@@ -1,25 +1,24 @@
 (function() {
-  'use strict';
+  "use strict";
 
   var objectTypes = {
-    'function': true,
-    'object': true
+    "function": true,
+    "object": true
   };
   var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
   var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
-  var freeGlobal = freeExports && freeModule && typeof global == 'object' && global && global.Object && global;
+  var freeGlobal = freeExports && freeModule && typeof global == "object" && global && global.Object && global;
   var freeWindow = objectTypes[typeof window] && window && window.Object && window;
   var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
   var root = freeGlobal || ((freeWindow !== (this && this.window)) && freeWindow) || this;
-  var config = {"iceServers": [{"urls": "stun:stun.l.google.com:19302"}]};
 
   var Sora = function() {};
   Sora.prototype.connect = function(params, onSuccess, onError) {
-    ws = new WebSocket("ws://" + params.host + ":" + params.port + "/" + params.path);
+    var ws = new WebSocket("ws://" + params.host + ":" + params.port + "/" + params.path);
     ws.onopen = function() {
       var message = JSON.stringify({
-        'type': params.role,
-        'channelId': params.channelId
+        "type": params.role,
+        "channelId": params.channelId
       });
       ws.send(message);
     };
@@ -32,12 +31,12 @@
       }
     };
     ws.onclose = function(error) {
-      onError();
+      onError(error);
     };
     return ws;
-  }
+  };
 
-  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {
+  if (typeof define == "function" && typeof define.amd == "object" && define.amd) {
     root.Sora = Sora;
     define(function() {
       return Sora;
