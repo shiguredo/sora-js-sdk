@@ -1,16 +1,5 @@
-(function() {
+(function(global) {
   "use strict";
-
-  var objectTypes = {
-    "function": true,
-    "object": true
-  };
-  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;
-  var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;
-  var freeGlobal = freeExports && freeModule && typeof global == "object" && global && global.Object && global;
-  var freeWindow = objectTypes[typeof window] && window && window.Object && window;
-  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;
-  var root = freeGlobal || ((freeWindow !== (this && this.window)) && freeWindow) || this;
 
   var Sora = function() {};
   Sora.prototype.connect = function(params, onSuccess, onError) {
@@ -36,21 +25,8 @@
     return ws;
   };
 
-  if (typeof define == "function" && typeof define.amd == "object" && define.amd) {
-    root.Sora = Sora;
-    define(function() {
-      return Sora;
-    });
+  if ("process" in global) {
+     module.exports = Sora;
   }
-  else if (freeExports && freeModule) {
-    if (moduleExports) {
-      (freeModule.exports = Sora).Sora = Sora;
-    }
-    else {
-      freeExports.Sora = Sora;
-    }
-  }
-  else {
-    root.Sora = Sora;
-  }
-}.call(this));
+  global.Sora = Sora;
+})((this || 0).self || global);
