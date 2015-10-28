@@ -8,7 +8,7 @@ var config = {
     "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
 };
 var pc = new RTCPeerConnection(config);
-var connection;
+var ws;
 var localStream;
 
 function getUserMedia(channelId) {
@@ -19,12 +19,12 @@ function getUserMedia(channelId) {
     localVideo.play();
 
     var sora = new Sora();
-    connection = sora.connect({
+    ws = sora.connect({
       "host": "127.0.0.1",
       "port": 5000,
       "path": "signaling",
       "role": "upstream",
-      "channelId": "sora"
+      "channelId": channelId
     }, onSuccess, channelId);
   }, onError);
 }
@@ -36,7 +36,7 @@ function onSuccess(message) {
       pc.setLocalDescription(answer, function() {
         pc.onicecandidate = function(event) {
           if (event.candidate === null) {
-            connection.send(JSON.stringify({type: "answer", sdp: pc.localDescription.sdp}));
+            ws.send(JSON.stringify({type: "answer", sdp: pc.localDescription.sdp}));
           }
         }
       }, onError);
