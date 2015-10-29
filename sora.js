@@ -13,7 +13,7 @@
     };
     ws.onmessage = function(event) {
       var message = JSON.parse(event.data);
-      if (message.sdp) {
+      if (message.type == "offer") {
         onSuccess(message);
       } else if (message.type == "ping") {
         ws.send(JSON.stringify({type: "pong"}));
