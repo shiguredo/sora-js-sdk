@@ -25,7 +25,7 @@ function getUserMedia(channelId) {
       "path": "signaling",
       "role": "upstream",
       "channelId": channelId
-    }, onSuccess, channelId);
+    }, onSuccess, onError);
   }, onError);
 }
 
