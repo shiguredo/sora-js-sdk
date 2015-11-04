@@ -13,11 +13,11 @@ var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
 var connection = sora.connection(onSuccess, onError);
 
 function onSuccess() {
-  connection.connect({"role": "upstream", "channelId": "sora"});
   navigator.getUserMedia({video: true, audio: true}, function(stream) {
     var localVideo = document.getElementById("local-video");
     localVideo.src = window.URL.createObjectURL(stream);
     localVideo.play();
+    connection.connect({"role": "upstream", "channelId": "sora"});
     connection.offer(function(message) {
       pc.addStream(stream);
       pc.setRemoteDescription(new RTCSessionDescription(message), function() {
