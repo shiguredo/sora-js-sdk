@@ -5,51 +5,40 @@ navigator.getUserMedia = navigator.getUserMedia ||
                          navigator.mozGetUserMedia ||
                          navigator.msGetUserMedia;
 var config = {
-    "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
+  "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
 };
 var pc = new RTCPeerConnection(config);
-var ws;
 var localStream;
 
-function getUserMedia(channelId) {
-  navigator.getUserMedia({video: true, audio: true}, function(stream) {
-    localStream = stream;
-    var localVideo = document.getElementById("local-video");
-    localVideo.src = window.URL.createObjectURL(stream);
-    localVideo.play();
+var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
+var connection = null;
 
-    var sora = new Sora();
-    ws = sora.connect({
-      "host": "127.0.0.1",
-      "port": 5000,
-      "path": "signaling",
-      "role": "upstream",
-      "channelId": channelId
-    }, onSuccess, onError);
-  }, onError);
-}
+navigator.getUserMedia({video: true, audio: true}, function(stream) {
+  localStream = stream;
+  var localVideo = document.getElementById("local-video");
+  localVideo.src = window.URL.createObjectURL(stream);
+  localVideo.play();
+  connection = sora.connection(onSuccess, onError);
+}, onError);
 
-function onSuccess(message) {
-  pc.addStream(localStream);
-  pc.setRemoteDescription(new RTCSessionDescription(message), function() {
-    pc.createAnswer(function(answer) {
-      pc.setLocalDescription(answer, function() {
-        pc.onicecandidate = function(event) {
-          if (event.candidate === null) {
-            ws.send(JSON.stringify({type: "answer", sdp: pc.localDescription.sdp}));
+function onSuccess() {
+  connection.signaling({"role": "upstream", "channelId": "sora"});
+  connection.offer(function(message) {
+    pc.addStream(localStream);
+    pc.setRemoteDescription(new RTCSessionDescription(message), function() {
+      pc.createAnswer(function(answer) {
+        pc.setLocalDescription(answer, function() {
+          pc.onicecandidate = function(event) {
+            if (event.candidate === null) {
+              connection.candidate(pc.localDescription.sdp);
+            }
           }
-        }
+        }, onError);
       }, onError);
     }, onError);
-  }, onError);
+  });
 }
 
 function onError(error) {
   console.warn(error);
 }
-
-var startButton = document.getElementById("start");
-startButton.addEventListener("click", function() {
-  var channelId = document.getElementById("channel").value;
-  getUserMedia(channelId);
-});
