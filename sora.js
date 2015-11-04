@@ -44,6 +44,9 @@
   };
 
   SoraConnection.prototype.candidate = function(sdp) {
+  };
+
+  SoraConnection.prototype.answer = function(sdp) {
     this._ws.send(JSON.stringify({"type": "answer", "sdp": sdp}));
   };
 

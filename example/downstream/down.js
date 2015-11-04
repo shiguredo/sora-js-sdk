@@ -16,7 +16,7 @@ function onSuccess() {
         pc.setLocalDescription(answer, function() {
           pc.onicecandidate = function(event) {
             if (event.candidate === null) {
-              connection.candidate(pc.localDescription.sdp);
+              connection.answer(pc.localDescription.sdp);
             }
           }
         }, onError);
