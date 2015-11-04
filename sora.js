@@ -21,7 +21,7 @@
     this._onOffer = function(message) {};
   };
 
-  SoraConnection.prototype.signaling = function(params) {
+  SoraConnection.prototype.connect = function(params) {
     var message = JSON.stringify({
       "type": "connect",
       "role": params.role,

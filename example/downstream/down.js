@@ -9,7 +9,7 @@ var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
 var connection = sora.connection(onSuccess, onError);
 
 function onSuccess() {
-  connection.signaling({"role": "downstream", "channelId": "sora"});
+  connection.connect({"role": "downstream", "channelId": "sora"});
   connection.offer(function(message) {
     pc.setRemoteDescription(new RTCSessionDescription(message), function() {
       pc.createAnswer(function(answer) {
