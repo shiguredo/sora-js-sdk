@@ -27,7 +27,7 @@ function onSuccess() {
               if (event.candidate === null) {
                 connection.answer(pc.localDescription.sdp);
               }
-            }
+            };
           }, onError);
         }, onError);
       }, onError);
