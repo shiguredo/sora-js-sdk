@@ -50,8 +50,8 @@
     this._ws.send(JSON.stringify({"type": "answer", "sdp": sdp}));
   };
 
-  if ("process" in global) {
-     module.exports = Sora;
+  if (typeof module !== "undefined") {
+    module.exports = Sora;
   }
   global.Sora = Sora;
 })((this || 0).self || global);
