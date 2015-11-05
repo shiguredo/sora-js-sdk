@@ -1,57 +1,47 @@
-(function(global) {
-  "use strict";
-
-  var Sora = function(config) {
+class Sora {
+  constructor(config) {
     this.config = config || {};
-  };
-
-  Sora.prototype.connection = function(onSuccess, onError) {
-    var ws = new WebSocket("ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path);
-    ws.onopen = function() {
+  }
+  connection(onSuccess, onError) {
+    let ws = new WebSocket("ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path);
+    ws.onopen = () => {
       onSuccess();
-    };
-    ws.onerror = function(e) {
+    }
+    ws.onerror = (e) => {
       onError(e);
-    };
+    }
     return new SoraConnection(ws);
-  };
+  }
+}
 
-  var SoraConnection = function(ws) {
+class SoraConnection {
+  constructor(ws) {
     this._ws = ws;
     this._onOffer = function(message) {};
-  };
-
-  SoraConnection.prototype.connect = function(params) {
-    var message = JSON.stringify({
+  }
+  connect(params) {
+    const message = JSON.stringify({
       "type": "connect",
       "role": params.role,
       "channelId": params.channelId
     });
-    var self = this;
+    const self = this;
     this._ws.send(message);
     this._ws.onmessage = function(event) {
-      var message = JSON.parse(event.data);
-      if (message.type == "offer") {
-        self._onOffer(message);
-      } else if (message.type == "ping") {
+      const data = JSON.parse(event.data);
+      if (data.type == "offer") {
+        self._onOffer(data);
+      } else if (data.type == "ping") {
         self._ws.send(JSON.stringify({type: "pong"}));
       }
-    };
-  };
-
-  SoraConnection.prototype.offer = function(callback) {
-    this._onOffer = callback;
-  };
-
-  SoraConnection.prototype.candidate = function(sdp) {
-  };
-
-  SoraConnection.prototype.answer = function(sdp) {
-    this._ws.send(JSON.stringify({"type": "answer", "sdp": sdp}));
-  };
-
-  if (typeof module !== "undefined") {
-    module.exports = Sora;
+    }
   }
-  global.Sora = Sora;
-})((this || 0).self || global);
+  offer(callback) {
+    this._onOffer = callback;
+  }
+  answer(sdp) {
+    this._ws.send(JSON.stringify({"type": "answer", "sdp": sdp}));
+  }
+}
+
+module.exports = Sora;
