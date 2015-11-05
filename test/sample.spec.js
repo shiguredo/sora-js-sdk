@@ -25,3 +25,21 @@ describe("Sora", function() {
     );
   });
 });
+
+describe("SoraConnection", function() {
+  it("Success `Upstream Signaling`", function(done) {
+    var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
+    var soraConnection = sora.connection(
+      function() {
+        soraConnection.connect({"role": "upstream", "channelId": "sora"});
+        soraConnection.offer(function(message) {
+          done();
+        });
+      },
+      function(e) {
+        assert(false);
+        done();
+      }
+    );
+  });
+});
