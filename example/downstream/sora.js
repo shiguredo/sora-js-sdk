@@ -1,1 +1,1 @@
-../../sora.js
+../../dist/sora.js
