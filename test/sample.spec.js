@@ -1,11 +1,27 @@
 var assert = require("power-assert");
 var Sora = require("../sora");
 
-describe("サンプルテスト", function() {
-  it("失敗する", function() {
-    assert(1 + 1 === 3);
+describe("Sora", function() {
+  it("Success create connection", function(done) {
+    var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
+    sora.connection(
+      function() {
+        done();
+      },
+      function(e) {
+        assert(false, 'Connect fail.');
+      }
+    );
   });
-  it("成功する", function() {
-    assert(1 + 1 === 2);
+  it("Fail create connection", function(done) {
+    var sora = new Sora({"host": "aaa", "port": 5000, "path": "signaling"});
+    sora.connection(
+      function() {
+        assert(false, 'Connect success.');
+      },
+      function(e) {
+        done();
+      }
+    );
   });
 });
