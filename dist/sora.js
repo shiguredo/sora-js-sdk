@@ -41,9 +41,9 @@ var SoraConnection = (function () {
     key: "connect",
     value: function connect(params) {
       var message = JSON.stringify({
-        "type": "connect",
-        "role": params.role,
-        "channelId": params.channelId
+        type: "connect",
+        role: params.role,
+        channelId: params.channelId
       });
       var self = this;
       this._ws.send(message);
@@ -64,7 +64,7 @@ var SoraConnection = (function () {
   }, {
     key: "answer",
     value: function answer(sdp) {
-      this._ws.send(JSON.stringify({ "type": "answer", "sdp": sdp }));
+      this._ws.send(JSON.stringify({ type: "answer", sdp: sdp }));
     }
   }]);
 

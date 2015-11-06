@@ -17,17 +17,17 @@ class Sora {
 class SoraConnection {
   constructor(ws) {
     this._ws = ws;
-    this._onOffer = function(message) {};
+    this._onOffer = (message) => {};
   }
   connect(params) {
     const message = JSON.stringify({
-      "type": "connect",
-      "role": params.role,
-      "channelId": params.channelId
+      type: "connect",
+      role: params.role,
+      channelId: params.channelId
     });
     const self = this;
     this._ws.send(message);
-    this._ws.onmessage = function(event) {
+    this._ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type == "offer") {
         self._onOffer(data);
@@ -40,7 +40,7 @@ class SoraConnection {
     this._onOffer = callback;
   }
   answer(sdp) {
-    this._ws.send(JSON.stringify({"type": "answer", "sdp": sdp}));
+    this._ws.send(JSON.stringify({type: "answer", sdp}));
   }
 }
 
