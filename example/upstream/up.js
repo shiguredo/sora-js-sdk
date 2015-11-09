@@ -17,8 +17,7 @@ function onSuccess() {
     var localVideo = document.getElementById("local-video");
     localVideo.src = window.URL.createObjectURL(stream);
     localVideo.play();
-    connection.connect({"role": "upstream", "channelId": "sora"});
-    connection.offer(function(message) {
+    connection.connect({"role": "upstream", "channelId": "sora"}, function(message) {
       pc.addStream(stream);
       pc.setRemoteDescription(new RTCSessionDescription(message), function() {
         pc.createAnswer(function(answer) {
@@ -31,7 +30,7 @@ function onSuccess() {
           }, onError);
         }, onError);
       }, onError);
-    });
+    }, onError);
   }, onError);
 }
 

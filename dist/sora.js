@@ -22,7 +22,7 @@ var Sora = (function () {
       ws.onerror = function (e) {
         onError(e);
       };
-      return new SoraConnection(ws);
+      return new SoraConnection(ws, onError);
     }
   }]);
 
@@ -30,16 +30,16 @@ var Sora = (function () {
 })();
 
 var SoraConnection = (function () {
-  function SoraConnection(ws) {
+  function SoraConnection(ws, onWsError) {
     _classCallCheck(this, SoraConnection);
 
     this._ws = ws;
-    this._onOffer = function (message) {};
+    this._onWsError = onWsError;
   }
 
   _createClass(SoraConnection, [{
     key: "connect",
-    value: function connect(params) {
+    value: function connect(params, onOffer, onError) {
       var message = JSON.stringify({
         type: "connect",
         role: params.role,
@@ -47,19 +47,17 @@ var SoraConnection = (function () {
       });
       var self = this;
       this._ws.send(message);
+      this._ws.onerror = function (e) {
+        onError(e);
+      };
       this._ws.onmessage = function (event) {
         var data = JSON.parse(event.data);
         if (data.type == "offer") {
-          self._onOffer(data);
+          onOffer(data);
         } else if (data.type == "ping") {
           self._ws.send(JSON.stringify({ type: "pong" }));
         }
       };
-    }
-  }, {
-    key: "offer",
-    value: function offer(callback) {
-      this._onOffer = callback;
     }
   }, {
     key: "answer",

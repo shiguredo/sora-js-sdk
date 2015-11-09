@@ -9,8 +9,7 @@ var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
 var connection = sora.connection(onSuccess, onError);
 
 function onSuccess() {
-  connection.connect({"role": "downstream", "channelId": "sora"});
-  connection.offer(function(message) {
+  connection.connect({"role": "downstream", "channelId": "sora"}, function(message) {
     pc.setRemoteDescription(new RTCSessionDescription(message), function() {
       pc.createAnswer(function(answer) {
         pc.setLocalDescription(answer, function() {
@@ -27,7 +26,7 @@ function onSuccess() {
       remoteVideo.src = window.URL.createObjectURL(event.stream);
       remoteVideo.play();
     };
-  });
+  }, onError);
 }
 
 function onError(error) {
