@@ -9,31 +9,36 @@ var config = {
 };
 var pc = new RTCPeerConnection(config);
 
-var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
-var connection = sora.connection(onSuccess, onError);
+$("#start").on("click", function () {
+  var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
+  var connection = sora.connection(onSuccess, onError);
 
-function onSuccess() {
-  navigator.getUserMedia({video: true, audio: true}, function(stream) {
-    var localVideo = document.getElementById("local-video");
-    localVideo.src = window.URL.createObjectURL(stream);
-    localVideo.play();
-    connection.connect({"role": "upstream", "channelId": "sora"}, function(message) {
-      pc.addStream(stream);
-      pc.setRemoteDescription(new RTCSessionDescription(message), function() {
-        pc.createAnswer(function(answer) {
-          pc.setLocalDescription(answer, function() {
-            pc.onicecandidate = function(event) {
-              if (event.candidate === null) {
-                connection.answer(pc.localDescription.sdp);
-              }
-            };
+  function onSuccess() {
+    navigator.getUserMedia({video: true, audio: true}, function(stream) {
+      var localVideo = document.getElementById("local-video");
+      localVideo.src = window.URL.createObjectURL(stream);
+      localVideo.play();
+      connection.connect(
+        {"role": "upstream", "channelId": $("#channel").val(), "accessToken": $("#token").val()},
+        function(message) {
+          pc.addStream(stream);
+          pc.setRemoteDescription(new RTCSessionDescription(message), function() {
+            pc.createAnswer(function(answer) {
+              pc.setLocalDescription(answer, function() {
+                pc.onicecandidate = function(event) {
+                  if (event.candidate === null) {
+                    connection.answer(pc.localDescription.sdp);
+                  }
+                };
+              }, onError);
+            }, onError);
           }, onError);
-        }, onError);
-      }, onError);
+        }, onError
+      );
     }, onError);
-  }, onError);
-}
+  }
 
-function onError(error) {
-  console.warn(error);
-}
+  function onError(error) {
+    console.warn(error);
+  }
+});
