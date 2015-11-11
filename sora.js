@@ -23,7 +23,8 @@ class SoraConnection {
     const message = JSON.stringify({
       type: "connect",
       role: params.role,
-      channelId: params.channelId
+      channelId: params.channelId,
+      accessToken: params.accessToken
     });
     const self = this;
     this._ws.send(message);
