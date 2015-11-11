@@ -9,12 +9,17 @@
       <h1>downstream</h1>
       <div class="row">
         <form role="form">
-          <div class="col-xs-5">
-            <input id="channel" type="text" class="form-control" placeholder="channelId" value="sora" />
+          <div class="col-xs-4">
+            <input id="channel" type="text" class="form-control" placeholder="channelId" value="" />
+          </div>
+          <div class="col-xs-4">
+            <input id="token" type="text" class="form-control" placeholder="accessToken" value="" />
           </div>
           <button id="start" type="button" class="btn btn-default">start video</button>
         </form>
-        <video id="remote-video" autoplay="" style="width: 500px; height: 375px; border: 1px solid black;"></video>
+        <div class="col-xs-10">
+          <video id="remote-video" autoplay="" style="width: 500px; height: 375px; border: 1px solid black;"></video>
+        </div>
       </div>
     </div>
 
