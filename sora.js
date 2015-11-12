@@ -2,7 +2,7 @@ class Sora {
   constructor(config) {
     this.config = config || {};
   }
-  connection(onSuccess, onError) {
+  connection(onSuccess, onError=() => {}, onClose=() => {}) {
     let ws = new WebSocket("ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path);
     ws.onopen = () => {
       onSuccess();
@@ -10,27 +10,27 @@ class Sora {
     ws.onerror = (e) => {
       onError(e);
     }
-    return new SoraConnection(ws, onError);
+    ws.onclose = (e) => {
+      onClose(e);
+    }
+    return new SoraConnection(ws, onClose);
   }
 }
 
 class SoraConnection {
-  constructor(ws, onWsError) {
+  constructor(ws, onClose) {
     this._ws = ws;
-    this._onWsError = onWsError;
+    this._onClose = onClose;
   }
   connect(params, onOffer, onError) {
-    const message = JSON.stringify({
-      type: "connect",
-      role: params.role,
-      channelId: params.channelId,
-      accessToken: params.accessToken
-    });
     const self = this;
-    this._ws.send(message);
-    this._ws.onerror = (e) => {
-      onError(e);
-    };
+    this._ws.onclose = (e) => {
+      if (/^440[0-9]$/.test(e.code)) {
+        onError(e.reason);
+      }
+      this._onClose(e);
+      self._ws = null;
+    }
     this._ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type == "offer") {
@@ -39,10 +39,18 @@ class SoraConnection {
         self._ws.send(JSON.stringify({type: "pong"}));
       }
     };
+    const message = JSON.stringify({
+      type: "connect",
+      role: params.role,
+      channelId: params.channelId,
+      accessToken: params.accessToken
+    });
+    this._ws.send(message);
   }
   answer(sdp) {
     this._ws.send(JSON.stringify({type: "answer", sdp}));
   }
 }
+
 
 module.exports = Sora;

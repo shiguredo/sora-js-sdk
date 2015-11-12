@@ -14,7 +14,10 @@ var Sora = (function () {
 
   _createClass(Sora, [{
     key: "connection",
-    value: function connection(onSuccess, onError) {
+    value: function connection(onSuccess) {
+      var onError = arguments.length <= 1 || arguments[1] === undefined ? function () {} : arguments[1];
+      var onClose = arguments.length <= 2 || arguments[2] === undefined ? function () {} : arguments[2];
+
       var ws = new WebSocket("ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path);
       ws.onopen = function () {
         onSuccess();
@@ -22,7 +25,10 @@ var Sora = (function () {
       ws.onerror = function (e) {
         onError(e);
       };
-      return new SoraConnection(ws, onError);
+      ws.onclose = function (e) {
+        onClose(e);
+      };
+      return new SoraConnection(ws, onClose);
     }
   }]);
 
@@ -30,26 +36,25 @@ var Sora = (function () {
 })();
 
 var SoraConnection = (function () {
-  function SoraConnection(ws, onWsError) {
+  function SoraConnection(ws, onClose) {
     _classCallCheck(this, SoraConnection);
 
     this._ws = ws;
-    this._onWsError = onWsError;
+    this._onClose = onClose;
   }
 
   _createClass(SoraConnection, [{
     key: "connect",
     value: function connect(params, onOffer, onError) {
-      var message = JSON.stringify({
-        type: "connect",
-        role: params.role,
-        channelId: params.channelId,
-        accessToken: params.accessToken
-      });
+      var _this = this;
+
       var self = this;
-      this._ws.send(message);
-      this._ws.onerror = function (e) {
-        onError(e);
+      this._ws.onclose = function (e) {
+        if (/^440[0-9]$/.test(e.code)) {
+          onError(e.reason);
+        }
+        _this._onClose(e);
+        self._ws = null;
       };
       this._ws.onmessage = function (event) {
         var data = JSON.parse(event.data);
@@ -59,6 +64,13 @@ var SoraConnection = (function () {
           self._ws.send(JSON.stringify({ type: "pong" }));
         }
       };
+      var message = JSON.stringify({
+        type: "connect",
+        role: params.role,
+        channelId: params.channelId,
+        accessToken: params.accessToken
+      });
+      this._ws.send(message);
     }
   }, {
     key: "answer",
