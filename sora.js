@@ -3,24 +3,24 @@ class Sora {
     this.config = config || {};
   }
   connection(onSuccess, onError=() => {}, onClose=() => {}) {
-    let ws = new WebSocket("ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path);
-    ws.onopen = () => {
-      onSuccess();
-    }
-    ws.onerror = (e) => {
-      onError(e);
-    }
-    ws.onclose = (e) => {
-      onClose(e);
-    }
-    return new SoraConnection(ws, onClose);
+    let url = "ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path;
+    return new SoraConnection(url, onSuccess, onError, onClose);
   }
 }
 
 class SoraConnection {
-  constructor(ws, onClose) {
-    this._ws = ws;
+  constructor(url, onSuccess, onError, onClose) {
+    this._ws = new WebSocket(url);
     this._onClose = onClose;
+    this._ws.onopen = () => {
+      onSuccess();
+    };
+    this._ws.onerror = (e) => {
+      onError(e);
+    };
+    this._ws.onclose = (e) => {
+      onClose(e);
+    };
   }
   connect(params, onOffer, onError) {
     const self = this;
@@ -30,7 +30,7 @@ class SoraConnection {
       }
       this._onClose(e);
       self._ws = null;
-    }
+    };
     this._ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type == "offer") {

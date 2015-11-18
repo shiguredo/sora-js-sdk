@@ -18,17 +18,8 @@ var Sora = (function () {
       var onError = arguments.length <= 1 || arguments[1] === undefined ? function () {} : arguments[1];
       var onClose = arguments.length <= 2 || arguments[2] === undefined ? function () {} : arguments[2];
 
-      var ws = new WebSocket("ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path);
-      ws.onopen = function () {
-        onSuccess();
-      };
-      ws.onerror = function (e) {
-        onError(e);
-      };
-      ws.onclose = function (e) {
-        onClose(e);
-      };
-      return new SoraConnection(ws, onClose);
+      var url = "ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path;
+      return new SoraConnection(url, onSuccess, onError, onClose);
     }
   }]);
 
@@ -36,11 +27,20 @@ var Sora = (function () {
 })();
 
 var SoraConnection = (function () {
-  function SoraConnection(ws, onClose) {
+  function SoraConnection(url, onSuccess, onError, onClose) {
     _classCallCheck(this, SoraConnection);
 
-    this._ws = ws;
+    this._ws = new WebSocket(url);
     this._onClose = onClose;
+    this._ws.onopen = function () {
+      onSuccess();
+    };
+    this._ws.onerror = function (e) {
+      onError(e);
+    };
+    this._ws.onclose = function (e) {
+      onClose(e);
+    };
   }
 
   _createClass(SoraConnection, [{
