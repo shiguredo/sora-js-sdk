@@ -1,0 +1,126 @@
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>updown test</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>updown test</h1>
+      <button id="start" type="button">start video</button>
+      <h2>up</h2>
+      <video id="local-video" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+      <h2>down</h2>
+      <video id="remote-video" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="./sora.js"></script>
+    <script type="text/javascript">
+var RTCPeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+var RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription;
+navigator.getUserMedia = navigator.getUserMedia ||
+                         navigator.webkitGetUserMedia ||
+                         navigator.mozGetUserMedia ||
+                         navigator.msGetUserMedia;
+navigator.getUserMedia = navigator.getUserMedia ||
+                         navigator.webkitGetUserMedia ||
+                         navigator.mozGetUserMedia ||
+                         navigator.msGetUserMedia;
+
+var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
+
+$("#start").on("click", function() {
+  upstream();
+  setTimeout(function() { downstream(); }, 2000)
+});
+
+function upstream() {
+  console.log("- upstream -");
+  var onSuccess = function() {
+    navigator.getUserMedia({video: true}, function(stream) {
+      var localVideo = document.getElementById("local-video");
+      localVideo.src = window.URL.createObjectURL(stream);
+      localVideo.play();
+      connection.connect(
+        {"role": "upstream", "channelId": "Sora"},
+        function(message) {
+          var config = {
+            "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
+          };
+          var pc = new RTCPeerConnection(config);
+          pc.addStream(stream);
+          pc.setRemoteDescription(new RTCSessionDescription(message), function() {
+            pc.createAnswer(function(answer) {
+              pc.setLocalDescription(answer, function() {
+                connection.answer(answer.sdp);
+                pc.onicecandidate = function(event) {
+                  if (event.candidate !== null) {
+                    connection.candidate(event.candidate);
+                  }
+                };
+              }, onError);
+            }, onError);
+          }, onError);
+        }, onError
+      );
+    }, onError);
+  };
+  var onError = function(e) {
+    console.warn(e);
+  };
+  var onClose = function(e) {
+    console.warn(e);
+    var localVideo = document.getElementById("local-video");
+    localVideo.pause();
+    localVideo.src = "";
+  };
+  var connection = sora.connection(onSuccess, onError, onClose);
+}
+
+function downstream() {
+  console.log("- downstream -");
+  var onSuccess = function() {
+    connection.connect(
+      {"role": "downstream", "channelId": "Sora"},
+      function(message) {
+        var config = {
+          "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
+        };
+        var pc = new RTCPeerConnection(config);
+        pc.setRemoteDescription(new RTCSessionDescription(message), function() {
+          pc.createAnswer(function(answer) {
+            pc.setLocalDescription(answer, function() {
+              connection.answer(answer.sdp);
+              pc.onicecandidate = function(event) {
+                if (event.candidate !== null) {
+                  connection.candidate(event.candidate);
+                }
+              };
+            }, onError);
+          }, onError);
+        }, onError);
+        pc.onaddstream = function(event) {
+          var remoteVideo = document.getElementById("remote-video");
+          remoteVideo.src = window.URL.createObjectURL(event.stream);
+          remoteVideo.play();
+        };
+      }, onError
+    );
+  }
+
+  var onError = function(error) {
+    console.warn(error);
+  }
+
+  var onClose = function(error) {
+    console.warn(error);
+    var remoteVideo = document.getElementById("remote-video");
+    remoteVideo.pause();
+    remoteVideo.src = "";
+  }
+  var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
+  var connection = sora.connection(onSuccess, onError, onClose);
+}
+    </script>
+  </body>
+</html>
