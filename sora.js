@@ -25,7 +25,7 @@ class SoraConnection {
   connect(params, onOffer, onError) {
     const self = this;
     this._ws.onclose = (e) => {
-      if (/^440[0-9]$/.test(e.code)) {
+      if (e.code === 4401) {
         onError(e.reason);
       }
       this._onClose(e);

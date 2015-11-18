@@ -50,7 +50,7 @@ var SoraConnection = (function () {
 
       var self = this;
       this._ws.onclose = function (e) {
-        if (/^440[0-9]$/.test(e.code)) {
+        if (e.code === 4401) {
           onError(e.reason);
         }
         _this._onClose(e);
