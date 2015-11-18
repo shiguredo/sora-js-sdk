@@ -77,6 +77,13 @@ var SoraConnection = (function () {
     value: function answer(sdp) {
       this._ws.send(JSON.stringify({ type: "answer", sdp: sdp }));
     }
+  }, {
+    key: "candidate",
+    value: function candidate(_candidate) {
+      var message = _candidate.toJSON();
+      message.type = "candidate";
+      this._ws.send(JSON.stringify(message));
+    }
   }]);
 
   return SoraConnection;

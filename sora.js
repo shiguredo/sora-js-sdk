@@ -50,6 +50,11 @@ class SoraConnection {
   answer(sdp) {
     this._ws.send(JSON.stringify({type: "answer", sdp}));
   }
+  candidate(candidate) {
+    let message = candidate.toJSON();
+    message.type = "candidate";
+    this._ws.send(JSON.stringify(message));
+  }
 }
 
 
