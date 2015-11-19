@@ -11,7 +11,7 @@ var pc = new RTCPeerConnection(config);
 
 $("#start").on("click", function () {
   var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
-  var connection = sora.connection(onSuccess, onError);
+  var connection = sora.connection(onSuccess, onError, onClose);
 
   function onSuccess() {
     navigator.getUserMedia({video: true, audio: true}, function(stream) {
@@ -21,13 +21,20 @@ $("#start").on("click", function () {
       connection.connect(
         {"role": "upstream", "channelId": $("#channel").val(), "accessToken": $("#token").val()},
         function(message) {
+          console.log("--- offer sdp ---");
+          console.log(message.sdp);
           pc.addStream(stream);
           pc.setRemoteDescription(new RTCSessionDescription(message), function() {
             pc.createAnswer(function(answer) {
               pc.setLocalDescription(answer, function() {
+                console.log("--- answer sdp ---");
+                console.log(answer.sdp);
+                connection.answer(answer.sdp);
                 pc.onicecandidate = function(event) {
-                  if (event.candidate === null) {
-                    connection.answer(pc.localDescription.sdp);
+                  if (event.candidate !== null) {
+                    console.log("--- candidate ---");
+                    console.log(event.candidate);
+                    connection.candidate(event.candidate);
                   }
                 };
               }, onError);
@@ -39,6 +46,10 @@ $("#start").on("click", function () {
   }
 
   function onError(error) {
+    console.warn(error);
+  }
+
+  function onClose(error) {
     console.warn(error);
   }
 });
