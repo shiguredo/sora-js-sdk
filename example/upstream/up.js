@@ -21,13 +21,19 @@ $("#start").on("click", function () {
       connection.connect(
         {"role": "upstream", "channelId": $("#channel").val(), "accessToken": $("#token").val()},
         function(message) {
+          console.log("--- offer sdp ---");
+          console.log(message.sdp);
           pc.addStream(stream);
           pc.setRemoteDescription(new RTCSessionDescription(message), function() {
             pc.createAnswer(function(answer) {
               pc.setLocalDescription(answer, function() {
+                console.log("--- answer sdp ---");
+                console.log(answer.sdp);
                 connection.answer(answer.sdp);
                 pc.onicecandidate = function(event) {
                   if (event.candidate !== null) {
+                    console.log("--- candidate ---");
+                    console.log(event.candidate);
                     connection.candidate(event.candidate);
                   }
                 };
