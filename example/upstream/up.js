@@ -11,7 +11,7 @@ var pc = new RTCPeerConnection(config);
 
 $("#start").on("click", function () {
   var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
-  var connection = sora.connection(onSuccess, onError);
+  var connection = sora.connection(onSuccess, onError, onClose);
 
   function onSuccess() {
     navigator.getUserMedia({video: true, audio: true}, function(stream) {
@@ -40,6 +40,10 @@ $("#start").on("click", function () {
   }
 
   function onError(error) {
+    console.warn(error);
+  }
+
+  function onClose(error) {
     console.warn(error);
   }
 });
