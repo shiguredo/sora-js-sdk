@@ -16,9 +16,10 @@ $("#start").on("click", function () {
         pc.setRemoteDescription(new RTCSessionDescription(message), function() {
           pc.createAnswer(function(answer) {
             pc.setLocalDescription(answer, function() {
+              connection.answer(answer.sdp);
               pc.onicecandidate = function(event) {
-                if (event.candidate === null) {
-                  connection.answer(pc.localDescription.sdp);
+                if (event.candidate !== null) {
+                  connection.candidate(event.candidate);
                 }
               };
             }, onError);
