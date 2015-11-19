@@ -1,0 +1,31 @@
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>upstream</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container">
+      <h1>upstream</h1>
+      <div class="row">
+        <form role="form">
+          <div class="col-xs-4">
+            <input id="channel" type="text" class="form-control" placeholder="channelId" value="" />
+          </div>
+          <div class="col-xs-4">
+            <input id="token" type="text" class="form-control" placeholder="accessToken" value="" />
+          </div>
+          <button id="start" type="button" class="btn btn-default">start video</button>
+        </form>
+        <div class="col-xs-10">
+          <video id="local-video" autoplay="" style="width: 500px; height: 375px; border: 1px solid black;"></video>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="./sora.js"></script>
+    <script src="./up.js"></script>
+  </body>
+</html>
