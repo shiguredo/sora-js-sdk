@@ -14,10 +14,10 @@ var _createClass = (function () { function defineProperties(target, props) { for
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Sora = (function () {
-  function Sora(config) {
+  function Sora(url) {
     _classCallCheck(this, Sora);
 
-    this.config = config || {};
+    this.url = url || "";
   }
 
   _createClass(Sora, [{
@@ -26,8 +26,7 @@ var Sora = (function () {
       var onError = arguments.length <= 1 || arguments[1] === undefined ? function () {} : arguments[1];
       var onClose = arguments.length <= 2 || arguments[2] === undefined ? function () {} : arguments[2];
 
-      var url = "ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path;
-      return new SoraConnection(url, onSuccess, onError, onClose);
+      return new SoraConnection(this.url, onSuccess, onError, onClose);
     }
   }]);
 

@@ -1,10 +1,9 @@
 class Sora {
-  constructor(config) {
-    this.config = config || {};
+  constructor(url) {
+    this.url = url || "";
   }
   connection(onSuccess, onError=() => {}, onClose=() => {}) {
-    let url = "ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path;
-    return new SoraConnection(url, onSuccess, onError, onClose);
+    return new SoraConnection(this.url, onSuccess, onError, onClose);
   }
 }
 
