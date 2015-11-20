@@ -1,7 +1,7 @@
 {
   "name": "sora.js",
   "version": "0.1.0",
-  "description": "",
+  "description": "WebRTC SFU Sora Signaling Library",
   "main": "sora.js",
   "scripts": {
     "dist": "gulp dist",
@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/shiguredo/sora.js.git"
   },
-  "author": "shiguredo",
+  "author": "Shiguredo Inc.",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/shiguredo/sora.js/issues"
