@@ -6,10 +6,9 @@ var config = {
 var pc = new RTCPeerConnection(config);
 
 $("#start").on("click", function () {
-  var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
+  var sora = new Sora("ws://127.0.0.1:5000/signaling");
   var connection = sora.connection(onSuccess, onError, onClose);
   function onSuccess() {
-    console.log({"role": "downstream", "channelId": $("#channel").val(), "accessToken": $("#token").val()});
     connection.connect(
       {"role": "downstream", "channelId": $("#channel").val(), "accessToken": $("#token").val()},
       function(message) {

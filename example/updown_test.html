@@ -22,12 +22,8 @@ navigator.getUserMedia = navigator.getUserMedia ||
                          navigator.webkitGetUserMedia ||
                          navigator.mozGetUserMedia ||
                          navigator.msGetUserMedia;
-navigator.getUserMedia = navigator.getUserMedia ||
-                         navigator.webkitGetUserMedia ||
-                         navigator.mozGetUserMedia ||
-                         navigator.msGetUserMedia;
 
-var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
+var sora = new Sora("ws://127.0.0.1:5000/signaling");
 
 $("#start").on("click", function() {
   upstream();
@@ -118,7 +114,6 @@ function downstream() {
     remoteVideo.pause();
     remoteVideo.src = "";
   }
-  var sora = new Sora({"host": "127.0.0.1", "port": 5000, "path": "signaling"});
   var connection = sora.connection(onSuccess, onError, onClose);
 }
     </script>
