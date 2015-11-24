@@ -2,7 +2,7 @@
   "name": "sora.js",
   "version": "0.1.0",
   "description": "WebRTC SFU Sora Signaling Library",
-  "main": "sora.js",
+  "main": "dist/sora.js",
   "scripts": {
     "dist": "gulp dist",
     "test": "karma start"
