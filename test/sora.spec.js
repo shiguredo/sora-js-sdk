@@ -1,52 +1,53 @@
-var assert = require("power-assert");
-var Sora = require("../dist/sora.js");
+import assert from "power-assert";
+import Sora from "../sora";
 
-describe("Sora", function() {
-  it("Success create connection", function(done) {
-    var sora = new Sora("ws://127.0.0.1:5000/signaling");
+describe("Sora", () => {
+  it("Success create connection", (done) => {
+    let sora = new Sora("ws://127.0.0.1:5000/signaling");
     sora.connection(
-      function() {
+      () => {
         done();
       },
-      function(_e) {
+      (_e) => {
         assert(false, "Connect fail.");
       },
-      function(_e) {
+      (_e) => {
         assert(false, "Connect fail.");
       }
     );
   });
-  it("Fail create connection", function(done) {
-    var sora = new Sora("ws://127.0.0.1:5000/bad");
+  it("Fail create connection", (done) => {
+    let sora = new Sora("ws://127.0.0.1:5000/bad");
     sora.connection(
-      function() {
+      () => {
         assert(false, "Connect success.");
       },
-      function(_e) {
+      (_e) => {
         done();
-      }
-      function(_e) {
+      },
+      (_e) => {
         done();
       }
     );
   });
 });
 
-describe("SoraConnection", function() {
-  it("Success upstream signaling", function(done) {
-    var sora = new Sora("ws://127.0.0.1:5000/signaling");
-    var soraConnection = sora.connection(
-      function() {
+describe("SoraConnection", () => {
+  it("Success upstream signaling", (done) => {
+    let sora = new Sora("ws://127.0.0.1:5000/signaling");
+    let soraConnection = sora.connection(
+      () => {
         soraConnection.connect(
-          {"role": "upstream", "channelId": "sora"},
-          function() { done(); }
+          {role: "upstream", channelId: "sora"},
+          () => { done(); },
+          () => { assert(false, "Connect success."); }
         );
       },
-      function(_e) {
+      (_e) => {
         assert(false);
         done();
       },
-      function(_e) {
+      (_e) => {
         assert(false);
         done();
       }
