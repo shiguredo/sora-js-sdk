@@ -1,6 +1,6 @@
 
 /*!
- * sora.js
+ * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
  * @version 0.1.0
  * @author Shiguredo Inc.
@@ -58,9 +58,10 @@ var SoraConnection = (function () {
       var self = this;
       this._ws.onclose = function (e) {
         if (e.code === 4401) {
-          onError(e.reason);
+          onError(e);
+        } else {
+          _this._onClose(e);
         }
-        _this._onClose(e);
         self._ws = null;
       };
       this._ws.onmessage = function (event) {
