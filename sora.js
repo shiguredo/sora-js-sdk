@@ -25,9 +25,11 @@ class SoraConnection {
     const self = this;
     this._ws.onclose = (e) => {
       if (e.code === 4401) {
-        onError(e.reason);
+        onError(e);
       }
-      this._onClose(e);
+      else {
+        this._onClose(e);
+      }
       self._ws = null;
     };
     this._ws.onmessage = (event) => {
