@@ -1,18 +1,22 @@
 import assert from "power-assert";
 import Sora from "../sora";
 
+let channelId = "7N3fsMHob"
+let accessToken = "PG9A6RXgYqiqWKOVO"
+let signalingUrl = "ws://127.0.0.1:5000/signaling"
+
 describe("Sora", () => {
   it("Success create connection", (done) => {
-    let sora = new Sora("ws://127.0.0.1:5000/signaling");
+    let sora = new Sora(signalingUrl);
     sora.connection(
       () => {
         done();
       },
       (_e) => {
-        assert(false, "Connect fail.");
+        assert(false, "Failed connection.");
       },
       (_e) => {
-        assert(false, "Connect fail.");
+        assert(false, "Failed connection.");
       }
     );
   });
@@ -20,7 +24,7 @@ describe("Sora", () => {
     let sora = new Sora("ws://127.0.0.1:5000/bad");
     sora.connection(
       () => {
-        assert(false, "Connect success.");
+        assert(false, "Success connection.");
       },
       (_e) => {
         done();
@@ -33,22 +37,42 @@ describe("Sora", () => {
 });
 
 describe("SoraConnection", () => {
-  it("Success upstream signaling", (done) => {
-    let sora = new Sora("ws://127.0.0.1:5000/signaling");
+  it("Success signaling", (done) => {
+    let sora = new Sora(signalingUrl);
     let soraConnection = sora.connection(
       () => {
         soraConnection.connect(
-          {role: "upstream", channelId: "sora"},
+          {role: "upstream", channelId: channelId, accessToken: accessToken},
           () => { done(); },
-          () => { assert(false, "Connect success."); }
+          () => { assert(false, "Faild signaling."); }
         );
       },
-      (_e) => {
-        assert(false);
+      (e) => {
+        assert(false, e);
         done();
       },
-      (_e) => {
-        assert(false);
+      (e) => {
+        assert(false, e);
+        done();
+      }
+    );
+  });
+  it("Failed signaling", (done) => {
+    let sora = new Sora(signalingUrl);
+    let soraConnection = sora.connection(
+      () => {
+        soraConnection.connect(
+          {role: "upstream", channelId: channelId, accessToken: "test"},
+          () => { assert(false, "Success signaling."); done(); },
+          (e) => { done(); }
+        );
+      },
+      (e) => {
+        assert(false, e);
+        done();
+      },
+      (e) => {
+        assert(false, e);
         done();
       }
     );
