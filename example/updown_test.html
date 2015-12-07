@@ -27,11 +27,11 @@ var sora = new Sora("ws://127.0.0.1:5000/signaling");
 
 $("#start").on("click", function() {
   upstream();
-  setTimeout(function() { downstream(); }, 2000)
+  setTimeout(function() { downstream(); }, 5000)
 });
 
 function upstream() {
-  console.log("- upstream -");
+  console.log("########## upstream ##########");
   var onSuccess = function() {
     navigator.getUserMedia({video: true}, function(stream) {
       var localVideo = document.getElementById("local-video");
@@ -40,6 +40,10 @@ function upstream() {
       connection.connect(
         {"role": "upstream", "channelId": "Sora"},
         function(message) {
+          console.log("====== offer ======");
+          console.log(message);
+          console.log("====== offer sdp ======");
+          console.log(message.sdp);
           var config = {
             "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
           };
@@ -48,9 +52,15 @@ function upstream() {
           upstreamPc.setRemoteDescription(new RTCSessionDescription(message), function() {
             upstreamPc.createAnswer(function(answer) {
               upstreamPc.setLocalDescription(answer, function() {
+                console.log("====== answer ======");
+                console.log(answer);
+                console.log("====== answer sdp ======");
+                console.log(answer.sdp);
                 connection.answer(answer.sdp);
                 upstreamPc.onicecandidate = function(event) {
                   if (event.candidate !== null) {
+                    console.log("====== candidate ======");
+                    console.log(event.candidate);
                     connection.candidate(event.candidate);
                   }
                 };
@@ -74,11 +84,15 @@ function upstream() {
 }
 
 function downstream() {
-  console.log("- downstream -");
+  console.log("########## downstream ##########");
   var onSuccess = function() {
     connection.connect(
       {"role": "downstream", "channelId": "Sora"},
       function(message) {
+        console.log("====== offer ======");
+        console.log(message);
+        console.log("====== offer sdp ======");
+        console.log(message.sdp);
         var config = {
           "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
         };
@@ -86,9 +100,15 @@ function downstream() {
         downstreamPc.setRemoteDescription(new RTCSessionDescription(message), function() {
           downstreamPc.createAnswer(function(answer) {
             downstreamPc.setLocalDescription(answer, function() {
+              console.log("====== answer ======");
+              console.log(answer);
+              console.log("====== answer sdp ======");
+              console.log(answer.sdp);
               connection.answer(answer.sdp);
               downstreamPc.onicecandidate = function(event) {
                 if (event.candidate !== null) {
+                  console.log("====== candidate ======");
+                  console.log(event.candidate);
                   connection.candidate(event.candidate);
                 }
               };
