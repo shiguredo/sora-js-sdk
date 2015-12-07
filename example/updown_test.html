@@ -22,7 +22,7 @@ navigator.getUserMedia = navigator.getUserMedia ||
                          navigator.webkitGetUserMedia ||
                          navigator.mozGetUserMedia ||
                          navigator.msGetUserMedia;
-
+var upstreamPc, downstreamPc;
 var sora = new Sora("ws://127.0.0.1:5000/signaling");
 
 $("#start").on("click", function() {
@@ -43,13 +43,13 @@ function upstream() {
           var config = {
             "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
           };
-          var pc = new RTCPeerConnection(config);
-          pc.addStream(stream);
-          pc.setRemoteDescription(new RTCSessionDescription(message), function() {
-            pc.createAnswer(function(answer) {
-              pc.setLocalDescription(answer, function() {
+          upstreamPc = new RTCPeerConnection(config);
+          upstreamPc.addStream(stream);
+          upstreamPc.setRemoteDescription(new RTCSessionDescription(message), function() {
+            upstreamPc.createAnswer(function(answer) {
+              upstreamPc.setLocalDescription(answer, function() {
                 connection.answer(answer.sdp);
-                pc.onicecandidate = function(event) {
+                upstreamPc.onicecandidate = function(event) {
                   if (event.candidate !== null) {
                     connection.candidate(event.candidate);
                   }
@@ -82,12 +82,12 @@ function downstream() {
         var config = {
           "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
         };
-        var pc = new RTCPeerConnection(config);
-        pc.setRemoteDescription(new RTCSessionDescription(message), function() {
-          pc.createAnswer(function(answer) {
-            pc.setLocalDescription(answer, function() {
+        downstreamPc = new RTCPeerConnection(config);
+        downstreamPc.setRemoteDescription(new RTCSessionDescription(message), function() {
+          downstreamPc.createAnswer(function(answer) {
+            downstreamPc.setLocalDescription(answer, function() {
               connection.answer(answer.sdp);
-              pc.onicecandidate = function(event) {
+              downstreamPc.onicecandidate = function(event) {
                 if (event.candidate !== null) {
                   connection.candidate(event.candidate);
                 }
@@ -95,7 +95,7 @@ function downstream() {
             }, onError);
           }, onError);
         }, onError);
-        pc.onaddstream = function(event) {
+        downstreamPc.onaddstream = function(event) {
           var remoteVideo = document.getElementById("remote-video");
           remoteVideo.src = window.URL.createObjectURL(event.stream);
           remoteVideo.play();
