@@ -1,6 +1,6 @@
 {
   "name": "sora-js-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "WebRTC SFU Sora Signaling Library",
   "main": "dist/sora.js",
   "scripts": {
