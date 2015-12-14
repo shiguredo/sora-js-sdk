@@ -32,109 +32,89 @@ $("#start").on("click", function() {
 
 function upstream() {
   console.log("########## upstream ##########");
-  var onSuccess = function() {
-    navigator.getUserMedia({video: true}, function(stream) {
-      var localVideo = document.getElementById("local-video");
-      localVideo.src = window.URL.createObjectURL(stream);
-      localVideo.play();
-      connection.connect(
-        {"role": "upstream", "channelId": "Sora"},
-        function(message) {
-          console.log("====== offer ======");
-          console.log(message);
-          console.log("====== offer sdp ======");
-          console.log(message.sdp);
-          var config = {
-            "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
-          };
-          upstreamPc = new RTCPeerConnection(config);
-          upstreamPc.addStream(stream);
-          upstreamPc.setRemoteDescription(new RTCSessionDescription(message), function() {
-            upstreamPc.createAnswer(function(answer) {
-              upstreamPc.setLocalDescription(answer, function() {
-                console.log("====== answer ======");
-                console.log(answer);
-                console.log("====== answer sdp ======");
-                console.log(answer.sdp);
-                connection.answer(answer.sdp);
-                upstreamPc.onicecandidate = function(event) {
-                  if (event.candidate !== null) {
-                    console.log("====== candidate ======");
-                    console.log(event.candidate);
-                    connection.candidate(event.candidate);
-                  }
-                };
-              }, onError);
-            }, onError);
-          }, onError);
-        }, onError
-      );
-    }, onError);
-  };
   var onError = function(e) {
     console.warn(e);
   };
-  var onClose = function(e) {
-    console.warn(e);
+  var connection = sora.connection();
+
+  navigator.getUserMedia({video: true}, function(stream) {
     var localVideo = document.getElementById("local-video");
-    localVideo.pause();
-    localVideo.src = "";
-  };
-  var connection = sora.connection(onSuccess, onError, onClose);
+    localVideo.src = window.URL.createObjectURL(stream);
+    localVideo.play();
+    connection.connect({"role": "upstream", "channelId": "Sora"})
+              .then(function(offer) {
+                console.log("====== offer ======");
+                console.log(offer);
+                console.log("====== offer sdp ======");
+                console.log(offer.sdp);
+                upstreamPc = new RTCPeerConnection({iceServers: offer.iceServers});
+                upstreamPc.addStream(stream);
+                upstreamPc.setRemoteDescription(new RTCSessionDescription(offer), function() {
+                  upstreamPc.createAnswer(function(answer) {
+                    upstreamPc.setLocalDescription(answer, function() {
+                      console.log("====== answer ======");
+                      console.log(answer);
+                      console.log("====== answer sdp ======");
+                      console.log(answer.sdp);
+                      connection.answer(answer.sdp);
+                      upstreamPc.onicecandidate = function(event) {
+                        if (event.candidate !== null) {
+                          console.log("====== candidate ======");
+                          console.log(event.candidate);
+                          connection.candidate(event.candidate);
+                        }
+                      };
+                    }, onError);
+                  }, onError);
+                }, onError);
+              });
+  }, onError);
 }
 
 function downstream() {
   console.log("########## downstream ##########");
-  var onSuccess = function() {
-    connection.connect(
-      {"role": "downstream", "channelId": "Sora"},
-      function(message) {
-        console.log("====== offer ======");
-        console.log(message);
-        console.log("====== offer sdp ======");
-        console.log(message.sdp);
-        var config = {
-          "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
-        };
-        downstreamPc = new RTCPeerConnection(config);
-        downstreamPc.setRemoteDescription(new RTCSessionDescription(message), function() {
-          downstreamPc.createAnswer(function(answer) {
-            downstreamPc.setLocalDescription(answer, function() {
-              console.log("====== answer ======");
-              console.log(answer);
-              console.log("====== answer sdp ======");
-              console.log(answer.sdp);
-              connection.answer(answer.sdp);
-              downstreamPc.onicecandidate = function(event) {
-                if (event.candidate !== null) {
-                  console.log("====== candidate ======");
-                  console.log(event.candidate);
-                  connection.candidate(event.candidate);
-                }
-              };
-            }, onError);
-          }, onError);
-        }, onError);
-        downstreamPc.onaddstream = function(event) {
-          var remoteVideo = document.getElementById("remote-video");
-          remoteVideo.src = window.URL.createObjectURL(event.stream);
-          remoteVideo.play();
-        };
-      }, onError
-    );
-  }
-
   var onError = function(error) {
     console.warn(error);
   }
 
-  var onClose = function(error) {
-    console.warn(error);
-    var remoteVideo = document.getElementById("remote-video");
-    remoteVideo.pause();
-    remoteVideo.src = "";
-  }
-  var connection = sora.connection(onSuccess, onError, onClose);
+  var connection = sora.connection();
+  connection.connect({"role": "downstream", "channelId": "Sora"})
+            .then(function(message) {
+              console.log("====== offer ======");
+              console.log(message);
+              console.log("====== offer sdp ======");
+              console.log(message.sdp);
+              var config = {
+                "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
+              };
+              downstreamPc = new RTCPeerConnection(config);
+              downstreamPc.setRemoteDescription(new RTCSessionDescription(message), function() {
+                downstreamPc.createAnswer(function(answer) {
+                  downstreamPc.setLocalDescription(answer, function() {
+                    console.log("====== answer ======");
+                    console.log(answer);
+                    console.log("====== answer sdp ======");
+                    console.log(answer.sdp);
+                    connection.answer(answer.sdp);
+                    downstreamPc.onicecandidate = function(event) {
+                      if (event.candidate !== null) {
+                        console.log("====== candidate ======");
+                        console.log(event.candidate);
+                        connection.candidate(event.candidate);
+                      }
+                    };
+                  }, onError);
+                }, onError);
+              }, onError);
+              downstreamPc.onaddstream = function(event) {
+                var remoteVideo = document.getElementById("remote-video");
+                remoteVideo.src = window.URL.createObjectURL(event.stream);
+                remoteVideo.play();
+              };
+            })
+            .catch(function(error) {
+              console.log(error);
+            });
 }
     </script>
   </body>
