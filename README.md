@@ -1,1 +1,1 @@
-# sora.js
+# sora-js-sdk

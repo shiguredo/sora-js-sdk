@@ -1,3 +1,11 @@
+
+/*!
+ * sora-js-sdk
+ * WebRTC SFU Sora Signaling Library
+ * @version 0.2.0
+ * @author Shiguredo Inc.
+ * @license MIT
+ */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Sora = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
@@ -6,20 +14,16 @@ var _createClass = (function () { function defineProperties(target, props) { for
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Sora = (function () {
-  function Sora(config) {
+  function Sora(url) {
     _classCallCheck(this, Sora);
 
-    this.config = config || {};
+    this.url = url || "";
   }
 
   _createClass(Sora, [{
     key: "connection",
-    value: function connection(onSuccess) {
-      var onError = arguments.length <= 1 || arguments[1] === undefined ? function () {} : arguments[1];
-      var onClose = arguments.length <= 2 || arguments[2] === undefined ? function () {} : arguments[2];
-
-      var url = "ws://" + this.config.host + ":" + this.config.port + "/" + this.config.path;
-      return new SoraConnection(url, onSuccess, onError, onClose);
+    value: function connection() {
+      return new SoraConnection(this.url);
     }
   }]);
 
@@ -27,50 +31,45 @@ var Sora = (function () {
 })();
 
 var SoraConnection = (function () {
-  function SoraConnection(url, onSuccess, onError, onClose) {
+  function SoraConnection(url) {
     _classCallCheck(this, SoraConnection);
 
-    this._ws = new WebSocket(url);
-    this._onClose = onClose;
-    this._ws.onopen = function () {
-      onSuccess();
-    };
-    this._ws.onerror = function (e) {
-      onError(e);
-    };
-    this._ws.onclose = function (e) {
-      onClose(e);
-    };
+    this._ws = null;
+    this._url = url;
   }
 
   _createClass(SoraConnection, [{
     key: "connect",
-    value: function connect(params, onOffer, onError) {
+    value: function connect(params) {
       var _this = this;
 
-      var self = this;
-      this._ws.onclose = function (e) {
-        if (e.code === 4401) {
-          onError(e.reason);
+      return new Promise(function (resolve, reject) {
+        if (_this._ws === null) {
+          _this._ws = new WebSocket(_this._url);
         }
-        _this._onClose(e);
-        self._ws = null;
-      };
-      this._ws.onmessage = function (event) {
-        var data = JSON.parse(event.data);
-        if (data.type == "offer") {
-          onOffer(data);
-        } else if (data.type == "ping") {
-          self._ws.send(JSON.stringify({ type: "pong" }));
-        }
-      };
-      var message = JSON.stringify({
-        type: "connect",
-        role: params.role,
-        channelId: params.channelId,
-        accessToken: params.accessToken
+        _this._ws.onopen = function () {
+          var message = JSON.stringify({
+            type: "connect",
+            role: params.role,
+            channelId: params.channelId,
+            accessToken: params.accessToken
+          });
+          _this._ws.send(message);
+        };
+        _this._ws.onclose = function (e) {
+          if (e.code === 4401) {
+            reject(e);
+          }
+        };
+        _this._ws.onmessage = function (event) {
+          var data = JSON.parse(event.data);
+          if (data.type == "offer") {
+            resolve(data);
+          } else if (data.type == "ping") {
+            _this._ws.send(JSON.stringify({ type: "pong" }));
+          }
+        };
       });
-      this._ws.send(message);
     }
   }, {
     key: "answer",
