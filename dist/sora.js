@@ -22,11 +22,8 @@ var Sora = (function () {
 
   _createClass(Sora, [{
     key: "connection",
-    value: function connection(onSuccess) {
-      var onError = arguments.length <= 1 || arguments[1] === undefined ? function () {} : arguments[1];
-      var onClose = arguments.length <= 2 || arguments[2] === undefined ? function () {} : arguments[2];
-
-      return new SoraConnection(this.url, onSuccess, onError, onClose);
+    value: function connection() {
+      return new SoraConnection(this.url);
     }
   }]);
 
@@ -34,51 +31,45 @@ var Sora = (function () {
 })();
 
 var SoraConnection = (function () {
-  function SoraConnection(url, onSuccess, onError, onClose) {
+  function SoraConnection(url) {
     _classCallCheck(this, SoraConnection);
 
-    this._ws = new WebSocket(url);
-    this._onClose = onClose;
-    this._ws.onopen = function () {
-      onSuccess();
-    };
-    this._ws.onerror = function (e) {
-      onError(e);
-    };
-    this._ws.onclose = function (e) {
-      onClose(e);
-    };
+    this._ws = null;
+    this._url = url;
   }
 
   _createClass(SoraConnection, [{
     key: "connect",
-    value: function connect(params, onOffer, onError) {
+    value: function connect(params) {
       var _this = this;
 
-      var self = this;
-      this._ws.onclose = function (e) {
-        if (e.code === 4401) {
-          onError(e);
-        } else {
-          _this._onClose(e);
+      return new Promise(function (resolve, reject) {
+        if (_this._ws === null) {
+          _this._ws = new WebSocket(_this._url);
         }
-        self._ws = null;
-      };
-      this._ws.onmessage = function (event) {
-        var data = JSON.parse(event.data);
-        if (data.type == "offer") {
-          onOffer(data);
-        } else if (data.type == "ping") {
-          self._ws.send(JSON.stringify({ type: "pong" }));
-        }
-      };
-      var message = JSON.stringify({
-        type: "connect",
-        role: params.role,
-        channelId: params.channelId,
-        accessToken: params.accessToken
+        _this._ws.onopen = function () {
+          var message = JSON.stringify({
+            type: "connect",
+            role: params.role,
+            channelId: params.channelId,
+            accessToken: params.accessToken
+          });
+          _this._ws.send(message);
+        };
+        _this._ws.onclose = function (e) {
+          if (e.code === 4401) {
+            reject(e);
+          }
+        };
+        _this._ws.onmessage = function (event) {
+          var data = JSON.parse(event.data);
+          if (data.type == "offer") {
+            resolve(data);
+          } else if (data.type == "ping") {
+            _this._ws.send(JSON.stringify({ type: "pong" }));
+          }
+        };
       });
-      this._ws.send(message);
     }
   }, {
     key: "answer",

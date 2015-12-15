@@ -2,51 +2,44 @@ class Sora {
   constructor(url) {
     this.url = url || "";
   }
-  connection(onSuccess, onError=() => {}, onClose=() => {}) {
-    return new SoraConnection(this.url, onSuccess, onError, onClose);
+  connection() {
+    return new SoraConnection(this.url);
   }
 }
 
 class SoraConnection {
-  constructor(url, onSuccess, onError, onClose) {
-    this._ws = new WebSocket(url);
-    this._onClose = onClose;
-    this._ws.onopen = () => {
-      onSuccess();
-    };
-    this._ws.onerror = (e) => {
-      onError(e);
-    };
-    this._ws.onclose = (e) => {
-      onClose(e);
-    };
+  constructor(url) {
+    this._ws = null;
+    this._url = url;
   }
-  connect(params, onOffer, onError) {
-    const self = this;
-    this._ws.onclose = (e) => {
-      if (e.code === 4401) {
-        onError(e);
+  connect(params) {
+    return new Promise((resolve, reject) => {
+      if (this._ws === null ) {
+        this._ws = new WebSocket(this._url);
       }
-      else {
-        this._onClose(e);
-      }
-      self._ws = null;
-    };
-    this._ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type == "offer") {
-        onOffer(data);
-      } else if (data.type == "ping") {
-        self._ws.send(JSON.stringify({type: "pong"}));
-      }
-    };
-    const message = JSON.stringify({
-      type: "connect",
-      role: params.role,
-      channelId: params.channelId,
-      accessToken: params.accessToken
+      this._ws.onopen = () => {
+        const message = JSON.stringify({
+          type: "connect",
+          role: params.role,
+          channelId: params.channelId,
+          accessToken: params.accessToken
+        });
+        this._ws.send(message);
+      };
+      this._ws.onclose = (e) => {
+        if (e.code === 4401) {
+          reject(e);
+        }
+      };
+      this._ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type == "offer") {
+          resolve(data);
+        } else if (data.type == "ping") {
+          this._ws.send(JSON.stringify({type: "pong"}));
+        }
+      };
     });
-    this._ws.send(message);
   }
   answer(sdp) {
     this._ws.send(JSON.stringify({type: "answer", sdp}));
