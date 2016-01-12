@@ -5,6 +5,7 @@
   "main": "dist/sora.js",
   "scripts": {
     "dist": "gulp dist",
+    "eslint": "gulp eslint",
     "test": "karma start"
   },
   "repository": {
@@ -23,8 +24,10 @@
     "babel-preset-es2015": "^6.1.2",
     "babelify": "^7.2.0",
     "browserify": "^12.0.1",
+    "eslint": "^1.10.3",
     "espowerify": "^1.0.0",
     "gulp": "^3.9.0",
+    "gulp-eslint": "^1.1.1",
     "gulp-header": "^1.7.1",
     "gulp-rename": "^1.2.2",
     "gulp-uglify": "^1.5.1",

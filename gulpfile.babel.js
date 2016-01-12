@@ -3,6 +3,7 @@ import gulp from "gulp";
 import uglify from "gulp-uglify";
 import rename from "gulp-rename";
 import header from "gulp-header";
+import eslint from "gulp-eslint";
 import runSequence from "run-sequence";
 import buffer from "vinyl-buffer";
 import source from "vinyl-source-stream";
@@ -52,4 +53,11 @@ gulp.task("header", () => {
   return gulp.src(["dist/sora.js"])
     .pipe(header(banner, {pkg: pkg}))
     .pipe(gulp.dest("dist"));
+});
+
+gulp.task("eslint", () => {
+  return gulp.src(["sora.js"])
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError());
 });
