@@ -14,7 +14,7 @@ class SoraConnection {
   }
   connect(params) {
     return new Promise((resolve, reject) => {
-      if (this._ws === null ) {
+      if (this._ws === null) {
         this._ws = new WebSocket(this._url);
       }
       this._ws.onopen = () => {
@@ -36,13 +36,13 @@ class SoraConnection {
         if (data.type == "offer") {
           resolve(data);
         } else if (data.type == "ping") {
-          this._ws.send(JSON.stringify({type: "pong"}));
+          this._ws.send(JSON.stringify({ type: "pong" }));
         }
       };
     });
   }
   answer(sdp) {
-    this._ws.send(JSON.stringify({type: "answer", sdp}));
+    this._ws.send(JSON.stringify({ type: "answer", sdp }));
   }
   candidate(candidate) {
     let message = candidate.toJSON();
@@ -50,6 +50,5 @@ class SoraConnection {
     this._ws.send(JSON.stringify(message));
   }
 }
-
 
 module.exports = Sora;
