@@ -1,17 +1,27 @@
 {
-    "rules": {
-        "indent": [2, 2],
-        "quotes": [2, "double"],
-        "linebreak-style": [2, "unix"],
-        "semi": [2, "always"]
-    },
-    "env": {
-        "es6": true,
-        "browser": true
-    },
-    "globals": {
-      "module": true,
-      "$": true
-    },
-    "extends": "eslint:recommended"
+  "parser": "babel-eslint",
+  "plugins": [],
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "rules": {
+    "no-console": 1,
+    "no-constant-condition": 1,
+    "no-trailing-spaces": 1,
+    "no-debugger": 1,
+    "no-unused-vars": [2, {"args": "all", "argsIgnorePattern": "^_"}],
+    "indent": [2, 2, {"SwitchCase": 1}],
+    "no-var": 1,
+    "max-len": [1, 120, 2],
+    "quotes": [2, "double", "avoid-escape"],
+    "linebreak-style": [2, "unix"],
+    "semi": [2, "always"],
+    "space-after-keywords": 2,
+    "space-in-parens": [2, "never"],
+    "space-unary-ops": 2,
+    "object-curly-spacing": [2, "always"]
+  },
+  "extends": "eslint:recommended"
 }
