@@ -36,6 +36,8 @@ var SoraConnection = (function () {
 
     this._ws = null;
     this._url = url;
+    this._onerror = function () {};
+    this._onclose = function () {};
   }
 
   _createClass(SoraConnection, [{
@@ -59,7 +61,12 @@ var SoraConnection = (function () {
         _this._ws.onclose = function (e) {
           if (e.code === 4401) {
             reject(e);
+          } else {
+            _this._onclose(e);
           }
+        };
+        _this._ws.onerror = function (e) {
+          _this._onerror(e);
         };
         _this._ws.onmessage = function (event) {
           var data = JSON.parse(event.data);
@@ -82,6 +89,22 @@ var SoraConnection = (function () {
       var message = _candidate.toJSON();
       message.type = "candidate";
       this._ws.send(JSON.stringify(message));
+    }
+  }, {
+    key: "onError",
+    value: function onError(f) {
+      this._onerror = f;
+    }
+  }, {
+    key: "onDisconnect",
+    value: function onDisconnect(f) {
+      this._onclose = f;
+    }
+  }, {
+    key: "disconnect",
+    value: function disconnect() {
+      this._ws.close();
+      this._ws = null;
     }
   }]);
 
