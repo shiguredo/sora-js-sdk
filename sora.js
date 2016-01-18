@@ -11,6 +11,8 @@ class SoraConnection {
   constructor(url) {
     this._ws = null;
     this._url = url;
+    this._onerror = () => {};
+    this._onclose = () => {};
   }
   connect(params) {
     return new Promise((resolve, reject) => {
@@ -30,6 +32,12 @@ class SoraConnection {
         if (e.code === 4401) {
           reject(e);
         }
+        else {
+          this._onclose(e);
+        }
+      };
+      this._ws.onerror = (e) => {
+        this._onerror(e);
       };
       this._ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -48,6 +56,16 @@ class SoraConnection {
     let message = candidate.toJSON();
     message.type = "candidate";
     this._ws.send(JSON.stringify(message));
+  }
+  onError(f) {
+    this._onerror = f;
+  }
+  onDisconnect(f) {
+    this._onclose = f;
+  }
+  disconnect() {
+    this._ws.close();
+    this._ws = null;
   }
 }
 
