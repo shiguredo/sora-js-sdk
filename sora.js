@@ -29,7 +29,7 @@ class SoraConnection {
         this._ws.send(message);
       };
       this._ws.onclose = (e) => {
-        if (e.code === 4401) {
+        if (/440\d$/.test(e.code)) {
           reject(e);
         }
         else {
