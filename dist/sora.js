@@ -2,7 +2,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version 0.3.0
+ * @version 0.3.1
  * @author Shiguredo Inc.
  * @license MIT
  */
