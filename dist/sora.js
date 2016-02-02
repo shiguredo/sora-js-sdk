@@ -59,7 +59,7 @@ var SoraConnection = (function () {
           _this._ws.send(message);
         };
         _this._ws.onclose = function (e) {
-          if (e.code === 4401) {
+          if (/440\d$/.test(e.code)) {
             reject(e);
           } else {
             _this._onclose(e);
