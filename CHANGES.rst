@@ -1,0 +1,50 @@
+########
+変更履歴
+########
+
+UPDATE
+    下位互換がある変更
+ADD
+    下位互換がある追加
+CHANGE
+    下位互換のない変更
+FIX
+    バグ修正
+
+0.3.x
+=====
+
+develop
+-------
+
+- [UPDATE] codecType が選択できるように修正する
+
+0.3.2
+-----
+
+- [UPDATE] パッケージの更新
+
+0.3.1
+-----
+
+- [UPDATE] signaling 時に WS が切断した場合、ステータスコードが 440x だったら Promise.reject するように変更する
+
+0.3.0
+-----
+
+- [ADD] disconnect を追加する
+
+0.2.0
+=====
+
+- [CHANGE] constructor の引数に URL 文字列を受け取る用に修正する
+- [CHANGE] package name を sora.js から sora-js-sdk に変更する
+- [CHANGE] Promise 化する
+- [FIX] PeerConnection Object が GC の対象にならないように修正する
+
+
+0.1.0
+=====
+
+**0.1.0 リリース**
+
