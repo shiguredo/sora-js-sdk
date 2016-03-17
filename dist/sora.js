@@ -30,6 +30,8 @@ var Sora = function () {
   return Sora;
 }();
 
+var CODEC_TYPES = ["VP8", "VP9", "H264"];
+
 var SoraConnection = function () {
   function SoraConnection(url) {
     _classCallCheck(this, SoraConnection);
@@ -50,13 +52,17 @@ var SoraConnection = function () {
           _this._ws = new WebSocket(_this._url);
         }
         _this._ws.onopen = function () {
-          var message = JSON.stringify({
+          var message = {
             type: "connect",
             role: params.role,
             channelId: params.channelId,
             accessToken: params.accessToken
-          });
-          _this._ws.send(message);
+          };
+          var codecTypeIndex = CODEC_TYPES.indexOf(params.codecType);
+          if (0 <= codecTypeIndex) {
+            message.video = { codecType: CODEC_TYPES[codecTypeIndex] };
+          }
+          _this._ws.send(JSON.stringify(message));
         };
         _this._ws.onclose = function (e) {
           if (/440\d$/.test(e.code)) {
