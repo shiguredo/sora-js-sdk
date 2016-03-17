@@ -1,21 +1,31 @@
 <html lang="ja">
-  <head>
-    <meta charset="utf-8">
-    <title>updown test</title>
-  </head>
-  <body>
-    <div class="container">
-      <h1>updown test</h1>
-      <button id="start" type="button">start video</button>
-      <h2>up</h2>
-      <video id="local-video" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
-      <h2>down</h2>
-      <video id="remote-video" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
-    </div>
+    <head>
+        <meta charset="utf-8">
+        <title>updown test</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>updown test</h1>
+            <select name="codec-type">
+                <option value="">-codec-</option>
+                <option value="VP8">VP8</option>
+                <option value="VP9">VP9</option>
+                <option value="H264">H264</option>
+            </select>
+            <button id="start">start</button>
+            <div>
+                <h2>up</h2>
+                <video id="local-video" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+            </div>
+            <div>
+                <h2>down</h2>
+                <video id="remote-video" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+            </div>
+        </div>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="./sora.js"></script>
-    <script type="text/javascript">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+        <script src="./sora.js"></script>
+        <script type="text/javascript">
 var RTCPeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
 var RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription;
 navigator.getUserMedia = navigator.getUserMedia ||
@@ -24,14 +34,16 @@ navigator.getUserMedia = navigator.getUserMedia ||
                          navigator.msGetUserMedia;
 var upstreamPc, downstreamPc;
 var sora = new Sora("ws://127.0.0.1:5000/signaling");
+var channelId = "";
+var upstreamToken = "";
+var downstreamToken = "";
 
 $("#start").on("click", function() {
   upstream();
-  setTimeout(function() { downstream(); }, 5000)
+  downstream();
 });
 
 function upstream() {
-  console.log("########## upstream ##########");
   var onError = function(e) {
     console.warn(e);
   };
@@ -41,26 +53,22 @@ function upstream() {
     var localVideo = document.getElementById("local-video");
     localVideo.src = window.URL.createObjectURL(stream);
     localVideo.play();
-    connection.connect({"role": "upstream", "channelId": "Sora"})
+    var params = {
+      role: "upstream",
+      channelId: channelId,
+      accessToken: upstreamToken,
+      codecType: $("select[name=codec-type]").val()
+    };
+    connection.connect(params)
               .then(function(offer) {
-                console.log("====== offer ======");
-                console.log(offer);
-                console.log("====== offer sdp ======");
-                console.log(offer.sdp);
-                upstreamPc = new RTCPeerConnection({iceServers: offer.iceServers});
+                upstreamPc = new RTCPeerConnection({iceServers: offer.metadata.iceServers});
                 upstreamPc.addStream(stream);
                 upstreamPc.setRemoteDescription(new RTCSessionDescription(offer), function() {
                   upstreamPc.createAnswer(function(answer) {
                     upstreamPc.setLocalDescription(answer, function() {
-                      console.log("====== answer ======");
-                      console.log(answer);
-                      console.log("====== answer sdp ======");
-                      console.log(answer.sdp);
                       connection.answer(answer.sdp);
                       upstreamPc.onicecandidate = function(event) {
                         if (event.candidate !== null) {
-                          console.log("====== candidate ======");
-                          console.log(event.candidate);
                           connection.candidate(event.candidate);
                         }
                       };
@@ -72,34 +80,26 @@ function upstream() {
 }
 
 function downstream() {
-  console.log("########## downstream ##########");
   var onError = function(error) {
     console.warn(error);
   }
 
   var connection = sora.connection();
-  connection.connect({"role": "downstream", "channelId": "Sora"})
-            .then(function(message) {
-              console.log("====== offer ======");
-              console.log(message);
-              console.log("====== offer sdp ======");
-              console.log(message.sdp);
-              var config = {
-                "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
-              };
-              downstreamPc = new RTCPeerConnection(config);
-              downstreamPc.setRemoteDescription(new RTCSessionDescription(message), function() {
+  var params = {
+    role: "downstream",
+    channelId: channelId,
+    accessToken: downstreamToken,
+    codecType: $("select[name=codec-type]").val()
+  };
+  connection.connect(params)
+            .then(function(offer) {
+              downstreamPc = new RTCPeerConnection({iceServers: offer.metadata.iceServers});
+              downstreamPc.setRemoteDescription(new RTCSessionDescription(offer), function() {
                 downstreamPc.createAnswer(function(answer) {
                   downstreamPc.setLocalDescription(answer, function() {
-                    console.log("====== answer ======");
-                    console.log(answer);
-                    console.log("====== answer sdp ======");
-                    console.log(answer.sdp);
                     connection.answer(answer.sdp);
                     downstreamPc.onicecandidate = function(event) {
                       if (event.candidate !== null) {
-                        console.log("====== candidate ======");
-                        console.log(event.candidate);
                         connection.candidate(event.candidate);
                       }
                     };
