@@ -18,7 +18,7 @@
     "quotes": [2, "double", "avoid-escape"],
     "linebreak-style": [2, "unix"],
     "semi": [2, "always"],
-    "space-after-keywords": 2,
+    "keyword-spacing": [2, {"before": true, "after": true, "overrides": {}}],
     "space-in-parens": [2, "never"],
     "space-unary-ops": 2,
     "object-curly-spacing": [2, "always"]
