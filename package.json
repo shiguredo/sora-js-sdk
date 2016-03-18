@@ -2,7 +2,7 @@
   "name": "sora-js-sdk",
   "version": "0.3.2",
   "description": "WebRTC SFU Sora Signaling Library",
-  "main": "dist/sora.js",
+  "main": "dist/sora.min.js",
   "scripts": {
     "dev": "gulp watch",
     "build": "gulp dist",
