@@ -37,7 +37,8 @@ gulp.task("compile:js", watchify((w) => {
     .pipe(plumber())
     .pipe(w({
       watch: watching,
-      transform: ["babelify", "envify"]
+      transform: ["babelify", "envify"],
+      standalone: "Sora"
     }))
     .pipe(buffer())
     .pipe(gulp.dest("dist"));
