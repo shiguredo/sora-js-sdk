@@ -43,7 +43,11 @@ gulp.task("compile:js", watchify((w) => {
     .pipe(gulp.dest("dist"));
 }));
 
-gulp.task("watch", ["enable-watch-mode", "compile:js"])
+gulp.task("watchify", ["enable-watch-mode", "compile:js"])
+
+gulp.task("watch", ["watchify"], function () {
+  gulp.watch("dist/sora.js", ["uglify"]);
+});
 
 gulp.task("uglify", () => {
   return gulp.src(["dist/sora.js"])
