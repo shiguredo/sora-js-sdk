@@ -7,6 +7,8 @@ class Sora {
   }
 }
 
+const CODEC_TYPES = ["VP8", "VP9", "H264"];
+
 class SoraConnection {
   constructor(url) {
     this._ws = null;
@@ -20,13 +22,17 @@ class SoraConnection {
         this._ws = new WebSocket(this._url);
       }
       this._ws.onopen = () => {
-        const message = JSON.stringify({
+        const message = {
           type: "connect",
           role: params.role,
           channelId: params.channelId,
           accessToken: params.accessToken
-        });
-        this._ws.send(message);
+        };
+        const codecTypeIndex = CODEC_TYPES.indexOf(params.codecType);
+        if (0 <= codecTypeIndex) {
+          message.video = { codecType: CODEC_TYPES[codecTypeIndex] };
+        }
+        this._ws.send(JSON.stringify(message));
       };
       this._ws.onclose = (e) => {
         if (/440\d$/.test(e.code)) {
