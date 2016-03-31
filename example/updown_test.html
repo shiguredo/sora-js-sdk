@@ -33,8 +33,11 @@ navigator.getUserMedia = navigator.getUserMedia ||
                          navigator.mozGetUserMedia ||
                          navigator.msGetUserMedia;
 var upstreamPc, downstreamPc;
+var config = {
+  "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
+};
 var sora = new Sora("ws://127.0.0.1:5000/signaling");
-var channelId = "";
+var channelId = "Sora";
 var upstreamToken = "";
 var downstreamToken = "";
 
@@ -61,7 +64,7 @@ function upstream() {
     };
     connection.connect(params)
               .then(function(offer) {
-                upstreamPc = new RTCPeerConnection({iceServers: offer.metadata.iceServers});
+                upstreamPc = new RTCPeerConnection(config);
                 upstreamPc.addStream(stream);
                 upstreamPc.setRemoteDescription(new RTCSessionDescription(offer), function() {
                   upstreamPc.createAnswer(function(answer) {
@@ -93,7 +96,7 @@ function downstream() {
   };
   connection.connect(params)
             .then(function(offer) {
-              downstreamPc = new RTCPeerConnection({iceServers: offer.metadata.iceServers});
+              downstreamPc = new RTCPeerConnection(config);
               downstreamPc.setRemoteDescription(new RTCSessionDescription(offer), function() {
                 downstreamPc.createAnswer(function(answer) {
                   downstreamPc.setLocalDescription(answer, function() {

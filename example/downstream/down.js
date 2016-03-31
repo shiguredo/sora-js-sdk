@@ -7,43 +7,36 @@ var pc = new RTCPeerConnection(config);
 
 $("#start").on("click", function () {
   var sora = new Sora("ws://127.0.0.1:5000/signaling");
-  var connection = sora.connection(onSuccess, onError, onClose);
-  function onSuccess() {
-    connection.connect(
-      {"role": "downstream", "channelId": $("#channel").val(), "accessToken": $("#token").val()},
-      function(message) {
-        console.log("--- offer sdp ---");
-        console.log(message.sdp);
-        pc.setRemoteDescription(new RTCSessionDescription(message), function() {
-          pc.createAnswer(function(answer) {
-            pc.setLocalDescription(answer, function() {
-              console.log("--- answer sdp ---");
-              console.log(answer.sdp);
-              connection.answer(answer.sdp);
-              pc.onicecandidate = function(event) {
-                if (event.candidate !== null) {
-                  console.log("--- candidate ---");
-                  console.log(event.candidate);
-                  connection.candidate(event.candidate);
-                }
-              };
-            }, onError);
-          }, onError);
-        }, onError);
+  var connection = sora.connection();
+  var params = {
+    role: "downstream",
+    channelId: $("#channel").val(),
+    accessToken: $("#token").val(),
+    codecType: $("select[name=codec-type]").val()
+  }
+  connection
+    .connect(params)
+    .then(function(offer) {
+      pc.setRemoteDescription(new RTCSessionDescription(offer), function() {
         pc.onaddstream = function(event) {
           var remoteVideo = document.getElementById("remote-video");
           remoteVideo.src = window.URL.createObjectURL(event.stream);
           remoteVideo.play();
         };
-      }, onError
-    );
-  }
+        pc.createAnswer(function(answer) {
+          pc.setLocalDescription(answer, function() {
+            connection.answer(answer.sdp);
+            pc.onicecandidate = function(event) {
+              if (event.candidate !== null) {
+                connection.candidate(event.candidate);
+              }
+            };
+          }, onError);
+        }, onError);
+      }, onError);
+    });
 
   function onError(error) {
-    console.warn(error);
-  }
-
-  function onClose(error) {
     console.warn(error);
   }
 });
