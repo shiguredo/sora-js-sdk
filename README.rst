@@ -2,7 +2,7 @@
 Sora JavaScript SDK
 ###################
 
-:バージョン: 0.4.0
+:バージョン: 0.4.1
 
 `WebRTC SFU Sora <https://sora.shiguredo.jp>`_ をブラウザから扱うための SDK です。
 
