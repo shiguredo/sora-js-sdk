@@ -38,7 +38,7 @@ example::
 
 
 
-new Sora(signalingUrl)
+connection()
 ----------------------
 SoraConnection オブジェクト作成
 
