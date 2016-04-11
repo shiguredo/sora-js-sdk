@@ -30,8 +30,6 @@ var Sora = function () {
   return Sora;
 }();
 
-var CODEC_TYPES = ["VP8", "VP9", "H264"];
-
 var SoraConnection = function () {
   function SoraConnection(url) {
     _classCallCheck(this, SoraConnection);
@@ -58,9 +56,8 @@ var SoraConnection = function () {
             channelId: params.channelId,
             accessToken: params.accessToken
           };
-          var codecTypeIndex = CODEC_TYPES.indexOf(params.codecType);
-          if (0 <= codecTypeIndex) {
-            message.video = { codecType: CODEC_TYPES[codecTypeIndex] };
+          if (params.codecType) {
+            message.video = { codecType: params.codecType };
           }
           _this._ws.send(JSON.stringify(message));
         };
