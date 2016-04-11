@@ -53,11 +53,11 @@ var SoraConnection = function () {
           var message = {
             type: "connect",
             role: params.role,
-            channelId: params.channelId,
-            accessToken: params.accessToken
+            channel_id: params.channelId,
+            access_token: params.accessToken
           };
           if (params.codecType) {
-            message.video = { codecType: params.codecType };
+            message.video = { codec_type: params.codecType };
           }
           _this._ws.send(JSON.stringify(message));
         };
