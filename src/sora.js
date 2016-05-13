@@ -7,7 +7,6 @@ class Sora {
   }
 }
 
-const CODEC_TYPES = ["VP8", "VP9", "H264"];
 
 class SoraConnection {
   constructor(url) {
@@ -25,12 +24,11 @@ class SoraConnection {
         const message = {
           type: "connect",
           role: params.role,
-          channelId: params.channelId,
-          accessToken: params.accessToken
+          channel_id: params.channelId,
+          access_token: params.accessToken
         };
-        const codecTypeIndex = CODEC_TYPES.indexOf(params.codecType);
-        if (0 <= codecTypeIndex) {
-          message.video = { codecType: CODEC_TYPES[codecTypeIndex] };
+        if (params.codecType) {
+          message.video = { codec_type: params.codecType };
         }
         this._ws.send(JSON.stringify(message));
       };

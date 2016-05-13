@@ -2,7 +2,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version 0.4.2
+ * @version 0.5.0
  * @author Shiguredo Inc.
  * @license MIT
  */
@@ -30,8 +30,6 @@ var Sora = function () {
   return Sora;
 }();
 
-var CODEC_TYPES = ["VP8", "VP9", "H264"];
-
 var SoraConnection = function () {
   function SoraConnection(url) {
     _classCallCheck(this, SoraConnection);
@@ -55,12 +53,11 @@ var SoraConnection = function () {
           var message = {
             type: "connect",
             role: params.role,
-            channelId: params.channelId,
-            accessToken: params.accessToken
+            channel_id: params.channelId,
+            access_token: params.accessToken
           };
-          var codecTypeIndex = CODEC_TYPES.indexOf(params.codecType);
-          if (0 <= codecTypeIndex) {
-            message.video = { codecType: CODEC_TYPES[codecTypeIndex] };
+          if (params.codecType) {
+            message.video = { codec_type: params.codecType };
           }
           _this._ws.send(JSON.stringify(message));
         };
