@@ -54,7 +54,8 @@ var SoraConnection = function () {
             type: "connect",
             role: params.role,
             channel_id: params.channelId,
-            access_token: params.accessToken
+            access_token: params.accessToken,
+            multistream: params.multistream
           };
           if (params.codecType) {
             message.video = { codec_type: params.codecType };
