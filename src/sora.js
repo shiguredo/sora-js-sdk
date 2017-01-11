@@ -12,8 +12,61 @@ class SoraConnection {
   constructor(url) {
     this._ws = null;
     this._url = url;
-    this._onerror = () => {};
-    this._onclose = () => {};
+    this._callbacks = {
+      error: () => {},
+      disconnect: () => {},
+      snapshot: () => {},
+    };
+  }
+  _createSignalingMessage(params) {
+    const message = {
+      type: "connect",
+      role: params.role,
+      channel_id: params.channelId,
+      access_token: params.accessToken,
+    };
+    Object.keys(message).forEach(key => {
+      if (message[key] === undefined) {
+        message[key] = null;
+      }
+    });
+    // create audio params
+    let audio = true;
+    if ("audio" in params && typeof params["audio"] === "boolean") {
+      audio = params.audio;
+    }
+    if (audio) {
+      if ("audioCodecType" in params) {
+        audio = {
+          codec_type: params.audioCodecType
+        };
+      }
+    }
+    message["audio"] = audio;
+    // create video params
+    let video = true;
+    if ("video" in params) {
+      video = params.video;
+    }
+
+    if (video) {
+      const videoPropertyKeys = ["videoCodecType", "videoBitRate", "videoSnapshot"];
+      if (Object.keys(params).some(key => { return 0 <= videoPropertyKeys.indexOf(key); })) {
+        video = {};
+        if ("videoCodecType" in params) {
+          video["codec_type"] = params.videoCodecType;
+        }
+        if ("videoBitRate" in params) {
+          video["bit_rate"] = params.videoBitRate;
+        }
+        if ("videoSnapshot" in params) {
+          video["snapshot"] = params.videoSnapshot;
+        }
+      }
+    }
+    message["video"] = video;
+
+    return message;
   }
   connect(params) {
     return new Promise((resolve, reject) => {
@@ -21,34 +74,28 @@ class SoraConnection {
         this._ws = new WebSocket(this._url);
       }
       this._ws.onopen = () => {
-        const message = {
-          type: "connect",
-          role: params.role,
-          channel_id: params.channelId,
-          access_token: params.accessToken,
-          multistream: params.multistream
-        };
-        if (params.codecType) {
-          message.video = { codec_type: params.codecType };
-        }
-        this._ws.send(JSON.stringify(message));
+        this._ws.send(JSON.stringify(this._createSignalingMessage(params)));
       };
       this._ws.onclose = (e) => {
         if (/440\d$/.test(e.code)) {
           reject(e);
         }
         else {
-          this._onclose(e);
+          this._callbacks.disconnect(e);
         }
       };
       this._ws.onerror = (e) => {
-        this._onerror(e);
+        this._callbacks.error(e);
       };
       this._ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        if (data.type == "offer") {
+        if (data.type === "offer") {
           resolve(data);
-        } else if (data.type == "ping") {
+        }
+        else if (data.type === "snapshot") {
+          this._callbacks.snapshot(data);
+        }
+        else if (data.type === "ping") {
           this._ws.send(JSON.stringify({ type: "pong" }));
         }
       };
@@ -58,19 +105,20 @@ class SoraConnection {
     this._ws.send(JSON.stringify({ type: "answer", sdp }));
   }
   candidate(candidate) {
-    let message = candidate.toJSON();
+    const message = candidate.toJSON();
     message.type = "candidate";
     this._ws.send(JSON.stringify(message));
   }
-  onError(f) {
-    this._onerror = f;
-  }
-  onDisconnect(f) {
-    this._onclose = f;
-  }
   disconnect() {
-    this._ws.close();
-    this._ws = null;
+    if (this._ws) {
+      this._ws.close();
+      this._ws = null;
+    }
+  }
+  on(kind, callback) {
+    if (this._callbacks.hasOwnProperty(kind)) {
+      this._callbacks[kind] = callback;
+    }
   }
 }
 
