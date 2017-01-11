@@ -39,6 +39,7 @@
     "gulp-watchify": "^0.6.0",
     "karma": "^1.3.0",
     "karma-browserify": "^5.0.2",
+    "karma-chrome-launcher": "^2.0.0",
     "karma-mocha": "^1.3.0",
     "karma-phantomjs-launcher": "^1.0.0",
     "karma-requirejs": "^1.1.0",
