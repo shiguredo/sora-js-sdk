@@ -52,43 +52,51 @@ var SoraConnection = function () {
         channel_id: params.channelId,
         access_token: params.accessToken
       };
+      Object.keys(message).forEach(function (key) {
+        if (message[key] === undefined) {
+          message[key] = null;
+        }
+      });
       // create audio params
-      var audio = null;
-      if ("audio" in params) {
+      var audio = true;
+      if ("audio" in params && typeof params["audio"] === "boolean") {
         audio = params.audio;
       }
-      if ("audioCodecType" in params) {
-        audio = {
-          codec_type: params.audioCodecType
-        };
+      if (audio) {
+        if ("audioCodecType" in params) {
+          audio = {
+            codec_type: params.audioCodecType
+          };
+        }
       }
+      message["audio"] = audio;
       // create video params
-      var video = null;
+      var video = true;
       if ("video" in params) {
-        audio = params.video;
+        video = params.video;
       }
 
-      var videoPropertyKeys = ["videoCodecType", "videoBitRate", "videoSnapshot"];
-      if (Object.keys(params).some(function (key) {
-        return 0 <= videoPropertyKeys.indexOf(key);
-      })) {
-        video = {};
-        if ("videoCodecType" in params) {
-          video["codec_type"] = params.videoCodecType;
-        }
-        if ("videoBitRate" in params) {
-          video["bit_rate"] = params.videoBitRate;
-        }
-        if ("videoSnapshot" in params) {
-          video["snapshot"] = params.videoSnapshot;
-        }
-      }
-      if (audio) {
-        message["audio"] = audio;
-      }
       if (video) {
-        message["video"] = video;
+        (function () {
+          var videoPropertyKeys = ["videoCodecType", "videoBitRate", "videoSnapshot"];
+          if (Object.keys(params).some(function (key) {
+            return 0 <= videoPropertyKeys.indexOf(key);
+          })) {
+            video = {};
+            if ("videoCodecType" in params) {
+              video["codec_type"] = params.videoCodecType;
+            }
+            if ("videoBitRate" in params) {
+              video["bit_rate"] = params.videoBitRate;
+            }
+            if ("videoSnapshot" in params) {
+              video["snapshot"] = params.videoSnapshot;
+            }
+          }
+        })();
       }
+      message["video"] = video;
+
       return message;
     }
   }, {
@@ -115,9 +123,11 @@ var SoraConnection = function () {
         };
         _this._ws.onmessage = function (event) {
           var data = JSON.parse(event.data);
-          if (data.type == "offer") {
+          if (data.type === "offer") {
             resolve(data);
-          } else if (data.type == "ping") {
+          } else if (data.type === "snapshot") {
+            _this._callbacks.snapshot(data);
+          } else if (data.type === "ping") {
             _this._ws.send(JSON.stringify({ type: "pong" }));
           }
         };
