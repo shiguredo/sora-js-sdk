@@ -6,12 +6,6 @@
     <body>
         <div class="container">
             <h1>updown test</h1>
-            <select name="codec-type">
-                <option value="">-codec-</option>
-                <option value="VP8">VP8</option>
-                <option value="VP9">VP9</option>
-                <option value="H264">H264</option>
-            </select>
             <button id="start">start</button>
             <div>
                 <h2>up</h2>
@@ -23,101 +17,102 @@
             </div>
         </div>
 
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
         <script src="./sora.js"></script>
         <script type="text/javascript">
-var RTCPeerConnection = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-var RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription;
-navigator.getUserMedia = navigator.getUserMedia ||
-                         navigator.webkitGetUserMedia ||
-                         navigator.mozGetUserMedia ||
-                         navigator.msGetUserMedia;
+var RTCPeerConnection = window.RTCPeerConnection;
+var RTCSessionDescription = window.RTCSessionDescription;
 var upstreamPc, downstreamPc;
-var config = {
-  "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
-};
 var sora = new Sora("ws://127.0.0.1:5000/signaling");
 var channelId = "Sora";
 var upstreamToken = "";
 var downstreamToken = "";
 
-$("#start").on("click", function() {
+document.querySelector("#start").addEventListener("click", function() {
   upstream();
   downstream();
 });
 
 function upstream() {
-  var onError = function(e) {
-    console.warn(e);
-  };
   var connection = sora.connection();
-
-  navigator.getUserMedia({video: true}, function(stream) {
-    var localVideo = document.getElementById("local-video");
-    localVideo.src = window.URL.createObjectURL(stream);
-    localVideo.play();
-    var params = {
-      role: "upstream",
-      channelId: channelId,
-      accessToken: upstreamToken,
-      codecType: $("select[name=codec-type]").val()
-    };
-    connection.connect(params)
-              .then(function(offer) {
-                upstreamPc = new RTCPeerConnection(config);
-                upstreamPc.addStream(stream);
-                upstreamPc.setRemoteDescription(new RTCSessionDescription(offer), function() {
-                  upstreamPc.createAnswer(function(answer) {
-                    upstreamPc.setLocalDescription(answer, function() {
-                      connection.answer(answer.sdp);
-                      upstreamPc.onicecandidate = function(event) {
-                        if (event.candidate !== null) {
-                          connection.candidate(event.candidate);
-                        }
-                      };
-                    }, onError);
-                  }, onError);
-                }, onError);
-              });
-  }, onError);
+  var offer, localStream;
+  navigator.mediaDevices.getUserMedia({video: true})
+    .then(stream => {
+      localStream = stream;
+      var params = {
+        role: "upstream",
+        channelId: channelId,
+        accessToken: upstreamToken
+      };
+      return connection.connect(params)
+    })
+    .then(message => {
+      offer = message;
+      return RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" })
+    })
+    .then(certificate => {
+      upstreamPc = new RTCPeerConnection(offer.config);
+      upstreamPc.addStream(localStream);
+      return upstreamPc.setRemoteDescription(new RTCSessionDescription(offer));
+    })
+    .then(() => {
+      return upstreamPc.createAnswer({});
+    })
+    .then(sessionDescription => {
+      return upstreamPc.setLocalDescription(sessionDescription);
+    })
+    .then(() => {
+      connection.answer(upstreamPc.localDescription.sdp);
+      upstreamPc.onicecandidate = function(event) {
+        if (event.candidate !== null) {
+          connection.candidate(event.candidate);
+        }
+      };
+      document.querySelector("#local-video").srcObject = localStream;
+      return Promise.resolve();
+    })
+    .catch(e => {
+      console.error(e);
+    });
 }
 
 function downstream() {
-  var onError = function(error) {
-    console.warn(error);
-  }
-
   var connection = sora.connection();
+  var offer;
   var params = {
     role: "downstream",
     channelId: channelId,
-    accessToken: downstreamToken,
-    codecType: $("select[name=codec-type]").val()
+    accessToken: upstreamToken
   };
   connection.connect(params)
-            .then(function(offer) {
-              downstreamPc = new RTCPeerConnection(config);
-              downstreamPc.setRemoteDescription(new RTCSessionDescription(offer), function() {
-                downstreamPc.createAnswer(function(answer) {
-                  downstreamPc.setLocalDescription(answer, function() {
-                    connection.answer(answer.sdp);
-                    downstreamPc.onicecandidate = function(event) {
-                      if (event.candidate !== null) {
-                        connection.candidate(event.candidate);
-                      }
-                    };
-                  }, onError);
-                }, onError);
-              }, onError);
-              downstreamPc.onaddstream = function(event) {
-                var remoteVideo = document.getElementById("remote-video");
-                remoteVideo.src = window.URL.createObjectURL(event.stream);
-                remoteVideo.play();
-              };
-            })
-            .catch(function(error) {
-              console.log(error);
-            });
+    .then(message => {
+      offer = message;
+      return RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" })
+    })
+    .then(certificate => {
+      downstreamPc = new RTCPeerConnection(offer.config);
+      downstreamPc.onaddstream = function(event) {
+        document.querySelector("#remote-video").srcObject = event.stream;
+      };
+      return downstreamPc.setRemoteDescription(new RTCSessionDescription(offer));
+    })
+    .then(() => {
+      return downstreamPc.createAnswer({});
+    })
+    .then(sessionDescription => {
+      return downstreamPc.setLocalDescription(sessionDescription);
+    })
+    .then(() => {
+      connection.answer(downstreamPc.localDescription.sdp);
+      downstreamPc.onicecandidate = function(event) {
+        if (event.candidate !== null) {
+          connection.candidate(event.candidate);
+        }
+      };
+      return Promise.resolve();
+    })
+    .catch(e => {
+      console.error(e);
+    });
 }
     </script>
   </body>
