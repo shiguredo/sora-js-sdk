@@ -14,6 +14,8 @@ FIX
 
 0.5.x
 =====
+- [CHANGE] connect 時に渡せるパラメーターを追加する
+- [CHANGE] codecType を videoCodecType に変更する
 
 0.5.0
 -----
