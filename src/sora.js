@@ -16,8 +16,19 @@ class SoraConnection {
       error: () => {},
       disconnect: () => {},
       snapshot: () => {},
+      update: () => {},
     };
   }
+
+  _isPlanB() {
+    const userAgent = window.navigator.userAgent.toLocaleLowerCase();
+    if (userAgent.indexOf("chrome") != -1) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   _createSignalingMessage(params) {
     const message = {
       type: "connect",
@@ -30,6 +41,11 @@ class SoraConnection {
         message[key] = null;
       }
     });
+    // multistream
+    if (params.multistream === true) {
+      message.multistream = true;
+      message.plan_b = this._isPlanB();
+    }
     // create audio params
     let audio = true;
     if ("audio" in params && typeof params["audio"] === "boolean") {
@@ -91,6 +107,9 @@ class SoraConnection {
         const data = JSON.parse(event.data);
         if (data.type === "offer") {
           resolve(data);
+        }
+        else if (data.type === "update") {
+          this._callbacks.update(data);
         }
         else if (data.type === "snapshot") {
           this._callbacks.snapshot(data);
