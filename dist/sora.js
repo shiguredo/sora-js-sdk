@@ -6,7 +6,7 @@
  * @author Shiguredo Inc.
  * @license Apache License 2.0
  */
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Sora = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Sora=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -39,11 +39,22 @@ var SoraConnection = function () {
     this._callbacks = {
       error: function error() {},
       disconnect: function disconnect() {},
-      snapshot: function snapshot() {}
+      snapshot: function snapshot() {},
+      update: function update() {}
     };
   }
 
   _createClass(SoraConnection, [{
+    key: "_isPlanB",
+    value: function _isPlanB() {
+      var userAgent = window.navigator.userAgent.toLocaleLowerCase();
+      if (userAgent.indexOf("chrome") != -1) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }, {
     key: "_createSignalingMessage",
     value: function _createSignalingMessage(params) {
       var message = {
@@ -57,6 +68,11 @@ var SoraConnection = function () {
           message[key] = null;
         }
       });
+      // multistream
+      if (params.multistream === true) {
+        message.multistream = true;
+        message.plan_b = this._isPlanB();
+      }
       // create audio params
       var audio = true;
       if ("audio" in params && typeof params["audio"] === "boolean") {
@@ -125,6 +141,8 @@ var SoraConnection = function () {
           var data = JSON.parse(event.data);
           if (data.type === "offer") {
             resolve(data);
+          } else if (data.type === "update") {
+            _this._callbacks.update(data);
           } else if (data.type === "snapshot") {
             _this._callbacks.snapshot(data);
           } else if (data.type === "ping") {
@@ -167,5 +185,6 @@ var SoraConnection = function () {
 
 module.exports = Sora;
 
-},{}]},{},[1])(1)
+},{}]},{},[1])
+(1)
 });
