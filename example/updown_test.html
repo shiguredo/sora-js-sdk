@@ -19,101 +19,35 @@
 
         <script src="./sora.js"></script>
         <script type="text/javascript">
-var RTCPeerConnection = window.RTCPeerConnection;
-var RTCSessionDescription = window.RTCSessionDescription;
-var upstreamPc, downstreamPc;
-var sora = new Sora("ws://127.0.0.1:5000/signaling");
-var channelId = "Sora";
-var upstreamToken = "";
-var downstreamToken = "";
+var channelId = 'Sora';
+var debug = true;
+var sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
+var metadata1 = 'ham';
+var metadata2 = 'spam';
+var publisher = sora.publisher(channelId, metadata1);
+var subscriber = sora.subscriber(channelId, metadata2);
 
 document.querySelector("#start").addEventListener("click", function() {
-  upstream();
-  downstream();
-});
-
-function upstream() {
-  var connection = sora.connection();
-  var offer, localStream;
-  navigator.mediaDevices.getUserMedia({video: true})
+  // upstream
+  navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    .then(mediaStream => {
+      publisher.connect(mediaStream)
+        .then(stream => {
+          document.querySelector("#local-video").srcObject = stream;
+        });
+    })
+    .catch(e => {
+      console.error(e);
+    });
+  // downstream
+  subscriber.connect()
     .then(stream => {
-      localStream = stream;
-      var params = {
-        role: "upstream",
-        channelId: channelId,
-        accessToken: upstreamToken
-      };
-      return connection.connect(params)
-    })
-    .then(message => {
-      offer = message;
-      return RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" })
-    })
-    .then(certificate => {
-      upstreamPc = new RTCPeerConnection(offer.config);
-      upstreamPc.addStream(localStream);
-      return upstreamPc.setRemoteDescription(new RTCSessionDescription(offer));
-    })
-    .then(() => {
-      return upstreamPc.createAnswer({});
-    })
-    .then(sessionDescription => {
-      return upstreamPc.setLocalDescription(sessionDescription);
-    })
-    .then(() => {
-      connection.answer(upstreamPc.localDescription.sdp);
-      upstreamPc.onicecandidate = function(event) {
-        if (event.candidate !== null) {
-          connection.candidate(event.candidate);
-        }
-      };
-      document.querySelector("#local-video").srcObject = localStream;
-      return Promise.resolve();
+      document.querySelector("#remote-video").srcObject = stream;
     })
     .catch(e => {
       console.error(e);
     });
-}
-
-function downstream() {
-  var connection = sora.connection();
-  var offer;
-  var params = {
-    role: "downstream",
-    channelId: channelId,
-    accessToken: upstreamToken
-  };
-  connection.connect(params)
-    .then(message => {
-      offer = message;
-      return RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" })
-    })
-    .then(certificate => {
-      downstreamPc = new RTCPeerConnection(offer.config);
-      downstreamPc.onaddstream = function(event) {
-        document.querySelector("#remote-video").srcObject = event.stream;
-      };
-      return downstreamPc.setRemoteDescription(new RTCSessionDescription(offer));
-    })
-    .then(() => {
-      return downstreamPc.createAnswer({});
-    })
-    .then(sessionDescription => {
-      return downstreamPc.setLocalDescription(sessionDescription);
-    })
-    .then(() => {
-      connection.answer(downstreamPc.localDescription.sdp);
-      downstreamPc.onicecandidate = function(event) {
-        if (event.candidate !== null) {
-          connection.candidate(event.candidate);
-        }
-      };
-      return Promise.resolve();
-    })
-    .catch(e => {
-      console.error(e);
-    });
-}
+});
     </script>
   </body>
 </html>
