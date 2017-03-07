@@ -8,6 +8,9 @@ type ConnectionOptions = {
   videoSnapshot?: boolean,
   multistream?: boolean
 }
+
+import { createSignalingMessage } from '../utils';
+
 const RTCPeerConnection = window.RTCPeerConnection;
 const RTCSessionDescription = window.RTCSessionDescription;
 
@@ -116,12 +119,7 @@ class ConnectionBase {
       };
       this._ws.onopen = () => {
         // TODO(yuito): signaling message を作る
-        const signalingMessage = {
-          type: 'connect',
-          role: this.role,
-          channel_id: this.channelId,
-          access_token: this.metadata
-        };
+        const signalingMessage = createSignalingMessage(this.role, this.channelId, this.metadata, this.options);
         this._ws.send(JSON.stringify(signalingMessage));
       };
       this._ws.onmessage = (event) => {

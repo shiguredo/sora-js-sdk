@@ -2,7 +2,6 @@
 import ConnectionBase from './base';
 
 class ConnectionPublisher extends ConnectionBase {
-  role: ?string;
   connect(stream: ?MediaStream.prototype) {
     this.role = 'upstream';
     return this.disconnect()
