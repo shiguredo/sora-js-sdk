@@ -1,28 +1,28 @@
 module.exports = function(config) {
   config.set({
-    basePath: "",
-    frameworks: ["mocha", "browserify"],
+    basePath: '',
+    frameworks: ['mocha', 'browserify'],
     files: [
-      "test/**/*.spec.js"
+      'test/**/*.spec.js'
     ],
     exclude: [
     ],
     preprocessors: {
-      "test/**/*.spec.js": ["browserify"]
+      'test/**/*.spec.js': ['browserify']
     },
     browserify: {
       debug: true,
       transform: [
-        ["babelify", {plugins: ["babel-plugin-espower"]}]
+        ['babelify', { presets: ['es2015'] }]
       ]
     },
-    reporters: ["progress"],
+    reporters: ['progress'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
-    autoWatch: true,
-    browsers: ["Chrome"],
+    autoWatch: false,
+    browsers: ['Chrome'],
     singleRun: false,
     concurrency: Infinity
-  })
-}
+  });
+};
