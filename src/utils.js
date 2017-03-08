@@ -20,7 +20,7 @@ export function createSignalingMessage(role, channelId, accessToken, options) {
     }
   });
   // multistream
-  if (options.multistream === true) {
+  if ('multistream' in options && options.multistream === true) {
     message.multistream = true;
     message.plan_b = isPlanB();
   }
