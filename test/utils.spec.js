@@ -19,7 +19,7 @@ describe('Utils', () => {
         audio: true,
         video: true
       };
-      assert.strictEqual(JSON.stringify(actual), JSON.stringify(expected));
+      assert.deepEqual(actual, expected);
     });
 
     it('undefined to null', () => {
@@ -32,7 +32,7 @@ describe('Utils', () => {
         audio: true,
         video: true
       };
-      assert.strictEqual(JSON.stringify(actual), JSON.stringify(expected));
+      assert.deepEqual(actual, expected);
     });
 
     it('audio and video', () => {
@@ -49,7 +49,7 @@ describe('Utils', () => {
         audio: false,
         video: false
       };
-      assert.strictEqual(JSON.stringify(actual), JSON.stringify(expected));
+      assert.deepEqual(actual, expected);
     });
 
     describe('audioCodecType parameter', () => {
@@ -69,7 +69,7 @@ describe('Utils', () => {
           },
           video: true
         };
-        assert.strictEqual(JSON.stringify(actual), JSON.stringify(expected));
+        assert.deepEqual(actual, expected);
       });
 
       it('audio false', () => {
@@ -86,7 +86,7 @@ describe('Utils', () => {
           audio: false,
           video: true
         };
-        assert.strictEqual(JSON.stringify(actual), JSON.stringify(expected));
+        assert.deepEqual(actual, expected);
       });
     });
 
