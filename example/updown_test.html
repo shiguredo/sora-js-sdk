@@ -13,7 +13,8 @@
             </div>
             <div>
                 <h2>down</h2>
-                <video id="remote-video" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+                <video id="remote-video1" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+                <video id="remote-video2" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
             </div>
         </div>
 
@@ -25,7 +26,8 @@ var sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
 var metadata1 = 'ham';
 var metadata2 = 'spam';
 var publisher = sora.publisher(channelId, metadata1);
-var subscriber = sora.subscriber(channelId, metadata2);
+var subscriber1 = sora.subscriber(channelId, metadata2);
+var subscriber2 = sora.subscriber(channelId, metadata2);
 
 document.querySelector("#start").addEventListener("click", function() {
   // upstream
@@ -40,9 +42,16 @@ document.querySelector("#start").addEventListener("click", function() {
       console.error(e);
     });
   // downstream
-  subscriber.connect()
+  subscriber1.connect()
     .then(stream => {
-      document.querySelector("#remote-video").srcObject = stream;
+      document.querySelector("#remote-video1").srcObject = stream;
+    })
+    .catch(e => {
+      console.error(e);
+    });
+  subscriber2.connect()
+    .then(stream => {
+      document.querySelector("#remote-video2").srcObject = stream;
     })
     .catch(e => {
       console.error(e);
