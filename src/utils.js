@@ -1,3 +1,14 @@
+export function trace(clientId: ?string, title: string, value: Object | string) {
+  let prefix = '';
+  if (window.performance) {
+    prefix = '[' + (window.performance.now() / 1000).toFixed(3) + ']';
+  }
+  if (clientId) {
+    prefix = prefix + '[' + clientId + ']';
+  }
+  console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
+}
+
 function isPlanB() {
   const userAgent = window.navigator.userAgent.toLocaleLowerCase();
   if (userAgent.indexOf('chrome') != -1) {

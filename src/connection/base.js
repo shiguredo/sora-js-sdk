@@ -9,7 +9,7 @@ type ConnectionOptions = {
   multistream?: boolean
 }
 
-import { createSignalingMessage } from '../utils';
+import { createSignalingMessage, trace } from '../utils';
 
 const RTCPeerConnection = window.RTCPeerConnection;
 const RTCSessionDescription = window.RTCSessionDescription;
@@ -113,8 +113,8 @@ class ConnectionBase {
         reject(e);
       };
       this._ws.onopen = () => {
-        // TODO(yuito): signaling message を作る
         const signalingMessage = createSignalingMessage(this.role, this.channelId, this.metadata, this.options);
+        this._trace('SIGNALING CONNECT MESSAGE', signalingMessage);
         this._ws.send(JSON.stringify(signalingMessage));
       };
       this._ws.onmessage = (event) => {
@@ -128,6 +128,8 @@ class ConnectionBase {
               });
           };
           this._ws.onerror = null;
+          this._trace('SIGNALING OFFER MESSAGE', data);
+          this._trace('OFFER SDP', data.sdp);
           resolve(data);
         } else if (data.type == 'ping') {
           this._ws.send(JSON.stringify({ type: 'pong' }));
@@ -142,9 +144,10 @@ class ConnectionBase {
     return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
       .then(certificate => {
         message.config.certificates = [certificate];
+        this._trace('PEER CONNECTION CONFIG', message.config);
         this._pc = new RTCPeerConnection(message.config, {});
         this._pc.oniceconnectionstatechange = (_) => {
-          // TODO(yuito): iceConnectionState, iceGatheringState あたりをログに出す
+          this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE',this._pc.iceConnectionState);
         };
         return message;
       });
@@ -160,6 +163,7 @@ class ConnectionBase {
         return this._pc.setLocalDescription(sessionDescription);
       })
       .then(() => {
+        this._trace('ANSWER SDP', this._pc.localDescription.sdp);
         this._ws.send(JSON.stringify({ type: 'answer', sdp: this._pc.localDescription.sdp }));
         return;
       });
@@ -168,16 +172,23 @@ class ConnectionBase {
   _onIceCandidate() {
     return new Promise((resolve, _) => {
       this._pc.onicecandidate = event => {
+        this._trace('ONICECANDIDATE ICEGATHERINGSTATE', this._pc.iceGatheringState);
         if (event.candidate === null) {
           resolve();
         }
         else {
           const message = event.candidate.toJSON();
           message.type = 'candidate';
+          this._trace('ONICECANDIDATE CANDIDATE MESSAGE', message);
           this._ws.send(JSON.stringify(message));
         }
       };
     });
+  }
+
+  _trace(title: string, message: Object | string) {
+    if (!this.debug) { return; }
+    trace(this.clientId, title, message);
   }
 }
 
