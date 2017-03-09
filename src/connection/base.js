@@ -53,57 +53,52 @@ class ConnectionBase {
 
   disconnect() {
     this.clientId = null;
-    return new Promise(
-      (resolve, _) => {
-        try {
-          if (this.stream) {
-            this.stream.getTracks().forEach((t) => {
-              t.stop();
-            });
-            this.stream = null;
-          }
-        }
-        catch (_) {
-          this.stream = null;
-        }
-        return resolve();
-      })
-      .then(() => {
-        try {
-          if (this._ws) {
-            this._ws.onclose = () => {
-              this._ws = null;
-              return Promise.resolve();
-            };
-            this._ws.close();
-          }
-        }
-        catch (_) {
-          this._ws = null;
-          return Promise.resolve();
-        }
-      })
-      .then(() => {
-        try {
-          if (this._pc && this._pc.signalingState !== 'closed') {
-            this._pc.close();
-          }
-          const timer_id = setInterval(() => {
-            if (this._pc && this._pc.signalingState === 'closed') {
-              clearInterval(timer_id);
-              this._pc = null;
-              return Promise.resolve();
-            }
-            else {
-              clearInterval(timer_id);
-            }
-          }, 1000);
-        }
-        catch (_) {
-          this._pc = null;
-          return Promise.resolve();
-        }
+    const closeStream = new Promise((resolve, _) => {
+      if (!this.stream) return resolve();
+      this.stream.getTracks().forEach((t) => {
+        t.stop();
       });
+      this.stream = null;
+      return resolve();
+    });
+    const closeWebSocket = new Promise((resolve, reject) => {
+      if (!this._ws) return resolve();
+      this._ws.onclose = () => {};
+
+      let counter = 5;
+      const timer_id = setInterval(() => {
+        if (this._ws.readyState === 3) {
+          this._ws = null;
+          clearInterval(timer_id);
+          return resolve();
+        }
+        --counter;
+        if (counter < 0) {
+          clearInterval(timer_id);
+          return reject('WebSocket Closing Error');
+        }
+      }, 1000);
+      this._ws.close();
+    });
+    const closePeerConnection = new Promise((resolve, reject) => {
+      if (!this._pc || this._pc.signalingState === 'closed') return resolve();
+
+      let counter = 5;
+      const timer_id = setInterval(() =>{
+        if (this._pc.signalingState === 'closed') {
+          clearInterval(timer_id);
+          this._pc = null;
+          return resolve();
+        }
+        --counter;
+        if (counter < 0) {
+          clearInterval(timer_id);
+          return reject('PeerConnection Closing Error');
+        }
+      }, 1000);
+      this._pc.close();
+    });
+    return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
   }
 
   _signaling() {
