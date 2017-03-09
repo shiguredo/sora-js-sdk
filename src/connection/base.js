@@ -41,7 +41,8 @@ class ConnectionBase {
     this._pc = null;
     this._callbacks = {
       disconnect: function() {},
-      notify: function() {}
+      notify: function() {},
+      snapshot: function() {}
     };
   }
 
@@ -135,6 +136,8 @@ class ConnectionBase {
           this._ws.send(JSON.stringify({ type: 'pong' }));
         } else if (data.type == 'notify') {
           this._callbacks.notify(data);
+        } else if (data.type == 'snapshot') {
+          this._callbacks.snapshot(data);
         }
       };
     });
