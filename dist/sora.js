@@ -106,7 +106,10 @@ var ConnectionBase = function () {
     this._pc = null;
     this._callbacks = {
       disconnect: function disconnect() {},
-      notify: function notify() {}
+      notify: function notify() {},
+      snapshot: function snapshot() {},
+      addstream: function addstream() {},
+      removestream: function removestream() {}
     };
   }
 
@@ -123,50 +126,52 @@ var ConnectionBase = function () {
       var _this = this;
 
       this.clientId = null;
-      return new Promise(function (resolve, _) {
-        try {
-          if (_this.stream) {
-            _this.stream.getTracks().forEach(function (t) {
-              t.stop();
-            });
-            _this.stream = null;
-          }
-        } catch (_) {
-          _this.stream = null;
-        }
+      var closeStream = new Promise(function (resolve, _) {
+        if (!_this.stream) return resolve();
+        _this.stream.getTracks().forEach(function (t) {
+          t.stop();
+        });
+        _this.stream = null;
         return resolve();
-      }).then(function () {
-        try {
-          if (_this._ws) {
-            _this._ws.onclose = function () {
-              _this._ws = null;
-              return Promise.resolve();
-            };
-            _this._ws.close();
-          }
-        } catch (_) {
-          _this._ws = null;
-          return Promise.resolve();
-        }
-      }).then(function () {
-        try {
-          if (_this._pc && _this._pc.signalingState !== 'closed') {
-            _this._pc.close();
-          }
-          var timer_id = setInterval(function () {
-            if (_this._pc && _this._pc.signalingState === 'closed') {
-              clearInterval(timer_id);
-              _this._pc = null;
-              return Promise.resolve();
-            } else {
-              clearInterval(timer_id);
-            }
-          }, 1000);
-        } catch (_) {
-          _this._pc = null;
-          return Promise.resolve();
-        }
       });
+      var closeWebSocket = new Promise(function (resolve, reject) {
+        if (!_this._ws) return resolve();
+        _this._ws.onclose = function () {};
+
+        var counter = 5;
+        var timer_id = setInterval(function () {
+          if (_this._ws.readyState === 3) {
+            _this._ws = null;
+            clearInterval(timer_id);
+            return resolve();
+          }
+          --counter;
+          if (counter < 0) {
+            clearInterval(timer_id);
+            return reject('WebSocket Closing Error');
+          }
+        }, 1000);
+        _this._ws.close();
+      });
+      var closePeerConnection = new Promise(function (resolve, reject) {
+        if (!_this._pc || _this._pc.signalingState === 'closed') return resolve();
+
+        var counter = 5;
+        var timer_id = setInterval(function () {
+          if (_this._pc.signalingState === 'closed') {
+            clearInterval(timer_id);
+            _this._pc = null;
+            return resolve();
+          }
+          --counter;
+          if (counter < 0) {
+            clearInterval(timer_id);
+            return reject('PeerConnection Closing Error');
+          }
+        }, 1000);
+        _this._pc.close();
+      });
+      return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
     }
   }, {
     key: '_signaling',
@@ -184,8 +189,8 @@ var ConnectionBase = function () {
           reject(e);
         };
         _this2._ws.onopen = function () {
-          // TODO(yuito): signaling message を作る
           var signalingMessage = (0, _utils.createSignalingMessage)(_this2.role, _this2.channelId, _this2.metadata, _this2.options);
+          _this2._trace('SIGNALING CONNECT MESSAGE', signalingMessage);
           _this2._ws.send(JSON.stringify(signalingMessage));
         };
         _this2._ws.onmessage = function (event) {
@@ -198,11 +203,18 @@ var ConnectionBase = function () {
               });
             };
             _this2._ws.onerror = null;
+            _this2._trace('SIGNALING OFFER MESSAGE', data);
+            _this2._trace('OFFER SDP', data.sdp);
             resolve(data);
+          } else if (data.type == 'update') {
+            _this2._trace('UPDATE SDP', data.sdp);
+            _this2._update(data);
           } else if (data.type == 'ping') {
             _this2._ws.send(JSON.stringify({ type: 'pong' }));
           } else if (data.type == 'notify') {
             _this2._callbacks.notify(data);
+          } else if (data.type == 'snapshot') {
+            _this2._callbacks.snapshot(data);
           }
         };
       });
@@ -214,9 +226,10 @@ var ConnectionBase = function () {
 
       return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' }).then(function (certificate) {
         message.config.certificates = [certificate];
+        _this3._trace('PEER CONNECTION CONFIG', message.config);
         _this3._pc = new RTCPeerConnection(message.config, {});
         _this3._pc.oniceconnectionstatechange = function (_) {
-          // TODO(yuito): iceConnectionState, iceGatheringState あたりをログに出す
+          _this3._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE', _this3._pc.iceConnectionState);
         };
         return message;
       });
@@ -233,10 +246,21 @@ var ConnectionBase = function () {
 
       return this._pc.createAnswer({}).then(function (sessionDescription) {
         return _this4._pc.setLocalDescription(sessionDescription);
-      }).then(function () {
-        _this4._ws.send(JSON.stringify({ type: 'answer', sdp: _this4._pc.localDescription.sdp }));
-        return;
       });
+    }
+  }, {
+    key: '_sendAnswer',
+    value: function _sendAnswer() {
+      this._trace('ANSWER SDP', this._pc.localDescription.sdp);
+      this._ws.send(JSON.stringify({ type: 'answer', sdp: this._pc.localDescription.sdp }));
+      return;
+    }
+  }, {
+    key: '_sendUpdateAnswer',
+    value: function _sendUpdateAnswer() {
+      this._trace('ANSWER SDP', this._pc.localDescription.sdp);
+      this._ws.send(JSON.stringify({ type: 'update', sdp: this._pc.localDescription.sdp }));
+      return;
     }
   }, {
     key: '_onIceCandidate',
@@ -245,15 +269,30 @@ var ConnectionBase = function () {
 
       return new Promise(function (resolve, _) {
         _this5._pc.onicecandidate = function (event) {
+          _this5._trace('ONICECANDIDATE ICEGATHERINGSTATE', _this5._pc.iceGatheringState);
           if (event.candidate === null) {
             resolve();
           } else {
             var message = event.candidate.toJSON();
             message.type = 'candidate';
+            _this5._trace('ONICECANDIDATE CANDIDATE MESSAGE', message);
             _this5._ws.send(JSON.stringify(message));
           }
         };
       });
+    }
+  }, {
+    key: '_update',
+    value: function _update(message) {
+      return this._setRemoteDescription(message).then(this._createAnswer.bind(this)).then(this._sendUpdateAnswer.bind(this));
+    }
+  }, {
+    key: '_trace',
+    value: function _trace(title, message) {
+      if (!this.debug) {
+        return;
+      }
+      (0, _utils.trace)(this.clientId, title, message);
     }
   }]);
 
@@ -295,9 +334,18 @@ var ConnectionPublisher = function (_ConnectionBase) {
   _createClass(ConnectionPublisher, [{
     key: 'connect',
     value: function connect(stream) {
+      this.role = 'upstream';
+      if (this.options && this.options.multistream) {
+        return this._multiStream(stream);
+      } else {
+        return this._singleStream(stream);
+      }
+    }
+  }, {
+    key: '_singleStream',
+    value: function _singleStream(stream) {
       var _this2 = this;
 
-      this.role = 'upstream';
       return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
         if (!message.config) {
           message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
@@ -307,8 +355,45 @@ var ConnectionPublisher = function (_ConnectionBase) {
         _this2._pc.addStream(stream);
         _this2.stream = stream;
         return _this2._setRemoteDescription(message);
-      }).then(this._createAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
+      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
         return _this2.stream;
+      });
+    }
+  }, {
+    key: '_multiStream',
+    value: function _multiStream(stream) {
+      var _this3 = this;
+
+      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
+        if (!message.config) {
+          message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        }
+        return _this3._connectPeerConnection(message);
+      }).then(function (message) {
+        _this3._pc.addStream(stream);
+        if (typeof _this3._pc.ontrack === 'undefined') {
+          _this3._pc.onaddstream = function (event) {
+            if (_this3.clientId !== event.stream.id) {
+              _this3._callbacks.addstream(event);
+            }
+          };
+        } else {
+          _this3._pc.ontrack = function (event) {
+            var stream = event.streams[0];
+            if (stream.id === 'default') return;
+
+            if (event.track.kind === 'video') {
+              _this3._callbacks.addstream(event);
+            }
+          };
+        }
+        _this3._pc.onremovestream = function (event) {
+          _this3._callbacks.removestream(event);
+        };
+        _this3.stream = stream;
+        return _this3._setRemoteDescription(message);
+      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
+        return _this3.stream;
       });
     }
   }]);
@@ -364,7 +449,7 @@ var ConnectionSubscriber = function (_ConnectionBase) {
           this.stream = event.stream;
         }.bind(_this2);
         return _this2._setRemoteDescription(message);
-      }).then(this._createAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
+      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
         return _this2.stream;
       });
     }
@@ -385,7 +470,19 @@ module.exports = ConnectionSubscriber;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.trace = trace;
 exports.createSignalingMessage = createSignalingMessage;
+function trace(clientId, title, value) {
+  var prefix = '';
+  if (window.performance) {
+    prefix = '[' + (window.performance.now() / 1000).toFixed(3) + ']';
+  }
+  if (clientId) {
+    prefix = prefix + '[' + clientId + ']';
+  }
+  console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
+}
+
 function isPlanB() {
   var userAgent = window.navigator.userAgent.toLocaleLowerCase();
   if (userAgent.indexOf('chrome') != -1) {
