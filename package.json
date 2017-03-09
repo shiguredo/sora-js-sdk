@@ -5,7 +5,7 @@
   "main": "dist/sora.min.js",
   "scripts": {
     "build": "webpack --cache false --config webpack.config.js",
-    "check": "flow; eslint ./src/sora.js; exit 0;",
+    "check": "flow; eslint ./src; exit 0;",
     "test": "karma start"
   },
   "repository": {
