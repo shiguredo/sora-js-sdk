@@ -4,6 +4,15 @@ import ConnectionBase from './base';
 class ConnectionPublisher extends ConnectionBase {
   connect(stream: ?MediaStream.prototype) {
     this.role = 'upstream';
+    if (this.options && this.options.multistream) {
+      return this._multiStream(stream);
+    }
+    else {
+      return this._singleStream(stream);
+    }
+  }
+
+  _singleStream(stream: ?MediaStream.prototype) {
     return this.disconnect()
       .then(this._signaling.bind(this))
       .then(message => {
@@ -18,6 +27,48 @@ class ConnectionPublisher extends ConnectionBase {
         return this._setRemoteDescription(message);
       })
       .then(this._createAnswer.bind(this))
+      .then(this._sendAnswer.bind(this))
+      .then(this._onIceCandidate.bind(this))
+      .then(() => {
+        return this.stream;
+      });
+  }
+
+  _multiStream(stream: ?MediaStream.prototype) {
+    return this.disconnect()
+      .then(this._signaling.bind(this))
+      .then(message => {
+        if (!message.config) {
+          message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        }
+        return this._connectPeerConnection(message);
+      })
+      .then(message => {
+        this._pc.addStream(stream);
+        if (typeof this._pc.ontrack === 'undefined') {
+          this._pc.onaddstream = event => {
+            if (this.clientId !== event.stream.id) {
+              this._callbacks.addstream(event);
+            }
+          };
+        } else {
+          this._pc.ontrack = event => {
+            const stream = event.streams[0];
+            if (stream.id === 'default') return;
+
+            if (event.track.kind === 'video') {
+              this._callbacks.addstream(event);
+            }
+          };
+        }
+        this._pc.onremovestream = event => {
+          this._callbacks.removestream(event);
+        };
+        this.stream = stream;
+        return this._setRemoteDescription(message);
+      })
+      .then(this._createAnswer.bind(this))
+      .then(this._sendAnswer.bind(this))
       .then(this._onIceCandidate.bind(this))
       .then(() => {
         return this.stream;

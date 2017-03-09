@@ -19,6 +19,7 @@ class ConnectionSubscriber extends ConnectionBase {
         return this._setRemoteDescription(message);
       })
       .then(this._createAnswer.bind(this))
+      .then(this._sendAnswer.bind(this))
       .then(this._onIceCandidate.bind(this))
       .then(() => {
         return this.stream;

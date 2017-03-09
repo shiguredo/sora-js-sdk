@@ -42,7 +42,9 @@ class ConnectionBase {
     this._callbacks = {
       disconnect: function() {},
       notify: function() {},
-      snapshot: function() {}
+      snapshot: function() {},
+      addstream: function() {},
+      removestream: function() {}
     };
   }
 
@@ -132,6 +134,9 @@ class ConnectionBase {
           this._trace('SIGNALING OFFER MESSAGE', data);
           this._trace('OFFER SDP', data.sdp);
           resolve(data);
+        } else if (data.type == 'update') {
+          this._trace('UPDATE SDP', data.sdp);
+          this._update(data);
         } else if (data.type == 'ping') {
           this._ws.send(JSON.stringify({ type: 'pong' }));
         } else if (data.type == 'notify') {
@@ -164,12 +169,19 @@ class ConnectionBase {
     return this._pc.createAnswer({})
       .then(sessionDescription => {
         return this._pc.setLocalDescription(sessionDescription);
-      })
-      .then(() => {
-        this._trace('ANSWER SDP', this._pc.localDescription.sdp);
-        this._ws.send(JSON.stringify({ type: 'answer', sdp: this._pc.localDescription.sdp }));
-        return;
       });
+  }
+
+  _sendAnswer() {
+    this._trace('ANSWER SDP', this._pc.localDescription.sdp);
+    this._ws.send(JSON.stringify({ type: 'answer', sdp: this._pc.localDescription.sdp }));
+    return;
+  }
+
+  _sendUpdateAnswer() {
+    this._trace('ANSWER SDP', this._pc.localDescription.sdp);
+    this._ws.send(JSON.stringify({ type: 'update', sdp: this._pc.localDescription.sdp }));
+    return;
   }
 
   _onIceCandidate() {
@@ -187,6 +199,12 @@ class ConnectionBase {
         }
       };
     });
+  }
+
+  _update(message: Object) {
+    return this._setRemoteDescription(message)
+      .then(this._createAnswer.bind(this))
+      .then(this._sendUpdateAnswer.bind(this));
   }
 
   _trace(title: string, message: Object | string) {
