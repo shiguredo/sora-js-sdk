@@ -5,8 +5,17 @@
  * @author: Shiguredo Inc.
  * @license: Apache License 2.0
  */
-var Sora =
-/******/ (function(modules) { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define("Sora", [], factory);
+	else if(typeof exports === 'object')
+		exports["Sora"] = factory();
+	else
+		root["Sora"] = factory();
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -106,7 +115,7 @@ var ConnectionBase = function () {
     this._pc = null;
     this._callbacks = {
       disconnect: function disconnect() {},
-      notify: function notify() {},
+      push: function push() {},
       snapshot: function snapshot() {},
       addstream: function addstream() {},
       removestream: function removestream() {}
@@ -211,8 +220,8 @@ var ConnectionBase = function () {
             _this2._update(data);
           } else if (data.type == 'ping') {
             _this2._ws.send(JSON.stringify({ type: 'pong' }));
-          } else if (data.type == 'notify') {
-            _this2._callbacks.notify(data);
+          } else if (data.type == 'push') {
+            _this2._callbacks.push(data);
           } else if (data.type == 'snapshot') {
             _this2._callbacks.snapshot(data);
           }
@@ -612,3 +621,4 @@ module.exports = Sora;
 
 /***/ })
 /******/ ]);
+});
