@@ -3,22 +3,19 @@ import del from "del";
 import uglify from "gulp-uglify";
 import rename from "gulp-rename";
 import header from "gulp-header";
-import eslint from "gulp-eslint";
-import plumber from "gulp-plumber";
-import watchify from "gulp-watchify";
+import browserify from "gulp-browserify";
 import runSequence from "run-sequence";
-import buffer from "vinyl-buffer";
 import pkg from "./package.json";
 
 
 gulp.task("dist", callback => {
   return runSequence.use(gulp)(
-      "clean",
-      "compile:js",
-      "header",
-      "uglify",
-      callback
-      );
+    "clean",
+    "compile:js",
+    "header",
+    "uglify",
+    callback
+  );
 });
 
 gulp.task("clean", () => {
@@ -27,27 +24,13 @@ gulp.task("clean", () => {
   ]);
 });
 
-let watching = false
-gulp.task("enable-watch-mode", () => {
-  watching = true;
-});
-
-gulp.task("compile:js", watchify((w) => {
+gulp.task("compile:js", () => {
   return gulp.src("src/sora.js")
-    .pipe(plumber())
-    .pipe(w({
-      watch: watching,
+    .pipe(browserify({
       transform: ["babelify", "envify"],
       standalone: "Sora"
     }))
-    .pipe(buffer())
     .pipe(gulp.dest("dist"));
-}));
-
-gulp.task("watchify", ["enable-watch-mode", "compile:js"])
-
-gulp.task("watch", ["watchify"], function () {
-  gulp.watch("dist/sora.js", ["uglify"]);
 });
 
 gulp.task("uglify", () => {
@@ -70,11 +53,4 @@ gulp.task("header", () => {
   return gulp.src(["dist/sora.js"])
     .pipe(header(banner, { pkg: pkg }))
     .pipe(gulp.dest("dist"));
-});
-
-gulp.task("eslint", () => {
-  return gulp.src(["src/sora.js"])
-    .pipe(eslint())
-    .pipe(eslint.format())
-    .pipe(eslint.failAfterError());
 });

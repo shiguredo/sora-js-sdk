@@ -1,0 +1,116 @@
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>multistream test</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>multistream test</h1>
+            <button id="start">start</button>
+            <div>
+                <h2>local</h2>
+                <video id="local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+            </div>
+            <div id="remote">
+                <h2>remote</h2>
+            </div>
+        </div>
+
+        <script src="./sora.js"></script>
+        <script type="text/javascript">
+var RTCPeerConnection = window.RTCPeerConnection;
+var RTCSessionDescription = window.RTCSessionDescription;
+var peerConnection, clientId;
+var sora = new Sora("ws://127.0.0.1:5000/signaling");
+var channelId = "Sora";
+var upstreamToken = "";
+
+document.querySelector("#start").addEventListener("click", function() {
+  multistream();
+});
+
+function multistream() {
+  var connection = sora.connection();
+  var offer, localStream;
+  navigator.mediaDevices.getUserMedia({video: true})
+    .then(stream => {
+      localStream = stream;
+      var params = {
+        role: "upstream",
+        channelId: channelId,
+        accessToken: upstreamToken,
+        multistream: true,
+      };
+      return connection.connect(params)
+    })
+    .then(message => {
+      offer = message;
+      return RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" })
+    })
+    .then(certificate => {
+      peerConnection = new RTCPeerConnection(offer.config);
+      clientId = offer.client_id;
+      peerConnection.addStream(localStream);
+      peerConnection.onaddstream = function(event) {
+        if (clientId !== event.stream.id) {
+          var remoteVideos = document.getElementById("remote");
+          var remoteVideo = document.createElement('video');
+          remoteVideo.id = "remotevideo_" + event.stream.id;
+          remoteVideo.style.border = "1px solid red";
+          remoteVideo.controls = true;
+          remoteVideo.width="320";
+          remoteVideo.height="240";
+          remoteVideo.srcObject = event.stream;
+          remoteVideos.appendChild(remoteVideo);
+          remoteVideo.play();
+        }
+      }
+      peerConnection.onremovestream = function(event) {
+          var remoteVideos = document.getElementById("remote");
+          var remoteVideo = document.getElementById('remotevideo_' + event.stream.id);
+          remoteVideos.removeChild(remoteVideo);
+      }
+
+      return peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    })
+    .then(() => {
+      return peerConnection.createAnswer({});
+    })
+    .then(sessionDescription => {
+      return peerConnection.setLocalDescription(sessionDescription);
+    })
+    .then(() => {
+      connection.answer(peerConnection.localDescription.sdp);
+      peerConnection.onicecandidate = function(event) {
+        if (event.candidate !== null) {
+          connection.candidate(event.candidate);
+        }
+      };
+      document.querySelector("#local-video").srcObject = localStream;
+      return Promise.resolve();
+    })
+    .catch(e => {
+      console.error(e);
+    });
+
+  connection.on("update", function(message) {
+    var sessionDescription = new RTCSessionDescription({type: "offer", sdp: message.sdp});
+    peerConnection.setRemoteDescription(sessionDescription)
+      .then(() => {
+        return peerConnection.createAnswer();
+      })
+      .then(sessionDescription => {
+        return peerConnection.setLocalDescription(sessionDescription);
+      })
+      .then(() => {
+        connection.answer(peerConnection.localDescription.sdp);
+        return Promise.resolve();
+      })
+      .catch(e => {
+        console.error(e);
+      });
+  });
+}
+    </script>
+  </body>
+</html>
