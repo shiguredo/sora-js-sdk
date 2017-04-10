@@ -9,9 +9,13 @@
 - FIX
     - バグ修正
 
-## develop
+## 1.0.0
 
-- [CHANGE] connect 時に渡せるパラメーターを追加する
+- [CHANGE] PeerConnection まで含めた処理を SDK で実行するように変更する
+- [CHANGE] multistream をパラメーターに追加する
+- [CHANGE] videoSnapshot をパラメーターに追加する
+- [CHANGE] videoBitRate をパラメーターに追加する
+- [CHANGE] audioCodecType をパラメーターに追加する
 - [CHANGE] codecType を videoCodecType に変更する
 
 ## 0.5.0
