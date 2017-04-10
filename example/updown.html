@@ -1,0 +1,66 @@
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>updown test</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>updown test</h1>
+            <button id="start">start</button>
+            <br />
+            <div style="float:left;">
+                <h2>up</h2>
+                <video id="local-video" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+            </div>
+            <div style="float:left;">
+                <h2>down1</h2>
+                <video id="remote-video1" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+            </div>
+            <div style="float:left;">
+                <h2>down2</h2>
+                <video id="remote-video2" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+            </div>
+        </div>
+
+        <script src="./sora.js"></script>
+        <script type="text/javascript">
+var channelId = 'Sora';
+var debug = true;
+var sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
+var metadata1 = 'ham';
+var metadata2 = 'spam';
+var publisher = sora.publisher(channelId, metadata1);
+var subscriber1 = sora.subscriber(channelId, metadata2);
+var subscriber2 = sora.subscriber(channelId, metadata2);
+
+document.querySelector("#start").addEventListener("click", function() {
+  // upstream
+  navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    .then(mediaStream => {
+      publisher.connect(mediaStream)
+        .then(stream => {
+          document.querySelector("#local-video").srcObject = stream;
+        });
+    })
+    .catch(e => {
+      console.error(e);
+    });
+  // downstream
+  subscriber1.connect()
+    .then(stream => {
+      document.querySelector("#remote-video1").srcObject = stream;
+    })
+    .catch(e => {
+      console.error(e);
+    });
+  subscriber2.connect()
+    .then(stream => {
+      document.querySelector("#remote-video2").srcObject = stream;
+    })
+    .catch(e => {
+      console.error(e);
+    });
+});
+    </script>
+  </body>
+</html>
