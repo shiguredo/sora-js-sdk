@@ -1,7 +1,7 @@
 # Sora JavaScript SDK
 
 - バージョン
-    - 0.5.0
+    - 1.0.0
 
 [株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
 
@@ -26,18 +26,18 @@ Sora JavaScript SDK に対する有償のサポートについては sora at shi
 
 ### Sora
 
-#### new Sora(signalingUrl)
+#### Sora.connection(signalingUrl, debug=false)
 
 |Param   |Type   |Default   |Description  |
-|:-:|:-:|:-:|:-:|
+|:--|:-:|:-:|:--|
 |signalingUrl  |string   |   |シグナリング先 URL   |
+|debug  |boolean   | false  |デバッグフラグ   |
 
 ##### example
 
 ```javascript
-var sora = new Sora("ws://127.0.0.1/signaling");
+var sora = Sora.connection("ws://127.0.0.1/signaling");
 ```
-
 
 #### connection()
 
@@ -49,95 +49,88 @@ SoraConnection オブジェクト作成
 var connection = sora.connection();
 ```
 
+### Publisher
 
-### SoraConnection
+配信者として接続する
 
-#### connect(params)
-
-シグナリング接続する
+#### sora.publisher(channelId, metadata, options={});
 
 |Param   |Type   |Default   |Description  |
-|:-|:-:|:-:|:-:|
-| params              | object  |          | シグナリングパラメーター              |
-| * role              | string  |          | ロール(upstream/downstream)           |
-| * channelId         | string  |          | チャネルID                            |
-| * accessToken       | string  |          | アクセストークン                      |
-| * audio             | boolean | true     | オーディオ有効/無効                   |
-| * audioCodecType    | string  | OPUS     | オーディオコーデックタイプ(OPUS/PCMU) |
-| * video             | boolean | true     | ビデオ有効/無効                       |
-| * videoCodecType    | string  | VP8      | ビデオコーデックタイプ(VP8/VP9/H264)  |
-| * videoBitRate      | number  |          | ビデオビットレート(0 - 5000)          |
-| * videoSnapshot     | boolean | false    | スナップショット有効/無効             |
-| * multistream       | boolean | false    | マルチストリーム有効/無効             |
+|:--|:-:|:-:|:--|
+| channelId        | string  |      | チャネルID                            |
+| metadata         | string  |      | メタデータ                            |
+| options          | object  |      | シグナリングパラメーター              |
+| * audio          | boolean | true | オーディオ有効／無効                  |
+| * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+| * video          | boolean | true | ビデオ有効／無効                      |
+| * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
+| * videoBitRate   | integer |      | ビデオビットレート                    |
+| * videoSnapshot  | boolean |      | スナップショット有効／無効            |
+| * multistream    | boolean |      | マルチストリーム有効／無効            |
 
+#### connect(stream)
+
+|Param   |Type   |Default   |Description  |
+|:--|:-:|:-:|:--|
+|  mediaStream       | MediaStream Object  |      | メディアストリームオブジェクト  |
 
 ##### example
 
 ```javascript
-var params = {
-  role: "upstream",
-  channelId: "Sora",
-  accessToken: "",
-  codecType: "VP8"
-};
-connection.connect(params)
-          .then(function(offer) {
-            console.log(offer);
-          });
+var channelId = 'Sora';
+var metadata = 'ham';
+var publisher = sora.publisher(channelId, metadata, options);
+
+navigator.mediaDevices.getUserMedia({audio: true, video: true})
+  .then(mediaStream => {
+    publisher.connect(mediaStream)
+      .then(stream => {
+        // stream を video.src に追加する等の処理
+      });
+  })
+  .catch(e => {
+    console.error(e);
+  });
 ```
 
-#### answer(sdp)
+### Subscriber
 
-Answer SDP を送信する
+視聴者として接続する
+
+#### sora.subscriber(channelId, metadata, options={});
+
+配信者として接続する
 
 |Param   |Type   |Default   |Description  |
-|:-:|:-:|:-:|:-:|
-| sdp   | string |          | Answer SDP  |
+|:--|:-:|:-:|:--|
+| channelId        | string  |      | チャネルID                            |
+| metadata         | string  |      | メタデータ                            |
+| options          | object  |      | シグナリングパラメーター              |
+| * audio          | boolean | true | オーディオ有効／無効                  |
+| * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+| * video          | boolean | true | ビデオ有効／無効                      |
+| * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
+| * videoBitRate   | integer |      | ビデオビットレート                    |
+| * videoSnapshot  | boolean |      | スナップショット有効／無効            |
+| * multistream    | boolean |      | マルチストリーム有効／無効            |
 
-##### example
-
-```
-connection.answer(sdp);
-```
-
-
-#### candidate(candidate)
-
-candidate を送信する
+#### connect()
 
 |Param   |Type   |Default   |Description  |
-|:-:|:-:|:-:|:-:|
-| candidate | object |          | candidate object  |
+|:--|:-:|:-:|:--|
 
 ##### example
 
 ```javascript
-connection.candidate(candidate);
-```
+var channelId = 'Sora';
+var metadata = 'ham';
+var subscriber = sora.subscriber(channelId, metadata, options);
 
-#### disconnect()
-
-切断する
-
-##### example
-
-```javascript
-connection.disconnect();
-```
-
-### on(kind, callback)
-
-callback を登録する
-
-|Param   |Type   |Default   |Description  |
-|:-:|:-:|:-:|:-:|
-| kind     | string   |          | コールバックの種類 |
-| callback | function |          | コールバック       |
-
-##### example
-
-```javascript
-connection.on("disconnect", function(e) {
-  console.log(e);
-});
+subscriber.connect()
+  .then(stream => {
+    // stream を video.src に追加する等の処理
+  })
+  .catch(e => {
+    console.error(e);
+  });
 ```
