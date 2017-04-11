@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 0.5.0
+ * @version: 1.0.0
  * @author: Shiguredo Inc.
  * @license: Apache License 2.0
  */
@@ -80,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -92,7 +92,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _utils = __webpack_require__(3);
+var _utils = __webpack_require__(4);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -476,6 +476,66 @@ module.exports = ConnectionSubscriber;
 "use strict";
 
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _publisher = __webpack_require__(1);
+
+var _publisher2 = _interopRequireDefault(_publisher);
+
+var _subscriber = __webpack_require__(2);
+
+var _subscriber2 = _interopRequireDefault(_subscriber);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Sora = {
+  connection: function connection(signalingUrl) {
+    var debug = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+    return new SoraConnection(signalingUrl, debug);
+  }
+};
+
+var SoraConnection = function () {
+  function SoraConnection(signalingUrl) {
+    var debug = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+    _classCallCheck(this, SoraConnection);
+
+    this.signalingUrl = signalingUrl;
+    this.debug = debug;
+  }
+
+  _createClass(SoraConnection, [{
+    key: 'publisher',
+    value: function publisher(channelId, metadata) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { audio: true, video: true };
+
+      return new _publisher2.default(this.signalingUrl, channelId, metadata, options, this.debug);
+    }
+  }, {
+    key: 'subscriber',
+    value: function subscriber(channelId, metadata) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { audio: true, video: true };
+
+      return new _subscriber2.default(this.signalingUrl, channelId, metadata, options, this.debug);
+    }
+  }]);
+
+  return SoraConnection;
+}();
+
+module.exports = Sora;
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -558,66 +618,6 @@ function createSignalingMessage(role, channelId, accessToken, options) {
 
   return message;
 }
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _publisher = __webpack_require__(1);
-
-var _publisher2 = _interopRequireDefault(_publisher);
-
-var _subscriber = __webpack_require__(2);
-
-var _subscriber2 = _interopRequireDefault(_subscriber);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Sora = {
-  connection: function connection(signalingUrl) {
-    var debug = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-    return new SoraConnection(signalingUrl, debug);
-  }
-};
-
-var SoraConnection = function () {
-  function SoraConnection(signalingUrl) {
-    var debug = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-    _classCallCheck(this, SoraConnection);
-
-    this.signalingUrl = signalingUrl;
-    this.debug = debug;
-  }
-
-  _createClass(SoraConnection, [{
-    key: 'publisher',
-    value: function publisher(channelId, metadata) {
-      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { audio: true, video: true };
-
-      return new _publisher2.default(this.signalingUrl, channelId, metadata, options, this.debug);
-    }
-  }, {
-    key: 'subscriber',
-    value: function subscriber(channelId, metadata) {
-      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { audio: true, video: true };
-
-      return new _subscriber2.default(this.signalingUrl, channelId, metadata, options, this.debug);
-    }
-  }]);
-
-  return SoraConnection;
-}();
-
-module.exports = Sora;
 
 /***/ })
 /******/ ]);
