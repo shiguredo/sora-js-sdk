@@ -10,15 +10,18 @@
             <br />
             <div style="float:left;">
                 <h2>up</h2>
-                <video id="local-video" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+                <p id="local-video-client-id"></p>
+                <video id="local-video" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
             </div>
             <div style="float:left;">
                 <h2>down1</h2>
-                <video id="remote-video1" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+                <p id="remote-video-client-id-1"></p>
+                <video id="remote-video1" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
             </div>
             <div style="float:left;">
                 <h2>down2</h2>
-                <video id="remote-video2" autoplay="" style="width: 400px; height: 275px; border: 1px solid black;"></video>
+                <p id="remote-video-client-id-2"></p>
+                <video id="remote-video2" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
             </div>
         </div>
 
@@ -33,13 +36,14 @@ var publisher = sora.publisher(channelId, metadata1);
 var subscriber1 = sora.subscriber(channelId, metadata2);
 var subscriber2 = sora.subscriber(channelId, metadata2);
 
-document.querySelector("#start").addEventListener("click", function() {
+document.querySelector('#start').addEventListener('click', function() {
   // upstream
   navigator.mediaDevices.getUserMedia({audio: true, video: true})
     .then(mediaStream => {
       publisher.connect(mediaStream)
         .then(stream => {
-          document.querySelector("#local-video").srcObject = stream;
+          document.querySelector('#local-video-client-id').textContent = '(' + publisher.clientId + ')';
+          document.querySelector('#local-video').srcObject = stream;
         });
     })
     .catch(e => {
@@ -48,14 +52,16 @@ document.querySelector("#start").addEventListener("click", function() {
   // downstream
   subscriber1.connect()
     .then(stream => {
-      document.querySelector("#remote-video1").srcObject = stream;
+      document.querySelector('#remote-video-client-id-1').textContent = '(' + subscriber1.clientId + ')';
+      document.querySelector('#remote-video1').srcObject = stream;
     })
     .catch(e => {
       console.error(e);
     });
   subscriber2.connect()
     .then(stream => {
-      document.querySelector("#remote-video2").srcObject = stream;
+      document.querySelector('#remote-video-client-id-2').textContent = '(' + subscriber2.clientId + ')';
+      document.querySelector('#remote-video2').srcObject = stream;
     })
     .catch(e => {
       console.error(e);

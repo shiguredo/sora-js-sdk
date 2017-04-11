@@ -10,15 +10,18 @@
             <br />
             <div style="float:left;">
                 <h2>up</h2>
-                <video id="local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                <p id="local-video-client-id"></p>
+                <video id="local-video" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
             </div>
             <div style="float:left;">
                 <h2>down</h2>
-                <video id="remote-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                <p id="remote-video-client-id"></p>
+                <video id="remote-video" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
             </div>
             <div style="float:left;">
                 <h2>snapshot</h2>
-                <img id="remote-snapshot" style="width: 320px; height: 240px; border: 1px solid black;" />
+                <p id="snapshot-video-client-id"></p>
+                <img id="remote-snapshot" style="width: 400px; height: 300px; border: 1px solid black;" />
             </div>
         </div>
 
@@ -43,6 +46,7 @@ document.querySelector('#start').addEventListener('click', function() {
     .then(mediaStream => {
       publisher.connect(mediaStream)
         .then(stream => {
+          document.querySelector('#local-video-client-id').textContent = '(' + publisher.clientId + ')';
           document.querySelector('#local-video').srcObject = stream;
         });
     })
@@ -52,6 +56,7 @@ document.querySelector('#start').addEventListener('click', function() {
   // downstream
   subscriber.connect()
     .then(stream => {
+      document.querySelector('#remote-video-client-id').textContent = '(' + subscriber.clientId + ')';
       document.querySelector('#remote-video').srcObject = stream;
     })
     .catch(e => {
@@ -59,6 +64,9 @@ document.querySelector('#start').addEventListener('click', function() {
     });
   // snapshot
   snapshot.connect()
+    .then(() => {
+      document.querySelector('#snapshot-video-client-id').textContent = '(' + snapshot.clientId + ')';
+    })
     .catch(e => {
       console.error(e);
     });

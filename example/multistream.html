@@ -51,11 +51,11 @@ document.querySelector('#start-publisher1').addEventListener('click', function()
   publisher1.on('addstream', function(event) {
     var remoteVideos = document.querySelector('#publisher1-remote-videos');
     var remoteVideo = document.createElement('video');
-    remoteVideo.id = "publisher1-remotevideo-" + event.stream.id;
+    remoteVideo.id = 'publisher1-remotevideo-' + event.stream.id;
     remoteVideo.style.border = '1px solid red';
     remoteVideo.autoplay = true;
     remoteVideo.width = '160';
-    remoteVideo.height="120";
+    remoteVideo.height = '120';
     remoteVideo.srcObject = event.stream;
     remoteVideos.appendChild(remoteVideo);
   });
@@ -83,7 +83,7 @@ document.querySelector('#start-publisher2').addEventListener('click', function()
     remoteVideo.style.border = '1px solid red';
     remoteVideo.autoplay = true;
     remoteVideo.width = '160';
-    remoteVideo.height="120";
+    remoteVideo.height = '120';
     remoteVideo.srcObject = event.stream;
     remoteVideos.appendChild(remoteVideo);
   });
