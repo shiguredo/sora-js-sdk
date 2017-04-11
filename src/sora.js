@@ -1,75 +1,39 @@
-class Sora {
-  constructor(url) {
-    this.url = url || "";
-  }
-  connection() {
-    return new SoraConnection(this.url);
-  }
+/* @flow */
+type ConnectionOptions = {
+  audio: boolean,
+  audioCodecType?: string,
+  video: boolean,
+  videoCodecType?: string,
+  videoBitRate?: number,
+  videoSnapshot?: boolean,
+  multistream?: boolean
 }
+import ConnectionPublisher from './connection/publisher';
+import ConnectionSubscriber from './connection/subscriber';
+
+
+const Sora = {
+  connection: function(signalingUrl: string, debug: boolean=false) {
+    return new SoraConnection(signalingUrl, debug);
+  }
+};
 
 
 class SoraConnection {
-  constructor(url) {
-    this._ws = null;
-    this._url = url;
-    this._onerror = () => {};
-    this._onclose = () => {};
+  signalingUrl: string;
+  debug: boolean;
+
+  constructor(signalingUrl: string, debug: boolean=false) {
+    this.signalingUrl = signalingUrl;
+    this.debug = debug;
   }
-  connect(params) {
-    return new Promise((resolve, reject) => {
-      if (this._ws === null) {
-        this._ws = new WebSocket(this._url);
-      }
-      this._ws.onopen = () => {
-        const message = {
-          type: "connect",
-          role: params.role,
-          channel_id: params.channelId,
-          access_token: params.accessToken
-        };
-        if (params.codecType) {
-          message.video = { codec_type: params.codecType };
-        }
-        this._ws.send(JSON.stringify(message));
-      };
-      this._ws.onclose = (e) => {
-        if (/440\d$/.test(e.code)) {
-          reject(e);
-        }
-        else {
-          this._onclose(e);
-        }
-      };
-      this._ws.onerror = (e) => {
-        this._onerror(e);
-      };
-      this._ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type == "offer") {
-          resolve(data);
-        } else if (data.type == "ping") {
-          this._ws.send(JSON.stringify({ type: "pong" }));
-        }
-      };
-    });
+
+  publisher(channelId: string, metadata: string, options: ConnectionOptions={ audio: true, video: true }) {
+    return new ConnectionPublisher(this.signalingUrl, channelId, metadata, options, this.debug);
   }
-  answer(sdp) {
-    this._ws.send(JSON.stringify({ type: "answer", sdp }));
-  }
-  candidate(candidate) {
-    let message = candidate.toJSON();
-    message.type = "candidate";
-    this._ws.send(JSON.stringify(message));
-  }
-  onError(f) {
-    this._onerror = f;
-  }
-  onDisconnect(f) {
-    this._onclose = f;
-  }
-  disconnect() {
-    this._ws.close();
-    this._ws = null;
+
+  subscriber(channelId: string, metadata: string, options: ConnectionOptions={ audio: true, video: true }) {
+    return new ConnectionSubscriber(this.signalingUrl, channelId, metadata, options, this.debug);
   }
 }
 
