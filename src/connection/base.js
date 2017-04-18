@@ -9,7 +9,7 @@ type ConnectionOptions = {
   multistream?: boolean
 }
 
-import { createSignalingMessage, trace } from '../utils';
+import { createSignalingMessage, isEdge, trace } from '../utils';
 
 const RTCPeerConnection = window.RTCPeerConnection;
 const RTCSessionDescription = window.RTCSessionDescription;
@@ -149,27 +149,64 @@ class ConnectionBase {
   }
 
   _connectPeerConnection(message: Object) {
-    return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
-      .then(certificate => {
-        message.config.certificates = [certificate];
-        this._trace('PEER CONNECTION CONFIG', message.config);
-        this._pc = new RTCPeerConnection(message.config, {});
-        this._pc.oniceconnectionstatechange = (_) => {
-          this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE',this._pc.iceConnectionState);
-        };
-        return message;
-      });
+    if (RTCPeerConnection.generateCertificate === undefined) {
+      this._trace('PEER CONNECTION CONFIG', message.config);
+      this._pc = new RTCPeerConnection(message.config);
+      this._pc.oniceconnectionstatechange = (_) => {
+        this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE',this._pc.iceConnectionState);
+      };
+      return Promise.resolve(message);
+    }
+    else {
+      return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
+        .then(certificate => {
+          message.config.certificates = [certificate];
+          this._trace('PEER CONNECTION CONFIG', message.config);
+          this._pc = new RTCPeerConnection(message.config, {});
+          this._pc.oniceconnectionstatechange = (_) => {
+            this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE',this._pc.iceConnectionState);
+          };
+          return message;
+        });
+    }
   }
 
   _setRemoteDescription(message: Object) {
-    return this._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
+    if (isEdge()) {
+      return new Promise((resolve, reject) => {
+        this._pc.setRemoteDescription(
+          new RTCSessionDescription({ type: 'offer', sdp: message.sdp }),
+          () => { resolve(); },
+          e => { reject(e); }
+        );
+      });
+    }
+    else {
+      return this._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
+    }
   }
 
   _createAnswer() {
-    return this._pc.createAnswer({})
-      .then(sessionDescription => {
-        return this._pc.setLocalDescription(sessionDescription);
+    if (isEdge()) {
+      return new Promise((resolve, reject) => {
+        this._pc.createAnswer(
+          sessionDescription => {
+            this._pc.setLocalDescription(
+              sessionDescription,
+              () => { resolve(); },
+              e => { reject(e); }
+            );
+          },
+          e => { reject(e); }
+        );
       });
+    }
+    else {
+      return this._pc.createAnswer({})
+        .then(sessionDescription => {
+          return this._pc.setLocalDescription(sessionDescription);
+        });
+    }
   }
 
   _sendAnswer() {
