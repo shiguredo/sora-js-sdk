@@ -15,8 +15,8 @@
 
 Sora JavaScript SDK に関する質問・要望・バグなどの報告は Issues の利用をお願いします。
 ただし、 Sora のライセンス契約の有無に関わらず、 Issue への応答時間と問題の解決を保証しませんのでご了承ください。
-Sora JavaScript SDK に対する有償のサポートについては sora at shiguredo.jp までお問い合わせください。
 
+Sora JavaScript SDK に対する有償のサポートについては現在お受けしておりません。
 
 ## サンプル
 
