@@ -6,16 +6,29 @@ export function trace(clientId: ?string, title: string, value: Object | string) 
   if (clientId) {
     prefix = prefix + '[' + clientId + ']';
   }
-  console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
+
+  if (isEdge()) {
+    console.log(prefix + ' ' + title + '\n', value); // eslint-disable-line
+  }
+  else {
+    console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
+  }
+}
+
+function userAgent() {
+  return window.navigator.userAgent.toLocaleLowerCase();
 }
 
 function isPlanB() {
-  const userAgent = window.navigator.userAgent.toLocaleLowerCase();
-  if (userAgent.indexOf('chrome') != -1) {
+  if (userAgent().indexOf('chrome') !== -1) {
     return true;
   } else {
     return false;
   }
+}
+
+export function isEdge() {
+  return userAgent().indexOf('edge') !== -1;
 }
 
 export function createSignalingMessage(role, channelId, accessToken, options) {

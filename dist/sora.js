@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.0.0
+ * @version: 1.1.0
  * @author: Shiguredo Inc.
  * @license: Apache License 2.0
  */
@@ -233,29 +233,64 @@ var ConnectionBase = function () {
     value: function _connectPeerConnection(message) {
       var _this3 = this;
 
-      return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' }).then(function (certificate) {
-        message.config.certificates = [certificate];
-        _this3._trace('PEER CONNECTION CONFIG', message.config);
-        _this3._pc = new RTCPeerConnection(message.config, {});
-        _this3._pc.oniceconnectionstatechange = function (_) {
+      if (RTCPeerConnection.generateCertificate === undefined) {
+        this._trace('PEER CONNECTION CONFIG', message.config);
+        this._pc = new RTCPeerConnection(message.config);
+        this._pc.oniceconnectionstatechange = function (_) {
           _this3._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE', _this3._pc.iceConnectionState);
         };
-        return message;
-      });
+        return Promise.resolve(message);
+      } else {
+        return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' }).then(function (certificate) {
+          message.config.certificates = [certificate];
+          _this3._trace('PEER CONNECTION CONFIG', message.config);
+          _this3._pc = new RTCPeerConnection(message.config, {});
+          _this3._pc.oniceconnectionstatechange = function (_) {
+            _this3._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE', _this3._pc.iceConnectionState);
+          };
+          return message;
+        });
+      }
     }
   }, {
     key: '_setRemoteDescription',
     value: function _setRemoteDescription(message) {
-      return this._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
+      var _this4 = this;
+
+      if ((0, _utils.isEdge)()) {
+        return new Promise(function (resolve, reject) {
+          _this4._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }), function () {
+            resolve();
+          }, function (e) {
+            reject(e);
+          });
+        });
+      } else {
+        return this._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
+      }
     }
   }, {
     key: '_createAnswer',
     value: function _createAnswer() {
-      var _this4 = this;
+      var _this5 = this;
 
-      return this._pc.createAnswer({}).then(function (sessionDescription) {
-        return _this4._pc.setLocalDescription(sessionDescription);
-      });
+      if ((0, _utils.isEdge)()) {
+        return new Promise(function (resolve, reject) {
+          _this5._pc.createAnswer(function (sessionDescription) {
+            _this5._pc.setLocalDescription(sessionDescription, function () {
+              resolve();
+            }, function (e) {
+              reject(e);
+            });
+          }, function (e) {
+            reject(e);
+          });
+        });
+      } else {
+        return this._pc.createAnswer({}).then(function (sessionDescription) {
+          return _this5._pc.setLocalDescription(sessionDescription);
+        });
+      }
     }
   }, {
     key: '_sendAnswer',
@@ -274,18 +309,18 @@ var ConnectionBase = function () {
   }, {
     key: '_onIceCandidate',
     value: function _onIceCandidate() {
-      var _this5 = this;
+      var _this6 = this;
 
       return new Promise(function (resolve, _) {
-        _this5._pc.onicecandidate = function (event) {
-          _this5._trace('ONICECANDIDATE ICEGATHERINGSTATE', _this5._pc.iceGatheringState);
+        _this6._pc.onicecandidate = function (event) {
+          _this6._trace('ONICECANDIDATE ICEGATHERINGSTATE', _this6._pc.iceGatheringState);
           if (event.candidate === null) {
             resolve();
           } else {
             var message = event.candidate.toJSON();
             message.type = 'candidate';
-            _this5._trace('ONICECANDIDATE CANDIDATE MESSAGE', message);
-            _this5._ws.send(JSON.stringify(message));
+            _this6._trace('ONICECANDIDATE CANDIDATE MESSAGE', message);
+            _this6._ws.send(JSON.stringify(message));
           }
         };
       });
@@ -540,6 +575,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.trace = trace;
+exports.isEdge = isEdge;
 exports.createSignalingMessage = createSignalingMessage;
 function trace(clientId, title, value) {
   var prefix = '';
@@ -549,16 +585,28 @@ function trace(clientId, title, value) {
   if (clientId) {
     prefix = prefix + '[' + clientId + ']';
   }
-  console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
+
+  if (isEdge()) {
+    console.log(prefix + ' ' + title + '\n', value); // eslint-disable-line
+  } else {
+    console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
+  }
+}
+
+function userAgent() {
+  return window.navigator.userAgent.toLocaleLowerCase();
 }
 
 function isPlanB() {
-  var userAgent = window.navigator.userAgent.toLocaleLowerCase();
-  if (userAgent.indexOf('chrome') != -1) {
+  if (userAgent().indexOf('chrome') !== -1) {
     return true;
   } else {
     return false;
   }
+}
+
+function isEdge() {
+  return userAgent().indexOf('edge') !== -1;
 }
 
 function createSignalingMessage(role, channelId, accessToken, options) {

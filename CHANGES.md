@@ -9,6 +9,10 @@
 - FIX
     - バグ修正
 
+## 1.1.0
+
+- [UPDATE] Microsoft Edge に対応する
+
 ## 1.0.0
 
 - [CHANGE] PeerConnection まで含めた処理を SDK で実行するように変更する
