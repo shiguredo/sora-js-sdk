@@ -57,6 +57,7 @@ class ConnectionPublisher extends ConnectionBase {
             if (stream.id === 'default') return;
 
             if (event.track.kind === 'video') {
+              event.stream = stream;
               this._callbacks.addstream(event);
             }
           };
