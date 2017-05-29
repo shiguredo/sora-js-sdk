@@ -427,6 +427,7 @@ var ConnectionPublisher = function (_ConnectionBase) {
             if (stream.id === 'default') return;
 
             if (event.track.kind === 'video') {
+              event.stream = stream;
               _this3._callbacks.addstream(event);
             }
           };
@@ -480,9 +481,18 @@ var ConnectionSubscriber = function (_ConnectionBase) {
   _createClass(ConnectionSubscriber, [{
     key: 'connect',
     value: function connect() {
+      this.role = 'downstream';
+      if (this.options && this.options.multistream) {
+        return this._multiStream();
+      } else {
+        return this._singleStream();
+      }
+    }
+  }, {
+    key: '_singleStream',
+    value: function _singleStream() {
       var _this2 = this;
 
-      this.role = 'downstream';
       return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
         if (!message.config) {
           message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
@@ -496,6 +506,38 @@ var ConnectionSubscriber = function (_ConnectionBase) {
       }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
         return _this2.stream;
       });
+    }
+  }, {
+    key: '_multiStream',
+    value: function _multiStream() {
+      var _this3 = this;
+
+      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
+        if (!message.config) {
+          message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        }
+        return _this3._connectPeerConnection(message);
+      }).then(function (message) {
+        if (typeof _this3._pc.ontrack === 'undefined') {
+          _this3._pc.onaddstream = function (event) {
+            _this3._callbacks.addstream(event);
+          };
+        } else {
+          _this3._pc.ontrack = function (event) {
+            var stream = event.streams[0];
+            if (stream.id === 'default') return;
+
+            if (event.track.kind === 'video') {
+              event.stream = stream;
+              _this3._callbacks.addstream(event);
+            }
+          };
+        }
+        _this3._pc.onremovestream = function (event) {
+          _this3._callbacks.removestream(event);
+        };
+        return _this3._setRemoteDescription(message);
+      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this));
     }
   }]);
 
