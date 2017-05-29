@@ -1,7 +1,7 @@
 # Sora JavaScript SDK
 
 - バージョン
-    - 1.1.0
+    - 1.2.0
 
 [株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
 
@@ -28,6 +28,8 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/snapshot.html
 - Multistream
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream.html
+- Multistream Downstream
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_down.html
 
 
 ## API 一覧
