@@ -28,6 +28,8 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/snapshot.html
 - Multistream
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream.html
+- Multistream Downstream
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_down.html
 
 
 ## API 一覧

@@ -9,6 +9,10 @@
 - FIX
     - バグ修正
 
+## 1.2.0
+- [ADD] Subscriber の multistream に対応する
+- [CHANGE] iceServers が指定されていない場合に 'stun:stun.l.google.com:19302' を使用していたのをやめる
+
 ## 1.1.0
 
 - [UPDATE] Microsoft Edge に対応する
