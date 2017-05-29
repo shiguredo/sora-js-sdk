@@ -391,9 +391,6 @@ var ConnectionPublisher = function (_ConnectionBase) {
       var _this2 = this;
 
       return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
-        if (!message.config) {
-          message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-        }
         return _this2._connectPeerConnection(message);
       }).then(function (message) {
         _this2._pc.addStream(stream);
@@ -409,9 +406,6 @@ var ConnectionPublisher = function (_ConnectionBase) {
       var _this3 = this;
 
       return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
-        if (!message.config) {
-          message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-        }
         return _this3._connectPeerConnection(message);
       }).then(function (message) {
         _this3._pc.addStream(stream);
@@ -494,9 +488,6 @@ var ConnectionSubscriber = function (_ConnectionBase) {
       var _this2 = this;
 
       return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
-        if (!message.config) {
-          message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-        }
         return _this2._connectPeerConnection(message);
       }).then(function (message) {
         _this2._pc.onaddstream = function (event) {
@@ -513,9 +504,6 @@ var ConnectionSubscriber = function (_ConnectionBase) {
       var _this3 = this;
 
       return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
-        if (!message.config) {
-          message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-        }
         return _this3._connectPeerConnection(message);
       }).then(function (message) {
         if (typeof _this3._pc.ontrack === 'undefined') {
