@@ -16,9 +16,6 @@ class ConnectionPublisher extends ConnectionBase {
     return this.disconnect()
       .then(this._signaling.bind(this))
       .then(message => {
-        if (!message.config) {
-          message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-        }
         return this._connectPeerConnection(message);
       })
       .then(message => {
@@ -38,9 +35,6 @@ class ConnectionPublisher extends ConnectionBase {
     return this.disconnect()
       .then(this._signaling.bind(this))
       .then(message => {
-        if (!message.config) {
-          message.config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-        }
         return this._connectPeerConnection(message);
       })
       .then(message => {
@@ -57,6 +51,7 @@ class ConnectionPublisher extends ConnectionBase {
             if (stream.id === 'default') return;
 
             if (event.track.kind === 'video') {
+              event.stream = stream;
               this._callbacks.addstream(event);
             }
           };
