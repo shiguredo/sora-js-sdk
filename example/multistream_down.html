@@ -1,0 +1,52 @@
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>multistream downstream test</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>multistream downstream test</h1>
+            <button id="start-subscriber">start</button>
+            <button id="stop-subscriber">stop</button><br />
+            <div style="float:left;">
+                <div id="remote-videos"></div>
+            </div>
+        </div>
+
+        <script src="./sora.js"></script>
+        <script type="text/javascript">
+var channelId = 'Sora';
+var debug = false;
+var sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
+var metadata = 'ham';
+var options = {
+  multistream: true
+}
+var subscriber = sora.subscriber(channelId, metadata, options);
+
+document.querySelector('#start-subscriber').addEventListener('click', function() {
+  subscriber.connect()
+    .catch(e => {
+      console.error(e);
+    });
+
+  subscriber.on('addstream', function(event) {
+    var remoteVideos = document.querySelector('#remote-videos');
+    var remoteVideo = document.createElement('video');
+    remoteVideo.id = 'publisher-remotevideo-' + event.stream.id;
+    remoteVideo.style.border = '1px solid red';
+    remoteVideo.autoplay = true;
+    remoteVideo.width = '320';
+    remoteVideo.height = '240';
+    remoteVideo.srcObject = event.stream;
+    remoteVideos.appendChild(remoteVideo);
+  });
+
+  subscriber.on('removestream', function(event) {
+    var remoteVideo = document.querySelector('#publisher-remotevideo-' + event.stream.id);
+    document.querySelector('#remote-videos').removeChild(remoteVideo);
+  });
+});
+    </script>
+  </body>
+</html>
