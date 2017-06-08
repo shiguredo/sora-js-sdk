@@ -393,7 +393,13 @@ var ConnectionPublisher = function (_ConnectionBase) {
       return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
         return _this2._connectPeerConnection(message);
       }).then(function (message) {
-        _this2._pc.addStream(stream);
+        if (typeof _this2._pc.addStream === 'undefined') {
+          stream.getTracks().forEach(function (track) {
+            _this2._pc.addTrack(track, stream);
+          });
+        } else {
+          _this2._pc.addStream(stream);
+        }
         _this2.stream = stream;
         return _this2._setRemoteDescription(message);
       }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
@@ -408,7 +414,13 @@ var ConnectionPublisher = function (_ConnectionBase) {
       return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
         return _this3._connectPeerConnection(message);
       }).then(function (message) {
-        _this3._pc.addStream(stream);
+        if (typeof _this3._pc.addStream === 'undefined') {
+          stream.getTracks().forEach(function (track) {
+            _this3._pc.addTrack(track, stream);
+          });
+        } else {
+          _this3._pc.addStream(stream);
+        }
         if (typeof _this3._pc.ontrack === 'undefined') {
           _this3._pc.onaddstream = function (event) {
             if (_this3.clientId !== event.stream.id) {
@@ -419,7 +431,6 @@ var ConnectionPublisher = function (_ConnectionBase) {
           _this3._pc.ontrack = function (event) {
             var stream = event.streams[0];
             if (stream.id === 'default') return;
-
             if (event.track.kind === 'video') {
               event.stream = stream;
               _this3._callbacks.addstream(event);
@@ -490,9 +501,15 @@ var ConnectionSubscriber = function (_ConnectionBase) {
       return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
         return _this2._connectPeerConnection(message);
       }).then(function (message) {
-        _this2._pc.onaddstream = function (event) {
-          this.stream = event.stream;
-        }.bind(_this2);
+        if (typeof _this2._pc.ontrack === 'undefined') {
+          _this2._pc.onaddstream = function (event) {
+            this.stream = event.stream;
+          }.bind(_this2);
+        } else {
+          _this2._pc.ontrack = function (event) {
+            this.stream = event.streams[0];
+          }.bind(_this2);
+        }
         return _this2._setRemoteDescription(message);
       }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
         return _this2.stream;
@@ -628,7 +645,7 @@ function userAgent() {
 }
 
 function isPlanB() {
-  if (userAgent().indexOf('chrome') !== -1) {
+  if (userAgent().indexOf('chrome') !== -1 || userAgent().indexOf('safari') !== -1) {
     return true;
   } else {
     return false;
