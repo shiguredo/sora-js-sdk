@@ -18,9 +18,16 @@ class ConnectionSubscriber extends ConnectionBase {
         return this._connectPeerConnection(message);
       })
       .then(message => {
-        this._pc.onaddstream = function(event) {
-          this.stream = event.stream;
-        }.bind(this);
+        if (typeof this._pc.ontrack === 'undefined') {
+          this._pc.onaddstream = function(event) {
+            this.stream = event.stream;
+          }.bind(this);
+        }
+        else {
+          this._pc.ontrack = function(event) {
+            this.stream = event.streams[0];
+          }.bind(this);
+        }
         return this._setRemoteDescription(message);
       })
       .then(this._createAnswer.bind(this))

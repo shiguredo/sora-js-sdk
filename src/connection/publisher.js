@@ -19,7 +19,14 @@ class ConnectionPublisher extends ConnectionBase {
         return this._connectPeerConnection(message);
       })
       .then(message => {
-        this._pc.addStream(stream);
+        if (typeof this._pc.addStream === 'undefined') {
+          stream.getTracks().forEach(track => {
+            this._pc.addTrack(track, stream);
+          });
+        }
+        else {
+          this._pc.addStream(stream);
+        }
         this.stream = stream;
         return this._setRemoteDescription(message);
       })
@@ -38,7 +45,14 @@ class ConnectionPublisher extends ConnectionBase {
         return this._connectPeerConnection(message);
       })
       .then(message => {
-        this._pc.addStream(stream);
+        if (typeof this._pc.addStream === 'undefined') {
+          stream.getTracks().forEach(track => {
+            this._pc.addTrack(track, stream);
+          });
+        }
+        else {
+          this._pc.addStream(stream);
+        }
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = event => {
             if (this.clientId !== event.stream.id) {
@@ -49,7 +63,6 @@ class ConnectionPublisher extends ConnectionBase {
           this._pc.ontrack = event => {
             const stream = event.streams[0];
             if (stream.id === 'default') return;
-
             if (event.track.kind === 'video') {
               event.stream = stream;
               this._callbacks.addstream(event);
