@@ -1,0 +1,112 @@
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>multistream safari test</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>multistream safari test</h1>
+            <br />
+            <div style="float:left;">
+                <h2>up1</h2>
+                <button id="start-publisher1">start</button>
+                <button id="stop-publisher1">stop</button><br />
+                <video id="publisher1-local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                <div id="publisher1-remote-videos"></div>
+            </div>
+            <div id="publisher2" style="float:left;">
+                <h2>up2</h2>
+                <button id="start-publisher2">start</button>
+                <button id="stop-publisher2">stop</button><br />
+                <video id="publisher2-local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                <div id="publisher2-remote-videos"></div>
+            </div>
+        </div>
+
+        <script src="./sora.js"></script>
+        <script type="text/javascript">
+var channelId = 'Sora';
+var debug = false;
+var sora = Sora.connection('wss://localhost/signaling', debug);
+var metadata1 = 'ham';
+var metadata2 = 'spam';
+var options = {
+  videoCodecType: 'H264',
+  multistream: true
+}
+var publisher1 = sora.publisher(channelId, metadata1, options);
+var publisher2 = sora.publisher(channelId, metadata1, options);
+
+document.querySelector('#start-publisher1').addEventListener('click', function() {
+  // publisher1
+  navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    .then(mediaStream => {
+      publisher1.connect(mediaStream)
+        .then(stream => {
+          document.querySelector('#publisher1-local-video').srcObject = stream;
+        });
+    })
+    .catch(e => {
+      console.error(e);
+    });
+  publisher1.on('addstream', function(event) {
+    var remoteVideos = document.querySelector('#publisher1-remote-videos');
+    var remoteVideo = document.createElement('video');
+    remoteVideo.id = 'publisher1-remotevideo-' + event.stream.id;
+    remoteVideo.style.border = '1px solid red';
+    remoteVideo.autoplay = true;
+    remoteVideo.width = '160';
+    remoteVideo.height = '120';
+    remoteVideo.srcObject = event.stream;
+    remoteVideos.appendChild(remoteVideo);
+  });
+  publisher1.on('removestream', function(event) {
+    var remoteVideo = document.querySelector('#publisher1-remotevideo-' + event.stream.id);
+    document.querySelector('#publisher1-remote-videos').removeChild(remoteVideo);
+  });
+});
+document.querySelector('#start-publisher2').addEventListener('click', function() {
+  // publisher2
+  navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    .then(mediaStream => {
+      publisher2.connect(mediaStream)
+        .then(stream => {
+          document.querySelector('#publisher2-local-video').srcObject = stream;
+        });
+    })
+    .catch(e => {
+      console.error(e);
+    });
+  publisher2.on('addstream', function(event) {
+    var remoteVideos = document.querySelector('#publisher2-remote-videos');
+    var remoteVideo = document.createElement('video');
+    remoteVideo.id = 'publisher2-remotevideo-' + event.stream.id;
+    remoteVideo.style.border = '1px solid red';
+    remoteVideo.autoplay = true;
+    remoteVideo.width = '160';
+    remoteVideo.height = '120';
+    remoteVideo.srcObject = event.stream;
+    remoteVideos.appendChild(remoteVideo);
+  });
+  publisher2.on('removestream', function(event) {
+    var remoteVideo = document.querySelector('#publisher2-remotevideo-' + event.stream.id);
+    document.querySelector('#publisher2-remote-videos').removeChild(remoteVideo);
+  });
+});
+document.querySelector('#stop-publisher1').addEventListener('click', function() {
+  publisher1.disconnect()
+    .then(function() {
+      document.querySelector('#publisher1-local-video').srcObject = null;
+      document.querySelector('#publisher1-remote-videos').innerHTML = null;
+    });
+});
+document.querySelector('#stop-publisher2').addEventListener('click', function() {
+  publisher2.disconnect()
+    .then(function() {
+      document.querySelector('#publisher2-local-video').srcObject = null;
+      document.querySelector('#publisher2-remote-videos').innerHTML = null;
+    });
+});
+    </script>
+  </body>
+</html>

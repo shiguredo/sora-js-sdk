@@ -1,0 +1,72 @@
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>updown safari test</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>updown safari test</h1>
+            <button id="start">start</button>
+            <br />
+            <div style="float:left;">
+                <h2>up</h2>
+                <p id="local-video-client-id"></p>
+                <video id="local-video" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
+            </div>
+            <div style="float:left;">
+                <h2>down1</h2>
+                <p id="remote-video-client-id-1"></p>
+                <video id="remote-video1" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
+            </div>
+            <div style="float:left;">
+                <h2>down2</h2>
+                <p id="remote-video-client-id-2"></p>
+                <video id="remote-video2" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
+            </div>
+        </div>
+
+        <script src="./sora.js"></script>
+        <script type="text/javascript">
+var channelId = 'Sora';
+var debug = true;
+var sora = Sora.connection('wss://localhost/signaling', debug);
+var metadata1 = 'ham';
+var metadata2 = 'spam';
+var publisher = sora.publisher(channelId, metadata1, {videoCodecType: 'H264'});
+var subscriber1 = sora.subscriber(channelId, metadata2, {videoCodecType: 'H264'});
+var subscriber2 = sora.subscriber(channelId, metadata2, {videoCodecType: 'H264'});
+
+document.querySelector('#start').addEventListener('click', function() {
+  // upstream
+  navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    .then(mediaStream => {
+      publisher.connect(mediaStream)
+        .then(stream => {
+          document.querySelector('#local-video-client-id').textContent = '(' + publisher.clientId + ')';
+          document.querySelector('#local-video').srcObject = stream;
+        });
+    })
+    .catch(e => {
+      console.error(e);
+    });
+  // downstream
+  subscriber1.connect()
+    .then(stream => {
+      document.querySelector('#remote-video-client-id-1').textContent = '(' + subscriber1.clientId + ')';
+      document.querySelector('#remote-video1').srcObject = stream;
+    })
+    .catch(e => {
+      console.error(e);
+    });
+  subscriber2.connect()
+    .then(stream => {
+      document.querySelector('#remote-video-client-id-2').textContent = '(' + subscriber2.clientId + ')';
+      document.querySelector('#remote-video2').srcObject = stream;
+    })
+    .catch(e => {
+      console.error(e);
+    });
+});
+    </script>
+  </body>
+</html>
