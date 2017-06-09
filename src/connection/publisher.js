@@ -60,11 +60,14 @@ class ConnectionPublisher extends ConnectionBase {
             }
           };
         } else {
+          this.streams = [];
           this._pc.ontrack = event => {
             const stream = event.streams[0];
             if (stream.id === 'default') return;
+            if (stream.id === this.clientId) return;
             if (event.track.kind === 'video') {
               event.stream = stream;
+              this.streams.push(stream);
               this._callbacks.addstream(event);
             }
           };
