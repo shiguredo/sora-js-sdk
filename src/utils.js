@@ -20,7 +20,7 @@ function userAgent() {
 }
 
 function isPlanB() {
-  if (userAgent().indexOf('chrome') !== -1) {
+  if (userAgent().indexOf('chrome') !== -1 || userAgent().indexOf('safari') !== -1) {
     return true;
   } else {
     return false;

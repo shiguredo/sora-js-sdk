@@ -1,11 +1,11 @@
 <html lang="ja">
     <head>
         <meta charset="utf-8">
-        <title>multistream test</title>
+        <title>multistream safari test</title>
     </head>
     <body>
         <div class="container">
-            <h1>multistream test</h1>
+            <h1>multistream safari test</h1>
             <br />
             <div style="float:left;">
                 <h2>up1</h2>
@@ -27,10 +27,11 @@
         <script type="text/javascript">
 var channelId = 'Sora';
 var debug = false;
-var sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
+var sora = Sora.connection('wss://localhost/signaling', debug);
 var metadata1 = 'ham';
 var metadata2 = 'spam';
 var options = {
+  videoCodecType: 'H264',
   multistream: true
 }
 var publisher1 = sora.publisher(channelId, metadata1, options);
