@@ -9,6 +9,9 @@
 - FIX
     - バグ修正
 
+## 1.3.0
+- [UPDATE] Safari に対応する
+
 ## 1.2.0
 - [ADD] Subscriber の multistream に対応する
 - [CHANGE] iceServers が指定されていない場合に 'stun:stun.l.google.com:19302' を使用していたのをやめる
