@@ -53,7 +53,7 @@ class ConnectionSubscriber extends ConnectionBase {
           this._pc.ontrack = event => {
             const stream = event.streams[0];
             if (stream.id === 'default') return;
-
+            if (stream.id === this.clientId) return;
             if (event.track.kind === 'video') {
               event.stream = stream;
               this._callbacks.addstream(event);
