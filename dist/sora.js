@@ -534,7 +534,7 @@ var ConnectionSubscriber = function (_ConnectionBase) {
           _this3._pc.ontrack = function (event) {
             var stream = event.streams[0];
             if (stream.id === 'default') return;
-
+            if (stream.id === _this3.clientId) return;
             if (event.track.kind === 'video') {
               event.stream = stream;
               _this3._callbacks.addstream(event);
