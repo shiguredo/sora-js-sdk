@@ -9,6 +9,9 @@
 - FIX
     - バグ修正
 
+## 1.4.0
+- [ADD] Signaling notify 用の callback を追加できるように変更する
+
 ## 1.3.0
 - [UPDATE] Safari に対応する
 
