@@ -83,7 +83,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, snapshot, addstream, removestream) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, snapshot, addstream, removestream, notify) |
   |  callback   | function  |      | コールバック |
 
 example
