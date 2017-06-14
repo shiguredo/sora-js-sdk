@@ -118,7 +118,8 @@ var ConnectionBase = function () {
       push: function push() {},
       snapshot: function snapshot() {},
       addstream: function addstream() {},
-      removestream: function removestream() {}
+      removestream: function removestream() {},
+      notify: function notify() {}
     };
   }
 
@@ -224,6 +225,8 @@ var ConnectionBase = function () {
             _this2._callbacks.push(data);
           } else if (data.type == 'snapshot') {
             _this2._callbacks.snapshot(data);
+          } else if (data.type == 'notify') {
+            _this2._callbacks.notify(data);
           }
         };
       });
