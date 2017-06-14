@@ -44,7 +44,8 @@ class ConnectionBase {
       push: function() {},
       snapshot: function() {},
       addstream: function() {},
-      removestream: function() {}
+      removestream: function() {},
+      notify: function() {}
     };
   }
 
@@ -143,6 +144,8 @@ class ConnectionBase {
           this._callbacks.push(data);
         } else if (data.type == 'snapshot') {
           this._callbacks.snapshot(data);
+        } else if (data.type == 'notify') {
+          this._callbacks.notify(data);
         }
       };
     });
