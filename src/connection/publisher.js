@@ -12,7 +12,7 @@ class ConnectionPublisher extends ConnectionBase {
     }
   }
 
-  _singleStream(stream: ?MediaStream.prototype) {
+  _singleStream(stream: MediaStream.prototype) {
     return this.disconnect()
       .then(this._signaling.bind(this))
       .then(message => {
@@ -38,7 +38,7 @@ class ConnectionPublisher extends ConnectionBase {
       });
   }
 
-  _multiStream(stream: ?MediaStream.prototype) {
+  _multiStream(stream: MediaStream.prototype) {
     return this.disconnect()
       .then(this._signaling.bind(this))
       .then(message => {
