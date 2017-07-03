@@ -9,6 +9,9 @@
 - FIX
     - バグ修正
 
+## 1.4.1
+- [FIX] Signaling message の metadata が旧仕様(access_token)のままだったので修正する
+
 ## 1.4.0
 - [ADD] Signaling notify 用の callback を追加できるように変更する
 

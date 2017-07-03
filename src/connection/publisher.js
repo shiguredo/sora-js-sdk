@@ -12,7 +12,7 @@ class ConnectionPublisher extends ConnectionBase {
     }
   }
 
-  _singleStream(stream: ?MediaStream.prototype) {
+  _singleStream(stream: MediaStream.prototype) {
     return this.disconnect()
       .then(this._signaling.bind(this))
       .then(message => {
@@ -38,7 +38,7 @@ class ConnectionPublisher extends ConnectionBase {
       });
   }
 
-  _multiStream(stream: ?MediaStream.prototype) {
+  _multiStream(stream: MediaStream.prototype) {
     return this.disconnect()
       .then(this._signaling.bind(this))
       .then(message => {
@@ -60,14 +60,12 @@ class ConnectionPublisher extends ConnectionBase {
             }
           };
         } else {
-          this.streams = [];
           this._pc.ontrack = event => {
             const stream = event.streams[0];
             if (stream.id === 'default') return;
             if (stream.id === this.clientId) return;
             if (event.track.kind === 'video') {
               event.stream = stream;
-              this.streams.push(stream);
               this._callbacks.addstream(event);
             }
           };

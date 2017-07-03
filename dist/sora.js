@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.4.0
+ * @version: 1.4.1
  * @author: Shiguredo Inc.
  * @license: Apache License 2.0
  */
@@ -23,9 +23,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	function __webpack_require__(moduleId) {
 /******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-/******/
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
@@ -431,14 +431,12 @@ var ConnectionPublisher = function (_ConnectionBase) {
             }
           };
         } else {
-          _this3.streams = [];
           _this3._pc.ontrack = function (event) {
             var stream = event.streams[0];
             if (stream.id === 'default') return;
             if (stream.id === _this3.clientId) return;
             if (event.track.kind === 'video') {
               event.stream = stream;
-              _this3.streams.push(stream);
               _this3._callbacks.addstream(event);
             }
           };
@@ -662,12 +660,12 @@ function isEdge() {
   return userAgent().indexOf('edge') !== -1;
 }
 
-function createSignalingMessage(role, channelId, accessToken, options) {
+function createSignalingMessage(role, channelId, metadata, options) {
   var message = {
     type: 'connect',
     role: role,
     channel_id: channelId,
-    access_token: accessToken
+    metadata: metadata
   };
   Object.keys(message).forEach(function (key) {
     if (message[key] === undefined) {

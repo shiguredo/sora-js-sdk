@@ -15,7 +15,7 @@ describe('Utils', () => {
         type: 'connect',
         role: role,
         channel_id: channelId,
-        access_token: metadata,
+        metadata: metadata,
         audio: true,
         video: true
       };
@@ -28,7 +28,7 @@ describe('Utils', () => {
         type: 'connect',
         role: null,
         channel_id: null,
-        access_token: null,
+        metadata: null,
         audio: true,
         video: true
       };
@@ -45,7 +45,7 @@ describe('Utils', () => {
         type: 'connect',
         role: role,
         channel_id: channelId,
-        access_token: metadata,
+        metadata: metadata,
         audio: false,
         video: false
       };
@@ -63,7 +63,7 @@ describe('Utils', () => {
           type: 'connect',
           role: role,
           channel_id: channelId,
-          access_token: metadata,
+          metadata: metadata,
           audio: {
             codec_type: 'OPUS'
           },
@@ -82,7 +82,7 @@ describe('Utils', () => {
           type: 'connect',
           role: role,
           channel_id: channelId,
-          access_token: metadata,
+          metadata: metadata,
           audio: false,
           video: true
         };
@@ -101,7 +101,7 @@ describe('Utils', () => {
           type: 'connect',
           role: role,
           channel_id: channelId,
-          access_token: metadata,
+          metadata: metadata,
           audio: true,
           video: {
             codec_type: 'VP8'
@@ -120,7 +120,7 @@ describe('Utils', () => {
           type: 'connect',
           role: role,
           channel_id: channelId,
-          access_token: metadata,
+          metadata: metadata,
           audio: true,
           video: false
         };
@@ -139,7 +139,7 @@ describe('Utils', () => {
           type: 'connect',
           role: role,
           channel_id: channelId,
-          access_token: metadata,
+          metadata: metadata,
           audio: true,
           video: {
             codec_type: 'VP8',
@@ -161,7 +161,7 @@ describe('Utils', () => {
           type: 'connect',
           role: role,
           channel_id: channelId,
-          access_token: metadata,
+          metadata: metadata,
           multistream: true,
           plan_b: true,
           video: true,

@@ -31,12 +31,12 @@ export function isEdge() {
   return userAgent().indexOf('edge') !== -1;
 }
 
-export function createSignalingMessage(role, channelId, accessToken, options) {
+export function createSignalingMessage(role, channelId, metadata, options) {
   const message = {
     type: 'connect',
     role: role,
     channel_id: channelId,
-    access_token: accessToken,
+    metadata: metadata,
   };
   Object.keys(message).forEach(key => {
     if (message[key] === undefined) {
