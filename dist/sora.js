@@ -660,12 +660,12 @@ function isEdge() {
   return userAgent().indexOf('edge') !== -1;
 }
 
-function createSignalingMessage(role, channelId, accessToken, options) {
+function createSignalingMessage(role, channelId, metadata, options) {
   var message = {
     type: 'connect',
     role: role,
     channel_id: channelId,
-    access_token: accessToken
+    metadata: metadata
   };
   Object.keys(message).forEach(function (key) {
     if (message[key] === undefined) {
