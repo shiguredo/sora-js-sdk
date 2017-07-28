@@ -109,6 +109,7 @@ var ConnectionBase = function () {
     this.options = options;
     this.debug = debug;
     this.clientId = null;
+    this.remoteClientIds = [];
     this.stream = null;
     this.role = null;
     this._ws = null;
@@ -427,6 +428,7 @@ var ConnectionPublisher = function (_ConnectionBase) {
         if (typeof _this3._pc.ontrack === 'undefined') {
           _this3._pc.onaddstream = function (event) {
             if (_this3.clientId !== event.stream.id) {
+              _this3.remoteClientIds.push(stream.id);
               _this3._callbacks.addstream(event);
             }
           };
@@ -435,13 +437,17 @@ var ConnectionPublisher = function (_ConnectionBase) {
             var stream = event.streams[0];
             if (stream.id === 'default') return;
             if (stream.id === _this3.clientId) return;
-            if (event.track.kind === 'video') {
-              event.stream = stream;
-              _this3._callbacks.addstream(event);
-            }
+            if (-1 < _this3.remoteClientIds.indexOf(stream.id)) return;
+            event.stream = stream;
+            _this3.remoteClientIds.push(stream.id);
+            _this3._callbacks.addstream(event);
           };
         }
         _this3._pc.onremovestream = function (event) {
+          var index = _this3.remoteClientIds.indexOf(event.stream.id);
+          if (-1 < index) {
+            delete _this3.remoteClientIds[index];
+          };
           _this3._callbacks.removestream(event);
         };
         _this3.stream = stream;
