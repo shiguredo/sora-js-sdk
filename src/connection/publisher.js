@@ -56,6 +56,7 @@ class ConnectionPublisher extends ConnectionBase {
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = event => {
             if (this.clientId !== event.stream.id) {
+              this.remoteClientIds.push(stream.id)
               this._callbacks.addstream(event);
             }
           };
@@ -64,13 +65,17 @@ class ConnectionPublisher extends ConnectionBase {
             const stream = event.streams[0];
             if (stream.id === 'default') return;
             if (stream.id === this.clientId) return;
-            if (event.track.kind === 'video') {
-              event.stream = stream;
-              this._callbacks.addstream(event);
-            }
+            if (-1 < this.remoteClientIds.indexOf(stream.id)) return;
+            event.stream = stream;
+            this.remoteClientIds.push(stream.id)
+            this._callbacks.addstream(event);
           };
         }
         this._pc.onremovestream = event => {
+          const index = this.remoteClientIds.indexOf(event.stream.id)
+          if (-1 < index) {
+            delete(this.remoteClientIds[index])
+          };
           this._callbacks.removestream(event);
         };
         this.stream = stream;
