@@ -196,9 +196,6 @@ var ConnectionBase = function () {
         _this2._ws.onclose = function (e) {
           reject(e);
         };
-        _this2._ws.onerror = function (e) {
-          reject(e);
-        };
         _this2._ws.onopen = function () {
           var signalingMessage = (0, _utils.createSignalingMessage)(_this2.role, _this2.channelId, _this2.metadata, _this2.options);
           _this2._trace('SIGNALING CONNECT MESSAGE', signalingMessage);

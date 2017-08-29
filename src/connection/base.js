@@ -115,9 +115,6 @@ class ConnectionBase {
       this._ws.onclose = (e) => {
         reject(e);
       };
-      this._ws.onerror = (e) => {
-        reject(e);
-      };
       this._ws.onopen = () => {
         const signalingMessage = createSignalingMessage(this.role, this.channelId, this.metadata, this.options);
         this._trace('SIGNALING CONNECT MESSAGE', signalingMessage);
