@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.4.1
+ * @version: 1.5.0
  * @author: Shiguredo Inc.
  * @license: Apache License 2.0
  */
@@ -50,9 +50,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
 /******/
-/******/ 	// identity function for calling harmony imports with the correct context
-/******/ 	__webpack_require__.i = function(value) { return value; };
-/******/
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
@@ -80,7 +77,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -92,7 +89,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _utils = __webpack_require__(4);
+var _utils = __webpack_require__(3);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -109,6 +106,7 @@ var ConnectionBase = function () {
     this.options = options;
     this.debug = debug;
     this.clientId = null;
+    this.remoteClientIds = [];
     this.stream = null;
     this.role = null;
     this._ws = null;
@@ -193,9 +191,6 @@ var ConnectionBase = function () {
           _this2._ws = new WebSocket(_this2.signalingUrl);
         }
         _this2._ws.onclose = function (e) {
-          reject(e);
-        };
-        _this2._ws.onerror = function (e) {
           reject(e);
         };
         _this2._ws.onopen = function () {
@@ -357,6 +352,66 @@ module.exports = ConnectionBase;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _publisher = __webpack_require__(2);
+
+var _publisher2 = _interopRequireDefault(_publisher);
+
+var _subscriber = __webpack_require__(4);
+
+var _subscriber2 = _interopRequireDefault(_subscriber);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Sora = {
+  connection: function connection(signalingUrl) {
+    var debug = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+    return new SoraConnection(signalingUrl, debug);
+  }
+};
+
+var SoraConnection = function () {
+  function SoraConnection(signalingUrl) {
+    var debug = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+    _classCallCheck(this, SoraConnection);
+
+    this.signalingUrl = signalingUrl;
+    this.debug = debug;
+  }
+
+  _createClass(SoraConnection, [{
+    key: 'publisher',
+    value: function publisher(channelId, metadata) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { audio: true, video: true };
+
+      return new _publisher2.default(this.signalingUrl, channelId, metadata, options, this.debug);
+    }
+  }, {
+    key: 'subscriber',
+    value: function subscriber(channelId, metadata) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { audio: true, video: true };
+
+      return new _subscriber2.default(this.signalingUrl, channelId, metadata, options, this.debug);
+    }
+  }]);
+
+  return SoraConnection;
+}();
+
+module.exports = Sora;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 var _base = __webpack_require__(0);
 
 var _base2 = _interopRequireDefault(_base);
@@ -427,6 +482,7 @@ var ConnectionPublisher = function (_ConnectionBase) {
         if (typeof _this3._pc.ontrack === 'undefined') {
           _this3._pc.onaddstream = function (event) {
             if (_this3.clientId !== event.stream.id) {
+              _this3.remoteClientIds.push(stream.id);
               _this3._callbacks.addstream(event);
             }
           };
@@ -435,13 +491,17 @@ var ConnectionPublisher = function (_ConnectionBase) {
             var stream = event.streams[0];
             if (stream.id === 'default') return;
             if (stream.id === _this3.clientId) return;
-            if (event.track.kind === 'video') {
-              event.stream = stream;
-              _this3._callbacks.addstream(event);
-            }
+            if (-1 < _this3.remoteClientIds.indexOf(stream.id)) return;
+            event.stream = stream;
+            _this3.remoteClientIds.push(stream.id);
+            _this3._callbacks.addstream(event);
           };
         }
         _this3._pc.onremovestream = function (event) {
+          var index = _this3.remoteClientIds.indexOf(event.stream.id);
+          if (-1 < index) {
+            delete _this3.remoteClientIds[index];
+          };
           _this3._callbacks.removestream(event);
         };
         _this3.stream = stream;
@@ -458,165 +518,7 @@ var ConnectionPublisher = function (_ConnectionBase) {
 module.exports = ConnectionPublisher;
 
 /***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _base = __webpack_require__(0);
-
-var _base2 = _interopRequireDefault(_base);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var ConnectionSubscriber = function (_ConnectionBase) {
-  _inherits(ConnectionSubscriber, _ConnectionBase);
-
-  function ConnectionSubscriber() {
-    _classCallCheck(this, ConnectionSubscriber);
-
-    return _possibleConstructorReturn(this, (ConnectionSubscriber.__proto__ || Object.getPrototypeOf(ConnectionSubscriber)).apply(this, arguments));
-  }
-
-  _createClass(ConnectionSubscriber, [{
-    key: 'connect',
-    value: function connect() {
-      this.role = 'downstream';
-      if (this.options && this.options.multistream) {
-        return this._multiStream();
-      } else {
-        return this._singleStream();
-      }
-    }
-  }, {
-    key: '_singleStream',
-    value: function _singleStream() {
-      var _this2 = this;
-
-      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
-        return _this2._connectPeerConnection(message);
-      }).then(function (message) {
-        if (typeof _this2._pc.ontrack === 'undefined') {
-          _this2._pc.onaddstream = function (event) {
-            this.stream = event.stream;
-          }.bind(_this2);
-        } else {
-          _this2._pc.ontrack = function (event) {
-            this.stream = event.streams[0];
-          }.bind(_this2);
-        }
-        return _this2._setRemoteDescription(message);
-      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
-        return _this2.stream;
-      });
-    }
-  }, {
-    key: '_multiStream',
-    value: function _multiStream() {
-      var _this3 = this;
-
-      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
-        return _this3._connectPeerConnection(message);
-      }).then(function (message) {
-        if (typeof _this3._pc.ontrack === 'undefined') {
-          _this3._pc.onaddstream = function (event) {
-            _this3._callbacks.addstream(event);
-          };
-        } else {
-          _this3._pc.ontrack = function (event) {
-            var stream = event.streams[0];
-            if (stream.id === 'default') return;
-            if (stream.id === _this3.clientId) return;
-            if (event.track.kind === 'video') {
-              event.stream = stream;
-              _this3._callbacks.addstream(event);
-            }
-          };
-        }
-        _this3._pc.onremovestream = function (event) {
-          _this3._callbacks.removestream(event);
-        };
-        return _this3._setRemoteDescription(message);
-      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this));
-    }
-  }]);
-
-  return ConnectionSubscriber;
-}(_base2.default);
-
-module.exports = ConnectionSubscriber;
-
-/***/ }),
 /* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _publisher = __webpack_require__(1);
-
-var _publisher2 = _interopRequireDefault(_publisher);
-
-var _subscriber = __webpack_require__(2);
-
-var _subscriber2 = _interopRequireDefault(_subscriber);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Sora = {
-  connection: function connection(signalingUrl) {
-    var debug = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-    return new SoraConnection(signalingUrl, debug);
-  }
-};
-
-var SoraConnection = function () {
-  function SoraConnection(signalingUrl) {
-    var debug = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-    _classCallCheck(this, SoraConnection);
-
-    this.signalingUrl = signalingUrl;
-    this.debug = debug;
-  }
-
-  _createClass(SoraConnection, [{
-    key: 'publisher',
-    value: function publisher(channelId, metadata) {
-      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { audio: true, video: true };
-
-      return new _publisher2.default(this.signalingUrl, channelId, metadata, options, this.debug);
-    }
-  }, {
-    key: 'subscriber',
-    value: function subscriber(channelId, metadata) {
-      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { audio: true, video: true };
-
-      return new _subscriber2.default(this.signalingUrl, channelId, metadata, options, this.debug);
-    }
-  }]);
-
-  return SoraConnection;
-}();
-
-module.exports = Sora;
-
-/***/ }),
-/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -717,6 +619,104 @@ function createSignalingMessage(role, channelId, metadata, options) {
 
   return message;
 }
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _base = __webpack_require__(0);
+
+var _base2 = _interopRequireDefault(_base);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var ConnectionSubscriber = function (_ConnectionBase) {
+  _inherits(ConnectionSubscriber, _ConnectionBase);
+
+  function ConnectionSubscriber() {
+    _classCallCheck(this, ConnectionSubscriber);
+
+    return _possibleConstructorReturn(this, (ConnectionSubscriber.__proto__ || Object.getPrototypeOf(ConnectionSubscriber)).apply(this, arguments));
+  }
+
+  _createClass(ConnectionSubscriber, [{
+    key: 'connect',
+    value: function connect() {
+      this.role = 'downstream';
+      if (this.options && this.options.multistream) {
+        return this._multiStream();
+      } else {
+        return this._singleStream();
+      }
+    }
+  }, {
+    key: '_singleStream',
+    value: function _singleStream() {
+      var _this2 = this;
+
+      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
+        return _this2._connectPeerConnection(message);
+      }).then(function (message) {
+        if (typeof _this2._pc.ontrack === 'undefined') {
+          _this2._pc.onaddstream = function (event) {
+            this.stream = event.stream;
+          }.bind(_this2);
+        } else {
+          _this2._pc.ontrack = function (event) {
+            this.stream = event.streams[0];
+          }.bind(_this2);
+        }
+        return _this2._setRemoteDescription(message);
+      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
+        return _this2.stream;
+      });
+    }
+  }, {
+    key: '_multiStream',
+    value: function _multiStream() {
+      var _this3 = this;
+
+      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
+        return _this3._connectPeerConnection(message);
+      }).then(function (message) {
+        if (typeof _this3._pc.ontrack === 'undefined') {
+          _this3._pc.onaddstream = function (event) {
+            _this3._callbacks.addstream(event);
+          };
+        } else {
+          _this3._pc.ontrack = function (event) {
+            var stream = event.streams[0];
+            if (stream.id === 'default') return;
+            if (stream.id === _this3.clientId) return;
+            if (event.track.kind === 'video') {
+              event.stream = stream;
+              _this3._callbacks.addstream(event);
+            }
+          };
+        }
+        _this3._pc.onremovestream = function (event) {
+          _this3._callbacks.removestream(event);
+        };
+        return _this3._setRemoteDescription(message);
+      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this));
+    }
+  }]);
+
+  return ConnectionSubscriber;
+}(_base2.default);
+
+module.exports = ConnectionSubscriber;
 
 /***/ })
 /******/ ]);

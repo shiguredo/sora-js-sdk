@@ -22,6 +22,7 @@ class ConnectionBase {
   options: ConnectionOptions;
   debug: boolean;
   clientId: ?string;
+  remoteClientIds: string[];
   stream: ?MediaStream.prototype;
   role: ?string;
   _ws: WebSocket.prototype;
@@ -35,6 +36,7 @@ class ConnectionBase {
     this.options = options;
     this.debug = debug;
     this.clientId = null;
+    this.remoteClientIds = [];
     this.stream = null;
     this.role = null;
     this._ws = null;
@@ -111,9 +113,6 @@ class ConnectionBase {
         this._ws = new WebSocket(this.signalingUrl);
       }
       this._ws.onclose = (e) => {
-        reject(e);
-      };
-      this._ws.onerror = (e) => {
         reject(e);
       };
       this._ws.onopen = () => {
