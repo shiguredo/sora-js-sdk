@@ -52,11 +52,12 @@ describe('Utils', () => {
       assert.deepEqual(actual, expected);
     });
 
-    describe('audioCodecType parameter', () => {
+    describe('audioCodecType audioBitRate', () => {
       it('audio true', () => {
         const options = {
           audio: true,
-          audioCodecType: 'OPUS'
+          audioCodecType: 'OPUS',
+          audioBitRate: 100
         };
         const actual = createSignalingMessage(role, channelId, metadata, options);
         const expected = {
@@ -65,7 +66,8 @@ describe('Utils', () => {
           channel_id: channelId,
           metadata: metadata,
           audio: {
-            codec_type: 'OPUS'
+            codec_type: 'OPUS',
+            bit_rate: 100
           },
           video: true
         };
