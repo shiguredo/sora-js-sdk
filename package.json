@@ -5,6 +5,7 @@
   "main": "dist/sora.min.js",
   "scripts": {
     "build": "webpack --cache false --config webpack.config.js",
+    "dev": "http-server ./example",
     "check": "flow; eslint ./src; exit 0;",
     "test": "karma start"
   },
@@ -35,5 +36,8 @@
     "mocha": "^3.4.2",
     "power-assert": "^1.4.4",
     "webpack": "^3.5.5"
+  },
+  "dependencies": {
+    "http-server": "^0.10.0"
   }
 }
