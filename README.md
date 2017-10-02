@@ -12,6 +12,11 @@
 - sora.min.js
     - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.min.js
 
+## About Support
+
+Support for Sora iOS SDK by Shiguredo Inc. are limited
+**ONLY in JAPANESE** through GitHub issues and there is no guarantee such
+as response time or resolution.
 
 ## サポートについて
 
@@ -19,6 +24,10 @@ Sora JavaScript SDK に関する質問・要望・バグなどの報告は Issue
 ただし、 Sora のライセンス契約の有無に関わらず、 Issue への応答時間と問題の解決を保証しませんのでご了承ください。
 
 Sora JavaScript SDK に対する有償のサポートについては現在提供しておりません。
+
+## システム条件
+
+- WebRTC SFU Sora 17.08 以降
 
 ## サンプル
 
@@ -31,6 +40,12 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 - Multistream Downstream
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_down.html
 
+## Issues について
+
+質問やバグ報告の場合は、次の開発環境のバージョンを **「メジャーバージョン、マイナーバージョン、メンテナンスバージョン」** まで含めて書いてください。
+
+- Sora JavaScript SDK のバージョン
+- 利用ブラウザのバージョン
 
 ## API 一覧
 
