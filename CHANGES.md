@@ -9,6 +9,8 @@
 - FIX
     - バグ修正
 
+## 1.6.0
+- [ADD] Publisher と Subscriber の options に AudioBitRate を追加する
 
 ## 1.5.0
 - [CHANGE] Signaling 時の WebSocket onerror では reject しないようにする

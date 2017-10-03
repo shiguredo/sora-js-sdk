@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.5.0
+ * @version: 1.6.0
  * @author: Shiguredo Inc.
  * @license: Apache License 2.0
  */
@@ -585,10 +585,17 @@ function createSignalingMessage(role, channelId, metadata, options) {
     audio = options.audio;
   }
   if (audio) {
-    if ('audioCodecType' in options) {
-      audio = {
-        codec_type: options.audioCodecType
-      };
+    var audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
+    if (Object.keys(options).some(function (key) {
+      return 0 <= audioPropertyKeys.indexOf(key);
+    })) {
+      audio = {};
+      if ('audioCodecType' in options) {
+        audio['codec_type'] = options.audioCodecType;
+      }
+      if ('audioBitRate' in options) {
+        audio['bit_rate'] = options.audioBitRate;
+      }
     }
   }
   message['audio'] = audio;

@@ -1,7 +1,7 @@
 # Sora JavaScript SDK
 
 - バージョン
-    - 1.5.0
+    - 1.6.0
 
 [株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
 
@@ -12,6 +12,11 @@
 - sora.min.js
     - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.min.js
 
+## About Support
+
+Support for Sora iOS SDK by Shiguredo Inc. are limited
+**ONLY in JAPANESE** through GitHub issues and there is no guarantee such
+as response time or resolution.
 
 ## サポートについて
 
@@ -19,6 +24,10 @@ Sora JavaScript SDK に関する質問・要望・バグなどの報告は Issue
 ただし、 Sora のライセンス契約の有無に関わらず、 Issue への応答時間と問題の解決を保証しませんのでご了承ください。
 
 Sora JavaScript SDK に対する有償のサポートについては現在提供しておりません。
+
+## システム条件
+
+- WebRTC SFU Sora 17.08 以降
 
 ## サンプル
 
@@ -31,6 +40,12 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 - Multistream Downstream
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_down.html
 
+## Issues について
+
+質問やバグ報告の場合は、次の開発環境のバージョンを **「メジャーバージョン、マイナーバージョン、メンテナンスバージョン」** まで含めて書いてください。
+
+- Sora JavaScript SDK のバージョン
+- 利用ブラウザのバージョン
 
 ## API 一覧
 
@@ -62,6 +77,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | options          | object  |      | シグナリングパラメーター              |
   | * audio          | boolean | true | オーディオ有効／無効                  |
   | * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+  | * audioBitRate   | integer |      | オーディオビットレート                |
   | * video          | boolean | true | ビデオ有効／無効                      |
   | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
   | * videoBitRate   | integer |      | ビデオビットレート                    |
@@ -130,6 +146,7 @@ publisher.on('disconnect', function(e) {
   | options          | object  |      | シグナリングパラメーター              |
   | * audio          | boolean | true | オーディオ有効／無効                  |
   | * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+  | * audioBitRate   | integer |      | オーディオビットレート                |
   | * video          | boolean | true | ビデオ有効／無効                      |
   | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
   | * videoBitRate   | integer |      | ビデオビットレート                    |
