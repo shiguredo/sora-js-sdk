@@ -77,6 +77,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | options          | object  |      | シグナリングパラメーター              |
   | * audio          | boolean | true | オーディオ有効／無効                  |
   | * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+  | * audioBitRate   | integer |      | オーディオビットレート                |
   | * video          | boolean | true | ビデオ有効／無効                      |
   | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
   | * videoBitRate   | integer |      | ビデオビットレート                    |
@@ -145,6 +146,7 @@ publisher.on('disconnect', function(e) {
   | options          | object  |      | シグナリングパラメーター              |
   | * audio          | boolean | true | オーディオ有効／無効                  |
   | * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+  | * audioBitRate   | integer |      | オーディオビットレート                |
   | * video          | boolean | true | ビデオ有効／無効                      |
   | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
   | * videoBitRate   | integer |      | ビデオビットレート                    |
