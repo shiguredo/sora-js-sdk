@@ -9,6 +9,9 @@
 - FIX
     - バグ修正
 
+## 1.6.1
+- [ADD] RTCPeerConnection の引数に MediaConstraints を渡せるようにする
+
 ## 1.6.0
 - [ADD] Publisher と Subscriber の options に AudioBitRate を追加する
 

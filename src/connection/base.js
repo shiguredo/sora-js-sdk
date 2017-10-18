@@ -20,6 +20,7 @@ class ConnectionBase {
   metadata: string;
   signalingUrl: string;
   options: ConnectionOptions;
+  constraints: ?Object;
   debug: boolean;
   clientId: ?string;
   remoteClientIds: string[];
@@ -34,6 +35,7 @@ class ConnectionBase {
     this.metadata = metadata;
     this.signalingUrl = signalingUrl;
     this.options = options;
+    this.constraints = null;
     this.debug = debug;
     this.clientId = null;
     this.remoteClientIds = [];
@@ -153,7 +155,7 @@ class ConnectionBase {
   _connectPeerConnection(message: Object) {
     if (RTCPeerConnection.generateCertificate === undefined) {
       this._trace('PEER CONNECTION CONFIG', message.config);
-      this._pc = new RTCPeerConnection(message.config);
+      this._pc = new RTCPeerConnection(message.config, this.constraints);
       this._pc.oniceconnectionstatechange = (_) => {
         this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE',this._pc.iceConnectionState);
       };
@@ -164,7 +166,7 @@ class ConnectionBase {
         .then(certificate => {
           message.config.certificates = [certificate];
           this._trace('PEER CONNECTION CONFIG', message.config);
-          this._pc = new RTCPeerConnection(message.config, {});
+          this._pc = new RTCPeerConnection(message.config, this.constraints);
           this._pc.oniceconnectionstatechange = (_) => {
             this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE',this._pc.iceConnectionState);
           };

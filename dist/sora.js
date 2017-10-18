@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.6.0
+ * @version: 1.6.1
  * @author: Shiguredo Inc.
  * @license: Apache License 2.0
  */
@@ -104,6 +104,7 @@ var ConnectionBase = function () {
     this.metadata = metadata;
     this.signalingUrl = signalingUrl;
     this.options = options;
+    this.constraints = null;
     this.debug = debug;
     this.clientId = null;
     this.remoteClientIds = [];
@@ -233,7 +234,7 @@ var ConnectionBase = function () {
 
       if (RTCPeerConnection.generateCertificate === undefined) {
         this._trace('PEER CONNECTION CONFIG', message.config);
-        this._pc = new RTCPeerConnection(message.config);
+        this._pc = new RTCPeerConnection(message.config, this.constraints);
         this._pc.oniceconnectionstatechange = function (_) {
           _this3._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE', _this3._pc.iceConnectionState);
         };
@@ -242,7 +243,7 @@ var ConnectionBase = function () {
         return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' }).then(function (certificate) {
           message.config.certificates = [certificate];
           _this3._trace('PEER CONNECTION CONFIG', message.config);
-          _this3._pc = new RTCPeerConnection(message.config, {});
+          _this3._pc = new RTCPeerConnection(message.config, _this3.constraints);
           _this3._pc.oniceconnectionstatechange = function (_) {
             _this3._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE', _this3._pc.iceConnectionState);
           };
