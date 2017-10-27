@@ -75,6 +75,10 @@ class ConnectionBase {
 
       let counter = 5;
       const timer_id = setInterval(() => {
+        if (!this._ws) {
+          clearInterval(timer_id);
+          return reject('WebSocket Closing Error');
+        }
         if (this._ws.readyState === 3) {
           this._ws = null;
           clearInterval(timer_id);
@@ -93,6 +97,10 @@ class ConnectionBase {
 
       let counter = 5;
       const timer_id = setInterval(() =>{
+        if (!this._pc) {
+          clearInterval(timer_id);
+          return reject('PeerConnection Closing Error');
+        }
         if (this._pc.signalingState === 'closed') {
           clearInterval(timer_id);
           this._pc = null;
