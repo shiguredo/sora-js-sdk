@@ -9,6 +9,10 @@
 - FIX
     - バグ修正
 
+## 1.7.0
+- [ADD] event type に log を追加する
+- [FIX] disconnect を同時に複数回呼ぶとエラーになる問題を修正する
+
 ## 1.6.1
 - [ADD] RTCPeerConnection の引数に MediaConstraints を渡せるようにする
 

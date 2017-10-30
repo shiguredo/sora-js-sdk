@@ -1,9 +1,9 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.6.1
+ * @version: 1.7.0
  * @author: Shiguredo Inc.
- * @license: Apache License 2.0
+ * @license: Apache-2.0
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -118,7 +118,8 @@ var ConnectionBase = function () {
       snapshot: function snapshot() {},
       addstream: function addstream() {},
       removestream: function removestream() {},
-      notify: function notify() {}
+      notify: function notify() {},
+      log: function log() {}
     };
   }
 
@@ -149,6 +150,10 @@ var ConnectionBase = function () {
 
         var counter = 5;
         var timer_id = setInterval(function () {
+          if (!_this._ws) {
+            clearInterval(timer_id);
+            return reject('WebSocket Closing Error');
+          }
           if (_this._ws.readyState === 3) {
             _this._ws = null;
             clearInterval(timer_id);
@@ -167,6 +172,10 @@ var ConnectionBase = function () {
 
         var counter = 5;
         var timer_id = setInterval(function () {
+          if (!_this._pc) {
+            clearInterval(timer_id);
+            return reject('PeerConnection Closing Error');
+          }
           if (_this._pc.signalingState === 'closed') {
             clearInterval(timer_id);
             _this._pc = null;
@@ -332,6 +341,7 @@ var ConnectionBase = function () {
   }, {
     key: '_trace',
     value: function _trace(title, message) {
+      this._callbacks.log(title, message);
       if (!this.debug) {
         return;
       }

@@ -1,7 +1,7 @@
 # Sora JavaScript SDK
 
 - バージョン
-    - 1.6.0
+    - 1.7.0
 
 [株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
 
@@ -99,7 +99,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, snapshot, addstream, removestream, notify) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, snapshot, addstream, removestream, notify, log) |
   |  callback   | function  |      | コールバック |
 
 example
@@ -167,7 +167,7 @@ publisher.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, snapshot, addstream, removestream) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, snapshot, addstream, removestream, notify, log) |
   |  callback   | function  |      | コールバック |
 
 example
