@@ -3,7 +3,7 @@
  * WebRTC SFU Sora Signaling Library
  * @version: 1.6.1
  * @author: Shiguredo Inc.
- * @license: Apache License 2.0
+ * @license: Apache-2.0
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -118,7 +118,8 @@ var ConnectionBase = function () {
       snapshot: function snapshot() {},
       addstream: function addstream() {},
       removestream: function removestream() {},
-      notify: function notify() {}
+      notify: function notify() {},
+      log: function log() {}
     };
   }
 
@@ -340,6 +341,7 @@ var ConnectionBase = function () {
   }, {
     key: '_trace',
     value: function _trace(title, message) {
+      this._callbacks.log(title, message);
       if (!this.debug) {
         return;
       }
