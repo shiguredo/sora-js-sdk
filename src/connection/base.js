@@ -49,7 +49,8 @@ class ConnectionBase {
       snapshot: function() {},
       addstream: function() {},
       removestream: function() {},
-      notify: function() {}
+      notify: function() {},
+      log: function() {}
     };
   }
 
@@ -257,6 +258,7 @@ class ConnectionBase {
   }
 
   _trace(title: string, message: Object | string) {
+    this._callbacks.log(title, message);
     if (!this.debug) { return; }
     trace(this.clientId, title, message);
   }
