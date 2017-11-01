@@ -193,9 +193,10 @@ var ConnectionBase = function () {
     }
   }, {
     key: '_signaling',
-    value: function _signaling() {
+    value: function _signaling(offer) {
       var _this2 = this;
 
+      this._trace('CREATE OFFER SDP', offer);
       return new Promise(function (resolve, reject) {
         if (_this2._ws === null) {
           _this2._ws = new WebSocket(_this2.signalingUrl);
@@ -204,7 +205,7 @@ var ConnectionBase = function () {
           reject(e);
         };
         _this2._ws.onopen = function () {
-          var signalingMessage = (0, _utils.createSignalingMessage)(_this2.role, _this2.channelId, _this2.metadata, _this2.options);
+          var signalingMessage = (0, _utils.createSignalingMessage)(offer.sdp, _this2.role, _this2.channelId, _this2.metadata, _this2.options);
           _this2._trace('SIGNALING CONNECT MESSAGE', signalingMessage);
           _this2._ws.send(JSON.stringify(signalingMessage));
         };
@@ -235,6 +236,18 @@ var ConnectionBase = function () {
           }
         };
       });
+    }
+  }, {
+    key: '_createOffer',
+    value: function _createOffer() {
+      var pc = new RTCPeerConnection({ iceServers: [] });
+      if (pc.addTransceiver === undefined) {
+        return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+      } else {
+        pc.addTransceiver('video').setDirection('recvonly');
+        pc.addTransceiver('audio').setDirection('recvonly');
+        return pc.createOffer();
+      }
     }
   }, {
     key: '_connectPeerConnection',
@@ -459,7 +472,7 @@ var ConnectionPublisher = function (_ConnectionBase) {
     value: function _singleStream(stream) {
       var _this2 = this;
 
-      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
+      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(function (message) {
         return _this2._connectPeerConnection(message);
       }).then(function (message) {
         if (typeof _this2._pc.addStream === 'undefined') {
@@ -480,7 +493,7 @@ var ConnectionPublisher = function (_ConnectionBase) {
     value: function _multiStream(stream) {
       var _this3 = this;
 
-      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
+      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(function (message) {
         return _this3._connectPeerConnection(message);
       }).then(function (message) {
         if (typeof _this3._pc.addStream === 'undefined') {
@@ -573,12 +586,13 @@ function isEdge() {
   return userAgent().indexOf('edge') !== -1;
 }
 
-function createSignalingMessage(role, channelId, metadata, options) {
+function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   var message = {
     type: 'connect',
     role: role,
     channel_id: channelId,
-    metadata: metadata
+    metadata: metadata,
+    sdp: offerSDP
   };
   Object.keys(message).forEach(function (key) {
     if (message[key] === undefined) {
@@ -683,7 +697,7 @@ var ConnectionSubscriber = function (_ConnectionBase) {
     value: function _singleStream() {
       var _this2 = this;
 
-      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
+      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(function (message) {
         return _this2._connectPeerConnection(message);
       }).then(function (message) {
         if (typeof _this2._pc.ontrack === 'undefined') {
@@ -705,7 +719,7 @@ var ConnectionSubscriber = function (_ConnectionBase) {
     value: function _multiStream() {
       var _this3 = this;
 
-      return this.disconnect().then(this._signaling.bind(this)).then(function (message) {
+      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(function (message) {
         return _this3._connectPeerConnection(message);
       }).then(function (message) {
         if (typeof _this3._pc.ontrack === 'undefined') {
