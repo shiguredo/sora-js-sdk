@@ -14,6 +14,7 @@ class ConnectionPublisher extends ConnectionBase {
 
   _singleStream(stream: MediaStream.prototype) {
     return this.disconnect()
+      .then(this._createOffer)
       .then(this._signaling.bind(this))
       .then(message => {
         return this._connectPeerConnection(message);
@@ -40,6 +41,7 @@ class ConnectionPublisher extends ConnectionBase {
 
   _multiStream(stream: MediaStream.prototype) {
     return this.disconnect()
+      .then(this._createOffer)
       .then(this._signaling.bind(this))
       .then(message => {
         return this._connectPeerConnection(message);

@@ -13,6 +13,7 @@ class ConnectionSubscriber extends ConnectionBase {
   }
   _singleStream() {
     return this.disconnect()
+      .then(this._createOffer)
       .then(this._signaling.bind(this))
       .then(message => {
         return this._connectPeerConnection(message);
@@ -40,6 +41,7 @@ class ConnectionSubscriber extends ConnectionBase {
 
   _multiStream() {
     return this.disconnect()
+      .then(this._createOffer)
       .then(this._signaling.bind(this))
       .then(message => {
         return this._connectPeerConnection(message);

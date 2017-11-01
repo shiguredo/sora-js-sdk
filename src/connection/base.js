@@ -118,7 +118,8 @@ class ConnectionBase {
     return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
   }
 
-  _signaling() {
+  _signaling(offer: {type: 'offer', sdp: string}) {
+    this._trace('CREATE OFFER SDP', offer);
     return new Promise((resolve, reject) => {
       if (this._ws === null) {
         this._ws = new WebSocket(this.signalingUrl);
@@ -127,7 +128,8 @@ class ConnectionBase {
         reject(e);
       };
       this._ws.onopen = () => {
-        const signalingMessage = createSignalingMessage(this.role, this.channelId, this.metadata, this.options);
+        const signalingMessage = createSignalingMessage(
+          offer.sdp, this.role, this.channelId, this.metadata, this.options);
         this._trace('SIGNALING CONNECT MESSAGE', signalingMessage);
         this._ws.send(JSON.stringify(signalingMessage));
       };
@@ -159,6 +161,18 @@ class ConnectionBase {
         }
       };
     });
+  }
+
+  _createOffer() {
+    const pc = new RTCPeerConnection({iceServers: []});
+    if (pc.addTransceiver === undefined) {
+      return pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true});
+    }
+    else {
+      pc.addTransceiver('video').setDirection('recvonly');
+      pc.addTransceiver('audio').setDirection('recvonly');
+      return pc.createOffer();
+    }
   }
 
   _connectPeerConnection(message: Object) {
