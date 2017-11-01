@@ -9,6 +9,9 @@
 - FIX
     - バグ修正
 
+## 1.7.1
+- [UPDATE] signaling connect 時のパラメータに sdp を追加する
+
 ## 1.7.0
 - [ADD] event type に log を追加する
 - [FIX] disconnect を同時に複数回呼ぶとエラーになる問題を修正する
