@@ -6,16 +6,18 @@ import { createSignalingMessage } from '../src/utils';
 const role = 'upstream';
 const channelId = '7N3fsMHob';
 const metadata = 'PG9A6RXgYqiqWKOVO';
+const sdp = 'v=0...';
 
 describe('Utils', () => {
   describe('createSignalingMessage', () => {
     it('simple', () => {
-      const actual = createSignalingMessage(role, channelId, metadata, {});
+      const actual = createSignalingMessage(sdp, role, channelId, metadata, {});
       const expected = {
         type: 'connect',
         role: role,
         channel_id: channelId,
         metadata: metadata,
+        sdp: sdp,
         audio: true,
         video: true
       };
@@ -23,12 +25,13 @@ describe('Utils', () => {
     });
 
     it('undefined to null', () => {
-      const actual = createSignalingMessage(undefined, undefined, undefined, {});
+      const actual = createSignalingMessage(sdp, undefined, undefined, undefined, {});
       const expected = {
         type: 'connect',
         role: null,
         channel_id: null,
         metadata: null,
+        sdp: sdp,
         audio: true,
         video: true
       };
@@ -40,12 +43,13 @@ describe('Utils', () => {
         audio: false,
         video: false
       };
-      const actual = createSignalingMessage(role, channelId, metadata, options);
+      const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
       const expected = {
         type: 'connect',
         role: role,
         channel_id: channelId,
         metadata: metadata,
+        sdp: sdp,
         audio: false,
         video: false
       };
@@ -59,12 +63,13 @@ describe('Utils', () => {
           audioCodecType: 'OPUS',
           audioBitRate: 100
         };
-        const actual = createSignalingMessage(role, channelId, metadata, options);
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
         const expected = {
           type: 'connect',
           role: role,
           channel_id: channelId,
           metadata: metadata,
+          sdp: sdp,
           audio: {
             codec_type: 'OPUS',
             bit_rate: 100
@@ -79,12 +84,13 @@ describe('Utils', () => {
           audio: false,
           audioCodecType: 'OPUS'
         };
-        const actual = createSignalingMessage(role, channelId, metadata, options);
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
         const expected = {
           type: 'connect',
           role: role,
           channel_id: channelId,
           metadata: metadata,
+          sdp: sdp,
           audio: false,
           video: true
         };
@@ -98,12 +104,13 @@ describe('Utils', () => {
           video: true,
           videoCodecType: 'VP8'
         };
-        const actual = createSignalingMessage(role, channelId, metadata, options);
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
         const expected = {
           type: 'connect',
           role: role,
           channel_id: channelId,
           metadata: metadata,
+          sdp: sdp,
           audio: true,
           video: {
             codec_type: 'VP8'
@@ -117,12 +124,13 @@ describe('Utils', () => {
           video: false,
           videoCodecType: 'VP8'
         };
-        const actual = createSignalingMessage(role, channelId, metadata, options);
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
         const expected = {
           type: 'connect',
           role: role,
           channel_id: channelId,
           metadata: metadata,
+          sdp: sdp,
           audio: true,
           video: false
         };
@@ -136,13 +144,14 @@ describe('Utils', () => {
           videoBitRate: 50,
           videoSnapshot: true
         };
-        const actual = createSignalingMessage(role, channelId, metadata, options);
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
         const expected = {
           type: 'connect',
           role: role,
           channel_id: channelId,
           metadata: metadata,
           audio: true,
+          sdp: sdp,
           video: {
             codec_type: 'VP8',
             bit_rate: 50,
@@ -158,13 +167,14 @@ describe('Utils', () => {
         const options = {
           multistream: true
         };
-        const actual = createSignalingMessage(role, channelId, metadata, options);
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
         const expected = {
           type: 'connect',
           role: role,
           channel_id: channelId,
           metadata: metadata,
           multistream: true,
+          sdp: sdp,
           plan_b: true,
           video: true,
           audio: true,
