@@ -9,6 +9,10 @@
 - FIX
     - バグ修正
 
+## develop
+- [UPDATE] 最新の Edge に対応する
+- [FIX] signaling offer 時の message に config が含まれていない場合の処理を追加する
+
 ## 1.7.1
 - [UPDATE] signaling connect 時のパラメータに sdp を追加する
 
