@@ -276,42 +276,16 @@ var ConnectionBase = function () {
   }, {
     key: '_setRemoteDescription',
     value: function _setRemoteDescription(message) {
-      var _this4 = this;
-
-      if ((0, _utils.isEdge)()) {
-        return new Promise(function (resolve, reject) {
-          _this4._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }), function () {
-            resolve();
-          }, function (e) {
-            reject(e);
-          });
-        });
-      } else {
-        return this._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
-      }
+      return this._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
     }
   }, {
     key: '_createAnswer',
     value: function _createAnswer() {
-      var _this5 = this;
+      var _this4 = this;
 
-      if ((0, _utils.isEdge)()) {
-        return new Promise(function (resolve, reject) {
-          _this5._pc.createAnswer(function (sessionDescription) {
-            _this5._pc.setLocalDescription(sessionDescription, function () {
-              resolve();
-            }, function (e) {
-              reject(e);
-            });
-          }, function (e) {
-            reject(e);
-          });
-        });
-      } else {
-        return this._pc.createAnswer({}).then(function (sessionDescription) {
-          return _this5._pc.setLocalDescription(sessionDescription);
-        });
-      }
+      return this._pc.createAnswer().then(function (sessionDescription) {
+        return _this4._pc.setLocalDescription(sessionDescription);
+      });
     }
   }, {
     key: '_sendAnswer',
@@ -330,18 +304,18 @@ var ConnectionBase = function () {
   }, {
     key: '_onIceCandidate',
     value: function _onIceCandidate() {
-      var _this6 = this;
+      var _this5 = this;
 
       return new Promise(function (resolve, _) {
-        _this6._pc.onicecandidate = function (event) {
-          _this6._trace('ONICECANDIDATE ICEGATHERINGSTATE', _this6._pc.iceGatheringState);
+        _this5._pc.onicecandidate = function (event) {
+          _this5._trace('ONICECANDIDATE ICEGATHERINGSTATE', _this5._pc.iceGatheringState);
           if (event.candidate === null) {
             resolve();
           } else {
             var message = event.candidate.toJSON();
             message.type = 'candidate';
-            _this6._trace('ONICECANDIDATE CANDIDATE MESSAGE', message);
-            _this6._ws.send(JSON.stringify(message));
+            _this5._trace('ONICECANDIDATE CANDIDATE MESSAGE', message);
+            _this5._ws.send(JSON.stringify(message));
           }
         };
       });
