@@ -176,6 +176,9 @@ class ConnectionBase {
   }
 
   _connectPeerConnection(message: Object) {
+    if (!message.config) {
+      message.config = {};
+    }
     if (RTCPeerConnection.generateCertificate === undefined) {
       this._trace('PEER CONNECTION CONFIG', message.config);
       this._pc = new RTCPeerConnection(message.config, this.constraints);

@@ -254,6 +254,9 @@ var ConnectionBase = function () {
     value: function _connectPeerConnection(message) {
       var _this3 = this;
 
+      if (!message.config) {
+        message.config = {};
+      }
       if (RTCPeerConnection.generateCertificate === undefined) {
         this._trace('PEER CONNECTION CONFIG', message.config);
         this._pc = new RTCPeerConnection(message.config, this.constraints);
