@@ -9,7 +9,7 @@
 - FIX
     - バグ修正
 
-## develop
+## 1.7.2
 - [UPDATE] 最新の Edge に対応する
 - [FIX] signaling offer 時の message に config が含まれていない場合の処理を追加する
 
