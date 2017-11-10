@@ -310,9 +310,16 @@ var ConnectionBase = function () {
       var _this5 = this;
 
       return new Promise(function (resolve, _) {
+        var timerId = setInterval(function () {
+          if (_this5._pc.iceConnectionState) {
+            clearInterval(timerId);
+            resolve();
+          }
+        }, 100);
         _this5._pc.onicecandidate = function (event) {
           _this5._trace('ONICECANDIDATE ICEGATHERINGSTATE', _this5._pc.iceGatheringState);
           if (event.candidate === null) {
+            clearInterval(timerId);
             resolve();
           } else {
             var message = event.candidate.toJSON();
