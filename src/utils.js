@@ -37,7 +37,8 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     role: role,
     channel_id: channelId,
     metadata: metadata,
-    sdp: offerSDP
+    sdp: offerSDP,
+    userAgent: window.navigator.userAgent
   };
   Object.keys(message).forEach(key => {
     if (message[key] === undefined) {

@@ -576,7 +576,8 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     role: role,
     channel_id: channelId,
     metadata: metadata,
-    sdp: offerSDP
+    sdp: offerSDP,
+    userAgent: window.navigator.userAgent
   };
   Object.keys(message).forEach(function (key) {
     if (message[key] === undefined) {
