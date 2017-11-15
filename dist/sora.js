@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.7.2
+ * @version: 1.7.3
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
