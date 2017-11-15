@@ -194,7 +194,7 @@ class ConnectionBase {
           this._trace('PEER CONNECTION CONFIG', message.config);
           this._pc = new RTCPeerConnection(message.config, this.constraints);
           this._pc.oniceconnectionstatechange = (_) => {
-            this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE',this._pc.iceConnectionState);
+            this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE', this._pc.iceConnectionState);
           };
           return message;
         });
@@ -226,9 +226,16 @@ class ConnectionBase {
 
   _onIceCandidate() {
     return new Promise((resolve, _) => {
+      const timerId = setInterval(() => {
+        if (this._pc.iceConnectionState) {
+          clearInterval(timerId);
+          resolve();
+        }
+      }, 100);
       this._pc.onicecandidate = event => {
         this._trace('ONICECANDIDATE ICEGATHERINGSTATE', this._pc.iceGatheringState);
         if (event.candidate === null) {
+          clearInterval(timerId);
           resolve();
         }
         else {
