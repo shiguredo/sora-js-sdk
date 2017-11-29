@@ -7,6 +7,7 @@ const role = 'upstream';
 const channelId = '7N3fsMHob';
 const metadata = 'PG9A6RXgYqiqWKOVO';
 const sdp = 'v=0...';
+const userAgent = window.navigator.userAgent;
 
 describe('Utils', () => {
   describe('createSignalingMessage', () => {
@@ -19,7 +20,8 @@ describe('Utils', () => {
         metadata: metadata,
         sdp: sdp,
         audio: true,
-        video: true
+        video: true,
+        userAgent: userAgent
       };
       assert.deepEqual(actual, expected);
     });
@@ -33,7 +35,8 @@ describe('Utils', () => {
         metadata: null,
         sdp: sdp,
         audio: true,
-        video: true
+        video: true,
+        userAgent: userAgent
       };
       assert.deepEqual(actual, expected);
     });
@@ -51,7 +54,8 @@ describe('Utils', () => {
         metadata: metadata,
         sdp: sdp,
         audio: false,
-        video: false
+        video: false,
+        userAgent: userAgent
       };
       assert.deepEqual(actual, expected);
     });
@@ -74,7 +78,8 @@ describe('Utils', () => {
             codec_type: 'OPUS',
             bit_rate: 100
           },
-          video: true
+          video: true,
+          userAgent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -92,7 +97,8 @@ describe('Utils', () => {
           metadata: metadata,
           sdp: sdp,
           audio: false,
-          video: true
+          video: true,
+          userAgent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -114,7 +120,8 @@ describe('Utils', () => {
           audio: true,
           video: {
             codec_type: 'VP8'
-          }
+          },
+          userAgent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -132,7 +139,8 @@ describe('Utils', () => {
           metadata: metadata,
           sdp: sdp,
           audio: true,
-          video: false
+          video: false,
+          userAgent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -156,7 +164,8 @@ describe('Utils', () => {
             codec_type: 'VP8',
             bit_rate: 50,
             snapshot: true
-          }
+          },
+          userAgent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -178,6 +187,7 @@ describe('Utils', () => {
           plan_b: true,
           video: true,
           audio: true,
+          userAgent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
