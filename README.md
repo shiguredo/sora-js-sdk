@@ -1,9 +1,8 @@
 # Sora JavaScript SDK
 
-- バージョン
-    - 1.7.3
+[![GitHub tag](https://img.shields.io/github/tag/shiguredo/sora-js-sdk.svg)](https://github.com/shiguredo/sora-js-sdk)
 
-[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
+Sora JavaSCript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
 
 使い方は [Sora JavaScript SDK ドキュメント](https://sora.shiguredo.jp/js-sdk-doc/) を参照してください。
 
@@ -27,7 +26,7 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 
 ## システム条件
 
-- WebRTC SFU Sora 17.08 以降
+- WebRTC SFU Sora 17.10 以降
 
 ## サンプル
 

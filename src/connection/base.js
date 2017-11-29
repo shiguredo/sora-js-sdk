@@ -164,9 +164,9 @@ class ConnectionBase {
   }
 
   _createOffer() {
-    const pc = new RTCPeerConnection({iceServers: []});
+    const pc = new RTCPeerConnection({ iceServers: [] });
     if (pc.addTransceiver === undefined) {
-      return pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true});
+      return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
     }
     else {
       pc.addTransceiver('video').setDirection('recvonly');

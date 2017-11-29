@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.7.3
+ * @version: 1.7.4
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -509,7 +509,7 @@ var ConnectionPublisher = function (_ConnectionBase) {
           var index = _this3.remoteClientIds.indexOf(event.stream.id);
           if (-1 < index) {
             delete _this3.remoteClientIds[index];
-          };
+          }
           _this3._callbacks.removestream(event);
         };
         _this3.stream = stream;
@@ -576,7 +576,10 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     role: role,
     channel_id: channelId,
     metadata: metadata,
-    sdp: offerSDP
+    sdp: offerSDP,
+    userAgent: window.navigator.userAgent,
+    audio: true,
+    video: true
   };
   Object.keys(message).forEach(function (key) {
     if (message[key] === undefined) {
@@ -588,50 +591,52 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     message.multistream = true;
     message.plan_b = isPlanB();
   }
-  // create audio params
-  var audio = true;
-  if ('audio' in options && typeof options.audio === 'boolean') {
-    audio = options.audio;
+  // parse options
+  var audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
+  var videoPropertyKeys = ['videoCodecType', 'videoBitRate', 'videoSnapshot'];
+  var copyOptions = Object.assign({}, options);
+  Object.keys(copyOptions).forEach(function (key) {
+    if (key === 'audio' && typeof copyOptions[key] === 'boolean') return;
+    if (key === 'video' && typeof copyOptions[key] === 'boolean') return;
+    if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
+    if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
+    delete copyOptions[key];
+  });
+
+  if ('audio' in copyOptions) {
+    message.audio = copyOptions.audio;
   }
-  if (audio) {
-    var audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
-    if (Object.keys(options).some(function (key) {
-      return 0 <= audioPropertyKeys.indexOf(key);
-    })) {
-      audio = {};
-      if ('audioCodecType' in options) {
-        audio['codec_type'] = options.audioCodecType;
-      }
-      if ('audioBitRate' in options) {
-        audio['bit_rate'] = options.audioBitRate;
-      }
+  var hasAudioProperty = Object.keys(copyOptions).some(function (key) {
+    return 0 <= audioPropertyKeys.indexOf(key);
+  });
+  if (message.audio && hasAudioProperty) {
+    message.audio = {};
+    if ('audioCodecType' in copyOptions) {
+      message.audio['codec_type'] = copyOptions.audioCodecType;
     }
-  }
-  message['audio'] = audio;
-  // create video options
-  var video = true;
-  if ('video' in options) {
-    video = options.video;
+    if ('audioBitRate' in copyOptions) {
+      message.audio['bit_rate'] = copyOptions.audioBitRate;
+    }
   }
 
-  if (video) {
-    var videoPropertyKeys = ['videoCodecType', 'videoBitRate', 'videoSnapshot'];
-    if (Object.keys(options).some(function (key) {
-      return 0 <= videoPropertyKeys.indexOf(key);
-    })) {
-      video = {};
-      if ('videoCodecType' in options) {
-        video['codec_type'] = options.videoCodecType;
-      }
-      if ('videoBitRate' in options) {
-        video['bit_rate'] = options.videoBitRate;
-      }
-      if ('videoSnapshot' in options) {
-        video['snapshot'] = options.videoSnapshot;
-      }
+  if ('video' in copyOptions) {
+    message.video = copyOptions.video;
+  }
+  var hasVideoProperty = Object.keys(copyOptions).some(function (key) {
+    return 0 <= videoPropertyKeys.indexOf(key);
+  });
+  if (message.video && hasVideoProperty) {
+    message.video = {};
+    if ('videoCodecType' in copyOptions) {
+      message.video['codec_type'] = copyOptions.videoCodecType;
+    }
+    if ('videoBitRate' in copyOptions) {
+      message.video['bit_rate'] = copyOptions.videoBitRate;
+    }
+    if ('videoSnapshot' in copyOptions) {
+      message.video['snapshot'] = copyOptions.videoSnapshot;
     }
   }
-  message['video'] = video;
 
   return message;
 }
