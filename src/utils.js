@@ -38,7 +38,9 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     channel_id: channelId,
     metadata: metadata,
     sdp: offerSDP,
-    userAgent: window.navigator.userAgent
+    userAgent: window.navigator.userAgent,
+    audio: true,
+    video: true
   };
   Object.keys(message).forEach(key => {
     if (message[key] === undefined) {
@@ -50,51 +52,52 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     message.multistream = true;
     message.plan_b = isPlanB();
   }
-  // create audio params
-  let audio = true;
-  if ('audio' in options && typeof options.audio === 'boolean') {
-    audio = options.audio;
+  // parse options
+  const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
+  const videoPropertyKeys = ['videoCodecType', 'videoBitRate', 'videoSnapshot'];
+  const copyOptions = Object.assign({}, options);
+  Object.keys(copyOptions).forEach(key => {
+    if (key === 'audio' && typeof copyOptions[key] === 'boolean') return;
+    if (key === 'video' && typeof copyOptions[key] === 'boolean') return;
+    if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
+    if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
+    delete copyOptions[key];
+  });
+
+  if ('audio' in copyOptions) {
+    message.audio = copyOptions.audio;
   }
-  if (audio) {
-    const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
-    const hasAudioProperty = Object.keys(options).some(key => {
-      return 0 <= audioPropertyKeys.indexOf(key) && options[key] !== null;
-    });
-    if (hasAudioProperty) {
-      audio = {};
-      if ('audioCodecType' in options && options.audioCodecType) {
-        audio['codec_type'] = options.audioCodecType;
-      }
-      if ('audioBitRate' in options && options.audioBitRate) {
-        audio['bit_rate'] = options.audioBitRate;
-      }
+  const hasAudioProperty = Object.keys(copyOptions).some(key => {
+    return 0 <= audioPropertyKeys.indexOf(key);
+  });
+  if (message.audio && hasAudioProperty) {
+    message.audio = {};
+    if ('audioCodecType' in copyOptions) {
+      message.audio['codec_type'] = copyOptions.audioCodecType;
+    }
+    if ('audioBitRate' in copyOptions) {
+      message.audio['bit_rate'] = copyOptions.audioBitRate;
     }
   }
-  message['audio'] = audio;
-  // create video options
-  let video = true;
-  if ('video' in options && typeof options.video === 'boolean') {
-    video = options.video;
+
+  if ('video' in copyOptions) {
+    message.video = copyOptions.video;
   }
-  if (video) {
-    const videoPropertyKeys = ['videoCodecType', 'videoBitRate', 'videoSnapshot'];
-    const hasVideoProperty = Object.keys(options).some(key => {
-      return 0 <= videoPropertyKeys.indexOf(key) && options[key] !== null;
-    });
-    if (hasVideoProperty) {
-      video = {};
-      if ('videoCodecType' in options && options.videoCodecType) {
-        video['codec_type'] = options.videoCodecType;
-      }
-      if ('videoBitRate' in options && options.videoBitRate) {
-        video['bit_rate'] = options.videoBitRate;
-      }
-      if ('videoSnapshot' in options && options.videoSnapshot) {
-        video['snapshot'] = options.videoSnapshot;
-      }
+  const hasVideoProperty = Object.keys(copyOptions).some(key => {
+    return 0 <= videoPropertyKeys.indexOf(key);
+  });
+  if (message.video && hasVideoProperty) {
+    message.video = {};
+    if ('videoCodecType' in copyOptions) {
+      message.video['codec_type'] = copyOptions.videoCodecType;
+    }
+    if ('videoBitRate' in copyOptions) {
+      message.video['bit_rate'] = copyOptions.videoBitRate;
+    }
+    if ('videoSnapshot' in copyOptions) {
+      message.video['snapshot'] = copyOptions.videoSnapshot;
     }
   }
-  message['video'] = video;
 
   return message;
 }
