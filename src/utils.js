@@ -57,12 +57,15 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
   }
   if (audio) {
     const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
-    if (Object.keys(options).some(key => { return 0 <= audioPropertyKeys.indexOf(key); })) {
+    const hasAudioProperty = Object.keys(options).some(key => {
+      return 0 <= audioPropertyKeys.indexOf(key) && options[key] !== null;
+    });
+    if (hasAudioProperty) {
       audio = {};
-      if ('audioCodecType' in options) {
+      if ('audioCodecType' in options && options.audioCodecType) {
         audio['codec_type'] = options.audioCodecType;
       }
-      if ('audioBitRate' in options) {
+      if ('audioBitRate' in options && options.audioBitRate) {
         audio['bit_rate'] = options.audioBitRate;
       }
     }
@@ -70,21 +73,23 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
   message['audio'] = audio;
   // create video options
   let video = true;
-  if ('video' in options) {
+  if ('video' in options && typeof options.video === 'boolean') {
     video = options.video;
   }
-
   if (video) {
     const videoPropertyKeys = ['videoCodecType', 'videoBitRate', 'videoSnapshot'];
-    if (Object.keys(options).some(key => { return 0 <= videoPropertyKeys.indexOf(key); })) {
+    const hasVideoProperty = Object.keys(options).some(key => {
+      return 0 <= videoPropertyKeys.indexOf(key) && options[key] !== null;
+    });
+    if (hasVideoProperty) {
       video = {};
-      if ('videoCodecType' in options) {
+      if ('videoCodecType' in options && options.videoCodecType) {
         video['codec_type'] = options.videoCodecType;
       }
-      if ('videoBitRate' in options) {
+      if ('videoBitRate' in options && options.videoBitRate) {
         video['bit_rate'] = options.videoBitRate;
       }
-      if ('videoSnapshot' in options) {
+      if ('videoSnapshot' in options && options.videoSnapshot) {
         video['snapshot'] = options.videoSnapshot;
       }
     }
