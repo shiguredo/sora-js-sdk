@@ -9,7 +9,7 @@
 - FIX
     - バグ修正
 
-## develop
+## 1.7.5
 - [CHANGE] offer 作成用の peerConnection を close するように修正する
 
 ## 1.7.4
