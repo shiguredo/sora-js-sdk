@@ -9,6 +9,9 @@
 - FIX
     - バグ修正
 
+## 1.7.5
+- [CHANGE] offer 作成用の peerConnection を close するように修正する
+
 ## 1.7.4
 - [UPDATE] signaling connect 時のパラメータに UserAgent を追加する
 - [CHANGE] publisher, subscriber の引数の options に渡したオブジェクトの value 値が null の場合は処理しないように修正する

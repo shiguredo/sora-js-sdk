@@ -16,9 +16,7 @@ class ConnectionPublisher extends ConnectionBase {
     return this.disconnect()
       .then(this._createOffer)
       .then(this._signaling.bind(this))
-      .then(message => {
-        return this._connectPeerConnection(message);
-      })
+      .then(this._connectPeerConnection.bind(this))
       .then(message => {
         if (typeof this._pc.addStream === 'undefined') {
           stream.getTracks().forEach(track => {
@@ -43,9 +41,7 @@ class ConnectionPublisher extends ConnectionBase {
     return this.disconnect()
       .then(this._createOffer)
       .then(this._signaling.bind(this))
-      .then(message => {
-        return this._connectPeerConnection(message);
-      })
+      .then(this._connectPeerConnection.bind(this))
       .then(message => {
         if (typeof this._pc.addStream === 'undefined') {
           stream.getTracks().forEach(track => {
