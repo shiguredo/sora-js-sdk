@@ -15,9 +15,7 @@ class ConnectionSubscriber extends ConnectionBase {
     return this.disconnect()
       .then(this._createOffer)
       .then(this._signaling.bind(this))
-      .then(message => {
-        return this._connectPeerConnection(message);
-      })
+      .then(this._connectPeerConnection.bind(this))
       .then(message => {
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = function(event) {
@@ -43,9 +41,7 @@ class ConnectionSubscriber extends ConnectionBase {
     return this.disconnect()
       .then(this._createOffer)
       .then(this._signaling.bind(this))
-      .then(message => {
-        return this._connectPeerConnection(message);
-      })
+      .then(this._connectPeerConnection.bind(this))
       .then(message => {
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = event => {

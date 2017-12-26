@@ -242,11 +242,17 @@ var ConnectionBase = function () {
     value: function _createOffer() {
       var pc = new RTCPeerConnection({ iceServers: [] });
       if (pc.addTransceiver === undefined) {
-        return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+        return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true }).then(function (offer) {
+          pc.close();
+          return Promise.resolve(offer);
+        });
       } else {
         pc.addTransceiver('video').setDirection('recvonly');
         pc.addTransceiver('audio').setDirection('recvonly');
-        return pc.createOffer();
+        return pc.createOffer().then(function (offer) {
+          pc.close();
+          return Promise.resolve(offer);
+        });
       }
     }
   }, {
@@ -311,7 +317,7 @@ var ConnectionBase = function () {
 
       return new Promise(function (resolve, _) {
         var timerId = setInterval(function () {
-          if (_this5._pc.iceConnectionState) {
+          if (_this5._pc.iceConnectionState === 'connected') {
             clearInterval(timerId);
             resolve();
           }
@@ -456,9 +462,7 @@ var ConnectionPublisher = function (_ConnectionBase) {
     value: function _singleStream(stream) {
       var _this2 = this;
 
-      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(function (message) {
-        return _this2._connectPeerConnection(message);
-      }).then(function (message) {
+      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(function (message) {
         if (typeof _this2._pc.addStream === 'undefined') {
           stream.getTracks().forEach(function (track) {
             _this2._pc.addTrack(track, stream);
@@ -477,9 +481,7 @@ var ConnectionPublisher = function (_ConnectionBase) {
     value: function _multiStream(stream) {
       var _this3 = this;
 
-      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(function (message) {
-        return _this3._connectPeerConnection(message);
-      }).then(function (message) {
+      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(function (message) {
         if (typeof _this3._pc.addStream === 'undefined') {
           stream.getTracks().forEach(function (track) {
             _this3._pc.addTrack(track, stream);
@@ -686,9 +688,7 @@ var ConnectionSubscriber = function (_ConnectionBase) {
     value: function _singleStream() {
       var _this2 = this;
 
-      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(function (message) {
-        return _this2._connectPeerConnection(message);
-      }).then(function (message) {
+      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(function (message) {
         if (typeof _this2._pc.ontrack === 'undefined') {
           _this2._pc.onaddstream = function (event) {
             this.stream = event.stream;
@@ -708,9 +708,7 @@ var ConnectionSubscriber = function (_ConnectionBase) {
     value: function _multiStream() {
       var _this3 = this;
 
-      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(function (message) {
-        return _this3._connectPeerConnection(message);
-      }).then(function (message) {
+      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(function (message) {
         if (typeof _this3._pc.ontrack === 'undefined') {
           _this3._pc.onaddstream = function (event) {
             _this3._callbacks.addstream(event);

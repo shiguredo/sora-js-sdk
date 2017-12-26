@@ -166,12 +166,20 @@ class ConnectionBase {
   _createOffer() {
     const pc = new RTCPeerConnection({ iceServers: [] });
     if (pc.addTransceiver === undefined) {
-      return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+      return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
+        .then(offer => {
+          pc.close();
+          return Promise.resolve(offer);
+        });
     }
     else {
       pc.addTransceiver('video').setDirection('recvonly');
       pc.addTransceiver('audio').setDirection('recvonly');
-      return pc.createOffer();
+      return pc.createOffer()
+        .then(offer => {
+          pc.close();
+          return Promise.resolve(offer);
+        });
     }
   }
 
@@ -227,7 +235,7 @@ class ConnectionBase {
   _onIceCandidate() {
     return new Promise((resolve, _) => {
       const timerId = setInterval(() => {
-        if (this._pc.iceConnectionState) {
+        if (this._pc.iceConnectionState === 'connected') {
           clearInterval(timerId);
           resolve();
         }
