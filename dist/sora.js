@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.7.5
+ * @version: 1.7.6
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -14,7 +14,7 @@
 		exports["Sora"] = factory();
 	else
 		root["Sora"] = factory();
-})(this, function() {
+})(typeof self !== 'undefined' ? self : this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -718,13 +718,17 @@ var ConnectionSubscriber = function (_ConnectionBase) {
             var stream = event.streams[0];
             if (stream.id === 'default') return;
             if (stream.id === _this3.clientId) return;
-            if (event.track.kind === 'video') {
-              event.stream = stream;
-              _this3._callbacks.addstream(event);
-            }
+            if (-1 < _this3.remoteClientIds.indexOf(stream.id)) return;
+            event.stream = stream;
+            _this3.remoteClientIds.push(stream.id);
+            _this3._callbacks.addstream(event);
           };
         }
         _this3._pc.onremovestream = function (event) {
+          var index = _this3.remoteClientIds.indexOf(event.stream.id);
+          if (-1 < index) {
+            delete _this3.remoteClientIds[index];
+          }
           _this3._callbacks.removestream(event);
         };
         return _this3._setRemoteDescription(message);
