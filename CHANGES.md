@@ -11,6 +11,7 @@
 
 ## 1.7.6
 - [FIX] multistream subscriber 利用時に ontrack が video でしか発火しなかったのを修正する
+- [FIX] multistream subscriber 利用時に onremovestream を ontrack の動作に合わせる
 
 ## 1.7.5
 - [CHANGE] offer 作成用の peerConnection を close するように修正する
