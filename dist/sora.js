@@ -725,6 +725,10 @@ var ConnectionSubscriber = function (_ConnectionBase) {
           };
         }
         _this3._pc.onremovestream = function (event) {
+          var index = _this3.remoteClientIds.indexOf(event.stream.id);
+          if (-1 < index) {
+            delete _this3.remoteClientIds[index];
+          }
           _this3._callbacks.removestream(event);
         };
         return _this3._setRemoteDescription(message);
