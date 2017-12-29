@@ -59,6 +59,10 @@ class ConnectionSubscriber extends ConnectionBase {
           };
         }
         this._pc.onremovestream = event => {
+          const index = this.remoteClientIds.indexOf(event.stream.id);
+          if (-1 < index) {
+            delete this.remoteClientIds[index];
+          }
           this._callbacks.removestream(event);
         };
         return this._setRemoteDescription(message);
