@@ -31,6 +31,10 @@ export function isEdge() {
   return userAgent().indexOf('edge') !== -1;
 }
 
+export function isSafari() {
+  return userAgent().indexOf('safari') !== -1;
+}
+
 export function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   const message = {
     type: 'connect',

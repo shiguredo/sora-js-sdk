@@ -9,6 +9,9 @@
 - FIX
     - バグ修正
 
+## 1.7.7
+- [FIX] disconnect 時に Safari では PeerConnection Closing Error が出る問題を修正する
+
 ## 1.7.6
 - [FIX] multistream subscriber 利用時に ontrack が video でしか発火しなかったのを修正する
 - [FIX] multistream subscriber 利用時に onremovestream を ontrack の動作に合わせる

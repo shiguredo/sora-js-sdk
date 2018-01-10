@@ -9,7 +9,7 @@ type ConnectionOptions = {
   multistream?: boolean
 }
 
-import { createSignalingMessage, trace } from '../utils';
+import { createSignalingMessage, trace, isSafari } from '../utils';
 
 const RTCPeerConnection = window.RTCPeerConnection;
 const RTCSessionDescription = window.RTCSessionDescription;
@@ -94,6 +94,12 @@ class ConnectionBase {
       this._ws.close();
     });
     const closePeerConnection = new Promise((resolve, reject) => {
+      // Safari は signalingState が常に stable のため個別に処理する
+      if (isSafari() && this._pc) {
+        this._pc.close();
+        this._pc = null;
+        return resolve();
+      }
       if (!this._pc || this._pc.signalingState === 'closed') return resolve();
 
       let counter = 5;
