@@ -171,6 +171,7 @@ var ConnectionBase = function () {
       var closePeerConnection = new Promise(function (resolve, reject) {
         // Safari は signalingState が常に stable のため個別に処理する
         if ((0, _utils.isSafari)() && _this._pc) {
+          _this._pc.oniceconnectionstatechange = null;
           _this._pc.close();
           _this._pc = null;
           return resolve();
@@ -185,6 +186,7 @@ var ConnectionBase = function () {
           }
           if (_this._pc.signalingState === 'closed') {
             clearInterval(timer_id);
+            _this._pc.oniceconnectionstatechange = null;
             _this._pc = null;
             return resolve();
           }
