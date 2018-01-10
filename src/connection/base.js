@@ -62,6 +62,7 @@ class ConnectionBase {
 
   disconnect() {
     this.clientId = null;
+    this.remoteClientIds = [];
     const closeStream = new Promise((resolve, _) => {
       if (!this.stream) return resolve();
       this.stream.getTracks().forEach((t) => {
