@@ -45,6 +45,7 @@ class ConnectionSubscriber extends ConnectionBase {
       .then(message => {
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = event => {
+            this.remoteClientIds.push(event.id);
             this._callbacks.addstream(event);
           };
         } else {
