@@ -11,6 +11,9 @@
 
 ## 1.7.7
 - [FIX] disconnect 時に Safari では PeerConnection Closing Error が出る問題を修正する
+- [FIX] subscriber multistream 時に Chrome では remoteClientIds が更新されていなかった問題を修正する
+- [FIX] disconnect 時に remote 接続の clientId リストを初期化するように修正する
+- [FIX] disconnect 時に peerConnection の oniceconnectionstatechange を初期化するように修正する
 
 ## 1.7.6
 - [FIX] multistream subscriber 利用時に ontrack が video でしか発火しなかったのを修正する
