@@ -14,7 +14,7 @@
 		exports["Sora"] = factory();
 	else
 		root["Sora"] = factory();
-})(typeof self !== 'undefined' ? self : this, function() {
+})(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -136,6 +136,7 @@ var ConnectionBase = function () {
       var _this = this;
 
       this.clientId = null;
+      this.remoteClientIds = [];
       var closeStream = new Promise(function (resolve, _) {
         if (!_this.stream) return resolve();
         _this.stream.getTracks().forEach(function (t) {
@@ -168,6 +169,12 @@ var ConnectionBase = function () {
         _this._ws.close();
       });
       var closePeerConnection = new Promise(function (resolve, reject) {
+        // Safari は signalingState が常に stable のため個別に処理する
+        if ((0, _utils.isSafari)() && _this._pc) {
+          _this._pc.close();
+          _this._pc = null;
+          return resolve();
+        }
         if (!_this._pc || _this._pc.signalingState === 'closed') return resolve();
 
         var counter = 5;
@@ -539,6 +546,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.trace = trace;
 exports.isEdge = isEdge;
+exports.isSafari = isSafari;
 exports.createSignalingMessage = createSignalingMessage;
 function trace(clientId, title, value) {
   var prefix = '';
@@ -570,6 +578,10 @@ function isPlanB() {
 
 function isEdge() {
   return userAgent().indexOf('edge') !== -1;
+}
+
+function isSafari() {
+  return userAgent().indexOf('safari') !== -1;
 }
 
 function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
@@ -711,6 +723,7 @@ var ConnectionSubscriber = function (_ConnectionBase) {
       return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(function (message) {
         if (typeof _this3._pc.ontrack === 'undefined') {
           _this3._pc.onaddstream = function (event) {
+            _this3.remoteClientIds.push(event.id);
             _this3._callbacks.addstream(event);
           };
         } else {
