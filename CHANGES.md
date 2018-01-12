@@ -10,6 +10,7 @@
     - バグ修正
 
 ## 1.7.7
+- [UPDATE] example を修正する
 - [FIX] disconnect 時に Safari では PeerConnection Closing Error が出る問題を修正する
 - [FIX] subscriber multistream 時に Chrome では remoteClientIds が更新されていなかった問題を修正する
 - [FIX] disconnect 時に remote 接続の clientId リストを初期化するように修正する
