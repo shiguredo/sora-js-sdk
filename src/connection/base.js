@@ -9,7 +9,7 @@ type ConnectionOptions = {
   multistream?: boolean
 }
 
-import { createSignalingMessage, trace } from '../utils';
+import { createSignalingMessage, trace, isSafari } from '../utils';
 
 const RTCPeerConnection = window.RTCPeerConnection;
 const RTCSessionDescription = window.RTCSessionDescription;
@@ -62,6 +62,7 @@ class ConnectionBase {
 
   disconnect() {
     this.clientId = null;
+    this.remoteClientIds = [];
     const closeStream = new Promise((resolve, _) => {
       if (!this.stream) return resolve();
       this.stream.getTracks().forEach((t) => {
@@ -94,6 +95,13 @@ class ConnectionBase {
       this._ws.close();
     });
     const closePeerConnection = new Promise((resolve, reject) => {
+      // Safari は signalingState が常に stable のため個別に処理する
+      if (isSafari() && this._pc) {
+        this._pc.oniceconnectionstatechange = null;
+        this._pc.close();
+        this._pc = null;
+        return resolve();
+      }
       if (!this._pc || this._pc.signalingState === 'closed') return resolve();
 
       let counter = 5;
@@ -104,6 +112,7 @@ class ConnectionBase {
         }
         if (this._pc.signalingState === 'closed') {
           clearInterval(timer_id);
+          this._pc.oniceconnectionstatechange = null;
           this._pc = null;
           return resolve();
         }
