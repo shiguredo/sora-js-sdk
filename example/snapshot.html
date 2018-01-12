@@ -36,8 +36,11 @@ var options = {
   videoCodecType: 'VP8',
   videoSnapshot: true
 }
+var options2 = {
+  videoCodecType: 'VP8',
+}
 var publisher = sora.publisher(channelId, metadata1, options);
-var subscriber = sora.subscriber(channelId, metadata2);
+var subscriber = sora.subscriber(channelId, metadata2, options2);
 var snapshot = sora.subscriber(channelId, metadata2, options);
 
 document.querySelector('#start').addEventListener('click', function() {
