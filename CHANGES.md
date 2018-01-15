@@ -9,6 +9,9 @@
 - FIX
     - バグ修正
 
+## develop
+- [ADD] auth metadata を参照できるように修正する
+
 ## 1.7.7
 - [UPDATE] example を修正する
 - [FIX] disconnect 時に Safari では PeerConnection Closing Error が出る問題を修正する
