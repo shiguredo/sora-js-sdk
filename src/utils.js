@@ -56,6 +56,10 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     message.multistream = true;
     message.plan_b = isPlanB();
   }
+  // vad
+  if ('vad' in options) {
+    message.vad = options.vad;
+  }
   // parse options
   const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
   const videoPropertyKeys = ['videoCodecType', 'videoBitRate', 'videoSnapshot'];
