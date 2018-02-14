@@ -82,6 +82,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * videoBitRate   | integer |      | ビデオビットレート                    |
   | * videoSnapshot  | boolean |      | スナップショット有効／無効            |
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
+  | * vad            | integer |      | 最大話者数                            |
 
 - connect(stream)
 
@@ -151,6 +152,7 @@ publisher.on('disconnect', function(e) {
   | * videoBitRate   | integer |      | ビデオビットレート                    |
   | * videoSnapshot  | boolean |      | スナップショット有効／無効            |
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
+  | * vad            | integer |      | 最大話者数                            |
 
 - connect()
 

@@ -11,6 +11,7 @@
 
 ## develop
 - [ADD] auth metadata を参照できるように修正する
+- [UPDATE] signaling connect 時のパラメータに vad を追加する
 
 ## 1.7.7
 - [UPDATE] example を修正する
