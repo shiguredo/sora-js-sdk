@@ -180,7 +180,8 @@ describe('Utils', () => {
         videoCodecType: null,
         videoBitRate: null,
         videoSnapshot: null,
-        multistream: null
+        multistream: null,
+        vad: null
       };
       const actual = createSignalingMessage(null, null, null, null, options);
       const expected = {
@@ -191,6 +192,7 @@ describe('Utils', () => {
         sdp: null,
         audio: true,
         video: true,
+        vad: null,
         userAgent: userAgent
       };
       assert.deepEqual(actual, expected);
@@ -260,6 +262,27 @@ describe('Utils', () => {
           video: true,
           audio: true,
           userAgent: userAgent
+        };
+        assert.deepEqual(actual, expected);
+      });
+    });
+
+    describe('vad parameter', () => {
+      it('vad', () => {
+        const options = {
+          vad: 2
+        };
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
+        const expected = {
+          type: 'connect',
+          role: role,
+          channel_id: channelId,
+          metadata: metadata,
+          sdp: sdp,
+          video: true,
+          audio: true,
+          userAgent: userAgent,
+          vad: 2
         };
         assert.deepEqual(actual, expected);
       });

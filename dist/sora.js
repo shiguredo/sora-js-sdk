@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.7.7
+ * @version: 1.8.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -121,6 +121,7 @@ var ConnectionBase = function () {
       notify: function notify() {},
       log: function log() {}
     };
+    this.authMetadata = null;
   }
 
   _createClass(ConnectionBase, [{
@@ -136,6 +137,7 @@ var ConnectionBase = function () {
       var _this = this;
 
       this.clientId = null;
+      this.authMetadata = null;
       this.remoteClientIds = [];
       var closeStream = new Promise(function (resolve, _) {
         if (!_this.stream) return resolve();
@@ -228,6 +230,9 @@ var ConnectionBase = function () {
               });
             };
             _this2._ws.onerror = null;
+            if ('metadata' in data) {
+              _this2.authMetadata = data.metadata;
+            }
             _this2._trace('SIGNALING OFFER MESSAGE', data);
             _this2._trace('OFFER SDP', data.sdp);
             resolve(data);
@@ -606,6 +611,10 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   if ('multistream' in options && options.multistream === true) {
     message.multistream = true;
     message.plan_b = isPlanB();
+  }
+  // vad
+  if ('vad' in options) {
+    message.vad = options.vad;
   }
   // parse options
   var audioPropertyKeys = ['audioCodecType', 'audioBitRate'];

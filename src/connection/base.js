@@ -26,6 +26,7 @@ class ConnectionBase {
   remoteClientIds: string[];
   stream: ?MediaStream.prototype;
   role: ?string;
+  authMetadata: ?string;
   _ws: WebSocket.prototype;
   _pc: RTCPeerConnection.prototype;
   _callbacks: Object;
@@ -52,6 +53,7 @@ class ConnectionBase {
       notify: function() {},
       log: function() {}
     };
+    this.authMetadata = null;
   }
 
   on(kind: string, callback: Function) {
@@ -62,6 +64,7 @@ class ConnectionBase {
 
   disconnect() {
     this.clientId = null;
+    this.authMetadata = null;
     this.remoteClientIds = [];
     const closeStream = new Promise((resolve, _) => {
       if (!this.stream) return resolve();
@@ -153,6 +156,9 @@ class ConnectionBase {
               });
           };
           this._ws.onerror = null;
+          if ('metadata' in data) {
+            this.authMetadata = data.metadata;
+          }
           this._trace('SIGNALING OFFER MESSAGE', data);
           this._trace('OFFER SDP', data.sdp);
           resolve(data);
