@@ -9,7 +9,7 @@
 - FIX
     - バグ修正
 
-## develop
+## 1.8.0
 - [ADD] auth metadata を参照できるように修正する
 - [UPDATE] signaling connect 時のパラメータに vad を追加する
 
