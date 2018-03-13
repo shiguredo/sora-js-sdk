@@ -246,9 +246,15 @@ class ConnectionBase {
   }
 
   _onIceCandidate() {
-    return new Promise((resolve, _) => {
+    return new Promise((resolve, reject) => {
       const timerId = setInterval(() => {
-        if (this._pc.iceConnectionState === 'connected') {
+        if (this._pc === null) {
+          clearInterval(timerId);
+          const error = new Error();
+          error.message = 'ICECANDIDATE TIMEOUT';
+          reject(error);
+        }
+        else if (this._pc && this._pc.iceConnectionState === 'connected') {
           clearInterval(timerId);
           resolve();
         }
