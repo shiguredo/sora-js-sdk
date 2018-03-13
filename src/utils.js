@@ -15,24 +15,33 @@ export function trace(clientId: ?string, title: string, value: Object | string) 
   }
 }
 
-function userAgent() {
-  return window.navigator.userAgent.toLocaleLowerCase();
+function browser() {
+  const ua = window.navigator.userAgent.toLocaleLowerCase();
+  if (ua.indexOf('chrome') !== -1) {
+    return 'chrome';
+  }
+  else if (ua.indexOf('edge') !== -1) {
+    return 'edge';
+  }
+  else if (ua.indexOf('firefox') !== -1) {
+    return 'firefox';
+  }
+  else if (ua.indexOf('safari') !== -1) {
+    return 'safari';
+  }
+  return ;
 }
 
 function isPlanB() {
-  if (userAgent().indexOf('chrome') !== -1 || userAgent().indexOf('safari') !== -1) {
-    return true;
-  } else {
-    return false;
-  }
+  return browser() === 'chrome' || browser() === 'safari';
 }
 
 export function isEdge() {
-  return userAgent().indexOf('edge') !== -1;
+  return browser() === 'edge';
 }
 
 export function isSafari() {
-  return userAgent().indexOf('safari') !== -1;
+  return browser() === 'safari';
 }
 
 export function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
