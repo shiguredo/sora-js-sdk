@@ -180,14 +180,7 @@ class ConnectionBase {
 
   _createOffer() {
     const pc = new RTCPeerConnection({ iceServers: [] });
-    if (pc.addTransceiver === undefined) {
-      return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
-        .then(offer => {
-          pc.close();
-          return Promise.resolve(offer);
-        });
-    }
-    else {
+    if (isSafari()) {
       pc.addTransceiver('video').setDirection('recvonly');
       pc.addTransceiver('audio').setDirection('recvonly');
       return pc.createOffer()
@@ -196,6 +189,11 @@ class ConnectionBase {
           return Promise.resolve(offer);
         });
     }
+    return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
+      .then(offer => {
+        pc.close();
+        return Promise.resolve(offer);
+      });
   }
 
   _connectPeerConnection(message: Object) {
