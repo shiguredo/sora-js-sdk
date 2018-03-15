@@ -180,14 +180,7 @@ class ConnectionBase {
 
   _createOffer() {
     const pc = new RTCPeerConnection({ iceServers: [] });
-    if (pc.addTransceiver === undefined) {
-      return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
-        .then(offer => {
-          pc.close();
-          return Promise.resolve(offer);
-        });
-    }
-    else {
+    if (isSafari()) {
       pc.addTransceiver('video').setDirection('recvonly');
       pc.addTransceiver('audio').setDirection('recvonly');
       return pc.createOffer()
@@ -196,6 +189,11 @@ class ConnectionBase {
           return Promise.resolve(offer);
         });
     }
+    return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
+      .then(offer => {
+        pc.close();
+        return Promise.resolve(offer);
+      });
   }
 
   _connectPeerConnection(message: Object) {
@@ -248,9 +246,15 @@ class ConnectionBase {
   }
 
   _onIceCandidate() {
-    return new Promise((resolve, _) => {
+    return new Promise((resolve, reject) => {
       const timerId = setInterval(() => {
-        if (this._pc.iceConnectionState === 'connected') {
+        if (this._pc === null) {
+          clearInterval(timerId);
+          const error = new Error();
+          error.message = 'ICECANDIDATE TIMEOUT';
+          reject(error);
+        }
+        else if (this._pc && this._pc.iceConnectionState === 'connected') {
           clearInterval(timerId);
           resolve();
         }

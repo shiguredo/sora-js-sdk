@@ -9,6 +9,10 @@
 - FIX
     - バグ修正
 
+## 1.8.1
+- [FIX] addTransceiver を使うのは safari の場合だけにする
+- [FIX] pc が null の場合は reject するように修正する
+
 ## 1.8.0
 - [ADD] auth metadata を参照できるように修正する
 - [UPDATE] signaling connect 時のパラメータに vad を追加する
