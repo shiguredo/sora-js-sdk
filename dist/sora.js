@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.8.0
+ * @version: 1.8.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -14,7 +14,7 @@
 		exports["Sora"] = factory();
 	else
 		root["Sora"] = factory();
-})(this, function() {
+})(typeof self !== 'undefined' ? self : this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -255,12 +255,7 @@ var ConnectionBase = function () {
     key: '_createOffer',
     value: function _createOffer() {
       var pc = new RTCPeerConnection({ iceServers: [] });
-      if (pc.addTransceiver === undefined) {
-        return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true }).then(function (offer) {
-          pc.close();
-          return Promise.resolve(offer);
-        });
-      } else {
+      if ((0, _utils.isSafari)()) {
         pc.addTransceiver('video').setDirection('recvonly');
         pc.addTransceiver('audio').setDirection('recvonly');
         return pc.createOffer().then(function (offer) {
@@ -268,6 +263,10 @@ var ConnectionBase = function () {
           return Promise.resolve(offer);
         });
       }
+      return pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true }).then(function (offer) {
+        pc.close();
+        return Promise.resolve(offer);
+      });
     }
   }, {
     key: '_connectPeerConnection',
@@ -329,9 +328,14 @@ var ConnectionBase = function () {
     value: function _onIceCandidate() {
       var _this5 = this;
 
-      return new Promise(function (resolve, _) {
+      return new Promise(function (resolve, reject) {
         var timerId = setInterval(function () {
-          if (_this5._pc.iceConnectionState === 'connected') {
+          if (_this5._pc === null) {
+            clearInterval(timerId);
+            var error = new Error();
+            error.message = 'ICECANDIDATE TIMEOUT';
+            reject(error);
+          } else if (_this5._pc && _this5._pc.iceConnectionState === 'connected') {
             clearInterval(timerId);
             resolve();
           }
@@ -571,24 +575,30 @@ function trace(clientId, title, value) {
   }
 }
 
-function userAgent() {
-  return window.navigator.userAgent.toLocaleLowerCase();
+function browser() {
+  var ua = window.navigator.userAgent.toLocaleLowerCase();
+  if (ua.indexOf('chrome') !== -1) {
+    return 'chrome';
+  } else if (ua.indexOf('edge') !== -1) {
+    return 'edge';
+  } else if (ua.indexOf('firefox') !== -1) {
+    return 'firefox';
+  } else if (ua.indexOf('safari') !== -1) {
+    return 'safari';
+  }
+  return;
 }
 
 function isPlanB() {
-  if (userAgent().indexOf('chrome') !== -1 || userAgent().indexOf('safari') !== -1) {
-    return true;
-  } else {
-    return false;
-  }
+  return browser() === 'chrome' || browser() === 'safari';
 }
 
 function isEdge() {
-  return userAgent().indexOf('edge') !== -1;
+  return browser() === 'edge';
 }
 
 function isSafari() {
-  return userAgent().indexOf('safari') !== -1;
+  return browser() === 'safari';
 }
 
 function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
