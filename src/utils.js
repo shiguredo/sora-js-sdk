@@ -65,9 +65,9 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     message.multistream = true;
     message.plan_b = isPlanB();
   }
-  // vad
-  if ('vad' in options) {
-    message.vad = options.vad;
+  // spotlight
+  if ('spotlight' in options) {
+    message.spotlight = options.spotlight;
   }
   // parse options
   const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
