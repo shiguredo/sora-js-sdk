@@ -197,3 +197,31 @@ publisher.on('disconnect', function(e) {
   console.error(e);
 });
 ```
+
+## 開発者向け
+```
+$ git clone https://github.com/shiguredo/sora-js-sdk.git
+$ cd sora-js-sdk
+$ yarn install
+```
+
+### ビルド
+```
+ $ npm run build
+```
+
+### 開発時
+```
+ $ npm run build -- --watch
+```
+
+```
+ $ npm run dev
+```
+
+### リリース
+```
+ $ npm run check
+ $ npm run test
+ $ npm run build
+```
