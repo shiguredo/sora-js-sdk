@@ -10,6 +10,8 @@
     - バグ修正
 
 ## develop
+
+## 1.8.2
 - [CHANGE] vad を spotlight に変更する
 
 ## 1.8.1

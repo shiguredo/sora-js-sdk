@@ -26,7 +26,7 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 
 ## システム条件
 
-- WebRTC SFU Sora 18.02 以降
+- WebRTC SFU Sora 18.04 以降
 
 ## サンプル
 
