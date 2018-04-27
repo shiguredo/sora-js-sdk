@@ -9,6 +9,11 @@
 - FIX
     - バグ修正
 
+## develop
+
+## 1.8.2
+- [CHANGE] vad を spotlight に変更する
+
 ## 1.8.1
 - [FIX] addTransceiver を使うのは safari の場合だけにする
 - [FIX] pc が null の場合は reject するように修正する

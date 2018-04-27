@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.8.1
+ * @version: 1.8.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -14,7 +14,7 @@
 		exports["Sora"] = factory();
 	else
 		root["Sora"] = factory();
-})(typeof self !== 'undefined' ? self : this, function() {
+})(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -622,9 +622,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     message.multistream = true;
     message.plan_b = isPlanB();
   }
-  // vad
-  if ('vad' in options) {
-    message.vad = options.vad;
+  // spotlight
+  if ('spotlight' in options) {
+    message.spotlight = options.spotlight;
   }
   // parse options
   var audioPropertyKeys = ['audioCodecType', 'audioBitRate'];

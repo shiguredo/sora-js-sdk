@@ -26,7 +26,7 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 
 ## システム条件
 
-- WebRTC SFU Sora 18.02 以降
+- WebRTC SFU Sora 18.04 以降
 
 ## サンプル
 
@@ -82,7 +82,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * videoBitRate   | integer |      | ビデオビットレート                    |
   | * videoSnapshot  | boolean |      | スナップショット有効／無効            |
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
-  | * vad            | integer |      | 最大話者数                            |
+  | * spotlight      | integer |      | 最大話者数                            |
 
 - connect(stream)
 
@@ -152,7 +152,7 @@ publisher.on('disconnect', function(e) {
   | * videoBitRate   | integer |      | ビデオビットレート                    |
   | * videoSnapshot  | boolean |      | スナップショット有効／無効            |
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
-  | * vad            | integer |      | 最大話者数                            |
+  | * spotlight      | integer |      | 最大話者数                            |
 
 - connect()
 
@@ -196,4 +196,32 @@ subscriber.disconnect()
 publisher.on('disconnect', function(e) {
   console.error(e);
 });
+```
+
+## 開発者向け
+```
+$ git clone https://github.com/shiguredo/sora-js-sdk.git
+$ cd sora-js-sdk
+$ yarn install
+```
+
+### ビルド
+```
+ $ npm run build
+```
+
+### 開発時
+```
+ $ npm run build -- --watch
+```
+
+```
+ $ npm run dev
+```
+
+### リリース
+```
+ $ npm run check
+ $ npm run test
+ $ npm run build
 ```
