@@ -75,7 +75,9 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
   // multistream
   if ('multistream' in options && options.multistream === true) {
     message.multistream = true;
-    message.plan_b = isPlanB();
+    if (!isUnifiedChrome() && isPlanB()) {
+      message.plan_b = true;
+    }
   }
   // spotlight
   if ('spotlight' in options) {
