@@ -61,6 +61,7 @@ class ConnectionPublisher extends ConnectionBase {
         } else {
           this._pc.ontrack = event => {
             const stream = event.streams[0];
+            if (!stream) return;
             if (stream.id === 'default') return;
             if (stream.id === this.clientId) return;
             if (-1 < this.remoteClientIds.indexOf(stream.id)) return;
