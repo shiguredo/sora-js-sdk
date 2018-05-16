@@ -10,6 +10,10 @@
     - バグ修正
 
 ## develop
+- [ADD] Chrome M68 以降のバージョンの動作変更
+    - RTCPeerConnection の config に sdpSemantics: 'unified-plan' を追加
+    - signaling message に plan_b: true オプションを渡さないように修正
+- [FIX] ontrack で stream が取得できなかった場合のエラーを修正する
 
 ## 1.8.2
 - [CHANGE] vad を spotlight に変更する
