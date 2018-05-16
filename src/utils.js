@@ -36,6 +36,18 @@ function isPlanB() {
   return browser() === 'chrome' || browser() === 'safari';
 }
 
+export function isUnifiedChrome() {
+  if (browser() !== 'chrome') {
+    return false;
+  }
+  const ua = window.navigator.userAgent.toLocaleLowerCase();
+  const splitedUserAgent = /chrome\/([\d.]+)/.exec(ua);
+  if (!splitedUserAgent || splitedUserAgent.length < 2) {
+    return false;
+  }
+  return 68 <= parseInt(splitedUserAgent[1]);
+}
+
 export function isEdge() {
   return browser() === 'edge';
 }
