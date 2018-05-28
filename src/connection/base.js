@@ -5,11 +5,10 @@ type ConnectionOptions = {
   video: boolean,
   videoCodecType?: string,
   videoBitRate?: number,
-  videoSnapshot?: boolean,
   multistream?: boolean
 }
 
-import { createSignalingMessage, trace, isSafari } from '../utils';
+import { createSignalingMessage, trace, isSafari, isUnifiedChrome } from '../utils';
 
 const RTCPeerConnection = window.RTCPeerConnection;
 const RTCSessionDescription = window.RTCSessionDescription;
@@ -47,7 +46,6 @@ class ConnectionBase {
     this._callbacks = {
       disconnect: function() {},
       push: function() {},
-      snapshot: function() {},
       addstream: function() {},
       removestream: function() {},
       notify: function() {},
@@ -169,8 +167,6 @@ class ConnectionBase {
           this._ws.send(JSON.stringify({ type: 'pong' }));
         } else if (data.type == 'push') {
           this._callbacks.push(data);
-        } else if (data.type == 'snapshot') {
-          this._callbacks.snapshot(data);
         } else if (data.type == 'notify') {
           this._callbacks.notify(data);
         }
@@ -179,7 +175,11 @@ class ConnectionBase {
   }
 
   _createOffer() {
-    const pc = new RTCPeerConnection({ iceServers: [] });
+    let config = { iceServers: [] };
+    if (isUnifiedChrome()) {
+      config = Object.assign({}, config, { sdpSemantics: 'unified-plan' });
+    }
+    const pc = new RTCPeerConnection(config);
     if (isSafari()) {
       pc.addTransceiver('video').setDirection('recvonly');
       pc.addTransceiver('audio').setDirection('recvonly');
@@ -201,6 +201,9 @@ class ConnectionBase {
       message.config = {};
     }
     if (RTCPeerConnection.generateCertificate === undefined) {
+      if (isUnifiedChrome()) {
+        message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
+      }
       this._trace('PEER CONNECTION CONFIG', message.config);
       this._pc = new RTCPeerConnection(message.config, this.constraints);
       this._pc.oniceconnectionstatechange = (_) => {
@@ -212,6 +215,9 @@ class ConnectionBase {
       return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
         .then(certificate => {
           message.config.certificates = [certificate];
+          if (isUnifiedChrome()) {
+            message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
+          }
           this._trace('PEER CONNECTION CONFIG', message.config);
           this._pc = new RTCPeerConnection(message.config, this.constraints);
           this._pc.oniceconnectionstatechange = (_) => {
