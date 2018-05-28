@@ -32,8 +32,6 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 
 - Upstream/Downstream
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/updown.html
-- Snapshot
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/snapshot.html
 - Multistream
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream.html
 - Multistream Downstream
@@ -80,7 +78,6 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * video          | boolean | true | ビデオ有効／無効                      |
   | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
   | * videoBitRate   | integer |      | ビデオビットレート                    |
-  | * videoSnapshot  | boolean |      | スナップショット有効／無効            |
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
   | * spotlight      | integer |      | 最大話者数                            |
 
@@ -99,7 +96,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, snapshot, addstream, removestream, notify, log) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log) |
   |  callback   | function  |      | コールバック |
 
 example
@@ -150,7 +147,6 @@ publisher.on('disconnect', function(e) {
   | * video          | boolean | true | ビデオ有効／無効                      |
   | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
   | * videoBitRate   | integer |      | ビデオビットレート                    |
-  | * videoSnapshot  | boolean |      | スナップショット有効／無効            |
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
   | * spotlight      | integer |      | 最大話者数                            |
 
@@ -168,7 +164,7 @@ publisher.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, snapshot, addstream, removestream, notify, log) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log) |
   |  callback   | function  |      | コールバック |
 
 example

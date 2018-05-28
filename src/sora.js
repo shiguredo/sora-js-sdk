@@ -5,7 +5,6 @@ type ConnectionOptions = {
   video: boolean,
   videoCodecType?: string,
   videoBitRate?: number,
-  videoSnapshot?: boolean,
   multistream?: boolean
 }
 import ConnectionPublisher from './connection/publisher';
