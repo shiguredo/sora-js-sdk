@@ -85,7 +85,7 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
   }
   // parse options
   const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
-  const videoPropertyKeys = ['videoCodecType', 'videoBitRate', 'videoSnapshot'];
+  const videoPropertyKeys = ['videoCodecType', 'videoBitRate'];
   const copyOptions = Object.assign({}, options);
   Object.keys(copyOptions).forEach(key => {
     if (key === 'audio' && typeof copyOptions[key] === 'boolean') return;
@@ -124,9 +124,6 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     }
     if ('videoBitRate' in copyOptions) {
       message.video['bit_rate'] = copyOptions.videoBitRate;
-    }
-    if ('videoSnapshot' in copyOptions) {
-      message.video['snapshot'] = copyOptions.videoSnapshot;
     }
   }
 

@@ -5,7 +5,6 @@ type ConnectionOptions = {
   video: boolean,
   videoCodecType?: string,
   videoBitRate?: number,
-  videoSnapshot?: boolean,
   multistream?: boolean
 }
 
@@ -47,7 +46,6 @@ class ConnectionBase {
     this._callbacks = {
       disconnect: function() {},
       push: function() {},
-      snapshot: function() {},
       addstream: function() {},
       removestream: function() {},
       notify: function() {},
@@ -169,8 +167,6 @@ class ConnectionBase {
           this._ws.send(JSON.stringify({ type: 'pong' }));
         } else if (data.type == 'push') {
           this._callbacks.push(data);
-        } else if (data.type == 'snapshot') {
-          this._callbacks.snapshot(data);
         } else if (data.type == 'notify') {
           this._callbacks.notify(data);
         }

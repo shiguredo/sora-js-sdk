@@ -145,12 +145,11 @@ describe('Utils', () => {
         assert.deepEqual(actual, expected);
       });
 
-      it('videoCodecType videoBitRate videoSnapshot', () => {
+      it('videoCodecType videoBitRate', () => {
         const options = {
           video: true,
           videoCodecType: 'VP8',
-          videoBitRate: 50,
-          videoSnapshot: true
+          videoBitRate: 50
         };
         const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
         const expected = {
@@ -162,8 +161,7 @@ describe('Utils', () => {
           sdp: sdp,
           video: {
             codec_type: 'VP8',
-            bit_rate: 50,
-            snapshot: true
+            bit_rate: 50
           },
           userAgent: userAgent
         };
@@ -179,7 +177,6 @@ describe('Utils', () => {
         video: true,
         videoCodecType: null,
         videoBitRate: null,
-        videoSnapshot: null,
         multistream: null,
         spotlight: null
       };

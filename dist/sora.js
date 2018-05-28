@@ -115,7 +115,6 @@ var ConnectionBase = function () {
     this._callbacks = {
       disconnect: function disconnect() {},
       push: function push() {},
-      snapshot: function snapshot() {},
       addstream: function addstream() {},
       removestream: function removestream() {},
       notify: function notify() {},
@@ -243,8 +242,6 @@ var ConnectionBase = function () {
             _this2._ws.send(JSON.stringify({ type: 'pong' }));
           } else if (data.type == 'push') {
             _this2._callbacks.push(data);
-          } else if (data.type == 'snapshot') {
-            _this2._callbacks.snapshot(data);
           } else if (data.type == 'notify') {
             _this2._callbacks.notify(data);
           }
@@ -654,7 +651,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   }
   // parse options
   var audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
-  var videoPropertyKeys = ['videoCodecType', 'videoBitRate', 'videoSnapshot'];
+  var videoPropertyKeys = ['videoCodecType', 'videoBitRate'];
   var copyOptions = Object.assign({}, options);
   Object.keys(copyOptions).forEach(function (key) {
     if (key === 'audio' && typeof copyOptions[key] === 'boolean') return;
@@ -693,9 +690,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     if ('videoBitRate' in copyOptions) {
       message.video['bit_rate'] = copyOptions.videoBitRate;
-    }
-    if ('videoSnapshot' in copyOptions) {
-      message.video['snapshot'] = copyOptions.videoSnapshot;
     }
   }
 
