@@ -10,6 +10,8 @@
     - バグ修正
 
 ## develop
+
+## 1.9.0
 - [ADD] Chrome M68 以降のバージョンの動作変更
     - RTCPeerConnection の config に sdpSemantics: 'unified-plan' を追加
     - signaling message に plan_b: true オプションを渡さないように修正
