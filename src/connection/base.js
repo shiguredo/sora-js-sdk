@@ -162,7 +162,7 @@ class ConnectionBase {
           resolve(data);
         } else if (data.type == 're-offer') {
           this._trace('RE-OFFER SDP', data.sdp);
-          this._re_offer(data);
+          this._reOffer(data);
         } else if (data.type == 'ping') {
           this._ws.send(JSON.stringify({ type: 'pong' }));
         } else if (data.type == 'push') {
@@ -281,7 +281,7 @@ class ConnectionBase {
     });
   }
 
-  _re_offer(message: Object) {
+  _reOffer(message: Object) {
     return this._setRemoteDescription(message)
       .then(this._createAnswer.bind(this))
       .then(this._sendReAnswer.bind(this));
