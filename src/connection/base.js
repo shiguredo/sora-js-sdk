@@ -246,7 +246,7 @@ class ConnectionBase {
   }
 
   _sendReAnswer() {
-    this._trace('Re-ANSWER SDP', this._pc.localDescription.sdp);
+    this._trace('RE-ANSWER SDP', this._pc.localDescription.sdp);
     this._ws.send(JSON.stringify({ type: 're-answer', sdp: this._pc.localDescription.sdp }));
     return;
   }
