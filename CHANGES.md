@@ -11,6 +11,10 @@
 
 ## develop
 
+## 1.9.1
+
+- [UPDATE] Unified Plan の適応を Chrome M71 以降のバージョンに変更する
+
 ## 1.9.0
 - [ADD] Chrome M68 以降のバージョンの動作変更
     - RTCPeerConnection の config に sdpSemantics: 'unified-plan' を追加

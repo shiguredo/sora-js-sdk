@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Signaling Library
- * @version: 1.9.0
+ * @version: 1.9.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -14,7 +14,7 @@
 		exports["Sora"] = factory();
 	else
 		root["Sora"] = factory();
-})(this, function() {
+})(typeof self !== 'undefined' ? self : this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -611,7 +611,7 @@ function isUnifiedChrome() {
   if (!splitedUserAgent || splitedUserAgent.length < 2) {
     return false;
   }
-  return 68 <= parseInt(splitedUserAgent[1]);
+  return 71 <= parseInt(splitedUserAgent[1]);
 }
 
 function isEdge() {
