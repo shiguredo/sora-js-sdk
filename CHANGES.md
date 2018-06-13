@@ -11,7 +11,8 @@
 
 ## develop
 
-- [UPDATE] Unified Plan 適応を Chrome M68 から M70 に上げる
+## 1.9.1
+- [UPDATE] Unified Plan の適応を Chrome M71 以降のバージョンに変更する
 
 ## 1.9.0
 - [ADD] Chrome M68 以降のバージョンの動作変更

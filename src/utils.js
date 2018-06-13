@@ -45,7 +45,7 @@ export function isUnifiedChrome() {
   if (!splitedUserAgent || splitedUserAgent.length < 2) {
     return false;
   }
-  return 70 <= parseInt(splitedUserAgent[1]);
+  return 71 <= parseInt(splitedUserAgent[1]);
 }
 
 export function isEdge() {
