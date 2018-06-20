@@ -11,6 +11,9 @@
 
 ## develop
 
+## 1.9.2
+- [UPDATE] package json の文言修正
+
 ## 1.9.1
 - [UPDATE] Unified Plan の適応を Chrome M71 以降のバージョンに変更する
 
