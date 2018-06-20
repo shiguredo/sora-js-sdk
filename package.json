@@ -1,7 +1,7 @@
 {
   "name": "sora-js-sdk",
   "version": "1.9.1",
-  "description": "WebRTC SFU Sora Signaling Library",
+  "description": "WebRTC SFU Sora Javascript SDK",
   "main": "dist/sora.min.js",
   "scripts": {
     "build": "webpack --cache false --config webpack.config.js",
