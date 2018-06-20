@@ -160,9 +160,9 @@ class ConnectionBase {
           this._trace('SIGNALING OFFER MESSAGE', data);
           this._trace('OFFER SDP', data.sdp);
           resolve(data);
-        } else if (data.type == 're-offer') {
-          this._trace('RE-OFFER SDP', data.sdp);
-          this._reOffer(data);
+        } else if (data.type == 'update') {
+          this._trace('UPDATE SDP', data.sdp);
+          this._update(data);
         } else if (data.type == 'ping') {
           this._ws.send(JSON.stringify({ type: 'pong' }));
         } else if (data.type == 'push') {
@@ -245,9 +245,9 @@ class ConnectionBase {
     return;
   }
 
-  _sendReAnswer() {
-    this._trace('RE-ANSWER SDP', this._pc.localDescription.sdp);
-    this._ws.send(JSON.stringify({ type: 're-answer', sdp: this._pc.localDescription.sdp }));
+  _sendUpdateAnswer() {
+    this._trace('ANSWER SDP', this._pc.localDescription.sdp);
+    this._ws.send(JSON.stringify({ type: 'update', sdp: this._pc.localDescription.sdp }));
     return;
   }
 
@@ -281,10 +281,10 @@ class ConnectionBase {
     });
   }
 
-  _reOffer(message: Object) {
+  _update(message: Object) {
     return this._setRemoteDescription(message)
       .then(this._createAnswer.bind(this))
-      .then(this._sendReAnswer.bind(this));
+      .then(this._sendUpdateAnswer.bind(this));
   }
 
   _trace(title: string, message: Object | string) {
