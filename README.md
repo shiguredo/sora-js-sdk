@@ -2,7 +2,7 @@
 
 [![GitHub tag](https://img.shields.io/github/tag/shiguredo/sora-js-sdk.svg)](https://github.com/shiguredo/sora-js-sdk)
 
-Sora JavaSCript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
+Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
 
 使い方は [Sora JavaScript SDK ドキュメント](https://sora.shiguredo.jp/js-sdk-doc/) を参照してください。
 
@@ -13,7 +13,7 @@ Sora JavaSCript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発�
 
 ## About Support
 
-Support for Sora iOS SDK by Shiguredo Inc. are limited
+Support for Sora JavaScript SDK by Shiguredo Inc. are limited
 **ONLY in JAPANESE** through GitHub issues and there is no guarantee such
 as response time or resolution.
 
