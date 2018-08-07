@@ -1,14 +1,7 @@
 /* @flow */
-type ConnectionOptions = {
-  audio: boolean,
-  audioCodecType?: string,
-  video: boolean,
-  videoCodecType?: string,
-  videoBitRate?: number,
-  multistream?: boolean
-}
 import ConnectionPublisher from './connection/publisher';
 import ConnectionSubscriber from './connection/subscriber';
+import type { ConnectionOptions } from './connection/base';
 
 
 const Sora = {

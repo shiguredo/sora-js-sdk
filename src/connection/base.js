@@ -1,8 +1,8 @@
 /* @flow */
-type ConnectionOptions = {
-  audio: boolean,
+export type ConnectionOptions = {
+  audio?: boolean,
   audioCodecType?: string,
-  video: boolean,
+  video?: boolean,
   videoCodecType?: string,
   videoBitRate?: number,
   multistream?: boolean
