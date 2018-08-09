@@ -2,10 +2,12 @@
 export type ConnectionOptions = {
   audio?: boolean,
   audioCodecType?: string,
+  audioBitRate?: number,
   video?: boolean,
   videoCodecType?: string,
   videoBitRate?: number,
-  multistream?: boolean
+  multistream?: boolean,
+  spotlight?: number
 }
 
 import { createSignalingMessage, trace, isSafari, isUnifiedChrome } from '../utils';
