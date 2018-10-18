@@ -20,11 +20,19 @@ class ConnectionSubscriber extends ConnectionBase {
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = function(event) {
             this.stream = event.stream;
+            this.remoteClientIds.push(this.stream.id);
+            this._callbacks.addstream(event);
           }.bind(this);
         }
         else {
           this._pc.ontrack = function(event) {
             this.stream = event.streams[0];
+            const streamId = this.stream.id;
+            if (streamId === 'default') return;
+            if (-1 < this.remoteClientIds.indexOf(streamId)) return;
+            event.stream = this.stream;
+            this.remoteClientIds.push(streamId);
+            this._callbacks.addstream(event);
           }.bind(this);
         }
         return this._setRemoteDescription(message);

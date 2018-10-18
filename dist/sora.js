@@ -757,10 +757,18 @@ var ConnectionSubscriber = function (_ConnectionBase) {
         if (typeof _this2._pc.ontrack === 'undefined') {
           _this2._pc.onaddstream = function (event) {
             this.stream = event.stream;
+            this.remoteClientIds.push(this.stream.id);
+            this._callbacks.addstream(event);
           }.bind(_this2);
         } else {
           _this2._pc.ontrack = function (event) {
             this.stream = event.streams[0];
+            var streamId = this.stream.id;
+            if (streamId === 'default') return;
+            if (-1 < this.remoteClientIds.indexOf(streamId)) return;
+            event.stream = this.stream;
+            this.remoteClientIds.push(streamId);
+            this._callbacks.addstream(event);
           }.bind(_this2);
         }
         return _this2._setRemoteDescription(message);
