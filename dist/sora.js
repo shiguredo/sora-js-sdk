@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Javascript SDK
- * @version: 1.9.2
+ * @version: 1.9.3
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -565,6 +565,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.trace = trace;
 exports.isUnifiedChrome = isUnifiedChrome;
+exports.isUnifiedSafari = isUnifiedSafari;
 exports.isEdge = isEdge;
 exports.isSafari = isSafari;
 exports.createSignalingMessage = createSignalingMessage;
@@ -586,14 +587,16 @@ function trace(clientId, title, value) {
 
 function browser() {
   var ua = window.navigator.userAgent.toLocaleLowerCase();
-  if (ua.indexOf('chrome') !== -1) {
-    return 'chrome';
-  } else if (ua.indexOf('edge') !== -1) {
+  if (ua.indexOf('edge') !== -1) {
     return 'edge';
+  } else if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
+    return 'chrome';
+  } else if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
+    return 'safari';
+  } else if (ua.indexOf('opera') !== -1) {
+    return 'opera';
   } else if (ua.indexOf('firefox') !== -1) {
     return 'firefox';
-  } else if (ua.indexOf('safari') !== -1) {
-    return 'safari';
   }
   return;
 }
@@ -612,6 +615,15 @@ function isUnifiedChrome() {
     return false;
   }
   return 71 <= parseInt(splitedUserAgent[1]);
+}
+
+function isUnifiedSafari() {
+  if (browser() !== 'safari') {
+    return false;
+  }
+  var appVersion = window.navigator.appVersion.toLowerCase();
+  var version = /version\/([\d.]+)/.exec(appVersion).pop();
+  return 12.0 < parseFloat(version);
 }
 
 function isEdge() {
@@ -641,7 +653,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   // multistream
   if ('multistream' in options && options.multistream === true) {
     message.multistream = true;
-    if (!isUnifiedChrome() && isPlanB()) {
+    if (!isUnifiedChrome() && !isUnifiedSafari() && isPlanB()) {
       message.plan_b = true;
     }
   }
@@ -745,10 +757,18 @@ var ConnectionSubscriber = function (_ConnectionBase) {
         if (typeof _this2._pc.ontrack === 'undefined') {
           _this2._pc.onaddstream = function (event) {
             this.stream = event.stream;
+            this.remoteClientIds.push(this.stream.id);
+            this._callbacks.addstream(event);
           }.bind(_this2);
         } else {
           _this2._pc.ontrack = function (event) {
             this.stream = event.streams[0];
+            var streamId = this.stream.id;
+            if (streamId === 'default') return;
+            if (-1 < this.remoteClientIds.indexOf(streamId)) return;
+            event.stream = this.stream;
+            this.remoteClientIds.push(streamId);
+            this._callbacks.addstream(event);
           }.bind(_this2);
         }
         return _this2._setRemoteDescription(message);

@@ -1,11 +1,13 @@
 /* @flow */
-type ConnectionOptions = {
-  audio: boolean,
+export type ConnectionOptions = {
+  audio?: boolean,
   audioCodecType?: string,
-  video: boolean,
+  audioBitRate?: number,
+  video?: boolean,
   videoCodecType?: string,
   videoBitRate?: number,
-  multistream?: boolean
+  multistream?: boolean,
+  spotlight?: number
 }
 
 import { createSignalingMessage, trace, isSafari, isUnifiedChrome } from '../utils';
