@@ -11,6 +11,9 @@
 
 ## develop
 
+## 1.9.3
+- [FIX] Single Stream の subscriber で on('addstream', callback) が発火しない問題を修正する
+
 ## 1.9.2
 - [UPDATE] package json の文言修正
 
