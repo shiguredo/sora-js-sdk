@@ -313,6 +313,9 @@ var ConnectionBase = function () {
       var _this4 = this;
 
       return this._pc.createAnswer().then(function (sessionDescription) {
+        if (_this4.options.simulcast) {
+          sessionDescription.sdp = (0, _utils.replaceAnswerSdp)(sessionDescription.sdp);
+        }
         return _this4._pc.setLocalDescription(sessionDescription);
       });
     }
@@ -568,6 +571,7 @@ exports.isUnifiedChrome = isUnifiedChrome;
 exports.isUnifiedSafari = isUnifiedSafari;
 exports.isEdge = isEdge;
 exports.isSafari = isSafari;
+exports.replaceAnswerSdp = replaceAnswerSdp;
 exports.createSignalingMessage = createSignalingMessage;
 function trace(clientId, title, value) {
   var prefix = '';
@@ -634,6 +638,26 @@ function isSafari() {
   return browser() === 'safari';
 }
 
+function replaceAnswerSdp(sdp) {
+  var ssrcPattern = new RegExp(/m=video[\s\S]*?(a=ssrc:(\d+)\scname:.+\r\na=ssrc:\2\smsid:.+\r\na=ssrc:\2\smslabel:.+\r\na=ssrc:\2\slabel:.+\r\n)/); // eslint-disable-line
+  var found = sdp.match(ssrcPattern);
+  if (!found) {
+    return sdp;
+  }
+
+  var ssrcAttributes = found[1];
+  ssrcPattern = found[1];
+  var ssrcId = parseInt(found[2]);
+  var ssrcIdPattern = new RegExp(ssrcId.toString(), 'g');
+  var ssrcGroup = ['a=ssrc-group:SIM'];
+  var ssrcAttributeList = [];
+  for (var i = 0; i < 3; i += 1) {
+    ssrcGroup.push((ssrcId + i).toString());
+    ssrcAttributeList.push(ssrcAttributes.replace(ssrcIdPattern, (ssrcId + i).toString()));
+  }
+  return sdp.replace(ssrcPattern, [ssrcGroup.join(' '), '\r\n', ssrcAttributeList.join('')].join(''));
+}
+
 function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   var message = {
     type: 'connect',
@@ -650,16 +674,27 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
       message[key] = null;
     }
   });
-  // multistream
   if ('multistream' in options && options.multistream === true) {
+    // multistream
     message.multistream = true;
     if (!isUnifiedChrome() && !isUnifiedSafari() && isPlanB()) {
       message.plan_b = true;
     }
-  }
-  // spotlight
-  if ('spotlight' in options) {
-    message.spotlight = options.spotlight;
+    // spotlight
+    if ('spotlight' in options) {
+      message.spotlight = options.spotlight;
+    }
+  } else if ('simulcast' in options || 'simulcastQuality' in options) {
+    // simulcast
+    if ('simulcast' in options && options.simulcast === true) {
+      message.simulcast = true;
+    }
+    var simalcastQualities = ['low', 'middle', 'high'];
+    if ('simulcastQuality' in options && 0 <= simalcastQualities.indexOf(options.simulcastQuality)) {
+      message.simulcast = {
+        quality: options.simulcastQuality
+      };
+    }
   }
   // parse options
   var audioPropertyKeys = ['audioCodecType', 'audioBitRate'];

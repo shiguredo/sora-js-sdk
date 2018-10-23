@@ -10,7 +10,7 @@ export type ConnectionOptions = {
   spotlight?: number
 }
 
-import { createSignalingMessage, trace, isSafari, isUnifiedChrome } from '../utils';
+import { createSignalingMessage, trace, isSafari, isUnifiedChrome, replaceAnswerSdp } from '../utils';
 
 const RTCPeerConnection = window.RTCPeerConnection;
 const RTCSessionDescription = window.RTCSessionDescription;
@@ -237,6 +237,9 @@ class ConnectionBase {
   _createAnswer() {
     return this._pc.createAnswer()
       .then(sessionDescription => {
+        if (this.options.simulcast) {
+          sessionDescription.sdp = replaceAnswerSdp(sessionDescription.sdp);
+        }
         return this._pc.setLocalDescription(sessionDescription);
       });
   }

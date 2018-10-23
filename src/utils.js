@@ -68,6 +68,26 @@ export function isSafari() {
   return browser() === 'safari';
 }
 
+export function replaceAnswerSdp(sdp) {
+  let ssrcPattern = new RegExp(/m=video[\s\S]*?(a=ssrc:(\d+)\scname:.+\r\na=ssrc:\2\smsid:.+\r\na=ssrc:\2\smslabel:.+\r\na=ssrc:\2\slabel:.+\r\n)/);  // eslint-disable-line
+  const found = sdp.match(ssrcPattern);
+  if (!found) {
+    return sdp;
+  }
+
+  const ssrcAttributes = found[1];
+  ssrcPattern = found[1];
+  const ssrcId = parseInt(found[2]);
+  const ssrcIdPattern = new RegExp(ssrcId.toString(), 'g');
+  const ssrcGroup = ['a=ssrc-group:SIM'];
+  const ssrcAttributeList = [];
+  for (let i = 0; i < 3; i += 1) {
+    ssrcGroup.push((ssrcId + i).toString());
+    ssrcAttributeList.push(ssrcAttributes.replace(ssrcIdPattern, (ssrcId + i).toString()));
+  }
+  return sdp.replace(ssrcPattern, [ssrcGroup.join(' '), '\r\n', ssrcAttributeList.join('')].join(''));
+}
+
 export function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   const message = {
     type: 'connect',
@@ -84,16 +104,27 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
       message[key] = null;
     }
   });
-  // multistream
   if ('multistream' in options && options.multistream === true) {
+    // multistream
     message.multistream = true;
     if (!isUnifiedChrome() && !isUnifiedSafari() && isPlanB()) {
       message.plan_b = true;
     }
-  }
-  // spotlight
-  if ('spotlight' in options) {
-    message.spotlight = options.spotlight;
+    // spotlight
+    if ('spotlight' in options) {
+      message.spotlight = options.spotlight;
+    }
+  } else if ('simulcast' in options || 'simulcastQuality' in options) {
+    // simulcast
+    if ('simulcast' in options && options.simulcast === true) {
+      message.simulcast = true;
+    }
+    const simalcastQualities = ['low', 'middle', 'high'];
+    if ('simulcastQuality' in options && 0 <= simalcastQualities.indexOf(options.simulcastQuality)) {
+      message.simulcast = {
+        quality: options.simulcastQuality
+      };
+    }
   }
   // parse options
   const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
