@@ -10,6 +10,7 @@
     - バグ修正
 
 ## develop
+- [UPDATE] simulcast, simulcastQuality オプションを追加
 
 ## 1.9.3
 - [FIX] Single Stream の subscriber で on('addstream', callback) が発火しない問題を修正する
