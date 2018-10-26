@@ -133,6 +133,8 @@ class ConnectionBase {
   _signaling(offer: {type: 'offer', sdp: string}) {
     this._trace('CREATE OFFER SDP', offer);
     return new Promise((resolve, reject) => {
+      const signalingMessage = createSignalingMessage(
+        offer.sdp, this.role, this.channelId, this.metadata, this.options);
       if (this._ws === null) {
         this._ws = new WebSocket(this.signalingUrl);
       }
@@ -140,8 +142,6 @@ class ConnectionBase {
         reject(e);
       };
       this._ws.onopen = () => {
-        const signalingMessage = createSignalingMessage(
-          offer.sdp, this.role, this.channelId, this.metadata, this.options);
         this._trace('SIGNALING CONNECT MESSAGE', signalingMessage);
         this._ws.send(JSON.stringify(signalingMessage));
       };

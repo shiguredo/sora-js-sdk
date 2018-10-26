@@ -208,6 +208,7 @@ var ConnectionBase = function () {
 
       this._trace('CREATE OFFER SDP', offer);
       return new Promise(function (resolve, reject) {
+        var signalingMessage = (0, _utils.createSignalingMessage)(offer.sdp, _this2.role, _this2.channelId, _this2.metadata, _this2.options);
         if (_this2._ws === null) {
           _this2._ws = new WebSocket(_this2.signalingUrl);
         }
@@ -215,7 +216,6 @@ var ConnectionBase = function () {
           reject(e);
         };
         _this2._ws.onopen = function () {
-          var signalingMessage = (0, _utils.createSignalingMessage)(offer.sdp, _this2.role, _this2.channelId, _this2.metadata, _this2.options);
           _this2._trace('SIGNALING CONNECT MESSAGE', signalingMessage);
           _this2._ws.send(JSON.stringify(signalingMessage));
         };
@@ -571,6 +571,7 @@ exports.isUnifiedChrome = isUnifiedChrome;
 exports.isUnifiedSafari = isUnifiedSafari;
 exports.isEdge = isEdge;
 exports.isSafari = isSafari;
+exports.isChrome = isChrome;
 exports.replaceAnswerSdp = replaceAnswerSdp;
 exports.createSignalingMessage = createSignalingMessage;
 function trace(clientId, title, value) {
@@ -638,8 +639,12 @@ function isSafari() {
   return browser() === 'safari';
 }
 
+function isChrome() {
+  return browser() === 'chrome';
+}
+
 function replaceAnswerSdp(sdp) {
-  var ssrcPattern = new RegExp(/m=video[\s\S]*?(a=ssrc:(\d+)\scname:.+\r\na=ssrc:\2\smsid:.+\r\na=ssrc:\2\smslabel:.+\r\na=ssrc:\2\slabel:.+\r\n)/); // eslint-disable-line
+  var ssrcPattern = new RegExp(/m=video[\s\S]*?(a=ssrc:(\d+)\scname:.+\r\n(a=ssrc:\2\smsid:.+\r\na=ssrc:\2\smslabel:.+\r\na=ssrc:\2\slabel:.+\r\n)?)/); // eslint-disable-line
   var found = sdp.match(ssrcPattern);
   if (!found) {
     return sdp;
@@ -685,6 +690,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
       message.spotlight = options.spotlight;
     }
   } else if ('simulcast' in options || 'simulcastQuality' in options) {
+    if (!(isUnifiedSafari() || isChrome())) {
+      throw new Error('Simulcast can not be used with this browse be used with this browserr');
+    }
     // simulcast
     if ('simulcast' in options && options.simulcast === true) {
       message.simulcast = true;

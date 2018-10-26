@@ -68,8 +68,12 @@ export function isSafari() {
   return browser() === 'safari';
 }
 
+export function isChrome() {
+  return browser() === 'chrome';
+}
+
 export function replaceAnswerSdp(sdp) {
-  let ssrcPattern = new RegExp(/m=video[\s\S]*?(a=ssrc:(\d+)\scname:.+\r\na=ssrc:\2\smsid:.+\r\na=ssrc:\2\smslabel:.+\r\na=ssrc:\2\slabel:.+\r\n)/);  // eslint-disable-line
+  let ssrcPattern = new RegExp(/m=video[\s\S]*?(a=ssrc:(\d+)\scname:.+\r\n(a=ssrc:\2\smsid:.+\r\na=ssrc:\2\smslabel:.+\r\na=ssrc:\2\slabel:.+\r\n)?)/);  // eslint-disable-line
   const found = sdp.match(ssrcPattern);
   if (!found) {
     return sdp;
@@ -115,6 +119,9 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
       message.spotlight = options.spotlight;
     }
   } else if ('simulcast' in options || 'simulcastQuality' in options) {
+    if (!(isUnifiedSafari() || isChrome())) {
+      throw new Error('Simulcast can not be used with this browse be used with this browserr');
+    }
     // simulcast
     if ('simulcast' in options && options.simulcast === true) {
       message.simulcast = true;
