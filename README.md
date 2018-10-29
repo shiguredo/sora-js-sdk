@@ -80,6 +80,8 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * videoBitRate   | integer |      | ビデオビットレートの最大値            |
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
   | * spotlight      | integer |      | 最大話者数                            |
+  | * simulcast      | boolean |      | サイマルキャスト有効／無効            |
+
 
 - connect(stream)
 
@@ -138,17 +140,20 @@ publisher.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  | channelId        | string  |      | チャネルID                            |
-  | metadata         | string  |      | メタデータ                            |
-  | options          | object  |      | シグナリングパラメーター              |
-  | * audio          | boolean | true | オーディオ有効／無効                  |
-  | * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
-  | * audioBitRate   | integer |      | オーディオビットレートの最大値        |
-  | * video          | boolean | true | ビデオ有効／無効                      |
-  | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
-  | * videoBitRate   | integer |      | ビデオビットレートの最大値            |
-  | * multistream    | boolean |      | マルチストリーム有効／無効            |
-  | * spotlight      | integer |      | 最大話者数                            |
+  | channelId          | string  |      | チャネルID                                  |
+  | metadata           | string  |      | メタデータ                                  |
+  | options            | object  |      | シグナリングパラメーター                    |
+  | * audio            | boolean | true | オーディオ有効／無効                        |
+  | * audioCodecType   | string  |      | オーディオコーデックタイプ(OPUS/PCMU)       |
+  | * audioBitRate     | integer |      | オーディオビットレートの最大値              |
+  | * video            | boolean | true | ビデオ有効／無効                            |
+  | * videoCodecType   | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)        |
+  | * videoBitRate     | integer |      | ビデオビットレートの最大値                  |
+  | * multistream      | boolean |      | マルチストリーム有効／無効                  |
+  | * spotlight        | integer |      | 最大話者数                                  |
+  | * simulcast        | boolean |      | サイマルキャスト有効／無効                  |
+  | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
+
 
 - connect()
 
