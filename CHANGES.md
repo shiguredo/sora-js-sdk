@@ -10,6 +10,8 @@
     - バグ修正
 
 ## develop
+
+## 1.10.0
 - [UPDATE] simulcast, simulcastQuality オプションを追加
 
 ## 1.9.3
