@@ -189,7 +189,6 @@ describe('Utils', () => {
         sdp: null,
         audio: true,
         video: true,
-        spotlight: null,
         userAgent: userAgent
       };
       assert.deepEqual(actual, expected);
@@ -267,6 +266,7 @@ describe('Utils', () => {
     describe('spotlight parameter', () => {
       it('spotlight', () => {
         const options = {
+          multistream: true,
           spotlight: 2
         };
         const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
@@ -279,7 +279,87 @@ describe('Utils', () => {
           video: true,
           audio: true,
           userAgent: userAgent,
+          multistream: true,
+          plan_b: true,
           spotlight: 2
+        };
+        assert.deepEqual(actual, expected);
+      });
+    });
+
+    describe('simulcast parameter', () => {
+      it('simulcast true', () => {
+        const options = {
+          simulcast: true
+        };
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
+        const expected = {
+          type: 'connect',
+          role: role,
+          channel_id: channelId,
+          metadata: metadata,
+          sdp: sdp,
+          video: true,
+          audio: true,
+          userAgent: userAgent,
+          simulcast: true
+        };
+        assert.deepEqual(actual, expected);
+      });
+
+      it('simulcast false', () => {
+        const options = {
+          simulcast: false
+        };
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
+        const expected = {
+          type: 'connect',
+          role: role,
+          channel_id: channelId,
+          metadata: metadata,
+          sdp: sdp,
+          video: true,
+          audio: true,
+          userAgent: userAgent,
+        };
+        assert.deepEqual(actual, expected);
+      });
+
+      it('simulcast quality', () => {
+        const options = {
+          simulcastQuality: 'low'
+        };
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
+        const expected = {
+          type: 'connect',
+          role: role,
+          channel_id: channelId,
+          metadata: metadata,
+          sdp: sdp,
+          video: true,
+          audio: true,
+          userAgent: userAgent,
+          simulcast: {
+            quality: 'low'
+          }
+        };
+        assert.deepEqual(actual, expected);
+      });
+
+      it('unknown simulcast quality', () => {
+        const options = {
+          simulcastQuality: 'test'
+        };
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
+        const expected = {
+          type: 'connect',
+          role: role,
+          channel_id: channelId,
+          metadata: metadata,
+          sdp: sdp,
+          video: true,
+          audio: true,
+          userAgent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
