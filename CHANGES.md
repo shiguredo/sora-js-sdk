@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] Firefox の Media Panel addon の Media-Webrtc が動作するよう RTCPeerConnection の変数格納を削除する
+
 ## 1.10.0
 - [UPDATE] simulcast, simulcastQuality オプションを追加
 
