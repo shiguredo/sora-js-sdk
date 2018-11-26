@@ -7,7 +7,9 @@ export type ConnectionOptions = {
   videoCodecType?: string,
   videoBitRate?: number,
   multistream?: boolean,
-  spotlight?: number
+  spotlight?: number,
+  simulcast?: boolean,
+  simulcastQuality?: 'low' | 'middle' | 'high'
 }
 
 import { createSignalingMessage, trace, isSafari, isUnifiedChrome, replaceAnswerSdp } from '../utils';
