@@ -181,8 +181,8 @@ class ConnectionBase {
     }
     const pc = new window.RTCPeerConnection(config);
     if (isSafari()) {
-      pc.addTransceiver('video').setDirection('recvonly');
-      pc.addTransceiver('audio').setDirection('recvonly');
+      pc.addTransceiver('video').direction = 'recvonly';
+      pc.addTransceiver('audio').direction = 'recvonly';
       return pc.createOffer()
         .then(offer => {
           pc.close();
