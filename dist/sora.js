@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Javascript SDK
- * @version: 1.10.0
+ * @version: 1.10.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -92,9 +92,6 @@ var _createClass = function () { function defineProperties(target, props) { for 
 var _utils = __webpack_require__(3);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var RTCPeerConnection = window.RTCPeerConnection;
-var RTCSessionDescription = window.RTCSessionDescription;
 
 var ConnectionBase = function () {
   function ConnectionBase(signalingUrl, channelId, metadata, options, debug) {
@@ -255,10 +252,10 @@ var ConnectionBase = function () {
       if ((0, _utils.isUnifiedChrome)()) {
         config = Object.assign({}, config, { sdpSemantics: 'unified-plan' });
       }
-      var pc = new RTCPeerConnection(config);
+      var pc = new window.RTCPeerConnection(config);
       if ((0, _utils.isSafari)()) {
-        pc.addTransceiver('video').setDirection('recvonly');
-        pc.addTransceiver('audio').setDirection('recvonly');
+        pc.addTransceiver('video').direction = 'recvonly';
+        pc.addTransceiver('audio').direction = 'recvonly';
         return pc.createOffer().then(function (offer) {
           pc.close();
           return Promise.resolve(offer);
@@ -277,24 +274,24 @@ var ConnectionBase = function () {
       if (!message.config) {
         message.config = {};
       }
-      if (RTCPeerConnection.generateCertificate === undefined) {
+      if (window.RTCPeerConnection.generateCertificate === undefined) {
         if ((0, _utils.isUnifiedChrome)()) {
           message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
         }
         this._trace('PEER CONNECTION CONFIG', message.config);
-        this._pc = new RTCPeerConnection(message.config, this.constraints);
+        this._pc = new window.RTCPeerConnection(message.config, this.constraints);
         this._pc.oniceconnectionstatechange = function (_) {
           _this3._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE', _this3._pc.iceConnectionState);
         };
         return Promise.resolve(message);
       } else {
-        return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' }).then(function (certificate) {
+        return window.RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' }).then(function (certificate) {
           message.config.certificates = [certificate];
           if ((0, _utils.isUnifiedChrome)()) {
             message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
           }
           _this3._trace('PEER CONNECTION CONFIG', message.config);
-          _this3._pc = new RTCPeerConnection(message.config, _this3.constraints);
+          _this3._pc = new window.RTCPeerConnection(message.config, _this3.constraints);
           _this3._pc.oniceconnectionstatechange = function (_) {
             _this3._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE', _this3._pc.iceConnectionState);
           };
@@ -305,7 +302,7 @@ var ConnectionBase = function () {
   }, {
     key: '_setRemoteDescription',
     value: function _setRemoteDescription(message) {
-      return this._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
+      return this._pc.setRemoteDescription(new window.RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
     }
   }, {
     key: '_createAnswer',
