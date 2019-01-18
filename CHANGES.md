@@ -12,6 +12,9 @@
 ## develop
 
 - [UPDATE] Firefox の Media Panel addon の Media-Webrtc が動作するよう RTCPeerConnection の変数格納を削除する
+- [FIX] setDirection を direction に変更する
+
+  - Safari Technology Preview 73 への対応
 
 ## 1.10.0
 - [UPDATE] simulcast, simulcastQuality オプションを追加
