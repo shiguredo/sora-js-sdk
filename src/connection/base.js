@@ -7,14 +7,12 @@ export type ConnectionOptions = {
   videoCodecType?: string,
   videoBitRate?: number,
   multistream?: boolean,
-  spotlight?: number
+  spotlight?: number,
+  simulcast?: boolean,
+  simulcastQuality?: 'low' | 'middle' | 'high'
 }
 
 import { createSignalingMessage, trace, isSafari, isUnifiedChrome, replaceAnswerSdp } from '../utils';
-
-const RTCPeerConnection = window.RTCPeerConnection;
-const RTCSessionDescription = window.RTCSessionDescription;
-
 
 class ConnectionBase {
   channelId: string;
@@ -29,7 +27,7 @@ class ConnectionBase {
   role: ?string;
   authMetadata: ?string;
   _ws: WebSocket.prototype;
-  _pc: RTCPeerConnection.prototype;
+  _pc: window.RTCPeerConnection.prototype;
   _callbacks: Object;
 
   constructor(signalingUrl: string, channelId: string, metadata: string, options: ConnectionOptions, debug: boolean) {
@@ -181,10 +179,10 @@ class ConnectionBase {
     if (isUnifiedChrome()) {
       config = Object.assign({}, config, { sdpSemantics: 'unified-plan' });
     }
-    const pc = new RTCPeerConnection(config);
+    const pc = new window.RTCPeerConnection(config);
     if (isSafari()) {
-      pc.addTransceiver('video').setDirection('recvonly');
-      pc.addTransceiver('audio').setDirection('recvonly');
+      pc.addTransceiver('video').direction = 'recvonly';
+      pc.addTransceiver('audio').direction = 'recvonly';
       return pc.createOffer()
         .then(offer => {
           pc.close();
@@ -202,26 +200,26 @@ class ConnectionBase {
     if (!message.config) {
       message.config = {};
     }
-    if (RTCPeerConnection.generateCertificate === undefined) {
+    if (window.RTCPeerConnection.generateCertificate === undefined) {
       if (isUnifiedChrome()) {
         message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
       }
       this._trace('PEER CONNECTION CONFIG', message.config);
-      this._pc = new RTCPeerConnection(message.config, this.constraints);
+      this._pc = new window.RTCPeerConnection(message.config, this.constraints);
       this._pc.oniceconnectionstatechange = (_) => {
         this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE',this._pc.iceConnectionState);
       };
       return Promise.resolve(message);
     }
     else {
-      return RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
+      return window.RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
         .then(certificate => {
           message.config.certificates = [certificate];
           if (isUnifiedChrome()) {
             message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
           }
           this._trace('PEER CONNECTION CONFIG', message.config);
-          this._pc = new RTCPeerConnection(message.config, this.constraints);
+          this._pc = new window.RTCPeerConnection(message.config, this.constraints);
           this._pc.oniceconnectionstatechange = (_) => {
             this._trace('ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE', this._pc.iceConnectionState);
           };
@@ -231,7 +229,7 @@ class ConnectionBase {
   }
 
   _setRemoteDescription(message: Object) {
-    return this._pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
+    return this._pc.setRemoteDescription(new window.RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
   }
 
   _createAnswer() {
