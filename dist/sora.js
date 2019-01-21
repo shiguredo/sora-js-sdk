@@ -254,8 +254,8 @@ var ConnectionBase = function () {
       }
       var pc = new window.RTCPeerConnection(config);
       if ((0, _utils.isSafari)()) {
-        pc.addTransceiver('video').direction = 'recvonly';
-        pc.addTransceiver('audio').direction = 'recvonly';
+        pc.addTransceiver('video', { direction: 'recvonly' });
+        pc.addTransceiver('audio', { direction: 'recvonly' });
         return pc.createOffer().then(function (offer) {
           pc.close();
           return Promise.resolve(offer);
