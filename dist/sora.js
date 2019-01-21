@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Javascript SDK
- * @version: 1.10.1
+ * @version: 1.10.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -254,8 +254,8 @@ var ConnectionBase = function () {
       }
       var pc = new window.RTCPeerConnection(config);
       if ((0, _utils.isSafari)()) {
-        pc.addTransceiver('video').direction = 'recvonly';
-        pc.addTransceiver('audio').direction = 'recvonly';
+        pc.addTransceiver('video', { direction: 'recvonly' });
+        pc.addTransceiver('audio', { direction: 'recvonly' });
         return pc.createOffer().then(function (offer) {
           pc.close();
           return Promise.resolve(offer);
