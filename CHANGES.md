@@ -11,6 +11,10 @@
 
 ## develop
 
+## 1.10.2
+
+- [FIX] direction を {direciton: ''} 形式に変更する
+
 ## 1.10.1
 
 - [UPDATE] Firefox の Media Panel addon の Media-Webrtc が動作するよう RTCPeerConnection の変数格納を削除する
