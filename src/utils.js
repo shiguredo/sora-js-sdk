@@ -51,13 +51,11 @@ export function isUnifiedChrome() {
   return 71 <= parseInt(splitedUserAgent[1]);
 }
 
-export function isUnifiedSafari() {
+export function isUnifiedSafari(sdp) {
   if (browser() !== 'safari') {
     return false;
   }
-  const appVersion = window.navigator.appVersion.toLowerCase();
-  const version = /version\/([\d.]+)/.exec(appVersion).pop();
-  return 12.0 < parseFloat(version);
+  return sdp.includes('a=group:BUNDLE 0 1');
 }
 
 export function isEdge() {
@@ -111,7 +109,7 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
   if ('multistream' in options && options.multistream === true) {
     // multistream
     message.multistream = true;
-    if (!isUnifiedChrome() && !isUnifiedSafari() && isPlanB()) {
+    if (!isUnifiedChrome() && !isUnifiedSafari(offerSDP) && isPlanB()) {
       message.plan_b = true;
     }
     // spotlight
