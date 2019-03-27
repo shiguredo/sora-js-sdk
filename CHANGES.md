@@ -11,6 +11,10 @@
 
 ## develop
 
+## 1.11.0
+- [UPDATE] Safari の Unified Plan, Plan B 両方に対応する
+- [UPDATE] Simulcast option が使えるブラウザ判定を変更する
+
 ## 1.10.2
 
 - [FIX] direction を {direciton: ''} 形式に変更する

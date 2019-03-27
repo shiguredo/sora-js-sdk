@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Javascript SDK
- * @version: 1.10.2
+ * @version: 1.11.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -607,6 +607,40 @@ function isPlanB() {
   return browser() === 'chrome' || browser() === 'safari';
 }
 
+function enabledSimulcast(role, video) {
+  /**
+    VP9 x
+     simulcast_pub Chrome o
+    simulcast_pub Firefox x
+    simulcast_pub Safari 12.1 o
+    simulcast_pub Safari 12.0 x
+    simulcast_sub Chrome o
+    simulcast_sub Firefox o
+    simulcast_sub Safari 12.1 o
+    simulcast_sub Safari 12.0 o ※H.264 のみ
+  **/
+  if (video.codec_type === 'VP9') {
+    return false;
+  }
+  if (role === 'upstream' && browser() === 'firefox') {
+    return false;
+  }
+  if (browser() === 'safari') {
+    var appVersion = window.navigator.appVersion.toLowerCase();
+    var version = /version\/([\d.]+)/.exec(appVersion).pop();
+    // version 12.0 以降であれば有効
+    if (12.0 < parseFloat(version)) {
+      return true;
+    }
+    if (12.0 == parseFloat(version) && role === 'downstream' && video.codec_type === 'H264') {
+      // role が downstream で 'H264' の場合のみ有効
+      return true;
+    }
+    return false;
+  }
+  return true;
+}
+
 function isUnifiedChrome() {
   if (browser() !== 'chrome') {
     return false;
@@ -619,13 +653,11 @@ function isUnifiedChrome() {
   return 71 <= parseInt(splitedUserAgent[1]);
 }
 
-function isUnifiedSafari() {
+function isUnifiedSafari(sdp) {
   if (browser() !== 'safari') {
     return false;
   }
-  var appVersion = window.navigator.appVersion.toLowerCase();
-  var version = /version\/([\d.]+)/.exec(appVersion).pop();
-  return 12.0 < parseFloat(version);
+  return sdp.includes('a=group:BUNDLE 0 1');
 }
 
 function isEdge() {
@@ -679,7 +711,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   if ('multistream' in options && options.multistream === true) {
     // multistream
     message.multistream = true;
-    if (!isUnifiedChrome() && !isUnifiedSafari() && isPlanB()) {
+    if (!isUnifiedChrome() && !isUnifiedSafari(offerSDP) && isPlanB()) {
       message.plan_b = true;
     }
     // spotlight
@@ -687,9 +719,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
       message.spotlight = options.spotlight;
     }
   } else if ('simulcast' in options || 'simulcastQuality' in options) {
-    if (!(isUnifiedSafari() || isChrome())) {
-      throw new Error('Simulcast can not be used with this browse be used with this browserr');
-    }
     // simulcast
     if ('simulcast' in options && options.simulcast === true) {
       message.simulcast = true;
@@ -745,6 +774,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
   }
 
+  if (message.simulcast && !enabledSimulcast(message.role, message.video)) {
+    throw new Error('Simulcast can not be used with this browser');
+  }
   return message;
 }
 
