@@ -20,7 +20,7 @@ class ConnectionSubscriber extends ConnectionBase {
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = function(event) {
             this.stream = event.stream;
-            this.remoteClientIds.push(this.stream.id);
+            this.remoteConnectionIds.push(this.stream.id);
             this._callbacks.addstream(event);
           }.bind(this);
         }
@@ -29,9 +29,9 @@ class ConnectionSubscriber extends ConnectionBase {
             this.stream = event.streams[0];
             const streamId = this.stream.id;
             if (streamId === 'default') return;
-            if (-1 < this.remoteClientIds.indexOf(streamId)) return;
+            if (-1 < this.remoteConnectionIds.indexOf(streamId)) return;
             event.stream = this.stream;
-            this.remoteClientIds.push(streamId);
+            this.remoteConnectionIds.push(streamId);
             this._callbacks.addstream(event);
           }.bind(this);
         }
@@ -53,24 +53,24 @@ class ConnectionSubscriber extends ConnectionBase {
       .then(message => {
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = event => {
-            this.remoteClientIds.push(event.id);
+            this.remoteConnectionIds.push(event.id);
             this._callbacks.addstream(event);
           };
         } else {
           this._pc.ontrack = event => {
             const stream = event.streams[0];
             if (stream.id === 'default') return;
-            if (stream.id === this.clientId) return;
-            if (-1 < this.remoteClientIds.indexOf(stream.id)) return;
+            if (stream.id === this.connectionId) return;
+            if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
             event.stream = stream;
-            this.remoteClientIds.push(stream.id);
+            this.remoteConnectionIds.push(stream.id);
             this._callbacks.addstream(event);
           };
         }
         this._pc.onremovestream = event => {
-          const index = this.remoteClientIds.indexOf(event.stream.id);
+          const index = this.remoteConnectionIds.indexOf(event.stream.id);
           if (-1 < index) {
-            delete this.remoteClientIds[index];
+            delete this.remoteConnectionIds[index];
           }
           this._callbacks.removestream(event);
         };

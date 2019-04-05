@@ -141,6 +141,7 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
       message[key] = null;
     }
   });
+
   if ('multistream' in options && options.multistream === true) {
     // multistream
     message.multistream = true;
@@ -163,6 +164,12 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
       };
     }
   }
+
+  // client_id
+  if ('clientId' in options && options.clientId) {
+    message.client_id = options.clientId;
+  }
+
   // parse options
   const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
   const videoPropertyKeys = ['videoCodecType', 'videoBitRate'];
