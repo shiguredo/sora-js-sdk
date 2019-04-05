@@ -81,6 +81,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
   | * spotlight      | integer |      | 最大話者数                            |
   | * simulcast      | boolean |      | サイマルキャスト有効／無効            |
+  | * clientId       | string  |      | クライアントID                        |
 
 
 - connect(stream)
@@ -153,6 +154,7 @@ publisher.on('disconnect', function(e) {
   | * spotlight        | integer |      | 最大話者数                                  |
   | * simulcast        | boolean |      | サイマルキャスト有効／無効                  |
   | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
+  | * clientId         | string  |      | クライアントID                              |
 
 
 - connect()
