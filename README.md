@@ -210,21 +210,21 @@ $ yarn install
 
 ### ビルド
 ```
- $ npm run build
+ $ yarn build
 ```
 
 ### 開発時
 ```
- $ npm run build -- --watch
+ $ yarn build --watch
 ```
 
 ```
- $ npm run dev
+ $ yarn serve
 ```
 
 ### リリース
 ```
- $ npm run check
- $ npm run test
- $ npm run build
+ $ yarn check
+ $ yarn test
+ $ yarn release
 ```
