@@ -7,6 +7,9 @@ import type { ConnectionOptions } from './connection/base';
 const Sora = {
   connection: function(signalingUrl: string, debug: boolean=false) {
     return new SoraConnection(signalingUrl, debug);
+  },
+  version: function() {
+    return process.version;
   }
 };
 
