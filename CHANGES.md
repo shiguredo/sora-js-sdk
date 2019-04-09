@@ -10,6 +10,8 @@
     - バグ修正
 
 ## develop
+- [UPDATE] development build 時に sora-js-sdk の version に '-dev' をつけるようにする
+- [ADD] Signaling Option に client_id を追加する
 
 ## 1.11.0
 - [UPDATE] Safari の Unified Plan, Plan B 両方に対応する
