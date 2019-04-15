@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora Javascript SDK
- * @version: 1.11.0
+ * @version: 1.12.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -104,7 +104,8 @@ var ConnectionBase = function () {
     this.constraints = null;
     this.debug = debug;
     this.clientId = null;
-    this.remoteClientIds = [];
+    this.connectionId = null;
+    this.remoteConnectionIds = [];
     this.stream = null;
     this.role = null;
     this._ws = null;
@@ -133,8 +134,9 @@ var ConnectionBase = function () {
       var _this = this;
 
       this.clientId = null;
+      this.connectionId = null;
       this.authMetadata = null;
-      this.remoteClientIds = [];
+      this.remoteConnectionIds = [];
       var closeStream = new Promise(function (resolve, _) {
         if (!_this.stream) return resolve();
         _this.stream.getTracks().forEach(function (t) {
@@ -220,6 +222,7 @@ var ConnectionBase = function () {
           var data = JSON.parse(event.data);
           if (data.type == 'offer') {
             _this2.clientId = data.client_id;
+            _this2.connectionId = data.connection_id;
             _this2._ws.onclose = function (e) {
               _this2.disconnect().then(function () {
                 _this2._callbacks.disconnect(e);
@@ -408,6 +411,9 @@ var Sora = {
     var debug = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
     return new SoraConnection(signalingUrl, debug);
+  },
+  version: function version() {
+    return "1.12.0";
   }
 };
 
@@ -516,8 +522,8 @@ var ConnectionPublisher = function (_ConnectionBase) {
         }
         if (typeof _this3._pc.ontrack === 'undefined') {
           _this3._pc.onaddstream = function (event) {
-            if (_this3.clientId !== event.stream.id) {
-              _this3.remoteClientIds.push(stream.id);
+            if (_this3.connectionId !== event.stream.id) {
+              _this3.remoteConnectionIds.push(stream.id);
               _this3._callbacks.addstream(event);
             }
           };
@@ -526,17 +532,17 @@ var ConnectionPublisher = function (_ConnectionBase) {
             var stream = event.streams[0];
             if (!stream) return;
             if (stream.id === 'default') return;
-            if (stream.id === _this3.clientId) return;
-            if (-1 < _this3.remoteClientIds.indexOf(stream.id)) return;
+            if (stream.id === _this3.connectionId) return;
+            if (-1 < _this3.remoteConnectionIds.indexOf(stream.id)) return;
             event.stream = stream;
-            _this3.remoteClientIds.push(stream.id);
+            _this3.remoteConnectionIds.push(stream.id);
             _this3._callbacks.addstream(event);
           };
         }
         _this3._pc.onremovestream = function (event) {
-          var index = _this3.remoteClientIds.indexOf(event.stream.id);
+          var index = _this3.remoteConnectionIds.indexOf(event.stream.id);
           if (-1 < index) {
-            delete _this3.remoteClientIds[index];
+            delete _this3.remoteConnectionIds[index];
           }
           _this3._callbacks.removestream(event);
         };
@@ -708,6 +714,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
       message[key] = null;
     }
   });
+
   if ('multistream' in options && options.multistream === true) {
     // multistream
     message.multistream = true;
@@ -730,6 +737,12 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
       };
     }
   }
+
+  // client_id
+  if ('clientId' in options && options.clientId) {
+    message.client_id = options.clientId;
+  }
+
   // parse options
   var audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
   var videoPropertyKeys = ['videoCodecType', 'videoBitRate'];
@@ -829,7 +842,7 @@ var ConnectionSubscriber = function (_ConnectionBase) {
         if (typeof _this2._pc.ontrack === 'undefined') {
           _this2._pc.onaddstream = function (event) {
             this.stream = event.stream;
-            this.remoteClientIds.push(this.stream.id);
+            this.remoteConnectionIds.push(this.stream.id);
             this._callbacks.addstream(event);
           }.bind(_this2);
         } else {
@@ -837,9 +850,9 @@ var ConnectionSubscriber = function (_ConnectionBase) {
             this.stream = event.streams[0];
             var streamId = this.stream.id;
             if (streamId === 'default') return;
-            if (-1 < this.remoteClientIds.indexOf(streamId)) return;
+            if (-1 < this.remoteConnectionIds.indexOf(streamId)) return;
             event.stream = this.stream;
-            this.remoteClientIds.push(streamId);
+            this.remoteConnectionIds.push(streamId);
             this._callbacks.addstream(event);
           }.bind(_this2);
         }
@@ -856,24 +869,24 @@ var ConnectionSubscriber = function (_ConnectionBase) {
       return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(function (message) {
         if (typeof _this3._pc.ontrack === 'undefined') {
           _this3._pc.onaddstream = function (event) {
-            _this3.remoteClientIds.push(event.id);
+            _this3.remoteConnectionIds.push(event.id);
             _this3._callbacks.addstream(event);
           };
         } else {
           _this3._pc.ontrack = function (event) {
             var stream = event.streams[0];
             if (stream.id === 'default') return;
-            if (stream.id === _this3.clientId) return;
-            if (-1 < _this3.remoteClientIds.indexOf(stream.id)) return;
+            if (stream.id === _this3.connectionId) return;
+            if (-1 < _this3.remoteConnectionIds.indexOf(stream.id)) return;
             event.stream = stream;
-            _this3.remoteClientIds.push(stream.id);
+            _this3.remoteConnectionIds.push(stream.id);
             _this3._callbacks.addstream(event);
           };
         }
         _this3._pc.onremovestream = function (event) {
-          var index = _this3.remoteClientIds.indexOf(event.stream.id);
+          var index = _this3.remoteConnectionIds.indexOf(event.stream.id);
           if (-1 < index) {
-            delete _this3.remoteClientIds[index];
+            delete _this3.remoteConnectionIds[index];
           }
           _this3._callbacks.removestream(event);
         };

@@ -9,7 +9,8 @@ export type ConnectionOptions = {
   multistream?: boolean,
   spotlight?: number,
   simulcast?: boolean,
-  simulcastQuality?: 'low' | 'middle' | 'high'
+  simulcastQuality?: 'low' | 'middle' | 'high',
+  clientId?: string
 }
 
 import { createSignalingMessage, trace, isSafari, isUnifiedChrome, replaceAnswerSdp } from '../utils';
@@ -22,7 +23,8 @@ class ConnectionBase {
   constraints: ?Object;
   debug: boolean;
   clientId: ?string;
-  remoteClientIds: string[];
+  connectionId: ?string;
+  remoteConnectionIds: string[];
   stream: ?MediaStream.prototype;
   role: ?string;
   authMetadata: ?string;
@@ -38,7 +40,8 @@ class ConnectionBase {
     this.constraints = null;
     this.debug = debug;
     this.clientId = null;
-    this.remoteClientIds = [];
+    this.connectionId = null;
+    this.remoteConnectionIds = [];
     this.stream = null;
     this.role = null;
     this._ws = null;
@@ -62,8 +65,9 @@ class ConnectionBase {
 
   disconnect() {
     this.clientId = null;
+    this.connectionId = null;
     this.authMetadata = null;
-    this.remoteClientIds = [];
+    this.remoteConnectionIds = [];
     const closeStream = new Promise((resolve, _) => {
       if (!this.stream) return resolve();
       this.stream.getTracks().forEach((t) => {
@@ -147,6 +151,7 @@ class ConnectionBase {
         const data = JSON.parse(event.data);
         if (data.type == 'offer') {
           this.clientId = data.client_id;
+          this.connectionId = data.connection_id;
           this._ws.onclose = (e) => {
             this.disconnect()
               .then(() => {

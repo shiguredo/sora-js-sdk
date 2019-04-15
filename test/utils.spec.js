@@ -285,6 +285,27 @@ describe('Utils', () => {
       });
     });
 
+    describe('client id parameter', () => {
+      it('client_id', () => {
+        const options = {
+          clientId: 'client_id'
+        };
+        const actual = createSignalingMessage(sdp, role, channelId, metadata, options);
+        const expected = {
+          type: 'connect',
+          role: role,
+          channel_id: channelId,
+          metadata: metadata,
+          sdp: sdp,
+          video: true,
+          audio: true,
+          userAgent: userAgent,
+          client_id: 'client_id'
+        };
+        assert.deepEqual(actual, expected);
+      });
+    });
+
     describe('simulcast parameter', () => {
       it('simulcast true', () => {
         const options = {
@@ -451,7 +472,6 @@ describe('Utils', () => {
           }
         );
       });
-
     });
   });
 });

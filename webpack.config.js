@@ -3,10 +3,14 @@
 const path = require('path');
 const webpack = require('webpack');
 const pkg = require('./package.json');
+
+const env = process.env.NODE_ENV || 'development';
+let version = pkg.version;
+if (env === 'development') {
+  version += '-dev';
+}
 const banner = pkg.name + '\n' + pkg.description +
-  '\n@version: ' + pkg.version + '\n@author: ' + pkg.author + '\n@license: ' + pkg.license;
-
-
+  '\n@version: ' + version + '\n@author: ' + pkg.author + '\n@license: ' + pkg.license;
 
 module.exports = {
   context: path.resolve(__dirname, './src'),
@@ -23,6 +27,9 @@ module.exports = {
   },
   plugins: [
     new webpack.BannerPlugin(banner),
+    new webpack.DefinePlugin({
+      'process.version': JSON.stringify(version),
+    }),
     new webpack.optimize.UglifyJsPlugin({ include: /\.min\.js$/, minimize: true })
   ],
   module: {

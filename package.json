@@ -1,11 +1,12 @@
 {
   "name": "sora-js-sdk",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "WebRTC SFU Sora Javascript SDK",
   "main": "dist/sora.min.js",
   "scripts": {
-    "build": "webpack --cache false --config webpack.config.js",
-    "dev": "http-server ./example",
+    "build": "NODE_ENV=development webpack --cache false --config webpack.config.js",
+    "release": "NODE_ENV=production webpack --cache false --config webpack.config.js",
+    "serve": "http-server ./example",
     "check": "flow; eslint ./src; exit 0;",
     "test": "karma start"
   },
