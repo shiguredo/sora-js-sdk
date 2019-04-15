@@ -27,14 +27,12 @@
 
         <script src="./sora.js"></script>
         <script type="text/javascript">
-var channelId = 'Sora';
-var debug = true;
-var sora = Sora.connection('ws://localhost:5000/signaling', debug);
-var metadata1 = 'ham';
-var metadata2 = 'spam';
-var publisher = sora.publisher(channelId, metadata1);
-var subscriber1 = sora.subscriber(channelId, metadata2);
-var subscriber2 = sora.subscriber(channelId, metadata2);
+const channelId = 'Sora';
+const debug = true;
+const sora = Sora.connection('ws://localhost:5000/signaling', debug);
+const publisher = sora.publisher(channelId);
+const subscriber1 = sora.subscriber(channelId);
+const subscriber2 = sora.subscriber(channelId);
 
 document.querySelector('#start').addEventListener('click', function() {
   // upstream

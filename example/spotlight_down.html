@@ -1,11 +1,11 @@
 <html lang="ja">
     <head>
         <meta charset="utf-8">
-        <title>multistream downstream test</title>
+        <title>spotlight downstream test</title>
     </head>
     <body>
         <div class="container">
-            <h1>multistream downstream test</h1>
+            <h1>spotlight downstream test</h1>
             <button id="start-subscriber">start</button>
             <button id="stop-subscriber">stop</button><br />
             <div style="float:left;">
@@ -19,7 +19,8 @@ const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
 const options = {
-  multistream: true
+  multistream: true,
+  spotlight: 2
 }
 const subscriber = sora.subscriber(channelId, null, options);
 
