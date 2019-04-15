@@ -10,6 +10,9 @@
     - バグ修正
 
 ## develop
+
+## 1.12.0
+- [UPDATE] example の整理
 - [UPDATE] development build 時に sora-js-sdk の version に '-dev' をつけるようにする
 - [ADD] Signaling Option に client_id を追加する
 
