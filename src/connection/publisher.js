@@ -18,13 +18,16 @@ class ConnectionPublisher extends ConnectionBase {
       .then(this._signaling.bind(this))
       .then(this._connectPeerConnection.bind(this))
       .then(message => {
-        if (typeof this._pc.addStream === 'undefined') {
-          stream.getTracks().forEach(track => {
-            this._pc.addTrack(track, stream);
-          });
-        }
-        else {
-          this._pc.addStream(stream);
+        // simulcast rid の場合には addStream/addTrack しない
+        if (!(this.options.simulcast && this.options.simulcastRid)) {
+          if (typeof this._pc.addStream === 'undefined') {
+            stream.getTracks().forEach(track => {
+              this._pc.addTrack(track, stream);
+            });
+          }
+          else {
+            this._pc.addStream(stream);
+          }
         }
         this.stream = stream;
         return this._setRemoteDescription(message);
