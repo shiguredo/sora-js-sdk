@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] userAgent を user_agent に変更する
+
 ## 1.12.0
 - [UPDATE] example の整理
 - [UPDATE] development build 時に sora-js-sdk の version に '-dev' をつけるようにする
