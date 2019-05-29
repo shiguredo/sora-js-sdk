@@ -132,7 +132,7 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     channel_id: channelId,
     metadata: metadata,
     sdp: offerSDP,
-    userAgent: window.navigator.userAgent,
+    user_agent: window.navigator.userAgent,
     audio: true,
     video: true
   };
