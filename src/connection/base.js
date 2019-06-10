@@ -10,6 +10,7 @@ export type ConnectionOptions = {
   spotlight?: number,
   simulcast?: boolean,
   simulcastQuality?: 'low' | 'middle' | 'high',
+  simulcastRid?: boolean,
   clientId?: string
 }
 
@@ -234,10 +235,36 @@ class ConnectionBase {
   }
 
   _setRemoteDescription(message: Object) {
-    return this._pc.setRemoteDescription(new window.RTCSessionDescription({ type: 'offer', sdp: message.sdp }));
+    return this._pc.setRemoteDescription(new window.RTCSessionDescription({ type: 'offer', sdp: message.sdp }))
+      .then(() => {
+        return Promise.resolve(message);
+      });
   }
 
-  _createAnswer() {
+  _createAnswer(message: Object) {
+    // simulcast rid の場合
+    if (this.options.simulcastRid && this.stream) {
+      const localVideoTrack = this.stream.getVideoTracks()[0];
+      const transceiver = this._pc.getTransceivers().find(t => {
+        if (0 <= t.mid.indexOf('video')) {
+          return t;
+        }
+      });
+      if (!transceiver) {
+        return Promise.reject('Simulcast Rid Error');
+      }
+      transceiver.direction = 'sendonly';
+      return transceiver.sender.replaceTrack(localVideoTrack)
+        .then(() => {
+          return this._setSenderParameters(transceiver, message.encodings);
+        })
+        .then(() => {
+          return this._pc.createAnswer();
+        })
+        .then(sessionDescription => {
+          return this._pc.setLocalDescription(sessionDescription);
+        });
+    }
     return this._pc.createAnswer()
       .then(sessionDescription => {
         if (this.options.simulcast) {
@@ -245,6 +272,14 @@ class ConnectionBase {
         }
         return this._pc.setLocalDescription(sessionDescription);
       });
+  }
+
+  _setSenderParameters(transceiver: Object, encodings: ?Object) {
+    const originalParameters = transceiver.sender.getParameters();
+    if (encodings) {
+      originalParameters.encodings = encodings;
+    }
+    return transceiver.sender.setParameters(originalParameters);
   }
 
   _sendAnswer() {
