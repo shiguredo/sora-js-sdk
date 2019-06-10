@@ -41,6 +41,7 @@ function isPlanB() {
 
 function enabledSimulcast(role, video) {
   /**
+    simulcast validator
     VP9 x
 
     simulcast_pub Chrome o
@@ -66,6 +67,47 @@ function enabledSimulcast(role, video) {
       return true;
     }
     if (12.0 == parseFloat(version) && role === 'downstream' && video.codec_type === 'H264') {
+      // role が downstream で 'H264' の場合のみ有効
+      return true;
+    }
+    return false;
+  }
+  return true;
+}
+
+function enabledSimulcastRid(role, video) {
+  /**
+    simulcast_rid validator
+    VP9 x
+
+    simulcast_pub Chrome o
+    simulcast_pub Firefox x
+    simulcast_pub Safari 12.1.1 x
+    simulcast_pub Safari 12.1 x
+    simulcast_pub Safari 12.0 x
+    simulcast_sub Chrome o
+    simulcast_sub Firefox o
+    simulcast_sub Safari 12.1.1 o
+    simulcast_sub Safari 12.1 o
+    simulcast_sub Safari 12.0 o ※H.264 のみ
+  **/
+  if (video.codec_type === 'VP9') {
+    return false;
+  }
+  if (role === 'upstream' && browser() === 'firefox') {
+    return false;
+  }
+  if (role === 'upstream' && browser() === 'safari') {
+    return false;
+  }
+  if (role === 'downstream' && browser() === 'safari') {
+    const appVersion = window.navigator.appVersion.toLowerCase();
+    const version = /version\/([\d.]+)/.exec(appVersion).pop();
+    // version 12.0 以降であれば有効
+    if (12.0 < parseFloat(version)) {
+      return true;
+    }
+    if (12.0 == parseFloat(version) && video.codec_type === 'H264') {
       // role が downstream で 'H264' の場合のみ有効
       return true;
     }
@@ -132,7 +174,7 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     channel_id: channelId,
     metadata: metadata,
     sdp: offerSDP,
-    userAgent: window.navigator.userAgent,
+    user_agent: window.navigator.userAgent,
     audio: true,
     video: true
   };
@@ -156,6 +198,10 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     // simulcast
     if ('simulcast' in options && options.simulcast === true) {
       message.simulcast = true;
+      // simulcast rid
+      if ('simulcastRid' in options && options.simulcastRid === true) {
+        message.simulcast_rid = true;
+      }
     }
     const simalcastQualities = ['low', 'middle', 'high'];
     if ('simulcastQuality' in options && 0 <= simalcastQualities.indexOf(options.simulcastQuality)) {
@@ -216,6 +262,9 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
 
   if (message.simulcast && !enabledSimulcast(message.role, message.video)) {
     throw new Error('Simulcast can not be used with this browser');
+  }
+  if (message.simulcast && message.simulcastRid && !enabledSimulcast(message.role, message.video)) {
+    throw new Error('Simulcast Rid can not be used with this browser');
   }
   return message;
 }
