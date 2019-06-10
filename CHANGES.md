@@ -11,6 +11,9 @@
 
 ## develop
 
+- [ADD] rid ベース simulcast への対応
+    - firefox と safari では利用できないようにする
+
 ## 1.12.0
 - [UPDATE] example の整理
 - [UPDATE] development build 時に sora-js-sdk の version に '-dev' をつけるようにする
@@ -28,11 +31,9 @@
 
 - [UPDATE] Firefox の Media Panel addon の Media-Webrtc が動作するよう RTCPeerConnection の変数格納を削除する
 - [FIX] setDirection を direction に変更する
-
-  - Safari Technology Preview 73 への対応
+    - Safari Technology Preview 73 への対応
 - [ADD] ConnectionOptions の新しいプロパティに型を追加する
-
-  - thx @exKAZUu
+    - thx @exKAZUu
 
 ## 1.10.0
 
