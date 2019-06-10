@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
- * WebRTC SFU Sora Javascript SDK
- * @version: 1.12.0-dev
+ * WebRTC SFU Sora JavaScript SDK
+ * @version: 1.13.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -444,7 +444,7 @@ var Sora = {
     return new SoraConnection(signalingUrl, debug);
   },
   version: function version() {
-    return "1.12.0-dev";
+    return "1.13.0";
   }
 };
 
@@ -780,7 +780,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     channel_id: channelId,
     metadata: metadata,
     sdp: offerSDP,
-    userAgent: window.navigator.userAgent,
+    user_agent: window.navigator.userAgent,
     audio: true,
     video: true
   };
