@@ -16,7 +16,7 @@
 - git flow release start <tag> で開始する
 - CHANGES.md にタグを打つバージョンで書き込む
 - package.json の version をタグを打つバージョンに変更する
-- npm run build を実行する
+- yarn release を実行する
     - バイナリができるのでそれをコミットする
 - git flow release finish <tag> で終了する
 - git push -u origin develop master --tags
