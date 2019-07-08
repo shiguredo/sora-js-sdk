@@ -244,20 +244,15 @@ class ConnectionBase {
   _createAnswer(message: Object) {
     // simulcast rid の場合
     if (this.options.simulcastRid && this.stream) {
-      const localVideoTrack = this.stream.getVideoTracks()[0];
       const transceiver = this._pc.getTransceivers().find(t => {
-        if (0 <= t.mid.indexOf('video')) {
+        if (t.mid && 0 <= t.mid.indexOf('video')) {
           return t;
         }
       });
       if (!transceiver) {
         return Promise.reject('Simulcast Rid Error');
       }
-      transceiver.direction = 'sendonly';
-      return transceiver.sender.replaceTrack(localVideoTrack)
-        .then(() => {
-          return this._setSenderParameters(transceiver, message.encodings);
-        })
+      return this._setSenderParameters(transceiver, message.encodings)
         .then(() => {
           return this._pc.createAnswer();
         })
