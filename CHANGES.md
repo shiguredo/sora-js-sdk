@@ -9,8 +9,11 @@
 - FIX
     - バグ修正
 
-## develop
+## 1.14.0
+- [FIX] rid ベース simulcast で音声がでない問題を修正
+- [UPDATE] rid ベース simulcast で replaceTrack を使用しないで addTrack のみで実装する
 
+## 1.13.0
 - [CHANGE] userAgent を user_agent に変更する
 - [ADD] rid ベース simulcast への対応
     - firefox と safari では利用できないようにする

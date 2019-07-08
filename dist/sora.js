@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 1.13.0
+ * @version: 1.14.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -316,19 +316,15 @@ var ConnectionBase = function () {
 
       // simulcast rid の場合
       if (this.options.simulcastRid && this.stream) {
-        var localVideoTrack = this.stream.getVideoTracks()[0];
         var transceiver = this._pc.getTransceivers().find(function (t) {
-          if (0 <= t.mid.indexOf('video')) {
+          if (t.mid && 0 <= t.mid.indexOf('video')) {
             return t;
           }
         });
         if (!transceiver) {
           return Promise.reject('Simulcast Rid Error');
         }
-        transceiver.direction = 'sendonly';
-        return transceiver.sender.replaceTrack(localVideoTrack).then(function () {
-          return _this4._setSenderParameters(transceiver, message.encodings);
-        }).then(function () {
+        return this._setSenderParameters(transceiver, message.encodings).then(function () {
           return _this4._pc.createAnswer();
         }).then(function (sessionDescription) {
           return _this4._pc.setLocalDescription(sessionDescription);
@@ -444,7 +440,7 @@ var Sora = {
     return new SoraConnection(signalingUrl, debug);
   },
   version: function version() {
-    return "1.13.0";
+    return "1.14.0";
   }
 };
 
@@ -524,19 +520,16 @@ var ConnectionPublisher = function (_ConnectionBase) {
     value: function _singleStream(stream) {
       var _this2 = this;
 
-      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(function (message) {
-        // simulcast rid の場合には addStream/addTrack しない
-        if (!(_this2.options.simulcast && _this2.options.simulcastRid)) {
-          if (typeof _this2._pc.addStream === 'undefined') {
-            stream.getTracks().forEach(function (track) {
-              _this2._pc.addTrack(track, stream);
-            });
-          } else {
-            _this2._pc.addStream(stream);
-          }
+      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(this._setRemoteDescription.bind(this)).then(function (message) {
+        if (typeof _this2._pc.addStream === 'undefined') {
+          stream.getTracks().forEach(function (track) {
+            _this2._pc.addTrack(track, stream);
+          });
+        } else {
+          _this2._pc.addStream(stream);
         }
         _this2.stream = stream;
-        return _this2._setRemoteDescription(message);
+        return Promise.resolve(message);
       }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(function () {
         return _this2.stream;
       });
