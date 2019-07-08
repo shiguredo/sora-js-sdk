@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 1.13.0-dev
+ * @version: 1.14.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -440,7 +440,7 @@ var Sora = {
     return new SoraConnection(signalingUrl, debug);
   },
   version: function version() {
-    return "1.13.0-dev";
+    return "1.14.0";
   }
 };
 
