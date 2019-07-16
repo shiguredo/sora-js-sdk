@@ -1,7 +1,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 1.14.0
+ * @version: 1.14.0-dev
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -252,9 +252,6 @@ var ConnectionBase = function () {
     key: '_createOffer',
     value: function _createOffer() {
       var config = { iceServers: [] };
-      if ((0, _utils.isUnifiedChrome)()) {
-        config = Object.assign({}, config, { sdpSemantics: 'unified-plan' });
-      }
       var pc = new window.RTCPeerConnection(config);
       if ((0, _utils.isSafari)()) {
         pc.addTransceiver('video', { direction: 'recvonly' });
@@ -278,9 +275,6 @@ var ConnectionBase = function () {
         message.config = {};
       }
       if (window.RTCPeerConnection.generateCertificate === undefined) {
-        if ((0, _utils.isUnifiedChrome)()) {
-          message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
-        }
         this._trace('PEER CONNECTION CONFIG', message.config);
         this._pc = new window.RTCPeerConnection(message.config, this.constraints);
         this._pc.oniceconnectionstatechange = function (_) {
@@ -290,9 +284,6 @@ var ConnectionBase = function () {
       } else {
         return window.RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' }).then(function (certificate) {
           message.config.certificates = [certificate];
-          if ((0, _utils.isUnifiedChrome)()) {
-            message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
-          }
           _this3._trace('PEER CONNECTION CONFIG', message.config);
           _this3._pc = new window.RTCPeerConnection(message.config, _this3.constraints);
           _this3._pc.oniceconnectionstatechange = function (_) {
@@ -440,7 +431,7 @@ var Sora = {
     return new SoraConnection(signalingUrl, debug);
   },
   version: function version() {
-    return "1.14.0";
+    return "1.14.0-dev";
   }
 };
 
@@ -597,8 +588,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.trace = trace;
-exports.isUnifiedChrome = isUnifiedChrome;
-exports.isUnifiedSafari = isUnifiedSafari;
 exports.isEdge = isEdge;
 exports.isSafari = isSafari;
 exports.isChrome = isChrome;
@@ -634,10 +623,6 @@ function browser() {
     return 'firefox';
   }
   return;
-}
-
-function isPlanB() {
-  return browser() === 'chrome' || browser() === 'safari';
 }
 
 function enabledSimulcast(role, video) {
@@ -715,25 +700,6 @@ function enabledSimulcastRid(role, video) {
   return true;
 }
 
-function isUnifiedChrome() {
-  if (browser() !== 'chrome') {
-    return false;
-  }
-  var ua = window.navigator.userAgent.toLocaleLowerCase();
-  var splitedUserAgent = /chrome\/([\d.]+)/.exec(ua);
-  if (!splitedUserAgent || splitedUserAgent.length < 2) {
-    return false;
-  }
-  return 71 <= parseInt(splitedUserAgent[1]);
-}
-
-function isUnifiedSafari(sdp) {
-  if (browser() !== 'safari') {
-    return false;
-  }
-  return sdp.includes('a=group:BUNDLE 0 1');
-}
-
 function isEdge() {
   return browser() === 'edge';
 }
@@ -786,9 +752,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   if ('multistream' in options && options.multistream === true) {
     // multistream
     message.multistream = true;
-    if (!isUnifiedChrome() && !isUnifiedSafari(offerSDP) && isPlanB()) {
-      message.plan_b = true;
-    }
     // spotlight
     if ('spotlight' in options) {
       message.spotlight = options.spotlight;
