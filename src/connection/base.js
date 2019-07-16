@@ -14,7 +14,7 @@ export type ConnectionOptions = {
   clientId?: string
 }
 
-import { createSignalingMessage, trace, isSafari, isUnifiedChrome, replaceAnswerSdp } from '../utils';
+import { createSignalingMessage, trace, isSafari, replaceAnswerSdp } from '../utils';
 
 class ConnectionBase {
   channelId: string;
@@ -182,9 +182,6 @@ class ConnectionBase {
 
   _createOffer() {
     let config = { iceServers: [] };
-    if (isUnifiedChrome()) {
-      config = Object.assign({}, config, { sdpSemantics: 'unified-plan' });
-    }
     const pc = new window.RTCPeerConnection(config);
     if (isSafari()) {
       pc.addTransceiver('video', { direction: 'recvonly' });
@@ -207,9 +204,6 @@ class ConnectionBase {
       message.config = {};
     }
     if (window.RTCPeerConnection.generateCertificate === undefined) {
-      if (isUnifiedChrome()) {
-        message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
-      }
       this._trace('PEER CONNECTION CONFIG', message.config);
       this._pc = new window.RTCPeerConnection(message.config, this.constraints);
       this._pc.oniceconnectionstatechange = (_) => {
@@ -221,9 +215,6 @@ class ConnectionBase {
       return window.RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
         .then(certificate => {
           message.config.certificates = [certificate];
-          if (isUnifiedChrome()) {
-            message.config = Object.assign(message.config, { sdpSemantics: 'unified-plan' });
-          }
           this._trace('PEER CONNECTION CONFIG', message.config);
           this._pc = new window.RTCPeerConnection(message.config, this.constraints);
           this._pc.oniceconnectionstatechange = (_) => {
