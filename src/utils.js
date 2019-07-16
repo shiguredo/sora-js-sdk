@@ -35,10 +35,6 @@ function browser() {
   return ;
 }
 
-function isPlanB() {
-  return browser() === 'chrome' || browser() === 'safari';
-}
-
 function enabledSimulcast(role, video) {
   /**
     simulcast validator
@@ -116,25 +112,6 @@ function enabledSimulcastRid(role, video) {
   return true;
 }
 
-export function isUnifiedChrome() {
-  if (browser() !== 'chrome') {
-    return false;
-  }
-  const ua = window.navigator.userAgent.toLocaleLowerCase();
-  const splitedUserAgent = /chrome\/([\d.]+)/.exec(ua);
-  if (!splitedUserAgent || splitedUserAgent.length < 2) {
-    return false;
-  }
-  return 71 <= parseInt(splitedUserAgent[1]);
-}
-
-export function isUnifiedSafari(sdp) {
-  if (browser() !== 'safari') {
-    return false;
-  }
-  return sdp.includes('a=group:BUNDLE 0 1');
-}
-
 export function isEdge() {
   return browser() === 'edge';
 }
@@ -187,9 +164,6 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
   if ('multistream' in options && options.multistream === true) {
     // multistream
     message.multistream = true;
-    if (!isUnifiedChrome() && !isUnifiedSafari(offerSDP) && isPlanB()) {
-      message.plan_b = true;
-    }
     // spotlight
     if ('spotlight' in options) {
       message.spotlight = options.spotlight;
