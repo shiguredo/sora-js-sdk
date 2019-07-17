@@ -42,42 +42,6 @@ function enabledSimulcast(role, video) {
 
     simulcast_pub Chrome o
     simulcast_pub Firefox x
-    simulcast_pub Safari 12.1 o
-    simulcast_pub Safari 12.0 x
-    simulcast_sub Chrome o
-    simulcast_sub Firefox o
-    simulcast_sub Safari 12.1 o
-    simulcast_sub Safari 12.0 o ※H.264 のみ
-  **/
-  if (video.codec_type === 'VP9') {
-    return false;
-  }
-  if (role === 'upstream' && browser() === 'firefox') {
-    return false;
-  }
-  if (browser() === 'safari') {
-    const appVersion = window.navigator.appVersion.toLowerCase();
-    const version = /version\/([\d.]+)/.exec(appVersion).pop();
-    // version 12.0 以降であれば有効
-    if (12.0 < parseFloat(version)) {
-      return true;
-    }
-    if (12.0 == parseFloat(version) && role === 'downstream' && video.codec_type === 'H264') {
-      // role が downstream で 'H264' の場合のみ有効
-      return true;
-    }
-    return false;
-  }
-  return true;
-}
-
-function enabledSimulcastRid(role, video) {
-  /**
-    simulcast_rid validator
-    VP9 x
-
-    simulcast_pub Chrome o
-    simulcast_pub Firefox x
     simulcast_pub Safari 12.1.1 x
     simulcast_pub Safari 12.1 x
     simulcast_pub Safari 12.0 x
@@ -124,26 +88,6 @@ export function isChrome() {
   return browser() === 'chrome';
 }
 
-export function replaceAnswerSdp(sdp) {
-  let ssrcPattern = new RegExp(/m=video[\s\S]*?(a=ssrc:(\d+)\scname:.+\r\n(a=ssrc:\2\smsid:.+\r\na=ssrc:\2\smslabel:.+\r\na=ssrc:\2\slabel:.+\r\n)?)/);  // eslint-disable-line
-  const found = sdp.match(ssrcPattern);
-  if (!found) {
-    return sdp;
-  }
-
-  const ssrcAttributes = found[1];
-  ssrcPattern = found[1];
-  const ssrcId = parseInt(found[2]);
-  const ssrcIdPattern = new RegExp(ssrcId.toString(), 'g');
-  const ssrcGroup = ['a=ssrc-group:SIM'];
-  const ssrcAttributeList = [];
-  for (let i = 0; i < 3; i += 1) {
-    ssrcGroup.push((ssrcId + i).toString());
-    ssrcAttributeList.push(ssrcAttributes.replace(ssrcIdPattern, (ssrcId + i).toString()));
-  }
-  return sdp.replace(ssrcPattern, [ssrcGroup.join(' '), '\r\n', ssrcAttributeList.join('')].join(''));
-}
-
 export function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   const message = {
     type: 'connect',
@@ -172,10 +116,6 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     // simulcast
     if ('simulcast' in options && options.simulcast === true) {
       message.simulcast = true;
-      // simulcast rid
-      if ('simulcastRid' in options && options.simulcastRid === true) {
-        message.simulcast_rid = true;
-      }
     }
     const simalcastQualities = ['low', 'middle', 'high'];
     if ('simulcastQuality' in options && 0 <= simalcastQualities.indexOf(options.simulcastQuality)) {
@@ -236,9 +176,6 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
 
   if (message.simulcast && !enabledSimulcast(message.role, message.video)) {
     throw new Error('Simulcast can not be used with this browser');
-  }
-  if (message.simulcast && message.simulcastRid && !enabledSimulcast(message.role, message.video)) {
-    throw new Error('Simulcast Rid can not be used with this browser');
   }
   return message;
 }
