@@ -21,7 +21,7 @@ describe('Utils', () => {
         sdp: sdp,
         audio: true,
         video: true,
-        userAgent: userAgent
+        user_agent: userAgent
       };
       assert.deepEqual(actual, expected);
     });
@@ -36,7 +36,7 @@ describe('Utils', () => {
         sdp: sdp,
         audio: true,
         video: true,
-        userAgent: userAgent
+        user_agent: userAgent
       };
       assert.deepEqual(actual, expected);
     });
@@ -55,7 +55,7 @@ describe('Utils', () => {
         sdp: sdp,
         audio: false,
         video: false,
-        userAgent: userAgent
+        user_agent: userAgent
       };
       assert.deepEqual(actual, expected);
     });
@@ -79,7 +79,7 @@ describe('Utils', () => {
             bit_rate: 100
           },
           video: true,
-          userAgent: userAgent
+          user_agent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -98,7 +98,7 @@ describe('Utils', () => {
           sdp: sdp,
           audio: false,
           video: true,
-          userAgent: userAgent
+          user_agent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -121,7 +121,7 @@ describe('Utils', () => {
           video: {
             codec_type: 'VP8'
           },
-          userAgent: userAgent
+          user_agent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -140,7 +140,7 @@ describe('Utils', () => {
           sdp: sdp,
           audio: true,
           video: false,
-          userAgent: userAgent
+          user_agent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -163,7 +163,7 @@ describe('Utils', () => {
             codec_type: 'VP8',
             bit_rate: 50
           },
-          userAgent: userAgent
+          user_agent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -189,7 +189,7 @@ describe('Utils', () => {
         sdp: null,
         audio: true,
         video: true,
-        userAgent: userAgent
+        user_agent: userAgent
       };
       assert.deepEqual(actual, expected);
     });
@@ -213,7 +213,7 @@ describe('Utils', () => {
           bit_rate: 10
         },
         video: true,
-        userAgent: userAgent
+        user_agent: userAgent
       };
       assert.deepEqual(actual, expected);
     });
@@ -236,7 +236,7 @@ describe('Utils', () => {
         video: {
           bit_rate: 10
         },
-        userAgent: userAgent
+        user_agent: userAgent
       };
       assert.deepEqual(actual, expected);
     });
@@ -256,7 +256,7 @@ describe('Utils', () => {
           sdp: sdp,
           video: true,
           audio: true,
-          userAgent: userAgent
+          user_agent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -277,7 +277,7 @@ describe('Utils', () => {
           sdp: sdp,
           video: true,
           audio: true,
-          userAgent: userAgent,
+          user_agent: userAgent,
           multistream: true,
           spotlight: 2
         };
@@ -299,7 +299,7 @@ describe('Utils', () => {
           sdp: sdp,
           video: true,
           audio: true,
-          userAgent: userAgent,
+          user_agent: userAgent,
           client_id: 'client_id'
         };
         assert.deepEqual(actual, expected);
@@ -320,7 +320,7 @@ describe('Utils', () => {
           sdp: sdp,
           video: true,
           audio: true,
-          userAgent: userAgent,
+          user_agent: userAgent,
           simulcast: true
         };
         assert.deepEqual(actual, expected);
@@ -339,7 +339,7 @@ describe('Utils', () => {
           sdp: sdp,
           video: true,
           audio: true,
-          userAgent: userAgent,
+          user_agent: userAgent,
         };
         assert.deepEqual(actual, expected);
       });
@@ -357,7 +357,7 @@ describe('Utils', () => {
           sdp: sdp,
           video: true,
           audio: true,
-          userAgent: userAgent,
+          user_agent: userAgent,
           simulcast: {
             quality: 'low'
           }
@@ -378,7 +378,7 @@ describe('Utils', () => {
           sdp: sdp,
           video: true,
           audio: true,
-          userAgent: userAgent
+          user_agent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
