@@ -305,16 +305,17 @@ var ConnectionBase = function () {
     value: function _createAnswer(message) {
       var _this4 = this;
 
-      // simulcast rid の場合
-      if (this.options.simulcastRid && this.stream) {
+      // simulcast の場合
+      if (this.options.simulcast && this.role === 'upstream' && message.encodings) {
         var transceiver = this._pc.getTransceivers().find(function (t) {
           if (t.mid && 0 <= t.mid.indexOf('video')) {
             return t;
           }
         });
         if (!transceiver) {
-          return Promise.reject('Simulcast Rid Error');
+          return Promise.reject('Simulcast Error');
         }
+        this._setSenderParameters(transceiver, message.encodings);
         return this._setSenderParameters(transceiver, message.encodings).then(function () {
           return _this4._pc.createAnswer();
         }).then(function (sessionDescription) {
@@ -322,9 +323,6 @@ var ConnectionBase = function () {
         });
       }
       return this._pc.createAnswer().then(function (sessionDescription) {
-        if (_this4.options.simulcast) {
-          sessionDescription.sdp = (0, _utils.replaceAnswerSdp)(sessionDescription.sdp);
-        }
         return _this4._pc.setLocalDescription(sessionDescription);
       });
     }
@@ -332,9 +330,7 @@ var ConnectionBase = function () {
     key: '_setSenderParameters',
     value: function _setSenderParameters(transceiver, encodings) {
       var originalParameters = transceiver.sender.getParameters();
-      if (encodings) {
-        originalParameters.encodings = encodings;
-      }
+      originalParameters.encodings = encodings;
       return transceiver.sender.setParameters(originalParameters);
     }
   }, {
@@ -591,7 +587,6 @@ exports.trace = trace;
 exports.isEdge = isEdge;
 exports.isSafari = isSafari;
 exports.isChrome = isChrome;
-exports.replaceAnswerSdp = replaceAnswerSdp;
 exports.createSignalingMessage = createSignalingMessage;
 function trace(clientId, title, value) {
   var prefix = '';
@@ -628,41 +623,6 @@ function browser() {
 function enabledSimulcast(role, video) {
   /**
     simulcast validator
-    VP9 x
-     simulcast_pub Chrome o
-    simulcast_pub Firefox x
-    simulcast_pub Safari 12.1 o
-    simulcast_pub Safari 12.0 x
-    simulcast_sub Chrome o
-    simulcast_sub Firefox o
-    simulcast_sub Safari 12.1 o
-    simulcast_sub Safari 12.0 o ※H.264 のみ
-  **/
-  if (video.codec_type === 'VP9') {
-    return false;
-  }
-  if (role === 'upstream' && browser() === 'firefox') {
-    return false;
-  }
-  if (browser() === 'safari') {
-    var appVersion = window.navigator.appVersion.toLowerCase();
-    var version = /version\/([\d.]+)/.exec(appVersion).pop();
-    // version 12.0 以降であれば有効
-    if (12.0 < parseFloat(version)) {
-      return true;
-    }
-    if (12.0 == parseFloat(version) && role === 'downstream' && video.codec_type === 'H264') {
-      // role が downstream で 'H264' の場合のみ有効
-      return true;
-    }
-    return false;
-  }
-  return true;
-}
-
-function enabledSimulcastRid(role, video) {
-  /**
-    simulcast_rid validator
     VP9 x
      simulcast_pub Chrome o
     simulcast_pub Firefox x
@@ -712,26 +672,6 @@ function isChrome() {
   return browser() === 'chrome';
 }
 
-function replaceAnswerSdp(sdp) {
-  var ssrcPattern = new RegExp(/m=video[\s\S]*?(a=ssrc:(\d+)\scname:.+\r\n(a=ssrc:\2\smsid:.+\r\na=ssrc:\2\smslabel:.+\r\na=ssrc:\2\slabel:.+\r\n)?)/); // eslint-disable-line
-  var found = sdp.match(ssrcPattern);
-  if (!found) {
-    return sdp;
-  }
-
-  var ssrcAttributes = found[1];
-  ssrcPattern = found[1];
-  var ssrcId = parseInt(found[2]);
-  var ssrcIdPattern = new RegExp(ssrcId.toString(), 'g');
-  var ssrcGroup = ['a=ssrc-group:SIM'];
-  var ssrcAttributeList = [];
-  for (var i = 0; i < 3; i += 1) {
-    ssrcGroup.push((ssrcId + i).toString());
-    ssrcAttributeList.push(ssrcAttributes.replace(ssrcIdPattern, (ssrcId + i).toString()));
-  }
-  return sdp.replace(ssrcPattern, [ssrcGroup.join(' '), '\r\n', ssrcAttributeList.join('')].join(''));
-}
-
 function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
   var message = {
     type: 'connect',
@@ -760,10 +700,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     // simulcast
     if ('simulcast' in options && options.simulcast === true) {
       message.simulcast = true;
-      // simulcast rid
-      if ('simulcastRid' in options && options.simulcastRid === true) {
-        message.simulcast_rid = true;
-      }
     }
     var simalcastQualities = ['low', 'middle', 'high'];
     if ('simulcastQuality' in options && 0 <= simalcastQualities.indexOf(options.simulcastQuality)) {
@@ -824,9 +760,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
 
   if (message.simulcast && !enabledSimulcast(message.role, message.video)) {
     throw new Error('Simulcast can not be used with this browser');
-  }
-  if (message.simulcast && message.simulcastRid && !enabledSimulcast(message.role, message.video)) {
-    throw new Error('Simulcast Rid can not be used with this browser');
   }
   return message;
 }

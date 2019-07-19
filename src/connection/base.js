@@ -10,11 +10,10 @@ export type ConnectionOptions = {
   spotlight?: number,
   simulcast?: boolean,
   simulcastQuality?: 'low' | 'middle' | 'high',
-  simulcastRid?: boolean,
   clientId?: string
 }
 
-import { createSignalingMessage, trace, isSafari, replaceAnswerSdp } from '../utils';
+import { createSignalingMessage, trace, isSafari } from '../utils';
 
 class ConnectionBase {
   channelId: string;
@@ -233,16 +232,17 @@ class ConnectionBase {
   }
 
   _createAnswer(message: Object) {
-    // simulcast rid の場合
-    if (this.options.simulcastRid && this.stream) {
+    // simulcast の場合
+    if (this.options.simulcast && this.role === 'upstream' && message.encodings) {
       const transceiver = this._pc.getTransceivers().find(t => {
         if (t.mid && 0 <= t.mid.indexOf('video')) {
           return t;
         }
       });
       if (!transceiver) {
-        return Promise.reject('Simulcast Rid Error');
+        return Promise.reject('Simulcast Error');
       }
+      this._setSenderParameters(transceiver, message.encodings);
       return this._setSenderParameters(transceiver, message.encodings)
         .then(() => {
           return this._pc.createAnswer();
@@ -253,18 +253,13 @@ class ConnectionBase {
     }
     return this._pc.createAnswer()
       .then(sessionDescription => {
-        if (this.options.simulcast) {
-          sessionDescription.sdp = replaceAnswerSdp(sessionDescription.sdp);
-        }
         return this._pc.setLocalDescription(sessionDescription);
       });
   }
 
-  _setSenderParameters(transceiver: Object, encodings: ?Object) {
+  _setSenderParameters(transceiver: Object, encodings: Object) {
     const originalParameters = transceiver.sender.getParameters();
-    if (encodings) {
-      originalParameters.encodings = encodings;
-    }
+    originalParameters.encodings = encodings;
     return transceiver.sender.setParameters(originalParameters);
   }
 
