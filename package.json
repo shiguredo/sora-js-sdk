@@ -7,7 +7,7 @@
     "build": "NODE_ENV=development rollup -c",
     "release": "NODE_ENV=production rollup -c",
     "serve": "http-server ./example",
-    "check": "flow; eslint ./src; exit 0;",
+    "lint": "flow; eslint ./src; exit 0;",
     "test": "karma start"
   },
   "repository": {
@@ -27,7 +27,9 @@
     "babel-loader": "^8.0.6",
     "babel-preset-minify": "^0.5.0",
     "eslint": "^6.1.0",
+    "eslint-config-prettier": "^6.0.0",
     "eslint-plugin-flowtype": "^3.12.2",
+    "eslint-plugin-prettier": "^3.1.0",
     "flow-bin": "^0.104.0",
     "http-server": "^0.11.1",
     "karma": "^4.2.0",
@@ -37,6 +39,7 @@
     "karma-webpack": "^4.0.2",
     "mocha": "^6.2.0",
     "power-assert": "^1.6.1",
+    "prettier": "^1.18.2",
     "rollup": "^1.17.0",
     "rollup-plugin-babel": "^4.3.3",
     "webpack": "^4.38.0"
