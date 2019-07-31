@@ -6,8 +6,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     this.role = 'downstream';
     if (this.options && this.options.multistream) {
       return this._multiStream();
-    }
-    else {
+    } else {
       return this._singleStream();
     }
   }
@@ -23,8 +22,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
             this.remoteConnectionIds.push(this.stream.id);
             this._callbacks.addstream(event);
           }.bind(this);
-        }
-        else {
+        } else {
           this._pc.ontrack = function(event) {
             this.stream = event.streams[0];
             const streamId = this.stream.id;

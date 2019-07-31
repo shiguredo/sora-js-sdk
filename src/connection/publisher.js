@@ -6,8 +6,7 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.role = 'upstream';
     if (this.options && this.options.multistream) {
       return this._multiStream(stream);
-    }
-    else {
+    } else {
       return this._singleStream(stream);
     }
   }
@@ -23,8 +22,7 @@ export default class ConnectionPublisher extends ConnectionBase {
           stream.getTracks().forEach(track => {
             this._pc.addTrack(track, stream);
           });
-        }
-        else {
+        } else {
           this._pc.addStream(stream);
         }
         this.stream = stream;
@@ -48,8 +46,7 @@ export default class ConnectionPublisher extends ConnectionBase {
           stream.getTracks().forEach(track => {
             this._pc.addTrack(track, stream);
           });
-        }
-        else {
+        } else {
           this._pc.addStream(stream);
         }
         if (typeof this._pc.ontrack === 'undefined') {
