@@ -4,8 +4,8 @@
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.min.js",
   "scripts": {
-    "build": "NODE_ENV=development webpack --cache false --config webpack.config.js",
-    "release": "NODE_ENV=production webpack --cache false --config webpack.config.js",
+    "build": "NODE_ENV=development rollup -c",
+    "release": "NODE_ENV=production rollup -c",
     "serve": "http-server ./example",
     "check": "flow; eslint ./src; exit 0;",
     "test": "karma start"
@@ -25,6 +25,7 @@
     "@babel/preset-flow": "^7.0.0",
     "babel-eslint": "^10.0.2",
     "babel-loader": "^8.0.6",
+    "babel-preset-minify": "^0.5.0",
     "eslint": "^6.1.0",
     "eslint-plugin-flowtype": "^3.12.2",
     "flow-bin": "^0.104.0",
@@ -36,6 +37,8 @@
     "karma-webpack": "^4.0.2",
     "mocha": "^6.2.0",
     "power-assert": "^1.6.1",
+    "rollup": "^1.17.0",
+    "rollup-plugin-babel": "^4.3.3",
     "webpack": "^4.38.0"
   }
 }
