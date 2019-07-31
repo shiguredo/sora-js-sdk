@@ -15,7 +15,7 @@ export type ConnectionOptions = {
 
 import { createSignalingMessage, trace, isSafari } from '../utils';
 
-class ConnectionBase {
+export default class ConnectionBase {
   channelId: string;
   metadata: string;
   signalingUrl: string;
@@ -317,5 +317,3 @@ class ConnectionBase {
     trace(this.clientId, title, message);
   }
 }
-
-module.exports = ConnectionBase;

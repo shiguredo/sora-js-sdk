@@ -4,7 +4,7 @@ import ConnectionSubscriber from './connection/subscriber';
 import type { ConnectionOptions } from './connection/base';
 
 
-const Sora = {
+export default {
   connection: function(signalingUrl: string, debug: boolean=false) {
     return new SoraConnection(signalingUrl, debug);
   },
@@ -31,5 +31,3 @@ class SoraConnection {
     return new ConnectionSubscriber(this.signalingUrl, channelId, metadata, options, this.debug);
   }
 }
-
-module.exports = Sora;

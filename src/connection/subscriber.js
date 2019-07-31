@@ -1,7 +1,7 @@
 /* @flow */
 import ConnectionBase from './base';
 
-class ConnectionSubscriber extends ConnectionBase {
+export default class ConnectionSubscriber extends ConnectionBase {
   connect() {
     this.role = 'downstream';
     if (this.options && this.options.multistream) {
@@ -81,5 +81,3 @@ class ConnectionSubscriber extends ConnectionBase {
       .then(this._onIceCandidate.bind(this));
   }
 }
-
-module.exports = ConnectionSubscriber;
