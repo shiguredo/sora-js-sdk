@@ -1,4 +1,5 @@
 import babel from 'rollup-plugin-babel';
+import replace from 'rollup-plugin-replace';
 import pkg from './package.json';
 
 const env = process.env.NODE_ENV || 'development';
@@ -19,6 +20,9 @@ export default [
   {
     input: 'src/sora.js',
     plugins: [
+      replace({
+        SORA_VERSION: `'${pkg.version}';`
+      }),
       babel({
         presets: ['@babel/preset-flow']
       })
@@ -28,13 +32,15 @@ export default [
       file: 'dist/sora.js',
       format: 'umd',
       name: 'Sora',
-      banner: banner,
-      intro: `const VERSION = '${pkg.version}';`
+      banner: banner
     }
   },
   {
     input: 'src/sora.js',
     plugins: [
+      replace({
+        SORA_VERSION: `'${pkg.version}';`
+      }),
       babel({
         presets: ['@babel/preset-flow', 'minify'],
         comments: false
@@ -45,8 +51,7 @@ export default [
       file: 'dist/sora.min.js',
       format: 'umd',
       name: 'Sora',
-      banner: banner,
-      intro: `const VERSION = '${pkg.version}';`
+      banner: banner
     }
   }
 ];

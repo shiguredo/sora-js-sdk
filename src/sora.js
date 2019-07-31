@@ -8,7 +8,7 @@ export default {
     return new SoraConnection(signalingUrl, debug);
   },
   version: function() {
-    return process.version;
+    return SORA_VERSION; // eslint-disable-line
   }
 };
 

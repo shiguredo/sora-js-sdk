@@ -13,8 +13,6 @@
   (global = global || self, global.Sora = factory());
 }(this, function () { 'use strict';
 
-  const VERSION = '1.14.0-dev';
-
   function trace(clientId, title, value) {
     let prefix = '';
 
@@ -715,7 +713,7 @@
       return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-      return process.version;
+      return '1.14.0-dev';
     }
   };
 
