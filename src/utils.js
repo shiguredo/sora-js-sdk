@@ -1,3 +1,31 @@
+/* @flow */
+export type ConnectionOptions = {
+  audio?: boolean,
+  audioCodecType?: string,
+  audioBitRate?: number,
+  video?: boolean,
+  videoCodecType?: string,
+  videoBitRate?: number,
+  multistream?: boolean,
+  spotlight?: number,
+  simulcast?: boolean,
+  simulcastQuality?: 'low' | 'middle' | 'high',
+  clientId?: string
+};
+
+type SignalingOptions = {
+  type: 'connect',
+  role: 'upstream' | 'downstream',
+  channel_id: string,
+  metadata: ?string,
+  audio: boolean | Object,
+  video: boolean | Object,
+  multistream?: boolean,
+  spotlight?: number,
+  simulcast?: boolean | Object,
+  client_id?: string
+};
+
 export function trace(clientId: ?string, title: string, value: Object | string) {
   let prefix = '';
   if (window.performance) {
@@ -57,7 +85,11 @@ function enabledSimulcast(role, video) {
   }
   if (role === 'downstream' && browser() === 'safari') {
     const appVersion = window.navigator.appVersion.toLowerCase();
-    const version = /version\/([\d.]+)/.exec(appVersion).pop();
+    const versions = /version\/([\d.]+)/.exec(appVersion);
+    if (!versions) {
+      return false;
+    }
+    const version = versions.pop();
     // version 12.0 以降であれば有効
     if (12.0 < parseFloat(version)) {
       return true;
@@ -83,8 +115,14 @@ export function isChrome() {
   return browser() === 'chrome';
 }
 
-export function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
-  const message = {
+export function createSignalingMessage(
+  offerSDP: string,
+  role: 'upstream' | 'downstream',
+  channelId: string,
+  metadata: ?string,
+  options: ConnectionOptions
+) {
+  const message: SignalingOptions = {
     type: 'connect',
     role: role,
     channel_id: channelId,
@@ -94,11 +132,6 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     audio: true,
     video: true
   };
-  Object.keys(message).forEach(key => {
-    if (message[key] === undefined) {
-      message[key] = null;
-    }
-  });
 
   if ('multistream' in options && options.multistream === true) {
     // multistream

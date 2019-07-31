@@ -1,19 +1,6 @@
 /* @flow */
-export type ConnectionOptions = {
-  audio?: boolean,
-  audioCodecType?: string,
-  audioBitRate?: number,
-  video?: boolean,
-  videoCodecType?: string,
-  videoBitRate?: number,
-  multistream?: boolean,
-  spotlight?: number,
-  simulcast?: boolean,
-  simulcastQuality?: 'low' | 'middle' | 'high',
-  clientId?: string
-};
-
 import { createSignalingMessage, trace, isSafari } from '../utils';
+import type { ConnectionOptions } from '../utils';
 
 export default class ConnectionBase {
   channelId: string;

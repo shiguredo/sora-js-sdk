@@ -1,7 +1,7 @@
 /* @flow */
 import ConnectionPublisher from './connection/publisher';
 import ConnectionSubscriber from './connection/subscriber';
-import type { ConnectionOptions } from './connection/base';
+import type { ConnectionOptions } from './utils';
 
 export default {
   connection: function(signalingUrl: string, debug: boolean = false) {

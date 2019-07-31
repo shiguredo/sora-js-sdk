@@ -80,7 +80,13 @@
 
     if (role === 'downstream' && browser() === 'safari') {
       const appVersion = window.navigator.appVersion.toLowerCase();
-      const version = /version\/([\d.]+)/.exec(appVersion).pop(); // version 12.0 以降であれば有効
+      const versions = /version\/([\d.]+)/.exec(appVersion);
+
+      if (!versions) {
+        return false;
+      }
+
+      const version = versions.pop(); // version 12.0 以降であれば有効
 
       if (12.0 < parseFloat(version)) {
         return true;
@@ -114,11 +120,6 @@
       audio: true,
       video: true
     };
-    Object.keys(message).forEach(key => {
-      if (message[key] === undefined) {
-        message[key] = null;
-      }
-    });
 
     if ('multistream' in options && options.multistream === true) {
       // multistream

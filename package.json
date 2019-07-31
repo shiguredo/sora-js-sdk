@@ -5,9 +5,10 @@
   "main": "dist/sora.min.js",
   "scripts": {
     "build": "NODE_ENV=development rollup -c",
-    "release": "NODE_ENV=production rollup -c",
+    "watch": "NODE_ENV=development rollup -c -w",
+    "release": "yarn lint; NODE_ENV=production rollup -c",
     "serve": "http-server ./example",
-    "lint": "flow; eslint ./src; exit 0;",
+    "lint": "eslint ./src",
     "test": "karma start"
   },
   "repository": {
