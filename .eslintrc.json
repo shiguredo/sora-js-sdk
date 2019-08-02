@@ -7,8 +7,7 @@
   "extends": [
     "eslint:recommended",
     "plugin:flowtype/recommended",
-    "prettier",
-    "prettier/flowtype"
+    "prettier"
   ],
   "parser": "babel-eslint",
   "parserOptions": {
@@ -20,6 +19,7 @@
   },
   "plugins": [
     "flowtype",
+    "flowtype-errors",
     "prettier"
   ],
   "globals": {
@@ -27,6 +27,8 @@
     "VERSION": true
   },
   "rules": {
+    "flowtype-errors/show-errors": 2,
+    "flowtype-errors/show-warnings": 1,
     "prettier/prettier": [
       "error", {
         "singleQuote": true,

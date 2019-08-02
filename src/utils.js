@@ -117,11 +117,14 @@ export function isChrome() {
 
 export function createSignalingMessage(
   offerSDP: string,
-  role: 'upstream' | 'downstream',
+  role: ?string,
   channelId: string,
   metadata: ?string,
   options: ConnectionOptions
 ) {
+  if (role !== 'upstream' || role !== 'downstream') {
+    throw new Error('Unknown role type');
+  }
   const message: SignalingOptions = {
     type: 'connect',
     role: role,
