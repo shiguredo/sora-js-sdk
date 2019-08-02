@@ -6,8 +6,9 @@
   "scripts": {
     "build": "NODE_ENV=development rollup -c",
     "watch": "NODE_ENV=development rollup -c -w",
-    "release": "yarn lint; NODE_ENV=production rollup -c",
-    "serve": "http-server ./example",
+    "prerelease": "yarn lint",
+    "release": "NODE_ENV=production rollup -c",
+    "server": "http-server ./example",
     "lint": "eslint ./src",
     "test": "karma start"
   },
