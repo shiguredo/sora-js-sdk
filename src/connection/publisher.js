@@ -42,13 +42,6 @@ export default class ConnectionPublisher extends ConnectionBase {
       .then(this._signaling.bind(this))
       .then(this._connectPeerConnection.bind(this))
       .then(message => {
-        if (typeof this._pc.addStream === 'undefined') {
-          stream.getTracks().forEach(track => {
-            this._pc.addTrack(track, stream);
-          });
-        } else {
-          this._pc.addStream(stream);
-        }
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = event => {
             if (this.connectionId !== event.stream.id) {
@@ -75,8 +68,18 @@ export default class ConnectionPublisher extends ConnectionBase {
           }
           this._callbacks.removestream(event);
         };
-        this.stream = stream;
         return this._setRemoteDescription(message);
+      })
+      .then(message => {
+        if (typeof this._pc.addStream === 'undefined') {
+          stream.getTracks().forEach(track => {
+            this._pc.addTrack(track, stream);
+          });
+        } else {
+          this._pc.addStream(stream);
+        }
+        this.stream = stream;
+        return Promise.resolve(message);
       })
       .then(this._createAnswer.bind(this))
       .then(this._sendAnswer.bind(this))

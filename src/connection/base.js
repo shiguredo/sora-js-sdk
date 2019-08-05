@@ -223,14 +223,13 @@ export default class ConnectionBase {
     // simulcast の場合
     if (this.options.simulcast && this.role === 'upstream' && message.encodings) {
       const transceiver = this._pc.getTransceivers().find(t => {
-        if (t.mid && 0 <= t.mid.indexOf('video')) {
+        if (t.mid && 0 <= t.mid.indexOf('video') && t.currentDirection == null) {
           return t;
         }
       });
       if (!transceiver) {
         return Promise.reject('Simulcast Error');
       }
-      this._setSenderParameters(transceiver, message.encodings);
       return this._setSenderParameters(transceiver, message.encodings)
         .then(() => {
           return this._pc.createAnswer();
