@@ -108,20 +108,27 @@
     return browser() === 'safari';
   }
   function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
-    if (role !== 'upstream' || role !== 'downstream') {
+    if (role !== 'upstream' && role !== 'downstream') {
       throw new Error('Unknown role type');
+    }
+
+    if (channelId === null || channelId === undefined) {
+      throw new Error('channelId can not be null or undefined');
     }
 
     const message = {
       type: 'connect',
       role: role,
       channel_id: channelId,
-      metadata: metadata,
       sdp: offerSDP,
       user_agent: window.navigator.userAgent,
       audio: true,
       video: true
     };
+
+    if (metadata) {
+      message.metadata = metadata;
+    }
 
     if ('multistream' in options && options.multistream === true) {
       // multistream
