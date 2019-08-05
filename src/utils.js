@@ -17,9 +17,9 @@ type SignalingOptions = {
   type: 'connect',
   role: 'upstream' | 'downstream',
   channel_id: string,
-  metadata: ?string,
   audio: boolean | Object,
   video: boolean | Object,
+  metadata?: string,
   multistream?: boolean,
   spotlight?: number,
   simulcast?: boolean | Object,
@@ -118,23 +118,29 @@ export function isChrome() {
 export function createSignalingMessage(
   offerSDP: string,
   role: ?string,
-  channelId: string,
+  channelId: ?string,
   metadata: ?string,
   options: ConnectionOptions
 ) {
-  if (role !== 'upstream' || role !== 'downstream') {
+  if (role !== 'upstream' && role !== 'downstream') {
     throw new Error('Unknown role type');
+  }
+  if (channelId === null || channelId === undefined) {
+    throw new Error('channelId can not be null or undefined');
   }
   const message: SignalingOptions = {
     type: 'connect',
     role: role,
     channel_id: channelId,
-    metadata: metadata,
     sdp: offerSDP,
     user_agent: window.navigator.userAgent,
     audio: true,
     video: true
   };
+
+  if (metadata) {
+    message.metadata = metadata;
+  }
 
   if ('multistream' in options && options.multistream === true) {
     // multistream
