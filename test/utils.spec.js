@@ -1,6 +1,5 @@
-/* global describe:false, it:false */
+/* global describe:false, it:false, assert:false */
 
-import assert from 'power-assert';
 import { createSignalingMessage } from '../src/utils';
 
 const role = 'upstream';
@@ -339,7 +338,7 @@ describe('Utils', () => {
           sdp: sdp,
           video: true,
           audio: true,
-          user_agent: userAgent,
+          user_agent: userAgent
         };
         assert.deepEqual(actual, expected);
       });
@@ -386,91 +385,77 @@ describe('Utils', () => {
       it('simulcast with VP9', () => {
         const options = {
           simulcast: true,
-          videoCodecType: 'VP9',
+          videoCodecType: 'VP9'
         };
-        assert.throws(
-          () => {
-            createSignalingMessage(sdp, 'downstream', channelId, metadata, options);
-          },
-          (error) => {
-            assert(error.message === 'Simulcast can not be used with this browser');
-            return true;
-          }
-        );
+        assert.throws(() => {
+          createSignalingMessage(sdp, 'downstream', channelId, metadata, options);
+        }, 'Simulcast can not be used with this browser');
       });
 
       it('simulcast with Firefox upstream', () => {
         Object.defineProperty(navigator, 'userAgent', {
-          get: () => { return '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:66.0) Gecko/20100101 Firefox/66.0"'; },
+          get: () => {
+            return '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:66.0) Gecko/20100101 Firefox/66.0"';
+          },
           enumerable: true,
-          configurable: true,
+          configurable: true
         });
         const options = {
           simulcast: true
         };
-        assert.throws(
-          () => {
-            createSignalingMessage(sdp, 'upstream', channelId, metadata, options);
-          },
-          (error) => {
-            assert(error.message === 'Simulcast can not be used with this browser');
-            return true;
-          }
-        );
+        assert.throws(() => {
+          createSignalingMessage(sdp, 'upstream', channelId, metadata, options);
+        }, 'Simulcast can not be used with this browser');
       });
 
       it('simulcast with Safari 12.0 upstream', () => {
         const localUserAgent = '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Safari/605.1.15"';  // eslint-disable-line
         Object.defineProperty(navigator, 'userAgent', {
-          get: () => { return localUserAgent; },
+          get: () => {
+            return localUserAgent;
+          },
           enumerable: true,
-          configurable: true,
+          configurable: true
         });
         const appVersion = '"5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Safari/605.1.15"';  // eslint-disable-line
         Object.defineProperty(navigator, 'appVersion', {
-          get: () => { return appVersion; },
+          get: () => {
+            return appVersion;
+          },
           enumerable: true,
-          configurable: true,
+          configurable: true
         });
         const options = {
           simulcast: true
         };
-        assert.throws(
-          () => {
-            createSignalingMessage(sdp, 'upstream', channelId, metadata, options);
-          },
-          (error) => {
-            assert(error.message === 'Simulcast can not be used with this browser');
-            return true;
-          }
-        );
+        assert.throws(() => {
+          createSignalingMessage(sdp, 'upstream', channelId, metadata, options);
+        }, 'Simulcast can not be used with this browser');
       });
 
       it('simulcast with Safari 12.0 VP8 downstream', () => {
         const localUserAgent = '"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Safari/605.1.15"';  // eslint-disable-line
         Object.defineProperty(navigator, 'userAgent', {
-          get: () => { return localUserAgent; },
+          get: () => {
+            return localUserAgent;
+          },
           enumerable: true,
-          configurable: true,
+          configurable: true
         });
         const appVersion = '"5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Safari/605.1.15"';  // eslint-disable-line
         Object.defineProperty(navigator, 'appVersion', {
-          get: () => { return appVersion; },
+          get: () => {
+            return appVersion;
+          },
           enumerable: true,
-          configurable: true,
+          configurable: true
         });
         const options = {
           simulcast: true
         };
-        assert.throws(
-          () => {
-            createSignalingMessage(sdp, 'downstream', channelId, metadata, options);
-          },
-          (error) => {
-            assert(error.message === 'Simulcast can not be used with this browser');
-            return true;
-          }
-        );
+        assert.throws(() => {
+          createSignalingMessage(sdp, 'downstream', channelId, metadata, options);
+        }, 'Simulcast can not be used with this browser');
       });
     });
   });

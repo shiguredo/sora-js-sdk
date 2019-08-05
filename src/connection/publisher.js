@@ -1,13 +1,12 @@
 /* @flow */
 import ConnectionBase from './base';
 
-class ConnectionPublisher extends ConnectionBase {
+export default class ConnectionPublisher extends ConnectionBase {
   connect(stream: ?MediaStream.prototype) {
     this.role = 'upstream';
     if (this.options && this.options.multistream) {
       return this._multiStream(stream);
-    }
-    else {
+    } else {
       return this._singleStream(stream);
     }
   }
@@ -23,8 +22,7 @@ class ConnectionPublisher extends ConnectionBase {
           stream.getTracks().forEach(track => {
             this._pc.addTrack(track, stream);
           });
-        }
-        else {
+        } else {
           this._pc.addStream(stream);
         }
         this.stream = stream;
@@ -48,8 +46,7 @@ class ConnectionPublisher extends ConnectionBase {
           stream.getTracks().forEach(track => {
             this._pc.addTrack(track, stream);
           });
-        }
-        else {
+        } else {
           this._pc.addStream(stream);
         }
         if (typeof this._pc.ontrack === 'undefined') {
@@ -89,5 +86,3 @@ class ConnectionPublisher extends ConnectionBase {
       });
   }
 }
-
-module.exports = ConnectionPublisher;

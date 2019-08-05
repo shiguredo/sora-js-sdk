@@ -1,13 +1,12 @@
 /* @flow */
 import ConnectionBase from './base';
 
-class ConnectionSubscriber extends ConnectionBase {
+export default class ConnectionSubscriber extends ConnectionBase {
   connect() {
     this.role = 'downstream';
     if (this.options && this.options.multistream) {
       return this._multiStream();
-    }
-    else {
+    } else {
       return this._singleStream();
     }
   }
@@ -23,8 +22,7 @@ class ConnectionSubscriber extends ConnectionBase {
             this.remoteConnectionIds.push(this.stream.id);
             this._callbacks.addstream(event);
           }.bind(this);
-        }
-        else {
+        } else {
           this._pc.ontrack = function(event) {
             this.stream = event.streams[0];
             const streamId = this.stream.id;
@@ -81,5 +79,3 @@ class ConnectionSubscriber extends ConnectionBase {
       .then(this._onIceCandidate.bind(this));
   }
 }
-
-module.exports = ConnectionSubscriber;

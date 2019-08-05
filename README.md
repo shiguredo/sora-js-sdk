@@ -216,16 +216,13 @@ $ yarn install
 
 ### 開発時
 ```
- $ yarn build --watch
-```
-
-```
- $ yarn serve
+ $ yarn watch
+ $ yarn server
 ```
 
 ### リリース
 ```
- $ yarn check
+ $ yarn lint
  $ yarn test
  $ yarn release
 ```

@@ -1,3 +1,31 @@
+/* @flow */
+export type ConnectionOptions = {
+  audio?: boolean,
+  audioCodecType?: string,
+  audioBitRate?: number,
+  video?: boolean,
+  videoCodecType?: string,
+  videoBitRate?: number,
+  multistream?: boolean,
+  spotlight?: number,
+  simulcast?: boolean,
+  simulcastQuality?: 'low' | 'middle' | 'high',
+  clientId?: string
+};
+
+type SignalingOptions = {
+  type: 'connect',
+  role: 'upstream' | 'downstream',
+  channel_id: string,
+  metadata: ?string,
+  audio: boolean | Object,
+  video: boolean | Object,
+  multistream?: boolean,
+  spotlight?: number,
+  simulcast?: boolean | Object,
+  client_id?: string
+};
+
 export function trace(clientId: ?string, title: string, value: Object | string) {
   let prefix = '';
   if (window.performance) {
@@ -9,8 +37,7 @@ export function trace(clientId: ?string, title: string, value: Object | string) 
 
   if (isEdge()) {
     console.log(prefix + ' ' + title + '\n', value); // eslint-disable-line
-  }
-  else {
+  } else {
     console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
   }
 }
@@ -19,20 +46,16 @@ function browser() {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
   if (ua.indexOf('edge') !== -1) {
     return 'edge';
-  }
-  else if (ua.indexOf('chrome')  !== -1 && ua.indexOf('edge') === -1) {
+  } else if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
     return 'chrome';
-  }
-  else if (ua.indexOf('safari')  !== -1 && ua.indexOf('chrome') === -1) {
+  } else if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
     return 'safari';
-  }
-  else if (ua.indexOf('opera')   !== -1) {
+  } else if (ua.indexOf('opera') !== -1) {
     return 'opera';
-  }
-  else if (ua.indexOf('firefox') !== -1) {
+  } else if (ua.indexOf('firefox') !== -1) {
     return 'firefox';
   }
-  return ;
+  return;
 }
 
 function enabledSimulcast(role, video) {
@@ -62,7 +85,11 @@ function enabledSimulcast(role, video) {
   }
   if (role === 'downstream' && browser() === 'safari') {
     const appVersion = window.navigator.appVersion.toLowerCase();
-    const version = /version\/([\d.]+)/.exec(appVersion).pop();
+    const versions = /version\/([\d.]+)/.exec(appVersion);
+    if (!versions) {
+      return false;
+    }
+    const version = versions.pop();
     // version 12.0 以降であれば有効
     if (12.0 < parseFloat(version)) {
       return true;
@@ -88,8 +115,17 @@ export function isChrome() {
   return browser() === 'chrome';
 }
 
-export function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
-  const message = {
+export function createSignalingMessage(
+  offerSDP: string,
+  role: ?string,
+  channelId: string,
+  metadata: ?string,
+  options: ConnectionOptions
+) {
+  if (role !== 'upstream' || role !== 'downstream') {
+    throw new Error('Unknown role type');
+  }
+  const message: SignalingOptions = {
     type: 'connect',
     role: role,
     channel_id: channelId,
@@ -99,11 +135,6 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     audio: true,
     video: true
   };
-  Object.keys(message).forEach(key => {
-    if (message[key] === undefined) {
-      message[key] = null;
-    }
-  });
 
   if ('multistream' in options && options.multistream === true) {
     // multistream

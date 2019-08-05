@@ -1,16 +1,36 @@
+const babel = require('rollup-plugin-babel');
+const pkg = require('./package.json');
+
+const env = process.env.NODE_ENV || 'development';
+if (env === 'development') {
+  pkg.version += '-dev';
+}
+
 module.exports = function(config) {
   config.set({
-    basePath: '',
-    frameworks: ['mocha'],
-    files: [
-      'test/**/*.spec.js'
-    ],
-    exclude: [
-    ],
+    files: ['test/**/*.spec.js'],
+    frameworks: ['mocha', 'chai'],
     preprocessors: {
-      'test/**/*.spec.js': ['webpack']
+      'test/**/*.spec.js': ['rollup']
+    },
+    rollupPreprocessor: {
+      plugins: [
+        babel({
+          presets: ['@babel/preset-flow'],
+          comments: false
+        })
+      ],
+      output: {
+        format: 'iife',
+        name: 'sora',
+        sourcemap: 'inline',
+        intro: `const VERSION = '${pkg.version}';`
+      }
     },
     reporters: ['progress'],
+    mochaReporter: {
+      showDiff: true
+    },
     port: 9876,
     colors: true,
     logLevel: config.LOG_WARN,
@@ -28,25 +48,6 @@ module.exports = function(config) {
     },
     browsers: ['chrome_without_security'],
     singleRun: false,
-    concurrency: Infinity,
-    webpackMiddleware: {
-      stats: 'errors-only'
-    },
-    webpack: {
-      devtool: 'inline-source-map',
-      module: {
-        exprContextCritical: false,
-        rules: [
-          {
-            test: /\.js$/,
-            exclude: [/node_modules/],
-            use: [{
-              loader: 'babel-loader',
-              options: { presets: ['es2015'],  plugins: ['transform-flow-strip-types'] }
-            }],
-          },
-        ],
-      }
-    }
+    concurrency: Infinity
   });
 };
