@@ -139,7 +139,9 @@
       if ('spotlight' in options) {
         message.spotlight = options.spotlight;
       }
-    } else if ('simulcast' in options || 'simulcastQuality' in options) {
+    }
+
+    if ('simulcast' in options || 'simulcastQuality' in options) {
       // simulcast
       if ('simulcast' in options && options.simulcast === true) {
         message.simulcast = true;
@@ -467,7 +469,7 @@
       // simulcast の場合
       if (this.options.simulcast && this.role === 'upstream' && message.encodings) {
         const transceiver = this._pc.getTransceivers().find(t => {
-          if (t.mid && 0 <= t.mid.indexOf('video')) {
+          if (t.mid && 0 <= t.mid.indexOf('video') && t.currentDirection == null) {
             return t;
           }
         });
@@ -475,8 +477,6 @@
         if (!transceiver) {
           return Promise.reject('Simulcast Error');
         }
-
-        this._setSenderParameters(transceiver, message.encodings);
 
         return this._setSenderParameters(transceiver, message.encodings).then(() => {
           return this._pc.createAnswer();
@@ -596,14 +596,6 @@
 
     _multiStream(stream) {
       return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(message => {
-        if (typeof this._pc.addStream === 'undefined') {
-          stream.getTracks().forEach(track => {
-            this._pc.addTrack(track, stream);
-          });
-        } else {
-          this._pc.addStream(stream);
-        }
-
         if (typeof this._pc.ontrack === 'undefined') {
           this._pc.onaddstream = event => {
             if (this.connectionId !== event.stream.id) {
@@ -636,8 +628,18 @@
           this._callbacks.removestream(event);
         };
 
-        this.stream = stream;
         return this._setRemoteDescription(message);
+      }).then(message => {
+        if (typeof this._pc.addStream === 'undefined') {
+          stream.getTracks().forEach(track => {
+            this._pc.addTrack(track, stream);
+          });
+        } else {
+          this._pc.addStream(stream);
+        }
+
+        this.stream = stream;
+        return Promise.resolve(message);
       }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
         return this.stream;
       });
