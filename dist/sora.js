@@ -108,6 +108,10 @@
     return browser() === 'safari';
   }
   function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
+    if (role !== 'upstream' || role !== 'downstream') {
+      throw new Error('Unknown role type');
+    }
+
     const message = {
       type: 'connect',
       role: role,
