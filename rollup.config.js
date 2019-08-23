@@ -21,7 +21,7 @@ export default [
     input: 'src/sora.js',
     plugins: [
       replace({
-        SORA_VERSION: `'${pkg.version}';`
+        SORA_JS_SDK_VERSION: `'${pkg.version}'`
       }),
       babel({
         presets: ['@babel/preset-flow']
@@ -39,7 +39,7 @@ export default [
     input: 'src/sora.js',
     plugins: [
       replace({
-        SORA_VERSION: `'${pkg.version}';`
+        SORA_JS_SDK_VERSION: `'${pkg.version}'`
       }),
       babel({
         presets: ['@babel/preset-flow', 'minify'],

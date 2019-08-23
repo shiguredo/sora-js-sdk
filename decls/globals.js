@@ -4,4 +4,4 @@ declare var RTCSessionDescription: window.RTCSessionDescription.prototype;
 declare var WebSocket: window.WebSocket.prototype;
 declare var Promise: window.Promise.prototype;
 declare var MediaStream: window.MediaStream.prototype;
-declare var SORA_VERSION: string;
+declare var SORA_JS_SDK_VERSION: string;

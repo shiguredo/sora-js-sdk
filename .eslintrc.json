@@ -23,8 +23,7 @@
     "prettier"
   ],
   "globals": {
-    "process": true,
-    "VERSION": true
+    "SORA_JS_SDK_VERSION": true
   },
   "rules": {
     "flowtype-errors/show-errors": 2,

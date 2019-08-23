@@ -8,7 +8,7 @@ export default {
     return new SoraConnection(signalingUrl, debug);
   },
   version: function() {
-    return SORA_VERSION; // eslint-disable-line
+    return SORA_JS_SDK_VERSION;
   }
 };
 
