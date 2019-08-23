@@ -15,6 +15,8 @@ export type ConnectionOptions = {
 
 type SignalingOptions = {
   type: 'connect',
+  sdk_version: string,
+  sdk_type: string,
   role: 'upstream' | 'downstream',
   channel_id: string,
   audio: boolean | Object,
@@ -130,6 +132,8 @@ export function createSignalingMessage(
   }
   const message: SignalingOptions = {
     type: 'connect',
+    sdk_version: SORA_VERSION,
+    sdk_type: 'JavaScript',
     role: role,
     channel_id: channelId,
     sdp: offerSDP,
