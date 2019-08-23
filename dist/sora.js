@@ -118,6 +118,8 @@
 
     const message = {
       type: 'connect',
+      sdk_version: '1.14.0-dev',
+      sdk_type: 'JavaScript',
       role: role,
       channel_id: channelId,
       sdp: offerSDP,
