@@ -1,3 +1,8 @@
 module.exports = {
-  presets: ['@babel/preset-flow']
+  presets: ['@babel/preset-flow'],
+  env: {
+    test: {
+      presets: ['@babel/preset-env']
+    }
+  }
 };
