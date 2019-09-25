@@ -19,6 +19,7 @@
     - channelId が null または undefined な場合はエラーになるように修正
     - metadata が null または undefined な場合は signaling message に metadata を含めないように修正
 - [ADD] multistream + simulcast に対応する
+- [ADD] opus params 関連のオプションを追加する
 
 ## 1.14.0
 - [FIX] rid ベース simulcast で音声がでない問題を修正
