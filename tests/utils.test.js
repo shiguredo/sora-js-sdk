@@ -216,6 +216,145 @@ test('createSignalingMessage audio option', () => {
   );
 });
 
+test('createSignalingMessage audio opus params option', () => {
+  const options1 = {
+    audio: false,
+    audioOpusParamsChannels: 2
+  };
+  const diff1 = {
+    audio: false
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff1)
+  );
+
+  const options2 = {
+    audioOpusParamsChannels: 2
+  };
+  const diff2 = {
+    audio: {
+      opus_params: {
+        channels: 2
+      }
+    }
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+
+  const options3 = {
+    audioOpusParamsClockRate: 48000
+  };
+  const diff3 = {
+    audio: {
+      opus_params: {
+        clock_rate: 48000
+      }
+    }
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff3)
+  );
+
+  const options4 = {
+    audioOpusParamsMaxplaybackrate: 48000
+  };
+  const diff4 = {
+    audio: {
+      opus_params: {
+        maxplaybackrate: 48000
+      }
+    }
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff4)
+  );
+
+  const options5 = {
+    audioOpusParamsStereo: true
+  };
+  const diff5 = {
+    audio: {
+      opus_params: {
+        stereo: true
+      }
+    }
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options5)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff5)
+  );
+
+  const options6 = {
+    audioOpusParamsSpropStereo: true
+  };
+  const diff6 = {
+    audio: {
+      opus_params: {
+        sprop_stereo: true
+      }
+    }
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options6)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff6)
+  );
+
+  const options7 = {
+    audioOpusParamsMinptime: 10
+  };
+  const diff7 = {
+    audio: {
+      opus_params: {
+        minptime: 10
+      }
+    }
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options7)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff7)
+  );
+
+  const options8 = {
+    audioOpusParamsPtime: 20
+  };
+  const diff8 = {
+    audio: {
+      opus_params: {
+        ptime: 20
+      }
+    }
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options8)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff8)
+  );
+
+  const options9 = {
+    audioOpusParamsUseinbandfec: true
+  };
+  const diff9 = {
+    audio: {
+      opus_params: {
+        useinbandfec: true
+      }
+    }
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options9)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff9)
+  );
+
+  const options10 = {
+    audioOpusParamsUsedtx: false
+  };
+  const diff10 = {
+    audio: {
+      opus_params: {
+        usedtx: false
+      }
+    }
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options10)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff10)
+  );
+});
+
 test('createSignalingMessage video option', () => {
   const options1 = {
     video: false,
