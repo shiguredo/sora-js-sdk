@@ -153,7 +153,9 @@ export function createSignalingMessage(
     if ('spotlight' in options) {
       message.spotlight = options.spotlight;
     }
-  } else if ('simulcast' in options || 'simulcastQuality' in options) {
+  }
+
+  if ('simulcast' in options || 'simulcastQuality' in options) {
     // simulcast
     if ('simulcast' in options && options.simulcast === true) {
       message.simulcast = true;
