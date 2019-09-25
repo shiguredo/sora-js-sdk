@@ -175,12 +175,24 @@ export function createSignalingMessage(
 
   // parse options
   const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
+  const audioOpusParamsPropertyKeys = [
+    'audioOpusParamsChannels',
+    'audioOpusParamsClockRate',
+    'audioOpusParamsMaxplaybackrate',
+    'audioOpusParamsStereo',
+    'audioOpusParamsSpropStereo',
+    'audioOpusParamsMinptime',
+    'audioOpusParamsPtime',
+    'audioOpusParamsUseinbandfec',
+    'audioOpusParamsUsedtx'
+  ];
   const videoPropertyKeys = ['videoCodecType', 'videoBitRate'];
   const copyOptions = Object.assign({}, options);
   Object.keys(copyOptions).forEach(key => {
     if (key === 'audio' && typeof copyOptions[key] === 'boolean') return;
     if (key === 'video' && typeof copyOptions[key] === 'boolean') return;
     if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
+    if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
     if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
     delete copyOptions[key];
   });
@@ -198,6 +210,42 @@ export function createSignalingMessage(
     }
     if ('audioBitRate' in copyOptions) {
       message.audio['bit_rate'] = copyOptions.audioBitRate;
+    }
+  }
+  const hasAudioOpusParamsProperty = Object.keys(copyOptions).some(key => {
+    return 0 <= audioOpusParamsPropertyKeys.indexOf(key);
+  });
+  if (message.audio && hasAudioOpusParamsProperty) {
+    if (typeof message.audio != 'object') {
+      message.audio = {};
+    }
+    message.audio.opus_params = {};
+    if ('audioOpusParamsChannels' in copyOptions) {
+      message.audio.opus_params.channels = copyOptions.audioOpusParamsChannels;
+    }
+    if ('audioOpusParamsClockRate' in copyOptions) {
+      message.audio.opus_params.clock_rate = copyOptions.audioOpusParamsClockRate;
+    }
+    if ('audioOpusParamsMaxplaybackrate' in copyOptions) {
+      message.audio.opus_params.maxplaybackrate = copyOptions.audioOpusParamsMaxplaybackrate;
+    }
+    if ('audioOpusParamsStereo' in copyOptions) {
+      message.audio.opus_params.stereo = copyOptions.audioOpusParamsStereo;
+    }
+    if ('audioOpusParamsSpropStereo' in copyOptions) {
+      message.audio.opus_params.sprop_stereo = copyOptions.audioOpusParamsSpropStereo;
+    }
+    if ('audioOpusParamsMinptime' in copyOptions) {
+      message.audio.opus_params.minptime = copyOptions.audioOpusParamsMinptime;
+    }
+    if ('audioOpusParamsPtime' in copyOptions) {
+      message.audio.opus_params.ptime = copyOptions.audioOpusParamsPtime;
+    }
+    if ('audioOpusParamsUseinbandfec' in copyOptions) {
+      message.audio.opus_params.useinbandfec = copyOptions.audioOpusParamsUseinbandfec;
+    }
+    if ('audioOpusParamsUsedtx' in copyOptions) {
+      message.audio.opus_params.usedtx = copyOptions.audioOpusParamsUsedtx;
     }
   }
 
