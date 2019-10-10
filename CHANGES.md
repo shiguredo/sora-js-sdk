@@ -9,6 +9,20 @@
 - FIX
     - バグ修正
 
+## develop
+
+## 1.15.0
+- [CHANGE] Plan B のコードをすべて削除する
+- [CHANGE] ssrc group simulcast のコードをすべて削除する
+- [UPDATE] タスクランナーを webpack から rollupjs に変更
+- [UPDATE] babel core を 6 から 7 へアップデート
+- [CHANGE] signaling message 作成時のチェックを修正
+    - role が 'upstream' または 'downstream' でない場合はエラーになるように修正
+    - channelId が null または undefined な場合はエラーになるように修正
+    - metadata が null または undefined な場合は signaling message に metadata を含めないように修正
+- [ADD] multistream + simulcast に対応する
+- [ADD] opus params 関連のオプションを追加する
+
 ## 1.14.0
 - [FIX] rid ベース simulcast で音声がでない問題を修正
 - [UPDATE] rid ベース simulcast で replaceTrack を使用しないで addTrack のみで実装する

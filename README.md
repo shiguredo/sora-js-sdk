@@ -1,6 +1,5 @@
 # Sora JavaScript SDK
-
-[![GitHub tag](https://img.shields.io/github/tag/shiguredo/sora-js-sdk.svg)](https://github.com/shiguredo/sora-js-sdk) [![npm version](https://badge.fury.io/js/sora-js-sdk.svg)](https://badge.fury.io/js/sora-js-sdk)
+[![CircleCI](https://circleci.com/gh/shiguredo/sora-js-sdk.svg?style=svg)](https://circleci.com/gh/shiguredo/sora-js-sdk) [![GitHub tag](https://img.shields.io/github/tag/shiguredo/sora-js-sdk.svg)](https://github.com/shiguredo/sora-js-sdk) [![npm version](https://badge.fury.io/js/sora-js-sdk.svg)](https://badge.fury.io/js/sora-js-sdk)
 
 Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
 
@@ -26,7 +25,7 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 
 ## システム条件
 
-- WebRTC SFU Sora 18.04 以降
+- WebRTC SFU Sora 19.04 以降
 
 ## サンプル
 
@@ -216,16 +215,13 @@ $ yarn install
 
 ### 開発時
 ```
- $ yarn build --watch
-```
-
-```
- $ yarn serve
+ $ yarn watch
+ $ yarn server
 ```
 
 ### リリース
 ```
- $ yarn check
+ $ yarn lint
  $ yarn test
  $ yarn release
 ```

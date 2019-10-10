@@ -1,3 +1,33 @@
+/* @flow */
+export type ConnectionOptions = {
+  audio?: boolean,
+  audioCodecType?: string,
+  audioBitRate?: number,
+  video?: boolean,
+  videoCodecType?: string,
+  videoBitRate?: number,
+  multistream?: boolean,
+  spotlight?: number,
+  simulcast?: boolean,
+  simulcastQuality?: 'low' | 'middle' | 'high',
+  clientId?: string
+};
+
+type SignalingOptions = {
+  type: 'connect',
+  sdk_version: string,
+  sdk_type: string,
+  role: 'upstream' | 'downstream',
+  channel_id: string,
+  audio: boolean | Object,
+  video: boolean | Object,
+  metadata?: string,
+  multistream?: boolean,
+  spotlight?: number,
+  simulcast?: boolean | Object,
+  client_id?: string
+};
+
 export function trace(clientId: ?string, title: string, value: Object | string) {
   let prefix = '';
   if (window.performance) {
@@ -9,8 +39,7 @@ export function trace(clientId: ?string, title: string, value: Object | string) 
 
   if (isEdge()) {
     console.log(prefix + ' ' + title + '\n', value); // eslint-disable-line
-  }
-  else {
+  } else {
     console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
   }
 }
@@ -19,65 +48,21 @@ function browser() {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
   if (ua.indexOf('edge') !== -1) {
     return 'edge';
-  }
-  else if (ua.indexOf('chrome')  !== -1 && ua.indexOf('edge') === -1) {
+  } else if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
     return 'chrome';
-  }
-  else if (ua.indexOf('safari')  !== -1 && ua.indexOf('chrome') === -1) {
+  } else if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
     return 'safari';
-  }
-  else if (ua.indexOf('opera')   !== -1) {
+  } else if (ua.indexOf('opera') !== -1) {
     return 'opera';
-  }
-  else if (ua.indexOf('firefox') !== -1) {
+  } else if (ua.indexOf('firefox') !== -1) {
     return 'firefox';
   }
-  return ;
-}
-
-function isPlanB() {
-  return browser() === 'chrome' || browser() === 'safari';
+  return;
 }
 
 function enabledSimulcast(role, video) {
   /**
     simulcast validator
-    VP9 x
-
-    simulcast_pub Chrome o
-    simulcast_pub Firefox x
-    simulcast_pub Safari 12.1 o
-    simulcast_pub Safari 12.0 x
-    simulcast_sub Chrome o
-    simulcast_sub Firefox o
-    simulcast_sub Safari 12.1 o
-    simulcast_sub Safari 12.0 o ※H.264 のみ
-  **/
-  if (video.codec_type === 'VP9') {
-    return false;
-  }
-  if (role === 'upstream' && browser() === 'firefox') {
-    return false;
-  }
-  if (browser() === 'safari') {
-    const appVersion = window.navigator.appVersion.toLowerCase();
-    const version = /version\/([\d.]+)/.exec(appVersion).pop();
-    // version 12.0 以降であれば有効
-    if (12.0 < parseFloat(version)) {
-      return true;
-    }
-    if (12.0 == parseFloat(version) && role === 'downstream' && video.codec_type === 'H264') {
-      // role が downstream で 'H264' の場合のみ有効
-      return true;
-    }
-    return false;
-  }
-  return true;
-}
-
-function enabledSimulcastRid(role, video) {
-  /**
-    simulcast_rid validator
     VP9 x
 
     simulcast_pub Chrome o
@@ -102,7 +87,11 @@ function enabledSimulcastRid(role, video) {
   }
   if (role === 'downstream' && browser() === 'safari') {
     const appVersion = window.navigator.appVersion.toLowerCase();
-    const version = /version\/([\d.]+)/.exec(appVersion).pop();
+    const versions = /version\/([\d.]+)/.exec(appVersion);
+    if (!versions) {
+      return false;
+    }
+    const version = versions.pop();
     // version 12.0 以降であれば有効
     if (12.0 < parseFloat(version)) {
       return true;
@@ -114,25 +103,6 @@ function enabledSimulcastRid(role, video) {
     return false;
   }
   return true;
-}
-
-export function isUnifiedChrome() {
-  if (browser() !== 'chrome') {
-    return false;
-  }
-  const ua = window.navigator.userAgent.toLocaleLowerCase();
-  const splitedUserAgent = /chrome\/([\d.]+)/.exec(ua);
-  if (!splitedUserAgent || splitedUserAgent.length < 2) {
-    return false;
-  }
-  return 71 <= parseInt(splitedUserAgent[1]);
-}
-
-export function isUnifiedSafari(sdp) {
-  if (browser() !== 'safari') {
-    return false;
-  }
-  return sdp.includes('a=group:BUNDLE 0 1');
 }
 
 export function isEdge() {
@@ -147,61 +117,48 @@ export function isChrome() {
   return browser() === 'chrome';
 }
 
-export function replaceAnswerSdp(sdp) {
-  let ssrcPattern = new RegExp(/m=video[\s\S]*?(a=ssrc:(\d+)\scname:.+\r\n(a=ssrc:\2\smsid:.+\r\na=ssrc:\2\smslabel:.+\r\na=ssrc:\2\slabel:.+\r\n)?)/);  // eslint-disable-line
-  const found = sdp.match(ssrcPattern);
-  if (!found) {
-    return sdp;
+export function createSignalingMessage(
+  offerSDP: string,
+  role: ?string,
+  channelId: ?string,
+  metadata: ?string,
+  options: ConnectionOptions
+) {
+  if (role !== 'upstream' && role !== 'downstream') {
+    throw new Error('Unknown role type');
   }
-
-  const ssrcAttributes = found[1];
-  ssrcPattern = found[1];
-  const ssrcId = parseInt(found[2]);
-  const ssrcIdPattern = new RegExp(ssrcId.toString(), 'g');
-  const ssrcGroup = ['a=ssrc-group:SIM'];
-  const ssrcAttributeList = [];
-  for (let i = 0; i < 3; i += 1) {
-    ssrcGroup.push((ssrcId + i).toString());
-    ssrcAttributeList.push(ssrcAttributes.replace(ssrcIdPattern, (ssrcId + i).toString()));
+  if (channelId === null || channelId === undefined) {
+    throw new Error('channelId can not be null or undefined');
   }
-  return sdp.replace(ssrcPattern, [ssrcGroup.join(' '), '\r\n', ssrcAttributeList.join('')].join(''));
-}
-
-export function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
-  const message = {
+  const message: SignalingOptions = {
     type: 'connect',
+    sdk_version: SORA_JS_SDK_VERSION,
+    sdk_type: 'JavaScript',
     role: role,
     channel_id: channelId,
-    metadata: metadata,
     sdp: offerSDP,
     user_agent: window.navigator.userAgent,
     audio: true,
     video: true
   };
-  Object.keys(message).forEach(key => {
-    if (message[key] === undefined) {
-      message[key] = null;
-    }
-  });
+
+  if (metadata) {
+    message.metadata = metadata;
+  }
 
   if ('multistream' in options && options.multistream === true) {
     // multistream
     message.multistream = true;
-    if (!isUnifiedChrome() && !isUnifiedSafari(offerSDP) && isPlanB()) {
-      message.plan_b = true;
-    }
     // spotlight
     if ('spotlight' in options) {
       message.spotlight = options.spotlight;
     }
-  } else if ('simulcast' in options || 'simulcastQuality' in options) {
+  }
+
+  if ('simulcast' in options || 'simulcastQuality' in options) {
     // simulcast
     if ('simulcast' in options && options.simulcast === true) {
       message.simulcast = true;
-      // simulcast rid
-      if ('simulcastRid' in options && options.simulcastRid === true) {
-        message.simulcast_rid = true;
-      }
     }
     const simalcastQualities = ['low', 'middle', 'high'];
     if ('simulcastQuality' in options && 0 <= simalcastQualities.indexOf(options.simulcastQuality)) {
@@ -218,12 +175,24 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
 
   // parse options
   const audioPropertyKeys = ['audioCodecType', 'audioBitRate'];
+  const audioOpusParamsPropertyKeys = [
+    'audioOpusParamsChannels',
+    'audioOpusParamsClockRate',
+    'audioOpusParamsMaxplaybackrate',
+    'audioOpusParamsStereo',
+    'audioOpusParamsSpropStereo',
+    'audioOpusParamsMinptime',
+    'audioOpusParamsPtime',
+    'audioOpusParamsUseinbandfec',
+    'audioOpusParamsUsedtx'
+  ];
   const videoPropertyKeys = ['videoCodecType', 'videoBitRate'];
   const copyOptions = Object.assign({}, options);
   Object.keys(copyOptions).forEach(key => {
     if (key === 'audio' && typeof copyOptions[key] === 'boolean') return;
     if (key === 'video' && typeof copyOptions[key] === 'boolean') return;
     if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
+    if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
     if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
     delete copyOptions[key];
   });
@@ -241,6 +210,42 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
     }
     if ('audioBitRate' in copyOptions) {
       message.audio['bit_rate'] = copyOptions.audioBitRate;
+    }
+  }
+  const hasAudioOpusParamsProperty = Object.keys(copyOptions).some(key => {
+    return 0 <= audioOpusParamsPropertyKeys.indexOf(key);
+  });
+  if (message.audio && hasAudioOpusParamsProperty) {
+    if (typeof message.audio != 'object') {
+      message.audio = {};
+    }
+    message.audio.opus_params = {};
+    if ('audioOpusParamsChannels' in copyOptions) {
+      message.audio.opus_params.channels = copyOptions.audioOpusParamsChannels;
+    }
+    if ('audioOpusParamsClockRate' in copyOptions) {
+      message.audio.opus_params.clock_rate = copyOptions.audioOpusParamsClockRate;
+    }
+    if ('audioOpusParamsMaxplaybackrate' in copyOptions) {
+      message.audio.opus_params.maxplaybackrate = copyOptions.audioOpusParamsMaxplaybackrate;
+    }
+    if ('audioOpusParamsStereo' in copyOptions) {
+      message.audio.opus_params.stereo = copyOptions.audioOpusParamsStereo;
+    }
+    if ('audioOpusParamsSpropStereo' in copyOptions) {
+      message.audio.opus_params.sprop_stereo = copyOptions.audioOpusParamsSpropStereo;
+    }
+    if ('audioOpusParamsMinptime' in copyOptions) {
+      message.audio.opus_params.minptime = copyOptions.audioOpusParamsMinptime;
+    }
+    if ('audioOpusParamsPtime' in copyOptions) {
+      message.audio.opus_params.ptime = copyOptions.audioOpusParamsPtime;
+    }
+    if ('audioOpusParamsUseinbandfec' in copyOptions) {
+      message.audio.opus_params.useinbandfec = copyOptions.audioOpusParamsUseinbandfec;
+    }
+    if ('audioOpusParamsUsedtx' in copyOptions) {
+      message.audio.opus_params.usedtx = copyOptions.audioOpusParamsUsedtx;
     }
   }
 
@@ -262,9 +267,6 @@ export function createSignalingMessage(offerSDP, role, channelId, metadata, opti
 
   if (message.simulcast && !enabledSimulcast(message.role, message.video)) {
     throw new Error('Simulcast can not be used with this browser');
-  }
-  if (message.simulcast && message.simulcastRid && !enabledSimulcast(message.role, message.video)) {
-    throw new Error('Simulcast Rid can not be used with this browser');
   }
   return message;
 }
