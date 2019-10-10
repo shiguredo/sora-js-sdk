@@ -239,7 +239,7 @@
       }
 
       if ('audioOpusParamsUsedtx' in copyOptions) {
-        message.audio.opus_params.params_usedtx = copyOptions.audioOpusParamsUsedtx;
+        message.audio.opus_params.usedtx = copyOptions.audioOpusParamsUsedtx;
       }
     }
 
