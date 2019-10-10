@@ -2,7 +2,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 1.14.0-dev
+ * @version: 1.15.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -118,7 +118,7 @@
 
     const message = {
       type: 'connect',
-      sdk_version: '1.14.0-dev',
+      sdk_version: '1.15.0',
       sdk_type: 'JavaScript',
       role: role,
       channel_id: channelId,
@@ -778,7 +778,7 @@
       return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-      return '1.14.0-dev';
+      return '1.15.0';
     }
   };
 

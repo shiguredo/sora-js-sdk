@@ -10,6 +10,8 @@
     - バグ修正
 
 ## develop
+
+## 1.15.0
 - [CHANGE] Plan B のコードをすべて削除する
 - [CHANGE] ssrc group simulcast のコードをすべて削除する
 - [UPDATE] タスクランナーを webpack から rollupjs に変更
