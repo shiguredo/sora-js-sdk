@@ -19,6 +19,7 @@
 - [CHANGE] サンプルの spotlight.html を spotlight_sendrecv.html に変更する
 - [CHANGE] サンプルの spotlight_down.html を spotlight_recvonly.html に変更する
 - [CHANGE] サンプルの updown.html を sendonly_recvonly.html に変更する
+- [FIX] README から simulcast_rid を削除する
 
 ## develop
 
