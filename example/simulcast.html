@@ -31,18 +31,18 @@
 const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://localhost:5000/signaling', debug);
-const publisher = sora.publisher(channelId, null, { videoCodecType: 'VP8', videoBitRate: 3000, simulcast: true });
-const subscriberLow = sora.subscriber(channelId, null, { videoCodecType: 'VP8', simulcast: true, simulcastQuality: 'low' });
-const subscriberMiddle = sora.subscriber(channelId, null, { videoCodecType: 'VP8', simulcast: true, simulcastQuality: 'middle' });
-const subscriberHigh = sora.subscriber(channelId, null, { videoCodecType: 'VP8', simulcast: true, simulcastQuality: 'high' });
+const sendonly = sora.sendonly(channelId, null, { videoCodecType: 'VP8', videoBitRate: 3000, simulcast: true });
+const recvonlyLow = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, simulcastQuality: 'low' });
+const recvonlyMiddle = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, simulcastQuality: 'middle' });
+const recvonlyHigh = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, simulcastQuality: 'high' });
 
 document.querySelector('#start').addEventListener('click', function() {
   // upstream
   navigator.mediaDevices.getUserMedia({audio: true, video: {width: {exact: 1280}, height: {exact: 720}}})
     .then(mediaStream => {
-      publisher.connect(mediaStream)
+      sendonly.connect(mediaStream)
         .then(stream => {
-          document.querySelector('#local-video-client-id').textContent = '(' + publisher.clientId + ')';
+          document.querySelector('#local-video-client-id').textContent = '(' + sendonly.clientId + ')';
           document.querySelector('#local-video').srcObject = stream;
         });
     })
@@ -51,25 +51,25 @@ document.querySelector('#start').addEventListener('click', function() {
     });
 
   // downstream
-  subscriberLow.connect()
+  recvonlyLow.connect()
     .then(stream => {
-      document.querySelector('#remote-video-client-id-low').textContent = '(' + subscriberLow.clientId + ')';
+      document.querySelector('#remote-video-client-id-low').textContent = '(' + recvonlyLow.clientId + ')';
       document.querySelector('#remote-video-low').srcObject = stream;
     })
     .catch(e => {
       console.error(e);
     });
-  subscriberMiddle.connect()
+  recvonlyMiddle.connect()
     .then(stream => {
-      document.querySelector('#remote-video-client-id-middle').textContent = '(' + subscriberMiddle.clientId + ')';
+      document.querySelector('#remote-video-client-id-middle').textContent = '(' + recvonlyMiddle.clientId + ')';
       document.querySelector('#remote-video-middle').srcObject = stream;
     })
     .catch(e => {
       console.error(e);
     });
-  subscriberHigh.connect()
+  recvonlyHigh.connect()
     .then(stream => {
-      document.querySelector('#remote-video-client-id-high').textContent = '(' + subscriberHigh.clientId + ')';
+      document.querySelector('#remote-video-client-id-high').textContent = '(' + recvonlyHigh.clientId + ')';
       document.querySelector('#remote-video-high').srcObject = stream;
     })
     .catch(e => {
