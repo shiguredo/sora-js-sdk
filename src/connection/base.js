@@ -39,7 +39,6 @@ export default class ConnectionBase {
     this.connectionId = null;
     this.remoteConnectionIds = [];
     this.stream = null;
-    this.role = null;
     this._ws = null;
     this._pc = null;
     this._callbacks = {

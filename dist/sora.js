@@ -109,7 +109,8 @@
     return browser() === 'safari';
   }
   function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
-    if (role !== 'upstream' && role !== 'downstream') {
+    if (role !== 'upstream' && role !== 'downstream' && role !== 'sendrecv' && role !== 'sendonly' && role !== 'recvonly') {
+      console.log(role);
       throw new Error('Unknown role type');
     }
 
@@ -284,7 +285,6 @@
       this.connectionId = null;
       this.remoteConnectionIds = [];
       this.stream = null;
-      this.role = null;
       this._ws = null;
       this._pc = null;
       this._callbacks = {
@@ -519,7 +519,7 @@
 
     _createAnswer(message) {
       // simulcast の場合
-      if (this.options.simulcast && this.role === 'upstream' && message.encodings) {
+      if (this.options.simulcast && (this.role === 'upstream' || this.role === 'sendrecv' || this.role === 'sendonly') && message.encodings) {
         const transceiver = this._pc.getTransceivers().find(t => {
           if (t.mid && 0 <= t.mid.indexOf('video') && t.currentDirection == null) {
             return t;
@@ -784,7 +784,8 @@
     constructor(signalingUrl, debug = false) {
       this.signalingUrl = signalingUrl;
       this.debug = debug;
-    }
+    } // 古い role
+
 
     publisher(channelId, metadata, options = {
       audio: true,
@@ -798,7 +799,8 @@
       video: true
     }) {
       return new ConnectionSubscriber(this.signalingUrl, 'downstream', channelId, metadata, options, this.debug);
-    }
+    } // 新しい role
+
 
     sendrecv(channelId, metadata, options = {
       audio: true,

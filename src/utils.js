@@ -132,6 +132,7 @@ export function createSignalingMessage(
     role !== 'sendonly' &&
     role !== 'recvonly'
   ) {
+    console.log(role);
     throw new Error('Unknown role type');
   }
   if (channelId === null || channelId === undefined) {

@@ -14,9 +14,11 @@
 - [ADD] 新しい role である sendrecv / sendonly / sendrecv を利用できるようにする
 - [ADD] サンプルに multsitream_sendonly.html を追加する
 - [UPDATE] サンプルで利用する role を新しいものに変更する
-- [UPDATE] サンプルの multistream_down.html を multistream_recvonly.html に変更する
-- [UPDATE] サンプルの spotlight_down.html を spotlight_recvonly.html に変更する
-- [UPDATE] サンプルの updown.html を sendonly_recvonly.html に変更する
+- [CHANGE] サンプルの multistream.html を multistream_sendrecv.html に変更する
+- [CHANGE] サンプルの multistream_down.html を multistream_recvonly.html に変更する
+- [CHANGE] サンプルの spotlight.html を spotlight_sendrecv.html に変更する
+- [CHANGE] サンプルの spotlight_down.html を spotlight_recvonly.html に変更する
+- [CHANGE] サンプルの updown.html を sendonly_recvonly.html に変更する
 
 ## develop
 
