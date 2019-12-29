@@ -9,6 +9,13 @@
 - FIX
     - バグ修正
 
+## feature/add-new-role
+
+- [ADD] 新しい role である sendrecv / sendonly / sendrecv を利用できるようにする
+- [ADD] サンプルに multsitream_sendonly.html を追加
+- [UPDATE] サンプルの multistream_down.html を multistream_recvonly.html に変更
+- [UPDATE] サンプルで利用する role を新しいものに変更する
+
 ## develop
 
 ## 1.15.0
