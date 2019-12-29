@@ -6,13 +6,6 @@
 
 Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
 
-使い方は [Sora JavaScript SDK ドキュメント](https://sora.shiguredo.jp/js-sdk-doc/) を参照してください。
-
-- sora.js
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
-- sora.min.js
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.min.js
-
 ## About Support
 
 We check PRs or Issues only when written in JAPANESE.
@@ -25,9 +18,18 @@ Sora JavaScript SDK に関する質問・要望・バグなどの報告は Issue
 
 Sora JavaScript SDK に対する有償のサポートについては現在提供しておりません。
 
+## 使い方
+
+使い方は [Sora JavaScript SDK ドキュメント](https://sora.shiguredo.jp/js-sdk-doc/) を参照してください。
+
+- sora.js
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
+- sora.min.js
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.min.js
+
 ## システム条件
 
-- WebRTC SFU Sora 19.04 以降
+- WebRTC SFU Sora 19.10 以降
 
 ## サンプル
 
