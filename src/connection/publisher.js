@@ -3,7 +3,6 @@ import ConnectionBase from './base';
 
 export default class ConnectionPublisher extends ConnectionBase {
   connect(stream: ?MediaStream.prototype) {
-    this.role = 'upstream';
     if (this.options && this.options.multistream) {
       return this._multiStream(stream);
     } else {

@@ -3,6 +3,7 @@ import { createSignalingMessage, trace, isSafari } from '../utils';
 import type { ConnectionOptions } from '../utils';
 
 export default class ConnectionBase {
+  role: string;
   channelId: string;
   metadata: string;
   signalingUrl: string;
@@ -19,7 +20,8 @@ export default class ConnectionBase {
   _pc: window.RTCPeerConnection.prototype;
   _callbacks: Object;
 
-  constructor(signalingUrl: string, channelId: string, metadata: string, options: ConnectionOptions, debug: boolean) {
+  constructor(signalingUrl: string, role: string, channelId: string, metadata: string, options: ConnectionOptions, debug: boolean) {
+    this.role = role;
     this.channelId = channelId;
     this.metadata = metadata;
     this.signalingUrl = signalingUrl;

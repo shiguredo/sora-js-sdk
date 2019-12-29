@@ -2,7 +2,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 1.15.0
+ * @version: 1.15.0-dev
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -68,15 +68,16 @@
       return false;
     }
 
-    if (role === 'upstream' && browser() === 'firefox') {
+    if ((role === 'upstream' || role === 'sendrecv' || role === 'sendonly') && browser() === 'firefox') {
       return false;
     }
 
-    if (role === 'upstream' && browser() === 'safari') {
+    if ((role === 'upstream' || role === 'sendrecv' || role === 'sendonly') && browser() === 'safari') {
       return false;
-    }
+    } // TODO(nakai): sendonly, sendrecv を無効にする
 
-    if (role === 'downstream' && browser() === 'safari') {
+
+    if ((role === 'downstream' || role === 'recvonly') && browser() === 'safari') {
       const appVersion = window.navigator.appVersion.toLowerCase();
       const versions = /version\/([\d.]+)/.exec(appVersion);
 
@@ -118,7 +119,7 @@
 
     const message = {
       type: 'connect',
-      sdk_version: '1.15.0',
+      sdk_version: '1.15.0-dev',
       sdk_type: 'JavaScript',
       role: role,
       channel_id: channelId,
@@ -271,7 +272,8 @@
   }
 
   class ConnectionBase {
-    constructor(signalingUrl, channelId, metadata, options, debug) {
+    constructor(signalingUrl, role, channelId, metadata, options, debug) {
+      this.role = role;
       this.channelId = channelId;
       this.metadata = metadata;
       this.signalingUrl = signalingUrl;
@@ -618,8 +620,6 @@
 
   class ConnectionPublisher extends ConnectionBase {
     connect(stream) {
-      this.role = 'upstream';
-
       if (this.options && this.options.multistream) {
         return this._multiStream(stream);
       } else {
@@ -699,8 +699,6 @@
 
   class ConnectionSubscriber extends ConnectionBase {
     connect() {
-      this.role = 'downstream';
-
       if (this.options && this.options.multistream) {
         return this._multiStream();
       } else {
@@ -778,7 +776,7 @@
       return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-      return '1.15.0';
+      return '1.15.0-dev';
     }
   };
 
@@ -792,14 +790,35 @@
       audio: true,
       video: true
     }) {
-      return new ConnectionPublisher(this.signalingUrl, channelId, metadata, options, this.debug);
+      return new ConnectionPublisher(this.signalingUrl, 'upstream', channelId, metadata, options, this.debug);
     }
 
     subscriber(channelId, metadata, options = {
       audio: true,
       video: true
     }) {
-      return new ConnectionSubscriber(this.signalingUrl, channelId, metadata, options, this.debug);
+      return new ConnectionSubscriber(this.signalingUrl, 'downstream', channelId, metadata, options, this.debug);
+    }
+
+    sendrecv(channelId, metadata, options = {
+      audio: true,
+      video: true
+    }) {
+      return new ConnectionPublisher(this.signalingUrl, 'sendrecv', channelId, metadata, options, this.debug);
+    }
+
+    sendonly(channelId, metadata, options = {
+      audio: true,
+      video: true
+    }) {
+      return new ConnectionPublisher(this.signalingUrl, 'sendonly', channelId, metadata, options, this.debug);
+    }
+
+    recvonly(channelId, metadata, options = {
+      audio: true,
+      video: true
+    }) {
+      return new ConnectionSubscriber(this.signalingUrl, 'recvonly', channelId, metadata, options, this.debug);
     }
 
   }
