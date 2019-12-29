@@ -39,6 +39,12 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_sendonly.html
 - Multistream Recvonly
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_recvonly.html
+- Spotlight Sendrecv
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/spotlight_sendrecv.html
+- Spotlight Recvonly
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/spotlight_recvonly.html
+- Simulcast
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/simulcast.html
 
 ## Issues について
 
@@ -63,7 +69,7 @@ example
 var sora = Sora.connection('ws://127.0.0.1/signaling');
 ```
 
-### Publisher (sendrecv)
+### Sendrecv (Publisher)
 
 受信もする配信者として接続する
 
@@ -135,7 +141,7 @@ publisher.on('disconnect', function(e) {
 });
 ```
 
-### Publisher (sendonly)
+### Sendonly (Publisher)
 
 受信しない配信者として接続する
 
@@ -207,7 +213,7 @@ publisher.on('disconnect', function(e) {
 ```
 
 
-### Subscriber (recvonly)
+### Recvonly (Subscriber)
 
 視聴者のみとして接続する
 
