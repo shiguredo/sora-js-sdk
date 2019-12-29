@@ -785,6 +785,7 @@
       this.signalingUrl = signalingUrl;
       this.debug = debug;
     } // 古い role
+    // @deprecated 1 年は残します
 
 
     publisher(channelId, metadata, options = {
@@ -792,7 +793,8 @@
       video: true
     }) {
       return new ConnectionPublisher(this.signalingUrl, 'upstream', channelId, metadata, options, this.debug);
-    }
+    } // @deprecated 1 年は残します
+
 
     subscriber(channelId, metadata, options = {
       audio: true,
