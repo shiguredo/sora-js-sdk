@@ -71,20 +71,20 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  | channelId        | string  |      | チャネルID                            |
-  | metadata         | string  |      | メタデータ                            |
-  | options          | object  |      | シグナリングパラメーター              |
-  | * audio          | boolean | true | オーディオ有効／無効                  |
-  | * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
-  | * audioBitRate   | integer |      | オーディオビットレートの最大値        |
-  | * video          | boolean | true | ビデオ有効／無効                      |
-  | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
-  | * videoBitRate   | integer |      | ビデオビットレートの最大値            |
-  | * multistream    | boolean |      | マルチストリーム有効／無効            |
-  | * spotlight      | integer |      | 最大話者数                            |
-  | * simulcast      | boolean |      | サイマルキャスト有効／無効            |
-  | * simulcast_rid  | boolean |      | rid ベースサイマルキャスト有効／無効  |
-  | * clientId       | string  |      | クライアントID                        |
+  | channelId          | string  |      | チャネルID                            |
+  | metadata           | string  |      | メタデータ                            |
+  | options            | object  |      | シグナリングパラメーター              |
+  | * audio            | boolean | true | オーディオ有効／無効                  |
+  | * audioCodecType   | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+  | * audioBitRate     | integer |      | オーディオビットレートの最大値        |
+  | * video            | boolean | true | ビデオ有効／無効                      |
+  | * videoCodecType   | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
+  | * videoBitRate     | integer |      | ビデオビットレートの最大値            |
+  | * multistream      | boolean |      | マルチストリーム有効／無効            |
+  | * spotlight        | integer |      | 最大話者数                            |
+  | * simulcast        | boolean |      | サイマルキャスト有効／無効            |
+  | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
+  | * clientId         | string  |      | クライアントID                        |
 
 
 - connect(stream)
@@ -155,7 +155,6 @@ publisher.on('disconnect', function(e) {
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
   | * spotlight      | integer |      | 最大話者数                            |
   | * simulcast      | boolean |      | サイマルキャスト有効／無効            |
-  | * simulcast_rid  | boolean |      | rid ベースサイマルキャスト有効／無効  |
   | * clientId       | string  |      | クライアントID                        |
 
 
@@ -210,7 +209,7 @@ publisher.on('disconnect', function(e) {
 
 ### Subscriber (recvonly)
 
-視聴者として接続する
+視聴者のみとして接続する
 
 - sora.recvonly(channelId, metadata, options={});
 
