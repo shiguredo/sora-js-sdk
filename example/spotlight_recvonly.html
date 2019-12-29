@@ -33,7 +33,7 @@ document.querySelector('#start-recvonly').addEventListener('click', function() {
   recvonly.on('addstream', function(event) {
     const remoteVideos = document.querySelector('#remote-videos');
     const remoteVideo = document.createElement('video');
-    remoteVideo.id = 'publisher-remotevideo-' + event.stream.id;
+    remoteVideo.id = 'remotevideo-' + event.stream.id;
     remoteVideo.style.border = '1px solid red';
     remoteVideo.autoplay = true;
     remoteVideo.width = '320';
@@ -43,7 +43,7 @@ document.querySelector('#start-recvonly').addEventListener('click', function() {
   });
 
   recvonly.on('removestream', function(event) {
-    const remoteVideo = document.querySelector('#publisher-remotevideo-' + event.stream.id);
+    const remoteVideo = document.querySelector('#remotevideo-' + event.stream.id);
     document.querySelector('#remote-videos').removeChild(remoteVideo);
   });
 });
