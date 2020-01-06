@@ -33,20 +33,20 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 
 ## サンプル
 
-- Upstream/Downstream
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/updown.html
+- Sendonly/Recvonly
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendonly_recvonly.html
 - Multistream Sendrecv
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/multistream_sendrecv.html
 - Multistream Sendonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_sendonly.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/multistream_sendonly.html
 - Multistream Recvonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_recvonly.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/multistream_recvonly.html
 - Spotlight Sendrecv
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/spotlight_sendrecv.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_sendrecv.html
 - Spotlight Recvonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/spotlight_recvonly.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_recvonly.html
 - Simulcast
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/simulcast.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/simulcast.html
 
 ## Issues について
 
