@@ -1,25 +1,25 @@
 <html lang="ja">
     <head>
         <meta charset="utf-8">
-        <title>updown test</title>
+        <title>Sendonly / Recvonly test</title>
     </head>
     <body>
         <div class="container">
-            <h1>updown test</h1>
+            <h1>Sendonly / Recvonly test</h1>
             <button id="start">start</button>
             <br />
             <div style="float:left;">
-                <h2>up</h2>
+                <h2>sendonly</h2>
                 <p id="local-video-client-id"></p>
                 <video id="local-video" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
             </div>
             <div style="float:left;">
-                <h2>down1</h2>
+                <h2>recvonly1</h2>
                 <p id="remote-video-client-id-1"></p>
                 <video id="remote-video1" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
             </div>
             <div style="float:left;">
-                <h2>down2</h2>
+                <h2>recvonly2</h2>
                 <p id="remote-video-client-id-2"></p>
                 <video id="remote-video2" autoplay="" style="width: 400px; height: 300px; border: 1px solid black;"></video>
             </div>
@@ -30,17 +30,17 @@
 const channelId = 'Sora';
 const debug = true;
 const sora = Sora.connection('ws://localhost:5000/signaling', debug);
-const publisher = sora.publisher(channelId);
-const subscriber1 = sora.subscriber(channelId);
-const subscriber2 = sora.subscriber(channelId);
+const sendonly = sora.sendonly(channelId);
+const recvonly1 = sora.recvonly(channelId);
+const recvonly2 = sora.recvonly(channelId);
 
 document.querySelector('#start').addEventListener('click', function() {
   // upstream
   navigator.mediaDevices.getUserMedia({audio: true, video: true})
     .then(mediaStream => {
-      publisher.connect(mediaStream)
+      sendonly.connect(mediaStream)
         .then(stream => {
-          document.querySelector('#local-video-client-id').textContent = '(' + publisher.clientId + ')';
+          document.querySelector('#local-video-client-id').textContent = '(' + sendonly.clientId + ')';
           document.querySelector('#local-video').srcObject = stream;
         });
     })
@@ -48,17 +48,17 @@ document.querySelector('#start').addEventListener('click', function() {
       console.error(e);
     });
   // downstream
-  subscriber1.connect()
+  recvonly1.connect()
     .then(stream => {
-      document.querySelector('#remote-video-client-id-1').textContent = '(' + subscriber1.clientId + ')';
+      document.querySelector('#remote-video-client-id-1').textContent = '(' + recvonly1.clientId + ')';
       document.querySelector('#remote-video1').srcObject = stream;
     })
     .catch(e => {
       console.error(e);
     });
-  subscriber2.connect()
+  recvonly2.connect()
     .then(stream => {
-      document.querySelector('#remote-video-client-id-2').textContent = '(' + subscriber2.clientId + ')';
+      document.querySelector('#remote-video-client-id-2').textContent = '(' + recvonly2.clientId + ')';
       document.querySelector('#remote-video2').srcObject = stream;
     })
     .catch(e => {

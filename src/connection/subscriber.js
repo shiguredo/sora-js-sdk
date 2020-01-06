@@ -3,7 +3,6 @@ import ConnectionBase from './base';
 
 export default class ConnectionSubscriber extends ConnectionBase {
   connect() {
-    this.role = 'downstream';
     if (this.options && this.options.multistream) {
       return this._multiStream();
     } else {

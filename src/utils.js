@@ -17,7 +17,7 @@ type SignalingOptions = {
   type: 'connect',
   sora_client: string,
   environment: string,
-  role: 'upstream' | 'downstream',
+  role: 'upstream' | 'downstream' | 'sendrecv' | 'sendonly' | 'recvonly',
   channel_id: string,
   audio: boolean | Object,
   video: boolean | Object,
@@ -79,13 +79,14 @@ function enabledSimulcast(role, video) {
   if (video.codec_type === 'VP9') {
     return false;
   }
-  if (role === 'upstream' && browser() === 'firefox') {
+  if ((role === 'upstream' || role === 'sendrecv' || role === 'sendonly') && browser() === 'firefox') {
     return false;
   }
-  if (role === 'upstream' && browser() === 'safari') {
+  if ((role === 'upstream' || role === 'sendrecv' || role === 'sendonly') && browser() === 'safari') {
     return false;
   }
-  if (role === 'downstream' && browser() === 'safari') {
+  // TODO(nakai): sendonly, sendrecv を無効にする
+  if ((role === 'downstream' || role === 'recvonly') && browser() === 'safari') {
     const appVersion = window.navigator.appVersion.toLowerCase();
     const versions = /version\/([\d.]+)/.exec(appVersion);
     if (!versions) {
@@ -124,7 +125,13 @@ export function createSignalingMessage(
   metadata: ?string,
   options: ConnectionOptions
 ) {
-  if (role !== 'upstream' && role !== 'downstream') {
+  if (
+    role !== 'upstream' &&
+    role !== 'downstream' &&
+    role !== 'sendrecv' &&
+    role !== 'sendonly' &&
+    role !== 'recvonly'
+  ) {
     throw new Error('Unknown role type');
   }
   if (channelId === null || channelId === undefined) {

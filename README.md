@@ -6,13 +6,6 @@
 
 Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
 
-使い方は [Sora JavaScript SDK ドキュメント](https://sora.shiguredo.jp/js-sdk-doc/) を参照してください。
-
-- sora.js
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
-- sora.min.js
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.min.js
-
 ## About Support
 
 We check PRs or Issues only when written in JAPANESE.
@@ -25,18 +18,35 @@ Sora JavaScript SDK に関する質問・要望・バグなどの報告は Issue
 
 Sora JavaScript SDK に対する有償のサポートについては現在提供しておりません。
 
+## 使い方
+
+使い方は [Sora JavaScript SDK ドキュメント](https://sora.shiguredo.jp/js-sdk-doc/) を参照してください。
+
+- sora.js
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
+- sora.min.js
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.min.js
+
 ## システム条件
 
-- WebRTC SFU Sora 19.04 以降
+- WebRTC SFU Sora 19.10 以降
 
 ## サンプル
 
 - Upstream/Downstream
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/updown.html
-- Multistream
+- Multistream Sendrecv
     - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream.html
-- Multistream Downstream
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_down.html
+- Multistream Sendonly
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_sendonly.html
+- Multistream Recvonly
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/multistream_recvonly.html
+- Spotlight Sendrecv
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/spotlight_sendrecv.html
+- Spotlight Recvonly
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/spotlight_recvonly.html
+- Simulcast
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/example/simulcast.html
 
 ## Issues について
 
@@ -61,12 +71,83 @@ example
 var sora = Sora.connection('ws://127.0.0.1/signaling');
 ```
 
+### Sendrecv (Publisher)
 
-### Publisher
+受信もする配信者として接続する
 
-配信者として接続する
+- sora.sendrecv(channelId, metadata, options={});
 
-- sora.publisher(channelId, metadata, options={});
+  |Param   |Type   |Default   |Description  |
+  |:--|:-:|:-:|:--|
+  | channelId          | string  |      | チャネルID                            |
+  | metadata           | string  |      | メタデータ                            |
+  | options            | object  |      | シグナリングパラメーター              |
+  | * audio            | boolean | true | オーディオ有効／無効                  |
+  | * audioCodecType   | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+  | * audioBitRate     | integer |      | オーディオビットレートの最大値        |
+  | * video            | boolean | true | ビデオ有効／無効                      |
+  | * videoCodecType   | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
+  | * videoBitRate     | integer |      | ビデオビットレートの最大値            |
+  | * multistream      | boolean |      | マルチストリーム有効／無効            |
+  | * spotlight        | integer |      | 最大話者数                            |
+  | * simulcast        | boolean |      | サイマルキャスト有効／無効            |
+  | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
+  | * clientId         | string  |      | クライアントID                        |
+
+
+- connect(stream)
+
+  |Param   |Type   |Default   |Description  |
+  |:--|:-:|:-:|:--|
+  |  mediaStream       | MediaStream Object  |      | メディアストリームオブジェクト  |
+
+- disconnect()
+
+  |Param   |Type   |Default   |Description  |
+  |:--|:-:|:-:|:--|
+
+- on(kind, callback)
+
+  |Param   |Type   |Default   |Description  |
+  |:--|:-:|:-:|:--|
+  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log) |
+  |  callback   | function  |      | コールバック |
+
+example
+```javascript
+var channelId = 'Sora';
+var metadata = 'ham';
+var publisher = sora.sendonly(channelId, metadata);
+
+navigator.mediaDevices.getUserMedia({audio: true, video: true})
+  .then(mediaStream => {
+    // connect
+    publisher.connect(mediaStream)
+      .then(stream => {
+        // stream を video.src に追加する等の処理
+      });
+  })
+  .catch(e => {
+    console.error(e);
+  });
+
+// disconnect
+publisher.disconnect()
+  .then(() => {
+    // video を止める等の処理
+  });
+
+// event
+publisher.on('disconnect', function(e) {
+  console.error(e);
+});
+```
+
+### Sendonly (Publisher)
+
+受信しない配信者として接続する
+
+- sora.sendrecv(channelId, metadata, options={});
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
@@ -82,7 +163,6 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * multistream    | boolean |      | マルチストリーム有効／無効            |
   | * spotlight      | integer |      | 最大話者数                            |
   | * simulcast      | boolean |      | サイマルキャスト有効／無効            |
-  | * simulcast_rid  | boolean |      | rid ベースサイマルキャスト有効／無効  |
   | * clientId       | string  |      | クライアントID                        |
 
 
@@ -108,7 +188,7 @@ example
 ```javascript
 var channelId = 'Sora';
 var metadata = 'ham';
-var publisher = sora.publisher(channelId, metadata);
+var publisher = sora.sendonly(channelId, metadata);
 
 navigator.mediaDevices.getUserMedia({audio: true, video: true})
   .then(mediaStream => {
@@ -135,11 +215,11 @@ publisher.on('disconnect', function(e) {
 ```
 
 
-### Subscriber
+### Recvonly (Subscriber)
 
-視聴者として接続する
+視聴者のみとして接続する
 
-- sora.subscriber(channelId, metadata, options={});
+- sora.recvonly(channelId, metadata, options={});
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
@@ -180,7 +260,7 @@ example
 ```javascript
 var channelId = 'Sora';
 var metadata = 'ham';
-var subscriber = sora.subscriber(channelId, metadata, options);
+var subscriber = sora.recvonly(channelId, metadata, options);
 
 // connect
 subscriber.connect()
