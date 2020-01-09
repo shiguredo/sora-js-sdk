@@ -47,7 +47,8 @@ export default class ConnectionBase {
       addstream: function() {},
       removestream: function() {},
       notify: function() {},
-      log: function() {}
+      log: function() {},
+      timeout: function() {}
     };
     this.authMetadata = null;
   }

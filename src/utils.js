@@ -10,7 +10,8 @@ export type ConnectionOptions = {
   spotlight?: number,
   simulcast?: boolean,
   simulcastQuality?: 'low' | 'middle' | 'high',
-  clientId?: string
+  clientId?: string,
+  timeout?: number
 };
 
 type SignalingOptions = {
