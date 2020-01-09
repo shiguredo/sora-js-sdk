@@ -93,6 +93,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * simulcast        | boolean |      | サイマルキャスト有効／無効            |
   | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
   | * clientId         | string  |      | クライアントID                        |
+  | * timeout          | integer |      | タイムアウト時間(ms)                  |
 
 
 - connect(stream)
@@ -110,7 +111,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log, timeout) |
   |  callback   | function  |      | コールバック |
 
 example
@@ -164,6 +165,7 @@ publisher.on('disconnect', function(e) {
   | * spotlight      | integer |      | 最大話者数                            |
   | * simulcast      | boolean |      | サイマルキャスト有効／無効            |
   | * clientId       | string  |      | クライアントID                        |
+  | * timeout        | integer |      | タイムアウト時間(ms)                  |
 
 
 - connect(stream)
@@ -181,7 +183,7 @@ publisher.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log, timeout) |
   |  callback   | function  |      | コールバック |
 
 example
@@ -237,6 +239,7 @@ publisher.on('disconnect', function(e) {
   | * simulcast        | boolean |      | サイマルキャスト有効／無効                  |
   | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
   | * clientId         | string  |      | クライアントID                              |
+  | * timeout          | integer |      | タイムアウト時間(ms)                        |
 
 
 - connect()
@@ -253,7 +256,7 @@ publisher.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log, timeout) |
   |  callback   | function  |      | コールバック |
 
 example
