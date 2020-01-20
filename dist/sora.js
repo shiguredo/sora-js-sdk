@@ -2,7 +2,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 1.15.0-dev
+ * @version: 1.16.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -11,7 +11,7 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.Sora = factory());
-}(this, function () { 'use strict';
+}(this, (function () { 'use strict';
 
   function trace(clientId, title, value) {
     let prefix = '';
@@ -119,7 +119,7 @@
 
     const message = {
       type: 'connect',
-      sora_client: `Sora JavaScript SDK ${'1.15.0-dev'}`,
+      sora_client: `Sora JavaScript SDK ${'1.16.0'}`,
       environment: window.navigator.userAgent,
       role: role,
       channel_id: channelId,
@@ -853,7 +853,7 @@
       return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-      return '1.15.0-dev';
+      return '1.16.0';
     }
   };
 
@@ -906,4 +906,4 @@
 
   return sora;
 
-}));
+})));
