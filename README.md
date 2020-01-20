@@ -20,7 +20,7 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 
 ## 使い方
 
-使い方は [Sora JavaScript SDK ドキュメント](https://sora.shiguredo.jp/js-sdk-doc/) を参照してください。
+使い方は [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/) を参照してください。
 
 - sora.js
     - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
