@@ -10,6 +10,9 @@
     - バグ修正
 
 ## develop
+
+- [ADD] タイムアウトを指定可能にする
+    - デフォルトではタイムアウトは有効にはなっていない
 - [ADD] 新しい role である sendrecv / sendonly / sendrecv を利用できるようにする
 - [ADD] サンプルに multsitream_sendonly.html を追加する
 - [UPDATE] サンプルで利用する role を新しいものに変更する
