@@ -21,11 +21,27 @@ class SoraConnection {
     this.debug = debug;
   }
 
+  // 古い role
+  // @deprecated 1 年は残します
   publisher(channelId: string, metadata: string, options: ConnectionOptions = { audio: true, video: true }) {
-    return new ConnectionPublisher(this.signalingUrl, channelId, metadata, options, this.debug);
+    return new ConnectionPublisher(this.signalingUrl, 'upstream', channelId, metadata, options, this.debug);
   }
 
+  // @deprecated 1 年は残します
   subscriber(channelId: string, metadata: string, options: ConnectionOptions = { audio: true, video: true }) {
-    return new ConnectionSubscriber(this.signalingUrl, channelId, metadata, options, this.debug);
+    return new ConnectionSubscriber(this.signalingUrl, 'downstream', channelId, metadata, options, this.debug);
+  }
+
+  // 新しい role
+  sendrecv(channelId: string, metadata: string, options: ConnectionOptions = { audio: true, video: true }) {
+    return new ConnectionPublisher(this.signalingUrl, 'sendrecv', channelId, metadata, options, this.debug);
+  }
+
+  sendonly(channelId: string, metadata: string, options: ConnectionOptions = { audio: true, video: true }) {
+    return new ConnectionPublisher(this.signalingUrl, 'sendonly', channelId, metadata, options, this.debug);
+  }
+
+  recvonly(channelId: string, metadata: string, options: ConnectionOptions = { audio: true, video: true }) {
+    return new ConnectionSubscriber(this.signalingUrl, 'recvonly', channelId, metadata, options, this.debug);
   }
 }

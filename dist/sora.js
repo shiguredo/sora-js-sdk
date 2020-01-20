@@ -2,7 +2,7 @@
 /*!
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 1.15.0
+ * @version: 1.16.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  */
@@ -11,7 +11,7 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.Sora = factory());
-}(this, function () { 'use strict';
+}(this, (function () { 'use strict';
 
   function trace(clientId, title, value) {
     let prefix = '';
@@ -68,15 +68,16 @@
       return false;
     }
 
-    if (role === 'upstream' && browser() === 'firefox') {
+    if ((role === 'upstream' || role === 'sendrecv' || role === 'sendonly') && browser() === 'firefox') {
       return false;
     }
 
-    if (role === 'upstream' && browser() === 'safari') {
+    if ((role === 'upstream' || role === 'sendrecv' || role === 'sendonly') && browser() === 'safari') {
       return false;
-    }
+    } // TODO(nakai): sendonly, sendrecv を無効にする
 
-    if (role === 'downstream' && browser() === 'safari') {
+
+    if ((role === 'downstream' || role === 'recvonly') && browser() === 'safari') {
       const appVersion = window.navigator.appVersion.toLowerCase();
       const versions = /version\/([\d.]+)/.exec(appVersion);
 
@@ -108,7 +109,7 @@
     return browser() === 'safari';
   }
   function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
-    if (role !== 'upstream' && role !== 'downstream') {
+    if (role !== 'upstream' && role !== 'downstream' && role !== 'sendrecv' && role !== 'sendonly' && role !== 'recvonly') {
       throw new Error('Unknown role type');
     }
 
@@ -118,12 +119,11 @@
 
     const message = {
       type: 'connect',
-      sdk_version: '1.15.0',
-      sdk_type: 'JavaScript',
+      sora_client: `Sora JavaScript SDK ${'1.16.0'}`,
+      environment: window.navigator.userAgent,
       role: role,
       channel_id: channelId,
       sdp: offerSDP,
-      user_agent: window.navigator.userAgent,
       audio: true,
       video: true
     };
@@ -271,7 +271,8 @@
   }
 
   class ConnectionBase {
-    constructor(signalingUrl, channelId, metadata, options, debug) {
+    constructor(signalingUrl, role, channelId, metadata, options, debug) {
+      this.role = role;
       this.channelId = channelId;
       this.metadata = metadata;
       this.signalingUrl = signalingUrl;
@@ -282,7 +283,6 @@
       this.connectionId = null;
       this.remoteConnectionIds = [];
       this.stream = null;
-      this.role = null;
       this._ws = null;
       this._pc = null;
       this._callbacks = {
@@ -291,7 +291,8 @@
         addstream: function () {},
         removestream: function () {},
         notify: function () {},
-        log: function () {}
+        log: function () {},
+        timeout: function () {}
       };
       this.authMetadata = null;
     }
@@ -517,7 +518,7 @@
 
     _createAnswer(message) {
       // simulcast の場合
-      if (this.options.simulcast && this.role === 'upstream' && message.encodings) {
+      if (this.options.simulcast && (this.role === 'upstream' || this.role === 'sendrecv' || this.role === 'sendonly') && message.encodings) {
         const transceiver = this._pc.getTransceivers().find(t => {
           if (t.mid && 0 <= t.mid.indexOf('video') && t.currentDirection == null) {
             return t;
@@ -618,8 +619,6 @@
 
   class ConnectionPublisher extends ConnectionBase {
     connect(stream) {
-      this.role = 'upstream';
-
       if (this.options && this.options.multistream) {
         return this._multiStream(stream);
       } else {
@@ -628,70 +627,108 @@
     }
 
     _singleStream(stream) {
-      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(this._setRemoteDescription.bind(this)).then(message => {
-        if (typeof this._pc.addStream === 'undefined') {
-          stream.getTracks().forEach(track => {
-            this._pc.addTrack(track, stream);
-          });
-        } else {
-          this._pc.addStream(stream);
+      return new Promise((resolve, reject) => {
+        let timeoutTimerId = null;
+
+        if (this.options.timeout && 0 < this.options.timeout) {
+          timeoutTimerId = setTimeout(() => {
+            const error = new Error();
+            error.message = 'CONNECTION TIMEOUT';
+
+            this._callbacks.timeout();
+
+            this.disconnect();
+            reject(error);
+          }, this.options.timeout);
         }
 
-        this.stream = stream;
-        return Promise.resolve(message);
-      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
-        return this.stream;
+        this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(this._setRemoteDescription.bind(this)).then(message => {
+          if (typeof this._pc.addStream === 'undefined') {
+            stream.getTracks().forEach(track => {
+              this._pc.addTrack(track, stream);
+            });
+          } else {
+            this._pc.addStream(stream);
+          }
+
+          this.stream = stream;
+          return Promise.resolve(message);
+        }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
+          clearTimeout(timeoutTimerId);
+          resolve(this.stream);
+        }).catch(error => {
+          reject(error);
+        });
       });
     }
 
     _multiStream(stream) {
-      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(message => {
-        if (typeof this._pc.ontrack === 'undefined') {
-          this._pc.onaddstream = event => {
-            if (this.connectionId !== event.stream.id) {
+      return new Promise((resolve, reject) => {
+        let timeoutTimerId = null;
+
+        if (this.options.timeout && 0 < parseInt(this.options.timeout)) {
+          timeoutTimerId = setTimeout(() => {
+            const error = new Error();
+            error.message = 'CONNECTION TIMEOUT';
+
+            this._callbacks.timeout();
+
+            this.disconnect();
+            reject(error);
+          }, this.options.timeout);
+        }
+
+        this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(message => {
+          if (typeof this._pc.ontrack === 'undefined') {
+            this._pc.onaddstream = event => {
+              if (this.connectionId !== event.stream.id) {
+                this.remoteConnectionIds.push(stream.id);
+
+                this._callbacks.addstream(event);
+              }
+            };
+          } else {
+            this._pc.ontrack = event => {
+              const stream = event.streams[0];
+              if (!stream) return;
+              if (stream.id === 'default') return;
+              if (stream.id === this.connectionId) return;
+              if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
+              event.stream = stream;
               this.remoteConnectionIds.push(stream.id);
 
               this._callbacks.addstream(event);
-            }
-          };
-        } else {
-          this._pc.ontrack = event => {
-            const stream = event.streams[0];
-            if (!stream) return;
-            if (stream.id === 'default') return;
-            if (stream.id === this.connectionId) return;
-            if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
-            event.stream = stream;
-            this.remoteConnectionIds.push(stream.id);
-
-            this._callbacks.addstream(event);
-          };
-        }
-
-        this._pc.onremovestream = event => {
-          const index = this.remoteConnectionIds.indexOf(event.stream.id);
-
-          if (-1 < index) {
-            delete this.remoteConnectionIds[index];
+            };
           }
 
-          this._callbacks.removestream(event);
-        };
+          this._pc.onremovestream = event => {
+            const index = this.remoteConnectionIds.indexOf(event.stream.id);
 
-        return this._setRemoteDescription(message);
-      }).then(message => {
-        if (typeof this._pc.addStream === 'undefined') {
-          stream.getTracks().forEach(track => {
-            this._pc.addTrack(track, stream);
-          });
-        } else {
-          this._pc.addStream(stream);
-        }
+            if (-1 < index) {
+              delete this.remoteConnectionIds[index];
+            }
 
-        this.stream = stream;
-        return Promise.resolve(message);
-      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
-        return this.stream;
+            this._callbacks.removestream(event);
+          };
+
+          return this._setRemoteDescription(message);
+        }).then(message => {
+          if (typeof this._pc.addStream === 'undefined') {
+            stream.getTracks().forEach(track => {
+              this._pc.addTrack(track, stream);
+            });
+          } else {
+            this._pc.addStream(stream);
+          }
+
+          this.stream = stream;
+          return Promise.resolve(message);
+        }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
+          clearTimeout(timeoutTimerId);
+          resolve(this.stream);
+        }).catch(error => {
+          reject(error);
+        });
       });
     }
 
@@ -699,8 +736,6 @@
 
   class ConnectionSubscriber extends ConnectionBase {
     connect() {
-      this.role = 'downstream';
-
       if (this.options && this.options.multistream) {
         return this._multiStream();
       } else {
@@ -709,66 +744,106 @@
     }
 
     _singleStream() {
-      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(message => {
-        if (typeof this._pc.ontrack === 'undefined') {
-          this._pc.onaddstream = function (event) {
-            this.stream = event.stream;
-            this.remoteConnectionIds.push(this.stream.id);
+      return new Promise((resolve, reject) => {
+        let timeoutTimerId = null;
 
-            this._callbacks.addstream(event);
-          }.bind(this);
-        } else {
-          this._pc.ontrack = function (event) {
-            this.stream = event.streams[0];
-            const streamId = this.stream.id;
-            if (streamId === 'default') return;
-            if (-1 < this.remoteConnectionIds.indexOf(streamId)) return;
-            event.stream = this.stream;
-            this.remoteConnectionIds.push(streamId);
+        if (this.options.timeout && 0 < parseInt(this.options.timeout)) {
+          timeoutTimerId = setTimeout(() => {
+            const error = new Error();
+            error.message = 'CONNECTION TIMEOUT';
 
-            this._callbacks.addstream(event);
-          }.bind(this);
+            this._callbacks.timeout();
+
+            this.disconnect();
+            reject(error);
+          }, this.options.timeout);
         }
 
-        return this._setRemoteDescription(message);
-      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
-        return this.stream;
+        this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(message => {
+          if (typeof this._pc.ontrack === 'undefined') {
+            this._pc.onaddstream = function (event) {
+              this.stream = event.stream;
+              this.remoteConnectionIds.push(this.stream.id);
+
+              this._callbacks.addstream(event);
+            }.bind(this);
+          } else {
+            this._pc.ontrack = function (event) {
+              this.stream = event.streams[0];
+              const streamId = this.stream.id;
+              if (streamId === 'default') return;
+              if (-1 < this.remoteConnectionIds.indexOf(streamId)) return;
+              event.stream = this.stream;
+              this.remoteConnectionIds.push(streamId);
+
+              this._callbacks.addstream(event);
+            }.bind(this);
+          }
+
+          return this._setRemoteDescription(message);
+        }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
+          clearTimeout(timeoutTimerId);
+          resolve(this.stream);
+        }).catch(error => {
+          reject(error);
+        });
       });
     }
 
     _multiStream() {
-      return this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(message => {
-        if (typeof this._pc.ontrack === 'undefined') {
-          this._pc.onaddstream = event => {
-            this.remoteConnectionIds.push(event.id);
+      return new Promise((resolve, reject) => {
+        let timeoutTimerId = null;
 
-            this._callbacks.addstream(event);
-          };
-        } else {
-          this._pc.ontrack = event => {
-            const stream = event.streams[0];
-            if (stream.id === 'default') return;
-            if (stream.id === this.connectionId) return;
-            if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
-            event.stream = stream;
-            this.remoteConnectionIds.push(stream.id);
+        if (this.options.timeout && 0 < parseInt(this.options.timeout)) {
+          timeoutTimerId = setTimeout(() => {
+            const error = new Error();
+            error.message = 'CONNECTION TIMEOUT';
 
-            this._callbacks.addstream(event);
-          };
+            this._callbacks.timeout();
+
+            this.disconnect();
+            reject(error);
+          }, this.options.timeout);
         }
 
-        this._pc.onremovestream = event => {
-          const index = this.remoteConnectionIds.indexOf(event.stream.id);
+        this.disconnect().then(this._createOffer).then(this._signaling.bind(this)).then(this._connectPeerConnection.bind(this)).then(message => {
+          if (typeof this._pc.ontrack === 'undefined') {
+            this._pc.onaddstream = event => {
+              this.remoteConnectionIds.push(event.id);
 
-          if (-1 < index) {
-            delete this.remoteConnectionIds[index];
+              this._callbacks.addstream(event);
+            };
+          } else {
+            this._pc.ontrack = event => {
+              const stream = event.streams[0];
+              if (stream.id === 'default') return;
+              if (stream.id === this.connectionId) return;
+              if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
+              event.stream = stream;
+              this.remoteConnectionIds.push(stream.id);
+
+              this._callbacks.addstream(event);
+            };
           }
 
-          this._callbacks.removestream(event);
-        };
+          this._pc.onremovestream = event => {
+            const index = this.remoteConnectionIds.indexOf(event.stream.id);
 
-        return this._setRemoteDescription(message);
-      }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this));
+            if (-1 < index) {
+              delete this.remoteConnectionIds[index];
+            }
+
+            this._callbacks.removestream(event);
+          };
+
+          return this._setRemoteDescription(message);
+        }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
+          clearTimeout(timeoutTimerId);
+          resolve();
+        }).catch(error => {
+          reject(error);
+        });
+      });
     }
 
   }
@@ -778,7 +853,7 @@
       return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-      return '1.15.0';
+      return '1.16.0';
     }
   };
 
@@ -786,24 +861,49 @@
     constructor(signalingUrl, debug = false) {
       this.signalingUrl = signalingUrl;
       this.debug = debug;
-    }
+    } // 古い role
+    // @deprecated 1 年は残します
+
 
     publisher(channelId, metadata, options = {
       audio: true,
       video: true
     }) {
-      return new ConnectionPublisher(this.signalingUrl, channelId, metadata, options, this.debug);
-    }
+      return new ConnectionPublisher(this.signalingUrl, 'upstream', channelId, metadata, options, this.debug);
+    } // @deprecated 1 年は残します
+
 
     subscriber(channelId, metadata, options = {
       audio: true,
       video: true
     }) {
-      return new ConnectionSubscriber(this.signalingUrl, channelId, metadata, options, this.debug);
+      return new ConnectionSubscriber(this.signalingUrl, 'downstream', channelId, metadata, options, this.debug);
+    } // 新しい role
+
+
+    sendrecv(channelId, metadata, options = {
+      audio: true,
+      video: true
+    }) {
+      return new ConnectionPublisher(this.signalingUrl, 'sendrecv', channelId, metadata, options, this.debug);
+    }
+
+    sendonly(channelId, metadata, options = {
+      audio: true,
+      video: true
+    }) {
+      return new ConnectionPublisher(this.signalingUrl, 'sendonly', channelId, metadata, options, this.debug);
+    }
+
+    recvonly(channelId, metadata, options = {
+      audio: true,
+      video: true
+    }) {
+      return new ConnectionSubscriber(this.signalingUrl, 'recvonly', channelId, metadata, options, this.debug);
     }
 
   }
 
   return sora;
 
-}));
+})));

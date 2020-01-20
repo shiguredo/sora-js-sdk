@@ -3,6 +3,7 @@ import { createSignalingMessage, trace, isSafari } from '../utils';
 import type { ConnectionOptions } from '../utils';
 
 export default class ConnectionBase {
+  role: string;
   channelId: string;
   metadata: string;
   signalingUrl: string;
@@ -19,7 +20,15 @@ export default class ConnectionBase {
   _pc: window.RTCPeerConnection.prototype;
   _callbacks: Object;
 
-  constructor(signalingUrl: string, channelId: string, metadata: string, options: ConnectionOptions, debug: boolean) {
+  constructor(
+    signalingUrl: string,
+    role: string,
+    channelId: string,
+    metadata: string,
+    options: ConnectionOptions,
+    debug: boolean
+  ) {
+    this.role = role;
     this.channelId = channelId;
     this.metadata = metadata;
     this.signalingUrl = signalingUrl;
@@ -30,7 +39,6 @@ export default class ConnectionBase {
     this.connectionId = null;
     this.remoteConnectionIds = [];
     this.stream = null;
-    this.role = null;
     this._ws = null;
     this._pc = null;
     this._callbacks = {
@@ -39,7 +47,8 @@ export default class ConnectionBase {
       addstream: function() {},
       removestream: function() {},
       notify: function() {},
-      log: function() {}
+      log: function() {},
+      timeout: function() {}
     };
     this.authMetadata = null;
   }
@@ -221,7 +230,11 @@ export default class ConnectionBase {
 
   _createAnswer(message: Object) {
     // simulcast の場合
-    if (this.options.simulcast && this.role === 'upstream' && message.encodings) {
+    if (
+      this.options.simulcast &&
+      (this.role === 'upstream' || this.role === 'sendrecv' || this.role === 'sendonly') &&
+      message.encodings
+    ) {
       const transceiver = this._pc.getTransceivers().find(t => {
         if (t.mid && 0 <= t.mid.indexOf('video') && t.currentDirection == null) {
           return t;

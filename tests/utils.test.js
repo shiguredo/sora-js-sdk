@@ -8,16 +8,14 @@ const role = 'upstream';
 const metadata = 'PG9A6RXgYqiqWKOVO';
 const sdp = 'v=0...';
 const userAgent = window.navigator.userAgent;
-const sdkVersion = pkg.version;
-const sdkType = 'JavaScript';
+const soraClient = `Sora JavaScript SDK ${pkg.version}`;
 const baseExpectedMessage = Object.freeze({
   type: 'connect',
-  sdk_version: sdkVersion,
-  sdk_type: sdkType,
+  sora_client: soraClient,
+  environment: userAgent,
   sdp: sdp,
   audio: true,
   video: true,
-  user_agent: userAgent,
   role: role,
   channel_id: channelId
 });
