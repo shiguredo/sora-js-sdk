@@ -17,10 +17,10 @@ https://discord.gg/uZ5wgHE
 
 Sora JavaScript SDK に関する質問・要望などの報告は Disocrd へお願いします。
 
-バグに関してもまずは Discord へお願いします。
+バグに関してはまず Discord へお願いします。
 ただし、 Sora のライセンス契約の有無に関わらず、 Issue への応答時間と問題の解決を保証しませんのでご了承ください。
 
-Sora JavaScript SDK に対する有償のサポートについては現在提供しておりません。
+Sora JavaScript SDK に対する有償のサポートについては提供しておりません。
 
 ## 使い方
 
