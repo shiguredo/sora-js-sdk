@@ -11,9 +11,13 @@ Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発�
 We check PRs or Issues only when written in JAPANESE.
 In other languages, we won't be able to deal with them. Thank you for your understanding.
 
-## サポートについて
+## Discord
 
-Sora JavaScript SDK に関する質問・要望・バグなどの報告は Issues の利用をお願いします。
+https://discord.gg/uZ5wgHE
+
+Sora JavaScript SDK に関する質問・要望などの報告は Disocrd へお願いします。
+
+バグに関してもまずは Discord へお願いします。
 ただし、 Sora のライセンス契約の有無に関わらず、 Issue への応答時間と問題の解決を保証しませんのでご了承ください。
 
 Sora JavaScript SDK に対する有償のサポートについては現在提供しておりません。
