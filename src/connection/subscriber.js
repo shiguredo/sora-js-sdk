@@ -51,7 +51,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
         .then(this._onIceCandidate.bind(this))
         .then(() => {
           clearTimeout(timeoutTimerId);
-          this._sendStats();
           resolve(this.stream);
         })
         .catch(error => {
@@ -108,7 +107,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
         .then(this._onIceCandidate.bind(this))
         .then(() => {
           clearTimeout(timeoutTimerId);
-          this._sendStats();
           resolve();
         })
         .catch(error => {
