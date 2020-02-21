@@ -169,7 +169,25 @@ export default class ConnectionBase {
           this._trace('UPDATE SDP', data.sdp);
           this._update(data);
         } else if (data.type == 'ping') {
-          this._ws.send(JSON.stringify({ type: 'pong' }));
+          if (data.stats) {
+            this._pc.getStats()
+              .then(res => {
+                const stats = [];
+                if (!res) {
+                  this._ws.send(JSON.stringify({ type: 'pong', stats: stats }));
+                  return;
+                }
+                res.forEach (s => {
+                  stats.push(s);
+                });
+                this._ws.send(JSON.stringify({
+                  type: "pong",
+                  stats: stats
+                }));
+              });
+          } else {
+            this._ws.send(JSON.stringify({ type: 'pong' }));
+          }
         } else if (data.type == 'push') {
           this._callbacks.push(data);
         } else if (data.type == 'notify') {
@@ -300,32 +318,6 @@ export default class ConnectionBase {
         }
       };
     });
-  }
-
-  _sendStats() {
-    // TODO(yuito): timer を止める処理を考える
-    if (this.options.stats) {
-      let interval = 5000;
-      if (0 < this.options.statsInterval) {
-        interval = this.options.statsInterval * 1000;
-      }
-      setInterval(() => {
-        if (this._pc && this._ws) {
-          this._pc.getStats()
-            .then(res => {
-              if (!res) return;
-              const stats = [];
-              res.forEach (s => {
-                stats.push(s);
-              });
-              this._ws.send(JSON.stringify({
-                type: "stats",
-                stats: stats
-              }));
-            });
-        }
-      }, interval);
-    }
   }
 
   _update(message: Object) {

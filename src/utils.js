@@ -12,8 +12,6 @@ export type ConnectionOptions = {
   simulcastQuality?: 'low' | 'middle' | 'high',
   clientId?: string,
   timeout?: number,
-  stats?: boolean,
-  statsInterval?: number,
 };
 
 type SignalingOptions = {
