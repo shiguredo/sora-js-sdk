@@ -302,6 +302,32 @@ export default class ConnectionBase {
     });
   }
 
+  _sendStats() {
+    // TODO(yuito): timer を止める処理を考える
+    if (this.options.stats) {
+      let interval = 5000;
+      if (0 < this.options.statsInterval) {
+        interval = this.options.statsInterval * 1000;
+      }
+      setInterval(() => {
+        if (this._pc && this._ws) {
+          this._pc.getStats()
+            .then(res => {
+              if (!res) return;
+              const stats = [];
+              res.forEach (s => {
+                stats.push(s);
+              });
+              this._ws.send(JSON.stringify({
+                type: "stats",
+                stats: stats
+              }));
+            });
+        }
+      }, interval);
+    }
+  }
+
   _update(message: Object) {
     return this._setRemoteDescription(message)
       .then(this._createAnswer.bind(this))
