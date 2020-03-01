@@ -11,7 +11,7 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
   (global = global || self, global.Sora = factory());
-}(this, function () { 'use strict';
+}(this, (function () { 'use strict';
 
   function trace(clientId, title, value) {
     let prefix = '';
@@ -432,9 +432,33 @@
 
             this._update(data);
           } else if (data.type == 'ping') {
-            this._ws.send(JSON.stringify({
-              type: 'pong'
-            }));
+            if (data.stats) {
+              this._pc.getStats().then(res => {
+                const stats = [];
+
+                if (!res) {
+                  this._ws.send(JSON.stringify({
+                    type: 'pong',
+                    stats: stats
+                  }));
+
+                  return;
+                }
+
+                res.forEach(s => {
+                  stats.push(s);
+                });
+
+                this._ws.send(JSON.stringify({
+                  type: "pong",
+                  stats: stats
+                }));
+              });
+            } else {
+              this._ws.send(JSON.stringify({
+                type: 'pong'
+              }));
+            }
           } else if (data.type == 'push') {
             this._callbacks.push(data);
           } else if (data.type == 'notify') {
@@ -601,34 +625,6 @@
       });
     }
 
-    _sendStats() {
-      // TODO(yuito): timer を止める処理を考える
-      if (this.options.stats) {
-        let interval = 5000;
-
-        if (0 < this.options.statsInterval) {
-          interval = this.options.statsInterval * 1000;
-        }
-
-        setInterval(() => {
-          if (this._pc && this._ws) {
-            this._pc.getStats().then(res => {
-              if (!res) return;
-              const stats = [];
-              res.forEach(s => {
-                stats.push(s);
-              });
-
-              this._ws.send(JSON.stringify({
-                type: "stats",
-                stats: stats
-              }));
-            });
-          }
-        }, interval);
-      }
-    }
-
     _update(message) {
       return this._setRemoteDescription(message).then(this._createAnswer.bind(this)).then(this._sendUpdateAnswer.bind(this));
     }
@@ -683,9 +679,6 @@
           return Promise.resolve(message);
         }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
           clearTimeout(timeoutTimerId);
-
-          this._sendStats();
-
           resolve(this.stream);
         }).catch(error => {
           reject(error);
@@ -756,9 +749,6 @@
           return Promise.resolve(message);
         }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
           clearTimeout(timeoutTimerId);
-
-          this._sendStats();
-
           resolve(this.stream);
         }).catch(error => {
           reject(error);
@@ -817,9 +807,6 @@
           return this._setRemoteDescription(message);
         }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
           clearTimeout(timeoutTimerId);
-
-          this._sendStats();
-
           resolve(this.stream);
         }).catch(error => {
           reject(error);
@@ -876,9 +863,6 @@
           return this._setRemoteDescription(message);
         }).then(this._createAnswer.bind(this)).then(this._sendAnswer.bind(this)).then(this._onIceCandidate.bind(this)).then(() => {
           clearTimeout(timeoutTimerId);
-
-          this._sendStats();
-
           resolve();
         }).catch(error => {
           reject(error);
@@ -946,4 +930,4 @@
 
   return sora;
 
-}));
+})));
