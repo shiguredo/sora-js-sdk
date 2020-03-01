@@ -33,7 +33,7 @@ Sora JavaScript SDK に対する有償のサポートについては提供して
 
 ## システム条件
 
-- WebRTC SFU Sora 19.10.3 以降
+- WebRTC SFU Sora 19.10.8 以降
 
 ## サンプル
 
