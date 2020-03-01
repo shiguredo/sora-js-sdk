@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] Sora から `type: ping` が送られてきた際に `stats: true` だった場合 `type: pong` 送信時に `stats` に getStats の結果を入れる
+
 ## 1.16.0
 
 - [ADD] タイムアウトを指定可能にする
