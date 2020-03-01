@@ -169,7 +169,25 @@ export default class ConnectionBase {
           this._trace('UPDATE SDP', data.sdp);
           this._update(data);
         } else if (data.type == 'ping') {
-          this._ws.send(JSON.stringify({ type: 'pong' }));
+          if (data.stats) {
+            this._pc.getStats()
+              .then(res => {
+                const stats = [];
+                if (!res) {
+                  this._ws.send(JSON.stringify({ type: 'pong', stats: stats }));
+                  return;
+                }
+                res.forEach (s => {
+                  stats.push(s);
+                });
+                this._ws.send(JSON.stringify({
+                  type: "pong",
+                  stats: stats
+                }));
+              });
+          } else {
+            this._ws.send(JSON.stringify({ type: 'pong' }));
+          }
         } else if (data.type == 'push') {
           this._callbacks.push(data);
         } else if (data.type == 'notify') {
