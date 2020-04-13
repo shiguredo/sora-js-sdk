@@ -10,7 +10,7 @@
     "watch": "NODE_ENV=development rollup -c -w",
     "prerelease": "yarn lint",
     "release": "NODE_ENV=production rollup -c",
-    "server": "serve ./example",
+    "server": "serve -S -l 8080 ./example",
     "lint": "eslint --ext .ts ./src",
     "fmt": "eslint --fix --ext .ts ./src",
     "test": "jest"
