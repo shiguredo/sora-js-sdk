@@ -56,7 +56,7 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this._connectPeerConnection(signalingMessage);
     if (this._pc) {
       if (typeof this._pc.ontrack === "undefined") {
-        // @ts-ignore  TODO(yuito): あとで対応
+        // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
         this._pc.onaddstream = (event): void => {
           if (this.connectionId !== event.stream.id) {
             this.remoteConnectionIds.push(stream.id);
@@ -70,7 +70,7 @@ export default class ConnectionPublisher extends ConnectionBase {
           if (stream.id === "default") return;
           if (stream.id === this.connectionId) return;
           if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
-          // @ts-ignore  TODO(yuito): あとで対応
+          // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
           event.stream = stream;
           this.remoteConnectionIds.push(stream.id);
           this._callbacks.addstream(event);
@@ -78,7 +78,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       }
     }
     if (this._pc) {
-      // @ts-ignore  TODO(yuito): あとで対応
+      // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
       this._pc.onremovestream = (event): void => {
         const index = this.remoteConnectionIds.indexOf(event.stream.id);
         if (-1 < index) {
