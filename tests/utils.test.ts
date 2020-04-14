@@ -89,20 +89,15 @@ test("createSignalingMessage multistream option", () => {
   // multistream spotlight
   const options2 = {
     multistream: true,
-    spotlight: true,
+    spotlight: 1,
   };
   const diff2 = {
     multistream: true,
-    spotlight: true,
+    spotlight: 1,
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
-  // spotlight
-  const options3 = {
-    spotlight: true,
-  };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(baseExpectedMessage);
 });
 
 test("createSignalingMessage simulcast option", () => {
