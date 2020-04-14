@@ -558,7 +558,7 @@
 
   class ConnectionPublisher extends ConnectionBase {
       connect(stream) {
-          if (this.options && this.options.multistream) {
+          if (this.options.multistream) {
               return this._multiStream(stream);
           }
           else {
@@ -662,7 +662,7 @@
 
   class ConnectionSubscriber extends ConnectionBase {
       connect() {
-          if (this.options && this.options.multistream) {
+          if (this.options.multistream) {
               return this._multiStream();
           }
           else {

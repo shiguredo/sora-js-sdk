@@ -2,7 +2,7 @@ import ConnectionBase from "./base";
 
 export default class ConnectionPublisher extends ConnectionBase {
   connect(stream: MediaStream): Promise<MediaStream> {
-    if (this.options && this.options.multistream) {
+    if (this.options.multistream) {
       return this._multiStream(stream);
     } else {
       return this._singleStream(stream);
