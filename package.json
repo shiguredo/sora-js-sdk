@@ -1,6 +1,6 @@
 {
   "name": "sora-js-sdk",
-  "version": "1.16.0",
+  "version": "2010.1.0",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.min.js",
   "module": "dist/sora.min.js",
