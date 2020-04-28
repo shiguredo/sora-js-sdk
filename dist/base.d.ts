@@ -1,0 +1,33 @@
+import { Callbacks, ConnectionOptions, Encoding, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
+export default class ConnectionBase {
+    role: string;
+    channelId: string;
+    metadata: string | null;
+    signalingUrl: string;
+    options: ConnectionOptions;
+    constraints: any;
+    debug: boolean;
+    clientId: string | null;
+    connectionId: string | null;
+    remoteConnectionIds: string[];
+    stream: MediaStream | null;
+    authMetadata: string | null;
+    _ws: WebSocket | null;
+    _pc: RTCPeerConnection | null;
+    _callbacks: Callbacks;
+    constructor(signalingUrl: string, role: string, channelId: string, metadata: string | null, options: ConnectionOptions, debug: boolean);
+    on(kind: keyof Callbacks, callback: Function): void;
+    disconnect(): Promise<[void, void, void]>;
+    _signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage>;
+    _createOffer(): Promise<RTCSessionDescriptionInit>;
+    _connectPeerConnection(message: SignalingOfferMessage): Promise<void>;
+    _setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void>;
+    _createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void>;
+    _setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void>;
+    _sendAnswer(): void;
+    _sendUpdateAnswer(): void;
+    _onIceCandidate(): Promise<void>;
+    _update(message: SignalingUpdateMessage): Promise<void>;
+    _getStats(): Promise<RTCStatsReport[]>;
+    _trace(title: string, message: any): void;
+}

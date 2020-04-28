@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/eslintrc.json",
   "env": {
     "browser": true,
     "commonjs": true,
@@ -6,37 +7,29 @@
   },
   "extends": [
     "eslint:recommended",
-    "plugin:flowtype/recommended",
-    "prettier"
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:prettier/recommended",
+    "prettier/@typescript-eslint"
   ],
-  "parser": "babel-eslint",
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaFeatures": {
-      "experimentalObjectRestSpread": true,
-      "jsx": true
-    },
     "sourceType": "module"
   },
   "plugins": [
-    "flowtype",
-    "flowtype-errors",
+    "@typescript-eslint",
     "prettier"
   ],
   "globals": {
     "SORA_JS_SDK_VERSION": true
   },
   "rules": {
-    "flowtype-errors/show-errors": 2,
-    "flowtype-errors/show-warnings": 1,
-    "prettier/prettier": [
-      "error", {
-        "singleQuote": true,
-        "printWidth": 120
-      }
-    ],
-    "no-unused-vars": [
-      "error",
-      { "args": "all", "argsIgnorePattern": "^_" }
-    ]
+    "@typescript-eslint/ban-ts-ignore": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-unused-vars": ["error", {
+      "vars": "all",
+      "args": "all",
+      "argsIgnorePattern": "^_"
+    }]
   }
 }
