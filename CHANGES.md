@@ -11,6 +11,10 @@
 
 ## develop
 
+- [UPDATE] TypeScript 化
+    - @yuitowest
+- [UPDATE] async / await 化
+    - @yuitowest
 - [ADD] Sora から `type: ping` が送られてきた際に `stats: true` だった場合 `type: pong` 送信時に `stats` に getStats の結果を入れる
     - @yuitowest @voluntas
 
