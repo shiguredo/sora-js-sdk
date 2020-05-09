@@ -1,5 +1,5 @@
 # Sora JavaScript SDK
-[![CircleCI](https://circleci.com/gh/shiguredo/sora-js-sdk.svg?style=svg)](https://circleci.com/gh/shiguredo/sora-js-sdk)
+
 [![GitHub tag](https://img.shields.io/github/tag/shiguredo/sora-js-sdk.svg)](https://github.com/shiguredo/sora-js-sdk)
 [![npm version](https://badge.fury.io/js/sora-js-sdk.svg)](https://badge.fury.io/js/sora-js-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
