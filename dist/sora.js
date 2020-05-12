@@ -652,6 +652,7 @@
                   this._pc.addTrack(track, stream);
               }
           });
+          this.stream = stream;
           await this._createAnswer(signalingMessage);
           this._sendAnswer();
           await this._onIceCandidate();
