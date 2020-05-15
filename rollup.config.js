@@ -1,3 +1,5 @@
+import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
 import minify from 'rollup-plugin-babel-minify';
 import typescript from 'rollup-plugin-typescript2';
 import replace from '@rollup/plugin-replace';
@@ -23,9 +25,11 @@ export default [
       replace({
         SORA_JS_SDK_VERSION: `'${pkg.version}'`
       }),
+      resolve(),
       typescript({
         tsconfig: './tsconfig.json'
-      })
+      }),
+      commonjs(),
     ],
     output: {
       sourcemap: false,
@@ -41,9 +45,11 @@ export default [
       replace({
         SORA_JS_SDK_VERSION: `'${pkg.version}'`
       }),
+      resolve(),
       typescript({
         tsconfig: './tsconfig.json'
       }),
+      commonjs(),
       minify({
         comments: false
       })
