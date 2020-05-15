@@ -59,6 +59,7 @@ export type SignalingConnectMessage = {
   sdp: string;
   sora_client: string;
   environment: string;
+  e2ee?: boolean;
 };
 
 export type SignalingOfferMessage = {
@@ -99,12 +100,14 @@ export type ConnectionOptions = {
   simulcastQuality?: SimulcastQuality;
   clientId?: string;
   timeout?: number;
+  e2ee?: string;
 };
 
 export type Callbacks = {
   disconnect: Function;
   push: Function;
   addstream: Function;
+  track: Function;
   removestream: Function;
   notify: Function;
   log: Function;

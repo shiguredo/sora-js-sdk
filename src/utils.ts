@@ -237,6 +237,15 @@ export function createSignalingMessage(
   if (message.simulcast && !enabledSimulcast(message.role, message.video)) {
     throw new Error("Simulcast can not be used with this browser");
   }
+
+  // e2ee
+  if ("e2ee" in options) {
+    if (typeof message.video === "boolean") {
+      message.video = {};
+    }
+    message.video["codec_type"] = "VP8";
+    message.e2ee = true;
+  }
   return message;
 }
 

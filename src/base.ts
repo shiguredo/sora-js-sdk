@@ -1,5 +1,6 @@
 import { createSignalingMessage, trace, isSafari } from "./utils";
 import { Callbacks, ConnectionOptions, Encoding, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
+import SoraE2EE from "sora-e2ee";
 
 // Override from @type/WebRTC
 interface SoraRTCPeerConnectionStatic extends RTCPeerConnectionStatic {
@@ -30,6 +31,7 @@ export default class ConnectionBase {
   _ws: WebSocket | null;
   _pc: RTCPeerConnection | null;
   _callbacks: Callbacks;
+  protected e2ee: SoraE2EE | null;
 
   constructor(
     signalingUrl: string,
@@ -56,12 +58,18 @@ export default class ConnectionBase {
       disconnect: (): void => {},
       push: (): void => {},
       addstream: (): void => {},
+      track: (): void => {},
       removestream: (): void => {},
       notify: (): void => {},
       log: (): void => {},
       timeout: (): void => {},
     };
     this.authMetadata = null;
+    this.e2ee = null;
+    if ("e2ee" in options && typeof options.e2ee === "string") {
+      this.e2ee = new SoraE2EE(options.e2ee);
+      this.e2ee.startWorker();
+    }
   }
 
   on(kind: keyof Callbacks, callback: Function): void {
@@ -222,6 +230,12 @@ export default class ConnectionBase {
   async _connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     const messageConfig = message.config || {};
     let config = messageConfig;
+    if (this.e2ee) {
+      // @ts-ignore
+      config["forceEncodedVideoInsertableStreams"] = true;
+      // @ts-ignore
+      config["forceEncodedAudioInsertableStreams"] = true;
+    }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
       const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
       config = Object.assign({ certificates: [certificate] }, messageConfig);

@@ -33,6 +33,13 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.stream = stream;
     await this._createAnswer(signalingMessage);
     this._sendAnswer();
+    if (this._pc && this.e2ee) {
+      this._pc.getSenders().forEach((sender) => {
+        if (this.e2ee) {
+          this.e2ee.setupSenderTransform(sender);
+        }
+      });
+    }
     await this._onIceCandidate();
     clearTimeout(timeoutTimerId);
     return stream;
@@ -69,6 +76,11 @@ export default class ConnectionPublisher extends ConnectionBase {
           if (!stream) return;
           if (stream.id === "default") return;
           if (stream.id === this.connectionId) return;
+          if (this.e2ee) {
+            console.log("coco");
+            this.e2ee.setupReceiverTransform(event.receiver);
+          }
+          this._callbacks.track(event);
           if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
           // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
           event.stream = stream;
@@ -96,6 +108,13 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.stream = stream;
     await this._createAnswer(signalingMessage);
     this._sendAnswer();
+    if (this._pc && this.e2ee) {
+      this._pc.getSenders().forEach((sender) => {
+        if (this.e2ee) {
+          this.e2ee.setupSenderTransform(sender);
+        }
+      });
+    }
     await this._onIceCandidate();
     clearTimeout(timeoutTimerId);
     return stream;
