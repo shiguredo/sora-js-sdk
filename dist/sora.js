@@ -307,7 +307,9 @@
           this.e2ee = null;
           if ("e2ee" in options && typeof options.e2ee === "string") {
               this.e2ee = new sora_e2ee_min(options.e2ee);
-              this.e2ee.startWorker();
+              this.e2ee.onWorkerDisconnect = () => {
+                  this.disconnect();
+              };
           }
       }
       on(kind, callback) {
@@ -382,6 +384,9 @@
               }, 1000);
               this._pc.close();
           });
+          if (this.e2ee) {
+              this.e2ee.terminateWorker();
+          }
           return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
       }
       _signaling(offer) {
@@ -614,6 +619,9 @@
               }, this.options.timeout);
           }
           await this.disconnect();
+          if (this.e2ee) {
+              this.e2ee.startWorker();
+          }
           const offer = await this._createOffer();
           const signalingMessage = await this._signaling(offer);
           await this._connectPeerConnection(signalingMessage);
@@ -649,6 +657,9 @@
               }, this.options.timeout);
           }
           await this.disconnect();
+          if (this.e2ee) {
+              this.e2ee.startWorker();
+          }
           const offer = await this._createOffer();
           const signalingMessage = await this._signaling(offer);
           await this._connectPeerConnection(signalingMessage);
@@ -672,7 +683,6 @@
                       if (stream.id === this.connectionId)
                           return;
                       if (this.e2ee) {
-                          console.log("coco");
                           this.e2ee.setupReceiverTransform(event.receiver);
                       }
                       this._callbacks.track(event);
@@ -738,6 +748,9 @@
               }, this.options.timeout);
           }
           await this.disconnect();
+          if (this.e2ee) {
+              this.e2ee.startWorker();
+          }
           const offer = await this._createOffer();
           const signalingMessage = await this._signaling(offer);
           await this._connectPeerConnection(signalingMessage);
@@ -778,6 +791,9 @@
               }, this.options.timeout);
           }
           await this.disconnect();
+          if (this.e2ee) {
+              this.e2ee.startWorker();
+          }
           const offer = await this._createOffer();
           const signalingMessage = await this._signaling(offer);
           await this._connectPeerConnection(signalingMessage);
