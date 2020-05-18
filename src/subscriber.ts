@@ -21,6 +21,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
     }
 
     await this.disconnect();
+    if (this.e2ee) {
+      this.e2ee.startWorker();
+    }
     const offer = await this._createOffer();
     const signalingMessage = await this._signaling(offer);
     await this._connectPeerConnection(signalingMessage);
@@ -61,6 +64,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
     }
 
     await this.disconnect();
+    if (this.e2ee) {
+      this.e2ee.startWorker();
+    }
     const offer = await this._createOffer();
     const signalingMessage = await this._signaling(offer);
     await this._connectPeerConnection(signalingMessage);

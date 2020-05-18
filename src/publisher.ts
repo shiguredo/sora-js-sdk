@@ -21,6 +21,9 @@ export default class ConnectionPublisher extends ConnectionBase {
       }, this.options.timeout);
     }
     await this.disconnect();
+    if (this.e2ee) {
+      this.e2ee.startWorker();
+    }
     const offer = await this._createOffer();
     const signalingMessage = await this._signaling(offer);
     await this._connectPeerConnection(signalingMessage);
@@ -58,6 +61,9 @@ export default class ConnectionPublisher extends ConnectionBase {
     }
 
     await this.disconnect();
+    if (this.e2ee) {
+      this.e2ee.startWorker();
+    }
     const offer = await this._createOffer();
     const signalingMessage = await this._signaling(offer);
     await this._connectPeerConnection(signalingMessage);
@@ -77,7 +83,6 @@ export default class ConnectionPublisher extends ConnectionBase {
           if (stream.id === "default") return;
           if (stream.id === this.connectionId) return;
           if (this.e2ee) {
-            console.log("coco");
             this.e2ee.setupReceiverTransform(event.receiver);
           }
           this._callbacks.track(event);

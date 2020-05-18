@@ -68,7 +68,9 @@ export default class ConnectionBase {
     this.e2ee = null;
     if ("e2ee" in options && typeof options.e2ee === "string") {
       this.e2ee = new SoraE2EE(options.e2ee);
-      this.e2ee.startWorker();
+      this.e2ee.onWorkerDisconnect = (): void => {
+        this.disconnect();
+      };
     }
   }
 
@@ -144,6 +146,9 @@ export default class ConnectionBase {
       }, 1000);
       this._pc.close();
     });
+    if (this.e2ee) {
+      this.e2ee.terminateWorker();
+    }
     return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
   }
 
