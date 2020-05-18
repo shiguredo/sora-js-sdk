@@ -66,12 +66,6 @@ export default class ConnectionBase {
     };
     this.authMetadata = null;
     this.e2ee = null;
-    if ("e2ee" in options && typeof options.e2ee === "string") {
-      this.e2ee = new SoraE2EE(options.e2ee);
-      this.e2ee.onWorkerDisconnect = (): void => {
-        this.disconnect();
-      };
-    }
   }
 
   on(kind: keyof Callbacks, callback: Function): void {
@@ -148,8 +142,19 @@ export default class ConnectionBase {
     });
     if (this.e2ee) {
       this.e2ee.terminateWorker();
+      this.e2ee = null;
     }
     return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
+  }
+
+  _startE2EE(): void {
+    if ("e2ee" in this.options && typeof this.options.e2ee === "string") {
+      this.e2ee = new SoraE2EE(this.options.e2ee);
+      this.e2ee.onWorkerDisconnect = (): void => {
+        this.disconnect();
+      };
+      this.e2ee.startWorker();
+    }
   }
 
   _signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage> {
