@@ -3993,7 +3993,7 @@ snapdragon@^0.8.1:
 
 "sora-e2ee@https://github.com/shiguredo/sora-e2ee.git#develop":
   version "2020.1.0"
-  resolved "https://github.com/shiguredo/sora-e2ee.git#0f8a86bcf4ae45dda555f886a4779cbd410c1827"
+  resolved "https://github.com/shiguredo/sora-e2ee.git#009c9a2356fee1008490cbeb3f3fa5846a9acd3b"
 
 source-map-resolve@^0.5.0:
   version "0.5.3"
