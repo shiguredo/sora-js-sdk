@@ -98,6 +98,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
   | * clientId         | string  |      | クライアントID                        |
   | * timeout          | integer |      | タイムアウト時間(ms)                  |
+  | * e2ee             | string  |      | e2ee のマスターシークレット           |
 
 
 - connect(stream)
@@ -170,6 +171,7 @@ publisher.on('disconnect', function(e) {
   | * simulcast      | boolean |      | サイマルキャスト有効／無効            |
   | * clientId       | string  |      | クライアントID                        |
   | * timeout        | integer |      | タイムアウト時間(ms)                  |
+  | * e2ee           | string  |      | e2ee のマスターシークレット           |
 
 
 - connect(stream)
@@ -244,6 +246,7 @@ publisher.on('disconnect', function(e) {
   | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
   | * clientId         | string  |      | クライアントID                              |
   | * timeout          | integer |      | タイムアウト時間(ms)                        |
+  | * e2ee             | string  |      | e2ee のマスターシークレット                 |
 
 
 - connect()
