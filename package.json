@@ -46,6 +46,6 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "sora-e2ee": "https://github.com/shiguredo/sora-e2ee.git#develop"
+    "sora-e2ee": "^2020.1.0"
   }
 }

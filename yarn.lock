@@ -3991,9 +3991,10 @@ snapdragon@^0.8.1:
     source-map-resolve "^0.5.0"
     use "^3.1.0"
 
-"sora-e2ee@https://github.com/shiguredo/sora-e2ee.git#develop":
+sora-e2ee@^2020.1.0:
   version "2020.1.0"
-  resolved "https://github.com/shiguredo/sora-e2ee.git#009c9a2356fee1008490cbeb3f3fa5846a9acd3b"
+  resolved "https://registry.yarnpkg.com/sora-e2ee/-/sora-e2ee-2020.1.0.tgz#88393618a68d55f944969738da395a984fc6e215"
+  integrity sha512-4X7PR4DU3mTbhpk9d0RTWN5Kav42VRNlHU4GsEZTHfQkH/LEdDFS+8WE3wnPkvw8dAgpLCGC08sW4KTFw+jBJg==
 
 source-map-resolve@^0.5.0:
   version "0.5.3"
