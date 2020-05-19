@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] E2EE 対応
+    - @yuitowest
 - [UPDATE] TypeScript 化
     - @yuitowest
 - [UPDATE] async / await 化
