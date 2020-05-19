@@ -21,6 +21,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     }
 
     await this.disconnect();
+    this._startE2EE();
     const offer = await this._createOffer();
     const signalingMessage = await this._signaling(offer);
     await this._connectPeerConnection(signalingMessage);
@@ -29,6 +30,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
         this.stream = event.streams[0];
         const streamId = this.stream.id;
         if (streamId === "default") return;
+        if (this.e2ee) {
+          this.e2ee.setupReceiverTransform(event.receiver);
+        }
+        this._callbacks.track(event);
         if (-1 < this.remoteConnectionIds.indexOf(streamId)) return;
         // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
         event.stream = this.stream;
@@ -57,6 +62,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     }
 
     await this.disconnect();
+    this._startE2EE();
     const offer = await this._createOffer();
     const signalingMessage = await this._signaling(offer);
     await this._connectPeerConnection(signalingMessage);
@@ -65,6 +71,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
         const stream = event.streams[0];
         if (stream.id === "default") return;
         if (stream.id === this.connectionId) return;
+        if (this.e2ee) {
+          this.e2ee.setupReceiverTransform(event.receiver);
+        }
+        this._callbacks.track(event);
         if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
         // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
         event.stream = stream;

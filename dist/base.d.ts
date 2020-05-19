@@ -1,4 +1,5 @@
 import { Callbacks, ConnectionOptions, Encoding, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
+import SoraE2EE from "sora-e2ee";
 export default class ConnectionBase {
     role: string;
     channelId: string;
@@ -15,9 +16,11 @@ export default class ConnectionBase {
     _ws: WebSocket | null;
     _pc: RTCPeerConnection | null;
     _callbacks: Callbacks;
+    protected e2ee: SoraE2EE | null;
     constructor(signalingUrl: string, role: string, channelId: string, metadata: string | null, options: ConnectionOptions, debug: boolean);
     on(kind: keyof Callbacks, callback: Function): void;
     disconnect(): Promise<[void, void, void]>;
+    _startE2EE(): void;
     _signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage>;
     _createOffer(): Promise<RTCSessionDescriptionInit>;
     _connectPeerConnection(message: SignalingOfferMessage): Promise<void>;

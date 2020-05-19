@@ -366,3 +366,18 @@ test("createSignalingMessage video option", () => {
     Object.assign({}, baseExpectedMessage, diff4)
   );
 });
+
+test("createSignalingMessage e2ee option", () => {
+  const options = {
+    e2ee: "key",
+  };
+  const diff = {
+    e2ee: true,
+    video: {
+      codec_type: "VP8",
+    },
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff)
+  );
+});
