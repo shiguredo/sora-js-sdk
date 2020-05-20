@@ -15,7 +15,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       timeoutTimerId = setTimeout(() => {
         const error = new Error();
         error.message = "CONNECTION TIMEOUT";
-        this._callbacks.timeout();
+        this.callbacks.timeout();
         this.disconnect();
         Promise.reject(error);
       }, this.options.timeout);
@@ -27,15 +27,15 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this._connectPeerConnection(signalingMessage);
     await this._setRemoteDescription(signalingMessage);
     stream.getTracks().forEach((track) => {
-      if (this._pc) {
-        this._pc.addTrack(track, stream);
+      if (this.pc) {
+        this.pc.addTrack(track, stream);
       }
     });
     this.stream = stream;
     await this._createAnswer(signalingMessage);
     this._sendAnswer();
-    if (this._pc && this.e2ee) {
-      this._pc.getSenders().forEach((sender) => {
+    if (this.pc && this.e2ee) {
+      this.pc.getSenders().forEach((sender) => {
         if (this.e2ee) {
           this.e2ee.setupSenderTransform(sender);
         }
@@ -52,7 +52,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       timeoutTimerId = setTimeout(() => {
         const error = new Error();
         error.message = "CONNECTION TIMEOUT";
-        this._callbacks.timeout();
+        this.callbacks.timeout();
         this.disconnect();
         Promise.reject(error);
       }, this.options.timeout);
@@ -63,17 +63,17 @@ export default class ConnectionPublisher extends ConnectionBase {
     const offer = await this._createOffer();
     const signalingMessage = await this._signaling(offer);
     await this._connectPeerConnection(signalingMessage);
-    if (this._pc) {
-      if (typeof this._pc.ontrack === "undefined") {
+    if (this.pc) {
+      if (typeof this.pc.ontrack === "undefined") {
         // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-        this._pc.onaddstream = (event): void => {
+        this.pc.onaddstream = (event): void => {
           if (this.connectionId !== event.stream.id) {
             this.remoteConnectionIds.push(stream.id);
-            this._callbacks.addstream(event);
+            this.callbacks.addstream(event);
           }
         };
       } else {
-        this._pc.ontrack = (event): void => {
+        this.pc.ontrack = (event): void => {
           const stream = event.streams[0];
           if (!stream) return;
           if (stream.id === "default") return;
@@ -81,36 +81,36 @@ export default class ConnectionPublisher extends ConnectionBase {
           if (this.e2ee) {
             this.e2ee.setupReceiverTransform(event.receiver);
           }
-          this._callbacks.track(event);
+          this.callbacks.track(event);
           if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
           // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
           event.stream = stream;
           this.remoteConnectionIds.push(stream.id);
-          this._callbacks.addstream(event);
+          this.callbacks.addstream(event);
         };
       }
     }
-    if (this._pc) {
+    if (this.pc) {
       // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-      this._pc.onremovestream = (event): void => {
+      this.pc.onremovestream = (event): void => {
         const index = this.remoteConnectionIds.indexOf(event.stream.id);
         if (-1 < index) {
           delete this.remoteConnectionIds[index];
         }
-        this._callbacks.removestream(event);
+        this.callbacks.removestream(event);
       };
     }
     await this._setRemoteDescription(signalingMessage);
     stream.getTracks().forEach((track) => {
-      if (this._pc) {
-        this._pc.addTrack(track, stream);
+      if (this.pc) {
+        this.pc.addTrack(track, stream);
       }
     });
     this.stream = stream;
     await this._createAnswer(signalingMessage);
     this._sendAnswer();
-    if (this._pc && this.e2ee) {
-      this._pc.getSenders().forEach((sender) => {
+    if (this.pc && this.e2ee) {
+      this.pc.getSenders().forEach((sender) => {
         if (this.e2ee) {
           this.e2ee.setupSenderTransform(sender);
         }
