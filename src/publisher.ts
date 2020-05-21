@@ -64,40 +64,33 @@ export default class ConnectionPublisher extends ConnectionBase {
     const signalingMessage = await this.signaling(offer);
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      if (typeof this.pc.ontrack === "undefined") {
-        // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-        this.pc.onaddstream = (event): void => {
-          if (this.connectionId !== event.stream.id) {
-            this.remoteConnectionIds.push(stream.id);
-            this.callbacks.addstream(event);
-          }
-        };
-      } else {
-        this.pc.ontrack = (event): void => {
-          const stream = event.streams[0];
-          if (!stream) return;
-          if (stream.id === "default") return;
-          if (stream.id === this.connectionId) return;
-          if (this.e2ee) {
-            this.e2ee.setupReceiverTransform(event.receiver);
-          }
-          this.callbacks.track(event);
-          if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
-          // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-          event.stream = stream;
-          this.remoteConnectionIds.push(stream.id);
-          this.callbacks.addstream(event);
-        };
-      }
-    }
-    if (this.pc) {
-      // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-      this.pc.onremovestream = (event): void => {
-        const index = this.remoteConnectionIds.indexOf(event.stream.id);
-        if (-1 < index) {
-          delete this.remoteConnectionIds[index];
+      this.pc.ontrack = (event): void => {
+        const stream = event.streams[0];
+        if (!stream) return;
+        if (stream.id === "default") return;
+        if (stream.id === this.connectionId) return;
+        if (this.e2ee) {
+          this.e2ee.setupReceiverTransform(event.receiver);
         }
-        this.callbacks.removestream(event);
+        this.callbacks.track(event);
+        stream.onremovetrack = (event): void => {
+          this.callbacks.removetrack(event);
+          if (event.target) {
+            // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
+            const index = this.remoteConnectionIds.indexOf(event.target.id);
+            if (-1 < index) {
+              delete this.remoteConnectionIds[index];
+              // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
+              event.stream = event.target;
+              this.callbacks.removestream(event);
+            }
+          }
+        };
+        if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
+        // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
+        event.stream = stream;
+        this.remoteConnectionIds.push(stream.id);
+        this.callbacks.addstream(event);
       };
     }
     await this.setRemoteDescription(signalingMessage);

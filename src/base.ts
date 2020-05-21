@@ -60,6 +60,7 @@ export default class ConnectionBase {
       addstream: (): void => {},
       track: (): void => {},
       removestream: (): void => {},
+      removetrack: (): void => {},
       notify: (): void => {},
       log: (): void => {},
       timeout: (): void => {},
