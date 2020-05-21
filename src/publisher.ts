@@ -3,13 +3,13 @@ import ConnectionBase from "./base";
 export default class ConnectionPublisher extends ConnectionBase {
   connect(stream: MediaStream): Promise<MediaStream> {
     if (this.options.multistream) {
-      return this._multiStream(stream);
+      return this.multiStream(stream);
     } else {
-      return this._singleStream(stream);
+      return this.singleStream(stream);
     }
   }
 
-  async _singleStream(stream: MediaStream): Promise<MediaStream> {
+  private async singleStream(stream: MediaStream): Promise<MediaStream> {
     let timeoutTimerId = 0;
     if (this.options.timeout && 0 < this.options.timeout) {
       timeoutTimerId = setTimeout(() => {
@@ -21,19 +21,19 @@ export default class ConnectionPublisher extends ConnectionBase {
       }, this.options.timeout);
     }
     await this.disconnect();
-    this._startE2EE();
-    const offer = await this._createOffer();
-    const signalingMessage = await this._signaling(offer);
-    await this._connectPeerConnection(signalingMessage);
-    await this._setRemoteDescription(signalingMessage);
+    this.startE2EE();
+    const offer = await this.createOffer();
+    const signalingMessage = await this.signaling(offer);
+    await this.connectPeerConnection(signalingMessage);
+    await this.setRemoteDescription(signalingMessage);
     stream.getTracks().forEach((track) => {
       if (this.pc) {
         this.pc.addTrack(track, stream);
       }
     });
     this.stream = stream;
-    await this._createAnswer(signalingMessage);
-    this._sendAnswer();
+    await this.createAnswer(signalingMessage);
+    this.sendAnswer();
     if (this.pc && this.e2ee) {
       this.pc.getSenders().forEach((sender) => {
         if (this.e2ee) {
@@ -41,12 +41,12 @@ export default class ConnectionPublisher extends ConnectionBase {
         }
       });
     }
-    await this._onIceCandidate();
+    await this.onIceCandidate();
     clearTimeout(timeoutTimerId);
     return stream;
   }
 
-  async _multiStream(stream: MediaStream): Promise<MediaStream> {
+  private async multiStream(stream: MediaStream): Promise<MediaStream> {
     let timeoutTimerId = 0;
     if (this.options.timeout && 0 < this.options.timeout) {
       timeoutTimerId = setTimeout(() => {
@@ -59,10 +59,10 @@ export default class ConnectionPublisher extends ConnectionBase {
     }
 
     await this.disconnect();
-    this._startE2EE();
-    const offer = await this._createOffer();
-    const signalingMessage = await this._signaling(offer);
-    await this._connectPeerConnection(signalingMessage);
+    this.startE2EE();
+    const offer = await this.createOffer();
+    const signalingMessage = await this.signaling(offer);
+    await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       if (typeof this.pc.ontrack === "undefined") {
         // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
@@ -100,15 +100,15 @@ export default class ConnectionPublisher extends ConnectionBase {
         this.callbacks.removestream(event);
       };
     }
-    await this._setRemoteDescription(signalingMessage);
+    await this.setRemoteDescription(signalingMessage);
     stream.getTracks().forEach((track) => {
       if (this.pc) {
         this.pc.addTrack(track, stream);
       }
     });
     this.stream = stream;
-    await this._createAnswer(signalingMessage);
-    this._sendAnswer();
+    await this.createAnswer(signalingMessage);
+    this.sendAnswer();
     if (this.pc && this.e2ee) {
       this.pc.getSenders().forEach((sender) => {
         if (this.e2ee) {
@@ -116,7 +116,7 @@ export default class ConnectionPublisher extends ConnectionBase {
         }
       });
     }
-    await this._onIceCandidate();
+    await this.onIceCandidate();
     clearTimeout(timeoutTimerId);
     return stream;
   }

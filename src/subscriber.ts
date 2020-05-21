@@ -3,12 +3,13 @@ import ConnectionBase from "./base";
 export default class ConnectionSubscriber extends ConnectionBase {
   connect(): Promise<MediaStream | void> {
     if (this.options.multistream) {
-      return this._multiStream();
+      return this.multiStream();
     } else {
-      return this._singleStream();
+      return this.singleStream();
     }
   }
-  async _singleStream(): Promise<MediaStream> {
+
+  private async singleStream(): Promise<MediaStream> {
     let timeoutTimerId = 0;
     if (this.options.timeout && 0 < this.options.timeout) {
       timeoutTimerId = setTimeout(() => {
@@ -21,10 +22,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
     }
 
     await this.disconnect();
-    this._startE2EE();
-    const offer = await this._createOffer();
-    const signalingMessage = await this._signaling(offer);
-    await this._connectPeerConnection(signalingMessage);
+    this.startE2EE();
+    const offer = await this.createOffer();
+    const signalingMessage = await this.signaling(offer);
+    await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
         this.stream = event.streams[0];
@@ -41,15 +42,15 @@ export default class ConnectionSubscriber extends ConnectionBase {
         this.callbacks.addstream(event);
       };
     }
-    await this._setRemoteDescription(signalingMessage);
-    await this._createAnswer(signalingMessage);
-    this._sendAnswer();
-    await this._onIceCandidate();
+    await this.setRemoteDescription(signalingMessage);
+    await this.createAnswer(signalingMessage);
+    this.sendAnswer();
+    await this.onIceCandidate();
     clearTimeout(timeoutTimerId);
     return this.stream || new MediaStream();
   }
 
-  async _multiStream(): Promise<void> {
+  private async multiStream(): Promise<void> {
     let timeoutTimerId = 0;
     if (this.options.timeout && 0 < this.options.timeout) {
       timeoutTimerId = setTimeout(() => {
@@ -62,10 +63,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
     }
 
     await this.disconnect();
-    this._startE2EE();
-    const offer = await this._createOffer();
-    const signalingMessage = await this._signaling(offer);
-    await this._connectPeerConnection(signalingMessage);
+    this.startE2EE();
+    const offer = await this.createOffer();
+    const signalingMessage = await this.signaling(offer);
+    await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
         const stream = event.streams[0];
@@ -90,10 +91,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
         this.callbacks.removestream(event);
       };
     }
-    await this._setRemoteDescription(signalingMessage);
-    await this._createAnswer(signalingMessage);
-    this._sendAnswer();
-    await this._onIceCandidate();
+    await this.setRemoteDescription(signalingMessage);
+    await this.createAnswer(signalingMessage);
+    this.sendAnswer();
+    await this.onIceCandidate();
     clearTimeout(timeoutTimerId);
     return;
   }

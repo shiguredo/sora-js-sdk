@@ -147,7 +147,7 @@ export default class ConnectionBase {
     return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
   }
 
-  _startE2EE(): void {
+  protected startE2EE(): void {
     if ("e2ee" in this.options && typeof this.options.e2ee === "string") {
       this.e2ee = new SoraE2EE(this.options.e2ee);
       this.e2ee.onWorkerDisconnect = (): void => {
@@ -157,8 +157,8 @@ export default class ConnectionBase {
     }
   }
 
-  _signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage> {
-    this._trace("CREATE OFFER SDP", offer);
+  protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage> {
+    this.trace("CREATE OFFER SDP", offer);
     return new Promise((resolve, reject) => {
       const signalingMessage = createSignalingMessage(
         offer.sdp || "",
@@ -174,7 +174,7 @@ export default class ConnectionBase {
         reject(e);
       };
       this.ws.onopen = (): void => {
-        this._trace("SIGNALING CONNECT MESSAGE", signalingMessage);
+        this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
         if (this.ws) {
           this.ws.send(JSON.stringify(signalingMessage));
         }
@@ -195,15 +195,15 @@ export default class ConnectionBase {
           if ("metadata" in data) {
             this.authMetadata = data.metadata;
           }
-          this._trace("SIGNALING OFFER MESSAGE", data);
-          this._trace("OFFER SDP", data.sdp);
+          this.trace("SIGNALING OFFER MESSAGE", data);
+          this.trace("OFFER SDP", data.sdp);
           resolve(data);
         } else if (data.type == "update") {
-          this._trace("UPDATE SDP", data.sdp);
-          this._update(data);
+          this.trace("UPDATE SDP", data.sdp);
+          this.update(data);
         } else if (data.type == "ping") {
           if (data.stats) {
-            this._getStats().then((stats) => {
+            this.getStats().then((stats) => {
               if (this.ws) {
                 this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
               }
@@ -222,7 +222,7 @@ export default class ConnectionBase {
     });
   }
 
-  async _createOffer(): Promise<RTCSessionDescriptionInit> {
+  protected async createOffer(): Promise<RTCSessionDescriptionInit> {
     const config = { iceServers: [] };
     const pc = new window.RTCPeerConnection(config);
     if (isSafari()) {
@@ -237,7 +237,7 @@ export default class ConnectionBase {
     return offer;
   }
 
-  async _connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
+  protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     const messageConfig = message.config || {};
     let config = messageConfig;
     if (this.e2ee) {
@@ -250,17 +250,17 @@ export default class ConnectionBase {
       const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
       config = Object.assign({ certificates: [certificate] }, messageConfig);
     }
-    this._trace("PEER CONNECTION CONFIG", config);
+    this.trace("PEER CONNECTION CONFIG", config);
     this.pc = new window.RTCPeerConnection(config, this.constraints);
     this.pc.oniceconnectionstatechange = (_): void => {
       if (this.pc) {
-        this._trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
+        this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
       }
     };
     return;
   }
 
-  async _setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void> {
+  protected async setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void> {
     if (!this.pc) {
       return;
     }
@@ -268,7 +268,7 @@ export default class ConnectionBase {
     return;
   }
 
-  async _createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void> {
+  protected async createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void> {
     if (!this.pc) {
       return;
     }
@@ -286,37 +286,30 @@ export default class ConnectionBase {
       if (!transceiver) {
         throw new Error("Simulcast Error");
       }
-      await this._setSenderParameters(transceiver, message.encodings);
+      await this.setSenderParameters(transceiver, message.encodings);
     }
     const sessionDescription = await this.pc.createAnswer();
     await this.pc.setLocalDescription(sessionDescription);
     return;
   }
 
-  _setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void> {
-    const originalParameters = transceiver.sender.getParameters();
-    // @ts-ignore
-    originalParameters.encodings = encodings;
-    return transceiver.sender.setParameters(originalParameters);
-  }
-
-  _sendAnswer(): void {
+  protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
-      this._trace("ANSWER SDP", this.pc.localDescription.sdp);
+      this.trace("ANSWER SDP", this.pc.localDescription.sdp);
       this.ws.send(JSON.stringify({ type: "answer", sdp: this.pc.localDescription.sdp }));
     }
     return;
   }
 
-  _sendUpdateAnswer(): void {
+  protected sendUpdateAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
-      this._trace("ANSWER SDP", this.pc.localDescription.sdp);
+      this.trace("ANSWER SDP", this.pc.localDescription.sdp);
       this.ws.send(JSON.stringify({ type: "update", sdp: this.pc.localDescription.sdp }));
     }
     return;
   }
 
-  _onIceCandidate(): Promise<void> {
+  protected onIceCandidate(): Promise<void> {
     return new Promise((resolve, reject) => {
       const timerId = setInterval(() => {
         if (this.pc === null) {
@@ -332,7 +325,7 @@ export default class ConnectionBase {
       if (this.pc) {
         this.pc.onicecandidate = (event): void => {
           if (this.pc) {
-            this._trace("ONICECANDIDATE ICEGATHERINGSTATE", this.pc.iceGatheringState);
+            this.trace("ONICECANDIDATE ICEGATHERINGSTATE", this.pc.iceGatheringState);
           }
           if (event.candidate === null) {
             clearInterval(timerId);
@@ -340,7 +333,7 @@ export default class ConnectionBase {
           } else {
             const candidate = event.candidate.toJSON();
             const message = Object.assign(candidate, { type: "candidate" });
-            this._trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
+            this.trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
             if (this.ws) {
               this.ws.send(JSON.stringify(message));
             }
@@ -349,14 +342,29 @@ export default class ConnectionBase {
       }
     });
   }
-
-  async _update(message: SignalingUpdateMessage): Promise<void> {
-    await this._setRemoteDescription(message);
-    await this._createAnswer(message);
-    this._sendUpdateAnswer();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected trace(title: string, message: any): void {
+    this.callbacks.log(title, message);
+    if (!this.debug) {
+      return;
+    }
+    trace(this.clientId, title, message);
   }
 
-  async _getStats(): Promise<RTCStatsReport[]> {
+  private async update(message: SignalingUpdateMessage): Promise<void> {
+    await this.setRemoteDescription(message);
+    await this.createAnswer(message);
+    this.sendUpdateAnswer();
+  }
+
+  private setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void> {
+    const originalParameters = transceiver.sender.getParameters();
+    // @ts-ignore
+    originalParameters.encodings = encodings;
+    return transceiver.sender.setParameters(originalParameters);
+  }
+
+  private async getStats(): Promise<RTCStatsReport[]> {
     const stats: RTCStatsReport[] = [];
     if (!this.pc) {
       return stats;
@@ -366,14 +374,5 @@ export default class ConnectionBase {
       stats.push(s);
     });
     return stats;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _trace(title: string, message: any): void {
-    this.callbacks.log(title, message);
-    if (!this.debug) {
-      return;
-    }
-    trace(this.clientId, title, message);
   }
 }
