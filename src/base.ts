@@ -86,6 +86,9 @@ export default class ConnectionBase {
     this.authMetadata = null;
     this.remoteConnectionIds = [];
     const closeStream: Promise<void> = new Promise((resolve, _) => {
+      if (this.debug) {
+        console.warn("@deprecated Close MediaStream in disconnect will be removed in a future version.");
+      }
       if (!this.stream) return resolve();
       this.stream.getTracks().forEach((t) => {
         t.stop();
