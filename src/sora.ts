@@ -18,6 +18,7 @@ class SoraConnection {
     metadata: string | null = null,
     options: ConnectionOptions = { audio: true, video: true }
   ): ConnectionPublisher {
+    console.warn("@deprecated publisher will be removed in a future version. Use sendrecv or sendonly.");
     return new ConnectionPublisher(this.signalingUrl, "upstream", channelId, metadata, options, this.debug);
   }
 
@@ -27,6 +28,7 @@ class SoraConnection {
     metadata: string | null = null,
     options: ConnectionOptions = { audio: true, video: true }
   ): ConnectionSubscriber {
+    console.warn("@deprecated subscriber will be removed in a future version. Use recvonly.");
     return new ConnectionSubscriber(this.signalingUrl, "downstream", channelId, metadata, options, this.debug);
   }
 

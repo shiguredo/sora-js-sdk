@@ -69,6 +69,12 @@ export default class ConnectionBase {
   }
 
   on(kind: keyof Callbacks, callback: Function): void {
+    // @deprecated message
+    if (kind === "addstream") {
+      console.warn("@deprecated addstream callback will be removed in a future version. Use track callback.");
+    } else if (kind === "removestream") {
+      console.warn("@deprecated removestream callback will be removed in a future version. Use removetrack callback.");
+    }
     if (kind in this.callbacks) {
       this.callbacks[kind] = callback;
     }
