@@ -6,20 +6,21 @@
     <body>
         <div class="container">
             <h1>Spotlight Sendrecv test</h1>
-            <br />
-            <div style="float:left;">
-                <h2>sendrecv1</h2>
-                <button id="start-publisher1">start</button>
-                <button id="stop-publisher1">stop</button><br />
-                <video id="publisher1-local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
-                <div id="publisher1-remote-videos"></div>
-            </div>
-            <div id="publisher2" style="float:left;">
-                <h2>sendrecv2</h2>
-                <button id="start-publisher2">start</button>
-                <button id="stop-publisher2">stop</button><br />
-                <video id="publisher2-local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
-                <div id="publisher2-remote-videos"></div>
+            <div style="display: flex;">
+                <div>
+                    <h2>sendrecv1</h2>
+                    <button id="start-sendrecv1">start</button>
+                    <button id="stop-sendrecv1">stop</button><br />
+                    <video id="sendrecv1-local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                    <div id="sendrecv1-remote-videos"></div>
+                </div>
+                <div>
+                    <h2>sendrecv2</h2>
+                    <button id="start-sendrecv2">start</button>
+                    <button id="stop-sendrecv2">stop</button><br />
+                    <video id="sendrecv2-local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                    <div id="sendrecv2-remote-videos"></div>
+                </div>
             </div>
         </div>
 
@@ -32,77 +33,91 @@ const options = {
   multistream: true,
   spotlight: 2
 }
-const publisher1 = sora.publisher(channelId, null, options);
-const publisher2 = sora.publisher(channelId, null, options);
+const sendrecv1 = sora.sendrecv(channelId, null, options);
+const sendrecv2 = sora.sendrecv(channelId, null, options);
 
-document.querySelector('#start-publisher1').addEventListener('click', function() {
-  // publisher1
+document.querySelector('#start-sendrecv1').addEventListener('click', function() {
+  // sendrecv1
   navigator.mediaDevices.getUserMedia({audio: true, video: true})
     .then(mediaStream => {
-      publisher1.connect(mediaStream)
+      sendrecv1.connect(mediaStream)
         .then(stream => {
-          document.querySelector('#publisher1-local-video').srcObject = stream;
+          document.querySelector('#sendrecv1-local-video').srcObject = stream;
         });
     })
     .catch(e => {
       console.error(e);
     });
-  publisher1.on('addstream', function(event) {
-    const remoteVideos = document.querySelector('#publisher1-remote-videos');
-    const remoteVideo = document.createElement('video');
-    remoteVideo.id = 'publisher1-remotevideo-' + event.stream.id;
-    remoteVideo.style.border = '1px solid red';
-    remoteVideo.autoplay = true;
-    remoteVideo.width = '160';
-    remoteVideo.height = '120';
-    remoteVideo.srcObject = event.stream;
-    remoteVideos.appendChild(remoteVideo);
+  sendrecv1.on('track', function(event) {
+    const stream = event.streams[0];
+    if (!stream) return;
+    const remoteVideoId = 'sendrecv1-remotevideo-' + stream.id;
+    const remoteVideos = document.querySelector('#sendrecv1-remote-videos');
+    if (!remoteVideos.querySelector('#' + remoteVideoId)) {
+      const remoteVideo = document.createElement('video');
+      remoteVideo.id = remoteVideoId;
+      remoteVideo.style.border = '1px solid red';
+      remoteVideo.autoplay = true;
+      remoteVideo.width = '160';
+      remoteVideo.height = '120';
+      remoteVideo.srcObject = stream;
+      remoteVideos.appendChild(remoteVideo);
+    }
   });
-  publisher1.on('removestream', function(event) {
-    const remoteVideo = document.querySelector('#publisher1-remotevideo-' + event.stream.id);
-    document.querySelector('#publisher1-remote-videos').removeChild(remoteVideo);
+  sendrecv1.on('removetrack', function(event) {
+    const remoteVideo = document.querySelector('#sendrecv1-remotevideo-' + event.target.id);
+    if (remoteVideo) {
+      document.querySelector('#sendrecv1-remote-videos').removeChild(remoteVideo);
+    }
   });
 });
-document.querySelector('#start-publisher2').addEventListener('click', function() {
-  // publisher2
+document.querySelector('#start-sendrecv2').addEventListener('click', function() {
+  // sendrecv2
   navigator.mediaDevices.getUserMedia({audio: true, video: true})
     .then(mediaStream => {
-      publisher2.connect(mediaStream)
+      sendrecv2.connect(mediaStream)
         .then(stream => {
-          document.querySelector('#publisher2-local-video').srcObject = stream;
+          document.querySelector('#sendrecv2-local-video').srcObject = stream;
         });
     })
     .catch(e => {
       console.error(e);
     });
-  publisher2.on('addstream', function(event) {
-    const remoteVideos = document.querySelector('#publisher2-remote-videos');
-    const remoteVideo = document.createElement('video');
-    remoteVideo.id = 'publisher2-remotevideo-' + event.stream.id;
-    remoteVideo.style.border = '1px solid red';
-    remoteVideo.autoplay = true;
-    remoteVideo.width = '160';
-    remoteVideo.height = '120';
-    remoteVideo.srcObject = event.stream;
-    remoteVideos.appendChild(remoteVideo);
+  sendrecv2.on('track', function(event) {
+    const stream = event.streams[0];
+    if (!stream) return;
+    const remoteVideoId = 'sendrecv2-remotevideo-' + stream.id;
+    const remoteVideos = document.querySelector('#sendrecv2-remote-videos');
+    if (!remoteVideos.querySelector('#' + remoteVideoId)) {
+      const remoteVideo = document.createElement('video');
+      remoteVideo.id = remoteVideoId;
+      remoteVideo.style.border = '1px solid red';
+      remoteVideo.autoplay = true;
+      remoteVideo.width = '160';
+      remoteVideo.height = '120';
+      remoteVideo.srcObject = stream;
+      remoteVideos.appendChild(remoteVideo);
+    }
   });
-  publisher2.on('removestream', function(event) {
-    const remoteVideo = document.querySelector('#publisher2-remotevideo-' + event.stream.id);
-    document.querySelector('#publisher2-remote-videos').removeChild(remoteVideo);
+  sendrecv2.on('removetrack', function(event) {
+    const remoteVideo = document.querySelector('#sendrecv2-remotevideo-' + event.target.id);
+    if (remoteVideo) {
+      document.querySelector('#sendrecv2-remote-videos').removeChild(remoteVideo);
+    }
   });
 });
-document.querySelector('#stop-publisher1').addEventListener('click', function() {
-  publisher1.disconnect()
+document.querySelector('#stop-sendrecv1').addEventListener('click', function() {
+  sendrecv1.disconnect()
     .then(function() {
-      document.querySelector('#publisher1-local-video').srcObject = null;
-      document.querySelector('#publisher1-remote-videos').innerHTML = null;
+      document.querySelector('#sendrecv1-local-video').srcObject = null;
+      document.querySelector('#sendrecv1-remote-videos').innerHTML = null;
     });
 });
-document.querySelector('#stop-publisher2').addEventListener('click', function() {
-  publisher2.disconnect()
+document.querySelector('#stop-sendrecv2').addEventListener('click', function() {
+  sendrecv2.disconnect()
     .then(function() {
-      document.querySelector('#publisher2-local-video').srcObject = null;
-      document.querySelector('#publisher2-remote-videos').innerHTML = null;
+      document.querySelector('#sendrecv2-local-video').srcObject = null;
+      document.querySelector('#sendrecv2-remote-videos').innerHTML = null;
     });
 });
     </script>

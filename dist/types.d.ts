@@ -95,6 +95,7 @@ export declare type Callbacks = {
     addstream: Function;
     track: Function;
     removestream: Function;
+    removetrack: Function;
     notify: Function;
     log: Function;
     timeout: Function;

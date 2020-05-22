@@ -291,14 +291,15 @@
           this.connectionId = null;
           this.remoteConnectionIds = [];
           this.stream = null;
-          this._ws = null;
-          this._pc = null;
-          this._callbacks = {
+          this.ws = null;
+          this.pc = null;
+          this.callbacks = {
               disconnect: () => { },
               push: () => { },
               addstream: () => { },
               track: () => { },
               removestream: () => { },
+              removetrack: () => { },
               notify: () => { },
               log: () => { },
               timeout: () => { },
@@ -307,8 +308,15 @@
           this.e2ee = null;
       }
       on(kind, callback) {
-          if (kind in this._callbacks) {
-              this._callbacks[kind] = callback;
+          // @deprecated message
+          if (kind === "addstream") {
+              console.warn("@deprecated addstream callback will be removed in a future version. Use track callback.");
+          }
+          else if (kind === "removestream") {
+              console.warn("@deprecated removestream callback will be removed in a future version. Use removetrack callback.");
+          }
+          if (kind in this.callbacks) {
+              this.callbacks[kind] = callback;
           }
       }
       disconnect() {
@@ -317,6 +325,9 @@
           this.authMetadata = null;
           this.remoteConnectionIds = [];
           const closeStream = new Promise((resolve, _) => {
+              if (this.debug) {
+                  console.warn("@deprecated closing MediaStream in disconnect will be removed in a future version. Close every track in the MediaStream by yourself.");
+              }
               if (!this.stream)
                   return resolve();
               this.stream.getTracks().forEach((t) => {
@@ -326,17 +337,17 @@
               return resolve();
           });
           const closeWebSocket = new Promise((resolve, reject) => {
-              if (!this._ws)
+              if (!this.ws)
                   return resolve();
-              this._ws.onclose = null;
+              this.ws.onclose = null;
               let counter = 5;
               const timerId = setInterval(() => {
-                  if (!this._ws) {
+                  if (!this.ws) {
                       clearInterval(timerId);
                       return reject("WebSocket Closing Error");
                   }
-                  if (this._ws.readyState === 3) {
-                      this._ws = null;
+                  if (this.ws.readyState === 3) {
+                      this.ws = null;
                       clearInterval(timerId);
                       return resolve();
                   }
@@ -346,28 +357,28 @@
                       return reject("WebSocket Closing Error");
                   }
               }, 1000);
-              this._ws.close();
+              this.ws.close();
           });
           const closePeerConnection = new Promise((resolve, reject) => {
               // Safari は signalingState が常に stable のため個別に処理する
-              if (isSafari() && this._pc) {
-                  this._pc.oniceconnectionstatechange = null;
-                  this._pc.close();
-                  this._pc = null;
+              if (isSafari() && this.pc) {
+                  this.pc.oniceconnectionstatechange = null;
+                  this.pc.close();
+                  this.pc = null;
                   return resolve();
               }
-              if (!this._pc || this._pc.signalingState === "closed")
+              if (!this.pc || this.pc.signalingState === "closed")
                   return resolve();
               let counter = 5;
               const timerId = setInterval(() => {
-                  if (!this._pc) {
+                  if (!this.pc) {
                       clearInterval(timerId);
                       return reject("PeerConnection Closing Error");
                   }
-                  if (this._pc.signalingState === "closed") {
+                  if (this.pc.signalingState === "closed") {
                       clearInterval(timerId);
-                      this._pc.oniceconnectionstatechange = null;
-                      this._pc = null;
+                      this.pc.oniceconnectionstatechange = null;
+                      this.pc = null;
                       return resolve();
                   }
                   --counter;
@@ -376,7 +387,7 @@
                       return reject("PeerConnection Closing Error");
                   }
               }, 1000);
-              this._pc.close();
+              this.pc.close();
           });
           if (this.e2ee) {
               this.e2ee.terminateWorker();
@@ -384,7 +395,7 @@
           }
           return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
       }
-      _startE2EE() {
+      startE2EE() {
           if ("e2ee" in this.options && typeof this.options.e2ee === "string") {
               this.e2ee = new sora_e2ee_min(this.options.e2ee);
               this.e2ee.onWorkerDisconnect = () => {
@@ -393,70 +404,70 @@
               this.e2ee.startWorker();
           }
       }
-      _signaling(offer) {
-          this._trace("CREATE OFFER SDP", offer);
+      signaling(offer) {
+          this.trace("CREATE OFFER SDP", offer);
           return new Promise((resolve, reject) => {
               const signalingMessage = createSignalingMessage(offer.sdp || "", this.role, this.channelId, this.metadata, this.options);
-              if (this._ws === null) {
-                  this._ws = new WebSocket(this.signalingUrl);
+              if (this.ws === null) {
+                  this.ws = new WebSocket(this.signalingUrl);
               }
-              this._ws.onclose = (e) => {
+              this.ws.onclose = (e) => {
                   reject(e);
               };
-              this._ws.onopen = () => {
-                  this._trace("SIGNALING CONNECT MESSAGE", signalingMessage);
-                  if (this._ws) {
-                      this._ws.send(JSON.stringify(signalingMessage));
+              this.ws.onopen = () => {
+                  this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
+                  if (this.ws) {
+                      this.ws.send(JSON.stringify(signalingMessage));
                   }
               };
-              this._ws.onmessage = (event) => {
+              this.ws.onmessage = (event) => {
                   const data = JSON.parse(event.data);
                   if (data.type == "offer") {
                       this.clientId = data.client_id;
                       this.connectionId = data.connection_id;
-                      if (this._ws) {
-                          this._ws.onclose = (e) => {
+                      if (this.ws) {
+                          this.ws.onclose = (e) => {
                               this.disconnect().then(() => {
-                                  this._callbacks.disconnect(e);
+                                  this.callbacks.disconnect(e);
                               });
                           };
-                          this._ws.onerror = null;
+                          this.ws.onerror = null;
                       }
                       if ("metadata" in data) {
                           this.authMetadata = data.metadata;
                       }
-                      this._trace("SIGNALING OFFER MESSAGE", data);
-                      this._trace("OFFER SDP", data.sdp);
+                      this.trace("SIGNALING OFFER MESSAGE", data);
+                      this.trace("OFFER SDP", data.sdp);
                       resolve(data);
                   }
                   else if (data.type == "update") {
-                      this._trace("UPDATE SDP", data.sdp);
-                      this._update(data);
+                      this.trace("UPDATE SDP", data.sdp);
+                      this.update(data);
                   }
                   else if (data.type == "ping") {
                       if (data.stats) {
-                          this._getStats().then((stats) => {
-                              if (this._ws) {
-                                  this._ws.send(JSON.stringify({ type: "pong", stats: stats }));
+                          this.getStats().then((stats) => {
+                              if (this.ws) {
+                                  this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
                               }
                           });
                       }
                       else {
-                          if (this._ws) {
-                              this._ws.send(JSON.stringify({ type: "pong" }));
+                          if (this.ws) {
+                              this.ws.send(JSON.stringify({ type: "pong" }));
                           }
                       }
                   }
                   else if (data.type == "push") {
-                      this._callbacks.push(data);
+                      this.callbacks.push(data);
                   }
                   else if (data.type == "notify") {
-                      this._callbacks.notify(data);
+                      this.callbacks.notify(data);
                   }
               };
           });
       }
-      async _createOffer() {
+      async createOffer() {
           const config = { iceServers: [] };
           const pc = new window.RTCPeerConnection(config);
           if (isSafari()) {
@@ -470,7 +481,7 @@
           pc.close();
           return offer;
       }
-      async _connectPeerConnection(message) {
+      async connectPeerConnection(message) {
           const messageConfig = message.config || {};
           let config = messageConfig;
           if (this.e2ee) {
@@ -483,31 +494,31 @@
               const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
               config = Object.assign({ certificates: [certificate] }, messageConfig);
           }
-          this._trace("PEER CONNECTION CONFIG", config);
-          this._pc = new window.RTCPeerConnection(config, this.constraints);
-          this._pc.oniceconnectionstatechange = (_) => {
-              if (this._pc) {
-                  this._trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this._pc.iceConnectionState);
+          this.trace("PEER CONNECTION CONFIG", config);
+          this.pc = new window.RTCPeerConnection(config, this.constraints);
+          this.pc.oniceconnectionstatechange = (_) => {
+              if (this.pc) {
+                  this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
               }
           };
           return;
       }
-      async _setRemoteDescription(message) {
-          if (!this._pc) {
+      async setRemoteDescription(message) {
+          if (!this.pc) {
               return;
           }
-          await this._pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: message.sdp }));
+          await this.pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: message.sdp }));
           return;
       }
-      async _createAnswer(message) {
-          if (!this._pc) {
+      async createAnswer(message) {
+          if (!this.pc) {
               return;
           }
           // simulcast の場合
           if (this.options.simulcast &&
               (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly") &&
               message.encodings) {
-              const transceiver = this._pc.getTransceivers().find((t) => {
+              const transceiver = this.pc.getTransceivers().find((t) => {
                   if (t.mid && 0 <= t.mid.indexOf("video") && t.currentDirection == null) {
                       return t;
                   }
@@ -515,50 +526,44 @@
               if (!transceiver) {
                   throw new Error("Simulcast Error");
               }
-              await this._setSenderParameters(transceiver, message.encodings);
+              await this.setSenderParameters(transceiver, message.encodings);
           }
-          const sessionDescription = await this._pc.createAnswer();
-          await this._pc.setLocalDescription(sessionDescription);
+          const sessionDescription = await this.pc.createAnswer();
+          await this.pc.setLocalDescription(sessionDescription);
           return;
       }
-      _setSenderParameters(transceiver, encodings) {
-          const originalParameters = transceiver.sender.getParameters();
-          // @ts-ignore
-          originalParameters.encodings = encodings;
-          return transceiver.sender.setParameters(originalParameters);
-      }
-      _sendAnswer() {
-          if (this._pc && this._ws && this._pc.localDescription) {
-              this._trace("ANSWER SDP", this._pc.localDescription.sdp);
-              this._ws.send(JSON.stringify({ type: "answer", sdp: this._pc.localDescription.sdp }));
+      sendAnswer() {
+          if (this.pc && this.ws && this.pc.localDescription) {
+              this.trace("ANSWER SDP", this.pc.localDescription.sdp);
+              this.ws.send(JSON.stringify({ type: "answer", sdp: this.pc.localDescription.sdp }));
           }
           return;
       }
-      _sendUpdateAnswer() {
-          if (this._pc && this._ws && this._pc.localDescription) {
-              this._trace("ANSWER SDP", this._pc.localDescription.sdp);
-              this._ws.send(JSON.stringify({ type: "update", sdp: this._pc.localDescription.sdp }));
+      sendUpdateAnswer() {
+          if (this.pc && this.ws && this.pc.localDescription) {
+              this.trace("ANSWER SDP", this.pc.localDescription.sdp);
+              this.ws.send(JSON.stringify({ type: "update", sdp: this.pc.localDescription.sdp }));
           }
           return;
       }
-      _onIceCandidate() {
+      onIceCandidate() {
           return new Promise((resolve, reject) => {
               const timerId = setInterval(() => {
-                  if (this._pc === null) {
+                  if (this.pc === null) {
                       clearInterval(timerId);
                       const error = new Error();
                       error.message = "ICECANDIDATE TIMEOUT";
                       reject(error);
                   }
-                  else if (this._pc && this._pc.iceConnectionState === "connected") {
+                  else if (this.pc && this.pc.iceConnectionState === "connected") {
                       clearInterval(timerId);
                       resolve();
                   }
               }, 100);
-              if (this._pc) {
-                  this._pc.onicecandidate = (event) => {
-                      if (this._pc) {
-                          this._trace("ONICECANDIDATE ICEGATHERINGSTATE", this._pc.iceGatheringState);
+              if (this.pc) {
+                  this.pc.onicecandidate = (event) => {
+                      if (this.pc) {
+                          this.trace("ONICECANDIDATE ICEGATHERINGSTATE", this.pc.iceGatheringState);
                       }
                       if (event.candidate === null) {
                           clearInterval(timerId);
@@ -567,161 +572,159 @@
                       else {
                           const candidate = event.candidate.toJSON();
                           const message = Object.assign(candidate, { type: "candidate" });
-                          this._trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
-                          if (this._ws) {
-                              this._ws.send(JSON.stringify(message));
+                          this.trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
+                          if (this.ws) {
+                              this.ws.send(JSON.stringify(message));
                           }
                       }
                   };
               }
           });
       }
-      async _update(message) {
-          await this._setRemoteDescription(message);
-          await this._createAnswer(message);
-          this._sendUpdateAnswer();
-      }
-      async _getStats() {
-          const stats = [];
-          if (!this._pc) {
-              return stats;
-          }
-          const reports = await this._pc.getStats();
-          reports.forEach((s) => {
-              stats.push(s);
-          });
-          return stats;
-      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      _trace(title, message) {
-          this._callbacks.log(title, message);
+      trace(title, message) {
+          this.callbacks.log(title, message);
           if (!this.debug) {
               return;
           }
           trace(this.clientId, title, message);
+      }
+      async update(message) {
+          await this.setRemoteDescription(message);
+          await this.createAnswer(message);
+          this.sendUpdateAnswer();
+      }
+      setSenderParameters(transceiver, encodings) {
+          const originalParameters = transceiver.sender.getParameters();
+          // @ts-ignore
+          originalParameters.encodings = encodings;
+          return transceiver.sender.setParameters(originalParameters);
+      }
+      async getStats() {
+          const stats = [];
+          if (!this.pc) {
+              return stats;
+          }
+          const reports = await this.pc.getStats();
+          reports.forEach((s) => {
+              stats.push(s);
+          });
+          return stats;
       }
   }
 
   class ConnectionPublisher extends ConnectionBase {
       connect(stream) {
           if (this.options.multistream) {
-              return this._multiStream(stream);
+              return this.multiStream(stream);
           }
           else {
-              return this._singleStream(stream);
+              return this.singleStream(stream);
           }
       }
-      async _singleStream(stream) {
+      async singleStream(stream) {
           let timeoutTimerId = 0;
           if (this.options.timeout && 0 < this.options.timeout) {
               timeoutTimerId = setTimeout(() => {
                   const error = new Error();
                   error.message = "CONNECTION TIMEOUT";
-                  this._callbacks.timeout();
+                  this.callbacks.timeout();
                   this.disconnect();
                   Promise.reject(error);
               }, this.options.timeout);
           }
           await this.disconnect();
-          this._startE2EE();
-          const offer = await this._createOffer();
-          const signalingMessage = await this._signaling(offer);
-          await this._connectPeerConnection(signalingMessage);
-          await this._setRemoteDescription(signalingMessage);
+          this.startE2EE();
+          const offer = await this.createOffer();
+          const signalingMessage = await this.signaling(offer);
+          await this.connectPeerConnection(signalingMessage);
+          await this.setRemoteDescription(signalingMessage);
           stream.getTracks().forEach((track) => {
-              if (this._pc) {
-                  this._pc.addTrack(track, stream);
+              if (this.pc) {
+                  this.pc.addTrack(track, stream);
               }
           });
           this.stream = stream;
-          await this._createAnswer(signalingMessage);
-          this._sendAnswer();
-          if (this._pc && this.e2ee) {
-              this._pc.getSenders().forEach((sender) => {
+          await this.createAnswer(signalingMessage);
+          this.sendAnswer();
+          if (this.pc && this.e2ee) {
+              this.pc.getSenders().forEach((sender) => {
                   if (this.e2ee) {
                       this.e2ee.setupSenderTransform(sender);
                   }
               });
           }
-          await this._onIceCandidate();
+          await this.onIceCandidate();
           clearTimeout(timeoutTimerId);
           return stream;
       }
-      async _multiStream(stream) {
+      async multiStream(stream) {
           let timeoutTimerId = 0;
           if (this.options.timeout && 0 < this.options.timeout) {
               timeoutTimerId = setTimeout(() => {
                   const error = new Error();
                   error.message = "CONNECTION TIMEOUT";
-                  this._callbacks.timeout();
+                  this.callbacks.timeout();
                   this.disconnect();
                   Promise.reject(error);
               }, this.options.timeout);
           }
           await this.disconnect();
-          this._startE2EE();
-          const offer = await this._createOffer();
-          const signalingMessage = await this._signaling(offer);
-          await this._connectPeerConnection(signalingMessage);
-          if (this._pc) {
-              if (typeof this._pc.ontrack === "undefined") {
-                  // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-                  this._pc.onaddstream = (event) => {
-                      if (this.connectionId !== event.stream.id) {
-                          this.remoteConnectionIds.push(stream.id);
-                          this._callbacks.addstream(event);
-                      }
-                  };
-              }
-              else {
-                  this._pc.ontrack = (event) => {
-                      const stream = event.streams[0];
-                      if (!stream)
-                          return;
-                      if (stream.id === "default")
-                          return;
-                      if (stream.id === this.connectionId)
-                          return;
-                      if (this.e2ee) {
-                          this.e2ee.setupReceiverTransform(event.receiver);
-                      }
-                      this._callbacks.track(event);
-                      if (-1 < this.remoteConnectionIds.indexOf(stream.id))
-                          return;
-                      // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-                      event.stream = stream;
-                      this.remoteConnectionIds.push(stream.id);
-                      this._callbacks.addstream(event);
-                  };
-              }
-          }
-          if (this._pc) {
-              // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-              this._pc.onremovestream = (event) => {
-                  const index = this.remoteConnectionIds.indexOf(event.stream.id);
-                  if (-1 < index) {
-                      delete this.remoteConnectionIds[index];
+          this.startE2EE();
+          const offer = await this.createOffer();
+          const signalingMessage = await this.signaling(offer);
+          await this.connectPeerConnection(signalingMessage);
+          if (this.pc) {
+              this.pc.ontrack = (event) => {
+                  const stream = event.streams[0];
+                  if (!stream)
+                      return;
+                  if (stream.id === "default")
+                      return;
+                  if (stream.id === this.connectionId)
+                      return;
+                  if (this.e2ee) {
+                      this.e2ee.setupReceiverTransform(event.receiver);
                   }
-                  this._callbacks.removestream(event);
+                  this.callbacks.track(event);
+                  stream.onremovetrack = (event) => {
+                      this.callbacks.removetrack(event);
+                      if (event.target) {
+                          // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
+                          const index = this.remoteConnectionIds.indexOf(event.target.id);
+                          if (-1 < index) {
+                              delete this.remoteConnectionIds[index];
+                              // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
+                              event.stream = event.target;
+                              this.callbacks.removestream(event);
+                          }
+                      }
+                  };
+                  if (-1 < this.remoteConnectionIds.indexOf(stream.id))
+                      return;
+                  // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
+                  event.stream = stream;
+                  this.remoteConnectionIds.push(stream.id);
+                  this.callbacks.addstream(event);
               };
           }
-          await this._setRemoteDescription(signalingMessage);
+          await this.setRemoteDescription(signalingMessage);
           stream.getTracks().forEach((track) => {
-              if (this._pc) {
-                  this._pc.addTrack(track, stream);
+              if (this.pc) {
+                  this.pc.addTrack(track, stream);
               }
           });
           this.stream = stream;
-          await this._createAnswer(signalingMessage);
-          this._sendAnswer();
-          if (this._pc && this.e2ee) {
-              this._pc.getSenders().forEach((sender) => {
+          await this.createAnswer(signalingMessage);
+          this.sendAnswer();
+          if (this.pc && this.e2ee) {
+              this.pc.getSenders().forEach((sender) => {
                   if (this.e2ee) {
                       this.e2ee.setupSenderTransform(sender);
                   }
               });
           }
-          await this._onIceCandidate();
+          await this.onIceCandidate();
           clearTimeout(timeoutTimerId);
           return stream;
       }
@@ -730,30 +733,30 @@
   class ConnectionSubscriber extends ConnectionBase {
       connect() {
           if (this.options.multistream) {
-              return this._multiStream();
+              return this.multiStream();
           }
           else {
-              return this._singleStream();
+              return this.singleStream();
           }
       }
-      async _singleStream() {
+      async singleStream() {
           let timeoutTimerId = 0;
           if (this.options.timeout && 0 < this.options.timeout) {
               timeoutTimerId = setTimeout(() => {
                   const error = new Error();
                   error.message = "CONNECTION TIMEOUT";
-                  this._callbacks.timeout();
+                  this.callbacks.timeout();
                   this.disconnect();
                   Promise.reject(error);
               }, this.options.timeout);
           }
           await this.disconnect();
-          this._startE2EE();
-          const offer = await this._createOffer();
-          const signalingMessage = await this._signaling(offer);
-          await this._connectPeerConnection(signalingMessage);
-          if (this._pc) {
-              this._pc.ontrack = (event) => {
+          this.startE2EE();
+          const offer = await this.createOffer();
+          const signalingMessage = await this.signaling(offer);
+          await this.connectPeerConnection(signalingMessage);
+          if (this.pc) {
+              this.pc.ontrack = (event) => {
                   this.stream = event.streams[0];
                   const streamId = this.stream.id;
                   if (streamId === "default")
@@ -761,40 +764,53 @@
                   if (this.e2ee) {
                       this.e2ee.setupReceiverTransform(event.receiver);
                   }
-                  this._callbacks.track(event);
+                  this.callbacks.track(event);
+                  this.stream.onremovetrack = (event) => {
+                      this.callbacks.removetrack(event);
+                      if (event.target) {
+                          // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
+                          const index = this.remoteConnectionIds.indexOf(event.target.id);
+                          if (-1 < index) {
+                              delete this.remoteConnectionIds[index];
+                              // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
+                              event.stream = event.target;
+                              this.callbacks.removestream(event);
+                          }
+                      }
+                  };
                   if (-1 < this.remoteConnectionIds.indexOf(streamId))
                       return;
                   // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
                   event.stream = this.stream;
                   this.remoteConnectionIds.push(streamId);
-                  this._callbacks.addstream(event);
+                  this.callbacks.addstream(event);
               };
           }
-          await this._setRemoteDescription(signalingMessage);
-          await this._createAnswer(signalingMessage);
-          this._sendAnswer();
-          await this._onIceCandidate();
+          await this.setRemoteDescription(signalingMessage);
+          await this.createAnswer(signalingMessage);
+          this.sendAnswer();
+          await this.onIceCandidate();
           clearTimeout(timeoutTimerId);
           return this.stream || new MediaStream();
       }
-      async _multiStream() {
+      async multiStream() {
           let timeoutTimerId = 0;
           if (this.options.timeout && 0 < this.options.timeout) {
               timeoutTimerId = setTimeout(() => {
                   const error = new Error();
                   error.message = "CONNECTION TIMEOUT";
-                  this._callbacks.timeout();
+                  this.callbacks.timeout();
                   this.disconnect();
                   Promise.reject(error);
               }, this.options.timeout);
           }
           await this.disconnect();
-          this._startE2EE();
-          const offer = await this._createOffer();
-          const signalingMessage = await this._signaling(offer);
-          await this._connectPeerConnection(signalingMessage);
-          if (this._pc) {
-              this._pc.ontrack = (event) => {
+          this.startE2EE();
+          const offer = await this.createOffer();
+          const signalingMessage = await this.signaling(offer);
+          await this.connectPeerConnection(signalingMessage);
+          if (this.pc) {
+              this.pc.ontrack = (event) => {
                   const stream = event.streams[0];
                   if (stream.id === "default")
                       return;
@@ -803,27 +819,32 @@
                   if (this.e2ee) {
                       this.e2ee.setupReceiverTransform(event.receiver);
                   }
-                  this._callbacks.track(event);
+                  this.callbacks.track(event);
+                  stream.onremovetrack = (event) => {
+                      this.callbacks.removetrack(event);
+                      if (event.target) {
+                          // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
+                          const index = this.remoteConnectionIds.indexOf(event.target.id);
+                          if (-1 < index) {
+                              delete this.remoteConnectionIds[index];
+                              // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
+                              event.stream = event.target;
+                              this.callbacks.removestream(event);
+                          }
+                      }
+                  };
                   if (-1 < this.remoteConnectionIds.indexOf(stream.id))
                       return;
                   // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
                   event.stream = stream;
                   this.remoteConnectionIds.push(stream.id);
-                  this._callbacks.addstream(event);
-              };
-              // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-              this._pc.onremovestream = (event) => {
-                  const index = this.remoteConnectionIds.indexOf(event.stream.id);
-                  if (-1 < index) {
-                      delete this.remoteConnectionIds[index];
-                  }
-                  this._callbacks.removestream(event);
+                  this.callbacks.addstream(event);
               };
           }
-          await this._setRemoteDescription(signalingMessage);
-          await this._createAnswer(signalingMessage);
-          this._sendAnswer();
-          await this._onIceCandidate();
+          await this.setRemoteDescription(signalingMessage);
+          await this.createAnswer(signalingMessage);
+          this.sendAnswer();
+          await this.onIceCandidate();
           clearTimeout(timeoutTimerId);
           return;
       }
@@ -837,10 +858,12 @@
       // 古い role
       // @deprecated 1 年は残します
       publisher(channelId, metadata = null, options = { audio: true, video: true }) {
+          console.warn("@deprecated publisher will be removed in a future version. Use sendrecv or sendonly.");
           return new ConnectionPublisher(this.signalingUrl, "upstream", channelId, metadata, options, this.debug);
       }
       // @deprecated 1 年は残します
       subscriber(channelId, metadata = null, options = { audio: true, video: true }) {
+          console.warn("@deprecated subscriber will be removed in a future version. Use recvonly.");
           return new ConnectionSubscriber(this.signalingUrl, "downstream", channelId, metadata, options, this.debug);
       }
       // 新しい role
