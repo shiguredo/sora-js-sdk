@@ -17,9 +17,9 @@
     - debug: true 時に disconnect の MediaStream close 処理で warning を出すように変更する
     - @yuitowest
 - [CHANGE] property 名の変更とアクセス制限の追加する
-    - _pc を pc に名前変更する
-    - _ws を ws に名前変更してアクセス制限を protected に変更する
-    - _callbacks を callbacks に名前変更してアクセス制限を protected に変更
+    - `_pc` を `pc` に名前変更する
+    - `_ws` を `ws` に名前変更してアクセス制限を protected に変更する
+    - `_callbacks` を `callbacks` に名前変更してアクセス制限を protected に変更
     - @yuitowest
 - [CHANGE] method 名の変更とアクセス制限の追加する
     - _ がついているメソッド名から _ を削除してアクセス制限を追加する
