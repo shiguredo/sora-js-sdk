@@ -28,7 +28,7 @@
         <script src="./sora.js"></script>
         <script type="text/javascript">
 const channelId = 'Sora';
-const debug = true;
+const debug = false;
 const sora = Sora.connection('ws://localhost:5000/signaling', debug);
 const sendonly = sora.sendonly(channelId);
 const recvonly1 = sora.recvonly(channelId);
