@@ -116,7 +116,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log, timeout) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, track, removetrack, notify, log, timeout) |
   |  callback   | function  |      | コールバック |
 
 example
@@ -189,7 +189,7 @@ publisher.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log, timeout) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, track, removetrack, notify, log, timeout) |
   |  callback   | function  |      | コールバック |
 
 example
@@ -263,7 +263,7 @@ publisher.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log, timeout) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, track, removetrack, notify, log, timeout) |
   |  callback   | function  |      | コールバック |
 
 example
