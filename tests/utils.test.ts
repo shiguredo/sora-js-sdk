@@ -368,16 +368,53 @@ test("createSignalingMessage video option", () => {
 });
 
 test("createSignalingMessage e2ee option", () => {
-  const options = {
+  const options1 = {
     e2ee: "key",
   };
-  const diff = {
+  const diff1 = {
     e2ee: true,
     video: {
       codec_type: "VP8",
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff)
+  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff1)
+  );
+  const options2 = {
+    e2ee: "key",
+    video: false,
+  };
+  const diff2 = {
+    e2ee: true,
+    video: false,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+  const options3 = {
+    e2ee: "key",
+    video: true,
+  };
+  const diff3 = {
+    e2ee: true,
+    video: {
+      codec_type: "VP8",
+    },
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff3)
+  );
+  const options4 = {
+    e2ee: "key",
+    VideoCodecType: "VP9",
+  };
+  const diff4 = {
+    e2ee: true,
+    video: {
+      codec_type: "VP8",
+    },
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff4)
   );
 });
