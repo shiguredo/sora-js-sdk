@@ -240,10 +240,12 @@ export function createSignalingMessage(
 
   // e2ee
   if ("e2ee" in options) {
-    if (typeof message.video === "boolean") {
+    if (message.video === true) {
       message.video = {};
     }
-    message.video["codec_type"] = "VP8";
+    if (message.video) {
+      message.video["codec_type"] = "VP8";
+    }
     message.e2ee = true;
   }
   return message;

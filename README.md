@@ -123,12 +123,12 @@ example
 ```javascript
 var channelId = 'Sora';
 var metadata = 'ham';
-var publisher = sora.sendonly(channelId, metadata);
+var sendrecv = sora.sendonly(channelId, metadata);
 
 navigator.mediaDevices.getUserMedia({audio: true, video: true})
   .then(mediaStream => {
     // connect
-    publisher.connect(mediaStream)
+    sendrecv.connect(mediaStream)
       .then(stream => {
         // stream を video.src に追加する等の処理
       });
@@ -138,13 +138,13 @@ navigator.mediaDevices.getUserMedia({audio: true, video: true})
   });
 
 // disconnect
-publisher.disconnect()
+sendrecv.disconnect()
   .then(() => {
     // video を止める等の処理
   });
 
 // event
-publisher.on('disconnect', function(e) {
+sendrecv.on('disconnect', function(e) {
   console.error(e);
 });
 ```
@@ -153,7 +153,7 @@ publisher.on('disconnect', function(e) {
 
 受信しない配信者として接続する
 
-- sora.sendrecv(channelId, metadata, options={});
+- sora.sendonly(channelId, metadata, options={});
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
@@ -196,12 +196,12 @@ example
 ```javascript
 var channelId = 'Sora';
 var metadata = 'ham';
-var publisher = sora.sendonly(channelId, metadata);
+var sendonly = sora.sendonly(channelId, metadata);
 
 navigator.mediaDevices.getUserMedia({audio: true, video: true})
   .then(mediaStream => {
     // connect
-    publisher.connect(mediaStream)
+    sendonly.connect(mediaStream)
       .then(stream => {
         // stream を video.src に追加する等の処理
       });
@@ -211,13 +211,13 @@ navigator.mediaDevices.getUserMedia({audio: true, video: true})
   });
 
 // disconnect
-publisher.disconnect()
+sendonly.disconnect()
   .then(() => {
     // video を止める等の処理
   });
 
 // event
-publisher.on('disconnect', function(e) {
+sendonly.on('disconnect', function(e) {
   console.error(e);
 });
 ```
@@ -273,7 +273,7 @@ var metadata = 'ham';
 var subscriber = sora.recvonly(channelId, metadata, options);
 
 // connect
-subscriber.connect()
+recvonly.connect()
   .then(stream => {
     // stream を video.src に追加する等の処理
   })
@@ -282,13 +282,13 @@ subscriber.connect()
   });
 
 // disconnect
-subscriber.disconnect()
+recvonly.disconnect()
   .then(() => {
     // video を止める等の処理
   });
 
 // event
-publisher.on('disconnect', function(e) {
+recvonly.on('disconnect', function(e) {
   console.error(e);
 });
 ```
