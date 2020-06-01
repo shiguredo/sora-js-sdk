@@ -11,6 +11,16 @@
 
 ## develop
 
+## 2020.1
+
+- [UPDATE] E2EE 対応
+    - @yuitowest
+- [UPDATE] TypeScript 化
+    - @yuitowest
+- [UPDATE] async / await 化
+    - @yuitowest
+- [ADD] Sora から `type: ping` が送られてきた際に `stats: true` だった場合 `type: pong` 送信時に `stats` に getStats の結果を入れる
+    - @yuitowest @voluntas
 - [CHANGE] @deprecated メッセージを追加する
     - publisher/subscriber を使用している場合に warning を出すように変更する
     - addstream/removestream を使用している場合に warning を出すように変更する
@@ -24,14 +34,6 @@
 - [CHANGE] method 名の変更とアクセス制限の追加する
     - _ がついているメソッド名から _ を削除してアクセス制限を追加する
     - @yuitowest
-- [UPDATE] E2EE 対応
-    - @yuitowest
-- [UPDATE] TypeScript 化
-    - @yuitowest
-- [UPDATE] async / await 化
-    - @yuitowest
-- [ADD] Sora から `type: ping` が送られてきた際に `stats: true` だった場合 `type: pong` 送信時に `stats` に getStats の結果を入れる
-    - @yuitowest @voluntas
 
 ## 1.16.0
 
