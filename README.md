@@ -1,5 +1,5 @@
 # Sora JavaScript SDK
-[![CircleCI](https://circleci.com/gh/shiguredo/sora-js-sdk.svg?style=svg)](https://circleci.com/gh/shiguredo/sora-js-sdk)
+
 [![GitHub tag](https://img.shields.io/github/tag/shiguredo/sora-js-sdk.svg)](https://github.com/shiguredo/sora-js-sdk)
 [![npm version](https://badge.fury.io/js/sora-js-sdk.svg)](https://badge.fury.io/js/sora-js-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -11,16 +11,20 @@ Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発�
 We check PRs or Issues only when written in JAPANESE.
 In other languages, we won't be able to deal with them. Thank you for your understanding.
 
-## サポートについて
+## Discord
 
-Sora JavaScript SDK に関する質問・要望・バグなどの報告は Issues の利用をお願いします。
+https://discord.gg/uZ5wgHE
+
+Sora JavaScript SDK に関する質問・要望などの報告は Disocrd へお願いします。
+
+バグに関してはまず Discord へお願いします。
 ただし、 Sora のライセンス契約の有無に関わらず、 Issue への応答時間と問題の解決を保証しませんのでご了承ください。
 
-Sora JavaScript SDK に対する有償のサポートについては現在提供しておりません。
+Sora JavaScript SDK に対する有償のサポートについては提供しておりません。
 
 ## 使い方
 
-使い方は [Sora JavaScript SDK ドキュメント](https://sora.shiguredo.jp/js-sdk-doc/) を参照してください。
+使い方は [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/) を参照してください。
 
 - sora.js
     - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
@@ -29,7 +33,7 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 
 ## システム条件
 
-- WebRTC SFU Sora 19.10 以降
+- WebRTC SFU Sora 19.10.8 以降
 
 ## サンプル
 
@@ -54,6 +58,12 @@ Sora JavaScript SDK に対する有償のサポートについては現在提供
 
 - Sora JavaScript SDK のバージョン
 - 利用ブラウザのバージョン
+
+## E2EE について
+
+詳細については以下をご確認ください。
+
+[shiguredo/sora\-e2ee: WebRTC SFU Sora 向け JavaScript E2EE ライブラリ](https://github.com/shiguredo/sora-e2ee)
 
 ## API 一覧
 
@@ -83,7 +93,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | metadata           | string  |      | メタデータ                            |
   | options            | object  |      | シグナリングパラメーター              |
   | * audio            | boolean | true | オーディオ有効／無効                  |
-  | * audioCodecType   | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+  | * audioCodecType   | string  |      | オーディオコーデックタイプ(OPUS)      |
   | * audioBitRate     | integer |      | オーディオビットレートの最大値        |
   | * video            | boolean | true | ビデオ有効／無効                      |
   | * videoCodecType   | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
@@ -94,6 +104,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
   | * clientId         | string  |      | クライアントID                        |
   | * timeout          | integer |      | タイムアウト時間(ms)                  |
+  | * e2ee             | string  |      | e2ee のマスターシークレット           |
 
 
 - connect(stream)
@@ -111,19 +122,19 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log, timeout) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, track, removetrack, notify, log, timeout) |
   |  callback   | function  |      | コールバック |
 
 example
 ```javascript
 var channelId = 'Sora';
 var metadata = 'ham';
-var publisher = sora.sendonly(channelId, metadata);
+var sendrecv = sora.sendonly(channelId, metadata);
 
 navigator.mediaDevices.getUserMedia({audio: true, video: true})
   .then(mediaStream => {
     // connect
-    publisher.connect(mediaStream)
+    sendrecv.connect(mediaStream)
       .then(stream => {
         // stream を video.src に追加する等の処理
       });
@@ -133,13 +144,13 @@ navigator.mediaDevices.getUserMedia({audio: true, video: true})
   });
 
 // disconnect
-publisher.disconnect()
+sendrecv.disconnect()
   .then(() => {
     // video を止める等の処理
   });
 
 // event
-publisher.on('disconnect', function(e) {
+sendrecv.on('disconnect', function(e) {
   console.error(e);
 });
 ```
@@ -148,7 +159,7 @@ publisher.on('disconnect', function(e) {
 
 受信しない配信者として接続する
 
-- sora.sendrecv(channelId, metadata, options={});
+- sora.sendonly(channelId, metadata, options={});
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
@@ -156,7 +167,7 @@ publisher.on('disconnect', function(e) {
   | metadata         | string  |      | メタデータ                            |
   | options          | object  |      | シグナリングパラメーター              |
   | * audio          | boolean | true | オーディオ有効／無効                  |
-  | * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS/PCMU) |
+  | * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS)      |
   | * audioBitRate   | integer |      | オーディオビットレートの最大値        |
   | * video          | boolean | true | ビデオ有効／無効                      |
   | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
@@ -166,6 +177,7 @@ publisher.on('disconnect', function(e) {
   | * simulcast      | boolean |      | サイマルキャスト有効／無効            |
   | * clientId       | string  |      | クライアントID                        |
   | * timeout        | integer |      | タイムアウト時間(ms)                  |
+  | * e2ee           | string  |      | e2ee のマスターシークレット           |
 
 
 - connect(stream)
@@ -183,19 +195,19 @@ publisher.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log, timeout) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, track, removetrack, notify, log, timeout) |
   |  callback   | function  |      | コールバック |
 
 example
 ```javascript
 var channelId = 'Sora';
 var metadata = 'ham';
-var publisher = sora.sendonly(channelId, metadata);
+var sendonly = sora.sendonly(channelId, metadata);
 
 navigator.mediaDevices.getUserMedia({audio: true, video: true})
   .then(mediaStream => {
     // connect
-    publisher.connect(mediaStream)
+    sendonly.connect(mediaStream)
       .then(stream => {
         // stream を video.src に追加する等の処理
       });
@@ -205,13 +217,13 @@ navigator.mediaDevices.getUserMedia({audio: true, video: true})
   });
 
 // disconnect
-publisher.disconnect()
+sendonly.disconnect()
   .then(() => {
     // video を止める等の処理
   });
 
 // event
-publisher.on('disconnect', function(e) {
+sendonly.on('disconnect', function(e) {
   console.error(e);
 });
 ```
@@ -229,7 +241,7 @@ publisher.on('disconnect', function(e) {
   | metadata           | string  |      | メタデータ                                  |
   | options            | object  |      | シグナリングパラメーター                    |
   | * audio            | boolean | true | オーディオ有効／無効                        |
-  | * audioCodecType   | string  |      | オーディオコーデックタイプ(OPUS/PCMU)       |
+  | * audioCodecType   | string  |      | オーディオコーデックタイプ(OPUS)            |
   | * audioBitRate     | integer |      | オーディオビットレートの最大値              |
   | * video            | boolean | true | ビデオ有効／無効                            |
   | * videoCodecType   | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)        |
@@ -240,6 +252,7 @@ publisher.on('disconnect', function(e) {
   | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
   | * clientId         | string  |      | クライアントID                              |
   | * timeout          | integer |      | タイムアウト時間(ms)                        |
+  | * e2ee             | string  |      | e2ee のマスターシークレット                 |
 
 
 - connect()
@@ -256,7 +269,7 @@ publisher.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  |  kind       | string    |      | イベントタイプ(disconnect, push, addstream, removestream, notify, log, timeout) |
+  |  kind       | string    |      | イベントタイプ(disconnect, push, track, removetrack, notify, log, timeout) |
   |  callback   | function  |      | コールバック |
 
 example
@@ -266,7 +279,7 @@ var metadata = 'ham';
 var subscriber = sora.recvonly(channelId, metadata, options);
 
 // connect
-subscriber.connect()
+recvonly.connect()
   .then(stream => {
     // stream を video.src に追加する等の処理
   })
@@ -275,13 +288,13 @@ subscriber.connect()
   });
 
 // disconnect
-subscriber.disconnect()
+recvonly.disconnect()
   .then(() => {
     // video を止める等の処理
   });
 
 // event
-publisher.on('disconnect', function(e) {
+recvonly.on('disconnect', function(e) {
   console.error(e);
 });
 ```
