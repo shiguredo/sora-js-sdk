@@ -59,6 +59,12 @@ Sora JavaScript SDK に対する有償のサポートについては提供して
 - Sora JavaScript SDK のバージョン
 - 利用ブラウザのバージョン
 
+## E2EE について
+
+詳細については以下をご確認ください。
+
+[shiguredo/sora\-e2ee: WebRTC SFU Sora 向け JavaScript E2EE ライブラリ](https://github.com/shiguredo/sora-e2ee)
+
 ## API 一覧
 
 ### Sora Connection
