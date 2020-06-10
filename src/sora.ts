@@ -68,4 +68,11 @@ export default {
   },
 };
 
-export type { AudioCodecType, ConnectionOptions, SimulcastQuality, VideoCodecType };
+export type {
+  AudioCodecType,
+  ConnectionOptions,
+  ConnectionPublisher,
+  ConnectionSubscriber,
+  SimulcastQuality,
+  VideoCodecType,
+};
