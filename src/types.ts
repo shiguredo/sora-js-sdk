@@ -4,7 +4,7 @@ export type SimulcastQuality = "low" | "middle" | "high";
 
 export type Simulcast = boolean | { quality: SimulcastQuality };
 
-export type AudioCodecType = "OPUS" | "PCMU";
+export type AudioCodecType = "OPUS";
 
 export type Audio =
   | boolean
