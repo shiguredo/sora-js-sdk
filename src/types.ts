@@ -24,7 +24,7 @@ export type Audio =
       };
     };
 
-export type VideoCodecType = "VP9" | "VP8" | "H264";
+export type VideoCodecType = "VP9" | "VP8" | "H264" | "H265";
 
 export type Video =
   | boolean
