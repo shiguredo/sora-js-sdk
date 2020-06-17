@@ -5,7 +5,7 @@ export declare type SimulcastQuality = "low" | "middle" | "high";
 export declare type Simulcast = boolean | {
     quality: SimulcastQuality;
 };
-export declare type AudioCodecType = "OPUS" | "PCMU";
+export declare type AudioCodecType = "OPUS";
 export declare type Audio = boolean | {
     codec_type?: AudioCodecType;
     bit_rate?: number;
@@ -21,7 +21,7 @@ export declare type Audio = boolean | {
         usedtx?: boolean;
     };
 };
-export declare type VideoCodecType = "VP9" | "VP8" | "H264";
+export declare type VideoCodecType = "VP9" | "VP8" | "H264" | "H265";
 export declare type Video = boolean | {
     codec_type?: VideoCodecType;
     bit_rate?: number;

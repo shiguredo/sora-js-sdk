@@ -4,7 +4,7 @@ export type SimulcastQuality = "low" | "middle" | "high";
 
 export type Simulcast = boolean | { quality: SimulcastQuality };
 
-export type AudioCodecType = "OPUS" | "PCMU";
+export type AudioCodecType = "OPUS";
 
 export type Audio =
   | boolean
@@ -24,7 +24,7 @@ export type Audio =
       };
     };
 
-export type VideoCodecType = "VP9" | "VP8" | "H264";
+export type VideoCodecType = "VP9" | "VP8" | "H264" | "H265";
 
 export type Video =
   | boolean

@@ -1,6 +1,7 @@
+import ConnectionBase from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
-import { ConnectionOptions } from "./types";
+import { AudioCodecType, Callbacks, ConnectionOptions, Role, SimulcastQuality, VideoCodecType } from "./types";
 declare class SoraConnection {
     signalingUrl: string;
     debug: boolean;
@@ -16,3 +17,4 @@ declare const _default: {
     version: () => string;
 };
 export default _default;
+export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, Role, SimulcastQuality, VideoCodecType, };
