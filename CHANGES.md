@@ -11,6 +11,8 @@
 
 ## develop
 
+## 2020.1.1
+
 - [UPDATE] type export を追加
     - AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, Role, SimulcastQuality, VideoCodecType の型定義を export する
     - @yuitowest
