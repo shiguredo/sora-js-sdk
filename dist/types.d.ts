@@ -1,4 +1,4 @@
-declare type Json = null | boolean | number | string | Json[] | {
+export declare type Json = null | boolean | number | string | Json[] | {
     [prop: string]: Json;
 };
 export declare type SimulcastQuality = "low" | "middle" | "high";
@@ -100,4 +100,3 @@ export declare type Callbacks = {
     log: Function;
     timeout: Function;
 };
-export {};

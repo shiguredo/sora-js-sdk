@@ -1,9 +1,9 @@
-import { Callbacks, ConnectionOptions, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
+import { Callbacks, ConnectionOptions, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
 import SoraE2EE from "sora-e2ee";
 export default class ConnectionBase {
     role: string;
     channelId: string;
-    metadata: string | null;
+    metadata: Json;
     signalingUrl: string;
     options: ConnectionOptions;
     constraints: any;
@@ -12,12 +12,12 @@ export default class ConnectionBase {
     connectionId: string | null;
     remoteConnectionIds: string[];
     stream: MediaStream | null;
-    authMetadata: string | null;
+    authMetadata: Json;
     pc: RTCPeerConnection | null;
     protected ws: WebSocket | null;
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;
-    constructor(signalingUrl: string, role: string, channelId: string, metadata: string | null, options: ConnectionOptions, debug: boolean);
+    constructor(signalingUrl: string, role: string, channelId: string, metadata: Json, options: ConnectionOptions, debug: boolean);
     on(kind: keyof Callbacks, callback: Function): void;
     disconnect(): Promise<[void, void, void]>;
     protected startE2EE(): void;
