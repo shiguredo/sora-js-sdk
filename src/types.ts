@@ -1,4 +1,4 @@
-type Json = null | boolean | number | string | Json[] | { [prop: string]: Json };
+export type Json = null | boolean | number | string | Json[] | { [prop: string]: Json };
 
 export type SimulcastQuality = "low" | "middle" | "high";
 

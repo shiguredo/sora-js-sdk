@@ -1,5 +1,5 @@
 import { createSignalingMessage, trace, isSafari } from "./utils";
-import { Callbacks, ConnectionOptions, Encoding, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
+import { Callbacks, ConnectionOptions, Encoding, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
 import SoraE2EE from "sora-e2ee";
 
 // Override from @type/WebRTC
@@ -17,7 +17,7 @@ declare let window: Window;
 export default class ConnectionBase {
   role: string;
   channelId: string;
-  metadata: string | null;
+  metadata: Json;
   signalingUrl: string;
   options: ConnectionOptions;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,7 +27,7 @@ export default class ConnectionBase {
   connectionId: string | null;
   remoteConnectionIds: string[];
   stream: MediaStream | null;
-  authMetadata: string | null;
+  authMetadata: Json;
   pc: RTCPeerConnection | null;
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
@@ -37,7 +37,7 @@ export default class ConnectionBase {
     signalingUrl: string,
     role: string,
     channelId: string,
-    metadata: string | null,
+    metadata: Json,
     options: ConnectionOptions,
     debug: boolean
   ) {
