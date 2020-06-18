@@ -1,4 +1,4 @@
-import { ConnectionOptions, Browser, Role, SignalingConnectMessage, Video } from "./types";
+import { ConnectionOptions, Browser, Json, Role, SignalingConnectMessage, Video } from "./types";
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
@@ -78,7 +78,7 @@ export function createSignalingMessage(
   offerSDP: string,
   role: string,
   channelId: string | null | undefined,
-  metadata: string | null | undefined,
+  metadata: Json,
   options: ConnectionOptions
 ): SignalingConnectMessage {
   if (

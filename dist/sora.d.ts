@@ -1,16 +1,16 @@
 import ConnectionBase from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
-import { AudioCodecType, Callbacks, ConnectionOptions, Role, SimulcastQuality, VideoCodecType } from "./types";
+import { AudioCodecType, Callbacks, ConnectionOptions, Json, Role, SimulcastQuality, VideoCodecType } from "./types";
 declare class SoraConnection {
     signalingUrl: string;
     debug: boolean;
     constructor(signalingUrl: string, debug?: boolean);
-    publisher(channelId: string, metadata?: string | null, options?: ConnectionOptions): ConnectionPublisher;
-    subscriber(channelId: string, metadata?: string | null, options?: ConnectionOptions): ConnectionSubscriber;
-    sendrecv(channelId: string, metadata?: string | null, options?: ConnectionOptions): ConnectionPublisher;
-    sendonly(channelId: string, metadata?: string | null, options?: ConnectionOptions): ConnectionPublisher;
-    recvonly(channelId: string, metadata?: string | null, options?: ConnectionOptions): ConnectionSubscriber;
+    publisher(channelId: string, metadata?: Json, options?: ConnectionOptions): ConnectionPublisher;
+    subscriber(channelId: string, metadata?: Json, options?: ConnectionOptions): ConnectionSubscriber;
+    sendrecv(channelId: string, metadata?: Json, options?: ConnectionOptions): ConnectionPublisher;
+    sendonly(channelId: string, metadata?: Json, options?: ConnectionOptions): ConnectionPublisher;
+    recvonly(channelId: string, metadata?: Json, options?: ConnectionOptions): ConnectionSubscriber;
 }
 declare const _default: {
     connection: (signalingUrl: string, debug?: boolean) => SoraConnection;
