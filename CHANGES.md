@@ -11,6 +11,8 @@
 
 ## develop
 
+## 2020.1.2
+
 - [FIX] sendrecv, sendonly, recvonly の引数に渡す metadata の型を Json に変更
     - @yuitowest
 - [FIX] authMetadata の型を Json に変更
