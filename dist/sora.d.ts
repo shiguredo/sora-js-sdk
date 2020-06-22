@@ -17,4 +17,4 @@ declare const _default: {
     version: () => string;
 };
 export default _default;
-export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, Role, SimulcastQuality, VideoCodecType, };
+export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, Role, SimulcastQuality, SoraConnection, VideoCodecType, };
