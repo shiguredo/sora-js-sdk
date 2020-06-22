@@ -6,7 +6,7 @@ export type Simulcast = boolean | { quality: SimulcastQuality };
 
 export type AudioCodecType = "OPUS";
 
-export type Audio =
+export type SignalingAudio =
   | boolean
   | {
       codec_type?: AudioCodecType;
@@ -26,7 +26,7 @@ export type Audio =
 
 export type VideoCodecType = "VP9" | "VP8" | "H264" | "H265";
 
-export type Video =
+export type SignalingVideo =
   | boolean
   | {
       codec_type?: VideoCodecType;
@@ -54,8 +54,8 @@ export type SignalingConnectMessage = {
   multistream?: boolean;
   spotlight?: number;
   simulcast?: Simulcast;
-  audio: Audio;
-  video: Video;
+  audio: SignalingAudio;
+  video: SignalingVideo;
   sdp: string;
   sora_client: string;
   environment: string;

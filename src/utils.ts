@@ -1,4 +1,4 @@
-import { ConnectionOptions, Browser, Json, Role, SignalingConnectMessage, Video } from "./types";
+import { ConnectionOptions, Browser, Json, Role, SignalingConnectMessage, SignalingVideo } from "./types";
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
@@ -16,7 +16,7 @@ function browser(): Browser {
   return null;
 }
 
-function enabledSimulcast(role: Role, video: Video): boolean {
+function enabledSimulcast(role: Role, video: SignalingVideo): boolean {
   /**
     simulcast validator
     VP9 x
