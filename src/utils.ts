@@ -111,6 +111,11 @@ export function createSignalingMessage(
     message.metadata = metadata;
   }
 
+  if ("signalingNotifyMetadata" in options) {
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    message.signaling_notify_metadata = options.signalingNotifyMetadata;
+  }
+
   if ("multistream" in options && options.multistream === true) {
     // multistream
     message.multistream = true;
