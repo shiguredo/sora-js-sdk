@@ -56,7 +56,6 @@ test("createSignalingMessage metadata", () => {
     Object.assign({}, baseExpectedMessage, diff)
   );
   expect(createSignalingMessage(sdp, role, channelId, null, {})).toEqual(baseExpectedMessage);
-  expect(createSignalingMessage(sdp, role, channelId, undefined, {})).toEqual(baseExpectedMessage);
 });
 
 test("createSignalingMessage clientId option", () => {
@@ -416,5 +415,35 @@ test("createSignalingMessage e2ee option", () => {
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
     Object.assign({}, baseExpectedMessage, diff4)
+  );
+});
+
+test("createSignalingMessage signalingMetadata option", () => {
+  const options1 = {
+    signalingNotifyMetadata: "metadata",
+  };
+  const diff1 = {
+    signaling_notify_metadata: "metadata",
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff1)
+  );
+  const options2 = {
+    signalingNotifyMetadata: { key: "value" },
+  };
+  const diff2 = {
+    signaling_notify_metadata: { key: "value" },
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+  const options3 = {
+    signalingNotifyMetadata: null,
+  };
+  const diff3 = {
+    signaling_notify_metadata: null,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff3)
   );
 });

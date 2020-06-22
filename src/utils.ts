@@ -1,4 +1,4 @@
-import { ConnectionOptions, Browser, Json, Role, SignalingConnectMessage, Video } from "./types";
+import { ConnectionOptions, Browser, Json, Role, SignalingConnectMessage, SignalingVideo } from "./types";
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
@@ -16,7 +16,7 @@ function browser(): Browser {
   return null;
 }
 
-function enabledSimulcast(role: Role, video: Video): boolean {
+function enabledSimulcast(role: Role, video: SignalingVideo): boolean {
   /**
     simulcast validator
     VP9 x
@@ -109,6 +109,11 @@ export function createSignalingMessage(
 
   if (metadata) {
     message.metadata = metadata;
+  }
+
+  if ("signalingNotifyMetadata" in options) {
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    message.signaling_notify_metadata = options.signalingNotifyMetadata;
   }
 
   if ("multistream" in options && options.multistream === true) {

@@ -6,7 +6,7 @@ export declare type Simulcast = boolean | {
     quality: SimulcastQuality;
 };
 export declare type AudioCodecType = "OPUS";
-export declare type Audio = boolean | {
+export declare type SignalingAudio = boolean | {
     codec_type?: AudioCodecType;
     bit_rate?: number;
     opus_params?: {
@@ -22,7 +22,7 @@ export declare type Audio = boolean | {
     };
 };
 export declare type VideoCodecType = "VP9" | "VP8" | "H264" | "H265";
-export declare type Video = boolean | {
+export declare type SignalingVideo = boolean | {
     codec_type?: VideoCodecType;
     bit_rate?: number;
 };
@@ -44,8 +44,8 @@ export declare type SignalingConnectMessage = {
     multistream?: boolean;
     spotlight?: number;
     simulcast?: Simulcast;
-    audio: Audio;
-    video: Video;
+    audio: SignalingAudio;
+    video: SignalingVideo;
     sdp: string;
     sora_client: string;
     environment: string;
@@ -88,6 +88,7 @@ export declare type ConnectionOptions = {
     clientId?: string;
     timeout?: number;
     e2ee?: string;
+    signalingNotifyMetadata?: Json;
 };
 export declare type Callbacks = {
     disconnect: Function;

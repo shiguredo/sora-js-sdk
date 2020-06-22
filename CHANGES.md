@@ -11,6 +11,15 @@
 
 ## develop
 
+## 2020.1.3
+
+- [CHANGE] type.ts にある Audio, Video をそれぞれ SignalingAudio, SignalingVideo に名前変更する
+    - @yuitowest
+- [ADD] SoraConnection の型定義を export する
+    - @yuitowest
+- [ADD] sendrecv, sendonly, recvonly の引数に渡す options に signalingNotifyMetadata を追加する
+    - @yuitowest
+
 ## 2020.1.2
 
 - [FIX] sendrecv, sendonly, recvonly の引数に渡す metadata の型を Json に変更

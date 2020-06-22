@@ -78,5 +78,6 @@ export type {
   ConnectionSubscriber,
   Role,
   SimulcastQuality,
+  SoraConnection,
   VideoCodecType,
 };

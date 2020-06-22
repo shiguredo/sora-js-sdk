@@ -89,22 +89,23 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  | channelId          | string  |      | チャネルID                            |
-  | metadata           | string  |      | メタデータ                            |
-  | options            | object  |      | シグナリングパラメーター              |
-  | * audio            | boolean | true | オーディオ有効／無効                  |
-  | * audioCodecType   | string  |      | オーディオコーデックタイプ(OPUS)      |
-  | * audioBitRate     | integer |      | オーディオビットレートの最大値        |
-  | * video            | boolean | true | ビデオ有効／無効                      |
-  | * videoCodecType   | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
-  | * videoBitRate     | integer |      | ビデオビットレートの最大値            |
-  | * multistream      | boolean |      | マルチストリーム有効／無効            |
-  | * spotlight        | integer |      | 最大話者数                            |
-  | * simulcast        | boolean |      | サイマルキャスト有効／無効            |
-  | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
-  | * clientId         | string  |      | クライアントID                        |
-  | * timeout          | integer |      | タイムアウト時間(ms)                  |
-  | * e2ee             | string  |      | e2ee のマスターシークレット           |
+  | channelId                  | string  |      | チャネルID                            |
+  | metadata                   | json    |      | メタデータ                            |
+  | options                    | object  |      | シグナリングパラメーター              |
+  | * audio                    | boolean | true | オーディオ有効／無効                  |
+  | * audioCodecType           | string  |      | オーディオコーデックタイプ(OPUS)      |
+  | * audioBitRate             | integer |      | オーディオビットレートの最大値        |
+  | * video                    | boolean | true | ビデオ有効／無効                      |
+  | * videoCodecType           | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
+  | * videoBitRate             | integer |      | ビデオビットレートの最大値            |
+  | * multistream              | boolean |      | マルチストリーム有効／無効            |
+  | * spotlight                | integer |      | 最大話者数                            |
+  | * simulcast                | boolean |      | サイマルキャスト有効／無効            |
+  | * simulcastQuality         | string  |      | サイマルキャストクオリティ(low/middle/high) |
+  | * clientId                 | string  |      | クライアントID                        |
+  | * timeout                  | integer |      | タイムアウト時間(ms)                  |
+  | * e2ee                     | string  |      | e2ee のマスターシークレット           |
+  | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
 
 
 - connect(stream)
@@ -163,21 +164,22 @@ sendrecv.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  | channelId        | string  |      | チャネルID                            |
-  | metadata         | string  |      | メタデータ                            |
-  | options          | object  |      | シグナリングパラメーター              |
-  | * audio          | boolean | true | オーディオ有効／無効                  |
-  | * audioCodecType | string  |      | オーディオコーデックタイプ(OPUS)      |
-  | * audioBitRate   | integer |      | オーディオビットレートの最大値        |
-  | * video          | boolean | true | ビデオ有効／無効                      |
-  | * videoCodecType | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
-  | * videoBitRate   | integer |      | ビデオビットレートの最大値            |
-  | * multistream    | boolean |      | マルチストリーム有効／無効            |
-  | * spotlight      | integer |      | 最大話者数                            |
-  | * simulcast      | boolean |      | サイマルキャスト有効／無効            |
-  | * clientId       | string  |      | クライアントID                        |
-  | * timeout        | integer |      | タイムアウト時間(ms)                  |
-  | * e2ee           | string  |      | e2ee のマスターシークレット           |
+  | channelId                  | string  |      | チャネルID                            |
+  | metadata                   | json    |      | メタデータ                            |
+  | options                    | object  |      | シグナリングパラメーター              |
+  | * audio                    | boolean | true | オーディオ有効／無効                  |
+  | * audioCodecType           | string  |      | オーディオコーデックタイプ(OPUS)      |
+  | * audioBitRate             | integer |      | オーディオビットレートの最大値        |
+  | * video                    | boolean | true | ビデオ有効／無効                      |
+  | * videoCodecType           | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)  |
+  | * videoBitRate             | integer |      | ビデオビットレートの最大値            |
+  | * multistream              | boolean |      | マルチストリーム有効／無効            |
+  | * spotlight                | integer |      | 最大話者数                            |
+  | * simulcast                | boolean |      | サイマルキャスト有効／無効            |
+  | * clientId                 | string  |      | クライアントID                        |
+  | * timeout                  | integer |      | タイムアウト時間(ms)                  |
+  | * e2ee                     | string  |      | e2ee のマスターシークレット           |
+  | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
 
 
 - connect(stream)
@@ -237,22 +239,23 @@ sendonly.on('disconnect', function(e) {
 
   |Param   |Type   |Default   |Description  |
   |:--|:-:|:-:|:--|
-  | channelId          | string  |      | チャネルID                                  |
-  | metadata           | string  |      | メタデータ                                  |
-  | options            | object  |      | シグナリングパラメーター                    |
-  | * audio            | boolean | true | オーディオ有効／無効                        |
-  | * audioCodecType   | string  |      | オーディオコーデックタイプ(OPUS)            |
-  | * audioBitRate     | integer |      | オーディオビットレートの最大値              |
-  | * video            | boolean | true | ビデオ有効／無効                            |
-  | * videoCodecType   | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)        |
-  | * videoBitRate     | integer |      | ビデオビットレートの最大値                  |
-  | * multistream      | boolean |      | マルチストリーム有効／無効                  |
-  | * spotlight        | integer |      | 最大話者数                                  |
-  | * simulcast        | boolean |      | サイマルキャスト有効／無効                  |
-  | * simulcastQuality | string  |      | サイマルキャストクオリティ(low/middle/high) |
-  | * clientId         | string  |      | クライアントID                              |
-  | * timeout          | integer |      | タイムアウト時間(ms)                        |
-  | * e2ee             | string  |      | e2ee のマスターシークレット                 |
+  | channelId                  | string  |      | チャネルID                                  |
+  | metadata                   | json    |      | メタデータ                                  |
+  | options                    | object  |      | シグナリングパラメーター                    |
+  | * audio                    | boolean | true | オーディオ有効／無効                        |
+  | * audioCodecType           | string  |      | オーディオコーデックタイプ(OPUS)            |
+  | * audioBitRate             | integer |      | オーディオビットレートの最大値              |
+  | * video                    | boolean | true | ビデオ有効／無効                            |
+  | * videoCodecType           | string  |      | ビデオコーデックタイプ(VP8/VP9/H264)        |
+  | * videoBitRate             | integer |      | ビデオビットレートの最大値                  |
+  | * multistream              | boolean |      | マルチストリーム有効／無効                  |
+  | * spotlight                | integer |      | 最大話者数                                  |
+  | * simulcast                | boolean |      | サイマルキャスト有効／無効                  |
+  | * simulcastQuality         | string  |      | サイマルキャストクオリティ(low/middle/high) |
+  | * clientId                 | string  |      | クライアントID                              |
+  | * timeout                  | integer |      | タイムアウト時間(ms)                        |
+  | * e2ee                     | string  |      | e2ee のマスターシークレット                 |
+  | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
 
 
 - connect()
