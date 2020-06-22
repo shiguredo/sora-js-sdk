@@ -8,7 +8,7 @@
   "scripts": {
     "build": "NODE_ENV=development rollup -c",
     "watch": "NODE_ENV=development rollup -c -w",
-    "prerelease": "yarn lint",
+    "prerelease": "yarn lint && yarn test",
     "release": "NODE_ENV=production rollup -c",
     "server": "serve -S -l 8080 ./example",
     "lint": "eslint --ext .ts ./src",
