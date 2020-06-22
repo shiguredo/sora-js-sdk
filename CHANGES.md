@@ -11,6 +11,8 @@
 
 ## develop
 
+## 2020.1.3
+
 - [CHANGE] type.ts にある Audio, Video をそれぞれ SignalingAudio, SignalingVideo に名前変更する
     - @yuitowest
 - [ADD] SoraConnection の型定義を export する
