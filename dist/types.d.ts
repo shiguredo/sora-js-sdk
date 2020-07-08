@@ -1,5 +1,5 @@
 export declare type Json = null | boolean | number | string | Json[] | {
-    [prop: string]: Json;
+    [prop: string]: Json | undefined;
 };
 export declare type SimulcastQuality = "low" | "middle" | "high";
 export declare type Simulcast = boolean | {
