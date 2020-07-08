@@ -9,7 +9,10 @@
 - FIX
     - バグ修正
 
-## develop
+## 2020.1.4
+
+- [UPDATE] type.ts にある type Json のインデックスシグネチャに undefined を許可する
+    - @yuitowest
 
 ## 2020.1.3
 
