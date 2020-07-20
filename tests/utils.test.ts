@@ -17,6 +17,7 @@ const baseExpectedMessage = Object.freeze({
   audio: true,
   video: true,
   role: role,
+  metadata: null,
   channel_id: channelId,
 });
 

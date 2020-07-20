@@ -107,7 +107,7 @@ export function createSignalingMessage(
     video: true,
   };
 
-  if (metadata) {
+  if (metadata !== undefined) {
     message.metadata = metadata;
   }
 
