@@ -9,6 +9,8 @@
 - FIX
     - バグ修正
 
+## develop
+
 ## 2020.1.5
 
 - [FIX] metadata が undefined の場合以外は signaling connect message に metadata を含めるように変更
