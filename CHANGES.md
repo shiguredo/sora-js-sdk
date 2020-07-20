@@ -9,6 +9,11 @@
 - FIX
     - バグ修正
 
+## develop
+
+- [FIX] metadata が undefined の場合以外は signaling connect message に metadata を含めるように変更
+    - @yuitowest
+
 ## 2020.1.4
 
 - [UPDATE] type.ts にある type Json のインデックスシグネチャに undefined を許可する
