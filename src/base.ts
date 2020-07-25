@@ -254,7 +254,6 @@ export default class ConnectionBase {
     let config = messageConfig;
     if (this.e2ee) {
       // @ts-ignore
-      encodedInsertableStreams
       config["encodedInsertableStreams"] = true;
     }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
