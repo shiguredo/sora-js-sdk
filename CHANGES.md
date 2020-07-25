@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] sora-e2ee を 2020.2.0 に上げる
+    - @voluntas
+
 ## 2020.1.5
 
 - [FIX] metadata が undefined の場合以外は signaling connect message に metadata を含めるように変更
