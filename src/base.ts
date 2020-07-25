@@ -254,9 +254,8 @@ export default class ConnectionBase {
     let config = messageConfig;
     if (this.e2ee) {
       // @ts-ignore
-      config["forceEncodedVideoInsertableStreams"] = true;
-      // @ts-ignore
-      config["forceEncodedAudioInsertableStreams"] = true;
+      encodedInsertableStreams
+      config["encodedInsertableStreams"] = true;
     }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
       const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
