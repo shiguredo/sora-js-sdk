@@ -115,13 +115,16 @@ export function createSignalingMessage(
     // eslint-disable-next-line @typescript-eslint/camelcase
     message.signaling_notify_metadata = options.signalingNotifyMetadata;
   }
-
   if ("multistream" in options && options.multistream === true) {
     // multistream
     message.multistream = true;
     // spotlight
     if ("spotlight" in options) {
       message.spotlight = options.spotlight;
+      if ("spotlightNumber" in options) {
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        message.spotlight_number = options.spotlightNumber;
+      }
     }
   }
 
