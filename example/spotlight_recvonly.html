@@ -40,6 +40,8 @@ document.querySelector('#start-recvonly').addEventListener('click', function() {
       remoteVideo.id = remoteVideoId;
       remoteVideo.style.border = '1px solid red';
       remoteVideo.autoplay = true;
+      remoteVideo.playsinline = true;
+      remoteVideo.controls = true;
       remoteVideo.width = '320';
       remoteVideo.height = '240';
       remoteVideo.srcObject = stream;

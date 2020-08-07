@@ -11,14 +11,14 @@
                     <h2>sendrecv1</h2>
                     <button id="start-sendrecv1">start</button>
                     <button id="stop-sendrecv1">stop</button><br />
-                    <video id="sendrecv1-local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                    <video id="sendrecv1-local-video" autoplay="" playsinline="" controls="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
                     <div id="sendrecv1-remote-videos"></div>
                 </div>
                 <div>
                     <h2>sendrecv2</h2>
                     <button id="start-sendrecv2">start</button>
                     <button id="stop-sendrecv2">stop</button><br />
-                    <video id="sendrecv2-local-video" autoplay="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                    <video id="sendrecv2-local-video" autoplay="" playsinline="" controls="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
                     <div id="sendrecv2-remote-videos"></div>
                 </div>
             </div>
@@ -58,6 +58,8 @@ document.querySelector('#start-sendrecv1').addEventListener('click', function() 
       remoteVideo.id = remoteVideoId;
       remoteVideo.style.border = '1px solid red';
       remoteVideo.autoplay = true;
+      remoteVideo.playsinline = true;
+      remoteVideo.controls = true;
       remoteVideo.width = '160';
       remoteVideo.height = '120';
       remoteVideo.srcObject = stream;
@@ -93,6 +95,8 @@ document.querySelector('#start-sendrecv2').addEventListener('click', function() 
       remoteVideo.id = remoteVideoId;
       remoteVideo.style.border = '1px solid red';
       remoteVideo.autoplay = true;
+      remoteVideo.playsinline = true;
+      remoteVideo.controls = true;
       remoteVideo.width = '160';
       remoteVideo.height = '120';
       remoteVideo.srcObject = stream;
