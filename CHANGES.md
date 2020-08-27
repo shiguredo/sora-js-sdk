@@ -13,6 +13,8 @@
 
 - [UPDATE] sora-e2ee を 2020.2.0 に上げる
     - @voluntas
+- [FIX] disconnect() を複数回実行した場合に例外が発生しないようにする
+    - @yuitowest
 
 ## 2020.1.5
 
