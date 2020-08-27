@@ -52,7 +52,8 @@ export type SignalingConnectMessage = {
   metadata?: Json;
   signaling_notify_metadata?: Json;
   multistream?: boolean;
-  spotlight?: number;
+  spotlight?: number | boolean;
+  spotlight_number?: number;
   simulcast?: Simulcast;
   audio: SignalingAudio;
   video: SignalingVideo;
@@ -95,7 +96,8 @@ export type ConnectionOptions = {
   videoCodecType?: VideoCodecType;
   videoBitRate?: number;
   multistream?: boolean;
-  spotlight?: number;
+  spotlight?: boolean | number;
+  spotlightNumber?: number;
   simulcast?: boolean;
   simulcastQuality?: SimulcastQuality;
   clientId?: string;

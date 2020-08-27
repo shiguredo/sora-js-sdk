@@ -119,6 +119,10 @@
           // spotlight
           if ("spotlight" in options) {
               message.spotlight = options.spotlight;
+              if ("spotlightNumber" in options) {
+                  // eslint-disable-next-line @typescript-eslint/camelcase
+                  message.spotlight_number = options.spotlightNumber;
+              }
           }
       }
       if ("simulcast" in options || "simulcastQuality" in options) {
