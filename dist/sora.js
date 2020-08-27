@@ -345,12 +345,11 @@
           const closeWebSocket = new Promise((resolve, reject) => {
               if (!this.ws)
                   return resolve();
-              this.ws.onclose = null;
               let counter = 5;
               const timerId = setInterval(() => {
                   if (!this.ws) {
                       clearInterval(timerId);
-                      return reject("WebSocket Closing Error");
+                      return resolve();
                   }
                   if (this.ws.readyState === 3) {
                       this.ws = null;
@@ -379,7 +378,7 @@
               const timerId = setInterval(() => {
                   if (!this.pc) {
                       clearInterval(timerId);
-                      return reject("PeerConnection Closing Error");
+                      return resolve();
                   }
                   if (this.pc.signalingState === "closed") {
                       clearInterval(timerId);
@@ -433,9 +432,8 @@
                       this.connectionId = data.connection_id;
                       if (this.ws) {
                           this.ws.onclose = (e) => {
-                              this.disconnect().then(() => {
-                                  this.callbacks.disconnect(e);
-                              });
+                              this.callbacks.disconnect(e);
+                              this.disconnect();
                           };
                           this.ws.onerror = null;
                       }
