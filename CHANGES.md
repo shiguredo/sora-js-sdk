@@ -15,6 +15,10 @@
     - @voluntas
 - [FIX] disconnect() を複数回実行した場合に例外が発生しないようにする
     - @yuitowest
+- [UPDATE] 新スポットライトに対応する
+    - ConnectionOptions に spotlightNumber を追加する
+    - ConnectionOptions の spotlight に boolean を受け取れるよう修正する
+    - @yuitowest
 
 ## 2020.1.5
 
