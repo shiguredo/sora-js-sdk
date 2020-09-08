@@ -9,6 +9,17 @@
 - FIX
     - バグ修正
 
+## 2020.2.0
+
+- [UPDATE] sora-e2ee を 2020.2.0 に上げる
+    - @voluntas
+- [FIX] disconnect() を複数回実行した場合に例外が発生しないようにする
+    - @yuitowest
+- [UPDATE] 新スポットライトに対応する
+    - ConnectionOptions に spotlightNumber を追加する
+    - ConnectionOptions の spotlight に boolean を受け取れるよう修正する
+    - @yuitowest
+
 ## 2020.1.5
 
 - [FIX] metadata が undefined の場合以外は signaling connect message に metadata を含めるように変更

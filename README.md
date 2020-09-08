@@ -11,16 +11,9 @@ Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発�
 We check PRs or Issues only when written in JAPANESE.
 In other languages, we won't be able to deal with them. Thank you for your understanding.
 
-## Discord
+## 時雨堂のオープンソースソフトウェアについて
 
-https://discord.gg/uZ5wgHE
-
-Sora JavaScript SDK に関する質問・要望などの報告は Disocrd へお願いします。
-
-バグに関してはまず Discord へお願いします。
-ただし、 Sora のライセンス契約の有無に関わらず、 Issue への応答時間と問題の解決を保証しませんのでご了承ください。
-
-Sora JavaScript SDK に対する有償のサポートについては提供しておりません。
+利用前に https://github.com/shiguredo/oss をお読みください。
 
 ## 使い方
 
@@ -33,7 +26,7 @@ Sora JavaScript SDK に対する有償のサポートについては提供して
 
 ## システム条件
 
-- WebRTC SFU Sora 19.10.8 以降
+- WebRTC SFU Sora 2020.1 以降
 
 ## サンプル
 
