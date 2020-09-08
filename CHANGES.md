@@ -9,6 +9,8 @@
 - FIX
     - バグ修正
 
+## develop
+
 ## 2020.2.0
 
 - [UPDATE] sora-e2ee を 2020.2.0 に上げる
