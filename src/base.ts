@@ -295,6 +295,7 @@ export default class ConnectionBase {
         throw new Error("Simulcast Error");
       }
       await this.setSenderParameters(transceiver, message.encodings);
+      await this.setRemoteDescription(message);
     }
     const sessionDescription = await this.pc.createAnswer();
     await this.pc.setLocalDescription(sessionDescription);
