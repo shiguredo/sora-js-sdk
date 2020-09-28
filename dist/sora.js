@@ -38,13 +38,10 @@
     
         simulcast_pub Chrome o
         simulcast_pub Firefox x
-        simulcast_pub Safari 12.1.1 x
-        simulcast_pub Safari 12.1 x
-        simulcast_pub Safari 12.0 x
+        simulcast_pub Safari <= 14 o
         simulcast_sub Chrome o
         simulcast_sub Firefox o
-        simulcast_sub Safari 12.1.1 o
-        simulcast_sub Safari 12.1 o
+        simulcast_sub Safari <= 12.1 o
         simulcast_sub Safari 12.0 o ※H.264 のみ
       **/
       if (typeof video !== "boolean" && video.codec_type === "VP9") {
@@ -53,24 +50,32 @@
       if ((role === "upstream" || role === "sendrecv" || role === "sendonly") && browser() === "firefox") {
           return false;
       }
-      if ((role === "upstream" || role === "sendrecv" || role === "sendonly") && browser() === "safari") {
-          return false;
-      }
-      // TODO(nakai): sendonly, sendrecv を無効にする
-      if ((role === "downstream" || role === "recvonly") && browser() === "safari") {
+      if (browser() === "safari") {
+          console.log("safari");
           const appVersion = window.navigator.appVersion.toLowerCase();
           const versions = /version\/([\d.]+)/.exec(appVersion);
           if (!versions) {
               return false;
           }
-          const version = versions.pop();
-          // version 12.0 以降であれば有効
-          if (version && 12.0 < parseFloat(version)) {
+          const versionString = versions.pop();
+          if (!versionString) {
+              return false;
+          }
+          const version = parseFloat(versionString);
+          // 配信の場合は version 14.0 以降であれば有効
+          if ((role === "upstream" || role === "sendrecv" || role === "sendonly") && 14.0 <= version) {
               return true;
           }
-          if (version && 12.0 == parseFloat(version) && typeof video !== "boolean" && video.codec_type === "H264") {
-              // role が downstream で 'H264' の場合のみ有効
-              return true;
+          // 視聴の場合
+          if ((role === "downstream" || role === "recvonly") && 12.1 <= version) {
+              // version 12.1 以降であれば有効
+              if (12.1 <= version) {
+                  return true;
+              }
+              // version が 12.0 の場合 video codec type が H264 であれば有効
+              if (12.0 == version && typeof video !== "boolean" && video.codec_type === "H264") {
+                  return true;
+              }
           }
           return false;
       }
@@ -533,6 +538,7 @@
                   throw new Error("Simulcast Error");
               }
               await this.setSenderParameters(transceiver, message.encodings);
+              await this.setRemoteDescription(message);
           }
           const sessionDescription = await this.pc.createAnswer();
           await this.pc.setLocalDescription(sessionDescription);
