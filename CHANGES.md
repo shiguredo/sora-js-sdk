@@ -9,7 +9,7 @@
 - FIX
     - バグ修正
 
-## develop
+## 2020.3.0
 
 - [UPDATE] Safari 14 以降で Simulcast が使えるように変更
     - @yuitowest
