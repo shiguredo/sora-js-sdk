@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] Safari 14 以降で Simulcast が使えるように変更
+    - @yuitowest
+
 ## 2020.2.0
 
 - [UPDATE] sora-e2ee を 2020.2.0 に上げる
