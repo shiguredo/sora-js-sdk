@@ -27,6 +27,7 @@ In other languages, we won't be able to deal with them. Thank you for your under
 ## システム条件
 
 - WebRTC SFU Sora 2020.1 以降
+- TypeScript 3.8 以降
 
 ## サンプル
 
