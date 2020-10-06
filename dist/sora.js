@@ -351,56 +351,34 @@
               this.stream = null;
               return resolve();
           });
-          const closeWebSocket = new Promise((resolve, reject) => {
+          const closeWebSocket = new Promise((resolve, _reject) => {
               if (!this.ws)
                   return resolve();
-              let counter = 5;
-              const timerId = setInterval(() => {
-                  if (!this.ws) {
-                      clearInterval(timerId);
-                      return resolve();
-                  }
-                  if (this.ws.readyState === 3) {
-                      this.ws = null;
-                      clearInterval(timerId);
-                      return resolve();
-                  }
-                  --counter;
-                  if (counter < 0) {
-                      clearInterval(timerId);
-                      return reject("WebSocket Closing Error");
-                  }
-              }, 1000);
+              this.ws.send(JSON.stringify({ type: "disconnect" }));
               this.ws.close();
+              this.ws = null;
+              return resolve();
           });
-          const closePeerConnection = new Promise((resolve, reject) => {
-              // Safari は signalingState が常に stable のため個別に処理する
-              if (isSafari() && this.pc) {
-                  this.pc.oniceconnectionstatechange = null;
-                  this.pc.close();
-                  this.pc = null;
+          const closePeerConnection = new Promise((resolve, _reject) => {
+              if (!this.pc || this.pc.connectionState === "closed")
                   return resolve();
-              }
-              if (!this.pc || this.pc.signalingState === "closed")
-                  return resolve();
-              let counter = 5;
+              let counter = 50;
               const timerId = setInterval(() => {
                   if (!this.pc) {
                       clearInterval(timerId);
                       return resolve();
                   }
-                  if (this.pc.signalingState === "closed") {
+                  if (this.pc.connectionState === "closed") {
                       clearInterval(timerId);
-                      this.pc.oniceconnectionstatechange = null;
                       this.pc = null;
                       return resolve();
                   }
                   --counter;
                   if (counter < 0) {
                       clearInterval(timerId);
-                      return reject("PeerConnection Closing Error");
+                      return resolve();
                   }
-              }, 1000);
+              }, 100);
               this.pc.close();
           });
           if (this.e2ee) {
