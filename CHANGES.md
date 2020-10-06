@@ -11,6 +11,12 @@
 
 ## develop
 
+- [UPDATE] disconnect 処理を修正
+    - websocket で type: "disconnect" を send するように変更する
+    - websocket の readyState の監視をやめる
+    - peerConnection の 切断監視を signalingState から connectionState に変更する
+    - @yuitowest
+
 ## 2020.3.0
 
 - [UPDATE] Safari 14 以降で Simulcast が使えるように変更
