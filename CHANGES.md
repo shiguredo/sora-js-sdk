@@ -17,6 +17,9 @@
     - peerConnection の 切断監視を signalingState から connectionState に変更する
     - @yuitowest
 
+- [UPDATE] sora-e2ee のバージョンを 2020.3.0 に更新する
+    - @yuitowest
+
 ## 2020.3.0
 
 - [UPDATE] Safari 14 以降で Simulcast が使えるように変更
