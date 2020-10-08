@@ -46,6 +46,6 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "sora-e2ee": "^2020.2.0"
+    "sora-e2ee": "^2020.3.0"
   }
 }
