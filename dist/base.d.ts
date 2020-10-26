@@ -29,6 +29,8 @@ export default class ConnectionBase {
     protected sendAnswer(): void;
     protected sendUpdateAnswer(): void;
     protected onIceCandidate(): Promise<void>;
+    protected waitChangeConnectionStateConnected(): Promise<void>;
+    protected setConnectionTimeout(): Promise<MediaStream>;
     protected trace(title: string, message: any): void;
     private update;
     private setSenderParameters;

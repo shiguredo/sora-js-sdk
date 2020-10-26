@@ -300,6 +300,10 @@
           this.metadata = metadata;
           this.signalingUrl = signalingUrl;
           this.options = options;
+          // client timeout の初期値をセットする
+          if (this.options.timeout === undefined) {
+              this.options.timeout = 60000;
+          }
           this.constraints = null;
           this.debug = debug;
           this.clientId = null;
@@ -354,7 +358,9 @@
           const closeWebSocket = new Promise((resolve, _reject) => {
               if (!this.ws)
                   return resolve();
-              this.ws.send(JSON.stringify({ type: "disconnect" }));
+              if (this.ws.readyState === 1) {
+                  this.ws.send(JSON.stringify({ type: "disconnect" }));
+              }
               this.ws.close();
               this.ws = null;
               return resolve();
@@ -571,6 +577,47 @@
               }
           });
       }
+      waitChangeConnectionStateConnected() {
+          return new Promise((resolve, reject) => {
+              // connectionState が存在しない場合はそのまま抜ける
+              if (this.pc && this.pc.connectionState === undefined) {
+                  resolve();
+              }
+              const timerId = setInterval(() => {
+                  if (!this.pc) {
+                      const error = new Error();
+                      error.message = "PeerConnection connectionState did not change to 'connected'";
+                      clearInterval(timerId);
+                      reject(error);
+                  }
+                  else if (!this.ws || this.ws.readyState !== 1) {
+                      const error = new Error();
+                      error.message = "PeerConnection connectionState did not change to 'connected'";
+                      clearInterval(timerId);
+                      reject(error);
+                  }
+                  else if (this.pc && this.pc.connectionState === "connected") {
+                      clearInterval(timerId);
+                      resolve();
+                  }
+              }, 100);
+          });
+      }
+      setConnectionTimeout() {
+          return new Promise((_, reject) => {
+              if (this.options.timeout && 0 < this.options.timeout) {
+                  setTimeout(() => {
+                      if (this.pc && this.pc.connectionState !== "connected") {
+                          const error = new Error();
+                          error.message = "CONNECTION TIMEOUT";
+                          this.callbacks.timeout();
+                          this.disconnect();
+                          reject(error);
+                      }
+                  }, this.options.timeout);
+              }
+          });
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       trace(title, message) {
           this.callbacks.log(title, message);
@@ -604,25 +651,15 @@
   }
 
   class ConnectionPublisher extends ConnectionBase {
-      connect(stream) {
+      async connect(stream) {
           if (this.options.multistream) {
-              return this.multiStream(stream);
+              return await Promise.race([this.multiStream(stream), this.setConnectionTimeout()]);
           }
           else {
-              return this.singleStream(stream);
+              return await Promise.race([this.singleStream(stream), this.setConnectionTimeout()]);
           }
       }
       async singleStream(stream) {
-          let timeoutTimerId = 0;
-          if (this.options.timeout && 0 < this.options.timeout) {
-              timeoutTimerId = setTimeout(() => {
-                  const error = new Error();
-                  error.message = "CONNECTION TIMEOUT";
-                  this.callbacks.timeout();
-                  this.disconnect();
-                  Promise.reject(error);
-              }, this.options.timeout);
-          }
           await this.disconnect();
           this.startE2EE();
           const offer = await this.createOffer();
@@ -645,20 +682,10 @@
               });
           }
           await this.onIceCandidate();
-          clearTimeout(timeoutTimerId);
+          await this.waitChangeConnectionStateConnected();
           return stream;
       }
       async multiStream(stream) {
-          let timeoutTimerId = 0;
-          if (this.options.timeout && 0 < this.options.timeout) {
-              timeoutTimerId = setTimeout(() => {
-                  const error = new Error();
-                  error.message = "CONNECTION TIMEOUT";
-                  this.callbacks.timeout();
-                  this.disconnect();
-                  Promise.reject(error);
-              }, this.options.timeout);
-          }
           await this.disconnect();
           this.startE2EE();
           const offer = await this.createOffer();
@@ -715,31 +742,21 @@
               });
           }
           await this.onIceCandidate();
-          clearTimeout(timeoutTimerId);
+          await this.waitChangeConnectionStateConnected();
           return stream;
       }
   }
 
   class ConnectionSubscriber extends ConnectionBase {
-      connect() {
+      async connect() {
           if (this.options.multistream) {
-              return this.multiStream();
+              return await Promise.race([this.multiStream(), this.setConnectionTimeout()]);
           }
           else {
-              return this.singleStream();
+              return await Promise.race([this.singleStream(), this.setConnectionTimeout()]);
           }
       }
       async singleStream() {
-          let timeoutTimerId = 0;
-          if (this.options.timeout && 0 < this.options.timeout) {
-              timeoutTimerId = setTimeout(() => {
-                  const error = new Error();
-                  error.message = "CONNECTION TIMEOUT";
-                  this.callbacks.timeout();
-                  this.disconnect();
-                  Promise.reject(error);
-              }, this.options.timeout);
-          }
           await this.disconnect();
           this.startE2EE();
           const offer = await this.createOffer();
@@ -780,20 +797,10 @@
           await this.createAnswer(signalingMessage);
           this.sendAnswer();
           await this.onIceCandidate();
-          clearTimeout(timeoutTimerId);
+          await this.waitChangeConnectionStateConnected();
           return this.stream || new MediaStream();
       }
       async multiStream() {
-          let timeoutTimerId = 0;
-          if (this.options.timeout && 0 < this.options.timeout) {
-              timeoutTimerId = setTimeout(() => {
-                  const error = new Error();
-                  error.message = "CONNECTION TIMEOUT";
-                  this.callbacks.timeout();
-                  this.disconnect();
-                  Promise.reject(error);
-              }, this.options.timeout);
-          }
           await this.disconnect();
           this.startE2EE();
           const offer = await this.createOffer();
@@ -835,7 +842,7 @@
           await this.createAnswer(signalingMessage);
           this.sendAnswer();
           await this.onIceCandidate();
-          clearTimeout(timeoutTimerId);
+          await this.waitChangeConnectionStateConnected();
           return;
       }
   }
