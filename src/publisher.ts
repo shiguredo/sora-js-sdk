@@ -42,6 +42,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       });
     }
     await this.onIceCandidate();
+    await this.waitChangeConnectionStateConnected();
     clearTimeout(timeoutTimerId);
     return stream;
   }
@@ -110,6 +111,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       });
     }
     await this.onIceCandidate();
+    await this.waitChangeConnectionStateConnected();
     clearTimeout(timeoutTimerId);
     return stream;
   }

@@ -101,7 +101,9 @@ export default class ConnectionBase {
     });
     const closeWebSocket: Promise<void> = new Promise((resolve, _reject) => {
       if (!this.ws) return resolve();
-      this.ws.send(JSON.stringify({ type: "disconnect" }));
+      if (this.ws.readyState === 1) {
+        this.ws.send(JSON.stringify({ type: "disconnect" }));
+      }
       this.ws.close();
       this.ws = null;
       return resolve();
@@ -327,6 +329,32 @@ export default class ConnectionBase {
       }
     });
   }
+
+  protected waitChangeConnectionStateConnected(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // connectionState が存在しない場合はそのまま抜ける
+      if (this.pc && this.pc.connectionState === undefined) {
+        resolve();
+      }
+      const timerId = setInterval(() => {
+        if (!this.pc) {
+          const error = new Error();
+          error.message = "PeerConnection connectionState did not change to 'connected'";
+          clearInterval(timerId);
+          reject(error);
+        } else if (!this.ws || this.ws.readyState !== 1) {
+          const error = new Error();
+          error.message = "PeerConnection connectionState did not change to 'connected'";
+          clearInterval(timerId);
+          reject(error);
+        } else if (this.pc && this.pc.connectionState === "connected") {
+          clearInterval(timerId);
+          resolve();
+        }
+      }, 100);
+    });
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected trace(title: string, message: any): void {
     this.callbacks.log(title, message);

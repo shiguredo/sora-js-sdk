@@ -59,6 +59,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
     await this.onIceCandidate();
+    await this.waitChangeConnectionStateConnected();
     clearTimeout(timeoutTimerId);
     return this.stream || new MediaStream();
   }
@@ -113,6 +114,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
     await this.onIceCandidate();
+    await this.waitChangeConnectionStateConnected();
     clearTimeout(timeoutTimerId);
     return;
   }
