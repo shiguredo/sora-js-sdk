@@ -46,6 +46,10 @@ export default class ConnectionBase {
     this.metadata = metadata;
     this.signalingUrl = signalingUrl;
     this.options = options;
+    // client timeout の初期値をセットする
+    if (this.options.timeout === undefined) {
+      this.options.timeout = 60000;
+    }
     this.constraints = null;
     this.debug = debug;
     this.clientId = null;
@@ -352,6 +356,22 @@ export default class ConnectionBase {
           resolve();
         }
       }, 100);
+    });
+  }
+
+  protected setConnectionTimeout(): Promise<MediaStream> {
+    return new Promise((_, reject) => {
+      if (this.options.timeout && 0 < this.options.timeout) {
+        setTimeout(() => {
+          if (this.pc && this.pc.connectionState !== "connected") {
+            const error = new Error();
+            error.message = "CONNECTION TIMEOUT";
+            this.callbacks.timeout();
+            this.disconnect();
+            reject(error);
+          }
+        }, this.options.timeout);
+      }
     });
   }
 

@@ -1,25 +1,15 @@
 import ConnectionBase from "./base";
 
 export default class ConnectionPublisher extends ConnectionBase {
-  connect(stream: MediaStream): Promise<MediaStream> {
+  async connect(stream: MediaStream): Promise<MediaStream> {
     if (this.options.multistream) {
-      return this.multiStream(stream);
+      return await Promise.race([this.multiStream(stream), this.setConnectionTimeout()]);
     } else {
-      return this.singleStream(stream);
+      return await Promise.race([this.singleStream(stream), this.setConnectionTimeout()]);
     }
   }
 
   private async singleStream(stream: MediaStream): Promise<MediaStream> {
-    let timeoutTimerId = 0;
-    if (this.options.timeout && 0 < this.options.timeout) {
-      timeoutTimerId = setTimeout(() => {
-        const error = new Error();
-        error.message = "CONNECTION TIMEOUT";
-        this.callbacks.timeout();
-        this.disconnect();
-        Promise.reject(error);
-      }, this.options.timeout);
-    }
     await this.disconnect();
     this.startE2EE();
     const offer = await this.createOffer();
@@ -43,22 +33,10 @@ export default class ConnectionPublisher extends ConnectionBase {
     }
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
-    clearTimeout(timeoutTimerId);
     return stream;
   }
 
   private async multiStream(stream: MediaStream): Promise<MediaStream> {
-    let timeoutTimerId = 0;
-    if (this.options.timeout && 0 < this.options.timeout) {
-      timeoutTimerId = setTimeout(() => {
-        const error = new Error();
-        error.message = "CONNECTION TIMEOUT";
-        this.callbacks.timeout();
-        this.disconnect();
-        Promise.reject(error);
-      }, this.options.timeout);
-    }
-
     await this.disconnect();
     this.startE2EE();
     const offer = await this.createOffer();
@@ -112,7 +90,6 @@ export default class ConnectionPublisher extends ConnectionBase {
     }
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
-    clearTimeout(timeoutTimerId);
     return stream;
   }
 }
