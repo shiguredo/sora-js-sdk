@@ -113,7 +113,7 @@ export default class ConnectionBase {
       return resolve();
     });
     const closePeerConnection: Promise<void> = new Promise((resolve, _reject) => {
-      if (!this.pc || this.pc.connectionState === "closed") return resolve();
+      if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) return resolve();
       let counter = 50;
       const timerId = setInterval(() => {
         if (!this.pc) {
