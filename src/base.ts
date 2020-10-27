@@ -163,8 +163,10 @@ export default class ConnectionBase {
       if (this.ws === null) {
         this.ws = new WebSocket(this.signalingUrl);
       }
-      this.ws.onclose = (e): void => {
-        reject(e);
+      this.ws.onclose = (event): void => {
+        const error = new Error();
+        error.message = `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`;
+        reject(error);
       };
       this.ws.onopen = (): void => {
         this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
