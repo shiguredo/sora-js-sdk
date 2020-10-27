@@ -365,7 +365,7 @@
               return resolve();
           });
           const closePeerConnection = new Promise((resolve, _reject) => {
-              if (!this.pc || this.pc.connectionState === "closed")
+              if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined)
                   return resolve();
               let counter = 50;
               const timerId = setInterval(() => {
