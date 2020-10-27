@@ -409,8 +409,10 @@
               if (this.ws === null) {
                   this.ws = new WebSocket(this.signalingUrl);
               }
-              this.ws.onclose = (e) => {
-                  reject(e);
+              this.ws.onclose = (event) => {
+                  const error = new Error();
+                  error.message = `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`;
+                  reject(error);
               };
               this.ws.onopen = () => {
                   this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
