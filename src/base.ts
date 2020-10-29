@@ -280,6 +280,8 @@ export default class ConnectionBase {
       }
       await this.setSenderParameters(transceiver, message.encodings);
       await this.setRemoteDescription(message);
+      // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
+      await this.setSenderParameters(transceiver, message.encodings);
     }
     const sessionDescription = await this.pc.createAnswer();
     await this.pc.setLocalDescription(sessionDescription);
