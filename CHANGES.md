@@ -10,6 +10,7 @@
     - バグ修正
 
 ## develop
+
 - [CHANGE] signaling 時に処理に失敗した場合の reject の引数を CloseEvent オブジェクトから Error オブジェクトに変更する
     - @yuitowest
 - [CHANGE] connect() のタイムアウト処理にデフォルト値を設定する
@@ -24,6 +25,9 @@
     - @yuitowest
 - [UPDATE] sora-e2ee のバージョンを 2020.3.0 に更新する
     - @yuitowest
+- [FIX] `package.json` に定義されている `module` の向き先を `dist/sora.mjs` に変更し、対象ファイルがビルドされるよう Rollup の設定を追加する
+    - https://github.com/shiguredo/sora-js-sdk/pull/44
+    - @rosylilly
 
 ## 2020.3.0
 
