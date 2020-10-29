@@ -3,7 +3,7 @@
   "version": "2020.3.0",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.min.js",
-  "module": "dist/sora.min.js",
+  "module": "dist/sora.mjs",
   "types": "dist/sora.d.ts",
   "scripts": {
     "build": "NODE_ENV=development rollup -c",

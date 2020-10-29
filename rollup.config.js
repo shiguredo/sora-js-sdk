@@ -61,5 +61,25 @@ export default [
       name: 'Sora',
       banner: banner
     }
+  },
+  {
+    input: 'src/sora.ts',
+    plugins: [
+      replace({
+        SORA_JS_SDK_VERSION: `'${pkg.version}'`
+      }),
+      resolve(),
+      typescript({
+        tsconfig: './tsconfig.json'
+      }),
+      commonjs(),
+    ],
+    output: {
+      sourcemap: false,
+      file: 'dist/sora.mjs',
+      format: 'module',
+      name: 'Sora',
+      banner: banner
+    }
   }
 ];
