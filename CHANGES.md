@@ -28,6 +28,8 @@
 - [FIX] `package.json` に定義されている `module` の向き先を `dist/sora.mjs` に変更し、対象ファイルがビルドされるよう Rollup の設定を追加する
     - https://github.com/shiguredo/sora-js-sdk/pull/44
     - @rosylilly
+- [UPDATE] simulcast で active パラメーターを有効にするための実装を追加する
+    - @yuitowest
 
 ## 2020.3.0
 
