@@ -9,7 +9,7 @@
 - FIX
     - バグ修正
 
-## develop
+## 2020.4.0
 
 - [CHANGE] signaling 時に処理に失敗した場合の reject の引数を CloseEvent オブジェクトから Error オブジェクトに変更する
     - @yuitowest
