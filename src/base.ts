@@ -46,6 +46,10 @@ export default class ConnectionBase {
     this.metadata = metadata;
     this.signalingUrl = signalingUrl;
     this.options = options;
+    // client timeout の初期値をセットする
+    if (this.options.timeout === undefined) {
+      this.options.timeout = 60000;
+    }
     this.constraints = null;
     this.debug = debug;
     this.clientId = null;
@@ -99,56 +103,34 @@ export default class ConnectionBase {
       this.stream = null;
       return resolve();
     });
-    const closeWebSocket: Promise<void> = new Promise((resolve, reject) => {
+    const closeWebSocket: Promise<void> = new Promise((resolve, _reject) => {
       if (!this.ws) return resolve();
-
-      let counter = 5;
-      const timerId = setInterval(() => {
-        if (!this.ws) {
-          clearInterval(timerId);
-          return resolve();
-        }
-        if (this.ws.readyState === 3) {
-          this.ws = null;
-          clearInterval(timerId);
-          return resolve();
-        }
-        --counter;
-        if (counter < 0) {
-          clearInterval(timerId);
-          return reject("WebSocket Closing Error");
-        }
-      }, 1000);
-      this.ws.close();
-    });
-    const closePeerConnection: Promise<void> = new Promise((resolve, reject) => {
-      // Safari は signalingState が常に stable のため個別に処理する
-      if (isSafari() && this.pc) {
-        this.pc.oniceconnectionstatechange = null;
-        this.pc.close();
-        this.pc = null;
-        return resolve();
+      if (this.ws.readyState === 1) {
+        this.ws.send(JSON.stringify({ type: "disconnect" }));
       }
-      if (!this.pc || this.pc.signalingState === "closed") return resolve();
-
-      let counter = 5;
+      this.ws.close();
+      this.ws = null;
+      return resolve();
+    });
+    const closePeerConnection: Promise<void> = new Promise((resolve, _reject) => {
+      if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) return resolve();
+      let counter = 50;
       const timerId = setInterval(() => {
         if (!this.pc) {
           clearInterval(timerId);
           return resolve();
         }
-        if (this.pc.signalingState === "closed") {
+        if (this.pc.connectionState === "closed") {
           clearInterval(timerId);
-          this.pc.oniceconnectionstatechange = null;
           this.pc = null;
           return resolve();
         }
         --counter;
         if (counter < 0) {
           clearInterval(timerId);
-          return reject("PeerConnection Closing Error");
+          return resolve();
         }
-      }, 1000);
+      }, 100);
       this.pc.close();
     });
     if (this.e2ee) {
@@ -181,8 +163,10 @@ export default class ConnectionBase {
       if (this.ws === null) {
         this.ws = new WebSocket(this.signalingUrl);
       }
-      this.ws.onclose = (e): void => {
-        reject(e);
+      this.ws.onclose = (event): void => {
+        const error = new Error();
+        error.message = `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`;
+        reject(error);
       };
       this.ws.onopen = (): void => {
         this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
@@ -296,6 +280,8 @@ export default class ConnectionBase {
       }
       await this.setSenderParameters(transceiver, message.encodings);
       await this.setRemoteDescription(message);
+      // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
+      await this.setSenderParameters(transceiver, message.encodings);
     }
     const sessionDescription = await this.pc.createAnswer();
     await this.pc.setLocalDescription(sessionDescription);
@@ -351,6 +337,48 @@ export default class ConnectionBase {
       }
     });
   }
+
+  protected waitChangeConnectionStateConnected(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // connectionState が存在しない場合はそのまま抜ける
+      if (this.pc && this.pc.connectionState === undefined) {
+        resolve();
+      }
+      const timerId = setInterval(() => {
+        if (!this.pc) {
+          const error = new Error();
+          error.message = "PeerConnection connectionState did not change to 'connected'";
+          clearInterval(timerId);
+          reject(error);
+        } else if (!this.ws || this.ws.readyState !== 1) {
+          const error = new Error();
+          error.message = "PeerConnection connectionState did not change to 'connected'";
+          clearInterval(timerId);
+          reject(error);
+        } else if (this.pc && this.pc.connectionState === "connected") {
+          clearInterval(timerId);
+          resolve();
+        }
+      }, 100);
+    });
+  }
+
+  protected setConnectionTimeout(): Promise<MediaStream> {
+    return new Promise((_, reject) => {
+      if (this.options.timeout && 0 < this.options.timeout) {
+        setTimeout(() => {
+          if (this.pc && this.pc.connectionState !== "connected") {
+            const error = new Error();
+            error.message = "CONNECTION TIMEOUT";
+            this.callbacks.timeout();
+            this.disconnect();
+            reject(error);
+          }
+        }, this.options.timeout);
+      }
+    });
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected trace(title: string, message: any): void {
     this.callbacks.log(title, message);

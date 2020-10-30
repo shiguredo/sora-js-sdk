@@ -2165,8 +2165,6 @@ get-stream@^4.0.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/get-stream/-/get-stream-4.1.0.tgz#c1b255575f3dc21d59bfc79cd3d2b46b1c3a54b5"
   integrity sha512-GMat4EJ5161kIy2HevLlr4luNjBgvmj413KaQA7jt4V8B4RDsfpHk7WQ9GVqfYyyx8OS/L66Kox+rJRNklLK7w==
-  dependencies:
-    pump "^3.0.0"
 
 get-stream@^5.0.0:
   version "5.1.0"
@@ -4119,10 +4117,10 @@ snapdragon@^0.8.1:
     source-map-resolve "^0.5.0"
     use "^3.1.0"
 
-sora-e2ee@^2020.2.0:
-  version "2020.2.0"
-  resolved "https://registry.yarnpkg.com/sora-e2ee/-/sora-e2ee-2020.2.0.tgz#332ec78f1bce0b3cf843edfe0bf460ce1deba168"
-  integrity sha512-beP2iXJphHxyTQ1ngYg4b+KlOH4RHhWdWxixsR57KXD9ZHggNhlDSCw0ydw5RtkDL8rbrxM043Qgcq3XVgeLDQ==
+sora-e2ee@^2020.3.0:
+  version "2020.3.0"
+  resolved "https://registry.yarnpkg.com/sora-e2ee/-/sora-e2ee-2020.3.0.tgz#0dd2e952e2c98044dbeeb7ba97a1cf36b1b571d5"
+  integrity sha512-DEKkG3MH05D5t4iUvp230JzV9sc3CT/OzzHMN7FyyQ6aRt59wc2+9TLO3BY2f3RPXTDJMyLbM+ca8X8oroXq0A==
 
 source-map-resolve@^0.5.0:
   version "0.5.3"

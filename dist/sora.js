@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2020.3.0
+ * @version: 2020.4.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -51,7 +51,6 @@
           return false;
       }
       if (browser() === "safari") {
-          console.log("safari");
           const appVersion = window.navigator.appVersion.toLowerCase();
           const versions = /version\/([\d.]+)/.exec(appVersion);
           if (!versions) {
@@ -102,7 +101,7 @@
           type: "connect",
           // @ts-ignore
           // eslint-disable-next-line @typescript-eslint/camelcase
-          sora_client: `Sora JavaScript SDK ${'2020.3.0'}`,
+          sora_client: `Sora JavaScript SDK ${'2020.4.0'}`,
           environment: window.navigator.userAgent,
           role: role,
           // eslint-disable-next-line @typescript-eslint/camelcase
@@ -286,10 +285,10 @@
   /**
    * sora-e2ee
    * WebRTC SFU Sora JavaScript E2EE Library
-   * @version: 2020.2.0
+   * @version: 2020.3.0-dev
    * @author: Shiguredo Inc.
    * @license: Apache-2.0
-   **/(function(a,b){module.exports=b();})(commonjsGlobal,function(){return class a{constructor(a){const b=!!RTCRtpSender.prototype.createEncodedStreams;if(!b)throw new Error("E2EE is not supported in this browser");this.worker=null,this.masterKey=new TextEncoder().encode(a),this.onWorkerDisconnect=null;}startWorker(){const a=atob("bGV0IG1hc3RlcktleSxtYXRlcmlhbDtjb25zdCBkZXJpdmVLZXlNYXA9bmV3IE1hcCxzZXFOdW1NYXA9bmV3IE1hcCx3cml0ZUlWTWFwPW5ldyBNYXAsc2VxTnVtTGVuZ3RoPTQsc3NyY0xlbmd0aD00LHBhZGRpbmdMZW5ndGg9OCx1bmVuY3J5cHRlZEJ5dGVzPXtrZXk6MTAsZGVsdGE6Myx1bmRlZmluZWQ6MX07ZnVuY3Rpb24gZ2V0U2VxTnVtKGEpe3JldHVybiBzZXFOdW1NYXAuZ2V0KGEpfHwwfWZ1bmN0aW9uIHNldFNlcU51bShhLGIpe3NlcU51bU1hcC5zZXQoYSxiKX1hc3luYyBmdW5jdGlvbiBnZW5lcmF0ZURlcml2ZUtleShhLGIpe2xldCBjPWRlcml2ZUtleU1hcC5nZXQoYSk7cmV0dXJuIGN8fChjPWF3YWl0IGNyeXB0by5zdWJ0bGUuZGVyaXZlS2V5KHtuYW1lOiJQQktERjIiLHNhbHQ6YixpdGVyYXRpb25zOjFlNCxoYXNoOiJTSEEtMjU2In0sbWF0ZXJpYWwse25hbWU6IkFFUy1HQ00iLGxlbmd0aDoxMjh9LCExLFsiZW5jcnlwdCIsImRlY3J5cHQiXSksZGVyaXZlS2V5TWFwLnNldChhLGMpKSxjfWFzeW5jIGZ1bmN0aW9uIGdlbmVyYXRlSVYoYSxiLGMpe2xldCBkPXdyaXRlSVZNYXAuZ2V0KGEpO2lmKCFkKXtjb25zdCBjPWF3YWl0IGNyeXB0by5zdWJ0bGUuZGVyaXZlQml0cyh7bmFtZToiUEJLREYyIixzYWx0OmIsaXRlcmF0aW9uczoxZTQsaGFzaDp7bmFtZToiU0hBLTM4NCJ9fSxtYXRlcmlhbCw5Nik7ZD1uZXcgVWludDhBcnJheShjKSx3cml0ZUlWTWFwLnNldChhLGQpfWNvbnN0IGU9bmV3IFVpbnQ4QXJyYXkocGFkZGluZ0xlbmd0aCtzZXFOdW1MZW5ndGgpO2Uuc2V0KG5ldyBVaW50OEFycmF5KGMuYnVmZmVyKSxwYWRkaW5nTGVuZ3RoKTtjb25zdCBmPW5ldyBVaW50OEFycmF5KGUuYnl0ZUxlbmd0aCk7Zm9yKGxldCBnPTA7ZzxlLmJ5dGVMZW5ndGg7ZysrKWZbZ109ZVtnXV5kW2ddO3JldHVybiBmfWFzeW5jIGZ1bmN0aW9uIGVuY3J5cHRGdW5jdGlvbihhLGIpe2NvbnN0IGM9YS5zeW5jaHJvbml6YXRpb25Tb3VyY2UsZD1VaW50MzJBcnJheS5vZihjKSxlPWdldFNlcU51bShjKTtlPj00Mjk0OTY3Mjk2JiZwb3N0TWVzc2FnZSh7b3BlcmF0aW9uOiJkaXNjb25uZWN0In0pO2NvbnN0IGY9VWludDMyQXJyYXkub2YoZSksZz1hd2FpdCBnZW5lcmF0ZURlcml2ZUtleShjLGQpLGg9YXdhaXQgZ2VuZXJhdGVJVihjLGQsZiksaT1hd2FpdCBjcnlwdG8uc3VidGxlLmVuY3J5cHQoe25hbWU6IkFFUy1HQ00iLGl2OmgsYWRkaXRpb25hbERhdGE6bmV3IFVpbnQ4QXJyYXkoYS5kYXRhLDAsdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKX0sZyxuZXcgVWludDhBcnJheShhLmRhdGEsdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKSksaj1uZXcgQXJyYXlCdWZmZXIodW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdK2kuYnl0ZUxlbmd0aCtkLmJ5dGVMZW5ndGgrZi5ieXRlTGVuZ3RoKSxrPW5ldyBVaW50OEFycmF5KGopO2suc2V0KG5ldyBVaW50OEFycmF5KGEuZGF0YSwwLHVuZW5jcnlwdGVkQnl0ZXNbYS50eXBlXSkpLGsuc2V0KG5ldyBVaW50OEFycmF5KGkpLHVuZW5jcnlwdGVkQnl0ZXNbYS50eXBlXSksay5zZXQobmV3IFVpbnQ4QXJyYXkoZC5idWZmZXIpLHVuZW5jcnlwdGVkQnl0ZXNbYS50eXBlXStpLmJ5dGVMZW5ndGgpLGsuc2V0KG5ldyBVaW50OEFycmF5KGYuYnVmZmVyKSx1bmVuY3J5cHRlZEJ5dGVzW2EudHlwZV0raS5ieXRlTGVuZ3RoK2QuYnl0ZUxlbmd0aCksYS5kYXRhPWosYi5lbnF1ZXVlKGEpLHNldFNlcU51bShjLGUrMSl9YXN5bmMgZnVuY3Rpb24gZGVjcnlwdEZ1bmN0aW9uKGEsYil7Y29uc3QgYz1hLmRhdGEuc2xpY2UoYS5kYXRhLmJ5dGVMZW5ndGgtKHNzcmNMZW5ndGgrc2VxTnVtTGVuZ3RoKSxhLmRhdGEuYnl0ZUxlbmd0aCksZD1jLnNsaWNlKDAsc3NyY0xlbmd0aCksZT1uZXcgVWludDMyQXJyYXkoZCksZj1jLnNsaWNlKHNzcmNMZW5ndGgsYy5ieXRlTGVuZ3RoKSxnPW5ldyBVaW50MzJBcnJheShmKSxoPWVbMF0saT1hd2FpdCBnZW5lcmF0ZURlcml2ZUtleShoLGUpLGo9YXdhaXQgZ2VuZXJhdGVJVihoLGUsZyksaz11bmVuY3J5cHRlZEJ5dGVzW2EudHlwZV0sbD1hLmRhdGEuYnl0ZUxlbmd0aC0odW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdK3NzcmNMZW5ndGgrc2VxTnVtTGVuZ3RoKTtsZXQgbTt0cnl7bT1hd2FpdCBjcnlwdG8uc3VidGxlLmRlY3J5cHQoe25hbWU6IkFFUy1HQ00iLGl2OmosYWRkaXRpb25hbERhdGE6bmV3IFVpbnQ4QXJyYXkoYS5kYXRhLDAsdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKX0saSxuZXcgVWludDhBcnJheShhLmRhdGEsayxsKSl9Y2F0Y2goYyl7aWYoYS50eXBlPT09dm9pZCAwKXtjb25zdCBiPW5ldyBBcnJheUJ1ZmZlcigzKSxjPW5ldyBVaW50OEFycmF5KGIpO2Muc2V0KFsyMTYsMjU1LDI1NF0pLGEuZGF0YT1ifWVsc2V7Y29uc3QgYj1uZXcgQXJyYXlCdWZmZXIoNjApLGM9bmV3IFVpbnQ4QXJyYXkoYik7Yy5zZXQoWzE3Niw1LDAsMTU3LDEsNDIsMTYwLDAsOTAsMCw1NywzLDAsMCwyOCwzNCwyMiwyMiwzNCwxMDIsMTgsMzIsNCwxNDQsNjQsMCwxOTcsMSwyMjQsMTI0LDc3LDQ3LDI1MCwyMjEsNzcsMTY1LDEyNywxMzcsMTY1LDI1NSw5MSwxNjksMTgwLDE3NSwyNDEsNTIsMTkxLDIzNSwxMTcsNTQsMTQ5LDI1NCwzOCwxNTAsOTYsMjU0LDI1NSwxODYsMjU1LDY0XSksYS5kYXRhPWJ9cmV0dXJuIHZvaWQgYi5lbnF1ZXVlKGEpfWNvbnN0IG49bmV3IEFycmF5QnVmZmVyKHVuZW5jcnlwdGVkQnl0ZXNbYS50eXBlXSttLmJ5dGVMZW5ndGgpLG89bmV3IFVpbnQ4QXJyYXkobik7by5zZXQobmV3IFVpbnQ4QXJyYXkoYS5kYXRhLDAsdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKSksby5zZXQobmV3IFVpbnQ4QXJyYXkobSksdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKSxhLmRhdGE9bixiLmVucXVldWUoYSl9b25tZXNzYWdlPWFzeW5jIGE9Pntjb25zdHtvcGVyYXRpb246Yn09YS5kYXRhO2lmKCJlbmNyeXB0Ij09PWIpe2NvbnN0e3JlYWRhYmxlU3RyZWFtOmIsd3JpdGFibGVTdHJlYW06Y309YS5kYXRhLGQ9bmV3IFRyYW5zZm9ybVN0cmVhbSh7dHJhbnNmb3JtOmVuY3J5cHRGdW5jdGlvbn0pO2IucGlwZVRocm91Z2goZCkucGlwZVRvKGMpfWVsc2UgaWYoImRlY3J5cHQiPT09Yil7Y29uc3R7cmVhZGFibGVTdHJlYW06Yix3cml0YWJsZVN0cmVhbTpjfT1hLmRhdGEsZD1uZXcgVHJhbnNmb3JtU3RyZWFtKHt0cmFuc2Zvcm06ZGVjcnlwdEZ1bmN0aW9ufSk7Yi5waXBlVGhyb3VnaChkKS5waXBlVG8oYyl9ZWxzZSJzZXRLZXkiPT09Yj8obWFzdGVyS2V5PWEuZGF0YS5tYXN0ZXJLZXksbWF0ZXJpYWw9YXdhaXQgY3J5cHRvLnN1YnRsZS5pbXBvcnRLZXkoInJhdyIsbWFzdGVyS2V5LCJQQktERjIiLCExLFsiZGVyaXZlQml0cyIsImRlcml2ZUtleSJdKSk6ImNsZWFyIj09PWImJihkZXJpdmVLZXlNYXAuY2xlYXIoKSxzZXFOdW1NYXAuY2xlYXIoKSx3cml0ZUlWTWFwLmNsZWFyKCkpfTsK");this.worker=new Worker(URL.createObjectURL(new Blob([a],{type:"application/javascript"}))),this.worker.onmessage=a=>{const{operation:b}=a.data;"disconnect"===b&&"function"==typeof this.onWorkerDisconnect&&this.onWorkerDisconnect();},this.worker.postMessage({operation:"setKey",masterKey:this.masterKey});}terminateWorker(){this.worker&&this.worker.terminate();}setupSenderTransform(a){if(a.track){const b=a.createEncodedStreams();this.worker&&this.worker.postMessage({operation:"encrypt",readableStream:b.readableStream,writableStream:b.writableStream},[b.readableStream,b.writableStream]);}}setupReceiverTransform(a){const b=a.createEncodedStreams();this.worker&&this.worker.postMessage({operation:"decrypt",readableStream:b.readableStream,writableStream:b.writableStream},[b.readableStream,b.writableStream]);}static version(){return "2020.2.0"}}});
+   **/(function(a,b){module.exports=b();})(commonjsGlobal,function(){return class a{constructor(a){const b=!!RTCRtpSender.prototype.createEncodedStreams;if(!b)throw new Error("E2EE is not supported in this browser");this.worker=null,this.masterKey=new TextEncoder().encode(a),this.onWorkerDisconnect=null;}startWorker(){const a=atob("bGV0IG1hc3RlcktleSxtYXRlcmlhbDtjb25zdCBkZXJpdmVLZXlNYXA9bmV3IE1hcCxzZXFOdW1NYXA9bmV3IE1hcCx3cml0ZUlWTWFwPW5ldyBNYXAsc2VxTnVtTGVuZ3RoPTQsc3NyY0xlbmd0aD00LHBhZGRpbmdMZW5ndGg9OCx1bmVuY3J5cHRlZEJ5dGVzPXtrZXk6MTAsZGVsdGE6Myx1bmRlZmluZWQ6MX07ZnVuY3Rpb24gZ2V0U2VxTnVtKGEpe3JldHVybiBzZXFOdW1NYXAuZ2V0KGEpfHwwfWZ1bmN0aW9uIHNldFNlcU51bShhLGIpe3NlcU51bU1hcC5zZXQoYSxiKX1hc3luYyBmdW5jdGlvbiBnZW5lcmF0ZURlcml2ZUtleShhLGIpe2xldCBjPWRlcml2ZUtleU1hcC5nZXQoYSk7cmV0dXJuIGN8fChjPWF3YWl0IGNyeXB0by5zdWJ0bGUuZGVyaXZlS2V5KHtuYW1lOiJQQktERjIiLHNhbHQ6YixpdGVyYXRpb25zOjFlNCxoYXNoOiJTSEEtMjU2In0sbWF0ZXJpYWwse25hbWU6IkFFUy1HQ00iLGxlbmd0aDoxMjh9LCExLFsiZW5jcnlwdCIsImRlY3J5cHQiXSksZGVyaXZlS2V5TWFwLnNldChhLGMpKSxjfWFzeW5jIGZ1bmN0aW9uIGdlbmVyYXRlSVYoYSxiLGMpe2xldCBkPXdyaXRlSVZNYXAuZ2V0KGEpO2lmKCFkKXtjb25zdCBjPWF3YWl0IGNyeXB0by5zdWJ0bGUuZGVyaXZlQml0cyh7bmFtZToiUEJLREYyIixzYWx0OmIsaXRlcmF0aW9uczoxZTQsaGFzaDp7bmFtZToiU0hBLTM4NCJ9fSxtYXRlcmlhbCw5Nik7ZD1uZXcgVWludDhBcnJheShjKSx3cml0ZUlWTWFwLnNldChhLGQpfWNvbnN0IGU9bmV3IFVpbnQ4QXJyYXkocGFkZGluZ0xlbmd0aCtzZXFOdW1MZW5ndGgpO2Uuc2V0KG5ldyBVaW50OEFycmF5KGMuYnVmZmVyKSxwYWRkaW5nTGVuZ3RoKTtjb25zdCBmPW5ldyBVaW50OEFycmF5KGUuYnl0ZUxlbmd0aCk7Zm9yKGxldCBnPTA7ZzxlLmJ5dGVMZW5ndGg7ZysrKWZbZ109ZVtnXV5kW2ddO3JldHVybiBmfWFzeW5jIGZ1bmN0aW9uIGVuY3J5cHRGdW5jdGlvbihhLGIpe2NvbnN0IGM9YS5zeW5jaHJvbml6YXRpb25Tb3VyY2UsZD1VaW50MzJBcnJheS5vZihjKSxlPWdldFNlcU51bShjKTtlPj00Mjk0OTY3Mjk2JiZwb3N0TWVzc2FnZSh7b3BlcmF0aW9uOiJkaXNjb25uZWN0In0pO2NvbnN0IGY9VWludDMyQXJyYXkub2YoZSksZz1hd2FpdCBnZW5lcmF0ZURlcml2ZUtleShjLGQpLGg9YXdhaXQgZ2VuZXJhdGVJVihjLGQsZiksaT1hd2FpdCBjcnlwdG8uc3VidGxlLmVuY3J5cHQoe25hbWU6IkFFUy1HQ00iLGl2OmgsYWRkaXRpb25hbERhdGE6bmV3IFVpbnQ4QXJyYXkoYS5kYXRhLDAsdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKX0sZyxuZXcgVWludDhBcnJheShhLmRhdGEsdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKSksaj1uZXcgQXJyYXlCdWZmZXIodW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdK2kuYnl0ZUxlbmd0aCtkLmJ5dGVMZW5ndGgrZi5ieXRlTGVuZ3RoKSxrPW5ldyBVaW50OEFycmF5KGopO2suc2V0KG5ldyBVaW50OEFycmF5KGEuZGF0YSwwLHVuZW5jcnlwdGVkQnl0ZXNbYS50eXBlXSkpLGsuc2V0KG5ldyBVaW50OEFycmF5KGkpLHVuZW5jcnlwdGVkQnl0ZXNbYS50eXBlXSksay5zZXQobmV3IFVpbnQ4QXJyYXkoZC5idWZmZXIpLHVuZW5jcnlwdGVkQnl0ZXNbYS50eXBlXStpLmJ5dGVMZW5ndGgpLGsuc2V0KG5ldyBVaW50OEFycmF5KGYuYnVmZmVyKSx1bmVuY3J5cHRlZEJ5dGVzW2EudHlwZV0raS5ieXRlTGVuZ3RoK2QuYnl0ZUxlbmd0aCksYS5kYXRhPWosYi5lbnF1ZXVlKGEpLHNldFNlcU51bShjLGUrMSl9YXN5bmMgZnVuY3Rpb24gZGVjcnlwdEZ1bmN0aW9uKGEsYil7Y29uc3QgYz1hLmRhdGEuc2xpY2UoYS5kYXRhLmJ5dGVMZW5ndGgtKHNzcmNMZW5ndGgrc2VxTnVtTGVuZ3RoKSxhLmRhdGEuYnl0ZUxlbmd0aCksZD1jLnNsaWNlKDAsc3NyY0xlbmd0aCksZT1uZXcgVWludDMyQXJyYXkoZCksZj1jLnNsaWNlKHNzcmNMZW5ndGgsYy5ieXRlTGVuZ3RoKSxnPW5ldyBVaW50MzJBcnJheShmKSxoPWVbMF0saT1hd2FpdCBnZW5lcmF0ZURlcml2ZUtleShoLGUpLGo9YXdhaXQgZ2VuZXJhdGVJVihoLGUsZyksaz11bmVuY3J5cHRlZEJ5dGVzW2EudHlwZV0sbD1hLmRhdGEuYnl0ZUxlbmd0aC0odW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdK3NzcmNMZW5ndGgrc2VxTnVtTGVuZ3RoKTtsZXQgbTt0cnl7bT1hd2FpdCBjcnlwdG8uc3VidGxlLmRlY3J5cHQoe25hbWU6IkFFUy1HQ00iLGl2OmosYWRkaXRpb25hbERhdGE6bmV3IFVpbnQ4QXJyYXkoYS5kYXRhLDAsdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKX0saSxuZXcgVWludDhBcnJheShhLmRhdGEsayxsKSl9Y2F0Y2goYyl7aWYoYS50eXBlPT09dm9pZCAwKXtjb25zdCBiPW5ldyBBcnJheUJ1ZmZlcigzKSxjPW5ldyBVaW50OEFycmF5KGIpO2Muc2V0KFsyMTYsMjU1LDI1NF0pLGEuZGF0YT1ifWVsc2V7Y29uc3QgYj1uZXcgQXJyYXlCdWZmZXIoNjApLGM9bmV3IFVpbnQ4QXJyYXkoYik7Yy5zZXQoWzE3Niw1LDAsMTU3LDEsNDIsMTYwLDAsOTAsMCw1NywzLDAsMCwyOCwzNCwyMiwyMiwzNCwxMDIsMTgsMzIsNCwxNDQsNjQsMCwxOTcsMSwyMjQsMTI0LDc3LDQ3LDI1MCwyMjEsNzcsMTY1LDEyNywxMzcsMTY1LDI1NSw5MSwxNjksMTgwLDE3NSwyNDEsNTIsMTkxLDIzNSwxMTcsNTQsMTQ5LDI1NCwzOCwxNTAsOTYsMjU0LDI1NSwxODYsMjU1LDY0XSksYS5kYXRhPWJ9cmV0dXJuIHZvaWQgYi5lbnF1ZXVlKGEpfWNvbnN0IG49bmV3IEFycmF5QnVmZmVyKHVuZW5jcnlwdGVkQnl0ZXNbYS50eXBlXSttLmJ5dGVMZW5ndGgpLG89bmV3IFVpbnQ4QXJyYXkobik7by5zZXQobmV3IFVpbnQ4QXJyYXkoYS5kYXRhLDAsdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKSksby5zZXQobmV3IFVpbnQ4QXJyYXkobSksdW5lbmNyeXB0ZWRCeXRlc1thLnR5cGVdKSxhLmRhdGE9bixiLmVucXVldWUoYSl9b25tZXNzYWdlPWFzeW5jIGE9Pntjb25zdHtvcGVyYXRpb246Yn09YS5kYXRhO2lmKCJlbmNyeXB0Ij09PWIpe2NvbnN0e3JlYWRhYmxlU3RyZWFtOmIsd3JpdGFibGVTdHJlYW06Y309YS5kYXRhLGQ9bmV3IFRyYW5zZm9ybVN0cmVhbSh7dHJhbnNmb3JtOmVuY3J5cHRGdW5jdGlvbn0pO2IucGlwZVRocm91Z2goZCkucGlwZVRvKGMpfWVsc2UgaWYoImRlY3J5cHQiPT09Yil7Y29uc3R7cmVhZGFibGVTdHJlYW06Yix3cml0YWJsZVN0cmVhbTpjfT1hLmRhdGEsZD1uZXcgVHJhbnNmb3JtU3RyZWFtKHt0cmFuc2Zvcm06ZGVjcnlwdEZ1bmN0aW9ufSk7Yi5waXBlVGhyb3VnaChkKS5waXBlVG8oYyl9ZWxzZSJzZXRLZXkiPT09Yj8obWFzdGVyS2V5PWEuZGF0YS5tYXN0ZXJLZXksbWF0ZXJpYWw9YXdhaXQgY3J5cHRvLnN1YnRsZS5pbXBvcnRLZXkoInJhdyIsbWFzdGVyS2V5LCJQQktERjIiLCExLFsiZGVyaXZlQml0cyIsImRlcml2ZUtleSJdKSk6ImNsZWFyIj09PWImJihkZXJpdmVLZXlNYXAuY2xlYXIoKSxzZXFOdW1NYXAuY2xlYXIoKSx3cml0ZUlWTWFwLmNsZWFyKCkpfTsK");this.worker=new Worker(URL.createObjectURL(new Blob([a],{type:"application/javascript"}))),this.worker.onmessage=a=>{const{operation:b}=a.data;"disconnect"===b&&"function"==typeof this.onWorkerDisconnect&&this.onWorkerDisconnect();},this.worker.postMessage({operation:"setKey",masterKey:this.masterKey});}terminateWorker(){this.worker&&this.worker.terminate();}setupSenderTransform(a){if(!a.track)return;const b=a.createEncodedStreams(),c=b.readableStream||b.readable,d=b.writableStream||b.writable;this.worker&&this.worker.postMessage({operation:"encrypt",readableStream:c,writableStream:d},[c,d]);}setupReceiverTransform(a){const b=a.createEncodedStreams(),c=b.readableStream||b.readable,d=b.writableStream||b.writable;this.worker&&this.worker.postMessage({operation:"decrypt",readableStream:c,writableStream:d},[c,d]);}static version(){return "2020.3.0-dev"}}});
 
   });
 
@@ -300,6 +299,10 @@
           this.metadata = metadata;
           this.signalingUrl = signalingUrl;
           this.options = options;
+          // client timeout の初期値をセットする
+          if (this.options.timeout === undefined) {
+              this.options.timeout = 60000;
+          }
           this.constraints = null;
           this.debug = debug;
           this.clientId = null;
@@ -351,56 +354,36 @@
               this.stream = null;
               return resolve();
           });
-          const closeWebSocket = new Promise((resolve, reject) => {
+          const closeWebSocket = new Promise((resolve, _reject) => {
               if (!this.ws)
                   return resolve();
-              let counter = 5;
-              const timerId = setInterval(() => {
-                  if (!this.ws) {
-                      clearInterval(timerId);
-                      return resolve();
-                  }
-                  if (this.ws.readyState === 3) {
-                      this.ws = null;
-                      clearInterval(timerId);
-                      return resolve();
-                  }
-                  --counter;
-                  if (counter < 0) {
-                      clearInterval(timerId);
-                      return reject("WebSocket Closing Error");
-                  }
-              }, 1000);
-              this.ws.close();
-          });
-          const closePeerConnection = new Promise((resolve, reject) => {
-              // Safari は signalingState が常に stable のため個別に処理する
-              if (isSafari() && this.pc) {
-                  this.pc.oniceconnectionstatechange = null;
-                  this.pc.close();
-                  this.pc = null;
-                  return resolve();
+              if (this.ws.readyState === 1) {
+                  this.ws.send(JSON.stringify({ type: "disconnect" }));
               }
-              if (!this.pc || this.pc.signalingState === "closed")
+              this.ws.close();
+              this.ws = null;
+              return resolve();
+          });
+          const closePeerConnection = new Promise((resolve, _reject) => {
+              if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined)
                   return resolve();
-              let counter = 5;
+              let counter = 50;
               const timerId = setInterval(() => {
                   if (!this.pc) {
                       clearInterval(timerId);
                       return resolve();
                   }
-                  if (this.pc.signalingState === "closed") {
+                  if (this.pc.connectionState === "closed") {
                       clearInterval(timerId);
-                      this.pc.oniceconnectionstatechange = null;
                       this.pc = null;
                       return resolve();
                   }
                   --counter;
                   if (counter < 0) {
                       clearInterval(timerId);
-                      return reject("PeerConnection Closing Error");
+                      return resolve();
                   }
-              }, 1000);
+              }, 100);
               this.pc.close();
           });
           if (this.e2ee) {
@@ -425,8 +408,10 @@
               if (this.ws === null) {
                   this.ws = new WebSocket(this.signalingUrl);
               }
-              this.ws.onclose = (e) => {
-                  reject(e);
+              this.ws.onclose = (event) => {
+                  const error = new Error();
+                  error.message = `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`;
+                  reject(error);
               };
               this.ws.onopen = () => {
                   this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
@@ -539,6 +524,8 @@
               }
               await this.setSenderParameters(transceiver, message.encodings);
               await this.setRemoteDescription(message);
+              // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
+              await this.setSenderParameters(transceiver, message.encodings);
           }
           const sessionDescription = await this.pc.createAnswer();
           await this.pc.setLocalDescription(sessionDescription);
@@ -593,6 +580,47 @@
               }
           });
       }
+      waitChangeConnectionStateConnected() {
+          return new Promise((resolve, reject) => {
+              // connectionState が存在しない場合はそのまま抜ける
+              if (this.pc && this.pc.connectionState === undefined) {
+                  resolve();
+              }
+              const timerId = setInterval(() => {
+                  if (!this.pc) {
+                      const error = new Error();
+                      error.message = "PeerConnection connectionState did not change to 'connected'";
+                      clearInterval(timerId);
+                      reject(error);
+                  }
+                  else if (!this.ws || this.ws.readyState !== 1) {
+                      const error = new Error();
+                      error.message = "PeerConnection connectionState did not change to 'connected'";
+                      clearInterval(timerId);
+                      reject(error);
+                  }
+                  else if (this.pc && this.pc.connectionState === "connected") {
+                      clearInterval(timerId);
+                      resolve();
+                  }
+              }, 100);
+          });
+      }
+      setConnectionTimeout() {
+          return new Promise((_, reject) => {
+              if (this.options.timeout && 0 < this.options.timeout) {
+                  setTimeout(() => {
+                      if (this.pc && this.pc.connectionState !== "connected") {
+                          const error = new Error();
+                          error.message = "CONNECTION TIMEOUT";
+                          this.callbacks.timeout();
+                          this.disconnect();
+                          reject(error);
+                      }
+                  }, this.options.timeout);
+              }
+          });
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       trace(title, message) {
           this.callbacks.log(title, message);
@@ -626,25 +654,15 @@
   }
 
   class ConnectionPublisher extends ConnectionBase {
-      connect(stream) {
+      async connect(stream) {
           if (this.options.multistream) {
-              return this.multiStream(stream);
+              return await Promise.race([this.multiStream(stream), this.setConnectionTimeout()]);
           }
           else {
-              return this.singleStream(stream);
+              return await Promise.race([this.singleStream(stream), this.setConnectionTimeout()]);
           }
       }
       async singleStream(stream) {
-          let timeoutTimerId = 0;
-          if (this.options.timeout && 0 < this.options.timeout) {
-              timeoutTimerId = setTimeout(() => {
-                  const error = new Error();
-                  error.message = "CONNECTION TIMEOUT";
-                  this.callbacks.timeout();
-                  this.disconnect();
-                  Promise.reject(error);
-              }, this.options.timeout);
-          }
           await this.disconnect();
           this.startE2EE();
           const offer = await this.createOffer();
@@ -667,20 +685,10 @@
               });
           }
           await this.onIceCandidate();
-          clearTimeout(timeoutTimerId);
+          await this.waitChangeConnectionStateConnected();
           return stream;
       }
       async multiStream(stream) {
-          let timeoutTimerId = 0;
-          if (this.options.timeout && 0 < this.options.timeout) {
-              timeoutTimerId = setTimeout(() => {
-                  const error = new Error();
-                  error.message = "CONNECTION TIMEOUT";
-                  this.callbacks.timeout();
-                  this.disconnect();
-                  Promise.reject(error);
-              }, this.options.timeout);
-          }
           await this.disconnect();
           this.startE2EE();
           const offer = await this.createOffer();
@@ -737,31 +745,21 @@
               });
           }
           await this.onIceCandidate();
-          clearTimeout(timeoutTimerId);
+          await this.waitChangeConnectionStateConnected();
           return stream;
       }
   }
 
   class ConnectionSubscriber extends ConnectionBase {
-      connect() {
+      async connect() {
           if (this.options.multistream) {
-              return this.multiStream();
+              return await Promise.race([this.multiStream(), this.setConnectionTimeout()]);
           }
           else {
-              return this.singleStream();
+              return await Promise.race([this.singleStream(), this.setConnectionTimeout()]);
           }
       }
       async singleStream() {
-          let timeoutTimerId = 0;
-          if (this.options.timeout && 0 < this.options.timeout) {
-              timeoutTimerId = setTimeout(() => {
-                  const error = new Error();
-                  error.message = "CONNECTION TIMEOUT";
-                  this.callbacks.timeout();
-                  this.disconnect();
-                  Promise.reject(error);
-              }, this.options.timeout);
-          }
           await this.disconnect();
           this.startE2EE();
           const offer = await this.createOffer();
@@ -802,20 +800,10 @@
           await this.createAnswer(signalingMessage);
           this.sendAnswer();
           await this.onIceCandidate();
-          clearTimeout(timeoutTimerId);
+          await this.waitChangeConnectionStateConnected();
           return this.stream || new MediaStream();
       }
       async multiStream() {
-          let timeoutTimerId = 0;
-          if (this.options.timeout && 0 < this.options.timeout) {
-              timeoutTimerId = setTimeout(() => {
-                  const error = new Error();
-                  error.message = "CONNECTION TIMEOUT";
-                  this.callbacks.timeout();
-                  this.disconnect();
-                  Promise.reject(error);
-              }, this.options.timeout);
-          }
           await this.disconnect();
           this.startE2EE();
           const offer = await this.createOffer();
@@ -857,7 +845,7 @@
           await this.createAnswer(signalingMessage);
           this.sendAnswer();
           await this.onIceCandidate();
-          clearTimeout(timeoutTimerId);
+          await this.waitChangeConnectionStateConnected();
           return;
       }
   }
@@ -895,7 +883,7 @@
       },
       version: function () {
           // @ts-ignore
-          return '2020.3.0';
+          return '2020.4.0';
       },
   };
 

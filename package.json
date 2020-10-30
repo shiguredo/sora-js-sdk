@@ -1,9 +1,9 @@
 {
   "name": "sora-js-sdk",
-  "version": "2020.3.0",
+  "version": "2020.4.0",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.min.js",
-  "module": "dist/sora.min.js",
+  "module": "dist/sora.mjs",
   "types": "dist/sora.d.ts",
   "scripts": {
     "build": "NODE_ENV=development rollup -c",
@@ -46,6 +46,6 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "sora-e2ee": "^2020.2.0"
+    "sora-e2ee": "^2020.3.0"
   }
 }

@@ -9,6 +9,28 @@
 - FIX
     - バグ修正
 
+## 2020.4.0
+
+- [CHANGE] signaling 時に処理に失敗した場合の reject の引数を CloseEvent オブジェクトから Error オブジェクトに変更する
+    - @yuitowest
+- [CHANGE] connect() のタイムアウト処理にデフォルト値を設定する
+    - 60000 ms でタイムアウトするように設定する
+    - @yuitowest
+- [UPDATE] connect() 実行時に PeerConnection connectionState が 'connected' になったら処理が完了するように変更する
+    - @yuitowest
+- [UPDATE] disconnect 処理を修正する
+    - websocket で type: "disconnect" を send するように変更する
+    - websocket の readyState の監視をやめる
+    - peerConnection の 切断監視を signalingState から connectionState に変更する
+    - @yuitowest
+- [UPDATE] sora-e2ee のバージョンを 2020.3.0 に更新する
+    - @yuitowest
+- [FIX] `package.json` に定義されている `module` の向き先を `dist/sora.mjs` に変更し、対象ファイルがビルドされるよう Rollup の設定を追加する
+    - https://github.com/shiguredo/sora-js-sdk/pull/44
+    - @rosylilly
+- [UPDATE] simulcast で active パラメーターを有効にするための実装を追加する
+    - @yuitowest
+
 ## 2020.3.0
 
 - [UPDATE] Safari 14 以降で Simulcast が使えるように変更

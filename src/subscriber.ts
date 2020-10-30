@@ -1,26 +1,15 @@
 import ConnectionBase from "./base";
 
 export default class ConnectionSubscriber extends ConnectionBase {
-  connect(): Promise<MediaStream | void> {
+  async connect(): Promise<MediaStream | void> {
     if (this.options.multistream) {
-      return this.multiStream();
+      return await Promise.race([this.multiStream(), this.setConnectionTimeout()]);
     } else {
-      return this.singleStream();
+      return await Promise.race([this.singleStream(), this.setConnectionTimeout()]);
     }
   }
 
   private async singleStream(): Promise<MediaStream> {
-    let timeoutTimerId = 0;
-    if (this.options.timeout && 0 < this.options.timeout) {
-      timeoutTimerId = setTimeout(() => {
-        const error = new Error();
-        error.message = "CONNECTION TIMEOUT";
-        this.callbacks.timeout();
-        this.disconnect();
-        Promise.reject(error);
-      }, this.options.timeout);
-    }
-
     await this.disconnect();
     this.startE2EE();
     const offer = await this.createOffer();
@@ -59,22 +48,11 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
     await this.onIceCandidate();
-    clearTimeout(timeoutTimerId);
+    await this.waitChangeConnectionStateConnected();
     return this.stream || new MediaStream();
   }
 
   private async multiStream(): Promise<void> {
-    let timeoutTimerId = 0;
-    if (this.options.timeout && 0 < this.options.timeout) {
-      timeoutTimerId = setTimeout(() => {
-        const error = new Error();
-        error.message = "CONNECTION TIMEOUT";
-        this.callbacks.timeout();
-        this.disconnect();
-        Promise.reject(error);
-      }, this.options.timeout);
-    }
-
     await this.disconnect();
     this.startE2EE();
     const offer = await this.createOffer();
@@ -113,7 +91,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
     await this.onIceCandidate();
-    clearTimeout(timeoutTimerId);
+    await this.waitChangeConnectionStateConnected();
     return;
   }
 }

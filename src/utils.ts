@@ -36,7 +36,6 @@ function enabledSimulcast(role: Role, video: SignalingVideo): boolean {
     return false;
   }
   if (browser() === "safari") {
-    console.log("safari");
     const appVersion = window.navigator.appVersion.toLowerCase();
     const versions = /version\/([\d.]+)/.exec(appVersion);
     if (!versions) {
