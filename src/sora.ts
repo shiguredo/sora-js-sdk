@@ -77,7 +77,6 @@ export type {
   ConnectionPublisher,
   ConnectionSubscriber,
   Role,
-  SimulcastQuality,
   SimulcastRid,
   SoraConnection,
   VideoCodecType,
