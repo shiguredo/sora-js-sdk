@@ -95,7 +95,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * multistream              | boolean |      | マルチストリーム有効／無効            |
   | * spotlight                | integer |      | 最大話者数                            |
   | * simulcast                | boolean |      | サイマルキャスト有効／無効            |
-  | * simulcastQuality         | string  |      | サイマルキャストクオリティ(low/middle/high) |
+  | * simulcastRid             | string  |      | サイマルキャストRID (r0/r1/r2)        |
   | * clientId                 | string  |      | クライアントID                        |
   | * timeout                  | integer |      | タイムアウト時間(ms)                  |
   | * e2ee                     | string  |      | e2ee のマスターシークレット           |
@@ -245,11 +245,11 @@ sendonly.on('disconnect', function(e) {
   | * multistream              | boolean |      | マルチストリーム有効／無効                  |
   | * spotlight                | integer |      | 最大話者数                                  |
   | * simulcast                | boolean |      | サイマルキャスト有効／無効                  |
-  | * simulcastQuality         | string  |      | サイマルキャストクオリティ(low/middle/high) |
+  | * simulcastRid             | string  |      | サイマルキャストRID(r0/r1/r2)               |
   | * clientId                 | string  |      | クライアントID                              |
   | * timeout                  | integer |      | タイムアウト時間(ms)                        |
   | * e2ee                     | string  |      | e2ee のマスターシークレット                 |
-  | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
+  | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata              |
 
 
 - connect()

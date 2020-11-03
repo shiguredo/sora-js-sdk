@@ -9,6 +9,13 @@
 - FIX
     - バグ修正
 
+
+## feature/change-simulcast-quality-to-rid
+
+- [CHANGE] simulcastQuality を simulcastRid に変更する
+- [CHANGE] simulcast を bool のみに変更する
+- [CHANGE] simulcast_rid を追加する
+
 ## 2020.4.0
 
 - [CHANGE] signaling 時に処理に失敗した場合の reject の引数を CloseEvent オブジェクトから Error オブジェクトに変更する

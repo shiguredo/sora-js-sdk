@@ -1,7 +1,7 @@
 import ConnectionBase from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
-import { AudioCodecType, Callbacks, ConnectionOptions, Json, Role, SimulcastQuality, VideoCodecType } from "./types";
+import { AudioCodecType, Callbacks, ConnectionOptions, Json, Role, SimulcastRid, VideoCodecType } from "./types";
 
 class SoraConnection {
   signalingUrl: string;

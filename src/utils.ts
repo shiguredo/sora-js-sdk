@@ -139,9 +139,7 @@ export function createSignalingMessage(
     }
     const simalcastRids = ["r0", "r1", "r2"];
     if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
-      message.simulcast = {
-        quality: options.simulcastRid,
-      };
+      message.simulcast_rid = options.simulcastRid;
     }
   }
 
