@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/camelcase: 0 */
 import { createSignalingMessage } from "../src/utils";
-import { AudioCodecType, SimulcastQuality, VideoCodecType } from "../src/types";
+import { AudioCodecType, SimulcastRid, VideoCodecType } from "../src/types";
 import pkg from "../package.json";
 
 const channelId = "7N3fsMHob";
@@ -117,7 +117,7 @@ test("createSignalingMessage multistream option", () => {
 test("createSignalingMessage simulcast option", () => {
   interface SimulcastOptions {
     simulcast: boolean;
-    simulcastQuality: SimulcastQuality;
+    SimulcastRid: SimulcastRid;
   }
   // simulcast
   const options1 = {
@@ -129,40 +129,40 @@ test("createSignalingMessage simulcast option", () => {
   expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
-  // simulcast + simulcastQuality(low)
+  // simulcast + SimulcastRid(r0)
   const options2: SimulcastOptions = {
     simulcast: true,
-    simulcastQuality: "low",
+    SimulcastRid: "r0",
   };
   const diff2 = {
     simulcast: {
-      quality: options2.simulcastQuality,
+      rid: options2.SimulcastRid,
     },
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
-  // simulcast + simulcastQuality(middle)
+  // simulcast + SimulcastRid(r1)
   const options3: SimulcastOptions = {
     simulcast: true,
-    simulcastQuality: "middle",
+    SimulcastRid: "r1",
   };
   const diff3 = {
     simulcast: {
-      quality: options3.simulcastQuality,
+      rid: options3.SimulcastRid,
     },
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
-  // simulcast + simulcastQuality(high)
+  // simulcast + SimulcastRid(r2)
   const options4: SimulcastOptions = {
     simulcast: true,
-    simulcastQuality: "high",
+    SimulcastRid: "r2",
   };
   const diff4 = {
     simulcast: {
-      quality: options4.simulcastQuality,
+      rid: options4.SimulcastRid,
     },
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(

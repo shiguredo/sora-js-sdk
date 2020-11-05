@@ -31,9 +31,9 @@ const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://localhost:5000/signaling', debug);
 const sendonly = sora.sendonly(channelId, null, { videoCodecType: 'VP8', videoBitRate: 3000, simulcast: true });
-const recvonlyLow = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, simulcastQuality: 'low' });
-const recvonlyMiddle = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, simulcastQuality: 'middle' });
-const recvonlyHigh = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, simulcastQuality: 'high' });
+const recvonlyLow = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'low' });
+const recvonlyMiddle = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'middle' });
+const recvonlyHigh = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'high' });
 
 document.querySelector('#start').addEventListener('click', function() {
   // upstream

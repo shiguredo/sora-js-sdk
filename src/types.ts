@@ -1,8 +1,7 @@
 export type Json = null | boolean | number | string | Json[] | { [prop: string]: Json | undefined };
 
-export type SimulcastQuality = "low" | "middle" | "high";
-
-export type Simulcast = boolean | { quality: SimulcastQuality };
+export type SimulcastRid = "r0" | "r1" | "r2";
+export type Simulcast = boolean | { rid: SimulcastRid };
 
 export type AudioCodecType = "OPUS";
 
@@ -55,6 +54,7 @@ export type SignalingConnectMessage = {
   spotlight?: number | boolean;
   spotlight_number?: number;
   simulcast?: Simulcast;
+  simulcast_rid?: SimulcastRid;
   audio: SignalingAudio;
   video: SignalingVideo;
   sdp: string;
@@ -99,7 +99,7 @@ export type ConnectionOptions = {
   spotlight?: boolean | number;
   spotlightNumber?: number;
   simulcast?: boolean;
-  simulcastQuality?: SimulcastQuality;
+  simulcastRid?: SimulcastRid;
   clientId?: string;
   timeout?: number;
   e2ee?: string;

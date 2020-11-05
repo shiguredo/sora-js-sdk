@@ -132,16 +132,14 @@ export function createSignalingMessage(
     }
   }
 
-  if ("simulcast" in options || "simulcastQuality" in options) {
+  if ("simulcast" in options || "simulcastRid" in options) {
     // simulcast
     if ("simulcast" in options && options.simulcast === true) {
       message.simulcast = true;
     }
-    const simalcastQualities = ["low", "middle", "high"];
-    if (options.simulcastQuality !== undefined && 0 <= simalcastQualities.indexOf(options.simulcastQuality)) {
-      message.simulcast = {
-        quality: options.simulcastQuality,
-      };
+    const simalcastRids = ["r0", "r1", "r2"];
+    if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
+      message.simulcast_rid = options.simulcastRid;
     }
   }
 
