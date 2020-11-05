@@ -27,6 +27,6 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "sora-e2ee": "^2020.3.0"
+    "@sora/e2ee": "^2020.5.0-canary.0"
   }
 }
