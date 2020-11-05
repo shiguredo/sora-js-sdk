@@ -1,7 +1,7 @@
 /**
- * sora-js-sdk
- * WebRTC SFU Sora JavaScript SDK
- * @version: 2020.5.0-canary.0
+ * @sora/sdk
+ * undefined
+ * @version: 2020.5.0-canary.0-dev
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -101,7 +101,7 @@
           type: "connect",
           // @ts-ignore
           // eslint-disable-next-line @typescript-eslint/camelcase
-          sora_client: `Sora JavaScript SDK ${'2020.5.0-canary.0'}`,
+          sora_client: `Sora JavaScript SDK ${'2020.5.0-canary.0-dev'}`,
           environment: window.navigator.userAgent,
           role: role,
           // eslint-disable-next-line @typescript-eslint/camelcase
@@ -882,7 +882,7 @@
       },
       version: function () {
           // @ts-ignore
-          return '2020.5.0-canary.0';
+          return '2020.5.0-canary.0-dev';
       },
   };
 
