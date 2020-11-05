@@ -117,7 +117,7 @@ test("createSignalingMessage multistream option", () => {
 test("createSignalingMessage simulcast option", () => {
   interface SimulcastOptions {
     simulcast: boolean;
-    SimulcastRid: SimulcastRid;
+    simulcastRid: SimulcastRid;
   }
   // simulcast
   const options1 = {
@@ -132,12 +132,11 @@ test("createSignalingMessage simulcast option", () => {
   // simulcast + SimulcastRid(r0)
   const options2: SimulcastOptions = {
     simulcast: true,
-    SimulcastRid: "r0",
+    simulcastRid: "r0",
   };
   const diff2 = {
-    simulcast: {
-      rid: options2.SimulcastRid,
-    },
+    simulcast: true,
+    simulcast_rid: options2.simulcastRid,
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
@@ -145,12 +144,11 @@ test("createSignalingMessage simulcast option", () => {
   // simulcast + SimulcastRid(r1)
   const options3: SimulcastOptions = {
     simulcast: true,
-    SimulcastRid: "r1",
+    simulcastRid: "r1",
   };
   const diff3 = {
-    simulcast: {
-      rid: options3.SimulcastRid,
-    },
+    simulcast: true,
+    simulcast_rid: options3.simulcastRid,
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
@@ -158,12 +156,11 @@ test("createSignalingMessage simulcast option", () => {
   // simulcast + SimulcastRid(r2)
   const options4: SimulcastOptions = {
     simulcast: true,
-    SimulcastRid: "r2",
+    simulcastRid: "r2",
   };
   const diff4 = {
-    simulcast: {
-      rid: options4.SimulcastRid,
-    },
+    simulcast: true,
+    simulcast_rid: options4.simulcastRid,
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
     Object.assign({}, baseExpectedMessage, diff4)
