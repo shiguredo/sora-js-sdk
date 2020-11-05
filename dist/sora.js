@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2020.4.0-dev
+ * @version: 2020.5.0-canary.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -101,7 +101,7 @@
           type: "connect",
           // @ts-ignore
           // eslint-disable-next-line @typescript-eslint/camelcase
-          sora_client: `Sora JavaScript SDK ${'2020.4.0-dev'}`,
+          sora_client: `Sora JavaScript SDK ${'2020.5.0-canary.0'}`,
           environment: window.navigator.userAgent,
           role: role,
           // eslint-disable-next-line @typescript-eslint/camelcase
@@ -136,6 +136,7 @@
           }
           const simalcastRids = ["r0", "r1", "r2"];
           if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
+              // eslint-disable-next-line @typescript-eslint/camelcase
               message.simulcast_rid = options.simulcastRid;
           }
       }
@@ -881,7 +882,7 @@
       },
       version: function () {
           // @ts-ignore
-          return '2020.4.0-dev';
+          return '2020.5.0-canary.0';
       },
   };
 
