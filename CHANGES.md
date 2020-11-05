@@ -10,7 +10,7 @@
     - バグ修正
 
 
-## feature/change-simulcast-quality-to-rid
+## develop
 
 - [CHANGE] simulcastQuality を simulcastRid に変更する
 - [CHANGE] simulcast を bool のみに変更する
