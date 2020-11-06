@@ -30,7 +30,7 @@ declare type StopSessionResult = {
 };
 declare class SoraE2EE {
     worker: Worker | null;
-    onWorkerDisconnect: Function | null;
+    onWorkerDisconnect: (() => void) | null;
     constructor();
     startWorker(): void;
     clearWorker(): void;

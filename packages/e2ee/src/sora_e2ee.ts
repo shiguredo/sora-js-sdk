@@ -58,7 +58,7 @@ interface E2EE {
 
 declare class Go {
   importObject: {
-    go: Record<string, () => {}>;
+    go: Record<string, () => void>;
   };
   run(instance: unknown): Promise<void>;
 }
@@ -71,7 +71,7 @@ declare let window: E2EEWindow;
 
 class SoraE2EE {
   worker: Worker | null;
-  onWorkerDisconnect: Function | null;
+  onWorkerDisconnect: (() => void) | null;
 
   constructor() {
     // 対応しているかどうかの判断
