@@ -267,10 +267,10 @@
           prefix = prefix + "[" + clientId + "]";
       }
       if (isEdge()) {
-          console.log(prefix + ' ' + title + '\n', value); // eslint-disable-line
+          console.log(prefix + " " + title + "\n", value); // eslint-disable-line
       }
       else {
-          console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
+          console.info(prefix + " " + title + "\n", value); // eslint-disable-line
       }
   }
 
