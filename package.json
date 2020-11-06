@@ -7,13 +7,7 @@
   "types": "dist/sora.d.ts",
   "scripts": {
     "build": "npx lerna run build",
-    "watch": "NODE_ENV=development rollup -c -w",
-    "prerelease": "yarn lint && yarn test",
-    "release": "NODE_ENV=production rollup -c",
-    "server": "serve -S -l 8080 ./example",
-    "lint": "eslint --ext .ts ./src",
-    "fmt": "eslint --fix --ext .ts ./src",
-    "test": "npx lerna run test"
+    "start": "npx serve -S -l 8080 ./example"
   },
   "repository": {
     "type": "git",
@@ -26,6 +20,7 @@
   },
   "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
   "devDependencies": {
-    "lerna": "^3.22.1"
+    "lerna": "^3.22.1",
+    "serve": "^11.3.2"
   }
 }
