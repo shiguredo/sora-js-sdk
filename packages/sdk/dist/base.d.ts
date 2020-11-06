@@ -1,5 +1,5 @@
 import { Callbacks, ConnectionOptions, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
-import SoraE2EE from "sora-e2ee";
+import SoraE2EE from "@sora/e2ee";
 export default class ConnectionBase {
     role: string;
     channelId: string;
