@@ -1,6 +1,6 @@
 import { createSignalingMessage, trace, isSafari } from "./utils";
 import { Callbacks, ConnectionOptions, Encoding, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
-import SoraE2EE from "sora-e2ee";
+import SoraE2EE from "@sora/e2ee";
 
 // Override from @type/WebRTC
 interface SoraRTCPeerConnectionStatic extends RTCPeerConnectionStatic {
@@ -142,7 +142,7 @@ export default class ConnectionBase {
 
   protected startE2EE(): void {
     if ("e2ee" in this.options && typeof this.options.e2ee === "string") {
-      this.e2ee = new SoraE2EE(this.options.e2ee);
+      this.e2ee = new SoraE2EE();
       this.e2ee.onWorkerDisconnect = (): void => {
         this.disconnect();
       };
