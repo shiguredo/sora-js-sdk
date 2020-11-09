@@ -18,8 +18,8 @@ export default [
     input: "src/sora_e2ee.ts",
     plugins: [
       replace({
-        SORA_E2EE_VERSION: `'${pkg.version}'`,
-        WORKER_SCRIPT: workerScript,
+        __SORA_E2EE_VERSION__: pkg.version,
+        __WORKER_SCRIPT__: workerScript,
       }),
       typescript({
         tsconfig: "./tsconfig.json",

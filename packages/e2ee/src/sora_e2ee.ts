@@ -69,6 +69,8 @@ interface E2EEWindow extends Window {
 }
 declare let window: E2EEWindow;
 
+const WORKER_SCRIPT = "__WORKER_SCRIPT__";
+
 class SoraE2EE {
   worker: Worker | null;
   onWorkerDisconnect: (() => void) | null;
@@ -86,7 +88,7 @@ class SoraE2EE {
   // worker を起動する
   startWorker(): void {
     // ワーカーを起動する
-    const workerScript = atob("WORKER_SCRIPT");
+    const workerScript = atob(WORKER_SCRIPT);
     this.worker = new Worker(URL.createObjectURL(new Blob([workerScript], { type: "application/javascript" })));
     this.worker.onmessage = (event): void => {
       const { operation } = event.data;
@@ -243,8 +245,7 @@ class SoraE2EE {
   }
 
   static version(): string {
-    // @ts-ignore
-    return SORA_E2EE_VERSION;
+    return "__SORA_E2EE_VERSION__";
   }
 
   static wasmVersion(): string {
