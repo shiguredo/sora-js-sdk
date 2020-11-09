@@ -12,7 +12,7 @@
     "build:worker": "npx tsc --project tsconfig.worker.json",
     "fmt": "prettier --write src",
     "lint": "eslint --ext .ts ./src",
-    "test": "echo \"Error: run tests from root\" && exit 1"
+    "test": "echo \"no test\""
   },
   "devDependencies": {
     "@rollup/plugin-replace": "^2.3.2",
