@@ -35,6 +35,7 @@ interface HkdfParams extends Algorithm {
 }
 
 // worker で使用している deriveBits, deriveKey のみ HKDF algorithm に対応する
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface SubtleCrypto {
   deriveBits(
     algorithm:
