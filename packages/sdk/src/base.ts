@@ -140,9 +140,14 @@ export default class ConnectionBase {
     return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
   }
 
-  protected startE2EE(): void {
-    if ("e2ee" in this.options && typeof this.options.e2ee === "string") {
-      this.e2ee = new SoraE2EE();
+  protected setupE2EE(): void {
+    if (this.options.e2ee === true) {
+      if (!this.options.e2eeWasmUrl) {
+        const error = new Error();
+        error.message = `E2EE failed. Options e2eeWasmUrl is ${this.options.e2eeWasmUrl}`;
+        throw error;
+      }
+      this.e2ee = new SoraE2EE(this.options.e2eeWasmUrl);
       this.e2ee.onWorkerDisconnect = (): void => {
         this.disconnect();
       };
@@ -150,9 +155,22 @@ export default class ConnectionBase {
     }
   }
 
+  protected startE2EE(): void {
+    if (this.options.e2ee === true && this.e2ee) {
+      if (!this.connectionId) {
+        const error = new Error();
+        error.message = `E2EE failed. Self connectionId is ${this.connectionId}`;
+        throw error;
+      }
+      this.e2ee.clearWorker();
+      const result = this.e2ee.start(this.connectionId);
+      this.e2ee.postSelfSecretKeyMaterial(this.connectionId, result.selfKeyId, result.selfSecretKeyMaterial);
+    }
+  }
+
   protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage> {
     this.trace("CREATE OFFER SDP", offer);
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const signalingMessage = createSignalingMessage(
         offer.sdp || "",
         this.role,
@@ -160,9 +178,15 @@ export default class ConnectionBase {
         this.metadata,
         this.options
       );
+      if (signalingMessage.e2ee && this.e2ee) {
+        const initResult = await this.e2ee.init();
+        // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
+        signalingMessage["signaling_notify_metadata"]["pre_key_bundle"] = initResult;
+      }
       if (this.ws === null) {
         this.ws = new WebSocket(this.signalingUrl);
       }
+      this.ws.binaryType = "arraybuffer";
       this.ws.onclose = (event): void => {
         const error = new Error();
         error.message = `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`;
@@ -175,6 +199,18 @@ export default class ConnectionBase {
         }
       };
       this.ws.onmessage = (event): void => {
+        // E2EE 時専用処理
+        if (event.data instanceof ArrayBuffer && this.e2ee) {
+          const message = new Uint8Array(event.data);
+          const result = this.e2ee.receiveMessage(message);
+          this.e2ee.postRemoteSecretKeyMaterials(result);
+          result.messages.forEach((message) => {
+            if (this.ws) {
+              this.ws.send(message.buffer);
+            }
+          });
+          return;
+        }
         const data = JSON.parse(event.data);
         if (data.type == "offer") {
           this.clientId = data.client_id;
@@ -211,6 +247,60 @@ export default class ConnectionBase {
           this.callbacks.push(data);
         } else if (data.type == "notify") {
           this.callbacks.notify(data);
+
+          if (data.event_type === "connection.created") {
+            const metadata = data.metadata;
+            const connectionId = data.connection_id;
+            if (this.connectionId !== connectionId) {
+              if (metadata && metadata.pre_key_bundle) {
+                const preKeyBundle = metadata.pre_key_bundle;
+                if (this.e2ee) {
+                  const result = this.e2ee.startSession(connectionId, preKeyBundle);
+                  this.e2ee.postRemoteSecretKeyMaterials(result);
+                  result.messages.forEach((message) => {
+                    if (this.ws) {
+                      this.ws.send(message.buffer);
+                    }
+                  });
+                  // messages を送信し終えてから、selfSecretKeyMaterial を更新する
+                  this.e2ee.postSelfSecretKeyMaterial(
+                    result.selfConnectionId,
+                    result.selfKeyId,
+                    result.selfSecretKeyMaterial
+                  );
+                }
+              }
+            }
+            const metadataList = data.metadata_list;
+            if (metadataList) {
+              // @ts-ignore TODO(yuito)
+              metadataList.forEach((metadata) => {
+                const preKeyBundle = metadata.metadata.pre_key_bundle;
+                const connectionId = metadata.connection_id;
+                if (this.e2ee) {
+                  this.e2ee.addPreKeyBundle(connectionId, preKeyBundle);
+                }
+              });
+            }
+          } else if (data.event_type === "connection.destroyed") {
+            const metadata = data.metadata;
+            if (metadata && metadata.pre_key_bundle && this.e2ee) {
+              const connectionId = data.connection_id;
+              const result = this.e2ee.stopSession(connectionId);
+              this.e2ee.postSelfSecretKeyMaterial(
+                result.selfConnectionId,
+                result.selfKeyId,
+                result.selfSecretKeyMaterial,
+                5000
+              );
+              result.messages.forEach((message) => {
+                if (this.ws) {
+                  this.ws.send(message.buffer);
+                }
+              });
+              this.e2ee.postRemoveRemoteDeriveKey(connectionId);
+            }
+          }
         }
       };
     });
