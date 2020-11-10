@@ -158,6 +158,7 @@ onmessage = (event): void => {
     }
   } else if (type === "remoteSecretKeyMaterials") {
     const { remoteSecretKeyMaterials } = event.data;
+
     for (const [connectionId, remoteSecretKeyMaterial] of Object.entries(
       remoteSecretKeyMaterials as Record<string, RemoteSecretKeyMaterial>
     )) {
@@ -195,6 +196,7 @@ onmessage = (event): void => {
     countMap.clear();
     writeIVMap.clear();
     remoteDeriveKeyMap.clear();
+    latestRemoteKeyIdMap.clear();
     selfDeriveKeyMap.clear();
   }
 };

@@ -55,7 +55,7 @@ function getRemoteDeriveKey(connectionId: string, keyId: number): CryptoKey | un
 
   const deriveKeyMap = remoteDeriveKeyMap.get(connectionId);
   if (!deriveKeyMap) {
-    return undefined;
+    return;
   }
   return deriveKeyMap.get(keyId);
 }
@@ -137,12 +137,12 @@ function silenceFrame(encodedFrame: Chunk): Chunk {
 
     // prettier-ignore
     newUint8.set([0xb0, 0x05, 0x00, 0x9d, 0x01, 0x2a, 0xa0, 0x00, 0x5a, 0x00,
-          0x39, 0x03, 0x00, 0x00, 0x1c, 0x22, 0x16, 0x16, 0x22, 0x66,
-          0x12, 0x20, 0x04, 0x90, 0x40, 0x00, 0xc5, 0x01, 0xe0, 0x7c,
-          0x4d, 0x2f, 0xfa, 0xdd, 0x4d, 0xa5, 0x7f, 0x89, 0xa5, 0xff,
-          0x5b, 0xa9, 0xb4, 0xaf, 0xf1, 0x34, 0xbf, 0xeb, 0x75, 0x36,
-          0x95, 0xfe, 0x26, 0x96, 0x60, 0xfe, 0xff, 0xba, 0xff, 0x40,
-        ]);
+      0x39, 0x03, 0x00, 0x00, 0x1c, 0x22, 0x16, 0x16, 0x22, 0x66,
+      0x12, 0x20, 0x04, 0x90, 0x40, 0x00, 0xc5, 0x01, 0xe0, 0x7c,
+      0x4d, 0x2f, 0xfa, 0xdd, 0x4d, 0xa5, 0x7f, 0x89, 0xa5, 0xff,
+      0x5b, 0xa9, 0xb4, 0xaf, 0xf1, 0x34, 0xbf, 0xeb, 0x75, 0x36,
+      0x95, 0xfe, 0x26, 0x96, 0x60, 0xfe, 0xff, 0xba, 0xff, 0x40,
+    ]);
     encodedFrame.data = newData;
   }
   return encodedFrame;
@@ -206,7 +206,6 @@ function encodeFrameAdd(header: Uint8Array, sframeHeader: Uint8Array, connection
 async function encryptFunction(encodedFrame: Chunk, controller: TransformStreamDefaultController): Promise<void> {
   const { connectionId, keyId, deriveKey } = getLatestSelfDeriveKey();
   if (!deriveKey) {
-    console.info("DERIVEKEY-NOT-FOUND");
     return;
   }
 
@@ -219,7 +218,6 @@ async function encryptFunction(encodedFrame: Chunk, controller: TransformStreamD
 
   const iv = generateIV(currentCount, connectionId, keyId);
   if (!iv) {
-    console.info("WRITEIV-NOT-FOUND");
     return;
   }
   const [header, payload] = parsePayload(encodedFrame.type, encodedFrame.data);
@@ -253,7 +251,6 @@ async function encryptFunction(encodedFrame: Chunk, controller: TransformStreamD
 async function decryptFunction(encodedFrame: Chunk, controller: TransformStreamDefaultController): Promise<void> {
   // 空フレーム対応
   if (encodedFrame.data.byteLength < 1) {
-    console.info("EMPTY-DATA");
     return;
   }
 
@@ -273,13 +270,11 @@ async function decryptFunction(encodedFrame: Chunk, controller: TransformStreamD
 
     const deriveKey = getRemoteDeriveKey(connectionId, keyId);
     if (!deriveKey) {
-      console.warn("DERIVEKEY-NOT-FOUND: ", connectionId, keyId);
       return;
     }
 
     const iv = generateIV(count, connectionId, keyId);
     if (!iv) {
-      console.info("WRITEIV-NOT-FOUND");
       return;
     }
 
