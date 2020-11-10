@@ -380,30 +380,35 @@ test("createSignalingMessage video option", () => {
 
 test("createSignalingMessage e2ee option", () => {
   const options1 = {
-    e2ee: "key",
+    e2ee: true,
+    e2eeWasmUrl: "wasm",
   };
   const diff1 = {
     e2ee: true,
     video: {
       codec_type: "VP8",
     },
+    signaling_notify_metadata: {},
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
   const options2 = {
-    e2ee: "key",
+    e2ee: true,
+    e2eeWasmUrl: "wasm",
     video: false,
   };
   const diff2 = {
     e2ee: true,
     video: false,
+    signaling_notify_metadata: {},
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
   const options3 = {
-    e2ee: "key",
+    e2ee: true,
+    e2eeWasmUrl: "wasm",
     video: true,
   };
   const diff3 = {
@@ -411,12 +416,14 @@ test("createSignalingMessage e2ee option", () => {
     video: {
       codec_type: "VP8",
     },
+    signaling_notify_metadata: {},
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
   const options4 = {
-    e2ee: "key",
+    e2ee: true,
+    e2eeWasmUrl: "wasm",
     VideoCodecType: "VP9",
   };
   const diff4 = {
@@ -424,6 +431,7 @@ test("createSignalingMessage e2ee option", () => {
     video: {
       codec_type: "VP8",
     },
+    signaling_notify_metadata: {},
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
     Object.assign({}, baseExpectedMessage, diff4)
