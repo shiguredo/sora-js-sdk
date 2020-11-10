@@ -6,6 +6,7 @@
   "module": "dist/sora.mjs",
   "types": "dist/sora.d.ts",
   "scripts": {
+    "bootstrap": "npx lerna bootstrap",
     "build": "npx lerna run build",
     "lint": "npx lerna run lint",
     "fmt": "npx lerna run fmt",
