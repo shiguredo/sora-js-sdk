@@ -30,8 +30,9 @@ declare type StopSessionResult = {
 };
 declare class SoraE2EE {
     worker: Worker | null;
+    wasmUrl: string;
     onWorkerDisconnect: (() => void) | null;
-    constructor();
+    constructor(wasmUrl: string);
     startWorker(): void;
     clearWorker(): void;
     terminateWorker(): void;
@@ -39,7 +40,8 @@ declare class SoraE2EE {
     setupSenderTransform(sender: RTCRtpSender): void;
     setupReceiverTransform(receiver: RTCRtpReceiver): void;
     postRemoteSecretKeyMaterials(result: ReceiveMessageResult): void;
-    postSelfSecretKeyMaterial(selfConnectionId: string, selfKeyId: number, selfSecretKeyMaterial: Uint8Array, waitingTime: number): void;
+    postRemoveRemoteDeriveKey(connectionId: string): void;
+    postSelfSecretKeyMaterial(selfConnectionId: string, selfKeyId: number, selfSecretKeyMaterial: Uint8Array, waitingTime?: number): void;
     startSession(connectionId: string, preKeyBundle: PreKeyBundle): StartSessionResult;
     stopSession(connectionId: string): StopSessionResult;
     receiveMessage(message: Uint8Array): ReceiveMessageResult;

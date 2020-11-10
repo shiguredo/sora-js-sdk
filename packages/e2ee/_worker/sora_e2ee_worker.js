@@ -129,7 +129,7 @@ function getRemoteDeriveKey(connectionId, keyId) {
     }
     const deriveKeyMap = remoteDeriveKeyMap.get(connectionId);
     if (!deriveKeyMap) {
-        return undefined;
+        return;
     }
     return deriveKeyMap.get(keyId);
 }
@@ -262,7 +262,6 @@ function encodeFrameAdd(header, sframeHeader, connectionId) {
 async function encryptFunction(encodedFrame, controller) {
     const { connectionId, keyId, deriveKey } = getLatestSelfDeriveKey();
     if (!deriveKey) {
-        console.info("DERIVEKEY-NOT-FOUND");
         return;
     }
     const currentCount = getCount(connectionId);
@@ -272,7 +271,6 @@ async function encryptFunction(encodedFrame, controller) {
     }
     const iv = generateIV(currentCount, connectionId, keyId);
     if (!iv) {
-        console.info("WRITEIV-NOT-FOUND");
         return;
     }
     const [header, payload] = parsePayload(encodedFrame.type, encodedFrame.data);
@@ -298,7 +296,6 @@ async function encryptFunction(encodedFrame, controller) {
 async function decryptFunction(encodedFrame, controller) {
     // 空フレーム対応
     if (encodedFrame.data.byteLength < 1) {
-        console.info("EMPTY-DATA");
         return;
     }
     try {
@@ -314,12 +311,10 @@ async function decryptFunction(encodedFrame, controller) {
         }
         const deriveKey = getRemoteDeriveKey(connectionId, keyId);
         if (!deriveKey) {
-            console.warn("DERIVEKEY-NOT-FOUND: ", connectionId, keyId);
             return;
         }
         const iv = generateIV(count, connectionId, keyId);
         if (!iv) {
-            console.info("WRITEIV-NOT-FOUND");
             return;
         }
         const frameAdd = encodeFrameAdd(frameMetadata, sframeHeader, connectionId);
@@ -460,6 +455,7 @@ onmessage = (event) => {
         countMap.clear();
         writeIVMap.clear();
         remoteDeriveKeyMap.clear();
+        latestRemoteKeyIdMap.clear();
         selfDeriveKeyMap.clear();
     }
 };
