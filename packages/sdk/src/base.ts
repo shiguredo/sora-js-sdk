@@ -170,6 +170,8 @@ export default class ConnectionBase {
 
   protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage> {
     this.trace("CREATE OFFER SDP", offer);
+    // TODO(yuito): 一旦 disable にする
+    // eslint-disable-next-line  no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       const signalingMessage = createSignalingMessage(
         offer.sdp || "",
