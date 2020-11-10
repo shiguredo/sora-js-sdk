@@ -73,9 +73,10 @@ const WORKER_SCRIPT = "__WORKER_SCRIPT__";
 
 class SoraE2EE {
   worker: Worker | null;
+  wasmUrl: string;
   onWorkerDisconnect: (() => void) | null;
 
-  constructor() {
+  constructor(wasmUrl: string) {
     // 対応しているかどうかの判断
     // @ts-ignore トライアル段階の API なので無視する
     const supportsInsertableStreams = !!RTCRtpSender.prototype.createEncodedStreams;
@@ -83,6 +84,7 @@ class SoraE2EE {
       throw new Error("E2EE is not supported in this browser.");
     }
     this.worker = null;
+    this.wasmUrl = wasmUrl;
     this.onWorkerDisconnect = null;
   }
   // worker を起動する
@@ -117,7 +119,7 @@ class SoraE2EE {
       throw new Error(`Failed to load module Go. window.Go is ${window.Go}.`);
     }
     const go = new Go();
-    const { instance } = await WebAssembly.instantiateStreaming(fetch("wasm.wasm"), go.importObject);
+    const { instance } = await WebAssembly.instantiateStreaming(fetch(this.wasmUrl), go.importObject);
     go.run(instance);
     if (!window.e2ee) {
       throw new Error(`Failed to load module e2ee. window.e2ee is ${window.e2ee}.`);
@@ -169,11 +171,21 @@ class SoraE2EE {
     });
   }
 
+  postRemoveRemoteDeriveKey(connectionId: string): void {
+    if (!this.worker) {
+      throw new Error("Worker is null. Call startWorker in advance.");
+    }
+    this.worker.postMessage({
+      type: "removeRemoteDeriveKey",
+      connectionId: connectionId,
+    });
+  }
+
   postSelfSecretKeyMaterial(
     selfConnectionId: string,
     selfKeyId: number,
     selfSecretKeyMaterial: Uint8Array,
-    waitingTime: number
+    waitingTime = 0
   ): void {
     if (!this.worker) {
       throw new Error("Worker is null. Call startWorker in advance.");
