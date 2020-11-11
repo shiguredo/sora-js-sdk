@@ -73,10 +73,9 @@ const WORKER_SCRIPT = "__WORKER_SCRIPT__";
 
 class SoraE2EE {
   worker: Worker | null;
-  wasmUrl: string;
   onWorkerDisconnect: (() => void) | null;
 
-  constructor(wasmUrl: string) {
+  constructor() {
     // 対応しているかどうかの判断
     // @ts-ignore トライアル段階の API なので無視する
     const supportsInsertableStreams = !!RTCRtpSender.prototype.createEncodedStreams;
@@ -84,7 +83,6 @@ class SoraE2EE {
       throw new Error("E2EE is not supported in this browser.");
     }
     this.worker = null;
-    this.wasmUrl = wasmUrl;
     this.onWorkerDisconnect = null;
   }
   // worker を起動する
@@ -115,15 +113,6 @@ class SoraE2EE {
   }
   // 初期化処理
   async init(): Promise<PreKeyBundle> {
-    if (!window.Go) {
-      throw new Error(`Failed to load module Go. window.Go is ${window.Go}.`);
-    }
-    const go = new Go();
-    const { instance } = await WebAssembly.instantiateStreaming(fetch(this.wasmUrl), go.importObject);
-    go.run(instance);
-    if (!window.e2ee) {
-      throw new Error(`Failed to load module e2ee. window.e2ee is ${window.e2ee}.`);
-    }
     const { preKeyBundle } = await window.e2ee.init();
     return preKeyBundle;
   }
@@ -254,6 +243,22 @@ class SoraE2EE {
 
   remoteFingerprints(): Record<string, string> {
     return window.e2ee.remoteFingerprints();
+  }
+
+  static async loadWasm(wasmUrl: string): Promise<void> {
+    if (!window.e2ee === undefined) {
+      console.warn("E2ee wasm is already loaded. Will not be reload.");
+      return;
+    }
+    if (!window.Go) {
+      throw new Error(`Failed to load module Go. window.Go is ${window.Go}.`);
+    }
+    const go = new Go();
+    const { instance } = await WebAssembly.instantiateStreaming(fetch(wasmUrl), go.importObject);
+    go.run(instance);
+    if (!window.e2ee) {
+      throw new Error(`Failed to load module e2ee. window.e2ee is ${window.e2ee}.`);
+    }
   }
 
   static version(): string {

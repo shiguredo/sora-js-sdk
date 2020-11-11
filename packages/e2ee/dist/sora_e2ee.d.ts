@@ -30,9 +30,8 @@ declare type StopSessionResult = {
 };
 declare class SoraE2EE {
     worker: Worker | null;
-    wasmUrl: string;
     onWorkerDisconnect: (() => void) | null;
-    constructor(wasmUrl: string);
+    constructor();
     startWorker(): void;
     clearWorker(): void;
     terminateWorker(): void;
@@ -49,6 +48,7 @@ declare class SoraE2EE {
     addPreKeyBundle(connectionId: string, preKeyBundle: PreKeyBundle): void;
     selfFingerprint(): string;
     remoteFingerprints(): Record<string, string>;
+    static loadWasm(wasmUrl: string): Promise<void>;
     static version(): string;
     static wasmVersion(): string;
 }

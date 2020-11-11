@@ -142,12 +142,7 @@ export default class ConnectionBase {
 
   protected setupE2EE(): void {
     if (this.options.e2ee === true) {
-      if (!this.options.e2eeWasmUrl) {
-        const error = new Error();
-        error.message = `E2EE failed. Options e2eeWasmUrl is ${this.options.e2eeWasmUrl}`;
-        throw error;
-      }
-      this.e2ee = new SoraE2EE(this.options.e2eeWasmUrl);
+      this.e2ee = new SoraE2EE();
       this.e2ee.onWorkerDisconnect = (): void => {
         this.disconnect();
       };

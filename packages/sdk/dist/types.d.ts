@@ -91,7 +91,6 @@ export declare type ConnectionOptions = {
     clientId?: string;
     timeout?: number;
     e2ee?: boolean;
-    e2eeWasmUrl?: string;
     signalingNotifyMetadata?: Json;
 };
 export declare type Callbacks = {
