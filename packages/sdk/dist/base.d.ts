@@ -20,6 +20,7 @@ export default class ConnectionBase {
     constructor(signalingUrl: string, role: string, channelId: string, metadata: Json, options: ConnectionOptions, debug: boolean);
     on(kind: keyof Callbacks, callback: Function): void;
     disconnect(): Promise<[void, void, void]>;
+    protected setupE2EE(): void;
     protected startE2EE(): void;
     protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage>;
     protected createOffer(): Promise<RTCSessionDescriptionInit>;

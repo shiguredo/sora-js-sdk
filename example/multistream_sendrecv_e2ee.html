@@ -8,28 +8,12 @@
             <h1>Multistream E2EE Sendrecv test</h1>
             <div style="display: flex;">
                 <div>
-                    <h2>sendrecv1</h2>
+                    <h2>sendrecv</h2>
                     <p>secretKey: MasterKey</p>
-                    <button id="start-sendrecv1">start</button>
-                    <button id="stop-sendrecv1">stop</button><br />
-                    <video id="sendrecv1-local-video" autoplay="" playsinline="" controls="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
-                    <div id="sendrecv1-remote-videos"></div>
-                </div>
-                <div>
-                    <h2>sendrecv2</h2>
-                    <p>secretKey: MasterKey</p>
-                    <button id="start-sendrecv2">start</button>
-                    <button id="stop-sendrecv2">stop</button><br />
-                    <video id="sendrecv2-local-video" autoplay="" playsinline="" controls="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
-                    <div id="sendrecv2-remote-videos"></div>
-                </div>
-                <div>
-                    <h2>sendrecv3</h2>
-                    <p>secretKey: AnotherKey</p>
-                    <button id="start-sendrecv3">start</button>
-                    <button id="stop-sendrecv3">stop</button><br />
-                    <video id="sendrecv3-local-video" autoplay="" playsinline="" controls="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
-                    <div id="sendrecv3-remote-videos"></div>
+                    <button id="start-sendrecv">start</button>
+                    <button id="stop-sendrecv">stop</button><br />
+                    <video id="sendrecv-local-video" autoplay="" playsinline="" controls="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                    <div id="sendrecv-remote-videos"></div>
                 </div>
             </div>
         </div>
@@ -38,37 +22,30 @@
         <script type="text/javascript">
 const channelId = 'Sora';
 const debug = false;
+Sora.initE2EE("./wasm.wasm");
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
-const sendrecv1 = sora.sendrecv(channelId, null, {
+const sendrecv = sora.sendrecv(channelId, null, {
   multistream: true,
-  e2ee: "MasterKey"
-});
-const sendrecv2 = sora.sendrecv(channelId, null, {
-  multistream: true,
-  e2ee: "MasterKey"
-});
-const sendrecv3 = sora.sendrecv(channelId, null, {
-  multistream: true,
-  e2ee: "AnotherKey"
+  e2ee: true
 });
 
-document.querySelector('#start-sendrecv1').addEventListener('click', function() {
-  // sendrecv1
+document.querySelector('#start-sendrecv').addEventListener('click', function() {
+  // sendrecv
   navigator.mediaDevices.getUserMedia({audio: true, video: true})
     .then(mediaStream => {
-      sendrecv1.connect(mediaStream)
+      sendrecv.connect(mediaStream)
         .then(stream => {
-          document.querySelector('#sendrecv1-local-video').srcObject = stream;
+          document.querySelector('#sendrecv-local-video').srcObject = stream;
         });
     })
     .catch(e => {
       console.error(e);
     });
-  sendrecv1.on('track', function(event) {
+  sendrecv.on('track', function(event) {
     const stream = event.streams[0];
     if (!stream) return;
-    const remoteVideoId = 'sendrecv1-remotevideo-' + stream.id;
-    const remoteVideos = document.querySelector('#sendrecv1-remote-videos');
+    const remoteVideoId = 'sendrecv-remotevideo-' + stream.id;
+    const remoteVideos = document.querySelector('#sendrecv-remote-videos');
     if (!remoteVideos.querySelector('#' + remoteVideoId)) {
       const remoteVideo = document.createElement('video');
       remoteVideo.id = remoteVideoId;
@@ -82,106 +59,18 @@ document.querySelector('#start-sendrecv1').addEventListener('click', function() 
       remoteVideos.appendChild(remoteVideo);
     }
   });
-  sendrecv1.on('removetrack', function(event) {
-    const remoteVideo = document.querySelector('#sendrecv1-remotevideo-' + event.target.id);
+  sendrecv.on('removetrack', function(event) {
+    const remoteVideo = document.querySelector('#sendrecv-remotevideo-' + event.target.id);
     if (remoteVideo) {
-      document.querySelector('#sendrecv1-remote-videos').removeChild(remoteVideo);
+      document.querySelector('#sendrecv-remote-videos').removeChild(remoteVideo);
     }
   });
 });
-document.querySelector('#start-sendrecv2').addEventListener('click', function() {
-  // sendrecv2
-  navigator.mediaDevices.getUserMedia({audio: true, video: true})
-    .then(mediaStream => {
-      sendrecv2.connect(mediaStream)
-        .then(stream => {
-          document.querySelector('#sendrecv2-local-video').srcObject = stream;
-        });
-    })
-    .catch(e => {
-      console.error(e);
-    });
-  sendrecv2.on('track', function(event) {
-    const stream = event.streams[0];
-    if (!stream) return;
-    const remoteVideoId = 'sendrecv2-remotevideo-' + stream.id;
-    const remoteVideos = document.querySelector('#sendrecv2-remote-videos');
-    if (!remoteVideos.querySelector('#' + remoteVideoId)) {
-      const remoteVideo = document.createElement('video');
-      remoteVideo.id = remoteVideoId;
-      remoteVideo.style.border = '1px solid red';
-      remoteVideo.autoplay = true;
-      remoteVideo.playsinline = true;
-      remoteVideo.controls = true;
-      remoteVideo.width = '160';
-      remoteVideo.height = '120';
-      remoteVideo.srcObject = stream;
-      remoteVideos.appendChild(remoteVideo);
-    }
-  });
-  sendrecv2.on('removetrack', function(event) {
-    const remoteVideo = document.querySelector('#sendrecv2-remotevideo-' + event.target.id);
-    if (remoteVideo) {
-      document.querySelector('#sendrecv2-remote-videos').removeChild(remoteVideo);
-    }
-  });
-});
-document.querySelector('#start-sendrecv3').addEventListener('click', function() {
-  // sendrecv3
-  navigator.mediaDevices.getUserMedia({audio: true, video: true})
-    .then(mediaStream => {
-      sendrecv3.connect(mediaStream)
-        .then(stream => {
-          document.querySelector('#sendrecv3-local-video').srcObject = stream;
-        });
-    })
-    .catch(e => {
-      console.error(e);
-    });
-  sendrecv3.on('track', function(event) {
-    const stream = event.streams[0];
-    if (!stream) return;
-    const remoteVideoId = 'sendrecv3-remotevideo-' + stream.id;
-    const remoteVideos = document.querySelector('#sendrecv3-remote-videos');
-    if (!remoteVideos.querySelector('#' + remoteVideoId)) {
-      const remoteVideo = document.createElement('video');
-      remoteVideo.id = remoteVideoId;
-      remoteVideo.style.border = '1px solid red';
-      remoteVideo.autoplay = true;
-      remoteVideo.playsinline = true;
-      remoteVideo.controls = true;
-      remoteVideo.width = '160';
-      remoteVideo.height = '120';
-      remoteVideo.srcObject = stream;
-      remoteVideos.appendChild(remoteVideo);
-    }
-  });
-  sendrecv3.on('removetrack', function(event) {
-    const remoteVideo = document.querySelector('#sendrecv3-remotevideo-' + event.target.id);
-    if (remoteVideo) {
-      document.querySelector('#sendrecv3-remote-videos').removeChild(remoteVideo);
-    }
-  });
-});
-document.querySelector('#stop-sendrecv1').addEventListener('click', function() {
-  sendrecv1.disconnect()
+document.querySelector('#stop-sendrecv').addEventListener('click', function() {
+  sendrecv.disconnect()
     .then(function() {
-      document.querySelector('#sendrecv1-local-video').srcObject = null;
-      document.querySelector('#sendrecv1-remote-videos').innerHTML = null;
-    });
-});
-document.querySelector('#stop-sendrecv2').addEventListener('click', function() {
-  sendrecv2.disconnect()
-    .then(function() {
-      document.querySelector('#sendrecv2-local-video').srcObject = null;
-      document.querySelector('#sendrecv2-remote-videos').innerHTML = null;
-    });
-});
-document.querySelector('#stop-sendrecv3').addEventListener('click', function() {
-  sendrecv3.disconnect()
-    .then(function() {
-      document.querySelector('#sendrecv3-local-video').srcObject = null;
-      document.querySelector('#sendrecv3-remote-videos').innerHTML = null;
+      document.querySelector('#sendrecv-local-video').srcObject = null;
+      document.querySelector('#sendrecv-remote-videos').innerHTML = null;
     });
 });
     </script>

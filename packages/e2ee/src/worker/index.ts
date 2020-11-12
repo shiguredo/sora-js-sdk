@@ -35,6 +35,7 @@ interface HkdfParams extends Algorithm {
 }
 
 // worker で使用している deriveBits, deriveKey のみ HKDF algorithm に対応する
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface SubtleCrypto {
   deriveBits(
     algorithm:
@@ -157,6 +158,7 @@ onmessage = (event): void => {
     }
   } else if (type === "remoteSecretKeyMaterials") {
     const { remoteSecretKeyMaterials } = event.data;
+
     for (const [connectionId, remoteSecretKeyMaterial] of Object.entries(
       remoteSecretKeyMaterials as Record<string, RemoteSecretKeyMaterial>
     )) {
@@ -194,6 +196,7 @@ onmessage = (event): void => {
     countMap.clear();
     writeIVMap.clear();
     remoteDeriveKeyMap.clear();
+    latestRemoteKeyIdMap.clear();
     selfDeriveKeyMap.clear();
   }
 };

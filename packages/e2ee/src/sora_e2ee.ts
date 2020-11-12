@@ -1,3 +1,5 @@
+import WasmExec from "@sora/go-wasm";
+
 type PreKeyBundle = {
   identityKey: string;
   signedPreKey: string;
@@ -69,6 +71,8 @@ interface E2EEWindow extends Window {
 }
 declare let window: E2EEWindow;
 
+const WORKER_SCRIPT = "__WORKER_SCRIPT__";
+
 class SoraE2EE {
   worker: Worker | null;
   onWorkerDisconnect: (() => void) | null;
@@ -86,7 +90,7 @@ class SoraE2EE {
   // worker を起動する
   startWorker(): void {
     // ワーカーを起動する
-    const workerScript = atob("WORKER_SCRIPT");
+    const workerScript = atob(WORKER_SCRIPT);
     this.worker = new Worker(URL.createObjectURL(new Blob([workerScript], { type: "application/javascript" })));
     this.worker.onmessage = (event): void => {
       const { operation } = event.data;
@@ -111,15 +115,6 @@ class SoraE2EE {
   }
   // 初期化処理
   async init(): Promise<PreKeyBundle> {
-    if (!window.Go) {
-      throw new Error(`Failed to load module Go. window.Go is ${window.Go}.`);
-    }
-    const go = new Go();
-    const { instance } = await WebAssembly.instantiateStreaming(fetch("wasm.wasm"), go.importObject);
-    go.run(instance);
-    if (!window.e2ee) {
-      throw new Error(`Failed to load module e2ee. window.e2ee is ${window.e2ee}.`);
-    }
     const { preKeyBundle } = await window.e2ee.init();
     return preKeyBundle;
   }
@@ -167,11 +162,21 @@ class SoraE2EE {
     });
   }
 
+  postRemoveRemoteDeriveKey(connectionId: string): void {
+    if (!this.worker) {
+      throw new Error("Worker is null. Call startWorker in advance.");
+    }
+    this.worker.postMessage({
+      type: "removeRemoteDeriveKey",
+      connectionId: connectionId,
+    });
+  }
+
   postSelfSecretKeyMaterial(
     selfConnectionId: string,
     selfKeyId: number,
     selfSecretKeyMaterial: Uint8Array,
-    waitingTime: number
+    waitingTime = 0
   ): void {
     if (!this.worker) {
       throw new Error("Worker is null. Call startWorker in advance.");
@@ -242,9 +247,25 @@ class SoraE2EE {
     return window.e2ee.remoteFingerprints();
   }
 
+  static async loadWasm(wasmUrl: string): Promise<void> {
+    if (!window.e2ee === undefined) {
+      console.warn("E2ee wasm is already loaded. Will not be reload.");
+      return;
+    }
+    WasmExec();
+    if (!window.Go) {
+      throw new Error(`Failed to load module Go. window.Go is ${window.Go}.`);
+    }
+    const go = new Go();
+    const { instance } = await WebAssembly.instantiateStreaming(fetch(wasmUrl), go.importObject);
+    go.run(instance);
+    if (!window.e2ee) {
+      throw new Error(`Failed to load module e2ee. window.e2ee is ${window.e2ee}.`);
+    }
+  }
+
   static version(): string {
-    // @ts-ignore
-    return SORA_E2EE_VERSION;
+    return "__SORA_E2EE_VERSION__";
   }
 
   static wasmVersion(): string {

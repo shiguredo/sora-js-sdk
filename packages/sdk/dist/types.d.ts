@@ -90,7 +90,7 @@ export declare type ConnectionOptions = {
     simulcastRid?: SimulcastRid;
     clientId?: string;
     timeout?: number;
-    e2ee?: string;
+    e2ee?: boolean;
     signalingNotifyMetadata?: Json;
 };
 export declare type Callbacks = {

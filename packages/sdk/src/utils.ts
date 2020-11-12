@@ -249,8 +249,16 @@ export function createSignalingMessage(
     throw new Error("Simulcast can not be used with this browser");
   }
 
-  // e2ee
-  if ("e2ee" in options) {
+  if (options.e2ee === true) {
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    if (message.signaling_notify_metadata === undefined) {
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      message.signaling_notify_metadata = {};
+    }
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    if (message.signaling_notify_metadata === null || typeof message.signaling_notify_metadata !== "object") {
+      throw new Error("E2EE failed. Options signalingNotifyMetadata must be type 'object'");
+    }
     if (message.video === true) {
       message.video = {};
     }
