@@ -26,5 +26,8 @@
     "rollup": "^2.10.0",
     "rollup-plugin-typescript2": "^0.27.1",
     "typescript": "^3.9.2"
+  },
+  "dependencies": {
+    "@sora/go-wasm": "^2020.5.0-canary.0"
   }
 }

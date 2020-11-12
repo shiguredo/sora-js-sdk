@@ -1,3 +1,5 @@
+import WasmExec from "@sora/go-wasm";
+
 type PreKeyBundle = {
   identityKey: string;
   signedPreKey: string;
@@ -250,6 +252,7 @@ class SoraE2EE {
       console.warn("E2ee wasm is already loaded. Will not be reload.");
       return;
     }
+    WasmExec();
     if (!window.Go) {
       throw new Error(`Failed to load module Go. window.Go is ${window.Go}.`);
     }
