@@ -57,7 +57,7 @@ In other languages, we won't be able to deal with them. Thank you for your under
 
 詳細については以下をご確認ください。
 
-[shiguredo/sora\-e2ee: WebRTC SFU Sora 向け JavaScript E2EE ライブラリ](https://github.com/shiguredo/sora-e2ee)
+[WebRTC SFU Sora 向け E2EE ライブラリ](https://github.com/shiguredo/sora-e2ee)
 
 ## API 一覧
 
