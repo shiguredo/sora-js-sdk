@@ -499,4 +499,18 @@ export default class ConnectionBase {
     });
     return stats;
   }
+
+  e2eeSelfFingerprint(): string | null {
+    if (this.options.e2ee && this.e2ee) {
+      return this.e2ee.selfFingerprint();
+    }
+    return null;
+  }
+
+  e2eeRemoteFingerprints(): Record<string, string> | null {
+    if (this.options.e2ee && this.e2ee) {
+      return this.e2ee.remoteFingerprints();
+    }
+    return null;
+  }
 }
