@@ -11,7 +11,8 @@
     "lint": "npx lerna run lint",
     "fmt": "npx lerna run fmt",
     "test": "npx lerna run test",
-    "start": "npx serve -S -l 8080 ./example"
+    "start": "npx serve -S -l 8080 ./example",
+    "release:canary": "npx lerna version prerelease --preid canary --no-push --tag-version-prefix ''"
   },
   "repository": {
     "type": "git",
