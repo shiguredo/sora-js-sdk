@@ -62,8 +62,8 @@ class SoraConnection {
 }
 
 export default {
-  initE2EE: function (wasmUrl: string): void {
-    SoraE2EE.loadWasm(wasmUrl);
+  initE2EE: async function (wasmUrl: string): Promise<void> {
+    await SoraE2EE.loadWasm(wasmUrl);
   },
   connection: function (signalingUrl: string, debug = false): SoraConnection {
     return new SoraConnection(signalingUrl, debug);
