@@ -13,7 +13,7 @@ declare class SoraConnection {
     recvonly(channelId: string, metadata?: Json, options?: ConnectionOptions): ConnectionSubscriber;
 }
 declare const _default: {
-    initE2EE: (wasmUrl: string) => void;
+    initE2EE: (wasmUrl: string) => Promise<void>;
     connection: (signalingUrl: string, debug?: boolean) => SoraConnection;
     version: () => string;
 };

@@ -1715,8 +1715,8 @@
 	    }
 	}
 	var sora = {
-	    initE2EE: function (wasmUrl) {
-	        SoraE2EE.loadWasm(wasmUrl);
+	    initE2EE: async function (wasmUrl) {
+	        await SoraE2EE.loadWasm(wasmUrl);
 	    },
 	    connection: function (signalingUrl, debug = false) {
 	        return new SoraConnection(signalingUrl, debug);
