@@ -24,6 +24,9 @@
     "url": "https://github.com/shiguredo/sora-js-sdk/issues"
   },
   "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "lerna": "^3.22.1",
     "serve": "^11.3.2"
