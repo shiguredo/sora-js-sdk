@@ -5,10 +5,6 @@ import typescript from 'rollup-plugin-typescript2';
 import replace from '@rollup/plugin-replace';
 import pkg from './package.json';
 
-const env = process.env.NODE_ENV || 'development';
-if (env === 'development') {
-  pkg.version += '-dev';
-}
 const banner = `/**
  * ${pkg.name}
  * ${pkg.description}
@@ -33,7 +29,7 @@ export default [
     ],
     output: {
       sourcemap: false,
-      file: 'dist/sora.js',
+      file: '../../dist/sora.js',
       format: 'umd',
       name: 'Sora',
       banner: banner
@@ -56,7 +52,7 @@ export default [
     ],
     output: {
       sourcemap: true,
-      file: 'dist/sora.min.js',
+      file: '../../dist/sora.min.js',
       format: 'umd',
       name: 'Sora',
       banner: banner
@@ -76,7 +72,7 @@ export default [
     ],
     output: {
       sourcemap: false,
-      file: 'dist/sora.mjs',
+      file: '../../dist/sora.mjs',
       format: 'module',
       name: 'Sora',
       banner: banner

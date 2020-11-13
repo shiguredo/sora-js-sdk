@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "NODE_ENV=development rollup -c",
+    "build": "rollup -c",
     "lint": "eslint --ext .ts ./src",
     "fmt": "prettier --write src",
     "test": "jest --detectOpenHandles --forceExit"
