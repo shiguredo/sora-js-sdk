@@ -36,4 +36,6 @@ export default class ConnectionBase {
     private update;
     private setSenderParameters;
     private getStats;
+    e2eeSelfFingerprint(): string | null;
+    e2eeRemoteFingerprints(): Record<string, string> | null;
 }

@@ -1484,6 +1484,18 @@
 	        });
 	        return stats;
 	    }
+	    e2eeSelfFingerprint() {
+	        if (this.options.e2ee && this.e2ee) {
+	            return this.e2ee.selfFingerprint();
+	        }
+	        return null;
+	    }
+	    e2eeRemoteFingerprints() {
+	        if (this.options.e2ee && this.e2ee) {
+	            return this.e2ee.remoteFingerprints();
+	        }
+	        return null;
+	    }
 	}
 
 	class ConnectionPublisher extends ConnectionBase {
