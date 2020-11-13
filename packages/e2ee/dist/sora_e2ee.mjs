@@ -1,7 +1,7 @@
 /**
  * @sora/e2ee
  * undefined
- * @version: 2020.5.0-canary.1
+ * @version: 2020.5.0-canary.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -170,7 +170,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2020.5.0-canary.1";
+        return "2020.5.0-canary.2";
     }
     static wasmVersion() {
         return window.e2ee.version();
