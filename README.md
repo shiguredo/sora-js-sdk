@@ -98,7 +98,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * simulcastRid             | string  |      | サイマルキャストRID (r0/r1/r2)        |
   | * clientId                 | string  |      | クライアントID                        |
   | * timeout                  | integer |      | タイムアウト時間(ms)                  |
-  | * e2ee                     | string  |      | e2ee のマスターシークレット           |
+  | * e2ee                     | boolean |      | E２EE 有効/無効                     |
   | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
 
 
@@ -172,7 +172,7 @@ sendrecv.on('disconnect', function(e) {
   | * simulcast                | boolean |      | サイマルキャスト有効／無効            |
   | * clientId                 | string  |      | クライアントID                        |
   | * timeout                  | integer |      | タイムアウト時間(ms)                  |
-  | * e2ee                     | string  |      | e2ee のマスターシークレット           |
+  | * e2ee                     | boolean |      | E２EE 有効/無効                     |
   | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
 
 
@@ -248,7 +248,7 @@ sendonly.on('disconnect', function(e) {
   | * simulcastRid             | string  |      | サイマルキャストRID(r0/r1/r2)               |
   | * clientId                 | string  |      | クライアントID                              |
   | * timeout                  | integer |      | タイムアウト時間(ms)                        |
-  | * e2ee                     | string  |      | e2ee のマスターシークレット                 |
+  | * e2ee                     | boolean |      | E２EE 有効/無効                     |
   | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata              |
 
 
