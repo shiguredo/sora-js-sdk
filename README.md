@@ -296,27 +296,22 @@ recvonly.on('disconnect', function(e) {
 });
 ```
 
-## 開発者向け
-```
-$ git clone https://github.com/shiguredo/sora-js-sdk.git
-$ cd sora-js-sdk
-$ yarn install
-```
+## ライセンス
 
-### ビルド
-```
- $ yarn build
-```
+Apache License 2.0
 
-### 開発時
 ```
- $ yarn watch
- $ yarn server
-```
+Copyright 2017-2020, Shiguredo Inc.
 
-### リリース
-```
- $ yarn lint
- $ yarn test
- $ yarn release
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ```
