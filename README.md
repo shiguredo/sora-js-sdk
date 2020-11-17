@@ -26,7 +26,7 @@ In other languages, we won't be able to deal with them. Thank you for your under
 
 ## システム条件
 
-- WebRTC SFU Sora 2020.1 以降
+- WebRTC SFU Sora 2020.2 以降
 - TypeScript 3.8 以降
 
 ## サンプル
@@ -98,7 +98,7 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * simulcastRid             | string  |      | サイマルキャストRID (r0/r1/r2)        |
   | * clientId                 | string  |      | クライアントID                        |
   | * timeout                  | integer |      | タイムアウト時間(ms)                  |
-  | * e2ee                     | boolean |      | E２EE 有効/無効                     |
+  | * e2ee                     | boolean |      | E2EE 有効/無効                        |
   | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
 
 
@@ -172,7 +172,7 @@ sendrecv.on('disconnect', function(e) {
   | * simulcast                | boolean |      | サイマルキャスト有効／無効            |
   | * clientId                 | string  |      | クライアントID                        |
   | * timeout                  | integer |      | タイムアウト時間(ms)                  |
-  | * e2ee                     | boolean |      | E２EE 有効/無効                     |
+  | * e2ee                     | boolean |      | E2EE 有効/無効                        |
   | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
 
 
@@ -248,7 +248,7 @@ sendonly.on('disconnect', function(e) {
   | * simulcastRid             | string  |      | サイマルキャストRID(r0/r1/r2)               |
   | * clientId                 | string  |      | クライアントID                              |
   | * timeout                  | integer |      | タイムアウト時間(ms)                        |
-  | * e2ee                     | boolean |      | E２EE 有効/無効                     |
+  | * e2ee                     | boolean |      | E2EE 有効/無効                              |
   | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata              |
 
 
