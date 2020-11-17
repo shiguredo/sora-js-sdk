@@ -8,11 +8,14 @@
             <h1>Multistream E2EE Sendrecv test</h1>
             <div style="display: flex;">
                 <div>
-                    <h2>sendrecv</h2>
-                    <p>secretKey: MasterKey</p>
+                    <h2>local</h2>
                     <button id="start-sendrecv">start</button>
                     <button id="stop-sendrecv">stop</button><br />
+                    <p id="local-connection-id"></p>
+                    <p id="local-fingerprint"></p>
                     <video id="sendrecv-local-video" autoplay="" playsinline="" controls="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+
+                    <h2>remote</h2>
                     <div id="sendrecv-remote-videos"></div>
                 </div>
             </div>
@@ -35,6 +38,8 @@ document.querySelector('#start-sendrecv').addEventListener('click', function() {
     .then(mediaStream => {
       sendrecv.connect(mediaStream)
         .then(stream => {
+          document.querySelector('#local-connection-id').textContent = "connectionId: " + sendrecv.connectionId;
+          document.querySelector('#local-fingerprint').textContent = "fingerprint: " + sendrecv.e2eeSelfFingerprint;
           document.querySelector('#sendrecv-local-video').srcObject = stream;
         });
     })
@@ -44,11 +49,19 @@ document.querySelector('#start-sendrecv').addEventListener('click', function() {
   sendrecv.on('track', function(event) {
     const stream = event.streams[0];
     if (!stream) return;
-    const remoteVideoId = 'sendrecv-remotevideo-' + stream.id;
+    const remoteVideoBoxId = 'remote-video-box-' + stream.id;
     const remoteVideos = document.querySelector('#sendrecv-remote-videos');
-    if (!remoteVideos.querySelector('#' + remoteVideoId)) {
+    if (!remoteVideos.querySelector('#' + remoteVideoBoxId)) {
+      const remoteVideoBox = document.createElement('div');
+      remoteVideoBox.id = remoteVideoBoxId;
+      const connectionIdElement = document.createElement('p');
+      connectionIdElement.id = remoteVideoBoxId + "-connection-id";
+      connectionIdElement.textContent = 'connectionId: ' + stream.id;
+      remoteVideoBox.appendChild(connectionIdElement);
+      const fingerprintElement = document.createElement('p');
+      fingerprintElement.id = remoteVideoBoxId + "-fingerprint";
+      remoteVideoBox.appendChild(fingerprintElement);
       const remoteVideo = document.createElement('video');
-      remoteVideo.id = remoteVideoId;
       remoteVideo.style.border = '1px solid red';
       remoteVideo.autoplay = true;
       remoteVideo.playsinline = true;
@@ -56,13 +69,25 @@ document.querySelector('#start-sendrecv').addEventListener('click', function() {
       remoteVideo.width = '160';
       remoteVideo.height = '120';
       remoteVideo.srcObject = stream;
-      remoteVideos.appendChild(remoteVideo);
+      remoteVideoBox.appendChild(remoteVideo);
+      remoteVideos.appendChild(remoteVideoBox);
     }
   });
   sendrecv.on('removetrack', function(event) {
-    const remoteVideo = document.querySelector('#sendrecv-remotevideo-' + event.target.id);
+    const remoteVideo = document.querySelector('#remote-video-box-' + event.target.id);
     if (remoteVideo) {
       document.querySelector('#sendrecv-remote-videos').removeChild(remoteVideo);
+    }
+  });
+  sendrecv.on('notify', function(event) {
+    if (event.event_type === "connection.created") {
+      const remoteFingerprints = sendrecv.e2eeRemoteFingerprints;
+      Object.keys(remoteFingerprints).forEach((connectionId) => {
+        const fingerprintElement = document.querySelector('#remote-video-box-' + connectionId + '-fingerprint');
+        if (fingerprintElement) {
+          fingerprintElement.textContent = "fingerprint: " + remoteFingerprints[connectionId];
+        }
+      });
     }
   });
 });
