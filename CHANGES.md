@@ -13,8 +13,13 @@
 ## develop
 
 - [CHANGE] simulcastQuality を simulcastRid に変更する
+    - @voluntas
 - [CHANGE] simulcast を bool のみに変更する
+    - @voluntas
 - [CHANGE] simulcast_rid を追加する
+    - @voluntas
+- [CHANGE] オプションの e2ee を boolean のみに変更する
+    - @yuitowest
 
 ## 2020.4.0
 
