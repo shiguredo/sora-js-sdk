@@ -1,6 +1,6 @@
 {
   "name": "@sora/e2ee",
-  "version": "2020.5.0-canary.2",
+  "version": "2020.5.0-canary.3",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "main": "dist/sora_e2ee.mjs",

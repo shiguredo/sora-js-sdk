@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2020.5.0-canary.2
+ * @version: 2020.5.0-canary.3
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * undefined
- * @version: 2020.5.0-canary.2
+ * @version: 2020.5.0-canary.3
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -765,7 +765,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2020.5.0-canary.2";
+        return "2020.5.0-canary.3";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -861,7 +861,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
         type: "connect",
         // @ts-ignore
         // eslint-disable-next-line @typescript-eslint/camelcase
-        sora_client: `Sora JavaScript SDK ${'2020.5.0-canary.2'}`,
+        sora_client: `Sora JavaScript SDK ${'2020.5.0-canary.3'}`,
         environment: window.navigator.userAgent,
         role: role,
         // eslint-disable-next-line @typescript-eslint/camelcase
@@ -1482,13 +1482,13 @@ class ConnectionBase {
         if (this.options.e2ee && this.e2ee) {
             return this.e2ee.selfFingerprint();
         }
-        return null;
+        return;
     }
     get e2eeRemoteFingerprints() {
         if (this.options.e2ee && this.e2ee) {
             return this.e2ee.remoteFingerprints();
         }
-        return null;
+        return;
     }
 }
 
@@ -1729,7 +1729,7 @@ var sora = {
     },
     version: function () {
         // @ts-ignore
-        return '2020.5.0-canary.2';
+        return '2020.5.0-canary.3';
     },
 };
 
