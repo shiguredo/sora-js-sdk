@@ -1242,7 +1242,6 @@ class ConnectionBase {
                     this.callbacks.push(data);
                 }
                 else if (data.type == "notify") {
-                    this.callbacks.notify(data);
                     if (data.event_type === "connection.created") {
                         const metadata = data.metadata;
                         const connectionId = data.connection_id;
@@ -1288,6 +1287,7 @@ class ConnectionBase {
                             this.e2ee.postRemoveRemoteDeriveKey(connectionId);
                         }
                     }
+                    this.callbacks.notify(data);
                 }
             };
         });
@@ -1478,13 +1478,13 @@ class ConnectionBase {
         });
         return stats;
     }
-    e2eeSelfFingerprint() {
+    get e2eeSelfFingerprint() {
         if (this.options.e2ee && this.e2ee) {
             return this.e2ee.selfFingerprint();
         }
         return null;
     }
-    e2eeRemoteFingerprints() {
+    get e2eeRemoteFingerprints() {
         if (this.options.e2ee && this.e2ee) {
             return this.e2ee.remoteFingerprints();
         }
