@@ -243,8 +243,6 @@ export default class ConnectionBase {
         } else if (data.type == "push") {
           this.callbacks.push(data);
         } else if (data.type == "notify") {
-          this.callbacks.notify(data);
-
           if (data.event_type === "connection.created") {
             const metadata = data.metadata;
             const connectionId = data.connection_id;
@@ -298,6 +296,7 @@ export default class ConnectionBase {
               this.e2ee.postRemoveRemoteDeriveKey(connectionId);
             }
           }
+          this.callbacks.notify(data);
         }
       };
     });
