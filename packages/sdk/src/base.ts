@@ -499,17 +499,17 @@ export default class ConnectionBase {
     return stats;
   }
 
-  e2eeSelfFingerprint(): string | null {
+  get e2eeSelfFingerprint(): string | undefined {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.selfFingerprint();
     }
-    return null;
+    return;
   }
 
-  e2eeRemoteFingerprints(): Record<string, string> | null {
+  get e2eeRemoteFingerprints(): Record<string, string> | undefined {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.remoteFingerprints();
     }
-    return null;
+    return;
   }
 }
