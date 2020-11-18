@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2020.4.0
+ * @version: 2020.4.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -95,7 +95,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
         type: "connect",
         // @ts-ignore
         // eslint-disable-next-line @typescript-eslint/camelcase
-        sora_client: `Sora JavaScript SDK ${'2020.4.0'}`,
+        sora_client: `Sora JavaScript SDK ${'2020.4.1'}`,
         environment: window.navigator.userAgent,
         role: role,
         // eslint-disable-next-line @typescript-eslint/camelcase
@@ -604,7 +604,8 @@ class ConnectionBase {
         return new Promise((_, reject) => {
             if (this.options.timeout && 0 < this.options.timeout) {
                 setTimeout(() => {
-                    if (this.pc && this.pc.connectionState !== "connected") {
+                    if (!this.pc ||
+                        (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")) {
                         const error = new Error();
                         error.message = "CONNECTION TIMEOUT";
                         this.callbacks.timeout();
@@ -877,7 +878,7 @@ var sora = {
     },
     version: function () {
         // @ts-ignore
-        return '2020.4.0';
+        return '2020.4.1';
     },
 };
 
