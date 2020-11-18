@@ -1437,7 +1437,8 @@ class ConnectionBase {
         return new Promise((_, reject) => {
             if (this.options.timeout && 0 < this.options.timeout) {
                 setTimeout(() => {
-                    if (this.pc && this.pc.connectionState !== "connected") {
+                    if (!this.pc ||
+                        (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")) {
                         const error = new Error();
                         error.message = "CONNECTION TIMEOUT";
                         this.callbacks.timeout();
