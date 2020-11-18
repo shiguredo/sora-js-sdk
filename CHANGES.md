@@ -9,6 +9,13 @@
 - FIX
     - バグ修正
 
+## 2020.4.1
+
+- [FIX] timeout option を設定時に特定の条件で正しく動かない問題を修正する
+    - peerconnection connectionState が undefined の場合に timeout error が強制的に発動してしまう
+    - peerconnection 接続前に timeout の時間に到達した場合 timeout error が発動しない
+    - @yuitowest
+
 ## 2020.4.0
 
 - [CHANGE] signaling 時に処理に失敗した場合の reject の引数を CloseEvent オブジェクトから Error オブジェクトに変更する
