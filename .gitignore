@@ -1,3 +1,5 @@
 node_modules
 npm-debug.log
 wasm.wasm
+packages/e2ee/dist
+packages/e2ee/_worker
