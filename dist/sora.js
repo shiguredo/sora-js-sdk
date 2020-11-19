@@ -603,7 +603,7 @@
 
 	/**
 	 * @sora/e2ee
-	 * undefined
+	 * WebRTC SFU Sora JavaScript E2EE Library
 	 * @version: 2020.5.0-canary.3
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
