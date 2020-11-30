@@ -3,7 +3,7 @@ import SoraE2EE from "@sora/e2ee";
 export default class ConnectionBase {
     role: string;
     channelId: string;
-    metadata: Json;
+    metadata: Json | undefined;
     signalingUrl: string;
     options: ConnectionOptions;
     constraints: any;
