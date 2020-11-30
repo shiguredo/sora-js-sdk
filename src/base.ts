@@ -17,7 +17,7 @@ declare let window: Window;
 export default class ConnectionBase {
   role: string;
   channelId: string;
-  metadata: Json;
+  metadata: Json | undefined;
   signalingUrl: string;
   options: ConnectionOptions;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

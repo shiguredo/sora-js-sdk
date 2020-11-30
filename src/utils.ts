@@ -82,7 +82,7 @@ export function createSignalingMessage(
   offerSDP: string,
   role: string,
   channelId: string | null | undefined,
-  metadata: Json,
+  metadata: Json | undefined,
   options: ConnectionOptions
 ): SignalingConnectMessage {
   if (
