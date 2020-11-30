@@ -9,6 +9,11 @@
 - FIX
     - バグ修正
 
+## 2020.4.2
+
+- [FIX] metadata に直接 undefined を渡せるように修正する
+    - @yuitowest
+
 ## 2020.4.1
 
 - [FIX] timeout option を設定時に特定の条件で正しく動かない問題を修正する
