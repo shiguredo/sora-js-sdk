@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2020.5.0-canary.5
+ * @version: 2020.5.0-canary.6
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2020.5.0-canary.5
+ * @version: 2020.5.0-canary.6
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -765,7 +765,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2020.5.0-canary.5";
+        return "2020.5.0-canary.6";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -861,7 +861,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
         type: "connect",
         // @ts-ignore
         // eslint-disable-next-line @typescript-eslint/camelcase
-        sora_client: `Sora JavaScript SDK ${'2020.5.0-canary.5'}`,
+        sora_client: `Sora JavaScript SDK ${'2020.5.0-canary.6'}`,
         environment: window.navigator.userAgent,
         role: role,
         // eslint-disable-next-line @typescript-eslint/camelcase
@@ -1262,7 +1262,7 @@ class ConnectionBase {
                             }
                         }
                         const metadataList = data.metadata_list;
-                        if (metadataList) {
+                        if (metadataList && this.e2ee) {
                             // @ts-ignore TODO(yuito)
                             metadataList.forEach((metadata) => {
                                 const preKeyBundle = metadata.metadata.pre_key_bundle;
@@ -1730,7 +1730,7 @@ var sora = {
     },
     version: function () {
         // @ts-ignore
-        return '2020.5.0-canary.5';
+        return '2020.5.0-canary.6';
     },
 };
 
