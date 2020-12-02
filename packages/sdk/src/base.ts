@@ -267,7 +267,7 @@ export default class ConnectionBase {
               }
             }
             const metadataList = data.metadata_list;
-            if (metadataList) {
+            if (metadataList && this.e2ee) {
               // @ts-ignore TODO(yuito)
               metadataList.forEach((metadata) => {
                 const preKeyBundle = metadata.metadata.pre_key_bundle;
