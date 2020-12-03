@@ -145,7 +145,7 @@ export function createSignalingMessage(
   }
 
   // client_id
-  if ("clientId" in options && options.clientId) {
+  if ("clientId" in options && options.clientId !== undefined) {
     // eslint-disable-next-line @typescript-eslint/camelcase
     message.client_id = options.clientId;
   }
