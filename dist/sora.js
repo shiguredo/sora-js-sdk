@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2020.5.0-canary.6
+ * @version: 2020.5.0-canary.7
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2020.5.0-canary.6
+	 * @version: 2020.5.0-canary.7
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -771,7 +771,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2020.5.0-canary.6";
+	        return "2020.5.0-canary.7";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -867,7 +867,7 @@
 	        type: "connect",
 	        // @ts-ignore
 	        // eslint-disable-next-line @typescript-eslint/camelcase
-	        sora_client: `Sora JavaScript SDK ${'2020.5.0-canary.6'}`,
+	        sora_client: `Sora JavaScript SDK ${'2020.5.0-canary.7'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        // eslint-disable-next-line @typescript-eslint/camelcase
@@ -907,7 +907,7 @@
 	        }
 	    }
 	    // client_id
-	    if ("clientId" in options && options.clientId) {
+	    if ("clientId" in options && options.clientId !== undefined) {
 	        // eslint-disable-next-line @typescript-eslint/camelcase
 	        message.client_id = options.clientId;
 	    }
@@ -1736,7 +1736,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2020.5.0-canary.6';
+	        return '2020.5.0-canary.7';
 	    },
 	};
 
