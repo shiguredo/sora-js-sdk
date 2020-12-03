@@ -63,16 +63,25 @@ test("createSignalingMessage clientId option", () => {
   const option1 = {
     clientId: "clientId",
   };
-  const diff = {
+  const diff1 = {
     client_id: option1.clientId,
   };
   expect(createSignalingMessage(sdp, role, channelId, null, option1)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff)
+    Object.assign({}, baseExpectedMessage, diff1)
   );
   const option2 = {
+    clientId: "",
+  };
+  const diff2 = {
+    client_id: option2.clientId,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, option2)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+  const option3 = {
     clientId: undefined,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, option2)).toEqual(baseExpectedMessage);
+  expect(createSignalingMessage(sdp, role, channelId, null, option3)).toEqual(baseExpectedMessage);
 });
 
 test("createSignalingMessage multistream option", () => {
