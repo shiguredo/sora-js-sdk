@@ -9,7 +9,7 @@
 - FIX
     - バグ修正
 
-## develop
+## 2020.5.0
 - [UPDATE] clientId option に空文字列を渡せるように修正する
     - @yuitowest
 - [CHANGE] オプションの e2ee を boolean のみに変更する
