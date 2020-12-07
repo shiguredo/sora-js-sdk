@@ -13,7 +13,8 @@
 
 ## 開発準備
 
-- `npx lerna bootstrap` を実行して packages 以下の各パッケージで依存関係をインストール
+- `yarn install` を実行
+- `yarn bootstrap` を実行して packages 以下の各パッケージで依存関係をインストール
 - `yarn start` でローカルサーバを起動する
 
 ## 開発
