@@ -1,7 +1,9 @@
+import SoraE2EE from "@sora/e2ee";
+
 import ConnectionBase from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
-import { AudioCodecType, Callbacks, ConnectionOptions, Json, Role, SimulcastQuality, VideoCodecType } from "./types";
+import { AudioCodecType, Callbacks, ConnectionOptions, Json, Role, SimulcastRid, VideoCodecType } from "./types";
 
 class SoraConnection {
   signalingUrl: string;
@@ -60,6 +62,9 @@ class SoraConnection {
 }
 
 export default {
+  initE2EE: async function (wasmUrl: string): Promise<void> {
+    await SoraE2EE.loadWasm(wasmUrl);
+  },
   connection: function (signalingUrl: string, debug = false): SoraConnection {
     return new SoraConnection(signalingUrl, debug);
   },
@@ -77,7 +82,7 @@ export type {
   ConnectionPublisher,
   ConnectionSubscriber,
   Role,
-  SimulcastQuality,
+  SimulcastRid,
   SoraConnection,
   VideoCodecType,
 };

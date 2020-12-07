@@ -1,0 +1,16 @@
+{
+  "name": "@sora/go-wasm",
+  "version": "2020.5.0",
+  "main": "src/wasm_exec.js",
+  "module": "src/wasm_exec.js",
+  "types": "src/wasm_exec.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "echo \"no build\"",
+    "lint": "echo \"no lint\"",
+    "fmt": "echo \"no fmt\"",
+    "test": "echo \"no test\""
+  }
+}

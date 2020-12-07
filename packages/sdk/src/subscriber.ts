@@ -11,9 +11,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
 
   private async singleStream(): Promise<MediaStream> {
     await this.disconnect();
-    this.startE2EE();
+    this.setupE2EE();
     const offer = await this.createOffer();
     const signalingMessage = await this.signaling(offer);
+    this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
@@ -54,9 +55,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
 
   private async multiStream(): Promise<void> {
     await this.disconnect();
-    this.startE2EE();
+    this.setupE2EE();
     const offer = await this.createOffer();
     const signalingMessage = await this.signaling(offer);
+    this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {

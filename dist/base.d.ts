@@ -1,5 +1,5 @@
 import { Callbacks, ConnectionOptions, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
-import SoraE2EE from "sora-e2ee";
+import SoraE2EE from "@sora/e2ee";
 export default class ConnectionBase {
     role: string;
     channelId: string;
@@ -20,6 +20,7 @@ export default class ConnectionBase {
     constructor(signalingUrl: string, role: string, channelId: string, metadata: Json, options: ConnectionOptions, debug: boolean);
     on(kind: keyof Callbacks, callback: Function): void;
     disconnect(): Promise<[void, void, void]>;
+    protected setupE2EE(): void;
     protected startE2EE(): void;
     protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage>;
     protected createOffer(): Promise<RTCSessionDescriptionInit>;
@@ -35,4 +36,6 @@ export default class ConnectionBase {
     private update;
     private setSenderParameters;
     private getStats;
+    get e2eeSelfFingerprint(): string | undefined;
+    get e2eeRemoteFingerprints(): Record<string, string> | undefined;
 }

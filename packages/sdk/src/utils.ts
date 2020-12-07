@@ -132,21 +132,20 @@ export function createSignalingMessage(
     }
   }
 
-  if ("simulcast" in options || "simulcastQuality" in options) {
+  if ("simulcast" in options || "simulcastRid" in options) {
     // simulcast
     if ("simulcast" in options && options.simulcast === true) {
       message.simulcast = true;
     }
-    const simalcastQualities = ["low", "middle", "high"];
-    if (options.simulcastQuality !== undefined && 0 <= simalcastQualities.indexOf(options.simulcastQuality)) {
-      message.simulcast = {
-        quality: options.simulcastQuality,
-      };
+    const simalcastRids = ["r0", "r1", "r2"];
+    if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      message.simulcast_rid = options.simulcastRid;
     }
   }
 
   // client_id
-  if ("clientId" in options && options.clientId) {
+  if ("clientId" in options && options.clientId !== undefined) {
     // eslint-disable-next-line @typescript-eslint/camelcase
     message.client_id = options.clientId;
   }
@@ -250,8 +249,16 @@ export function createSignalingMessage(
     throw new Error("Simulcast can not be used with this browser");
   }
 
-  // e2ee
-  if ("e2ee" in options) {
+  if (options.e2ee === true) {
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    if (message.signaling_notify_metadata === undefined) {
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      message.signaling_notify_metadata = {};
+    }
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    if (message.signaling_notify_metadata === null || typeof message.signaling_notify_metadata !== "object") {
+      throw new Error("E2EE failed. Options signalingNotifyMetadata must be type 'object'");
+    }
     if (message.video === true) {
       message.video = {};
     }
@@ -274,8 +281,8 @@ export function trace(clientId: string | null, title: string, value: any): void 
   }
 
   if (isEdge()) {
-    console.log(prefix + ' ' + title + '\n', value); // eslint-disable-line
+    console.log(prefix + " " + title + "\n", value); // eslint-disable-line
   } else {
-    console.info(prefix + ' ' + title + '\n', value); // eslint-disable-line
+    console.info(prefix + " " + title + "\n", value); // eslint-disable-line
   }
 }

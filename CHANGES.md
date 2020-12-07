@@ -9,6 +9,24 @@
 - FIX
     - バグ修正
 
+## 2020.5.0
+- [UPDATE] clientId option に空文字列を渡せるように修正する
+    - @yuitowest
+- [CHANGE] オプションの e2ee を boolean のみに変更する
+    - @yuitowest
+- [UPDATE] sora-e2ee パッケージを内包するように変更する
+    - lerna を使って複数 package を管理するようにする
+    - sdk package を作成して既存コードを sdk package 内へ移動する
+    - e2ee package を作成して sora-e2ee コードを移植する
+    - go-wasm package を作成して wasm_exec.js コードを内包する
+    - @yuitowest
+- [CHANGE] simulcastQuality を simulcastRid に変更する
+    - @voluntas
+- [CHANGE] simulcast を bool のみに変更する
+    - @voluntas
+- [CHANGE] simulcast_rid を追加する
+    - @voluntas
+
 ## 2020.4.2
 
 - [FIX] metadata に直接 undefined を渡せるように修正する

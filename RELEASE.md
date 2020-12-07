@@ -11,13 +11,25 @@
 - yarn install
     - これで事前に利用するライブラリをインストールする
 
+
+
 ## リリース手順
 
 - git flow release start <tag> で開始する
 - CHANGES.md にタグを打つバージョンで書き込む
-- package.json の version をタグを打つバージョンに変更する
-- yarn release を実行する
-    - Lint が実行されるので通ることを確認する
-    - バイナリができるのでそれをコミットする
+- yarn lint を実行する
+- yarn test を実行する
+- yarn release:minor を実行する
+    - minor バージョンが更新されていることを確認する
+    - 差分をコミットする
 - git flow release finish <tag> で終了する
 - git push -u origin develop master --tags
+
+## canary リリース手順
+
+- yarn lint を実行する
+- yarn test を実行する
+- yarn release:canary を実行する
+    - canary バージョンが更新されていることを確認する
+    - コミットメッセージをバージョンにして差分をコミットする(例. git commit -m "2020.1.0-canary.0")
+- git push -u origin develop --tags

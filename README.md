@@ -26,7 +26,7 @@ In other languages, we won't be able to deal with them. Thank you for your under
 
 ## システム条件
 
-- WebRTC SFU Sora 2020.1 以降
+- WebRTC SFU Sora 2020.2 以降
 - TypeScript 3.8 以降
 
 ## サンプル
@@ -57,7 +57,7 @@ In other languages, we won't be able to deal with them. Thank you for your under
 
 詳細については以下をご確認ください。
 
-[shiguredo/sora\-e2ee: WebRTC SFU Sora 向け JavaScript E2EE ライブラリ](https://github.com/shiguredo/sora-e2ee)
+[WebRTC SFU Sora 向け E2EE ライブラリ](https://github.com/shiguredo/sora-e2ee)
 
 ## API 一覧
 
@@ -95,10 +95,10 @@ var sora = Sora.connection('ws://127.0.0.1/signaling');
   | * multistream              | boolean |      | マルチストリーム有効／無効            |
   | * spotlight                | integer |      | 最大話者数                            |
   | * simulcast                | boolean |      | サイマルキャスト有効／無効            |
-  | * simulcastQuality         | string  |      | サイマルキャストクオリティ(low/middle/high) |
+  | * simulcastRid             | string  |      | サイマルキャストRID (r0/r1/r2)        |
   | * clientId                 | string  |      | クライアントID                        |
   | * timeout                  | integer |      | タイムアウト時間(ms)                  |
-  | * e2ee                     | string  |      | e2ee のマスターシークレット           |
+  | * e2ee                     | boolean |      | E2EE 有効/無効                        |
   | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
 
 
@@ -172,7 +172,7 @@ sendrecv.on('disconnect', function(e) {
   | * simulcast                | boolean |      | サイマルキャスト有効／無効            |
   | * clientId                 | string  |      | クライアントID                        |
   | * timeout                  | integer |      | タイムアウト時間(ms)                  |
-  | * e2ee                     | string  |      | e2ee のマスターシークレット           |
+  | * e2ee                     | boolean |      | E2EE 有効/無効                        |
   | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
 
 
@@ -245,11 +245,11 @@ sendonly.on('disconnect', function(e) {
   | * multistream              | boolean |      | マルチストリーム有効／無効                  |
   | * spotlight                | integer |      | 最大話者数                                  |
   | * simulcast                | boolean |      | サイマルキャスト有効／無効                  |
-  | * simulcastQuality         | string  |      | サイマルキャストクオリティ(low/middle/high) |
+  | * simulcastRid             | string  |      | サイマルキャストRID(r0/r1/r2)               |
   | * clientId                 | string  |      | クライアントID                              |
   | * timeout                  | integer |      | タイムアウト時間(ms)                        |
-  | * e2ee                     | string  |      | e2ee のマスターシークレット                 |
-  | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata        |
+  | * e2ee                     | boolean |      | E2EE 有効/無効                              |
+  | * signalingNotifyMetadata  | json    |      | signaling notify 用の metadata              |
 
 
 - connect()
@@ -296,27 +296,22 @@ recvonly.on('disconnect', function(e) {
 });
 ```
 
-## 開発者向け
-```
-$ git clone https://github.com/shiguredo/sora-js-sdk.git
-$ cd sora-js-sdk
-$ yarn install
-```
+## ライセンス
 
-### ビルド
-```
- $ yarn build
-```
+Apache License 2.0
 
-### 開発時
 ```
- $ yarn watch
- $ yarn server
-```
+Copyright 2017-2020, Shiguredo Inc.
 
-### リリース
-```
- $ yarn lint
- $ yarn test
- $ yarn release
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ```

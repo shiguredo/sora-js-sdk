@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/camelcase: 0 */
 import { createSignalingMessage } from "../src/utils";
-import { AudioCodecType, SimulcastQuality, VideoCodecType } from "../src/types";
+import { AudioCodecType, SimulcastRid, VideoCodecType } from "../src/types";
 import pkg from "../package.json";
 
 const channelId = "7N3fsMHob";
@@ -63,16 +63,25 @@ test("createSignalingMessage clientId option", () => {
   const option1 = {
     clientId: "clientId",
   };
-  const diff = {
+  const diff1 = {
     client_id: option1.clientId,
   };
   expect(createSignalingMessage(sdp, role, channelId, null, option1)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff)
+    Object.assign({}, baseExpectedMessage, diff1)
   );
   const option2 = {
+    clientId: "",
+  };
+  const diff2 = {
+    client_id: option2.clientId,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, option2)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+  const option3 = {
     clientId: undefined,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, option2)).toEqual(baseExpectedMessage);
+  expect(createSignalingMessage(sdp, role, channelId, null, option3)).toEqual(baseExpectedMessage);
 });
 
 test("createSignalingMessage multistream option", () => {
@@ -117,7 +126,7 @@ test("createSignalingMessage multistream option", () => {
 test("createSignalingMessage simulcast option", () => {
   interface SimulcastOptions {
     simulcast: boolean;
-    simulcastQuality: SimulcastQuality;
+    simulcastRid: SimulcastRid;
   }
   // simulcast
   const options1 = {
@@ -129,41 +138,38 @@ test("createSignalingMessage simulcast option", () => {
   expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
-  // simulcast + simulcastQuality(low)
+  // simulcast + SimulcastRid(r0)
   const options2: SimulcastOptions = {
     simulcast: true,
-    simulcastQuality: "low",
+    simulcastRid: "r0",
   };
   const diff2 = {
-    simulcast: {
-      quality: options2.simulcastQuality,
-    },
+    simulcast: true,
+    simulcast_rid: options2.simulcastRid,
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
-  // simulcast + simulcastQuality(middle)
+  // simulcast + SimulcastRid(r1)
   const options3: SimulcastOptions = {
     simulcast: true,
-    simulcastQuality: "middle",
+    simulcastRid: "r1",
   };
   const diff3 = {
-    simulcast: {
-      quality: options3.simulcastQuality,
-    },
+    simulcast: true,
+    simulcast_rid: options3.simulcastRid,
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
-  // simulcast + simulcastQuality(high)
+  // simulcast + SimulcastRid(r2)
   const options4: SimulcastOptions = {
     simulcast: true,
-    simulcastQuality: "high",
+    simulcastRid: "r2",
   };
   const diff4 = {
-    simulcast: {
-      quality: options4.simulcastQuality,
-    },
+    simulcast: true,
+    simulcast_rid: options4.simulcastRid,
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
     Object.assign({}, baseExpectedMessage, diff4)
@@ -383,30 +389,35 @@ test("createSignalingMessage video option", () => {
 
 test("createSignalingMessage e2ee option", () => {
   const options1 = {
-    e2ee: "key",
+    e2ee: true,
+    e2eeWasmUrl: "wasm",
   };
   const diff1 = {
     e2ee: true,
     video: {
       codec_type: "VP8",
     },
+    signaling_notify_metadata: {},
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
   const options2 = {
-    e2ee: "key",
+    e2ee: true,
+    e2eeWasmUrl: "wasm",
     video: false,
   };
   const diff2 = {
     e2ee: true,
     video: false,
+    signaling_notify_metadata: {},
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
   const options3 = {
-    e2ee: "key",
+    e2ee: true,
+    e2eeWasmUrl: "wasm",
     video: true,
   };
   const diff3 = {
@@ -414,12 +425,14 @@ test("createSignalingMessage e2ee option", () => {
     video: {
       codec_type: "VP8",
     },
+    signaling_notify_metadata: {},
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
   const options4 = {
-    e2ee: "key",
+    e2ee: true,
+    e2eeWasmUrl: "wasm",
     VideoCodecType: "VP9",
   };
   const diff4 = {
@@ -427,6 +440,7 @@ test("createSignalingMessage e2ee option", () => {
     video: {
       codec_type: "VP8",
     },
+    signaling_notify_metadata: {},
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
     Object.assign({}, baseExpectedMessage, diff4)
