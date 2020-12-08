@@ -487,7 +487,10 @@ export default class ConnectionBase {
     this.sendUpdateAnswer();
   }
 
-  private setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void> {
+  private setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[] | null | undefined): Promise<void> {
+    if (!Array.isArray(encodings)) {
+      return Promise.resolve();
+    }
     const originalParameters = transceiver.sender.getParameters();
     // @ts-ignore
     originalParameters.encodings = encodings;
