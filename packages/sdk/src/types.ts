@@ -117,3 +117,9 @@ export type Callbacks = {
   log: Function;
   timeout: Function;
 };
+
+export type PreKeyBundle = {
+  identityKey: string;
+  signedPreKey: string;
+  preKeySignature: string;
+};
