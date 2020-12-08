@@ -9,6 +9,10 @@
 - FIX
     - バグ修正
 
+## develop
+- [UPDATE] e2ee 処理で signaling notify 時に metadata / authn_metadata どちらでも動作するように修正する
+    - @yuitowest
+
 ## 2020.5.0
 - [UPDATE] clientId option に空文字列を渡せるように修正する
     - @yuitowest
