@@ -1,4 +1,11 @@
-import { createSignalingMessage, trace, isSafari } from "./utils";
+import {
+  createSignalingMessage,
+  getPreKeyBundle,
+  getSignalingNotifyData,
+  getSignalingNotifyAuthnMetadata,
+  trace,
+  isSafari,
+} from "./utils";
 import { Callbacks, ConnectionOptions, Encoding, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
 
@@ -208,10 +215,10 @@ export default class ConnectionBase {
           });
           return;
         }
-        const data = JSON.parse(event.data);
-        if (data.type == "offer") {
-          this.clientId = data.client_id;
-          this.connectionId = data.connection_id;
+        const message = JSON.parse(event.data);
+        if (message.type == "offer") {
+          this.clientId = message.client_id;
+          this.connectionId = message.connection_id;
           if (this.ws) {
             this.ws.onclose = (e): void => {
               this.callbacks.disconnect(e);
@@ -219,17 +226,17 @@ export default class ConnectionBase {
             };
             this.ws.onerror = null;
           }
-          if ("metadata" in data) {
-            this.authMetadata = data.metadata;
+          if ("metadata" in message) {
+            this.authMetadata = message.metadata;
           }
-          this.trace("SIGNALING OFFER MESSAGE", data);
-          this.trace("OFFER SDP", data.sdp);
-          resolve(data);
-        } else if (data.type == "update") {
-          this.trace("UPDATE SDP", data.sdp);
-          this.update(data);
-        } else if (data.type == "ping") {
-          if (data.stats) {
+          this.trace("SIGNALING OFFER MESSAGE", message);
+          this.trace("OFFER SDP", message.sdp);
+          resolve(message);
+        } else if (message.type == "update") {
+          this.trace("UPDATE SDP", message.sdp);
+          this.update(message);
+        } else if (message.type == "ping") {
+          if (message.stats) {
             this.getStats().then((stats) => {
               if (this.ws) {
                 this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
@@ -240,47 +247,44 @@ export default class ConnectionBase {
               this.ws.send(JSON.stringify({ type: "pong" }));
             }
           }
-        } else if (data.type == "push") {
-          this.callbacks.push(data);
-        } else if (data.type == "notify") {
-          if (data.event_type === "connection.created") {
-            const metadata = data.metadata;
-            const connectionId = data.connection_id;
+        } else if (message.type == "push") {
+          this.callbacks.push(message);
+        } else if (message.type == "notify") {
+          if (message.event_type === "connection.created") {
+            const connectionId = message.connection_id;
             if (this.connectionId !== connectionId) {
-              if (metadata && metadata.pre_key_bundle) {
-                const preKeyBundle = metadata.pre_key_bundle;
-                if (this.e2ee) {
-                  const result = this.e2ee.startSession(connectionId, preKeyBundle);
-                  this.e2ee.postRemoteSecretKeyMaterials(result);
-                  result.messages.forEach((message) => {
-                    if (this.ws) {
-                      this.ws.send(message.buffer);
-                    }
-                  });
-                  // messages を送信し終えてから、selfSecretKeyMaterial を更新する
-                  this.e2ee.postSelfSecretKeyMaterial(
-                    result.selfConnectionId,
-                    result.selfKeyId,
-                    result.selfSecretKeyMaterial
-                  );
-                }
+              const authnMetadata = getSignalingNotifyAuthnMetadata(message);
+              const preKeyBundle = getPreKeyBundle(authnMetadata);
+              if (preKeyBundle && this.e2ee) {
+                const result = this.e2ee.startSession(connectionId, preKeyBundle);
+                this.e2ee.postRemoteSecretKeyMaterials(result);
+                result.messages.forEach((message) => {
+                  if (this.ws) {
+                    this.ws.send(message.buffer);
+                  }
+                });
+                // messages を送信し終えてから、selfSecretKeyMaterial を更新する
+                this.e2ee.postSelfSecretKeyMaterial(
+                  result.selfConnectionId,
+                  result.selfKeyId,
+                  result.selfSecretKeyMaterial
+                );
               }
             }
-            const metadataList = data.metadata_list;
-            if (metadataList && this.e2ee) {
-              // @ts-ignore TODO(yuito)
-              metadataList.forEach((metadata) => {
-                const preKeyBundle = metadata.metadata.pre_key_bundle;
-                const connectionId = metadata.connection_id;
-                if (this.e2ee) {
-                  this.e2ee.addPreKeyBundle(connectionId, preKeyBundle);
-                }
-              });
-            }
-          } else if (data.event_type === "connection.destroyed") {
-            const metadata = data.metadata;
-            if (metadata && metadata.pre_key_bundle && this.e2ee) {
-              const connectionId = data.connection_id;
+            const data = getSignalingNotifyData(message);
+            data.forEach((metadata) => {
+              const authnMetadata = getSignalingNotifyAuthnMetadata(metadata);
+              const preKeyBundle = getPreKeyBundle(authnMetadata);
+              const connectionId = metadata.connection_id;
+              if (connectionId && this.e2ee && preKeyBundle) {
+                this.e2ee.addPreKeyBundle(connectionId as string, preKeyBundle);
+              }
+            });
+          } else if (message.event_type === "connection.destroyed") {
+            const authnMetadata = getSignalingNotifyAuthnMetadata(message);
+            const preKeyBundle = getPreKeyBundle(authnMetadata);
+            if (preKeyBundle && this.e2ee) {
+              const connectionId = message.connection_id;
               const result = this.e2ee.stopSession(connectionId);
               this.e2ee.postSelfSecretKeyMaterial(
                 result.selfConnectionId,
@@ -296,7 +300,7 @@ export default class ConnectionBase {
               this.e2ee.postRemoveRemoteDeriveKey(connectionId);
             }
           }
-          this.callbacks.notify(data);
+          this.callbacks.notify(message);
         }
       };
     });

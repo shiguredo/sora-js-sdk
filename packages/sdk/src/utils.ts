@@ -1,4 +1,4 @@
-import { ConnectionOptions, Browser, Json, Role, SignalingConnectMessage, SignalingVideo } from "./types";
+import { ConnectionOptions, Browser, Json, PreKeyBundle, Role, SignalingConnectMessage, SignalingVideo } from "./types";
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
@@ -268,6 +268,31 @@ export function createSignalingMessage(
     message.e2ee = true;
   }
   return message;
+}
+
+export function getSignalingNotifyAuthnMetadata(message: Record<string, unknown>): Json {
+  if (message.authn_metadata !== undefined) {
+    return message.authn_metadata as Json;
+  } else if (message.metadata !== undefined) {
+    return message.metadata as Json;
+  }
+  return null;
+}
+
+export function getSignalingNotifyData(message: Record<string, unknown>): Record<string, unknown>[] {
+  if (message.data !== undefined && Array.isArray(message.data)) {
+    return message.data;
+  } else if (message.metadata_list !== undefined && Array.isArray(message.metadata_list)) {
+    return message.metadata_list;
+  }
+  return [];
+}
+
+export function getPreKeyBundle(message: Json): PreKeyBundle | null {
+  if (typeof message === "object" && message !== null && "pre_key_bundle" in message) {
+    return message.pre_key_bundle as PreKeyBundle;
+  }
+  return null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
