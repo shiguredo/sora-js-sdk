@@ -36,6 +36,7 @@ export default class ConnectionBase {
   stream: MediaStream | null;
   authMetadata: Json;
   pc: RTCPeerConnection | null;
+  encodings: Encoding[];
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
@@ -65,6 +66,7 @@ export default class ConnectionBase {
     this.stream = null;
     this.ws = null;
     this.pc = null;
+    this.encodings = [];
     this.callbacks = {
       disconnect: (): void => {},
       push: (): void => {},
@@ -229,6 +231,9 @@ export default class ConnectionBase {
           if ("metadata" in message) {
             this.authMetadata = message.metadata;
           }
+          if ("encodings" in message && Array.isArray(message.encodings)) {
+            this.encodings = message.encodings;
+          }
           this.trace("SIGNALING OFFER MESSAGE", message);
           this.trace("OFFER SDP", message.sdp);
           resolve(message);
@@ -355,23 +360,23 @@ export default class ConnectionBase {
       return;
     }
     // simulcast の場合
-    if (
-      this.options.simulcast &&
-      (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly") &&
-      message.encodings
-    ) {
+    if (this.options.simulcast && (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly")) {
       const transceiver = this.pc.getTransceivers().find((t) => {
-        if (t.mid && 0 <= t.mid.indexOf("video") && t.currentDirection == null) {
+        if (t.mid && 0 <= t.mid.indexOf("video") && t.currentDirection == null && t.sender.track !== null) {
           return t;
         }
       });
-      if (!transceiver) {
-        throw new Error("Simulcast Error");
+      if (transceiver) {
+        await this.setSenderParameters(transceiver, this.encodings);
+        await this.setRemoteDescription(message);
+        this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
+        // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
+        await this.setSenderParameters(transceiver, this.encodings);
+        const sessionDescription = await this.pc.createAnswer();
+        await this.pc.setLocalDescription(sessionDescription);
+        this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
+        return;
       }
-      await this.setSenderParameters(transceiver, message.encodings);
-      await this.setRemoteDescription(message);
-      // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
-      await this.setSenderParameters(transceiver, message.encodings);
     }
     const sessionDescription = await this.pc.createAnswer();
     await this.pc.setLocalDescription(sessionDescription);
@@ -487,14 +492,13 @@ export default class ConnectionBase {
     this.sendUpdateAnswer();
   }
 
-  private setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[] | null | undefined): Promise<void> {
-    if (!Array.isArray(encodings)) {
-      return Promise.resolve();
-    }
+  private async setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void> {
     const originalParameters = transceiver.sender.getParameters();
     // @ts-ignore
     originalParameters.encodings = encodings;
-    return transceiver.sender.setParameters(originalParameters);
+    await transceiver.sender.setParameters(originalParameters);
+    this.trace("TRANSCEIVER SENDER SET_PARAMETERS", originalParameters);
+    return;
   }
 
   private async getStats(): Promise<RTCStatsReport[]> {
