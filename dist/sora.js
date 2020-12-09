@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2020.6.0-canary.0
+ * @version: 2020.6.0-canary.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2020.6.0-canary.0
+	 * @version: 2020.6.0-canary.1
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -771,7 +771,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2020.6.0-canary.0";
+	        return "2020.6.0-canary.1";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -867,7 +867,7 @@
 	        type: "connect",
 	        // @ts-ignore
 	        // eslint-disable-next-line @typescript-eslint/camelcase
-	        sora_client: `Sora JavaScript SDK ${'2020.6.0-canary.0'}`,
+	        sora_client: `Sora JavaScript SDK ${'2020.6.0-canary.1'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        // eslint-disable-next-line @typescript-eslint/camelcase
@@ -1091,6 +1091,7 @@
 	        this.stream = null;
 	        this.ws = null;
 	        this.pc = null;
+	        this.encodings = [];
 	        this.callbacks = {
 	            disconnect: () => { },
 	            push: () => { },
@@ -1246,6 +1247,9 @@
 	                    if ("metadata" in message) {
 	                        this.authMetadata = message.metadata;
 	                    }
+	                    if ("encodings" in message && Array.isArray(message.encodings)) {
+	                        this.encodings = message.encodings;
+	                    }
 	                    this.trace("SIGNALING OFFER MESSAGE", message);
 	                    this.trace("OFFER SDP", message.sdp);
 	                    resolve(message);
@@ -1365,21 +1369,23 @@
 	            return;
 	        }
 	        // simulcast の場合
-	        if (this.options.simulcast &&
-	            (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly") &&
-	            message.encodings) {
+	        if (this.options.simulcast && (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly")) {
 	            const transceiver = this.pc.getTransceivers().find((t) => {
-	                if (t.mid && 0 <= t.mid.indexOf("video") && t.currentDirection == null) {
+	                if (t.mid && 0 <= t.mid.indexOf("video") && t.currentDirection == null && t.sender.track !== null) {
 	                    return t;
 	                }
 	            });
-	            if (!transceiver) {
-	                throw new Error("Simulcast Error");
+	            if (transceiver) {
+	                await this.setSenderParameters(transceiver, this.encodings);
+	                await this.setRemoteDescription(message);
+	                this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
+	                // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
+	                await this.setSenderParameters(transceiver, this.encodings);
+	                const sessionDescription = await this.pc.createAnswer();
+	                await this.pc.setLocalDescription(sessionDescription);
+	                this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
+	                return;
 	            }
-	            await this.setSenderParameters(transceiver, message.encodings);
-	            await this.setRemoteDescription(message);
-	            // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
-	            await this.setSenderParameters(transceiver, message.encodings);
 	        }
 	        const sessionDescription = await this.pc.createAnswer();
 	        await this.pc.setLocalDescription(sessionDescription);
@@ -1489,14 +1495,13 @@
 	        await this.createAnswer(message);
 	        this.sendUpdateAnswer();
 	    }
-	    setSenderParameters(transceiver, encodings) {
-	        if (!Array.isArray(encodings)) {
-	            return Promise.resolve();
-	        }
+	    async setSenderParameters(transceiver, encodings) {
 	        const originalParameters = transceiver.sender.getParameters();
 	        // @ts-ignore
 	        originalParameters.encodings = encodings;
-	        return transceiver.sender.setParameters(originalParameters);
+	        await transceiver.sender.setParameters(originalParameters);
+	        this.trace("TRANSCEIVER SENDER SET_PARAMETERS", originalParameters);
+	        return;
 	    }
 	    async getStats() {
 	        const stats = [];
@@ -1760,7 +1765,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2020.6.0-canary.0';
+	        return '2020.6.0-canary.1';
 	    },
 	};
 
