@@ -362,7 +362,7 @@ export default class ConnectionBase {
     // simulcast の場合
     if (this.options.simulcast && (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly")) {
       const transceiver = this.pc.getTransceivers().find((t) => {
-        if (t.mid && 0 <= t.mid.indexOf("video") && t.currentDirection == null && t.sender.track !== null) {
+        if (t.mid && 0 <= t.mid.indexOf("video") && t.sender.track !== null) {
           return t;
         }
       });
