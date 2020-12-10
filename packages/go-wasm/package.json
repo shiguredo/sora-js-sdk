@@ -1,6 +1,6 @@
 {
   "name": "@sora/go-wasm",
-  "version": "2020.6.0-canary.2",
+  "version": "2020.6.0",
   "main": "src/wasm_exec.js",
   "module": "src/wasm_exec.js",
   "types": "src/wasm_exec.d.ts",
