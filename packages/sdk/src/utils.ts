@@ -311,3 +311,8 @@ export function trace(clientId: string | null, title: string, value: any): void 
     console.info(prefix + " " + title + "\n", value); // eslint-disable-line
   }
 }
+
+export class ConnectError extends Error {
+  code?: number;
+  reason?: string;
+}

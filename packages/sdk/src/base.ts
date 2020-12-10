@@ -5,6 +5,7 @@ import {
   getSignalingNotifyAuthnMetadata,
   trace,
   isSafari,
+  ConnectError,
 } from "./utils";
 import { Callbacks, ConnectionOptions, Encoding, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
@@ -194,8 +195,11 @@ export default class ConnectionBase {
       }
       this.ws.binaryType = "arraybuffer";
       this.ws.onclose = (event): void => {
-        const error = new Error();
-        error.message = `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`;
+        const error = new ConnectError(
+          `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
+        );
+        error.code = event.code;
+        error.reason = event.reason;
         reject(error);
       };
       this.ws.onopen = (): void => {
