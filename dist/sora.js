@@ -1071,6 +1071,8 @@
 	        console.info(prefix + " " + title + "\n", value); // eslint-disable-line
 	    }
 	}
+	class ConnectError extends Error {
+	}
 
 	class ConnectionBase {
 	    constructor(signalingUrl, role, channelId, metadata, options, debug) {
@@ -1210,8 +1212,9 @@
 	            }
 	            this.ws.binaryType = "arraybuffer";
 	            this.ws.onclose = (event) => {
-	                const error = new Error();
-	                error.message = `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`;
+	                const error = new ConnectError(`Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`);
+	                error.code = event.code;
+	                error.reason = event.reason;
 	                reject(error);
 	            };
 	            this.ws.onopen = () => {

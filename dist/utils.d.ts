@@ -7,3 +7,7 @@ export declare function getSignalingNotifyAuthnMetadata(message: Record<string, 
 export declare function getSignalingNotifyData(message: Record<string, unknown>): Record<string, unknown>[];
 export declare function getPreKeyBundle(message: Json): PreKeyBundle | null;
 export declare function trace(clientId: string | null, title: string, value: any): void;
+export declare class ConnectError extends Error {
+    code?: number;
+    reason?: string;
+}
