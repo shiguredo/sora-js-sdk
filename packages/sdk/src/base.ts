@@ -1,4 +1,12 @@
-import { createSignalingMessage, trace, isSafari } from "./utils";
+import {
+  createSignalingMessage,
+  getPreKeyBundle,
+  getSignalingNotifyData,
+  getSignalingNotifyAuthnMetadata,
+  trace,
+  isSafari,
+  ConnectError,
+} from "./utils";
 import { Callbacks, ConnectionOptions, Encoding, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
 
@@ -29,6 +37,7 @@ export default class ConnectionBase {
   stream: MediaStream | null;
   authMetadata: Json;
   pc: RTCPeerConnection | null;
+  encodings: Encoding[];
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
@@ -58,6 +67,7 @@ export default class ConnectionBase {
     this.stream = null;
     this.ws = null;
     this.pc = null;
+    this.encodings = [];
     this.callbacks = {
       disconnect: (): void => {},
       push: (): void => {},
@@ -185,8 +195,11 @@ export default class ConnectionBase {
       }
       this.ws.binaryType = "arraybuffer";
       this.ws.onclose = (event): void => {
-        const error = new Error();
-        error.message = `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`;
+        const error = new ConnectError(
+          `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
+        );
+        error.code = event.code;
+        error.reason = event.reason;
         reject(error);
       };
       this.ws.onopen = (): void => {
@@ -208,10 +221,10 @@ export default class ConnectionBase {
           });
           return;
         }
-        const data = JSON.parse(event.data);
-        if (data.type == "offer") {
-          this.clientId = data.client_id;
-          this.connectionId = data.connection_id;
+        const message = JSON.parse(event.data);
+        if (message.type == "offer") {
+          this.clientId = message.client_id;
+          this.connectionId = message.connection_id;
           if (this.ws) {
             this.ws.onclose = (e): void => {
               this.callbacks.disconnect(e);
@@ -219,17 +232,20 @@ export default class ConnectionBase {
             };
             this.ws.onerror = null;
           }
-          if ("metadata" in data) {
-            this.authMetadata = data.metadata;
+          if ("metadata" in message) {
+            this.authMetadata = message.metadata;
           }
-          this.trace("SIGNALING OFFER MESSAGE", data);
-          this.trace("OFFER SDP", data.sdp);
-          resolve(data);
-        } else if (data.type == "update") {
-          this.trace("UPDATE SDP", data.sdp);
-          this.update(data);
-        } else if (data.type == "ping") {
-          if (data.stats) {
+          if ("encodings" in message && Array.isArray(message.encodings)) {
+            this.encodings = message.encodings;
+          }
+          this.trace("SIGNALING OFFER MESSAGE", message);
+          this.trace("OFFER SDP", message.sdp);
+          resolve(message);
+        } else if (message.type == "update") {
+          this.trace("UPDATE SDP", message.sdp);
+          this.update(message);
+        } else if (message.type == "ping") {
+          if (message.stats) {
             this.getStats().then((stats) => {
               if (this.ws) {
                 this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
@@ -240,47 +256,44 @@ export default class ConnectionBase {
               this.ws.send(JSON.stringify({ type: "pong" }));
             }
           }
-        } else if (data.type == "push") {
-          this.callbacks.push(data);
-        } else if (data.type == "notify") {
-          if (data.event_type === "connection.created") {
-            const metadata = data.metadata;
-            const connectionId = data.connection_id;
+        } else if (message.type == "push") {
+          this.callbacks.push(message);
+        } else if (message.type == "notify") {
+          if (message.event_type === "connection.created") {
+            const connectionId = message.connection_id;
             if (this.connectionId !== connectionId) {
-              if (metadata && metadata.pre_key_bundle) {
-                const preKeyBundle = metadata.pre_key_bundle;
-                if (this.e2ee) {
-                  const result = this.e2ee.startSession(connectionId, preKeyBundle);
-                  this.e2ee.postRemoteSecretKeyMaterials(result);
-                  result.messages.forEach((message) => {
-                    if (this.ws) {
-                      this.ws.send(message.buffer);
-                    }
-                  });
-                  // messages を送信し終えてから、selfSecretKeyMaterial を更新する
-                  this.e2ee.postSelfSecretKeyMaterial(
-                    result.selfConnectionId,
-                    result.selfKeyId,
-                    result.selfSecretKeyMaterial
-                  );
-                }
+              const authnMetadata = getSignalingNotifyAuthnMetadata(message);
+              const preKeyBundle = getPreKeyBundle(authnMetadata);
+              if (preKeyBundle && this.e2ee) {
+                const result = this.e2ee.startSession(connectionId, preKeyBundle);
+                this.e2ee.postRemoteSecretKeyMaterials(result);
+                result.messages.forEach((message) => {
+                  if (this.ws) {
+                    this.ws.send(message.buffer);
+                  }
+                });
+                // messages を送信し終えてから、selfSecretKeyMaterial を更新する
+                this.e2ee.postSelfSecretKeyMaterial(
+                  result.selfConnectionId,
+                  result.selfKeyId,
+                  result.selfSecretKeyMaterial
+                );
               }
             }
-            const metadataList = data.metadata_list;
-            if (metadataList && this.e2ee) {
-              // @ts-ignore TODO(yuito)
-              metadataList.forEach((metadata) => {
-                const preKeyBundle = metadata.metadata.pre_key_bundle;
-                const connectionId = metadata.connection_id;
-                if (this.e2ee) {
-                  this.e2ee.addPreKeyBundle(connectionId, preKeyBundle);
-                }
-              });
-            }
-          } else if (data.event_type === "connection.destroyed") {
-            const metadata = data.metadata;
-            if (metadata && metadata.pre_key_bundle && this.e2ee) {
-              const connectionId = data.connection_id;
+            const data = getSignalingNotifyData(message);
+            data.forEach((metadata) => {
+              const authnMetadata = getSignalingNotifyAuthnMetadata(metadata);
+              const preKeyBundle = getPreKeyBundle(authnMetadata);
+              const connectionId = metadata.connection_id;
+              if (connectionId && this.e2ee && preKeyBundle) {
+                this.e2ee.addPreKeyBundle(connectionId as string, preKeyBundle);
+              }
+            });
+          } else if (message.event_type === "connection.destroyed") {
+            const authnMetadata = getSignalingNotifyAuthnMetadata(message);
+            const preKeyBundle = getPreKeyBundle(authnMetadata);
+            if (preKeyBundle && this.e2ee) {
+              const connectionId = message.connection_id;
               const result = this.e2ee.stopSession(connectionId);
               this.e2ee.postSelfSecretKeyMaterial(
                 result.selfConnectionId,
@@ -296,7 +309,7 @@ export default class ConnectionBase {
               this.e2ee.postRemoveRemoteDeriveKey(connectionId);
             }
           }
-          this.callbacks.notify(data);
+          this.callbacks.notify(message);
         }
       };
     });
@@ -351,23 +364,23 @@ export default class ConnectionBase {
       return;
     }
     // simulcast の場合
-    if (
-      this.options.simulcast &&
-      (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly") &&
-      message.encodings
-    ) {
+    if (this.options.simulcast && (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly")) {
       const transceiver = this.pc.getTransceivers().find((t) => {
-        if (t.mid && 0 <= t.mid.indexOf("video") && t.currentDirection == null) {
+        if (t.mid && 0 <= t.mid.indexOf("video") && t.sender.track !== null) {
           return t;
         }
       });
-      if (!transceiver) {
-        throw new Error("Simulcast Error");
+      if (transceiver) {
+        await this.setSenderParameters(transceiver, this.encodings);
+        await this.setRemoteDescription(message);
+        this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
+        // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
+        await this.setSenderParameters(transceiver, this.encodings);
+        const sessionDescription = await this.pc.createAnswer();
+        await this.pc.setLocalDescription(sessionDescription);
+        this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
+        return;
       }
-      await this.setSenderParameters(transceiver, message.encodings);
-      await this.setRemoteDescription(message);
-      // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
-      await this.setSenderParameters(transceiver, message.encodings);
     }
     const sessionDescription = await this.pc.createAnswer();
     await this.pc.setLocalDescription(sessionDescription);
@@ -483,11 +496,13 @@ export default class ConnectionBase {
     this.sendUpdateAnswer();
   }
 
-  private setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void> {
+  private async setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void> {
     const originalParameters = transceiver.sender.getParameters();
     // @ts-ignore
     originalParameters.encodings = encodings;
-    return transceiver.sender.setParameters(originalParameters);
+    await transceiver.sender.setParameters(originalParameters);
+    this.trace("TRANSCEIVER SENDER SET_PARAMETERS", originalParameters);
+    return;
   }
 
   private async getStats(): Promise<RTCStatsReport[]> {

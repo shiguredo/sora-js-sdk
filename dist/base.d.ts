@@ -1,4 +1,4 @@
-import { Callbacks, ConnectionOptions, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
+import { Callbacks, ConnectionOptions, Encoding, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
 export default class ConnectionBase {
     role: string;
@@ -14,6 +14,7 @@ export default class ConnectionBase {
     stream: MediaStream | null;
     authMetadata: Json;
     pc: RTCPeerConnection | null;
+    encodings: Encoding[];
     protected ws: WebSocket | null;
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;

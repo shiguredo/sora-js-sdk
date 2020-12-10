@@ -104,3 +104,8 @@ export declare type Callbacks = {
     log: Function;
     timeout: Function;
 };
+export declare type PreKeyBundle = {
+    identityKey: string;
+    signedPreKey: string;
+    preKeySignature: string;
+};

@@ -9,6 +9,15 @@
 - FIX
     - バグ修正
 
+## 2020.6.0
+- [UPDATE] e2ee 処理で signaling notify 時に metadata / authn_metadata どちらでも動作するように修正する
+    - @yuitowest
+- [FIX] type offer 時に受け取った encodings を type update 時にも setParametes するように修正する
+    - @yuitowest
+- [ADD] connect 時の例外に code と reason を含めるようにする
+    - WebSocket の onclose が発火した場合のみ Error オブジェクトに close event の code と reason を含める
+    - @yuitowest
+
 ## 2020.5.0
 - [UPDATE] clientId option に空文字列を渡せるように修正する
     - @yuitowest
