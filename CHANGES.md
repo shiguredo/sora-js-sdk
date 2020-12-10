@@ -9,7 +9,7 @@
 - FIX
     - バグ修正
 
-## develop
+## 2020.6.0
 - [UPDATE] e2ee 処理で signaling notify 時に metadata / authn_metadata どちらでも動作するように修正する
     - @yuitowest
 - [FIX] type offer 時に受け取った encodings を type update 時にも setParametes するように修正する
