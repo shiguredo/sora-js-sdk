@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2020.6.0
+ * @version: 2020.6.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -867,7 +867,7 @@
 	        type: "connect",
 	        // @ts-ignore
 	        // eslint-disable-next-line @typescript-eslint/camelcase
-	        sora_client: `Sora JavaScript SDK ${'2020.6.0'}`,
+	        sora_client: `Sora JavaScript SDK ${'2020.6.1'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        // eslint-disable-next-line @typescript-eslint/camelcase
@@ -1374,7 +1374,10 @@
 	        // simulcast の場合
 	        if (this.options.simulcast && (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly")) {
 	            const transceiver = this.pc.getTransceivers().find((t) => {
-	                if (t.mid && 0 <= t.mid.indexOf("video") && t.sender.track !== null) {
+	                if (t.mid &&
+	                    0 <= t.mid.indexOf("video") &&
+	                    t.sender.track !== null &&
+	                    (t.currentDirection === null || t.currentDirection === "sendonly")) {
 	                    return t;
 	                }
 	            });
@@ -1768,7 +1771,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2020.6.0';
+	        return '2020.6.1';
 	    },
 	};
 
