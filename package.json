@@ -12,12 +12,9 @@
     "fmt": "npx lerna run fmt",
     "test": "npx lerna run test",
     "start": "npx serve -S -l 8080 ./example",
-    "release:minor": "yarn release:minor:main && yarn release:minor:packages && yarn build",
-    "release:minor:main": "npm version minor --git-tag-version false",
-    "release:minor:packages": "npx lerna version minor --no-git-tag-version --tag-version-prefix ''",
-    "release:canary": "yarn release:canary:main && yarn release:canary:packages && yarn build",
-    "release:canary:main": "npm version prerelease --preid canary --git-tag-version false",
-    "release:canary:packages": "npx lerna version prerelease --preid canary --no-git-tag-version --tag-version-prefix ''"
+    "release:minor": "./scripts/versioning.sh minor && npx lerna run build",
+    "release:patch": "./scripts/versioning.sh patch && npx lerna run build",
+    "release:canary": "./scripts/versioning.sh canary && npx lerna run build"
   },
   "repository": {
     "type": "git",
