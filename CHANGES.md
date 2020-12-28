@@ -9,7 +9,12 @@
 - FIX
     - バグ修正
 
+## develop
+
+- [CHANGE] Slack 通知を #sora-demo チャネルに向けるようにする
+
 ## 2020.6.1
+
 - [FIX] simulcast 時に setParameters するための RTCRtpTransceiver 検索条件を変更する
     - getUserMedia constraints の audio/video と Sora signaling の audio/video が一致しなかった場合に `DOMException: Read-only field modified in setParameters().` が発生する
     - encodings が readonly な RTCRtpSender を持つ RTCRtpTransceiver を検索条件から除外して対応
@@ -25,6 +30,7 @@
     - @yuitowest
 
 ## 2020.5.0
+
 - [UPDATE] clientId option に空文字列を渡せるように修正する
     - @yuitowest
 - [CHANGE] オプションの e2ee を boolean のみに変更する
