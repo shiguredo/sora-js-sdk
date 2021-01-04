@@ -12,6 +12,8 @@
 ## develop
 
 - [CHANGE] Slack 通知を #sora-demo チャネルに向けるようにする
+- [CHANGE] packages:upgrade コマンドを追加する
+- [CHANGE] packages 以下の npm-client を yarn にする
 
 ## 2020.6.1
 
