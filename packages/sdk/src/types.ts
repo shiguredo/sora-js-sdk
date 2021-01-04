@@ -107,15 +107,15 @@ export type ConnectionOptions = {
 };
 
 export type Callbacks = {
-  disconnect: Function;
-  push: Function;
-  addstream: Function;
-  track: Function;
-  removestream: Function;
-  removetrack: Function;
-  notify: Function;
-  log: Function;
-  timeout: Function;
+  disconnect: (event: unknown) => void;
+  push: (event: unknown) => void;
+  addstream: (event: unknown) => void;
+  track: (event: unknown) => void;
+  removestream: (event: unknown) => void;
+  removetrack: (event: unknown) => void;
+  notify: (event: unknown) => void;
+  log: (title: string, message: unknown) => void;
+  timeout: () => void;
 };
 
 export type PreKeyBundle = {

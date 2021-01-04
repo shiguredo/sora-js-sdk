@@ -83,7 +83,7 @@ export default class ConnectionBase {
     this.e2ee = null;
   }
 
-  on(kind: keyof Callbacks, callback: Function): void {
+  on(kind: keyof Callbacks, callback: (arg?: unknown, arg2?: unknown) => void): void {
     // @deprecated message
     if (kind === "addstream") {
       console.warn("@deprecated addstream callback will be removed in a future version. Use track callback.");
@@ -486,8 +486,7 @@ export default class ConnectionBase {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected trace(title: string, message: any): void {
+  protected trace(title: string, message: unknown): void {
     this.callbacks.log(title, message);
     if (!this.debug) {
       return;
