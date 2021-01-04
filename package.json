@@ -12,6 +12,7 @@
     "fmt": "npx lerna run fmt",
     "test": "npx lerna run test",
     "start": "npx serve -S -l 8080 ./example",
+    "packages:upgrade": "npx lerna clean -y && npx lerna exec -- npx ncu -u && yarn bootstrap",
     "release:minor": "./scripts/versioning.sh minor && npx lerna run build",
     "release:patch": "./scripts/versioning.sh patch && npx lerna run build",
     "release:canary": "./scripts/versioning.sh canary && npx lerna run build"
@@ -31,6 +32,7 @@
   ],
   "devDependencies": {
     "lerna": "^3.22.1",
+    "npm-check-updates": "^10.2.5",
     "serve": "^11.3.2"
   }
 }
