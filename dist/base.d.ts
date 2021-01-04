@@ -19,7 +19,7 @@ export default class ConnectionBase {
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;
     constructor(signalingUrl: string, role: string, channelId: string, metadata: Json, options: ConnectionOptions, debug: boolean);
-    on(kind: keyof Callbacks, callback: Function): void;
+    on(kind: keyof Callbacks, callback: (arg?: unknown, arg2?: unknown) => void): void;
     disconnect(): Promise<[void, void, void]>;
     protected setupE2EE(): void;
     protected startE2EE(): void;
@@ -33,7 +33,7 @@ export default class ConnectionBase {
     protected onIceCandidate(): Promise<void>;
     protected waitChangeConnectionStateConnected(): Promise<void>;
     protected setConnectionTimeout(): Promise<MediaStream>;
-    protected trace(title: string, message: any): void;
+    protected trace(title: string, message: unknown): void;
     private update;
     private setSenderParameters;
     private getStats;

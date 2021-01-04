@@ -860,11 +860,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     const message = {
         type: "connect",
         // @ts-ignore
-        // eslint-disable-next-line @typescript-eslint/camelcase
         sora_client: `Sora JavaScript SDK ${'2020.6.1'}`,
         environment: window.navigator.userAgent,
         role: role,
-        // eslint-disable-next-line @typescript-eslint/camelcase
         channel_id: channelId,
         sdp: offerSDP,
         audio: true,
@@ -874,7 +872,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
         message.metadata = metadata;
     }
     if ("signalingNotifyMetadata" in options) {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         message.signaling_notify_metadata = options.signalingNotifyMetadata;
     }
     if ("multistream" in options && options.multistream === true) {
@@ -884,7 +881,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
         if ("spotlight" in options) {
             message.spotlight = options.spotlight;
             if ("spotlightNumber" in options) {
-                // eslint-disable-next-line @typescript-eslint/camelcase
                 message.spotlight_number = options.spotlightNumber;
             }
         }
@@ -896,13 +892,11 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
         }
         const simalcastRids = ["r0", "r1", "r2"];
         if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
-            // eslint-disable-next-line @typescript-eslint/camelcase
             message.simulcast_rid = options.simulcastRid;
         }
     }
     // client_id
     if ("clientId" in options && options.clientId !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         message.client_id = options.clientId;
     }
     // parse options
@@ -955,13 +949,11 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
         if (typeof message.audio != "object") {
             message.audio = {};
         }
-        // eslint-disable-next-line @typescript-eslint/camelcase
         message.audio.opus_params = {};
         if ("audioOpusParamsChannels" in copyOptions) {
             message.audio.opus_params.channels = copyOptions.audioOpusParamsChannels;
         }
         if ("audioOpusParamsClockRate" in copyOptions) {
-            // eslint-disable-next-line @typescript-eslint/camelcase
             message.audio.opus_params.clock_rate = copyOptions.audioOpusParamsClockRate;
         }
         if ("audioOpusParamsMaxplaybackrate" in copyOptions) {
@@ -971,7 +963,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
             message.audio.opus_params.stereo = copyOptions.audioOpusParamsStereo;
         }
         if ("audioOpusParamsSpropStereo" in copyOptions) {
-            // eslint-disable-next-line @typescript-eslint/camelcase
             message.audio.opus_params.sprop_stereo = copyOptions.audioOpusParamsSpropStereo;
         }
         if ("audioOpusParamsMinptime" in copyOptions) {
@@ -1006,12 +997,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
         throw new Error("Simulcast can not be used with this browser");
     }
     if (options.e2ee === true) {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         if (message.signaling_notify_metadata === undefined) {
-            // eslint-disable-next-line @typescript-eslint/camelcase
             message.signaling_notify_metadata = {};
         }
-        // eslint-disable-next-line @typescript-eslint/camelcase
         if (message.signaling_notify_metadata === null || typeof message.signaling_notify_metadata !== "object") {
             throw new Error("E2EE failed. Options signalingNotifyMetadata must be type 'object'");
         }
@@ -1049,7 +1037,6 @@ function getPreKeyBundle(message) {
     }
     return null;
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function trace(clientId, title, value) {
     let prefix = "";
     if (window.performance) {
@@ -1482,7 +1469,6 @@ class ConnectionBase {
             }
         });
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     trace(title, message) {
         this.callbacks.log(title, message);
         if (!this.debug) {
