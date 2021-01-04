@@ -6,65 +6,6 @@ type RemoteSecretKeyMaterial = {
   secretKeyMaterial: Uint8Array;
 };
 
-interface HkdfParams extends Algorithm {
-  salt:
-    | Int8Array
-    | Int16Array
-    | Int32Array
-    | Uint8Array
-    | Uint16Array
-    | Uint32Array
-    | Uint8ClampedArray
-    | Float32Array
-    | Float64Array
-    | DataView
-    | ArrayBuffer;
-  hash: string | Algorithm;
-  info:
-    | Int8Array
-    | Int16Array
-    | Int32Array
-    | Uint8Array
-    | Uint16Array
-    | Uint32Array
-    | Uint8ClampedArray
-    | Float32Array
-    | Float64Array
-    | DataView
-    | ArrayBuffer;
-}
-
-// worker で使用している deriveBits, deriveKey のみ HKDF algorithm に対応する
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface SubtleCrypto {
-  deriveBits(
-    algorithm:
-      | AlgorithmIdentifier
-      | EcdhKeyDeriveParams
-      | DhKeyDeriveParams
-      | ConcatParams
-      | HkdfCtrParams
-      | HkdfParams
-      | Pbkdf2Params,
-    baseKey: CryptoKey,
-    length: number
-  ): PromiseLike<ArrayBuffer>;
-  deriveKey(
-    algorithm:
-      | AlgorithmIdentifier
-      | EcdhKeyDeriveParams
-      | DhKeyDeriveParams
-      | ConcatParams
-      | HkdfCtrParams
-      | HkdfParams
-      | Pbkdf2Params,
-    baseKey: CryptoKey,
-    derivedKeyType: string | AesDerivedKeyParams | HmacImportParams | ConcatParams | HkdfCtrParams | Pbkdf2Params,
-    extractable: boolean,
-    keyUsages: KeyUsage[]
-  ): PromiseLike<CryptoKey>;
-}
-
 // nonce サイズ
 const Nn = 12;
 // key サイズ
