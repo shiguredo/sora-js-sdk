@@ -12,8 +12,14 @@
 ## develop
 
 - [CHANGE] Slack 通知を #sora-demo チャネルに向けるようにする
-- [CHANGE] packages:upgrade コマンドを追加する
+    - @voluntas
+- [ADD] packages:upgrade コマンドを追加する
+    - @yuitowest
 - [CHANGE] packages 以下の npm-client を yarn にする
+    - @yuitowest
+- [UPDATE] パッケージを更新する
+    - typescript を3系から4系に変更
+    - @yuitowest
 
 ## 2020.6.1
 
