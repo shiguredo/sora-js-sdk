@@ -19,7 +19,7 @@ export default class ConnectionBase {
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;
     constructor(signalingUrl: string, role: string, channelId: string, metadata: Json, options: ConnectionOptions, debug: boolean);
-    on(kind: keyof Callbacks, callback: (arg?: unknown, arg2?: unknown) => void): void;
+    on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void;
     disconnect(): Promise<[void, void, void]>;
     protected setupE2EE(): void;
     protected startE2EE(): void;

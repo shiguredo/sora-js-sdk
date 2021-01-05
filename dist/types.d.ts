@@ -93,15 +93,24 @@ export declare type ConnectionOptions = {
     e2ee?: boolean;
     signalingNotifyMetadata?: Json;
 };
+declare type PushMessage = {
+    type: "push";
+    data: Record<string, unknown>;
+};
+declare type NotifyMessage = {
+    [key: string]: unknown;
+    type: "notify";
+    event_type: string;
+};
 export declare type Callbacks = {
-    disconnect: (event: unknown) => void;
-    push: (event: unknown) => void;
-    addstream: (event: unknown) => void;
-    track: (event: unknown) => void;
-    removestream: (event: unknown) => void;
-    removetrack: (event: unknown) => void;
-    notify: (event: unknown) => void;
-    log: (title: string, message: unknown) => void;
+    disconnect: (event: CloseEvent) => void;
+    push: (event: PushMessage) => void;
+    addstream: (event: RTCTrackEvent) => void;
+    track: (event: RTCTrackEvent) => void;
+    removestream: (event: MediaStreamTrackEvent) => void;
+    removetrack: (event: MediaStreamTrackEvent) => void;
+    notify: (event: NotifyMessage) => void;
+    log: (title: string, message: Json) => void;
     timeout: () => void;
 };
 export declare type PreKeyBundle = {
@@ -109,3 +118,4 @@ export declare type PreKeyBundle = {
     signedPreKey: string;
     preKeySignature: string;
 };
+export {};
