@@ -61,6 +61,10 @@
         "selector": "parameter",
         "format": ["camelCase"],
         "leadingUnderscore": "allow"
+      },
+      {
+        "selector": "typeParameter",
+        "format": ["PascalCase"]
       }
     ]
   }
