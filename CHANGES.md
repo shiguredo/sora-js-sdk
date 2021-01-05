@@ -21,8 +21,8 @@
     - typescript を3系から4系に変更
     - @yuitowest
 - [CHANGE] 型定義の修正
-    - Callbacks の型定義を Function から () => void; に変更して引数の型定義を追加する
-    - on メソッドに渡す第2引数の型定義を Function から () => void; に変更して引数の型定義を追加する
+    - Callbacks の各 callback 型定義を Function から適切なものに修正する
+    - on メソッドに渡す第2引数の型定義を適切なものに修正する
     - trace メソッドに渡す第3引数の型定義をanyからunknownに変更する
     - @yuitowest
 
