@@ -487,7 +487,7 @@ export default class ConnectionBase {
   }
 
   protected trace(title: string, message: unknown): void {
-    this.callbacks.log(title, message);
+    this.callbacks.log(title, message as Json);
     if (!this.debug) {
       return;
     }
