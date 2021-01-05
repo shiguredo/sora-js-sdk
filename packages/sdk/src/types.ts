@@ -106,15 +106,26 @@ export type ConnectionOptions = {
   signalingNotifyMetadata?: Json;
 };
 
+type PushMessage = {
+  type: "push";
+  data: Record<string, unknown>;
+};
+
+type NotifyMessage = {
+  [key: string]: unknown;
+  type: "notify";
+  event_type: string;
+};
+
 export type Callbacks = {
-  disconnect: (event: unknown) => void;
-  push: (event: unknown) => void;
-  addstream: (event: unknown) => void;
-  track: (event: unknown) => void;
-  removestream: (event: unknown) => void;
-  removetrack: (event: unknown) => void;
-  notify: (event: unknown) => void;
-  log: (title: string, message: unknown) => void;
+  disconnect: (event: CloseEvent) => void;
+  push: (event: PushMessage) => void;
+  addstream: (event: RTCTrackEvent) => void;
+  track: (event: RTCTrackEvent) => void;
+  removestream: (event: MediaStreamTrackEvent) => void;
+  removetrack: (event: MediaStreamTrackEvent) => void;
+  notify: (event: NotifyMessage) => void;
+  log: (title: string, message: Json) => void;
   timeout: () => void;
 };
 

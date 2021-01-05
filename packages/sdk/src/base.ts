@@ -83,7 +83,7 @@ export default class ConnectionBase {
     this.e2ee = null;
   }
 
-  on(kind: keyof Callbacks, callback: (arg?: unknown, arg2?: unknown) => void): void {
+  on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
     // @deprecated message
     if (kind === "addstream") {
       console.warn("@deprecated addstream callback will be removed in a future version. Use track callback.");
