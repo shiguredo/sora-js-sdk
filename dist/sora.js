@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2020.6.1
+ * @version: 2020.7.0-canary.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2020.6.0
+	 * @version: 2020.7.0-canary.0
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -771,7 +771,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2020.6.0";
+	        return "2020.7.0-canary.0";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -866,7 +866,7 @@
 	    const message = {
 	        type: "connect",
 	        // @ts-ignore
-	        sora_client: `Sora JavaScript SDK ${'2020.6.1'}`,
+	        sora_client: `Sora JavaScript SDK ${'2020.7.0-canary.0'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1818,7 +1818,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2020.6.1';
+	        return '2020.7.0-canary.0';
 	    },
 	    helpers: {
 	        startAudioMediaDevice,
