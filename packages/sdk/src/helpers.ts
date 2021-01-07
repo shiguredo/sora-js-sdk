@@ -24,10 +24,8 @@ async function startVideoMediaDevice(mediastream: MediaStream, peerConnection: R
   if (!sender) {
     throw new Error("Could not find video sender");
   }
+  await sender.replaceTrack(newVideoTrack);
   mediastream.addTrack(newVideoTrack);
-  mediastream.getVideoTracks().forEach((track) => {
-    sender.replaceTrack(track);
-  });
 }
 
 function stopAudioMediaDevice(mediastream: MediaStream): void {
@@ -56,10 +54,8 @@ async function startAudioMediaDevice(mediastream: MediaStream, peerConnection: R
   if (!sender) {
     throw new Error("Could not find audio sender");
   }
+  await sender.replaceTrack(newAudioTrack);
   mediastream.addTrack(newAudioTrack);
-  mediastream.getAudioTracks().forEach((track) => {
-    sender.replaceTrack(track);
-  });
 }
 
 export { stopVideoMediaDevice, startVideoMediaDevice, stopAudioMediaDevice, startAudioMediaDevice };
