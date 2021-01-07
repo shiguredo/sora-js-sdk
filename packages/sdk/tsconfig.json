@@ -21,7 +21,11 @@
       "dom",
       "dom.iterable",
       "scripthost"
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "*": ["./src/@types/*"]
+    }
   },
   "include": [
     "src/**/*.ts"
