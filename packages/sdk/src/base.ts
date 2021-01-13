@@ -175,21 +175,7 @@ export default class ConnectionBase {
 
   protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage> {
     this.trace("CREATE OFFER SDP", offer);
-    // TODO(yuito): 一旦 disable にする
-    // eslint-disable-next-line  no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
-      const signalingMessage = createSignalingMessage(
-        offer.sdp || "",
-        this.role,
-        this.channelId,
-        this.metadata,
-        this.options
-      );
-      if (signalingMessage.e2ee && this.e2ee) {
-        const initResult = await this.e2ee.init();
-        // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
-        signalingMessage["signaling_notify_metadata"]["pre_key_bundle"] = initResult;
-      }
+    return new Promise((resolve, reject) => {
       if (this.ws === null) {
         this.ws = new WebSocket(this.signalingUrl);
       }
@@ -202,7 +188,19 @@ export default class ConnectionBase {
         error.reason = event.reason;
         reject(error);
       };
-      this.ws.onopen = (): void => {
+      this.ws.onopen = async (): Promise<void> => {
+        const signalingMessage = createSignalingMessage(
+          offer.sdp || "",
+          this.role,
+          this.channelId,
+          this.metadata,
+          this.options
+        );
+        if (signalingMessage.e2ee && this.e2ee) {
+          const initResult = await this.e2ee.init();
+          // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
+          signalingMessage["signaling_notify_metadata"]["pre_key_bundle"] = initResult;
+        }
         this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
         if (this.ws) {
           this.ws.send(JSON.stringify(signalingMessage));
