@@ -34,7 +34,11 @@ export default class ConnectionBase {
     protected waitChangeConnectionStateConnected(): Promise<void>;
     protected setConnectionTimeout(): Promise<MediaStream>;
     protected trace(title: string, message: unknown): void;
-    private update;
+    private signalingOnMessageE2EE;
+    private signalingOnMessageTypeOffer;
+    private signalingOnMessageTypeUpdate;
+    private signalingOnMessageTypePing;
+    private signalingOnMessageTypeNotify;
     private setSenderParameters;
     private getStats;
     get e2eeSelfFingerprint(): string | undefined;
