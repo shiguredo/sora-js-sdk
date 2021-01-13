@@ -76,7 +76,6 @@ export type SignalingOfferMessage = {
 export type SignalingUpdateMessage = {
   type: "update";
   sdp: string;
-  encodings?: Encoding[];
 };
 
 export type SignalingPingMessage = {
