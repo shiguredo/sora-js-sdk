@@ -66,10 +66,6 @@ function enabledSimulcast(role: Role, video: SignalingVideo): boolean {
   return true;
 }
 
-export function isEdge(): boolean {
-  return browser() === "edge";
-}
-
 export function isSafari(): boolean {
   return browser() === "safari";
 }
