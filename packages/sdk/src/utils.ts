@@ -284,6 +284,27 @@ export function getPreKeyBundle(message: Json): PreKeyBundle | null {
 }
 
 export function trace(clientId: string | null, title: string, value: unknown): void {
+  const dump = (record: unknown) => {
+    if (record && typeof record === "object") {
+      let keys = null;
+      try {
+        keys = Object.keys(JSON.parse(JSON.stringify(record)));
+      } catch (_) {
+        // 何もしない
+      }
+      if (keys && Array.isArray(keys)) {
+        keys.forEach((key) => {
+          console.group(key);
+          dump((record as Record<string, unknown>)[key]);
+          console.groupEnd();
+        });
+      } else {
+        console.info(record);
+      }
+    } else {
+      console.info(record);
+    }
+  };
   let prefix = "";
   if (window.performance) {
     prefix = "[" + (window.performance.now() / 1000).toFixed(3) + "]";
@@ -292,10 +313,12 @@ export function trace(clientId: string | null, title: string, value: unknown): v
     prefix = prefix + "[" + clientId + "]";
   }
 
-  if (isEdge()) {
-    console.log(prefix + " " + title + "\n", value); // eslint-disable-line
+  if (console.info && console.group) {
+    console.group(prefix + " " + title);
+    dump(value);
+    console.groupEnd();
   } else {
-    console.info(prefix + " " + title + "\n", value); // eslint-disable-line
+    console.log(prefix + " " + title + "\n", value);
   }
 }
 
