@@ -60,12 +60,112 @@ export declare type SignalingOfferMessage = {
     connection_id: string;
     metadata?: Json;
     config?: RTCConfiguration;
-    encodings?: Encoding[];
+    encodings?: RTCRtpEncodingParameters[];
 };
 export declare type SignalingUpdateMessage = {
     type: "update";
     sdp: string;
-    encodings?: Encoding[];
+};
+export declare type SignalingPingMessage = {
+    type: "ping";
+    stats: boolean;
+};
+export declare type SignalingNotifyMessage = SignalingNotifyConnectionCreated | SignalingNotifyConnectionUpdated | SignalingNotifyConnectionDestroyed | SignalingNotifySpotlightChanged | SignalingNotifySpotlightFocused | SignalingNotifySpotlightUnfocused | SignalingNotifyNetworkStatus;
+declare type SignalingNotifyMetadata = {
+    client_id?: string;
+    connection_id?: string;
+    authn_metadata?: Json;
+    authz_metadata?: Json;
+    metadata?: Json;
+};
+declare type SignalingNotifyConnectionCreated = {
+    type: "notify";
+    event_type: "connection.created";
+    role: Role;
+    client_id?: string;
+    connection_id?: string;
+    audio?: boolean;
+    video?: boolean;
+    authn_metadata?: Json;
+    authz_metadata?: Json;
+    metadata?: Json;
+    metadata_list?: SignalingNotifyMetadata[];
+    data?: SignalingNotifyMetadata[];
+    minutes: number;
+    channel_connections: number;
+    channel_sendrecv_connections: number;
+    channel_sendonly_connections: number;
+    channel_recvonly_connections: number;
+    channel_upstream_connections: number;
+    channel_downstream_connections: number;
+    turn_transport_type: "udp" | "tcp";
+};
+declare type SignalingNotifyConnectionUpdated = {
+    type: "notify";
+    event_type: "connection.updated";
+    role: Role;
+    client_id?: string;
+    connection_id?: string;
+    audio?: boolean;
+    video?: boolean;
+    minutes: number;
+    channel_connections: number;
+    channel_sendrecv_connections: number;
+    channel_sendonly_connections: number;
+    channel_recvonly_connections: number;
+    channel_upstream_connections: number;
+    channel_downstream_connections: number;
+    turn_transport_type: "udp" | "tcp";
+};
+declare type SignalingNotifyConnectionDestroyed = {
+    type: "notify";
+    event_type: "connection.destroyed";
+    role: Role;
+    client_id?: string;
+    connection_id?: string;
+    audio?: boolean;
+    video?: boolean;
+    minutes: number;
+    channel_connections: number;
+    channel_sendrecv_connections: number;
+    channel_sendonly_connections: number;
+    channel_recvonly_connections: number;
+    channel_upstream_connections: number;
+    channel_downstream_connections: number;
+    turn_transport_type: "udp" | "tcp";
+};
+declare type SignalingNotifySpotlightChanged = {
+    type: "notify";
+    event_type: "spotlight.changed";
+    client_id: string | null;
+    connection_id: string | null;
+    spotlight_id: string;
+    fixed?: boolean;
+    audio: boolean;
+    video: boolean;
+};
+declare type SignalingNotifySpotlightFocused = {
+    type: "notify";
+    event_type: "spotlight.focused";
+    client_id: string | null;
+    connection_id: string;
+    audio: boolean;
+    video: boolean;
+    fixed: boolean;
+};
+declare type SignalingNotifySpotlightUnfocused = {
+    type: "notify";
+    event_type: "spotlight.unfocused";
+    client_id: string | null;
+    connection_id: string;
+    audio: boolean;
+    video: boolean;
+    fixed: boolean;
+};
+declare type SignalingNotifyNetworkStatus = {
+    type: "notify";
+    event_type: "network.status";
+    unstable_level: 0 | 1 | 2 | 3;
 };
 export declare type ConnectionOptions = {
     audio?: boolean;

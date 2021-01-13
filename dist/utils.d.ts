@@ -1,5 +1,4 @@
 import { ConnectionOptions, Json, PreKeyBundle, SignalingConnectMessage } from "./types";
-export declare function isEdge(): boolean;
 export declare function isSafari(): boolean;
 export declare function isChrome(): boolean;
 export declare function createSignalingMessage(offerSDP: string, role: string, channelId: string | null | undefined, metadata: Json | undefined, options: ConnectionOptions): SignalingConnectMessage;
