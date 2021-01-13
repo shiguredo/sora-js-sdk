@@ -7,7 +7,16 @@ import {
   isSafari,
   ConnectError,
 } from "./utils";
-import { Callbacks, ConnectionOptions, Encoding, Json, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
+import {
+  Callbacks,
+  ConnectionOptions,
+  Encoding,
+  Json,
+  SignalingPingMessage,
+  SignalingOfferMessage,
+  SignalingUpdateMessage,
+  SignalingNotifyMessage,
+} from "./types";
 import SoraE2EE from "@sora/e2ee";
 
 // Override from @type/WebRTC
@@ -208,106 +217,22 @@ export default class ConnectionBase {
       };
       this.ws.onmessage = (event): void => {
         // E2EE 時専用処理
-        if (event.data instanceof ArrayBuffer && this.e2ee) {
-          const message = new Uint8Array(event.data);
-          const result = this.e2ee.receiveMessage(message);
-          this.e2ee.postRemoteSecretKeyMaterials(result);
-          result.messages.forEach((message) => {
-            if (this.ws) {
-              this.ws.send(message.buffer);
-            }
-          });
+        if (event.data instanceof ArrayBuffer) {
+          this.signalingOnMessageE2EE(event.data);
           return;
         }
         const message = JSON.parse(event.data);
         if (message.type == "offer") {
-          this.clientId = message.client_id;
-          this.connectionId = message.connection_id;
-          if (this.ws) {
-            this.ws.onclose = (e): void => {
-              this.callbacks.disconnect(e);
-              this.disconnect();
-            };
-            this.ws.onerror = null;
-          }
-          if ("metadata" in message) {
-            this.authMetadata = message.metadata;
-          }
-          if ("encodings" in message && Array.isArray(message.encodings)) {
-            this.encodings = message.encodings;
-          }
-          this.trace("SIGNALING OFFER MESSAGE", message);
-          this.trace("OFFER SDP", message.sdp);
+          this.signalingOnMessageTypeOffer(message);
           resolve(message);
         } else if (message.type == "update") {
-          this.trace("UPDATE SDP", message.sdp);
-          this.update(message);
+          this.signalingOnMessageTypeUpdate(message);
         } else if (message.type == "ping") {
-          if (message.stats) {
-            this.getStats().then((stats) => {
-              if (this.ws) {
-                this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
-              }
-            });
-          } else {
-            if (this.ws) {
-              this.ws.send(JSON.stringify({ type: "pong" }));
-            }
-          }
+          this.signalingOnMessageTypePing(message);
         } else if (message.type == "push") {
           this.callbacks.push(message);
         } else if (message.type == "notify") {
-          if (message.event_type === "connection.created") {
-            const connectionId = message.connection_id;
-            if (this.connectionId !== connectionId) {
-              const authnMetadata = getSignalingNotifyAuthnMetadata(message);
-              const preKeyBundle = getPreKeyBundle(authnMetadata);
-              if (preKeyBundle && this.e2ee) {
-                const result = this.e2ee.startSession(connectionId, preKeyBundle);
-                this.e2ee.postRemoteSecretKeyMaterials(result);
-                result.messages.forEach((message) => {
-                  if (this.ws) {
-                    this.ws.send(message.buffer);
-                  }
-                });
-                // messages を送信し終えてから、selfSecretKeyMaterial を更新する
-                this.e2ee.postSelfSecretKeyMaterial(
-                  result.selfConnectionId,
-                  result.selfKeyId,
-                  result.selfSecretKeyMaterial
-                );
-              }
-            }
-            const data = getSignalingNotifyData(message);
-            data.forEach((metadata) => {
-              const authnMetadata = getSignalingNotifyAuthnMetadata(metadata);
-              const preKeyBundle = getPreKeyBundle(authnMetadata);
-              const connectionId = metadata.connection_id;
-              if (connectionId && this.e2ee && preKeyBundle) {
-                this.e2ee.addPreKeyBundle(connectionId as string, preKeyBundle);
-              }
-            });
-          } else if (message.event_type === "connection.destroyed") {
-            const authnMetadata = getSignalingNotifyAuthnMetadata(message);
-            const preKeyBundle = getPreKeyBundle(authnMetadata);
-            if (preKeyBundle && this.e2ee) {
-              const connectionId = message.connection_id;
-              const result = this.e2ee.stopSession(connectionId);
-              this.e2ee.postSelfSecretKeyMaterial(
-                result.selfConnectionId,
-                result.selfKeyId,
-                result.selfSecretKeyMaterial,
-                5000
-              );
-              result.messages.forEach((message) => {
-                if (this.ws) {
-                  this.ws.send(message.buffer);
-                }
-              });
-              this.e2ee.postRemoveRemoteDeriveKey(connectionId);
-            }
-          }
-          this.callbacks.notify(message);
+          this.signalingOnMessageTypeNotify(message);
         }
       };
     });
@@ -492,10 +417,109 @@ export default class ConnectionBase {
     trace(this.clientId, title, message);
   }
 
-  private async update(message: SignalingUpdateMessage): Promise<void> {
+  private signalingOnMessageE2EE(data: ArrayBuffer): void {
+    if (this.e2ee) {
+      const message = new Uint8Array(data);
+      const result = this.e2ee.receiveMessage(message);
+      this.e2ee.postRemoteSecretKeyMaterials(result);
+      result.messages.forEach((message) => {
+        if (this.ws) {
+          this.ws.send(message.buffer);
+        }
+      });
+    }
+  }
+
+  private signalingOnMessageTypeOffer(message: SignalingOfferMessage): void {
+    this.clientId = message.client_id;
+    this.connectionId = message.connection_id;
+    if (this.ws) {
+      this.ws.onclose = (e): void => {
+        this.callbacks.disconnect(e);
+        this.disconnect();
+      };
+      this.ws.onerror = null;
+    }
+    if ("metadata" in message && message.metadata !== undefined) {
+      this.authMetadata = message.metadata;
+    }
+    if ("encodings" in message && Array.isArray(message.encodings)) {
+      this.encodings = message.encodings;
+    }
+    this.trace("SIGNALING OFFER MESSAGE", message);
+    this.trace("OFFER SDP", message.sdp);
+  }
+
+  private async signalingOnMessageTypeUpdate(message: SignalingUpdateMessage): Promise<void> {
+    this.trace("SIGNALING UPDATE MESSGE", message);
+    this.trace("UPDATE SDP", message.sdp);
     await this.setRemoteDescription(message);
     await this.createAnswer(message);
     this.sendUpdateAnswer();
+  }
+
+  private signalingOnMessageTypePing(message: SignalingPingMessage): void {
+    if (message.stats) {
+      this.getStats().then((stats) => {
+        if (this.ws) {
+          this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
+        }
+      });
+    } else {
+      if (this.ws) {
+        this.ws.send(JSON.stringify({ type: "pong" }));
+      }
+    }
+  }
+
+  private signalingOnMessageTypeNotify(message: SignalingNotifyMessage): void {
+    if (message.event_type === "connection.created") {
+      const connectionId = message.connection_id;
+      if (this.connectionId !== connectionId) {
+        const authnMetadata = getSignalingNotifyAuthnMetadata(message);
+        const preKeyBundle = getPreKeyBundle(authnMetadata);
+        if (preKeyBundle && this.e2ee && connectionId) {
+          const result = this.e2ee.startSession(connectionId, preKeyBundle);
+          this.e2ee.postRemoteSecretKeyMaterials(result);
+          result.messages.forEach((message) => {
+            if (this.ws) {
+              this.ws.send(message.buffer);
+            }
+          });
+          // messages を送信し終えてから、selfSecretKeyMaterial を更新する
+          this.e2ee.postSelfSecretKeyMaterial(result.selfConnectionId, result.selfKeyId, result.selfSecretKeyMaterial);
+        }
+      }
+      const data = getSignalingNotifyData(message);
+      data.forEach((metadata) => {
+        const authnMetadata = getSignalingNotifyAuthnMetadata(metadata);
+        const preKeyBundle = getPreKeyBundle(authnMetadata);
+        const connectionId = metadata.connection_id;
+        if (connectionId && this.e2ee && preKeyBundle) {
+          this.e2ee.addPreKeyBundle(connectionId as string, preKeyBundle);
+        }
+      });
+    } else if (message.event_type === "connection.destroyed") {
+      const authnMetadata = getSignalingNotifyAuthnMetadata(message);
+      const preKeyBundle = getPreKeyBundle(authnMetadata);
+      const connectionId = message.connection_id;
+      if (preKeyBundle && this.e2ee && connectionId) {
+        const result = this.e2ee.stopSession(connectionId);
+        this.e2ee.postSelfSecretKeyMaterial(
+          result.selfConnectionId,
+          result.selfKeyId,
+          result.selfSecretKeyMaterial,
+          5000
+        );
+        result.messages.forEach((message) => {
+          if (this.ws) {
+            this.ws.send(message.buffer);
+          }
+        });
+        this.e2ee.postRemoveRemoteDeriveKey(connectionId);
+      }
+    }
+    this.callbacks.notify(message);
   }
 
   private async setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void> {
