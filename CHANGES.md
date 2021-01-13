@@ -11,20 +11,22 @@
 
 ## develop
 
-- [CHANGE] Slack 通知を #sora-demo チャネルに向けるようにする
-    - @voluntas
-- [ADD] packages:upgrade コマンドを追加する
-    - @yuitowest
-- [CHANGE] packages 以下の npm-client を yarn にする
-    - @yuitowest
-- [UPDATE] パッケージを更新する
-    - typescript を3系から4系に変更
+- [CHANGE] シグナリングメッセージに型定義を追加
     - @yuitowest
 - [CHANGE] 型定義の修正
     - Callbacks の各 callback 型定義を Function から適切なものに修正する
     - on メソッドに渡す第2引数の型定義を適切なものに修正する
     - trace メソッドに渡す第3引数の型定義をanyからunknownに変更する
     - @yuitowest
+- [UPDATE] パッケージを更新する
+    - typescript を3系から4系に変更
+    - @yuitowest
+- [CHANGE] packages 以下の npm-client を yarn にする
+    - @yuitowest
+- [ADD] packages:upgrade コマンドを追加する
+    - @yuitowest
+- [CHANGE] Slack 通知を #sora-demo チャネルに向けるようにする
+    - @voluntas
 
 ## 2020.6.1
 
