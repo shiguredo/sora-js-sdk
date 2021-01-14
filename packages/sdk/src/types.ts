@@ -63,6 +63,13 @@ export type SignalingConnectMessage = {
   e2ee?: boolean;
 };
 
+export type SignalingMessage =
+  | SignalingOfferMessage
+  | SignalingUpdateMessage
+  | SignalingPingMessage
+  | SignalingPushMessage
+  | SignalingNotifyMessage;
+
 export type SignalingOfferMessage = {
   type: "offer";
   sdp: string;
@@ -81,6 +88,11 @@ export type SignalingUpdateMessage = {
 export type SignalingPingMessage = {
   type: "ping";
   stats: boolean;
+};
+
+export type SignalingPushMessage = {
+  type: "push";
+  data: Record<string, unknown>;
 };
 
 export type SignalingNotifyMessage =
@@ -223,25 +235,14 @@ export type ConnectionOptions = {
   signalingNotifyMetadata?: Json;
 };
 
-type PushMessage = {
-  type: "push";
-  data: Record<string, unknown>;
-};
-
-type NotifyMessage = {
-  [key: string]: unknown;
-  type: "notify";
-  event_type: string;
-};
-
 export type Callbacks = {
   disconnect: (event: CloseEvent) => void;
-  push: (event: PushMessage) => void;
+  push: (event: SignalingPushMessage) => void;
   addstream: (event: RTCTrackEvent) => void;
   track: (event: RTCTrackEvent) => void;
   removestream: (event: MediaStreamTrackEvent) => void;
   removetrack: (event: MediaStreamTrackEvent) => void;
-  notify: (event: NotifyMessage) => void;
+  notify: (event: SignalingNotifyMessage) => void;
   log: (title: string, message: Json) => void;
   timeout: () => void;
 };
