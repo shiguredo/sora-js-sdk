@@ -1,4 +1,14 @@
-import { ConnectionOptions, Browser, Json, PreKeyBundle, Role, SignalingConnectMessage, SignalingVideo } from "./types";
+import {
+  ConnectionOptions,
+  Browser,
+  Json,
+  PreKeyBundle,
+  Role,
+  SignalingConnectMessage,
+  SignalingNotifyMetadata,
+  SignalingNotifyConnectionCreated,
+  SignalingVideo,
+} from "./types";
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
@@ -263,10 +273,10 @@ export function getSignalingNotifyAuthnMetadata(message: Record<string, unknown>
   return null;
 }
 
-export function getSignalingNotifyData(message: Record<string, unknown>): Record<string, unknown>[] {
-  if (message.data !== undefined && Array.isArray(message.data)) {
+export function getSignalingNotifyData(message: SignalingNotifyConnectionCreated): SignalingNotifyMetadata[] {
+  if (message.data && Array.isArray(message.data)) {
     return message.data;
-  } else if (message.metadata_list !== undefined && Array.isArray(message.metadata_list)) {
+  } else if (message.metadata_list && Array.isArray(message.metadata_list)) {
     return message.metadata_list;
   }
   return [];

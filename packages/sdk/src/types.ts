@@ -92,7 +92,7 @@ export type SignalingNotifyMessage =
   | SignalingNotifySpotlightUnfocused
   | SignalingNotifyNetworkStatus;
 
-type SignalingNotifyMetadata = {
+export type SignalingNotifyMetadata = {
   client_id?: string;
   connection_id?: string;
   authn_metadata?: Json;
@@ -100,7 +100,7 @@ type SignalingNotifyMetadata = {
   metadata?: Json;
 };
 
-type SignalingNotifyConnectionCreated = {
+export type SignalingNotifyConnectionCreated = {
   type: "notify";
   event_type: "connection.created";
   role: Role;
@@ -123,7 +123,7 @@ type SignalingNotifyConnectionCreated = {
   turn_transport_type: "udp" | "tcp";
 };
 
-type SignalingNotifyConnectionUpdated = {
+export type SignalingNotifyConnectionUpdated = {
   type: "notify";
   event_type: "connection.updated";
   role: Role;
@@ -141,7 +141,7 @@ type SignalingNotifyConnectionUpdated = {
   turn_transport_type: "udp" | "tcp";
 };
 
-type SignalingNotifyConnectionDestroyed = {
+export type SignalingNotifyConnectionDestroyed = {
   type: "notify";
   event_type: "connection.destroyed";
   role: Role;
@@ -159,7 +159,7 @@ type SignalingNotifyConnectionDestroyed = {
   turn_transport_type: "udp" | "tcp";
 };
 
-type SignalingNotifySpotlightChanged = {
+export type SignalingNotifySpotlightChanged = {
   type: "notify";
   event_type: "spotlight.changed";
   client_id: string | null;
@@ -170,7 +170,7 @@ type SignalingNotifySpotlightChanged = {
   video: boolean;
 };
 
-type SignalingNotifySpotlightFocused = {
+export type SignalingNotifySpotlightFocused = {
   type: "notify";
   event_type: "spotlight.focused";
   client_id: string | null;
@@ -180,7 +180,7 @@ type SignalingNotifySpotlightFocused = {
   fixed: boolean;
 };
 
-type SignalingNotifySpotlightUnfocused = {
+export type SignalingNotifySpotlightUnfocused = {
   type: "notify";
   event_type: "spotlight.unfocused";
   client_id: string | null;
@@ -190,7 +190,7 @@ type SignalingNotifySpotlightUnfocused = {
   fixed: boolean;
 };
 
-type SignalingNotifyNetworkStatus = {
+export type SignalingNotifyNetworkStatus = {
   type: "notify";
   event_type: "network.status";
   unstable_level: 0 | 1 | 2 | 3;
