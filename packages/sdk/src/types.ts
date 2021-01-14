@@ -1,6 +1,7 @@
-export type Json = null | boolean | number | string | Json[] | { [prop: string]: Json | undefined };
+export type JSONType = null | boolean | number | string | JSONType[] | { [prop: string]: JSONType | undefined };
 
 export type SimulcastRid = "r0" | "r1" | "r2";
+
 export type Simulcast = boolean | { rid: SimulcastRid };
 
 export type AudioCodecType = "OPUS";
@@ -23,7 +24,7 @@ export type SignalingAudio =
       };
     };
 
-export type VideoCodecType = "VP9" | "VP8" | "H264" | "H265";
+export type VideoCodecType = "VP9" | "VP8" | "AV1" | "H264" | "H265";
 
 export type SignalingVideo =
   | boolean
@@ -34,22 +35,13 @@ export type SignalingVideo =
 
 export type Role = "upstream" | "downstream" | "sendrecv" | "sendonly" | "recvonly";
 
-export type Encoding = {
-  rid: string;
-  maxBitrate?: number;
-  maxFramerate?: number;
-  scaleResolutionDownBy?: number;
-};
-
-export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
-
 export type SignalingConnectMessage = {
   type: "connect";
   role: Role;
   channel_id: string;
   client_id?: string;
-  metadata?: Json;
-  signaling_notify_metadata?: Json;
+  metadata?: JSONType;
+  signaling_notify_metadata?: JSONType;
   multistream?: boolean;
   spotlight?: number | boolean;
   spotlight_number?: number;
@@ -75,7 +67,7 @@ export type SignalingOfferMessage = {
   sdp: string;
   client_id: string;
   connection_id: string;
-  metadata?: Json;
+  metadata?: JSONType;
   config?: RTCConfiguration;
   encodings?: RTCRtpEncodingParameters[];
 };
@@ -107,9 +99,9 @@ export type SignalingNotifyMessage =
 export type SignalingNotifyMetadata = {
   client_id?: string;
   connection_id?: string;
-  authn_metadata?: Json;
-  authz_metadata?: Json;
-  metadata?: Json;
+  authn_metadata?: JSONType;
+  authz_metadata?: JSONType;
+  metadata?: JSONType;
 };
 
 export type SignalingNotifyConnectionCreated = {
@@ -120,9 +112,9 @@ export type SignalingNotifyConnectionCreated = {
   connection_id?: string;
   audio?: boolean;
   video?: boolean;
-  authn_metadata?: Json;
-  authz_metadata?: Json;
-  metadata?: Json;
+  authn_metadata?: JSONType;
+  authz_metadata?: JSONType;
+  metadata?: JSONType;
   metadata_list?: SignalingNotifyMetadata[];
   data?: SignalingNotifyMetadata[];
   minutes: number;
@@ -162,6 +154,9 @@ export type SignalingNotifyConnectionDestroyed = {
   audio?: boolean;
   video?: boolean;
   minutes: number;
+  authn_metadata?: JSONType;
+  authz_metadata?: JSONType;
+  metadata?: JSONType;
   channel_connections: number;
   channel_sendrecv_connections: number;
   channel_sendonly_connections: number;
@@ -232,7 +227,7 @@ export type ConnectionOptions = {
   clientId?: string;
   timeout?: number;
   e2ee?: boolean;
-  signalingNotifyMetadata?: Json;
+  signalingNotifyMetadata?: JSONType;
 };
 
 export type Callbacks = {
@@ -243,7 +238,7 @@ export type Callbacks = {
   removestream: (event: MediaStreamTrackEvent) => void;
   removetrack: (event: MediaStreamTrackEvent) => void;
   notify: (event: SignalingNotifyMessage) => void;
-  log: (title: string, message: Json) => void;
+  log: (title: string, message: JSONType) => void;
   timeout: () => void;
 };
 
@@ -252,3 +247,5 @@ export type PreKeyBundle = {
   signedPreKey: string;
   preKeySignature: string;
 };
+
+export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;

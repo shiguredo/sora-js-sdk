@@ -10,8 +10,7 @@ import {
 import {
   Callbacks,
   ConnectionOptions,
-  Encoding,
-  Json,
+  JSONType,
   SignalingMessage,
   SignalingPingMessage,
   SignalingOfferMessage,
@@ -35,7 +34,7 @@ declare let window: Window;
 export default class ConnectionBase {
   role: string;
   channelId: string;
-  metadata: Json | undefined;
+  metadata: JSONType | undefined;
   signalingUrl: string;
   options: ConnectionOptions;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,9 +44,9 @@ export default class ConnectionBase {
   connectionId: string | null;
   remoteConnectionIds: string[];
   stream: MediaStream | null;
-  authMetadata: Json;
+  authMetadata: JSONType;
   pc: RTCPeerConnection | null;
-  encodings: Encoding[];
+  encodings: RTCRtpEncodingParameters[];
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
@@ -56,7 +55,7 @@ export default class ConnectionBase {
     signalingUrl: string,
     role: string,
     channelId: string,
-    metadata: Json,
+    metadata: JSONType,
     options: ConnectionOptions,
     debug: boolean
   ) {
@@ -411,7 +410,7 @@ export default class ConnectionBase {
   }
 
   protected trace(title: string, message: unknown): void {
-    this.callbacks.log(title, message as Json);
+    this.callbacks.log(title, message as JSONType);
     if (!this.debug) {
       return;
     }
@@ -522,7 +521,10 @@ export default class ConnectionBase {
     this.callbacks.notify(message);
   }
 
-  private async setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void> {
+  private async setSenderParameters(
+    transceiver: RTCRtpTransceiver,
+    encodings: RTCRtpEncodingParameters[]
+  ): Promise<void> {
     const originalParameters = transceiver.sender.getParameters();
     // @ts-ignore
     originalParameters.encodings = encodings;

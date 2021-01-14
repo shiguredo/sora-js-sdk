@@ -1,12 +1,13 @@
 import {
   ConnectionOptions,
   Browser,
-  Json,
+  JSONType,
   PreKeyBundle,
   Role,
   SignalingConnectMessage,
   SignalingNotifyMetadata,
   SignalingNotifyConnectionCreated,
+  SignalingNotifyConnectionDestroyed,
   SignalingVideo,
 } from "./types";
 
@@ -88,7 +89,7 @@ export function createSignalingMessage(
   offerSDP: string,
   role: string,
   channelId: string | null | undefined,
-  metadata: Json | undefined,
+  metadata: JSONType | undefined,
   options: ConnectionOptions
 ): SignalingConnectMessage {
   if (
@@ -264,11 +265,13 @@ export function createSignalingMessage(
   return message;
 }
 
-export function getSignalingNotifyAuthnMetadata(message: Record<string, unknown>): Json {
+export function getSignalingNotifyAuthnMetadata(
+  message: SignalingNotifyConnectionCreated | SignalingNotifyConnectionDestroyed | SignalingNotifyMetadata
+): JSONType {
   if (message.authn_metadata !== undefined) {
-    return message.authn_metadata as Json;
+    return message.authn_metadata;
   } else if (message.metadata !== undefined) {
-    return message.metadata as Json;
+    return message.metadata;
   }
   return null;
 }
@@ -282,7 +285,7 @@ export function getSignalingNotifyData(message: SignalingNotifyConnectionCreated
   return [];
 }
 
-export function getPreKeyBundle(message: Json): PreKeyBundle | null {
+export function getPreKeyBundle(message: JSONType): PreKeyBundle | null {
   if (typeof message === "object" && message !== null && "pre_key_bundle" in message) {
     return message.pre_key_bundle as PreKeyBundle;
   }
