@@ -1020,10 +1020,10 @@ function getSignalingNotifyAuthnMetadata(message) {
     return null;
 }
 function getSignalingNotifyData(message) {
-    if (message.data !== undefined && Array.isArray(message.data)) {
+    if (message.data && Array.isArray(message.data)) {
         return message.data;
     }
-    else if (message.metadata_list !== undefined && Array.isArray(message.metadata_list)) {
+    else if (message.metadata_list && Array.isArray(message.metadata_list)) {
         return message.metadata_list;
     }
     return [];
@@ -1182,8 +1182,8 @@ class ConnectionBase {
     setupE2EE() {
         if (this.options.e2ee === true) {
             this.e2ee = new SoraE2EE();
-            this.e2ee.onWorkerDisconnect = () => {
-                this.disconnect();
+            this.e2ee.onWorkerDisconnect = async () => {
+                await this.disconnect();
             };
             this.e2ee.startWorker();
         }
@@ -1192,7 +1192,7 @@ class ConnectionBase {
         if (this.options.e2ee === true && this.e2ee) {
             if (!this.connectionId) {
                 const error = new Error();
-                error.message = `E2EE failed. Self connectionId is ${this.connectionId}`;
+                error.message = `E2EE failed. Self connectionId is null`;
                 throw error;
             }
             this.e2ee.clearWorker();
@@ -1225,7 +1225,7 @@ class ConnectionBase {
                     this.ws.send(JSON.stringify(signalingMessage));
                 }
             };
-            this.ws.onmessage = (event) => {
+            this.ws.onmessage = async (event) => {
                 // E2EE 時専用処理
                 if (event.data instanceof ArrayBuffer) {
                     this.signalingOnMessageE2EE(event.data);
@@ -1237,10 +1237,10 @@ class ConnectionBase {
                     resolve(message);
                 }
                 else if (message.type == "update") {
-                    this.signalingOnMessageTypeUpdate(message);
+                    await this.signalingOnMessageTypeUpdate(message);
                 }
                 else if (message.type == "ping") {
-                    this.signalingOnMessageTypePing(message);
+                    await this.signalingOnMessageTypePing(message);
                 }
                 else if (message.type == "push") {
                     this.callbacks.push(message);
@@ -1400,13 +1400,13 @@ class ConnectionBase {
     setConnectionTimeout() {
         return new Promise((_, reject) => {
             if (this.options.timeout && 0 < this.options.timeout) {
-                setTimeout(() => {
+                setTimeout(async () => {
                     if (!this.pc ||
                         (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")) {
                         const error = new Error();
                         error.message = "CONNECTION TIMEOUT";
                         this.callbacks.timeout();
-                        this.disconnect();
+                        await this.disconnect();
                         reject(error);
                     }
                 }, this.options.timeout);
@@ -1436,9 +1436,9 @@ class ConnectionBase {
         this.clientId = message.client_id;
         this.connectionId = message.connection_id;
         if (this.ws) {
-            this.ws.onclose = (e) => {
+            this.ws.onclose = async (e) => {
                 this.callbacks.disconnect(e);
-                this.disconnect();
+                await this.disconnect();
             };
             this.ws.onerror = null;
         }
@@ -1458,13 +1458,12 @@ class ConnectionBase {
         await this.createAnswer(message);
         this.sendUpdateAnswer();
     }
-    signalingOnMessageTypePing(message) {
+    async signalingOnMessageTypePing(message) {
         if (message.stats) {
-            this.getStats().then((stats) => {
-                if (this.ws) {
-                    this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
-                }
-            });
+            const stats = await this.getStats();
+            if (this.ws) {
+                this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
+            }
         }
         else {
             if (this.ws) {

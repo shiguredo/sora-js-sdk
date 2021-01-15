@@ -1,5 +1,5 @@
-export declare type Json = null | boolean | number | string | Json[] | {
-    [prop: string]: Json | undefined;
+export declare type JSONType = null | boolean | number | string | JSONType[] | {
+    [prop: string]: JSONType | undefined;
 };
 export declare type SimulcastRid = "r0" | "r1" | "r2";
 export declare type Simulcast = boolean | {
@@ -21,26 +21,19 @@ export declare type SignalingAudio = boolean | {
         usedtx?: boolean;
     };
 };
-export declare type VideoCodecType = "VP9" | "VP8" | "H264" | "H265";
+export declare type VideoCodecType = "VP9" | "VP8" | "AV1" | "H264" | "H265";
 export declare type SignalingVideo = boolean | {
     codec_type?: VideoCodecType;
     bit_rate?: number;
 };
 export declare type Role = "upstream" | "downstream" | "sendrecv" | "sendonly" | "recvonly";
-export declare type Encoding = {
-    rid: string;
-    maxBitrate?: number;
-    maxFramerate?: number;
-    scaleResolutionDownBy?: number;
-};
-export declare type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
 export declare type SignalingConnectMessage = {
     type: "connect";
     role: Role;
     channel_id: string;
     client_id?: string;
-    metadata?: Json;
-    signaling_notify_metadata?: Json;
+    metadata?: JSONType;
+    signaling_notify_metadata?: JSONType;
     multistream?: boolean;
     spotlight?: number | boolean;
     spotlight_number?: number;
@@ -53,12 +46,13 @@ export declare type SignalingConnectMessage = {
     environment: string;
     e2ee?: boolean;
 };
+export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage;
 export declare type SignalingOfferMessage = {
     type: "offer";
     sdp: string;
     client_id: string;
     connection_id: string;
-    metadata?: Json;
+    metadata?: JSONType;
     config?: RTCConfiguration;
     encodings?: RTCRtpEncodingParameters[];
 };
@@ -70,15 +64,19 @@ export declare type SignalingPingMessage = {
     type: "ping";
     stats: boolean;
 };
+export declare type SignalingPushMessage = {
+    type: "push";
+    data: Record<string, unknown>;
+};
 export declare type SignalingNotifyMessage = SignalingNotifyConnectionCreated | SignalingNotifyConnectionUpdated | SignalingNotifyConnectionDestroyed | SignalingNotifySpotlightChanged | SignalingNotifySpotlightFocused | SignalingNotifySpotlightUnfocused | SignalingNotifyNetworkStatus;
-declare type SignalingNotifyMetadata = {
+export declare type SignalingNotifyMetadata = {
     client_id?: string;
     connection_id?: string;
-    authn_metadata?: Json;
-    authz_metadata?: Json;
-    metadata?: Json;
+    authn_metadata?: JSONType;
+    authz_metadata?: JSONType;
+    metadata?: JSONType;
 };
-declare type SignalingNotifyConnectionCreated = {
+export declare type SignalingNotifyConnectionCreated = {
     type: "notify";
     event_type: "connection.created";
     role: Role;
@@ -86,9 +84,9 @@ declare type SignalingNotifyConnectionCreated = {
     connection_id?: string;
     audio?: boolean;
     video?: boolean;
-    authn_metadata?: Json;
-    authz_metadata?: Json;
-    metadata?: Json;
+    authn_metadata?: JSONType;
+    authz_metadata?: JSONType;
+    metadata?: JSONType;
     metadata_list?: SignalingNotifyMetadata[];
     data?: SignalingNotifyMetadata[];
     minutes: number;
@@ -100,7 +98,7 @@ declare type SignalingNotifyConnectionCreated = {
     channel_downstream_connections: number;
     turn_transport_type: "udp" | "tcp";
 };
-declare type SignalingNotifyConnectionUpdated = {
+export declare type SignalingNotifyConnectionUpdated = {
     type: "notify";
     event_type: "connection.updated";
     role: Role;
@@ -117,7 +115,7 @@ declare type SignalingNotifyConnectionUpdated = {
     channel_downstream_connections: number;
     turn_transport_type: "udp" | "tcp";
 };
-declare type SignalingNotifyConnectionDestroyed = {
+export declare type SignalingNotifyConnectionDestroyed = {
     type: "notify";
     event_type: "connection.destroyed";
     role: Role;
@@ -126,6 +124,9 @@ declare type SignalingNotifyConnectionDestroyed = {
     audio?: boolean;
     video?: boolean;
     minutes: number;
+    authn_metadata?: JSONType;
+    authz_metadata?: JSONType;
+    metadata?: JSONType;
     channel_connections: number;
     channel_sendrecv_connections: number;
     channel_sendonly_connections: number;
@@ -134,7 +135,7 @@ declare type SignalingNotifyConnectionDestroyed = {
     channel_downstream_connections: number;
     turn_transport_type: "udp" | "tcp";
 };
-declare type SignalingNotifySpotlightChanged = {
+export declare type SignalingNotifySpotlightChanged = {
     type: "notify";
     event_type: "spotlight.changed";
     client_id: string | null;
@@ -144,7 +145,7 @@ declare type SignalingNotifySpotlightChanged = {
     audio: boolean;
     video: boolean;
 };
-declare type SignalingNotifySpotlightFocused = {
+export declare type SignalingNotifySpotlightFocused = {
     type: "notify";
     event_type: "spotlight.focused";
     client_id: string | null;
@@ -153,7 +154,7 @@ declare type SignalingNotifySpotlightFocused = {
     video: boolean;
     fixed: boolean;
 };
-declare type SignalingNotifySpotlightUnfocused = {
+export declare type SignalingNotifySpotlightUnfocused = {
     type: "notify";
     event_type: "spotlight.unfocused";
     client_id: string | null;
@@ -162,7 +163,7 @@ declare type SignalingNotifySpotlightUnfocused = {
     video: boolean;
     fixed: boolean;
 };
-declare type SignalingNotifyNetworkStatus = {
+export declare type SignalingNotifyNetworkStatus = {
     type: "notify";
     event_type: "network.status";
     unstable_level: 0 | 1 | 2 | 3;
@@ -191,26 +192,17 @@ export declare type ConnectionOptions = {
     clientId?: string;
     timeout?: number;
     e2ee?: boolean;
-    signalingNotifyMetadata?: Json;
-};
-declare type PushMessage = {
-    type: "push";
-    data: Record<string, unknown>;
-};
-declare type NotifyMessage = {
-    [key: string]: unknown;
-    type: "notify";
-    event_type: string;
+    signalingNotifyMetadata?: JSONType;
 };
 export declare type Callbacks = {
     disconnect: (event: CloseEvent) => void;
-    push: (event: PushMessage) => void;
+    push: (event: SignalingPushMessage) => void;
     addstream: (event: RTCTrackEvent) => void;
     track: (event: RTCTrackEvent) => void;
     removestream: (event: MediaStreamTrackEvent) => void;
     removetrack: (event: MediaStreamTrackEvent) => void;
-    notify: (event: NotifyMessage) => void;
-    log: (title: string, message: Json) => void;
+    notify: (event: SignalingNotifyMessage) => void;
+    log: (title: string, message: JSONType) => void;
     timeout: () => void;
 };
 export declare type PreKeyBundle = {
@@ -218,4 +210,4 @@ export declare type PreKeyBundle = {
     signedPreKey: string;
     preKeySignature: string;
 };
-export {};
+export declare type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
