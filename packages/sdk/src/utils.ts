@@ -1,4 +1,15 @@
-import { ConnectionOptions, Browser, Json, PreKeyBundle, Role, SignalingConnectMessage, SignalingVideo } from "./types";
+import {
+  ConnectionOptions,
+  Browser,
+  JSONType,
+  PreKeyBundle,
+  Role,
+  SignalingConnectMessage,
+  SignalingNotifyMetadata,
+  SignalingNotifyConnectionCreated,
+  SignalingNotifyConnectionDestroyed,
+  SignalingVideo,
+} from "./types";
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
@@ -78,7 +89,7 @@ export function createSignalingMessage(
   offerSDP: string,
   role: string,
   channelId: string | null | undefined,
-  metadata: Json | undefined,
+  metadata: JSONType | undefined,
   options: ConnectionOptions
 ): SignalingConnectMessage {
   if (
@@ -254,25 +265,27 @@ export function createSignalingMessage(
   return message;
 }
 
-export function getSignalingNotifyAuthnMetadata(message: Record<string, unknown>): Json {
+export function getSignalingNotifyAuthnMetadata(
+  message: SignalingNotifyConnectionCreated | SignalingNotifyConnectionDestroyed | SignalingNotifyMetadata
+): JSONType {
   if (message.authn_metadata !== undefined) {
-    return message.authn_metadata as Json;
+    return message.authn_metadata;
   } else if (message.metadata !== undefined) {
-    return message.metadata as Json;
+    return message.metadata;
   }
   return null;
 }
 
-export function getSignalingNotifyData(message: Record<string, unknown>): Record<string, unknown>[] {
-  if (message.data !== undefined && Array.isArray(message.data)) {
+export function getSignalingNotifyData(message: SignalingNotifyConnectionCreated): SignalingNotifyMetadata[] {
+  if (message.data && Array.isArray(message.data)) {
     return message.data;
-  } else if (message.metadata_list !== undefined && Array.isArray(message.metadata_list)) {
+  } else if (message.metadata_list && Array.isArray(message.metadata_list)) {
     return message.metadata_list;
   }
   return [];
 }
 
-export function getPreKeyBundle(message: Json): PreKeyBundle | null {
+export function getPreKeyBundle(message: JSONType): PreKeyBundle | null {
   if (typeof message === "object" && message !== null && "pre_key_bundle" in message) {
     return message.pre_key_bundle as PreKeyBundle;
   }

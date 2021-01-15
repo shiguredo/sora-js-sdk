@@ -10,8 +10,8 @@ import {
 import {
   Callbacks,
   ConnectionOptions,
-  Encoding,
-  Json,
+  JSONType,
+  SignalingMessage,
   SignalingPingMessage,
   SignalingOfferMessage,
   SignalingUpdateMessage,
@@ -34,7 +34,7 @@ declare let window: Window;
 export default class ConnectionBase {
   role: string;
   channelId: string;
-  metadata: Json | undefined;
+  metadata: JSONType | undefined;
   signalingUrl: string;
   options: ConnectionOptions;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,9 +44,9 @@ export default class ConnectionBase {
   connectionId: string | null;
   remoteConnectionIds: string[];
   stream: MediaStream | null;
-  authMetadata: Json;
+  authMetadata: JSONType;
   pc: RTCPeerConnection | null;
-  encodings: Encoding[];
+  encodings: RTCRtpEncodingParameters[];
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
@@ -55,7 +55,7 @@ export default class ConnectionBase {
     signalingUrl: string,
     role: string,
     channelId: string,
-    metadata: Json,
+    metadata: JSONType,
     options: ConnectionOptions,
     debug: boolean
   ) {
@@ -162,8 +162,8 @@ export default class ConnectionBase {
   protected setupE2EE(): void {
     if (this.options.e2ee === true) {
       this.e2ee = new SoraE2EE();
-      this.e2ee.onWorkerDisconnect = (): void => {
-        this.disconnect();
+      this.e2ee.onWorkerDisconnect = async (): Promise<void> => {
+        await this.disconnect();
       };
       this.e2ee.startWorker();
     }
@@ -173,7 +173,7 @@ export default class ConnectionBase {
     if (this.options.e2ee === true && this.e2ee) {
       if (!this.connectionId) {
         const error = new Error();
-        error.message = `E2EE failed. Self connectionId is ${this.connectionId}`;
+        error.message = `E2EE failed. Self connectionId is null`;
         throw error;
       }
       this.e2ee.clearWorker();
@@ -215,20 +215,20 @@ export default class ConnectionBase {
           this.ws.send(JSON.stringify(signalingMessage));
         }
       };
-      this.ws.onmessage = (event): void => {
+      this.ws.onmessage = async (event): Promise<void> => {
         // E2EE 時専用処理
         if (event.data instanceof ArrayBuffer) {
           this.signalingOnMessageE2EE(event.data);
           return;
         }
-        const message = JSON.parse(event.data);
+        const message = JSON.parse(event.data) as SignalingMessage;
         if (message.type == "offer") {
           this.signalingOnMessageTypeOffer(message);
           resolve(message);
         } else if (message.type == "update") {
-          this.signalingOnMessageTypeUpdate(message);
+          await this.signalingOnMessageTypeUpdate(message);
         } else if (message.type == "ping") {
-          this.signalingOnMessageTypePing(message);
+          await this.signalingOnMessageTypePing(message);
         } else if (message.type == "push") {
           this.callbacks.push(message);
         } else if (message.type == "notify") {
@@ -393,7 +393,7 @@ export default class ConnectionBase {
   protected setConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
       if (this.options.timeout && 0 < this.options.timeout) {
-        setTimeout(() => {
+        setTimeout(async () => {
           if (
             !this.pc ||
             (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")
@@ -401,7 +401,7 @@ export default class ConnectionBase {
             const error = new Error();
             error.message = "CONNECTION TIMEOUT";
             this.callbacks.timeout();
-            this.disconnect();
+            await this.disconnect();
             reject(error);
           }
         }, this.options.timeout);
@@ -410,7 +410,7 @@ export default class ConnectionBase {
   }
 
   protected trace(title: string, message: unknown): void {
-    this.callbacks.log(title, message as Json);
+    this.callbacks.log(title, message as JSONType);
     if (!this.debug) {
       return;
     }
@@ -434,9 +434,9 @@ export default class ConnectionBase {
     this.clientId = message.client_id;
     this.connectionId = message.connection_id;
     if (this.ws) {
-      this.ws.onclose = (e): void => {
+      this.ws.onclose = async (e): Promise<void> => {
         this.callbacks.disconnect(e);
-        this.disconnect();
+        await this.disconnect();
       };
       this.ws.onerror = null;
     }
@@ -458,13 +458,12 @@ export default class ConnectionBase {
     this.sendUpdateAnswer();
   }
 
-  private signalingOnMessageTypePing(message: SignalingPingMessage): void {
+  private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
     if (message.stats) {
-      this.getStats().then((stats) => {
-        if (this.ws) {
-          this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
-        }
-      });
+      const stats = await this.getStats();
+      if (this.ws) {
+        this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
+      }
     } else {
       if (this.ws) {
         this.ws.send(JSON.stringify({ type: "pong" }));
@@ -496,7 +495,7 @@ export default class ConnectionBase {
         const preKeyBundle = getPreKeyBundle(authnMetadata);
         const connectionId = metadata.connection_id;
         if (connectionId && this.e2ee && preKeyBundle) {
-          this.e2ee.addPreKeyBundle(connectionId as string, preKeyBundle);
+          this.e2ee.addPreKeyBundle(connectionId, preKeyBundle);
         }
       });
     } else if (message.event_type === "connection.destroyed") {
@@ -522,7 +521,10 @@ export default class ConnectionBase {
     this.callbacks.notify(message);
   }
 
-  private async setSenderParameters(transceiver: RTCRtpTransceiver, encodings: Encoding[]): Promise<void> {
+  private async setSenderParameters(
+    transceiver: RTCRtpTransceiver,
+    encodings: RTCRtpEncodingParameters[]
+  ): Promise<void> {
     const originalParameters = transceiver.sender.getParameters();
     // @ts-ignore
     originalParameters.encodings = encodings;
