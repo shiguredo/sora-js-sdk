@@ -60,6 +60,10 @@ Please read https://github.com/shiguredo/oss before use.
 
 [WebRTC SFU Sora 向け E2EE ライブラリ](https://github.com/shiguredo/sora-e2ee)
 
+## マルチトラックについて
+
+[WebRTC SFU Sora](https://sora.shiguredo.jp) は 1 メディアストリームにつき 1 音声トラック、1 映像トラックまでしか対応していないため, Sora JavaScript SDK はマルチトラックに対応していません。
+
 ## API 一覧
 
 ### Sora Connection
