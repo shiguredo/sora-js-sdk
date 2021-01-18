@@ -64,6 +64,8 @@ Please read https://github.com/shiguredo/oss before use.
 
 [WebRTC SFU Sora](https://sora.shiguredo.jp) は 1 メディアストリームにつき 1 音声トラック、1 映像トラックまでしか対応していないため, Sora JavaScript SDK はマルチトラックに対応していません。
 
+マルチトラックへの対応は今のところ未定です。
+
 ## API 一覧
 
 ### Sora Connection
