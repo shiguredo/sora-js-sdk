@@ -1,7 +1,7 @@
 import ConnectionBase from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
-import { stopAudioMediaDevice, stopVideoMediaDevice, startAudioMediaDevice, startVideoMediaDevice } from "./helpers";
+import { applyMediaStreamConstraints, stopAudioMediaDevice, stopVideoMediaDevice, startAudioMediaDevice, startVideoMediaDevice } from "./helpers";
 import { AudioCodecType, Callbacks, ConnectionOptions, JSONType, Role, SimulcastRid, VideoCodecType } from "./types";
 declare class SoraConnection {
     signalingUrl: string;
@@ -18,6 +18,7 @@ declare const _default: {
     connection: (signalingUrl: string, debug?: boolean) => SoraConnection;
     version: () => string;
     helpers: {
+        applyMediaStreamConstraints: typeof applyMediaStreamConstraints;
         startAudioMediaDevice: typeof startAudioMediaDevice;
         startVideoMediaDevice: typeof startVideoMediaDevice;
         stopAudioMediaDevice: typeof stopAudioMediaDevice;

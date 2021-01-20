@@ -1760,11 +1760,14 @@ function stopVideoMediaDevice(mediastream) {
         }, 100);
     });
 }
-async function startVideoMediaDevice(mediastream, peerConnection) {
+async function startVideoMediaDevice(mediastream, peerConnection, videoConstraints) {
     if (0 < mediastream.getVideoTracks().length) {
         throw new Error("Unable to start video media device. Mediastream already has a video track");
     }
-    const newMediastream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const mediaStreamConstraints = {
+        video: videoConstraints !== undefined ? videoConstraints : true,
+    };
+    const newMediastream = await navigator.mediaDevices.getUserMedia(mediaStreamConstraints);
     const newVideoTrack = newMediastream.getVideoTracks()[0];
     const sender = peerConnection.getSenders().find((s) => {
         if (!s.track) {
@@ -1788,11 +1791,14 @@ function stopAudioMediaDevice(mediastream) {
         }, 100);
     });
 }
-async function startAudioMediaDevice(mediastream, peerConnection) {
+async function startAudioMediaDevice(mediastream, peerConnection, audioConstraints) {
     if (0 < mediastream.getAudioTracks().length) {
         throw new Error("Unable to start audio media device. Mediastream already has a audio track");
     }
-    const newMediastream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mediaStreamConstraints = {
+        audio: audioConstraints !== undefined ? audioConstraints : true,
+    };
+    const newMediastream = await navigator.mediaDevices.getUserMedia(mediaStreamConstraints);
     const newAudioTrack = newMediastream.getAudioTracks()[0];
     const sender = peerConnection.getSenders().find((s) => {
         if (!s.track) {
@@ -1805,6 +1811,18 @@ async function startAudioMediaDevice(mediastream, peerConnection) {
     }
     await sender.replaceTrack(newAudioTrack);
     mediastream.addTrack(newAudioTrack);
+}
+async function applyMediaStreamConstraints(mediastream, constraints) {
+    if (constraints.audio && typeof constraints.audio !== "boolean") {
+        for (const track of mediastream.getAudioTracks()) {
+            await track.applyConstraints(constraints.audio);
+        }
+    }
+    if (constraints.video && typeof constraints.video !== "boolean") {
+        for (const track of mediastream.getVideoTracks()) {
+            await track.applyConstraints(constraints.video);
+        }
+    }
 }
 
 class SoraConnection {
@@ -1846,6 +1864,7 @@ var sora = {
         return '2020.7.0-canary.0';
     },
     helpers: {
+        applyMediaStreamConstraints,
         startAudioMediaDevice,
         startVideoMediaDevice,
         stopAudioMediaDevice,
