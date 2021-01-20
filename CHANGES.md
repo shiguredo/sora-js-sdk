@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] helper メソッドを追加
+    - @yuitowest
 - [CHANGE] シグナリングメッセージに型定義を追加
     - @yuitowest
 - [CHANGE] 型定義の修正
