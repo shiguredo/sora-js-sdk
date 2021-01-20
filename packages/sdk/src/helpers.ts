@@ -9,11 +9,18 @@ function stopVideoMediaDevice(mediastream: MediaStream): void {
   });
 }
 
-async function startVideoMediaDevice(mediastream: MediaStream, peerConnection: RTCPeerConnection): Promise<void> {
+async function startVideoMediaDevice(
+  mediastream: MediaStream,
+  peerConnection: RTCPeerConnection,
+  videoConstraints?: boolean | MediaTrackConstraints
+): Promise<void> {
   if (0 < mediastream.getVideoTracks().length) {
     throw new Error("Unable to start video media device. Mediastream already has a video track");
   }
-  const newMediastream = await navigator.mediaDevices.getUserMedia({ video: true });
+  const mediaStreamConstraints = {
+    video: videoConstraints !== undefined ? videoConstraints : true,
+  };
+  const newMediastream = await navigator.mediaDevices.getUserMedia(mediaStreamConstraints);
   const newVideoTrack = newMediastream.getVideoTracks()[0];
   const sender = peerConnection.getSenders().find((s) => {
     if (!s.track) {
@@ -39,11 +46,18 @@ function stopAudioMediaDevice(mediastream: MediaStream): void {
   });
 }
 
-async function startAudioMediaDevice(mediastream: MediaStream, peerConnection: RTCPeerConnection): Promise<void> {
+async function startAudioMediaDevice(
+  mediastream: MediaStream,
+  peerConnection: RTCPeerConnection,
+  audioConstraints?: boolean | MediaTrackConstraints
+): Promise<void> {
   if (0 < mediastream.getAudioTracks().length) {
     throw new Error("Unable to start audio media device. Mediastream already has a audio track");
   }
-  const newMediastream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const mediaStreamConstraints = {
+    audio: audioConstraints !== undefined ? audioConstraints : true,
+  };
+  const newMediastream = await navigator.mediaDevices.getUserMedia(mediaStreamConstraints);
   const newAudioTrack = newMediastream.getAudioTracks()[0];
   const sender = peerConnection.getSenders().find((s) => {
     if (!s.track) {
@@ -58,4 +72,26 @@ async function startAudioMediaDevice(mediastream: MediaStream, peerConnection: R
   mediastream.addTrack(newAudioTrack);
 }
 
-export { stopVideoMediaDevice, startVideoMediaDevice, stopAudioMediaDevice, startAudioMediaDevice };
+async function applyMediaStreamConstraints(
+  mediastream: MediaStream,
+  constraints: MediaStreamConstraints
+): Promise<void> {
+  if (constraints.audio && typeof constraints.audio !== "boolean") {
+    for (const track of mediastream.getAudioTracks()) {
+      await track.applyConstraints(constraints.audio);
+    }
+  }
+  if (constraints.video && typeof constraints.video !== "boolean") {
+    for (const track of mediastream.getVideoTracks()) {
+      await track.applyConstraints(constraints.video);
+    }
+  }
+}
+
+export {
+  applyMediaStreamConstraints,
+  stopVideoMediaDevice,
+  startVideoMediaDevice,
+  stopAudioMediaDevice,
+  startAudioMediaDevice,
+};
