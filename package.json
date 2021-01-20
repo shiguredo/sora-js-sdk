@@ -1,6 +1,6 @@
 {
   "name": "sora-js-sdk",
-  "version": "2020.7.0-canary.0",
+  "version": "2021.1.0-canary.0",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.min.js",
   "module": "dist/sora.mjs",
@@ -13,6 +13,7 @@
     "test": "npx lerna run --npm-client yarn test",
     "start": "npx serve -S -l 8080 ./example",
     "packages:upgrade": "npx lerna clean -y && npx lerna exec -- npx ncu -u && yarn bootstrap",
+    "release:major": "./scripts/versioning.sh major && npx lerna run build",
     "release:minor": "./scripts/versioning.sh minor && npx lerna run build",
     "release:patch": "./scripts/versioning.sh patch && npx lerna run build",
     "release:canary": "./scripts/versioning.sh canary && npx lerna run build"

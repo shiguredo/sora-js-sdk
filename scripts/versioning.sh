@@ -8,6 +8,8 @@ if [ $1 = "canary" ]; then
   else
     npx lerna version preminor --preid canary --no-git-tag-version --tag-version-prefix '';
   fi
+elif [ $1 = "major" ]; then
+  npx lerna version major --no-git-tag-version --tag-version-prefix '';
 elif [ $1 = "minor" ]; then
   npx lerna version minor --no-git-tag-version --tag-version-prefix '';
 elif [ $1 = "patch" ]; then
