@@ -36,7 +36,7 @@ const recvonlyMiddle = sora.recvonly(channelId, null, { videoCodecType: 'VP8', s
 const recvonlyHigh = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'high' });
 
 document.querySelector('#start').addEventListener('click', function() {
-  // upstream
+  // sendonly
   navigator.mediaDevices.getUserMedia({audio: true, video: {width: {exact: 1280}, height: {exact: 720}}})
     .then(mediaStream => {
       sendonly.connect(mediaStream)
@@ -49,7 +49,7 @@ document.querySelector('#start').addEventListener('click', function() {
       console.error(e);
     });
 
-  // downstream
+  // recvonly
   recvonlyLow.connect()
     .then(stream => {
       document.querySelector('#remote-video-client-id-low').textContent = '(' + recvonlyLow.clientId + ')';

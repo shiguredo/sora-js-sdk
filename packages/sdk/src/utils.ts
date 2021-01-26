@@ -43,7 +43,7 @@ function enabledSimulcast(role: Role, video: SignalingVideo): boolean {
   if (typeof video !== "boolean" && video.codec_type === "VP9") {
     return false;
   }
-  if ((role === "upstream" || role === "sendrecv" || role === "sendonly") && browser() === "firefox") {
+  if ((role === "sendrecv" || role === "sendonly") && browser() === "firefox") {
     return false;
   }
   if (browser() === "safari") {
@@ -58,11 +58,11 @@ function enabledSimulcast(role: Role, video: SignalingVideo): boolean {
     }
     const version = parseFloat(versionString);
     // 配信の場合は version 14.0 以降であれば有効
-    if ((role === "upstream" || role === "sendrecv" || role === "sendonly") && 14.0 <= version) {
+    if ((role === "sendrecv" || role === "sendonly") && 14.0 <= version) {
       return true;
     }
     // 視聴の場合
-    if ((role === "downstream" || role === "recvonly") && 12.1 <= version) {
+    if ((role === "recvonly") && 12.1 <= version) {
       // version 12.1 以降であれば有効
       if (12.1 <= version) {
         return true;
@@ -93,8 +93,6 @@ export function createSignalingMessage(
   options: ConnectionOptions
 ): SignalingConnectMessage {
   if (
-    role !== "upstream" &&
-    role !== "downstream" &&
     role !== "sendrecv" &&
     role !== "sendonly" &&
     role !== "recvonly"
