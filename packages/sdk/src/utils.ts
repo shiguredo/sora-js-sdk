@@ -62,7 +62,7 @@ function enabledSimulcast(role: Role, video: SignalingVideo): boolean {
       return true;
     }
     // 視聴の場合
-    if ((role === "recvonly") && 12.1 <= version) {
+    if (role === "recvonly" && 12.1 <= version) {
       // version 12.1 以降であれば有効
       if (12.1 <= version) {
         return true;
@@ -92,11 +92,7 @@ export function createSignalingMessage(
   metadata: JSONType | undefined,
   options: ConnectionOptions
 ): SignalingConnectMessage {
-  if (
-    role !== "sendrecv" &&
-    role !== "sendonly" &&
-    role !== "recvonly"
-  ) {
+  if (role !== "sendrecv" && role !== "sendonly" && role !== "recvonly") {
     throw new Error("Unknown role type");
   }
   if (channelId === null || channelId === undefined) {
