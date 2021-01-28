@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2020.6.1
+ * @version: 2020.6.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -791,54 +791,25 @@ function browser() {
     }
     return null;
 }
-function enabledSimulcast(role, video) {
-    /**
-      simulcast validator
-      VP9 x
-  
-      simulcast_pub Chrome o
-      simulcast_pub Firefox x
-      simulcast_pub Safari <= 14 o
-      simulcast_sub Chrome o
-      simulcast_sub Firefox o
-      simulcast_sub Safari <= 12.1 o
-      simulcast_sub Safari 12.0 o ※H.264 のみ
-    **/
-    if (typeof video !== "boolean" && video.codec_type === "VP9") {
+function enabledSimulcast() {
+    const REQUIRED_HEADER_EXTEMSIONS = [
+        "urn:ietf:params:rtp-hdrext:sdes:mid",
+        "urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id",
+        "urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id",
+    ];
+    if (!window.RTCRtpSender) {
         return false;
     }
-    if ((role === "upstream" || role === "sendrecv" || role === "sendonly") && browser() === "firefox") {
+    if (!RTCRtpSender.getCapabilities) {
         return false;
     }
-    if (browser() === "safari") {
-        const appVersion = window.navigator.appVersion.toLowerCase();
-        const versions = /version\/([\d.]+)/.exec(appVersion);
-        if (!versions) {
-            return false;
-        }
-        const versionString = versions.pop();
-        if (!versionString) {
-            return false;
-        }
-        const version = parseFloat(versionString);
-        // 配信の場合は version 14.0 以降であれば有効
-        if ((role === "upstream" || role === "sendrecv" || role === "sendonly") && 14.0 <= version) {
-            return true;
-        }
-        // 視聴の場合
-        if ((role === "downstream" || role === "recvonly") && 12.1 <= version) {
-            // version 12.1 以降であれば有効
-            if (12.1 <= version) {
-                return true;
-            }
-            // version が 12.0 の場合 video codec type が H264 であれば有効
-            if (12.0 == version && typeof video !== "boolean" && video.codec_type === "H264") {
-                return true;
-            }
-        }
+    const capabilities = RTCRtpSender.getCapabilities("video");
+    if (!capabilities) {
         return false;
     }
-    return true;
+    const headerExtensions = capabilities.headerExtensions.map((h) => h.uri);
+    const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTEMSIONS.every((h) => headerExtensions.includes(h));
+    return hasAllRequiredHeaderExtensions;
 }
 function isEdge() {
     return browser() === "edge";
@@ -861,7 +832,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
         type: "connect",
         // @ts-ignore
         // eslint-disable-next-line @typescript-eslint/camelcase
-        sora_client: `Sora JavaScript SDK ${'2020.6.1'}`,
+        sora_client: `Sora JavaScript SDK ${'2020.6.2'}`,
         environment: window.navigator.userAgent,
         role: role,
         // eslint-disable-next-line @typescript-eslint/camelcase
@@ -1002,7 +973,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
             message.video["bit_rate"] = copyOptions.videoBitRate;
         }
     }
-    if (message.simulcast && !enabledSimulcast(message.role, message.video)) {
+    if (message.simulcast && !enabledSimulcast()) {
         throw new Error("Simulcast can not be used with this browser");
     }
     if (options.e2ee === true) {
@@ -1765,7 +1736,7 @@ var sora = {
     },
     version: function () {
         // @ts-ignore
-        return '2020.6.1';
+        return '2020.6.2';
     },
 };
 
