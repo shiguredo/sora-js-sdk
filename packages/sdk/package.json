@@ -1,6 +1,6 @@
 {
   "name": "@sora/sdk",
-  "version": "2020.6.1",
+  "version": "2020.6.2",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "main": "dist/sora.min.js",
