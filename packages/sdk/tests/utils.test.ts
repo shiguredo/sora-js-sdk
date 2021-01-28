@@ -123,59 +123,6 @@ test("createSignalingMessage multistream option", () => {
   );
 });
 
-test("createSignalingMessage simulcast option", () => {
-  interface SimulcastOptions {
-    simulcast: boolean;
-    simulcastRid: SimulcastRid;
-  }
-  // simulcast
-  const options1 = {
-    simulcast: true,
-  };
-  const diff1 = {
-    simulcast: true,
-  };
-  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff1)
-  );
-  // simulcast + SimulcastRid(r0)
-  const options2: SimulcastOptions = {
-    simulcast: true,
-    simulcastRid: "r0",
-  };
-  const diff2 = {
-    simulcast: true,
-    simulcast_rid: options2.simulcastRid,
-  };
-  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff2)
-  );
-  // simulcast + SimulcastRid(r1)
-  const options3: SimulcastOptions = {
-    simulcast: true,
-    simulcastRid: "r1",
-  };
-  const diff3 = {
-    simulcast: true,
-    simulcast_rid: options3.simulcastRid,
-  };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff3)
-  );
-  // simulcast + SimulcastRid(r2)
-  const options4: SimulcastOptions = {
-    simulcast: true,
-    simulcastRid: "r2",
-  };
-  const diff4 = {
-    simulcast: true,
-    simulcast_rid: options4.simulcastRid,
-  };
-  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff4)
-  );
-});
-
 test("createSignalingMessage audio option", () => {
   const audioCodecType: AudioCodecType = "OPUS";
   const options1 = {
