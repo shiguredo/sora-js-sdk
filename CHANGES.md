@@ -34,6 +34,11 @@
 - [CHANGE] Slack 通知を #sora-demo チャネルに向けるようにする
     - @voluntas
 
+## 2020.6.2
+- [FIX] simulcast が使用できるかどうかの判定を修正する
+    - UserAgent を用いた判定から RTCRtpSender.getCapabilities を用いた判定に変更
+    - @yuitowest
+
 ## 2020.6.1
 
 - [FIX] simulcast 時に setParameters するための RTCRtpTransceiver 検索条件を変更する
