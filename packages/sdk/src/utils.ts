@@ -292,7 +292,7 @@ export function trace(clientId: string | null, title: string, value: unknown): v
     prefix = prefix + "[" + clientId + "]";
   }
 
-  if (console.info && console.group) {
+  if (console.info !== undefined && console.group !== undefined) {
     console.group(prefix + " " + title);
     dump(value);
     console.groupEnd();
