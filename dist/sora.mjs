@@ -1037,7 +1037,7 @@ function trace(clientId, title, value) {
     if (clientId) {
         prefix = prefix + "[" + clientId + "]";
     }
-    if (console.info && console.group) {
+    if (console.info !== undefined && console.group !== undefined) {
         console.group(prefix + " " + title);
         dump(value);
         console.groupEnd();
