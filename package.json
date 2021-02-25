@@ -32,8 +32,8 @@
     "dist"
   ],
   "devDependencies": {
-    "lerna": "^3.22.1",
-    "npm-check-updates": "^10.2.5",
+    "lerna": "^4.0.0",
+    "npm-check-updates": "^11.1.9",
     "serve": "^11.3.2"
   }
 }
