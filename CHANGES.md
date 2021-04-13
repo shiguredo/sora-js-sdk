@@ -29,6 +29,8 @@
     - @yuitowest
 - [CHANGE] Slack 通知を #sora-demo チャネルに向けるようにする
     - @voluntas
+- [ADD] ConnectionOptions に spotlightFocusRid / spotlightUnfocusRid を追加する
+    - @yuitowest
 
 ## 2020.6.2
 - [FIX] simulcast が使用できるかどうかの判定を修正する
