@@ -7,8 +7,6 @@ declare class SoraConnection {
     signalingUrl: string;
     debug: boolean;
     constructor(signalingUrl: string, debug?: boolean);
-    publisher(channelId: string, metadata?: JSONType, options?: ConnectionOptions): ConnectionPublisher;
-    subscriber(channelId: string, metadata?: JSONType, options?: ConnectionOptions): ConnectionSubscriber;
     sendrecv(channelId: string, metadata?: JSONType, options?: ConnectionOptions): ConnectionPublisher;
     sendonly(channelId: string, metadata?: JSONType, options?: ConnectionOptions): ConnectionPublisher;
     recvonly(channelId: string, metadata?: JSONType, options?: ConnectionOptions): ConnectionSubscriber;

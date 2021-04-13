@@ -27,7 +27,7 @@ export declare type SignalingVideo = boolean | {
     codec_type?: VideoCodecType;
     bit_rate?: number;
 };
-export declare type Role = "upstream" | "downstream" | "sendrecv" | "sendonly" | "recvonly";
+export declare type Role = "sendrecv" | "sendonly" | "recvonly";
 export declare type SignalingConnectMessage = {
     type: "connect";
     role: Role;
@@ -97,8 +97,6 @@ export declare type SignalingNotifyConnectionCreated = {
     channel_sendrecv_connections: number;
     channel_sendonly_connections: number;
     channel_recvonly_connections: number;
-    channel_upstream_connections: number;
-    channel_downstream_connections: number;
     turn_transport_type: "udp" | "tcp";
 };
 export declare type SignalingNotifyConnectionUpdated = {
@@ -114,8 +112,6 @@ export declare type SignalingNotifyConnectionUpdated = {
     channel_sendrecv_connections: number;
     channel_sendonly_connections: number;
     channel_recvonly_connections: number;
-    channel_upstream_connections: number;
-    channel_downstream_connections: number;
     turn_transport_type: "udp" | "tcp";
 };
 export declare type SignalingNotifyConnectionDestroyed = {
@@ -134,8 +130,6 @@ export declare type SignalingNotifyConnectionDestroyed = {
     channel_sendrecv_connections: number;
     channel_sendonly_connections: number;
     channel_recvonly_connections: number;
-    channel_upstream_connections: number;
-    channel_downstream_connections: number;
     turn_transport_type: "udp" | "tcp";
 };
 export declare type SignalingNotifySpotlightChanged = {

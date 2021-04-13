@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.1
+ * @version: 2021.1.0-canary.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.1
+ * @version: 2021.1.0-canary.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -765,7 +765,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.1";
+        return "2021.1.0-canary.2";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -815,11 +815,7 @@ function isSafari() {
     return browser() === "safari";
 }
 function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
-    if (role !== "upstream" &&
-        role !== "downstream" &&
-        role !== "sendrecv" &&
-        role !== "sendonly" &&
-        role !== "recvonly") {
+    if (role !== "sendrecv" && role !== "sendonly" && role !== "recvonly") {
         throw new Error("Unknown role type");
     }
     if (channelId === null || channelId === undefined) {
@@ -828,7 +824,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     const message = {
         type: "connect",
         // @ts-ignore
-        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.1'}`,
+        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.2'}`,
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1277,7 +1273,7 @@ class ConnectionBase {
             return;
         }
         // simulcast の場合
-        if (this.options.simulcast && (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly")) {
+        if (this.options.simulcast && (this.role === "sendrecv" || this.role === "sendonly")) {
             const transceiver = this.pc.getTransceivers().find((t) => {
                 if (t.mid &&
                     0 <= t.mid.indexOf("video") &&
@@ -1810,18 +1806,6 @@ class SoraConnection {
         this.signalingUrl = signalingUrl;
         this.debug = debug;
     }
-    // 古い role
-    // @deprecated 1 年は残します
-    publisher(channelId, metadata = null, options = { audio: true, video: true }) {
-        console.warn("@deprecated publisher will be removed in a future version. Use sendrecv or sendonly.");
-        return new ConnectionPublisher(this.signalingUrl, "upstream", channelId, metadata, options, this.debug);
-    }
-    // @deprecated 1 年は残します
-    subscriber(channelId, metadata = null, options = { audio: true, video: true }) {
-        console.warn("@deprecated subscriber will be removed in a future version. Use recvonly.");
-        return new ConnectionSubscriber(this.signalingUrl, "downstream", channelId, metadata, options, this.debug);
-    }
-    // 新しい role
     sendrecv(channelId, metadata = null, options = { audio: true, video: true }) {
         return new ConnectionPublisher(this.signalingUrl, "sendrecv", channelId, metadata, options, this.debug);
     }
@@ -1841,7 +1825,7 @@ var sora = {
     },
     version: function () {
         // @ts-ignore
-        return '2021.1.0-canary.1';
+        return '2021.1.0-canary.2';
     },
     helpers: {
         applyMediaStreamConstraints,
