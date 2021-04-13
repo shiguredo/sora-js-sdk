@@ -35,7 +35,7 @@ export type SignalingVideo =
       bit_rate?: number;
     };
 
-export type Role = "upstream" | "downstream" | "sendrecv" | "sendonly" | "recvonly";
+export type Role = "sendrecv" | "sendonly" | "recvonly";
 
 export type SignalingConnectMessage = {
   type: "connect";
@@ -126,8 +126,6 @@ export type SignalingNotifyConnectionCreated = {
   channel_sendrecv_connections: number;
   channel_sendonly_connections: number;
   channel_recvonly_connections: number;
-  channel_upstream_connections: number;
-  channel_downstream_connections: number;
   turn_transport_type: "udp" | "tcp";
 };
 
@@ -144,8 +142,6 @@ export type SignalingNotifyConnectionUpdated = {
   channel_sendrecv_connections: number;
   channel_sendonly_connections: number;
   channel_recvonly_connections: number;
-  channel_upstream_connections: number;
-  channel_downstream_connections: number;
   turn_transport_type: "udp" | "tcp";
 };
 
@@ -165,8 +161,6 @@ export type SignalingNotifyConnectionDestroyed = {
   channel_sendrecv_connections: number;
   channel_sendonly_connections: number;
   channel_recvonly_connections: number;
-  channel_upstream_connections: number;
-  channel_downstream_connections: number;
   turn_transport_type: "udp" | "tcp";
 };
 

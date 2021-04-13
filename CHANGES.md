@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] role から upstream と downstream を削除する
+    - @voluntas
+- [CHANGE] publisher と subscriber を削除する
+    - @voluntas
 - [CHANGE] helper メソッドを追加
     - @yuitowest
 - [CHANGE] シグナリングメッセージに型定義を追加

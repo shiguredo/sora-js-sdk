@@ -287,7 +287,7 @@ export default class ConnectionBase {
       return;
     }
     // simulcast の場合
-    if (this.options.simulcast && (this.role === "upstream" || this.role === "sendrecv" || this.role === "sendonly")) {
+    if (this.options.simulcast && (this.role === "sendrecv" || this.role === "sendonly")) {
       const transceiver = this.pc.getTransceivers().find((t) => {
         if (
           t.mid &&

@@ -62,13 +62,7 @@ export function createSignalingMessage(
   metadata: JSONType | undefined,
   options: ConnectionOptions
 ): SignalingConnectMessage {
-  if (
-    role !== "upstream" &&
-    role !== "downstream" &&
-    role !== "sendrecv" &&
-    role !== "sendonly" &&
-    role !== "recvonly"
-  ) {
+  if (role !== "sendrecv" && role !== "sendonly" && role !== "recvonly") {
     throw new Error("Unknown role type");
   }
   if (channelId === null || channelId === undefined) {

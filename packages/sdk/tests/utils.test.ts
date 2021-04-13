@@ -4,7 +4,7 @@ import { AudioCodecType, SpotlightFocusRid, VideoCodecType } from "../src/types"
 import pkg from "../package.json";
 
 const channelId = "7N3fsMHob";
-const role = "upstream";
+const role = "sendonly";
 const metadata = "PG9A6RXgYqiqWKOVO";
 const sdp = "v=0...";
 const userAgent = window.navigator.userAgent;
@@ -22,14 +22,14 @@ const baseExpectedMessage = Object.freeze({
 });
 
 test("createSignalingMessage simple", () => {
-  // upstream
+  // sendonly
   expect(createSignalingMessage(sdp, role, channelId, null, {})).toEqual(baseExpectedMessage);
 
-  // downstream
+  // recvonly
   const diff = {
-    role: "downstream",
+    role: "recvonly",
   };
-  expect(createSignalingMessage(sdp, "downstream", channelId, null, {})).toEqual(
+  expect(createSignalingMessage(sdp, "recvonly", channelId, null, {})).toEqual(
     Object.assign({}, baseExpectedMessage, diff)
   );
 });
