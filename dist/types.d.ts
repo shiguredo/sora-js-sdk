@@ -2,6 +2,7 @@ export declare type JSONType = null | boolean | number | string | JSONType[] | {
     [prop: string]: JSONType | undefined;
 };
 export declare type SimulcastRid = "r0" | "r1" | "r2";
+export declare type SpotlightFocusRid = "none" | SimulcastRid;
 export declare type Simulcast = boolean | {
     rid: SimulcastRid;
 };
@@ -45,6 +46,8 @@ export declare type SignalingConnectMessage = {
     sora_client: string;
     environment: string;
     e2ee?: boolean;
+    spotlight_focus_rid?: SpotlightFocusRid;
+    spotlight_unfocus_rid?: SpotlightFocusRid;
 };
 export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage;
 export declare type SignalingOfferMessage = {
@@ -187,6 +190,8 @@ export declare type ConnectionOptions = {
     multistream?: boolean;
     spotlight?: boolean | number;
     spotlightNumber?: number;
+    spotlightFocusRid?: SpotlightFocusRid;
+    spotlightUnfocusRid?: SpotlightFocusRid;
     simulcast?: boolean;
     simulcastRid?: SimulcastRid;
     clientId?: string;
