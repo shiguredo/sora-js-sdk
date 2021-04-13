@@ -2,6 +2,8 @@ export type JSONType = null | boolean | number | string | JSONType[] | { [prop: 
 
 export type SimulcastRid = "r0" | "r1" | "r2";
 
+export type SpotlightFocusRid = "none" | SimulcastRid;
+
 export type Simulcast = boolean | { rid: SimulcastRid };
 
 export type AudioCodecType = "OPUS";
@@ -53,6 +55,8 @@ export type SignalingConnectMessage = {
   sora_client: string;
   environment: string;
   e2ee?: boolean;
+  spotlight_focus_rid?: SpotlightFocusRid;
+  spotlight_unfocus_rid?: SpotlightFocusRid;
 };
 
 export type SignalingMessage =
@@ -222,6 +226,8 @@ export type ConnectionOptions = {
   multistream?: boolean;
   spotlight?: boolean | number;
   spotlightNumber?: number;
+  spotlightFocusRid?: SpotlightFocusRid;
+  spotlightUnfocusRid?: SpotlightFocusRid;
   simulcast?: boolean;
   simulcastRid?: SimulcastRid;
   clientId?: string;

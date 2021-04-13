@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/camelcase: 0 */
 import { createSignalingMessage } from "../src/utils";
-import { AudioCodecType, SimulcastRid, VideoCodecType } from "../src/types";
+import { AudioCodecType, SpotlightFocusRid, VideoCodecType } from "../src/types";
 import pkg from "../package.json";
 
 const channelId = "7N3fsMHob";
@@ -120,6 +120,35 @@ test("createSignalingMessage multistream option", () => {
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
+  );
+  // multistream spotlight focus rid
+  const spotlightFocusRid: SpotlightFocusRid = "r0";
+  const options4 = {
+    multistream: true,
+    spotlight: true,
+    spotlightFocusRid: spotlightFocusRid,
+  };
+  const diff4 = {
+    multistream: true,
+    spotlight: true,
+    spotlight_focus_rid: spotlightFocusRid,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff4)
+  );
+  // multistream spotlight unfocus rid
+  const options5 = {
+    multistream: true,
+    spotlight: true,
+    spotlightUnfocusRid: spotlightFocusRid,
+  };
+  const diff5 = {
+    multistream: true,
+    spotlight: true,
+    spotlight_unfocus_rid: spotlightFocusRid,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options5)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff5)
   );
 });
 

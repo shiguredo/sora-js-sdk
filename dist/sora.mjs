@@ -852,6 +852,15 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
                 message.spotlight_number = options.spotlightNumber;
             }
         }
+        if (message.spotlight === true) {
+            const spotlightFocusRids = ["none", "r0", "r1", "r2"];
+            if (options.spotlightFocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightFocusRid)) {
+                message.spotlight_focus_rid = options.spotlightFocusRid;
+            }
+            if (options.spotlightUnfocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightUnfocusRid)) {
+                message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
+            }
+        }
     }
     if ("simulcast" in options || "simulcastRid" in options) {
         // simulcast
