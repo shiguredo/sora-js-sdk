@@ -50,6 +50,7 @@ export default class ConnectionBase {
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
+  protected timeoutTimerId: number;
 
   constructor(
     signalingUrl: string,
@@ -90,6 +91,7 @@ export default class ConnectionBase {
     };
     this.authMetadata = null;
     this.e2ee = null;
+    this.timeoutTimerId = 0;
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -393,7 +395,8 @@ export default class ConnectionBase {
   protected setConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
       if (this.options.timeout && 0 < this.options.timeout) {
-        setTimeout(async () => {
+        this.timeoutTimerId = setTimeout(async () => {
+          console.debug(" connection timeout");
           if (
             !this.pc ||
             (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")
@@ -407,6 +410,10 @@ export default class ConnectionBase {
         }, this.options.timeout);
       }
     });
+  }
+
+  protected clearConnectionTimeout(): void {
+    clearTimeout(this.timeoutTimerId);
   }
 
   protected trace(title: string, message: unknown): void {

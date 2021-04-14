@@ -3,9 +3,19 @@ import ConnectionBase from "./base";
 export default class ConnectionPublisher extends ConnectionBase {
   async connect(stream: MediaStream): Promise<MediaStream> {
     if (this.options.multistream) {
-      return await Promise.race([this.multiStream(stream), this.setConnectionTimeout()]);
+      return await Promise.race([
+        this.multiStream(stream).finally(() => {
+          this.clearConnectionTimeout();
+        }),
+        this.setConnectionTimeout(),
+      ]);
     } else {
-      return await Promise.race([this.singleStream(stream), this.setConnectionTimeout()]);
+      return await Promise.race([
+        this.singleStream(stream).finally(() => {
+          this.clearConnectionTimeout();
+        }),
+        this.setConnectionTimeout(),
+      ]);
     }
   }
 
