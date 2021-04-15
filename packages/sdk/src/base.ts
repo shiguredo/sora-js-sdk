@@ -57,6 +57,7 @@ export default class ConnectionBase {
   protected dataChannels: {
     [key in DataChannelType]?: RTCDataChannel;
   };
+  private ignoreDisconnectWebsokect: boolean;
 
   constructor(
     signalingUrl: string,
@@ -100,6 +101,7 @@ export default class ConnectionBase {
     this.e2ee = null;
     this.timeoutTimerId = 0;
     this.dataChannels = {};
+    this.ignoreDisconnectWebsokect = false;
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -303,6 +305,9 @@ export default class ConnectionBase {
     if (this.e2ee) {
       // @ts-ignore
       config["encodedInsertableStreams"] = true;
+    }
+    if (message.ignore_disconnect_websocket !== undefined) {
+      this.ignoreDisconnectWebsokect = message.ignore_disconnect_websocket;
     }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
       const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
@@ -634,6 +639,14 @@ export default class ConnectionBase {
         case "ping":
         case "e2ee":
           this.dataChannels[channel.label] = channel;
+      }
+      if (channel.label === "signaling" && this.ws) {
+        this.ws.onclose = async (e): Promise<void> => {
+          if (!this.ignoreDisconnectWebsokect) {
+            this.callbacks.disconnect(e);
+            await this.disconnect();
+          }
+        };
       }
     };
     dataChannelEvent.channel.onclose = (event): void => {

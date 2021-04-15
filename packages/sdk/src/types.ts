@@ -75,6 +75,7 @@ export type SignalingOfferMessage = {
   metadata?: JSONType;
   config?: RTCConfiguration;
   encodings?: RTCRtpEncodingParameters[];
+  ignore_disconnect_websocket?: boolean;
 };
 
 export type SignalingUpdateMessage = {
