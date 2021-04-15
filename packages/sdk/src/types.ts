@@ -62,6 +62,7 @@ export type SignalingConnectMessage = {
 export type SignalingMessage =
   | SignalingOfferMessage
   | SignalingUpdateMessage
+  | SignalingReOfferMessage
   | SignalingPingMessage
   | SignalingPushMessage
   | SignalingNotifyMessage;
@@ -78,6 +79,11 @@ export type SignalingOfferMessage = {
 
 export type SignalingUpdateMessage = {
   type: "update";
+  sdp: string;
+};
+
+export type SignalingReOfferMessage = {
+  type: "re-offer";
   sdp: string;
 };
 
@@ -240,6 +246,7 @@ export type Callbacks = {
   notify: (event: SignalingNotifyMessage) => void;
   log: (title: string, message: JSONType) => void;
   timeout: () => void;
+  datachannel: (event: Event) => void;
 };
 
 export type PreKeyBundle = {
@@ -249,3 +256,5 @@ export type PreKeyBundle = {
 };
 
 export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
+
+export type DataChannelType = "signaling" | "notify" | "ping" | "e2ee";
