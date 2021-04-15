@@ -114,12 +114,8 @@ export default class ConnectionBase {
     }
   }
 
-  disconnect(): Promise<[void, void, void]> {
-    this.clientId = null;
-    this.connectionId = null;
-    this.authMetadata = null;
-    this.remoteConnectionIds = [];
-    const closeStream: Promise<void> = new Promise((resolve, _) => {
+  private closeStream(): Promise<void> {
+    return new Promise((resolve, _) => {
       if (this.debug) {
         console.warn(
           "@deprecated closing MediaStream in disconnect will be removed in a future version. Close every track in the MediaStream by yourself."
@@ -132,7 +128,10 @@ export default class ConnectionBase {
       this.stream = null;
       return resolve();
     });
-    const closeWebSocket: Promise<void> = new Promise((resolve, _reject) => {
+  }
+
+  private closeWebSocket(): Promise<void> {
+    return new Promise((resolve, _) => {
       if (!this.ws) return resolve();
       if (this.ws.readyState === 1) {
         this.ws.send(JSON.stringify({ type: "disconnect" }));
@@ -141,7 +140,31 @@ export default class ConnectionBase {
       this.ws = null;
       return resolve();
     });
-    const closePeerConnection: Promise<void> = new Promise((resolve, _reject) => {
+  }
+
+  private closeDataChannel(): Promise<void> {
+    return new Promise((resolve, _) => {
+      if (!this.dataChannels["signaling"]) {
+        return resolve();
+      }
+      if (this.dataChannels["signaling"].readyState === "open") {
+        this.dataChannels["signaling"].send(JSON.stringify({ type: "disconnect" }));
+      }
+      Object.keys(this.dataChannels).forEach((key) => {
+        switch (key) {
+          case "signaling":
+          case "notify":
+          case "ping":
+          case "e2ee":
+            delete this.dataChannels[key];
+        }
+      });
+      return resolve();
+    });
+  }
+
+  private closePeerConnection(): Promise<void> {
+    return new Promise((resolve, _reject) => {
       if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) return resolve();
       let counter = 50;
       const timerId = setInterval(() => {
@@ -162,11 +185,22 @@ export default class ConnectionBase {
       }, 100);
       this.pc.close();
     });
+  }
+
+  async disconnect(): Promise<void> {
+    this.clientId = null;
+    this.connectionId = null;
+    this.authMetadata = null;
+    this.remoteConnectionIds = [];
+    await this.closeStream();
+    await this.closeWebSocket();
+    await this.closeDataChannel();
+    await this.closePeerConnection();
     if (this.e2ee) {
       this.e2ee.terminateWorker();
       this.e2ee = null;
     }
-    return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
+    return;
   }
 
   protected setupE2EE(): void {
