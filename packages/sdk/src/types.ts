@@ -1,3 +1,5 @@
+import { SignalingEvent } from "./utils";
+
 export type JSONType = null | boolean | number | string | JSONType[] | { [prop: string]: JSONType | undefined };
 
 export type SimulcastRid = "r0" | "r1" | "r2";
@@ -248,6 +250,7 @@ export type Callbacks = {
   log: (title: string, message: JSONType) => void;
   timeout: () => void;
   datachannel: (event: Event) => void;
+  signaling: (event: SignalingEvent) => void;
 };
 
 export type PreKeyBundle = {

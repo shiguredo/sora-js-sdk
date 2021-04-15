@@ -3,7 +3,9 @@ import {
   getPreKeyBundle,
   getSignalingNotifyData,
   getSignalingNotifyAuthnMetadata,
+  createSignalingEvent,
   trace,
+  SignalingEvent,
   isSafari,
   ConnectError,
 } from "./utils";
@@ -96,6 +98,7 @@ export default class ConnectionBase {
       log: (): void => {},
       timeout: (): void => {},
       datachannel: (): void => {},
+      signaling: (): void => {},
     };
     this.authMetadata = null;
     this.e2ee = null;
@@ -136,7 +139,9 @@ export default class ConnectionBase {
     return new Promise((resolve, _) => {
       if (!this.ws) return resolve();
       if (this.ws.readyState === 1) {
-        this.ws.send(JSON.stringify({ type: "disconnect" }));
+        const message = { type: "disconnect" };
+        this.ws.send(JSON.stringify(message));
+        this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
       }
       this.ws.close();
       this.ws = null;
@@ -150,7 +155,9 @@ export default class ConnectionBase {
         return resolve();
       }
       if (this.dataChannels["signaling"].readyState === "open") {
-        this.dataChannels["signaling"].send(JSON.stringify({ type: "disconnect" }));
+        const message = { type: "disconnect" };
+        this.dataChannels["signaling"].send(JSON.stringify(message));
+        this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
       }
       Object.keys(this.dataChannels).forEach((key) => {
         switch (key) {
@@ -233,6 +240,7 @@ export default class ConnectionBase {
     return new Promise((resolve, reject) => {
       if (this.ws === null) {
         this.ws = new WebSocket(this.signalingUrl);
+        this.callbacks.signaling(createSignalingEvent("connect", this.signalingUrl, "websocket"));
       }
       this.ws.binaryType = "arraybuffer";
       this.ws.onclose = (event): void => {
@@ -243,7 +251,9 @@ export default class ConnectionBase {
         error.reason = event.reason;
         reject(error);
       };
-      this.ws.onopen = async (): Promise<void> => {
+      this.ws.onopen = async (event): Promise<void> => {
+        const signalingEvent = Object.assign(event, { transportType: "websocket" }) as SignalingEvent;
+        this.callbacks.signaling(signalingEvent);
         const signalingMessage = createSignalingMessage(
           offer.sdp || "",
           this.role,
@@ -259,21 +269,28 @@ export default class ConnectionBase {
         this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
         if (this.ws) {
           this.ws.send(JSON.stringify(signalingMessage));
+          this.callbacks.signaling(
+            createSignalingEvent(`send-${signalingMessage.type}`, signalingMessage, "websocket")
+          );
         }
       };
       this.ws.onmessage = async (event): Promise<void> => {
         // E2EE 時専用処理
         if (event.data instanceof ArrayBuffer) {
+          this.callbacks.signaling(createSignalingEvent("onmessage-e2ee", event.data, "websocket"));
           this.signalingOnMessageE2EE(event.data);
           return;
         }
         const message = JSON.parse(event.data) as SignalingMessage;
         if (message.type == "offer") {
+          this.callbacks.signaling(createSignalingEvent("onmessage-offer", message, "websocket"));
           this.signalingOnMessageTypeOffer(message);
           resolve(message);
         } else if (message.type == "update") {
+          this.callbacks.signaling(createSignalingEvent("onmessage-update", message, "websocket"));
           await this.signalingOnMessageTypeUpdate(message);
         } else if (message.type == "ping") {
+          this.callbacks.signaling(createSignalingEvent("onmessage-ping", message, "websocket"));
           await this.signalingOnMessageTypePing(message);
         } else if (message.type == "push") {
           this.callbacks.push(message);
@@ -374,7 +391,9 @@ export default class ConnectionBase {
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      this.ws.send(JSON.stringify({ type: "answer", sdp: this.pc.localDescription.sdp }));
+      const message = { type: "answer", sdp: this.pc.localDescription.sdp };
+      this.ws.send(JSON.stringify(message));
+      this.callbacks.signaling(createSignalingEvent("send-answer", message, "websocket"));
     }
     return;
   }
@@ -403,9 +422,9 @@ export default class ConnectionBase {
             resolve();
           } else {
             const candidate = event.candidate.toJSON();
-            const message = Object.assign(candidate, { type: "candidate" });
+            const message = Object.assign(candidate, { type: "candidate" }) as { type: string; [key: string]: unknown };
             this.trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
-            this.sendMessage(JSON.stringify(message));
+            this.sendMessage(message);
           }
         };
       }
@@ -476,6 +495,7 @@ export default class ConnectionBase {
       result.messages.forEach((message) => {
         if (this.ws) {
           this.ws.send(message.buffer);
+          this.callbacks.signaling(createSignalingEvent("send-e2ee", message.buffer, "websocket"));
         }
       });
     }
@@ -504,17 +524,15 @@ export default class ConnectionBase {
   private sendUpdateAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      this.sendMessage(JSON.stringify({ type: "update", sdp: this.pc.localDescription.sdp }));
+      this.sendMessage({ type: "update", sdp: this.pc.localDescription.sdp });
     }
-    return;
   }
 
   private sendReAnswer(): void {
     if (this.pc && this.pc.localDescription) {
       this.trace("RE ANSWER SDP", this.pc.localDescription.sdp);
-      this.sendMessage(JSON.stringify({ type: "re-answer", sdp: this.pc.localDescription.sdp }));
+      this.sendMessage({ type: "re-answer", sdp: this.pc.localDescription.sdp });
     }
-    return;
   }
 
   private async signalingOnMessageTypeUpdate(message: SignalingUpdateMessage): Promise<void> {
@@ -534,23 +552,25 @@ export default class ConnectionBase {
   }
 
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
+    if (!this.ws) {
+      return;
+    }
+    const pongMessage: { type: "pong"; stats?: RTCStatsReport[] } = { type: "pong" };
     if (message.stats) {
       const stats = await this.getStats();
-      if (this.ws) {
-        this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
-      }
-    } else {
-      if (this.ws) {
-        this.ws.send(JSON.stringify({ type: "pong" }));
-      }
+      pongMessage.stats = stats;
     }
+    this.ws.send(JSON.stringify(pongMessage));
+    this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
   }
 
   private signalingDataChannelOnMessageTypePing(): void {
     if (!this.dataChannels.signaling) {
       return;
     }
-    this.dataChannels.signaling.send(JSON.stringify({ type: "pong" }));
+    const pongMessage = { type: "pong" };
+    this.dataChannels.signaling.send(JSON.stringify(pongMessage));
+    this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "datachannel"));
   }
 
   private signalingOnMessageTypeNotify(message: SignalingNotifyMessage): void {
@@ -647,6 +667,8 @@ export default class ConnectionBase {
             await this.disconnect();
           }
         };
+        const signalingEvent = Object.assign(event, { transportType: "datachannel" }) as SignalingEvent;
+        this.callbacks.signaling(signalingEvent);
       }
     };
     dataChannelEvent.channel.onclose = (event): void => {
@@ -659,7 +681,7 @@ export default class ConnectionBase {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         if (event.currentTarget) {
           const message = JSON.parse(event.data) as SignalingMessage;
-          // this.callbacks.datachannel(channel.id, channel.label, "onmessage", message);
+          this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
           if (message.type === "re-offer") {
             await this.signalingOnMessageTypeReOffer(message);
           } else if (message.type === "ping") {
@@ -699,19 +721,23 @@ export default class ConnectionBase {
     }
   }
 
-  private sendMessage(message: string): void {
+  private sendMessage(message: { type: string; [key: string]: unknown }): void {
     if (this.dataChannels.signaling) {
-      this.dataChannels.signaling.send(message);
+      this.dataChannels.signaling.send(JSON.stringify(message));
+      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "datachannel"));
     } else if (this.ws !== null) {
-      this.ws.send(message);
+      this.ws.send(JSON.stringify(message));
+      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "websocket"));
     }
   }
 
   private sendE2EEMessage(message: ArrayBuffer): void {
     if (this.dataChannels.e2ee) {
       this.dataChannels.e2ee.send(message);
+      this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "datachannel"));
     } else if (this.ws !== null) {
       this.ws.send(message);
+      this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "websocket"));
     }
   }
 
