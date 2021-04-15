@@ -649,9 +649,6 @@ export default class ConnectionBase {
     };
     dataChannelEvent.channel.onopen = (event): void => {
       this.callbacks.datachannel(event);
-      if (!event.currentTarget) {
-        return;
-      }
       const channel = event.currentTarget as RTCDataChannel;
       switch (channel.label) {
         case "signaling":
@@ -659,6 +656,7 @@ export default class ConnectionBase {
         case "ping":
         case "e2ee":
           this.dataChannels[channel.label] = channel;
+          this.trace("OPEN DATA CHANNEL", channel.label);
       }
       if (channel.label === "signaling" && this.ws) {
         this.ws.onclose = async (e): Promise<void> => {
@@ -673,42 +671,38 @@ export default class ConnectionBase {
     };
     dataChannelEvent.channel.onclose = (event): void => {
       this.callbacks.datachannel(event);
+      const channel = event.currentTarget as RTCDataChannel;
+      this.trace("CLOSE DATA CHANNEL", channel.label);
     };
     dataChannelEvent.channel.onerror = (event): void => {
       this.callbacks.datachannel(event);
+      const channel = event.currentTarget as RTCDataChannel;
+      this.trace("ERROR DATA CHANNEL", channel.label);
     };
     if (dataChannelEvent.channel.label === "signaling") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
-        if (event.currentTarget) {
-          const message = JSON.parse(event.data) as SignalingMessage;
-          this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
-          if (message.type === "re-offer") {
-            await this.signalingOnMessageTypeReOffer(message);
-          } else if (message.type === "ping") {
-            this.signalingDataChannelOnMessageTypePing();
-          }
+        const message = JSON.parse(event.data) as SignalingMessage;
+        this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
+        if (message.type === "re-offer") {
+          await this.signalingOnMessageTypeReOffer(message);
+        } else if (message.type === "ping") {
+          this.signalingDataChannelOnMessageTypePing();
         }
       };
     } else if (dataChannelEvent.channel.label === "notify") {
       dataChannelEvent.channel.onmessage = (event): void => {
-        if (event.currentTarget) {
-          const message = JSON.parse(event.data) as SignalingNotifyMessage;
-          this.signalingOnMessageTypeNotify(message);
-        }
+        const message = JSON.parse(event.data) as SignalingNotifyMessage;
+        this.signalingOnMessageTypeNotify(message);
       };
     } else if (dataChannelEvent.channel.label === "push") {
       dataChannelEvent.channel.onmessage = (event): void => {
-        if (event.currentTarget) {
-          const message = JSON.parse(event.data) as SignalingPushMessage;
-          this.callbacks.push(message);
-        }
+        const message = JSON.parse(event.data) as SignalingPushMessage;
+        this.callbacks.push(message);
       };
     } else if (dataChannelEvent.channel.label === "e2ee") {
       dataChannelEvent.channel.onmessage = (event): void => {
-        if (event.currentTarget) {
-          const data = event.data as ArrayBuffer;
-          this.signalingOnMessageE2EE(data);
-        }
+        const data = event.data as ArrayBuffer;
+        this.signalingOnMessageE2EE(data);
       };
     } else if (dataChannelEvent.channel.label === "stats") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
