@@ -5,7 +5,6 @@ import {
   getSignalingNotifyAuthnMetadata,
   createSignalingEvent,
   trace,
-  SignalingEvent,
   isSafari,
   ConnectError,
 } from "./utils";
@@ -14,6 +13,7 @@ import {
   ConnectionOptions,
   DataChannelType,
   JSONType,
+  SignalingEvent,
   SignalingMessage,
   SignalingPingMessage,
   SignalingPushMessage,

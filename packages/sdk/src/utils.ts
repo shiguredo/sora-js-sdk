@@ -4,9 +4,11 @@ import {
   JSONType,
   PreKeyBundle,
   SignalingConnectMessage,
+  SignalingEvent,
   SignalingNotifyMetadata,
   SignalingNotifyConnectionCreated,
   SignalingNotifyConnectionDestroyed,
+  TransportType,
 } from "./types";
 
 function browser(): Browser {
@@ -309,16 +311,8 @@ export class ConnectError extends Error {
   reason?: string;
 }
 
-type TransportType = "websocket" | "datachannel";
-
-export class SignalingEvent extends Event {
-  transportType?: TransportType;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: any;
-}
-
 export function createSignalingEvent(eventType: string, data: unknown, transportType?: TransportType): SignalingEvent {
-  const event = new SignalingEvent(eventType);
+  const event = new Event(eventType) as SignalingEvent;
   event.data = data;
   event.transportType = transportType;
   return event;

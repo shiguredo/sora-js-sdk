@@ -1,5 +1,3 @@
-import { SignalingEvent } from "./utils";
-
 export type JSONType = null | boolean | number | string | JSONType[] | { [prop: string]: JSONType | undefined };
 
 export type SimulcastRid = "r0" | "r1" | "r2";
@@ -262,3 +260,11 @@ export type PreKeyBundle = {
 export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
 
 export type DataChannelType = "signaling" | "notify" | "ping" | "e2ee";
+
+export type TransportType = "websocket" | "datachannel";
+
+export interface SignalingEvent extends Event {
+  transportType?: TransportType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any;
+}
