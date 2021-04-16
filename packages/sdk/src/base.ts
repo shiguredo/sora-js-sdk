@@ -644,6 +644,7 @@ export default class ConnectionBase {
   }
 
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
+    this.callbacks.datachannel(dataChannelEvent);
     dataChannelEvent.channel.onbufferedamountlow = (event): void => {
       this.callbacks.datachannel(event);
     };
