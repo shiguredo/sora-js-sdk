@@ -62,6 +62,7 @@ export type SignalingConnectMessage = {
 export type SignalingMessage =
   | SignalingOfferMessage
   | SignalingUpdateMessage
+  | SignalingReOfferMessage
   | SignalingPingMessage
   | SignalingPushMessage
   | SignalingNotifyMessage;
@@ -74,10 +75,16 @@ export type SignalingOfferMessage = {
   metadata?: JSONType;
   config?: RTCConfiguration;
   encodings?: RTCRtpEncodingParameters[];
+  ignore_disconnect_websocket?: boolean;
 };
 
 export type SignalingUpdateMessage = {
   type: "update";
+  sdp: string;
+};
+
+export type SignalingReOfferMessage = {
+  type: "re-offer";
   sdp: string;
 };
 
@@ -240,6 +247,8 @@ export type Callbacks = {
   notify: (event: SignalingNotifyMessage) => void;
   log: (title: string, message: JSONType) => void;
   timeout: () => void;
+  datachannel: (event: DataChannelEvent) => void;
+  signaling: (event: SignalingEvent) => void;
 };
 
 export type PreKeyBundle = {
@@ -249,3 +258,28 @@ export type PreKeyBundle = {
 };
 
 export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
+
+export type DataChannelType = "signaling" | "notify" | "ping" | "e2ee";
+
+export type TransportType = "websocket" | "datachannel";
+
+export interface SignalingEvent extends Event {
+  transportType?: TransportType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any;
+}
+
+export interface DataChannelEvent extends Event {
+  binaryType: RTCDataChannel["binaryType"];
+  bufferedAmount: RTCDataChannel["bufferedAmount"];
+  bufferedAmountLowThreshold: RTCDataChannel["bufferedAmountLowThreshold"];
+  id: RTCDataChannel["id"];
+  label: RTCDataChannel["label"];
+  maxPacketLifeTime: RTCDataChannel["maxPacketLifeTime"];
+  maxRetransmits: RTCDataChannel["maxRetransmits"];
+  negotiated: RTCDataChannel["negotiated"];
+  ordered: RTCDataChannel["ordered"];
+  protocol: RTCDataChannel["protocol"];
+  readyState: RTCDataChannel["readyState"];
+  reliable: boolean;
+}

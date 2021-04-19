@@ -3,6 +3,8 @@ import {
   getPreKeyBundle,
   getSignalingNotifyData,
   getSignalingNotifyAuthnMetadata,
+  createDataChannelEvent,
+  createSignalingEvent,
   trace,
   isSafari,
   ConnectError,
@@ -10,11 +12,15 @@ import {
 import {
   Callbacks,
   ConnectionOptions,
+  DataChannelType,
   JSONType,
+  SignalingEvent,
   SignalingMessage,
   SignalingPingMessage,
+  SignalingPushMessage,
   SignalingOfferMessage,
   SignalingUpdateMessage,
+  SignalingReOfferMessage,
   SignalingNotifyMessage,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
@@ -50,6 +56,11 @@ export default class ConnectionBase {
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
+  protected timeoutTimerId: number;
+  protected dataChannels: {
+    [key in DataChannelType]?: RTCDataChannel;
+  };
+  private ignoreDisconnectWebsokect: boolean;
 
   constructor(
     signalingUrl: string,
@@ -87,9 +98,14 @@ export default class ConnectionBase {
       notify: (): void => {},
       log: (): void => {},
       timeout: (): void => {},
+      datachannel: (): void => {},
+      signaling: (): void => {},
     };
     this.authMetadata = null;
     this.e2ee = null;
+    this.timeoutTimerId = 0;
+    this.dataChannels = {};
+    this.ignoreDisconnectWebsokect = false;
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -104,12 +120,8 @@ export default class ConnectionBase {
     }
   }
 
-  disconnect(): Promise<[void, void, void]> {
-    this.clientId = null;
-    this.connectionId = null;
-    this.authMetadata = null;
-    this.remoteConnectionIds = [];
-    const closeStream: Promise<void> = new Promise((resolve, _) => {
+  private closeStream(): Promise<void> {
+    return new Promise((resolve, _) => {
       if (this.debug) {
         console.warn(
           "@deprecated closing MediaStream in disconnect will be removed in a future version. Close every track in the MediaStream by yourself."
@@ -122,16 +134,47 @@ export default class ConnectionBase {
       this.stream = null;
       return resolve();
     });
-    const closeWebSocket: Promise<void> = new Promise((resolve, _reject) => {
+  }
+
+  private closeWebSocket(): Promise<void> {
+    return new Promise((resolve, _) => {
       if (!this.ws) return resolve();
       if (this.ws.readyState === 1) {
-        this.ws.send(JSON.stringify({ type: "disconnect" }));
+        const message = { type: "disconnect" };
+        this.ws.send(JSON.stringify(message));
+        this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
       }
       this.ws.close();
       this.ws = null;
       return resolve();
     });
-    const closePeerConnection: Promise<void> = new Promise((resolve, _reject) => {
+  }
+
+  private closeDataChannel(): Promise<void> {
+    return new Promise((resolve, _) => {
+      if (!this.dataChannels["signaling"]) {
+        return resolve();
+      }
+      if (this.dataChannels["signaling"].readyState === "open") {
+        const message = { type: "disconnect" };
+        this.dataChannels["signaling"].send(JSON.stringify(message));
+        this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
+      }
+      Object.keys(this.dataChannels).forEach((key) => {
+        switch (key) {
+          case "signaling":
+          case "notify":
+          case "ping":
+          case "e2ee":
+            delete this.dataChannels[key];
+        }
+      });
+      return resolve();
+    });
+  }
+
+  private closePeerConnection(): Promise<void> {
+    return new Promise((resolve, _reject) => {
       if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) return resolve();
       let counter = 50;
       const timerId = setInterval(() => {
@@ -152,11 +195,22 @@ export default class ConnectionBase {
       }, 100);
       this.pc.close();
     });
+  }
+
+  async disconnect(): Promise<void> {
+    this.clientId = null;
+    this.connectionId = null;
+    this.authMetadata = null;
+    this.remoteConnectionIds = [];
+    await this.closeStream();
+    await this.closeWebSocket();
+    await this.closeDataChannel();
+    await this.closePeerConnection();
     if (this.e2ee) {
       this.e2ee.terminateWorker();
       this.e2ee = null;
     }
-    return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
+    return;
   }
 
   protected setupE2EE(): void {
@@ -187,6 +241,7 @@ export default class ConnectionBase {
     return new Promise((resolve, reject) => {
       if (this.ws === null) {
         this.ws = new WebSocket(this.signalingUrl);
+        this.callbacks.signaling(createSignalingEvent("connect", this.signalingUrl, "websocket"));
       }
       this.ws.binaryType = "arraybuffer";
       this.ws.onclose = (event): void => {
@@ -197,7 +252,9 @@ export default class ConnectionBase {
         error.reason = event.reason;
         reject(error);
       };
-      this.ws.onopen = async (): Promise<void> => {
+      this.ws.onopen = async (event): Promise<void> => {
+        const signalingEvent = Object.assign(event, { transportType: "websocket" }) as SignalingEvent;
+        this.callbacks.signaling(signalingEvent);
         const signalingMessage = createSignalingMessage(
           offer.sdp || "",
           this.role,
@@ -213,21 +270,28 @@ export default class ConnectionBase {
         this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
         if (this.ws) {
           this.ws.send(JSON.stringify(signalingMessage));
+          this.callbacks.signaling(
+            createSignalingEvent(`send-${signalingMessage.type}`, signalingMessage, "websocket")
+          );
         }
       };
       this.ws.onmessage = async (event): Promise<void> => {
         // E2EE 時専用処理
         if (event.data instanceof ArrayBuffer) {
+          this.callbacks.signaling(createSignalingEvent("onmessage-e2ee", event.data, "websocket"));
           this.signalingOnMessageE2EE(event.data);
           return;
         }
         const message = JSON.parse(event.data) as SignalingMessage;
         if (message.type == "offer") {
+          this.callbacks.signaling(createSignalingEvent("onmessage-offer", message, "websocket"));
           this.signalingOnMessageTypeOffer(message);
           resolve(message);
         } else if (message.type == "update") {
+          this.callbacks.signaling(createSignalingEvent("onmessage-update", message, "websocket"));
           await this.signalingOnMessageTypeUpdate(message);
         } else if (message.type == "ping") {
+          this.callbacks.signaling(createSignalingEvent("onmessage-ping", message, "websocket"));
           await this.signalingOnMessageTypePing(message);
         } else if (message.type == "push") {
           this.callbacks.push(message);
@@ -260,6 +324,9 @@ export default class ConnectionBase {
       // @ts-ignore
       config["encodedInsertableStreams"] = true;
     }
+    if (message.ignore_disconnect_websocket !== undefined) {
+      this.ignoreDisconnectWebsokect = message.ignore_disconnect_websocket;
+    }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
       const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
       config = Object.assign({ certificates: [certificate] }, messageConfig);
@@ -271,10 +338,15 @@ export default class ConnectionBase {
         this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
       }
     };
+    this.pc.ondatachannel = (event): void => {
+      this.onDataChannel(event);
+    };
     return;
   }
 
-  protected async setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void> {
+  protected async setRemoteDescription(
+    message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage
+  ): Promise<void> {
     if (!this.pc) {
       return;
     }
@@ -282,7 +354,9 @@ export default class ConnectionBase {
     return;
   }
 
-  protected async createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void> {
+  protected async createAnswer(
+    message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage
+  ): Promise<void> {
     if (!this.pc) {
       return;
     }
@@ -318,15 +392,9 @@ export default class ConnectionBase {
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      this.ws.send(JSON.stringify({ type: "answer", sdp: this.pc.localDescription.sdp }));
-    }
-    return;
-  }
-
-  protected sendUpdateAnswer(): void {
-    if (this.pc && this.ws && this.pc.localDescription) {
-      this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      this.ws.send(JSON.stringify({ type: "update", sdp: this.pc.localDescription.sdp }));
+      const message = { type: "answer", sdp: this.pc.localDescription.sdp };
+      this.ws.send(JSON.stringify(message));
+      this.callbacks.signaling(createSignalingEvent("send-answer", message, "websocket"));
     }
     return;
   }
@@ -349,16 +417,15 @@ export default class ConnectionBase {
           if (this.pc) {
             this.trace("ONICECANDIDATE ICEGATHERINGSTATE", this.pc.iceGatheringState);
           }
+          // TODO(yuito): Firefox は <empty string> を投げてくるようになったので対応する
           if (event.candidate === null) {
             clearInterval(timerId);
             resolve();
           } else {
             const candidate = event.candidate.toJSON();
-            const message = Object.assign(candidate, { type: "candidate" });
+            const message = Object.assign(candidate, { type: "candidate" }) as { type: string; [key: string]: unknown };
             this.trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
-            if (this.ws) {
-              this.ws.send(JSON.stringify(message));
-            }
+            this.sendMessage(message);
           }
         };
       }
@@ -393,7 +460,7 @@ export default class ConnectionBase {
   protected setConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
       if (this.options.timeout && 0 < this.options.timeout) {
-        setTimeout(async () => {
+        this.timeoutTimerId = setTimeout(async () => {
           if (
             !this.pc ||
             (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")
@@ -407,6 +474,10 @@ export default class ConnectionBase {
         }, this.options.timeout);
       }
     });
+  }
+
+  protected clearConnectionTimeout(): void {
+    clearTimeout(this.timeoutTimerId);
   }
 
   protected trace(title: string, message: unknown): void {
@@ -425,6 +496,7 @@ export default class ConnectionBase {
       result.messages.forEach((message) => {
         if (this.ws) {
           this.ws.send(message.buffer);
+          this.callbacks.signaling(createSignalingEvent("send-e2ee", message.buffer, "websocket"));
         }
       });
     }
@@ -450,6 +522,20 @@ export default class ConnectionBase {
     this.trace("OFFER SDP", message.sdp);
   }
 
+  private sendUpdateAnswer(): void {
+    if (this.pc && this.ws && this.pc.localDescription) {
+      this.trace("ANSWER SDP", this.pc.localDescription.sdp);
+      this.sendMessage({ type: "update", sdp: this.pc.localDescription.sdp });
+    }
+  }
+
+  private sendReAnswer(): void {
+    if (this.pc && this.pc.localDescription) {
+      this.trace("RE ANSWER SDP", this.pc.localDescription.sdp);
+      this.sendMessage({ type: "re-answer", sdp: this.pc.localDescription.sdp });
+    }
+  }
+
   private async signalingOnMessageTypeUpdate(message: SignalingUpdateMessage): Promise<void> {
     this.trace("SIGNALING UPDATE MESSGE", message);
     this.trace("UPDATE SDP", message.sdp);
@@ -458,17 +544,34 @@ export default class ConnectionBase {
     this.sendUpdateAnswer();
   }
 
+  private async signalingOnMessageTypeReOffer(message: SignalingReOfferMessage): Promise<void> {
+    this.trace("SIGNALING RE OFFER MESSGE", message);
+    this.trace("RE OFFER SDP", message.sdp);
+    await this.setRemoteDescription(message);
+    await this.createAnswer(message);
+    this.sendReAnswer();
+  }
+
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
+    if (!this.ws) {
+      return;
+    }
+    const pongMessage: { type: "pong"; stats?: RTCStatsReport[] } = { type: "pong" };
     if (message.stats) {
       const stats = await this.getStats();
-      if (this.ws) {
-        this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
-      }
-    } else {
-      if (this.ws) {
-        this.ws.send(JSON.stringify({ type: "pong" }));
-      }
+      pongMessage.stats = stats;
     }
+    this.ws.send(JSON.stringify(pongMessage));
+    this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
+  }
+
+  private signalingDataChannelOnMessageTypePing(): void {
+    if (!this.dataChannels.signaling) {
+      return;
+    }
+    const pongMessage = { type: "pong" };
+    this.dataChannels.signaling.send(JSON.stringify(pongMessage));
+    this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "datachannel"));
   }
 
   private signalingOnMessageTypeNotify(message: SignalingNotifyMessage): void {
@@ -481,9 +584,7 @@ export default class ConnectionBase {
           const result = this.e2ee.startSession(connectionId, preKeyBundle);
           this.e2ee.postRemoteSecretKeyMaterials(result);
           result.messages.forEach((message) => {
-            if (this.ws) {
-              this.ws.send(message.buffer);
-            }
+            this.sendE2EEMessage(message.buffer);
           });
           // messages を送信し終えてから、selfSecretKeyMaterial を更新する
           this.e2ee.postSelfSecretKeyMaterial(result.selfConnectionId, result.selfKeyId, result.selfSecretKeyMaterial);
@@ -511,9 +612,7 @@ export default class ConnectionBase {
           5000
         );
         result.messages.forEach((message) => {
-          if (this.ws) {
-            this.ws.send(message.buffer);
-          }
+          this.sendE2EEMessage(message.buffer);
         });
         this.e2ee.postRemoveRemoteDeriveKey(connectionId);
       }
@@ -543,6 +642,100 @@ export default class ConnectionBase {
       stats.push(s);
     });
     return stats;
+  }
+
+  private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
+    this.callbacks.datachannel(createDataChannelEvent("ondatachannel", dataChannelEvent.channel));
+    dataChannelEvent.channel.onbufferedamountlow = (event): void => {
+      const channel = event.currentTarget as RTCDataChannel;
+      this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
+    };
+    dataChannelEvent.channel.onopen = (event): void => {
+      const channel = event.currentTarget as RTCDataChannel;
+      this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
+      switch (channel.label) {
+        case "signaling":
+        case "notify":
+        case "ping":
+        case "e2ee":
+          this.dataChannels[channel.label] = channel;
+          this.trace("OPEN DATA CHANNEL", channel.label);
+      }
+      if (channel.label === "signaling" && this.ws) {
+        this.ws.onclose = async (e): Promise<void> => {
+          if (!this.ignoreDisconnectWebsokect) {
+            this.callbacks.disconnect(e);
+            await this.disconnect();
+          }
+        };
+        const signalingEvent = Object.assign(event, { transportType: "datachannel" }) as SignalingEvent;
+        this.callbacks.signaling(signalingEvent);
+      }
+    };
+    dataChannelEvent.channel.onclose = (event): void => {
+      const channel = event.currentTarget as RTCDataChannel;
+      this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
+      this.trace("CLOSE DATA CHANNEL", channel.label);
+    };
+    dataChannelEvent.channel.onerror = (event): void => {
+      const channel = event.currentTarget as RTCDataChannel;
+      this.callbacks.datachannel(createDataChannelEvent("onerror", channel));
+      this.trace("ERROR DATA CHANNEL", channel.label);
+    };
+    if (dataChannelEvent.channel.label === "signaling") {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+        const message = JSON.parse(event.data) as SignalingMessage;
+        this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
+        if (message.type === "re-offer") {
+          await this.signalingOnMessageTypeReOffer(message);
+        } else if (message.type === "ping") {
+          this.signalingDataChannelOnMessageTypePing();
+        }
+      };
+    } else if (dataChannelEvent.channel.label === "notify") {
+      dataChannelEvent.channel.onmessage = (event): void => {
+        const message = JSON.parse(event.data) as SignalingNotifyMessage;
+        this.signalingOnMessageTypeNotify(message);
+      };
+    } else if (dataChannelEvent.channel.label === "push") {
+      dataChannelEvent.channel.onmessage = (event): void => {
+        const message = JSON.parse(event.data) as SignalingPushMessage;
+        this.callbacks.push(message);
+      };
+    } else if (dataChannelEvent.channel.label === "e2ee") {
+      dataChannelEvent.channel.onmessage = (event): void => {
+        const data = event.data as ArrayBuffer;
+        this.signalingOnMessageE2EE(data);
+      };
+    } else if (dataChannelEvent.channel.label === "stats") {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+        if (event.currentTarget) {
+          const channel = event.currentTarget as RTCDataChannel;
+          const stats = await this.getStats();
+          channel.send(JSON.stringify(stats));
+        }
+      };
+    }
+  }
+
+  private sendMessage(message: { type: string; [key: string]: unknown }): void {
+    if (this.dataChannels.signaling) {
+      this.dataChannels.signaling.send(JSON.stringify(message));
+      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "datachannel"));
+    } else if (this.ws !== null) {
+      this.ws.send(JSON.stringify(message));
+      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "websocket"));
+    }
+  }
+
+  private sendE2EEMessage(message: ArrayBuffer): void {
+    if (this.dataChannels.e2ee) {
+      this.dataChannels.e2ee.send(message);
+      this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "datachannel"));
+    } else if (this.ws !== null) {
+      this.ws.send(message);
+      this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "websocket"));
+    }
   }
 
   get e2eeSelfFingerprint(): string | undefined {
