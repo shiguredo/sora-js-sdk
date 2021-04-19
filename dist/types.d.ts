@@ -49,7 +49,7 @@ export declare type SignalingConnectMessage = {
     spotlight_focus_rid?: SpotlightFocusRid;
     spotlight_unfocus_rid?: SpotlightFocusRid;
 };
-export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage;
+export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage;
 export declare type SignalingOfferMessage = {
     type: "offer";
     sdp: string;
@@ -58,9 +58,14 @@ export declare type SignalingOfferMessage = {
     metadata?: JSONType;
     config?: RTCConfiguration;
     encodings?: RTCRtpEncodingParameters[];
+    ignore_disconnect_websocket?: boolean;
 };
 export declare type SignalingUpdateMessage = {
     type: "update";
+    sdp: string;
+};
+export declare type SignalingReOfferMessage = {
+    type: "re-offer";
     sdp: string;
 };
 export declare type SignalingPingMessage = {
@@ -203,6 +208,8 @@ export declare type Callbacks = {
     notify: (event: SignalingNotifyMessage) => void;
     log: (title: string, message: JSONType) => void;
     timeout: () => void;
+    datachannel: (event: DataChannelEvent) => void;
+    signaling: (event: SignalingEvent) => void;
 };
 export declare type PreKeyBundle = {
     identityKey: string;
@@ -210,3 +217,23 @@ export declare type PreKeyBundle = {
     preKeySignature: string;
 };
 export declare type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
+export declare type DataChannelType = "signaling" | "notify" | "ping" | "e2ee";
+export declare type TransportType = "websocket" | "datachannel";
+export interface SignalingEvent extends Event {
+    transportType?: TransportType;
+    data?: any;
+}
+export interface DataChannelEvent extends Event {
+    binaryType: RTCDataChannel["binaryType"];
+    bufferedAmount: RTCDataChannel["bufferedAmount"];
+    bufferedAmountLowThreshold: RTCDataChannel["bufferedAmountLowThreshold"];
+    id: RTCDataChannel["id"];
+    label: RTCDataChannel["label"];
+    maxPacketLifeTime: RTCDataChannel["maxPacketLifeTime"];
+    maxRetransmits: RTCDataChannel["maxRetransmits"];
+    negotiated: RTCDataChannel["negotiated"];
+    ordered: RTCDataChannel["ordered"];
+    protocol: RTCDataChannel["protocol"];
+    readyState: RTCDataChannel["readyState"];
+    reliable: boolean;
+}

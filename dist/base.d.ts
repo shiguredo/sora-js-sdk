@@ -1,4 +1,4 @@
-import { Callbacks, ConnectionOptions, JSONType, SignalingOfferMessage, SignalingUpdateMessage } from "./types";
+import { Callbacks, ConnectionOptions, DataChannelType, JSONType, SignalingOfferMessage, SignalingUpdateMessage, SignalingReOfferMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
 export default class ConnectionBase {
     role: string;
@@ -18,29 +18,45 @@ export default class ConnectionBase {
     protected ws: WebSocket | null;
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;
+    protected timeoutTimerId: number;
+    protected dataChannels: {
+        [key in DataChannelType]?: RTCDataChannel;
+    };
+    private ignoreDisconnectWebsokect;
     constructor(signalingUrl: string, role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void;
-    disconnect(): Promise<[void, void, void]>;
+    private closeStream;
+    private closeWebSocket;
+    private closeDataChannel;
+    private closePeerConnection;
+    disconnect(): Promise<void>;
     protected setupE2EE(): void;
     protected startE2EE(): void;
     protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage>;
     protected createOffer(): Promise<RTCSessionDescriptionInit>;
     protected connectPeerConnection(message: SignalingOfferMessage): Promise<void>;
-    protected setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void>;
-    protected createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage): Promise<void>;
+    protected setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
+    protected createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
     protected sendAnswer(): void;
-    protected sendUpdateAnswer(): void;
     protected onIceCandidate(): Promise<void>;
     protected waitChangeConnectionStateConnected(): Promise<void>;
     protected setConnectionTimeout(): Promise<MediaStream>;
+    protected clearConnectionTimeout(): void;
     protected trace(title: string, message: unknown): void;
     private signalingOnMessageE2EE;
     private signalingOnMessageTypeOffer;
+    private sendUpdateAnswer;
+    private sendReAnswer;
     private signalingOnMessageTypeUpdate;
+    private signalingOnMessageTypeReOffer;
     private signalingOnMessageTypePing;
+    private signalingDataChannelOnMessageTypePing;
     private signalingOnMessageTypeNotify;
     private setSenderParameters;
     private getStats;
+    private onDataChannel;
+    private sendMessage;
+    private sendE2EEMessage;
     get e2eeSelfFingerprint(): string | undefined;
     get e2eeRemoteFingerprints(): Record<string, string> | undefined;
 }

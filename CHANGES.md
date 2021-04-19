@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] Switch DataChannel を実装する
+    - @yuitowest
 - [CHANGE] role から upstream と downstream を削除する
     - @voluntas
 - [CHANGE] publisher と subscriber を削除する

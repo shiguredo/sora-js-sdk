@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.2
+ * @version: 2021.1.0-canary.3
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.2
+	 * @version: 2021.1.0-canary.3
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -771,7 +771,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.2";
+	        return "2021.1.0-canary.3";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -830,7 +830,7 @@
 	    const message = {
 	        type: "connect",
 	        // @ts-ignore
-	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.2'}`,
+	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.3'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1059,6 +1059,30 @@
 	}
 	class ConnectError extends Error {
 	}
+	function createSignalingEvent(eventType, data, transportType) {
+	    const event = new Event(eventType);
+	    event.data = data;
+	    event.transportType = transportType;
+	    return event;
+	}
+	function createDataChannelEvent(eventType, channel) {
+	    const event = new Event(eventType);
+	    event.binaryType = channel.binaryType;
+	    event.bufferedAmount = channel.bufferedAmount;
+	    event.bufferedAmountLowThreshold = channel.bufferedAmountLowThreshold;
+	    event.id = channel.id;
+	    event.label = channel.label;
+	    event.maxPacketLifeTime = channel.maxPacketLifeTime;
+	    event.maxRetransmits = channel.maxRetransmits;
+	    event.negotiated = channel.negotiated;
+	    event.ordered = channel.ordered;
+	    event.protocol = channel.protocol;
+	    event.readyState = channel.readyState;
+	    // @ts-ignore w3c 仕様には存在しない property
+	    // eslint-disable-next-line
+	    event.reliable = channel.reliable;
+	    return event;
+	}
 
 	class ConnectionBase {
 	    constructor(signalingUrl, role, channelId, metadata, options, debug) {
@@ -1090,9 +1114,14 @@
 	            notify: () => { },
 	            log: () => { },
 	            timeout: () => { },
+	            datachannel: () => { },
+	            signaling: () => { },
 	        };
 	        this.authMetadata = null;
 	        this.e2ee = null;
+	        this.timeoutTimerId = 0;
+	        this.dataChannels = {};
+	        this.ignoreDisconnectWebsokect = false;
 	    }
 	    on(kind, callback) {
 	        // @deprecated message
@@ -1106,12 +1135,8 @@
 	            this.callbacks[kind] = callback;
 	        }
 	    }
-	    disconnect() {
-	        this.clientId = null;
-	        this.connectionId = null;
-	        this.authMetadata = null;
-	        this.remoteConnectionIds = [];
-	        const closeStream = new Promise((resolve, _) => {
+	    closeStream() {
+	        return new Promise((resolve, _) => {
 	            if (this.debug) {
 	                console.warn("@deprecated closing MediaStream in disconnect will be removed in a future version. Close every track in the MediaStream by yourself.");
 	            }
@@ -1123,17 +1148,45 @@
 	            this.stream = null;
 	            return resolve();
 	        });
-	        const closeWebSocket = new Promise((resolve, _reject) => {
+	    }
+	    closeWebSocket() {
+	        return new Promise((resolve, _) => {
 	            if (!this.ws)
 	                return resolve();
 	            if (this.ws.readyState === 1) {
-	                this.ws.send(JSON.stringify({ type: "disconnect" }));
+	                const message = { type: "disconnect" };
+	                this.ws.send(JSON.stringify(message));
+	                this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
 	            }
 	            this.ws.close();
 	            this.ws = null;
 	            return resolve();
 	        });
-	        const closePeerConnection = new Promise((resolve, _reject) => {
+	    }
+	    closeDataChannel() {
+	        return new Promise((resolve, _) => {
+	            if (!this.dataChannels["signaling"]) {
+	                return resolve();
+	            }
+	            if (this.dataChannels["signaling"].readyState === "open") {
+	                const message = { type: "disconnect" };
+	                this.dataChannels["signaling"].send(JSON.stringify(message));
+	                this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
+	            }
+	            Object.keys(this.dataChannels).forEach((key) => {
+	                switch (key) {
+	                    case "signaling":
+	                    case "notify":
+	                    case "ping":
+	                    case "e2ee":
+	                        delete this.dataChannels[key];
+	                }
+	            });
+	            return resolve();
+	        });
+	    }
+	    closePeerConnection() {
+	        return new Promise((resolve, _reject) => {
 	            if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined)
 	                return resolve();
 	            let counter = 50;
@@ -1155,11 +1208,21 @@
 	            }, 100);
 	            this.pc.close();
 	        });
+	    }
+	    async disconnect() {
+	        this.clientId = null;
+	        this.connectionId = null;
+	        this.authMetadata = null;
+	        this.remoteConnectionIds = [];
+	        await this.closeStream();
+	        await this.closeWebSocket();
+	        await this.closeDataChannel();
+	        await this.closePeerConnection();
 	        if (this.e2ee) {
 	            this.e2ee.terminateWorker();
 	            this.e2ee = null;
 	        }
-	        return Promise.all([closeStream, closeWebSocket, closePeerConnection]);
+	        return;
 	    }
 	    setupE2EE() {
 	        if (this.options.e2ee === true) {
@@ -1187,6 +1250,7 @@
 	        return new Promise((resolve, reject) => {
 	            if (this.ws === null) {
 	                this.ws = new WebSocket(this.signalingUrl);
+	                this.callbacks.signaling(createSignalingEvent("connect", this.signalingUrl, "websocket"));
 	            }
 	            this.ws.binaryType = "arraybuffer";
 	            this.ws.onclose = (event) => {
@@ -1195,7 +1259,9 @@
 	                error.reason = event.reason;
 	                reject(error);
 	            };
-	            this.ws.onopen = async () => {
+	            this.ws.onopen = async (event) => {
+	                const signalingEvent = Object.assign(event, { transportType: "websocket" });
+	                this.callbacks.signaling(signalingEvent);
 	                const signalingMessage = createSignalingMessage(offer.sdp || "", this.role, this.channelId, this.metadata, this.options);
 	                if (signalingMessage.e2ee && this.e2ee) {
 	                    const initResult = await this.e2ee.init();
@@ -1205,23 +1271,28 @@
 	                this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
 	                if (this.ws) {
 	                    this.ws.send(JSON.stringify(signalingMessage));
+	                    this.callbacks.signaling(createSignalingEvent(`send-${signalingMessage.type}`, signalingMessage, "websocket"));
 	                }
 	            };
 	            this.ws.onmessage = async (event) => {
 	                // E2EE 時専用処理
 	                if (event.data instanceof ArrayBuffer) {
+	                    this.callbacks.signaling(createSignalingEvent("onmessage-e2ee", event.data, "websocket"));
 	                    this.signalingOnMessageE2EE(event.data);
 	                    return;
 	                }
 	                const message = JSON.parse(event.data);
 	                if (message.type == "offer") {
+	                    this.callbacks.signaling(createSignalingEvent("onmessage-offer", message, "websocket"));
 	                    this.signalingOnMessageTypeOffer(message);
 	                    resolve(message);
 	                }
 	                else if (message.type == "update") {
+	                    this.callbacks.signaling(createSignalingEvent("onmessage-update", message, "websocket"));
 	                    await this.signalingOnMessageTypeUpdate(message);
 	                }
 	                else if (message.type == "ping") {
+	                    this.callbacks.signaling(createSignalingEvent("onmessage-ping", message, "websocket"));
 	                    await this.signalingOnMessageTypePing(message);
 	                }
 	                else if (message.type == "push") {
@@ -1254,6 +1325,9 @@
 	            // @ts-ignore
 	            config["encodedInsertableStreams"] = true;
 	        }
+	        if (message.ignore_disconnect_websocket !== undefined) {
+	            this.ignoreDisconnectWebsokect = message.ignore_disconnect_websocket;
+	        }
 	        if (window.RTCPeerConnection.generateCertificate !== undefined) {
 	            const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
 	            config = Object.assign({ certificates: [certificate] }, messageConfig);
@@ -1264,6 +1338,9 @@
 	            if (this.pc) {
 	                this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
 	            }
+	        };
+	        this.pc.ondatachannel = (event) => {
+	            this.onDataChannel(event);
 	        };
 	        return;
 	    }
@@ -1307,14 +1384,9 @@
 	    sendAnswer() {
 	        if (this.pc && this.ws && this.pc.localDescription) {
 	            this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-	            this.ws.send(JSON.stringify({ type: "answer", sdp: this.pc.localDescription.sdp }));
-	        }
-	        return;
-	    }
-	    sendUpdateAnswer() {
-	        if (this.pc && this.ws && this.pc.localDescription) {
-	            this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-	            this.ws.send(JSON.stringify({ type: "update", sdp: this.pc.localDescription.sdp }));
+	            const message = { type: "answer", sdp: this.pc.localDescription.sdp };
+	            this.ws.send(JSON.stringify(message));
+	            this.callbacks.signaling(createSignalingEvent("send-answer", message, "websocket"));
 	        }
 	        return;
 	    }
@@ -1337,6 +1409,7 @@
 	                    if (this.pc) {
 	                        this.trace("ONICECANDIDATE ICEGATHERINGSTATE", this.pc.iceGatheringState);
 	                    }
+	                    // TODO(yuito): Firefox は <empty string> を投げてくるようになったので対応する
 	                    if (event.candidate === null) {
 	                        clearInterval(timerId);
 	                        resolve();
@@ -1345,9 +1418,7 @@
 	                        const candidate = event.candidate.toJSON();
 	                        const message = Object.assign(candidate, { type: "candidate" });
 	                        this.trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
-	                        if (this.ws) {
-	                            this.ws.send(JSON.stringify(message));
-	                        }
+	                        this.sendMessage(message);
 	                    }
 	                };
 	            }
@@ -1382,7 +1453,7 @@
 	    setConnectionTimeout() {
 	        return new Promise((_, reject) => {
 	            if (this.options.timeout && 0 < this.options.timeout) {
-	                setTimeout(async () => {
+	                this.timeoutTimerId = setTimeout(async () => {
 	                    if (!this.pc ||
 	                        (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")) {
 	                        const error = new Error();
@@ -1394,6 +1465,9 @@
 	                }, this.options.timeout);
 	            }
 	        });
+	    }
+	    clearConnectionTimeout() {
+	        clearTimeout(this.timeoutTimerId);
 	    }
 	    trace(title, message) {
 	        this.callbacks.log(title, message);
@@ -1410,6 +1484,7 @@
 	            result.messages.forEach((message) => {
 	                if (this.ws) {
 	                    this.ws.send(message.buffer);
+	                    this.callbacks.signaling(createSignalingEvent("send-e2ee", message.buffer, "websocket"));
 	                }
 	            });
 	        }
@@ -1433,6 +1508,18 @@
 	        this.trace("SIGNALING OFFER MESSAGE", message);
 	        this.trace("OFFER SDP", message.sdp);
 	    }
+	    sendUpdateAnswer() {
+	        if (this.pc && this.ws && this.pc.localDescription) {
+	            this.trace("ANSWER SDP", this.pc.localDescription.sdp);
+	            this.sendMessage({ type: "update", sdp: this.pc.localDescription.sdp });
+	        }
+	    }
+	    sendReAnswer() {
+	        if (this.pc && this.pc.localDescription) {
+	            this.trace("RE ANSWER SDP", this.pc.localDescription.sdp);
+	            this.sendMessage({ type: "re-answer", sdp: this.pc.localDescription.sdp });
+	        }
+	    }
 	    async signalingOnMessageTypeUpdate(message) {
 	        this.trace("SIGNALING UPDATE MESSGE", message);
 	        this.trace("UPDATE SDP", message.sdp);
@@ -1440,18 +1527,32 @@
 	        await this.createAnswer(message);
 	        this.sendUpdateAnswer();
 	    }
+	    async signalingOnMessageTypeReOffer(message) {
+	        this.trace("SIGNALING RE OFFER MESSGE", message);
+	        this.trace("RE OFFER SDP", message.sdp);
+	        await this.setRemoteDescription(message);
+	        await this.createAnswer(message);
+	        this.sendReAnswer();
+	    }
 	    async signalingOnMessageTypePing(message) {
+	        if (!this.ws) {
+	            return;
+	        }
+	        const pongMessage = { type: "pong" };
 	        if (message.stats) {
 	            const stats = await this.getStats();
-	            if (this.ws) {
-	                this.ws.send(JSON.stringify({ type: "pong", stats: stats }));
-	            }
+	            pongMessage.stats = stats;
 	        }
-	        else {
-	            if (this.ws) {
-	                this.ws.send(JSON.stringify({ type: "pong" }));
-	            }
+	        this.ws.send(JSON.stringify(pongMessage));
+	        this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
+	    }
+	    signalingDataChannelOnMessageTypePing() {
+	        if (!this.dataChannels.signaling) {
+	            return;
 	        }
+	        const pongMessage = { type: "pong" };
+	        this.dataChannels.signaling.send(JSON.stringify(pongMessage));
+	        this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "datachannel"));
 	    }
 	    signalingOnMessageTypeNotify(message) {
 	        if (message.event_type === "connection.created") {
@@ -1463,9 +1564,7 @@
 	                    const result = this.e2ee.startSession(connectionId, preKeyBundle);
 	                    this.e2ee.postRemoteSecretKeyMaterials(result);
 	                    result.messages.forEach((message) => {
-	                        if (this.ws) {
-	                            this.ws.send(message.buffer);
-	                        }
+	                        this.sendE2EEMessage(message.buffer);
 	                    });
 	                    // messages を送信し終えてから、selfSecretKeyMaterial を更新する
 	                    this.e2ee.postSelfSecretKeyMaterial(result.selfConnectionId, result.selfKeyId, result.selfSecretKeyMaterial);
@@ -1489,9 +1588,7 @@
 	                const result = this.e2ee.stopSession(connectionId);
 	                this.e2ee.postSelfSecretKeyMaterial(result.selfConnectionId, result.selfKeyId, result.selfSecretKeyMaterial, 5000);
 	                result.messages.forEach((message) => {
-	                    if (this.ws) {
-	                        this.ws.send(message.buffer);
-	                    }
+	                    this.sendE2EEMessage(message.buffer);
 	                });
 	                this.e2ee.postRemoveRemoteDeriveKey(connectionId);
 	            }
@@ -1517,6 +1614,104 @@
 	        });
 	        return stats;
 	    }
+	    onDataChannel(dataChannelEvent) {
+	        this.callbacks.datachannel(createDataChannelEvent("ondatachannel", dataChannelEvent.channel));
+	        dataChannelEvent.channel.onbufferedamountlow = (event) => {
+	            const channel = event.currentTarget;
+	            this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
+	        };
+	        dataChannelEvent.channel.onopen = (event) => {
+	            const channel = event.currentTarget;
+	            this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
+	            switch (channel.label) {
+	                case "signaling":
+	                case "notify":
+	                case "ping":
+	                case "e2ee":
+	                    this.dataChannels[channel.label] = channel;
+	                    this.trace("OPEN DATA CHANNEL", channel.label);
+	            }
+	            if (channel.label === "signaling" && this.ws) {
+	                this.ws.onclose = async (e) => {
+	                    if (!this.ignoreDisconnectWebsokect) {
+	                        this.callbacks.disconnect(e);
+	                        await this.disconnect();
+	                    }
+	                };
+	                const signalingEvent = Object.assign(event, { transportType: "datachannel" });
+	                this.callbacks.signaling(signalingEvent);
+	            }
+	        };
+	        dataChannelEvent.channel.onclose = (event) => {
+	            const channel = event.currentTarget;
+	            this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
+	            this.trace("CLOSE DATA CHANNEL", channel.label);
+	        };
+	        dataChannelEvent.channel.onerror = (event) => {
+	            const channel = event.currentTarget;
+	            this.callbacks.datachannel(createDataChannelEvent("onerror", channel));
+	            this.trace("ERROR DATA CHANNEL", channel.label);
+	        };
+	        if (dataChannelEvent.channel.label === "signaling") {
+	            dataChannelEvent.channel.onmessage = async (event) => {
+	                const message = JSON.parse(event.data);
+	                this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
+	                if (message.type === "re-offer") {
+	                    await this.signalingOnMessageTypeReOffer(message);
+	                }
+	                else if (message.type === "ping") {
+	                    this.signalingDataChannelOnMessageTypePing();
+	                }
+	            };
+	        }
+	        else if (dataChannelEvent.channel.label === "notify") {
+	            dataChannelEvent.channel.onmessage = (event) => {
+	                const message = JSON.parse(event.data);
+	                this.signalingOnMessageTypeNotify(message);
+	            };
+	        }
+	        else if (dataChannelEvent.channel.label === "push") {
+	            dataChannelEvent.channel.onmessage = (event) => {
+	                const message = JSON.parse(event.data);
+	                this.callbacks.push(message);
+	            };
+	        }
+	        else if (dataChannelEvent.channel.label === "e2ee") {
+	            dataChannelEvent.channel.onmessage = (event) => {
+	                const data = event.data;
+	                this.signalingOnMessageE2EE(data);
+	            };
+	        }
+	        else if (dataChannelEvent.channel.label === "stats") {
+	            dataChannelEvent.channel.onmessage = async (event) => {
+	                if (event.currentTarget) {
+	                    const channel = event.currentTarget;
+	                    const stats = await this.getStats();
+	                    channel.send(JSON.stringify(stats));
+	                }
+	            };
+	        }
+	    }
+	    sendMessage(message) {
+	        if (this.dataChannels.signaling) {
+	            this.dataChannels.signaling.send(JSON.stringify(message));
+	            this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "datachannel"));
+	        }
+	        else if (this.ws !== null) {
+	            this.ws.send(JSON.stringify(message));
+	            this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "websocket"));
+	        }
+	    }
+	    sendE2EEMessage(message) {
+	        if (this.dataChannels.e2ee) {
+	            this.dataChannels.e2ee.send(message);
+	            this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "datachannel"));
+	        }
+	        else if (this.ws !== null) {
+	            this.ws.send(message);
+	            this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "websocket"));
+	        }
+	    }
 	    get e2eeSelfFingerprint() {
 	        if (this.options.e2ee && this.e2ee) {
 	            return this.e2ee.selfFingerprint();
@@ -1534,10 +1729,20 @@
 	class ConnectionPublisher extends ConnectionBase {
 	    async connect(stream) {
 	        if (this.options.multistream) {
-	            return await Promise.race([this.multiStream(stream), this.setConnectionTimeout()]);
+	            return await Promise.race([
+	                this.multiStream(stream).finally(() => {
+	                    this.clearConnectionTimeout();
+	                }),
+	                this.setConnectionTimeout(),
+	            ]);
 	        }
 	        else {
-	            return await Promise.race([this.singleStream(stream), this.setConnectionTimeout()]);
+	            return await Promise.race([
+	                this.singleStream(stream).finally(() => {
+	                    this.clearConnectionTimeout();
+	                }),
+	                this.setConnectionTimeout(),
+	            ]);
 	        }
 	    }
 	    async singleStream(stream) {
@@ -1633,10 +1838,20 @@
 	class ConnectionSubscriber extends ConnectionBase {
 	    async connect() {
 	        if (this.options.multistream) {
-	            return await Promise.race([this.multiStream(), this.setConnectionTimeout()]);
+	            return await Promise.race([
+	                this.multiStream().finally(() => {
+	                    this.clearConnectionTimeout();
+	                }),
+	                this.setConnectionTimeout(),
+	            ]);
 	        }
 	        else {
-	            return await Promise.race([this.singleStream(), this.setConnectionTimeout()]);
+	            return await Promise.race([
+	                this.singleStream().finally(() => {
+	                    this.clearConnectionTimeout();
+	                }),
+	                this.setConnectionTimeout(),
+	            ]);
 	        }
 	    }
 	    async singleStream() {
@@ -1831,7 +2046,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2021.1.0-canary.2';
+	        return '2021.1.0-canary.3';
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
