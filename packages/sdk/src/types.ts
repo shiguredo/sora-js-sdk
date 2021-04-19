@@ -247,7 +247,7 @@ export type Callbacks = {
   notify: (event: SignalingNotifyMessage) => void;
   log: (title: string, message: JSONType) => void;
   timeout: () => void;
-  datachannel: (event: Event) => void;
+  datachannel: (event: DataChannelEvent) => void;
   signaling: (event: SignalingEvent) => void;
 };
 
@@ -267,4 +267,19 @@ export interface SignalingEvent extends Event {
   transportType?: TransportType;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
+}
+
+export interface DataChannelEvent extends Event {
+  binaryType: RTCDataChannel["binaryType"];
+  bufferedAmount: RTCDataChannel["bufferedAmount"];
+  bufferedAmountLowThreshold: RTCDataChannel["bufferedAmountLowThreshold"];
+  id: RTCDataChannel["id"];
+  label: RTCDataChannel["label"];
+  maxPacketLifeTime: RTCDataChannel["maxPacketLifeTime"];
+  maxRetransmits: RTCDataChannel["maxRetransmits"];
+  negotiated: RTCDataChannel["negotiated"];
+  ordered: RTCDataChannel["ordered"];
+  protocol: RTCDataChannel["protocol"];
+  readyState: RTCDataChannel["readyState"];
+  reliable: boolean;
 }

@@ -3,6 +3,7 @@ import {
   getPreKeyBundle,
   getSignalingNotifyData,
   getSignalingNotifyAuthnMetadata,
+  createDataChannelEvent,
   createSignalingEvent,
   trace,
   isSafari,
@@ -644,13 +645,14 @@ export default class ConnectionBase {
   }
 
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
-    this.callbacks.datachannel(dataChannelEvent);
+    this.callbacks.datachannel(createDataChannelEvent("ondatachannel", dataChannelEvent.channel));
     dataChannelEvent.channel.onbufferedamountlow = (event): void => {
-      this.callbacks.datachannel(event);
+      const channel = event.currentTarget as RTCDataChannel;
+      this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
     };
     dataChannelEvent.channel.onopen = (event): void => {
-      this.callbacks.datachannel(event);
       const channel = event.currentTarget as RTCDataChannel;
+      this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
       switch (channel.label) {
         case "signaling":
         case "notify":
@@ -671,13 +673,13 @@ export default class ConnectionBase {
       }
     };
     dataChannelEvent.channel.onclose = (event): void => {
-      this.callbacks.datachannel(event);
       const channel = event.currentTarget as RTCDataChannel;
+      this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
       this.trace("CLOSE DATA CHANNEL", channel.label);
     };
     dataChannelEvent.channel.onerror = (event): void => {
-      this.callbacks.datachannel(event);
       const channel = event.currentTarget as RTCDataChannel;
+      this.callbacks.datachannel(createDataChannelEvent("onerror", channel));
       this.trace("ERROR DATA CHANNEL", channel.label);
     };
     if (dataChannelEvent.channel.label === "signaling") {

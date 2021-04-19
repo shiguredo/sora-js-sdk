@@ -1,6 +1,7 @@
 import {
   ConnectionOptions,
   Browser,
+  DataChannelEvent,
   JSONType,
   PreKeyBundle,
   SignalingConnectMessage,
@@ -315,5 +316,24 @@ export function createSignalingEvent(eventType: string, data: unknown, transport
   const event = new Event(eventType) as SignalingEvent;
   event.data = data;
   event.transportType = transportType;
+  return event;
+}
+
+export function createDataChannelEvent(eventType: string, channel: RTCDataChannel): DataChannelEvent {
+  const event = new Event(eventType) as DataChannelEvent;
+  event.binaryType = channel.binaryType;
+  event.bufferedAmount = channel.bufferedAmount;
+  event.bufferedAmountLowThreshold = channel.bufferedAmountLowThreshold;
+  event.id = channel.id;
+  event.label = channel.label;
+  event.maxPacketLifeTime = channel.maxPacketLifeTime;
+  event.maxRetransmits = channel.maxRetransmits;
+  event.negotiated = channel.negotiated;
+  event.ordered = channel.ordered;
+  event.protocol = channel.protocol;
+  event.readyState = channel.readyState;
+  // @ts-ignore w3c 仕様には存在しない property
+  // eslint-disable-next-line
+  event.reliable = channel.reliable;
   return event;
 }
