@@ -318,18 +318,17 @@ export default class ConnectionBase {
   }
 
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
-    const messageConfig = message.config || {};
-    let config = messageConfig;
+    let config = Object.assign({}, message.config);
     if (this.e2ee) {
       // @ts-ignore
-      config["encodedInsertableStreams"] = true;
+      config = Object.assign({ encodedInsertableStreams: true }, config);
     }
     if (message.ignore_disconnect_websocket !== undefined) {
       this.ignoreDisconnectWebsokect = message.ignore_disconnect_websocket;
     }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
       const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
-      config = Object.assign({ certificates: [certificate] }, messageConfig);
+      config = Object.assign({ certificates: [certificate] }, config);
     }
     this.trace("PEER CONNECTION CONFIG", config);
     this.pc = new window.RTCPeerConnection(config, this.constraints);
