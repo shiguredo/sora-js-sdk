@@ -642,10 +642,12 @@ export default class ConnectionBase {
 
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
     this.callbacks.datachannel(createDataChannelEvent("ondatachannel", dataChannelEvent.channel));
+    // onbufferedamountlow
     dataChannelEvent.channel.onbufferedamountlow = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
     };
+    // onopen
     dataChannelEvent.channel.onopen = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
@@ -665,10 +667,15 @@ export default class ConnectionBase {
         this.callbacks.signaling(signalingEvent);
       }
     };
-    dataChannelEvent.channel.onclose = (event): void => {
+    dataChannelEvent.channel.onclose = async (event): Promise<void> => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
       this.trace("CLOSE DATA CHANNEL", channel.label);
+      if (this.ignoreDisconnectWebsokect && channel.label === "signaling") {
+        const closeEvent = new CloseEvent("close", { code: 4999 });
+        this.callbacks.disconnect(closeEvent);
+        await this.disconnect();
+      }
     };
     dataChannelEvent.channel.onerror = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
