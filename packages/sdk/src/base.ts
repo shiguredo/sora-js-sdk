@@ -13,6 +13,7 @@ import {
   Callbacks,
   ConnectionOptions,
   DataChannelType,
+  isDataChannelType,
   JSONType,
   SignalingEvent,
   SignalingMessage,
@@ -161,12 +162,8 @@ export default class ConnectionBase {
         this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
       }
       Object.keys(this.dataChannels).forEach((key) => {
-        switch (key) {
-          case "signaling":
-          case "notify":
-          case "ping":
-          case "e2ee":
-            delete this.dataChannels[key];
+        if (isDataChannelType(key)) {
+          delete this.dataChannels[key];
         }
       });
       return resolve();
@@ -652,13 +649,10 @@ export default class ConnectionBase {
     dataChannelEvent.channel.onopen = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
-      switch (channel.label) {
-        case "signaling":
-        case "notify":
-        case "ping":
-        case "e2ee":
-          this.dataChannels[channel.label] = channel;
-          this.trace("OPEN DATA CHANNEL", channel.label);
+
+      if (isDataChannelType(channel.label)) {
+        this.dataChannels[channel.label] = channel;
+        this.trace("OPEN DATA CHANNEL", channel.label);
       }
       if (channel.label === "signaling" && this.ws) {
         this.ws.onclose = async (e): Promise<void> => {
