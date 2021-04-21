@@ -317,7 +317,7 @@ export default class ConnectionBase {
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
     if (this.e2ee) {
-      // @ts-ignore
+      // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
     if (message.ignore_disconnect_websocket !== undefined) {
