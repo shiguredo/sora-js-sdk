@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.3
+ * @version: 2021.1.0-canary.4
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.3
+	 * @version: 2021.1.0-canary.4
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -771,7 +771,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.3";
+	        return "2021.1.0-canary.4";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -830,7 +830,7 @@
 	    const message = {
 	        type: "connect",
 	        // @ts-ignore
-	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.3'}`,
+	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.4'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1061,7 +1061,13 @@
 	}
 	function createSignalingEvent(eventType, data, transportType) {
 	    const event = new Event(eventType);
-	    event.data = data;
+	    // data をコピーする
+	    try {
+	        event.data = JSON.parse(JSON.stringify(data));
+	    }
+	    catch (_) {
+	        event.data = data;
+	    }
 	    event.transportType = transportType;
 	    return event;
 	}
@@ -1082,6 +1088,11 @@
 	    // eslint-disable-next-line
 	    event.reliable = channel.reliable;
 	    return event;
+	}
+
+	const DATA_CHANNEL_LABELS = ["signaling", "notify", "e2ee", "stats", "push"];
+	function isDataChannelLabel(dataChannelType) {
+	    return DATA_CHANNEL_LABELS.indexOf(dataChannelType) >= 0;
 	}
 
 	class ConnectionBase {
@@ -1174,12 +1185,8 @@
 	                this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
 	            }
 	            Object.keys(this.dataChannels).forEach((key) => {
-	                switch (key) {
-	                    case "signaling":
-	                    case "notify":
-	                    case "ping":
-	                    case "e2ee":
-	                        delete this.dataChannels[key];
+	                if (isDataChannelLabel(key)) {
+	                    delete this.dataChannels[key];
 	                }
 	            });
 	            return resolve();
@@ -1319,18 +1326,17 @@
 	        return offer;
 	    }
 	    async connectPeerConnection(message) {
-	        const messageConfig = message.config || {};
-	        let config = messageConfig;
+	        let config = Object.assign({}, message.config);
 	        if (this.e2ee) {
-	            // @ts-ignore
-	            config["encodedInsertableStreams"] = true;
+	            // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
+	            config = Object.assign({ encodedInsertableStreams: true }, config);
 	        }
 	        if (message.ignore_disconnect_websocket !== undefined) {
 	            this.ignoreDisconnectWebsokect = message.ignore_disconnect_websocket;
 	        }
 	        if (window.RTCPeerConnection.generateCertificate !== undefined) {
 	            const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
-	            config = Object.assign({ certificates: [certificate] }, messageConfig);
+	            config = Object.assign({ certificates: [certificate] }, config);
 	        }
 	        this.trace("PEER CONNECTION CONFIG", config);
 	        this.pc = new window.RTCPeerConnection(config, this.constraints);
@@ -1616,20 +1622,18 @@
 	    }
 	    onDataChannel(dataChannelEvent) {
 	        this.callbacks.datachannel(createDataChannelEvent("ondatachannel", dataChannelEvent.channel));
+	        // onbufferedamountlow
 	        dataChannelEvent.channel.onbufferedamountlow = (event) => {
 	            const channel = event.currentTarget;
 	            this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
 	        };
+	        // onopen
 	        dataChannelEvent.channel.onopen = (event) => {
 	            const channel = event.currentTarget;
 	            this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
-	            switch (channel.label) {
-	                case "signaling":
-	                case "notify":
-	                case "ping":
-	                case "e2ee":
-	                    this.dataChannels[channel.label] = channel;
-	                    this.trace("OPEN DATA CHANNEL", channel.label);
+	            if (isDataChannelLabel(channel.label)) {
+	                this.dataChannels[channel.label] = channel;
+	                this.trace("OPEN DATA CHANNEL", channel.label);
 	            }
 	            if (channel.label === "signaling" && this.ws) {
 	                this.ws.onclose = async (e) => {
@@ -1642,16 +1646,24 @@
 	                this.callbacks.signaling(signalingEvent);
 	            }
 	        };
-	        dataChannelEvent.channel.onclose = (event) => {
+	        // onclose
+	        dataChannelEvent.channel.onclose = async (event) => {
 	            const channel = event.currentTarget;
 	            this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
 	            this.trace("CLOSE DATA CHANNEL", channel.label);
+	            if (this.ignoreDisconnectWebsokect && channel.label === "signaling") {
+	                const closeEvent = new CloseEvent("close", { code: 4999 });
+	                this.callbacks.disconnect(closeEvent);
+	                await this.disconnect();
+	            }
 	        };
+	        // onerror
 	        dataChannelEvent.channel.onerror = (event) => {
 	            const channel = event.currentTarget;
 	            this.callbacks.datachannel(createDataChannelEvent("onerror", channel));
 	            this.trace("ERROR DATA CHANNEL", channel.label);
 	        };
+	        // onmessage
 	        if (dataChannelEvent.channel.label === "signaling") {
 	            dataChannelEvent.channel.onmessage = async (event) => {
 	                const message = JSON.parse(event.data);
@@ -2046,7 +2058,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2021.1.0-canary.3';
+	        return '2021.1.0-canary.4';
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,

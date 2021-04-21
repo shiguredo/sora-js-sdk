@@ -1,4 +1,4 @@
-import { Callbacks, ConnectionOptions, DataChannelType, JSONType, SignalingOfferMessage, SignalingUpdateMessage, SignalingReOfferMessage } from "./types";
+import { Callbacks, ConnectionOptions, DataChannelLabel, JSONType, SignalingOfferMessage, SignalingUpdateMessage, SignalingReOfferMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
 export default class ConnectionBase {
     role: string;
@@ -20,7 +20,7 @@ export default class ConnectionBase {
     protected e2ee: SoraE2EE | null;
     protected timeoutTimerId: number;
     protected dataChannels: {
-        [key in DataChannelType]?: RTCDataChannel;
+        [key in DataChannelLabel]?: RTCDataChannel;
     };
     private ignoreDisconnectWebsokect;
     constructor(signalingUrl: string, role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);

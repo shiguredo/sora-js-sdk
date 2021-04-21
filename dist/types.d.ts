@@ -217,7 +217,9 @@ export declare type PreKeyBundle = {
     preKeySignature: string;
 };
 export declare type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
-export declare type DataChannelType = "signaling" | "notify" | "ping" | "e2ee";
+declare const DATA_CHANNEL_LABELS: readonly ["signaling", "notify", "e2ee", "stats", "push"];
+export declare type DataChannelLabel = typeof DATA_CHANNEL_LABELS[number];
+export declare function isDataChannelLabel(dataChannelType: string): dataChannelType is DataChannelLabel;
 export declare type TransportType = "websocket" | "datachannel";
 export interface SignalingEvent extends Event {
     transportType?: TransportType;
@@ -237,3 +239,4 @@ export interface DataChannelEvent extends Event {
     readyState: RTCDataChannel["readyState"];
     reliable: boolean;
 }
+export {};
