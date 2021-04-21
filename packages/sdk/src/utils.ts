@@ -90,6 +90,7 @@ export function createSignalingMessage(
   if ("signalingNotifyMetadata" in options) {
     message.signaling_notify_metadata = options.signalingNotifyMetadata;
   }
+
   if ("multistream" in options && options.multistream === true) {
     // multistream
     message.multistream = true;
@@ -125,6 +126,10 @@ export function createSignalingMessage(
   // client_id
   if ("clientId" in options && options.clientId !== undefined) {
     message.client_id = options.clientId;
+  }
+
+  if ("dataChannelSignaling" in options && typeof options.dataChannelSignaling === "boolean") {
+    message.data_channel_signaling = options.dataChannelSignaling;
   }
 
   // parse options
@@ -238,6 +243,7 @@ export function createSignalingMessage(
     }
     message.e2ee = true;
   }
+
   return message;
 }
 

@@ -54,6 +54,7 @@ export default class ConnectionBase {
   authMetadata: JSONType;
   pc: RTCPeerConnection | null;
   encodings: RTCRtpEncodingParameters[];
+  dataChannelSignaling: boolean;
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
@@ -107,6 +108,7 @@ export default class ConnectionBase {
     this.timeoutTimerId = 0;
     this.dataChannels = {};
     this.ignoreDisconnectWebsokect = false;
+    this.dataChannelSignaling = false;
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -513,6 +515,9 @@ export default class ConnectionBase {
     }
     if ("encodings" in message && Array.isArray(message.encodings)) {
       this.encodings = message.encodings;
+    }
+    if (message.data_channel_signaling !== undefined) {
+      this.dataChannelSignaling = message.data_channel_signaling;
     }
     this.trace("SIGNALING OFFER MESSAGE", message);
     this.trace("OFFER SDP", message.sdp);
