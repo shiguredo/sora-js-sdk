@@ -667,6 +667,7 @@ export default class ConnectionBase {
         this.callbacks.signaling(signalingEvent);
       }
     };
+    // onclose
     dataChannelEvent.channel.onclose = async (event): Promise<void> => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
@@ -677,11 +678,13 @@ export default class ConnectionBase {
         await this.disconnect();
       }
     };
+    // onerror
     dataChannelEvent.channel.onerror = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onerror", channel));
       this.trace("ERROR DATA CHANNEL", channel.label);
     };
+    // onmessage
     if (dataChannelEvent.channel.label === "signaling") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const message = JSON.parse(event.data) as SignalingMessage;
