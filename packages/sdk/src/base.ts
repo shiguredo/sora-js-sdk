@@ -510,10 +510,10 @@ export default class ConnectionBase {
       };
       this.ws.onerror = null;
     }
-    if ("metadata" in message && message.metadata !== undefined) {
+    if (message.metadata !== undefined) {
       this.authMetadata = message.metadata;
     }
-    if ("encodings" in message && Array.isArray(message.encodings)) {
+    if (Array.isArray(message.encodings)) {
       this.encodings = message.encodings;
     }
     if (message.data_channel_signaling !== undefined) {
