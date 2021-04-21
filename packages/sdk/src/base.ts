@@ -12,8 +12,8 @@ import {
 import {
   Callbacks,
   ConnectionOptions,
-  DataChannelType,
-  isDataChannelType,
+  DataChannelLabel,
+  isDataChannelLabel,
   JSONType,
   SignalingEvent,
   SignalingMessage,
@@ -59,7 +59,7 @@ export default class ConnectionBase {
   protected e2ee: SoraE2EE | null;
   protected timeoutTimerId: number;
   protected dataChannels: {
-    [key in DataChannelType]?: RTCDataChannel;
+    [key in DataChannelLabel]?: RTCDataChannel;
   };
   private ignoreDisconnectWebsokect: boolean;
 
@@ -162,7 +162,7 @@ export default class ConnectionBase {
         this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
       }
       Object.keys(this.dataChannels).forEach((key) => {
-        if (isDataChannelType(key)) {
+        if (isDataChannelLabel(key)) {
           delete this.dataChannels[key];
         }
       });
@@ -652,7 +652,7 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
 
-      if (isDataChannelType(channel.label)) {
+      if (isDataChannelLabel(channel.label)) {
         this.dataChannels[channel.label] = channel;
         this.trace("OPEN DATA CHANNEL", channel.label);
       }
