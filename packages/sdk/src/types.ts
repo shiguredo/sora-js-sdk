@@ -259,7 +259,13 @@ export type PreKeyBundle = {
 
 export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
 
-export type DataChannelType = "signaling" | "notify" | "ping" | "e2ee";
+const DATA_CHANNEL_LABELS = ["signaling", "notify", "e2ee", "stats", "push"] as const;
+
+export type DataChannelLabel = typeof DATA_CHANNEL_LABELS[number];
+
+export function isDataChannelLabel(dataChannelType: string): dataChannelType is DataChannelLabel {
+  return (DATA_CHANNEL_LABELS as readonly string[]).indexOf(dataChannelType) >= 0;
+}
 
 export type TransportType = "websocket" | "datachannel";
 

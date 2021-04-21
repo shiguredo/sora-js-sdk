@@ -314,7 +314,12 @@ export class ConnectError extends Error {
 
 export function createSignalingEvent(eventType: string, data: unknown, transportType?: TransportType): SignalingEvent {
   const event = new Event(eventType) as SignalingEvent;
-  event.data = data;
+  // data をコピーする
+  try {
+    event.data = JSON.parse(JSON.stringify(data)) as unknown;
+  } catch (_) {
+    event.data = data;
+  }
   event.transportType = transportType;
   return event;
 }

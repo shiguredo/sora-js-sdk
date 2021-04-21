@@ -12,7 +12,8 @@ import {
 import {
   Callbacks,
   ConnectionOptions,
-  DataChannelType,
+  DataChannelLabel,
+  isDataChannelLabel,
   JSONType,
   SignalingEvent,
   SignalingMessage,
@@ -58,7 +59,7 @@ export default class ConnectionBase {
   protected e2ee: SoraE2EE | null;
   protected timeoutTimerId: number;
   protected dataChannels: {
-    [key in DataChannelType]?: RTCDataChannel;
+    [key in DataChannelLabel]?: RTCDataChannel;
   };
   private ignoreDisconnectWebsokect: boolean;
 
@@ -161,12 +162,8 @@ export default class ConnectionBase {
         this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
       }
       Object.keys(this.dataChannels).forEach((key) => {
-        switch (key) {
-          case "signaling":
-          case "notify":
-          case "ping":
-          case "e2ee":
-            delete this.dataChannels[key];
+        if (isDataChannelLabel(key)) {
+          delete this.dataChannels[key];
         }
       });
       return resolve();
@@ -318,18 +315,17 @@ export default class ConnectionBase {
   }
 
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
-    const messageConfig = message.config || {};
-    let config = messageConfig;
+    let config = Object.assign({}, message.config);
     if (this.e2ee) {
-      // @ts-ignore
-      config["encodedInsertableStreams"] = true;
+      // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
+      config = Object.assign({ encodedInsertableStreams: true }, config);
     }
     if (message.ignore_disconnect_websocket !== undefined) {
       this.ignoreDisconnectWebsokect = message.ignore_disconnect_websocket;
     }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
       const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
-      config = Object.assign({ certificates: [certificate] }, messageConfig);
+      config = Object.assign({ certificates: [certificate] }, config);
     }
     this.trace("PEER CONNECTION CONFIG", config);
     this.pc = new window.RTCPeerConnection(config, this.constraints);
@@ -646,20 +642,19 @@ export default class ConnectionBase {
 
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
     this.callbacks.datachannel(createDataChannelEvent("ondatachannel", dataChannelEvent.channel));
+    // onbufferedamountlow
     dataChannelEvent.channel.onbufferedamountlow = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
     };
+    // onopen
     dataChannelEvent.channel.onopen = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
-      switch (channel.label) {
-        case "signaling":
-        case "notify":
-        case "ping":
-        case "e2ee":
-          this.dataChannels[channel.label] = channel;
-          this.trace("OPEN DATA CHANNEL", channel.label);
+
+      if (isDataChannelLabel(channel.label)) {
+        this.dataChannels[channel.label] = channel;
+        this.trace("OPEN DATA CHANNEL", channel.label);
       }
       if (channel.label === "signaling" && this.ws) {
         this.ws.onclose = async (e): Promise<void> => {
@@ -672,16 +667,24 @@ export default class ConnectionBase {
         this.callbacks.signaling(signalingEvent);
       }
     };
-    dataChannelEvent.channel.onclose = (event): void => {
+    // onclose
+    dataChannelEvent.channel.onclose = async (event): Promise<void> => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
       this.trace("CLOSE DATA CHANNEL", channel.label);
+      if (this.ignoreDisconnectWebsokect && channel.label === "signaling") {
+        const closeEvent = new CloseEvent("close", { code: 4999 });
+        this.callbacks.disconnect(closeEvent);
+        await this.disconnect();
+      }
     };
+    // onerror
     dataChannelEvent.channel.onerror = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onerror", channel));
       this.trace("ERROR DATA CHANNEL", channel.label);
     };
+    // onmessage
     if (dataChannelEvent.channel.label === "signaling") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const message = JSON.parse(event.data) as SignalingMessage;
