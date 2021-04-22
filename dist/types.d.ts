@@ -48,6 +48,8 @@ export declare type SignalingConnectMessage = {
     e2ee?: boolean;
     spotlight_focus_rid?: SpotlightFocusRid;
     spotlight_unfocus_rid?: SpotlightFocusRid;
+    data_channel_signaling?: boolean;
+    ignore_disconnect_websocket?: boolean;
 };
 export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage;
 export declare type SignalingOfferMessage = {
@@ -59,6 +61,7 @@ export declare type SignalingOfferMessage = {
     config?: RTCConfiguration;
     encodings?: RTCRtpEncodingParameters[];
     ignore_disconnect_websocket?: boolean;
+    data_channel_signaling?: boolean;
 };
 export declare type SignalingUpdateMessage = {
     type: "update";
@@ -197,6 +200,8 @@ export declare type ConnectionOptions = {
     timeout?: number;
     e2ee?: boolean;
     signalingNotifyMetadata?: JSONType;
+    dataChannelSignaling?: boolean;
+    ignoreDisconnectWebSocket?: boolean;
 };
 export declare type Callbacks = {
     disconnect: (event: CloseEvent) => void;

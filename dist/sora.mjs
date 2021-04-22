@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.4
+ * @version: 2021.1.0-canary.5
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.4
+ * @version: 2021.1.0-canary.5
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -765,7 +765,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.4";
+        return "2021.1.0-canary.5";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -824,7 +824,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     const message = {
         type: "connect",
         // @ts-ignore
-        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.4'}`,
+        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.5'}`,
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -871,6 +871,12 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     // client_id
     if ("clientId" in options && options.clientId !== undefined) {
         message.client_id = options.clientId;
+    }
+    if ("dataChannelSignaling" in options && typeof options.dataChannelSignaling === "boolean") {
+        message.data_channel_signaling = options.dataChannelSignaling;
+    }
+    if ("ignoreDisconnectWebSocket" in options && typeof options.ignoreDisconnectWebSocket === "boolean") {
+        message.ignore_disconnect_websocket = options.ignoreDisconnectWebSocket;
     }
     // parse options
     const audioPropertyKeys = ["audioCodecType", "audioBitRate"];
@@ -1126,7 +1132,8 @@ class ConnectionBase {
         this.e2ee = null;
         this.timeoutTimerId = 0;
         this.dataChannels = {};
-        this.ignoreDisconnectWebsokect = false;
+        this.ignoreDisconnectWebSocket = false;
+        this.dataChannelSignaling = false;
     }
     on(kind, callback) {
         // @deprecated message
@@ -1325,9 +1332,6 @@ class ConnectionBase {
             // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
             config = Object.assign({ encodedInsertableStreams: true }, config);
         }
-        if (message.ignore_disconnect_websocket !== undefined) {
-            this.ignoreDisconnectWebsokect = message.ignore_disconnect_websocket;
-        }
         if (window.RTCPeerConnection.generateCertificate !== undefined) {
             const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
             config = Object.assign({ certificates: [certificate] }, config);
@@ -1499,11 +1503,17 @@ class ConnectionBase {
             };
             this.ws.onerror = null;
         }
-        if ("metadata" in message && message.metadata !== undefined) {
+        if (message.metadata !== undefined) {
             this.authMetadata = message.metadata;
         }
-        if ("encodings" in message && Array.isArray(message.encodings)) {
+        if (Array.isArray(message.encodings)) {
             this.encodings = message.encodings;
+        }
+        if (message.ignore_disconnect_websocket !== undefined) {
+            this.ignoreDisconnectWebSocket = message.ignore_disconnect_websocket;
+        }
+        if (message.data_channel_signaling !== undefined) {
+            this.dataChannelSignaling = message.data_channel_signaling;
         }
         this.trace("SIGNALING OFFER MESSAGE", message);
         this.trace("OFFER SDP", message.sdp);
@@ -1631,7 +1641,7 @@ class ConnectionBase {
             }
             if (channel.label === "signaling" && this.ws) {
                 this.ws.onclose = async (e) => {
-                    if (!this.ignoreDisconnectWebsokect) {
+                    if (!this.ignoreDisconnectWebSocket) {
                         this.callbacks.disconnect(e);
                         await this.disconnect();
                     }
@@ -1645,7 +1655,7 @@ class ConnectionBase {
             const channel = event.currentTarget;
             this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
             this.trace("CLOSE DATA CHANNEL", channel.label);
-            if (this.ignoreDisconnectWebsokect && channel.label === "signaling") {
+            if (this.ignoreDisconnectWebSocket && channel.label === "signaling") {
                 const closeEvent = new CloseEvent("close", { code: 4999 });
                 this.callbacks.disconnect(closeEvent);
                 await this.disconnect();
@@ -2052,7 +2062,7 @@ var sora = {
     },
     version: function () {
         // @ts-ignore
-        return '2021.1.0-canary.4';
+        return '2021.1.0-canary.5';
     },
     helpers: {
         applyMediaStreamConstraints,

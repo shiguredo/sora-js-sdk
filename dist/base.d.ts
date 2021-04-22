@@ -15,6 +15,7 @@ export default class ConnectionBase {
     authMetadata: JSONType;
     pc: RTCPeerConnection | null;
     encodings: RTCRtpEncodingParameters[];
+    dataChannelSignaling: boolean;
     protected ws: WebSocket | null;
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;
@@ -22,7 +23,7 @@ export default class ConnectionBase {
     protected dataChannels: {
         [key in DataChannelLabel]?: RTCDataChannel;
     };
-    private ignoreDisconnectWebsokect;
+    private ignoreDisconnectWebSocket;
     constructor(signalingUrl: string, role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void;
     private closeStream;

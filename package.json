@@ -1,6 +1,6 @@
 {
   "name": "sora-js-sdk",
-  "version": "2021.1.0-canary.4",
+  "version": "2021.1.0-canary.5",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.min.js",
   "module": "dist/sora.mjs",
