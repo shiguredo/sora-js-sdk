@@ -452,3 +452,61 @@ test("createSignalingMessage signalingMetadata option", () => {
     Object.assign({}, baseExpectedMessage, diff3)
   );
 });
+
+test("createSignalingMessage dataChannelSignaling option", () => {
+  const options1 = {
+    dataChannelSignaling: true,
+  };
+  const diff1 = {
+    data_channel_signaling: true,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff1)
+  );
+  const options2 = {
+    dataChannelSignaling: false,
+  };
+  const diff2 = {
+    data_channel_signaling: false,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+  const options3 = {
+    dataChannelSignaling: undefined,
+  };
+  const diff3 = {
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff3)
+  );
+});
+
+test("createSignalingMessage ignoreDisconnectWebSocket option", () => {
+  const options1 = {
+    ignoreDisconnectWebSocket: true,
+  };
+  const diff1 = {
+    ignore_disconnect_websocket: true,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff1)
+  );
+  const options2 = {
+    ignoreDisconnectWebSocket: false,
+  };
+  const diff2 = {
+    ignore_disconnect_websocket: false,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+  const options3 = {
+    ignoreDisconnectWebSocket: undefined,
+  };
+  const diff3 = {
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff3)
+  );
+});
