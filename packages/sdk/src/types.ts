@@ -58,6 +58,7 @@ export type SignalingConnectMessage = {
   spotlight_focus_rid?: SpotlightFocusRid;
   spotlight_unfocus_rid?: SpotlightFocusRid;
   data_channel_signaling?: boolean;
+  ignore_disconnect_websocket?: boolean;
 };
 
 export type SignalingMessage =
@@ -238,6 +239,7 @@ export type ConnectionOptions = {
   e2ee?: boolean;
   signalingNotifyMetadata?: JSONType;
   dataChannelSignaling?: boolean;
+  ignoreDisconnectWebSocket?: boolean;
 };
 
 export type Callbacks = {

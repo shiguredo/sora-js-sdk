@@ -132,6 +132,10 @@ export function createSignalingMessage(
     message.data_channel_signaling = options.dataChannelSignaling;
   }
 
+  if ("ignoreDisconnectWebSocket" in options && typeof options.ignoreDisconnectWebSocket === "boolean") {
+    message.ignore_disconnect_websocket = options.ignoreDisconnectWebSocket;
+  }
+
   // parse options
   const audioPropertyKeys = ["audioCodecType", "audioBitRate"];
   const audioOpusParamsPropertyKeys = [
