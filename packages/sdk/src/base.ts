@@ -54,6 +54,7 @@ export default class ConnectionBase {
   authMetadata: JSONType;
   pc: RTCPeerConnection | null;
   encodings: RTCRtpEncodingParameters[];
+  dataChannelSignaling: boolean;
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
@@ -61,7 +62,7 @@ export default class ConnectionBase {
   protected dataChannels: {
     [key in DataChannelLabel]?: RTCDataChannel;
   };
-  private ignoreDisconnectWebsokect: boolean;
+  private ignoreDisconnectWebSocket: boolean;
 
   constructor(
     signalingUrl: string,
@@ -106,7 +107,8 @@ export default class ConnectionBase {
     this.e2ee = null;
     this.timeoutTimerId = 0;
     this.dataChannels = {};
-    this.ignoreDisconnectWebsokect = false;
+    this.ignoreDisconnectWebSocket = false;
+    this.dataChannelSignaling = false;
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -320,9 +322,6 @@ export default class ConnectionBase {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
-    if (message.ignore_disconnect_websocket !== undefined) {
-      this.ignoreDisconnectWebsokect = message.ignore_disconnect_websocket;
-    }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
       const certificate = await window.RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
       config = Object.assign({ certificates: [certificate] }, config);
@@ -508,11 +507,17 @@ export default class ConnectionBase {
       };
       this.ws.onerror = null;
     }
-    if ("metadata" in message && message.metadata !== undefined) {
+    if (message.metadata !== undefined) {
       this.authMetadata = message.metadata;
     }
-    if ("encodings" in message && Array.isArray(message.encodings)) {
+    if (Array.isArray(message.encodings)) {
       this.encodings = message.encodings;
+    }
+    if (message.ignore_disconnect_websocket !== undefined) {
+      this.ignoreDisconnectWebSocket = message.ignore_disconnect_websocket;
+    }
+    if (message.data_channel_signaling !== undefined) {
+      this.dataChannelSignaling = message.data_channel_signaling;
     }
     this.trace("SIGNALING OFFER MESSAGE", message);
     this.trace("OFFER SDP", message.sdp);
@@ -658,7 +663,7 @@ export default class ConnectionBase {
       }
       if (channel.label === "signaling" && this.ws) {
         this.ws.onclose = async (e): Promise<void> => {
-          if (!this.ignoreDisconnectWebsokect) {
+          if (!this.ignoreDisconnectWebSocket) {
             this.callbacks.disconnect(e);
             await this.disconnect();
           }
@@ -672,7 +677,7 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
       this.trace("CLOSE DATA CHANNEL", channel.label);
-      if (this.ignoreDisconnectWebsokect && channel.label === "signaling") {
+      if (this.ignoreDisconnectWebSocket && channel.label === "signaling") {
         const closeEvent = new CloseEvent("close", { code: 4999 });
         this.callbacks.disconnect(closeEvent);
         await this.disconnect();

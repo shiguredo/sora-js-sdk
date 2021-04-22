@@ -57,6 +57,8 @@ export type SignalingConnectMessage = {
   e2ee?: boolean;
   spotlight_focus_rid?: SpotlightFocusRid;
   spotlight_unfocus_rid?: SpotlightFocusRid;
+  data_channel_signaling?: boolean;
+  ignore_disconnect_websocket?: boolean;
 };
 
 export type SignalingMessage =
@@ -76,6 +78,7 @@ export type SignalingOfferMessage = {
   config?: RTCConfiguration;
   encodings?: RTCRtpEncodingParameters[];
   ignore_disconnect_websocket?: boolean;
+  data_channel_signaling?: boolean;
 };
 
 export type SignalingUpdateMessage = {
@@ -235,6 +238,8 @@ export type ConnectionOptions = {
   timeout?: number;
   e2ee?: boolean;
   signalingNotifyMetadata?: JSONType;
+  dataChannelSignaling?: boolean;
+  ignoreDisconnectWebSocket?: boolean;
 };
 
 export type Callbacks = {
