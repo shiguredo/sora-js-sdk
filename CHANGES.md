@@ -12,6 +12,8 @@
 ## develop
 
 - [ADD] Switch DataChannel を実装する
+    - ConnectionOptions に dataChannelSignaling を追加する
+    - ConnectionOptions に ignoreDisconnectWebSocket を追加する
     - @yuitowest
 - [CHANGE] role から upstream と downstream を削除する
     - @voluntas
