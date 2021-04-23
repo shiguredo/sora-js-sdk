@@ -163,12 +163,15 @@ export default class ConnectionBase {
         this.dataChannels["signaling"].send(JSON.stringify(message));
         this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
       }
-      Object.keys(this.dataChannels).forEach((key) => {
-        if (isDataChannelLabel(key)) {
-          delete this.dataChannels[key];
-        }
-      });
-      return resolve();
+      // DataChannel 切断を待つ
+      setTimeout(() => {
+        Object.keys(this.dataChannels).forEach((key) => {
+          if (isDataChannelLabel(key)) {
+            delete this.dataChannels[key];
+          }
+        });
+        return resolve();
+      }, 100);
     });
   }
 
@@ -202,8 +205,8 @@ export default class ConnectionBase {
     this.authMetadata = null;
     this.remoteConnectionIds = [];
     await this.closeStream();
-    await this.closeWebSocket();
     await this.closeDataChannel();
+    await this.closeWebSocket();
     await this.closePeerConnection();
     if (this.e2ee) {
       this.e2ee.terminateWorker();
