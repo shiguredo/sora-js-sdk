@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.5
+ * @version: 2021.1.0-canary.6
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.5
+ * @version: 2021.1.0-canary.6
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -765,7 +765,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.5";
+        return "2021.1.0-canary.6";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -824,7 +824,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     const message = {
         type: "connect",
         // @ts-ignore
-        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.5'}`,
+        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.6'}`,
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1185,12 +1185,15 @@ class ConnectionBase {
                 this.dataChannels["signaling"].send(JSON.stringify(message));
                 this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
             }
-            Object.keys(this.dataChannels).forEach((key) => {
-                if (isDataChannelLabel(key)) {
-                    delete this.dataChannels[key];
-                }
-            });
-            return resolve();
+            // DataChannel 切断を待つ
+            setTimeout(() => {
+                Object.keys(this.dataChannels).forEach((key) => {
+                    if (isDataChannelLabel(key)) {
+                        delete this.dataChannels[key];
+                    }
+                });
+                return resolve();
+            }, 100);
         });
     }
     closePeerConnection() {
@@ -1223,8 +1226,8 @@ class ConnectionBase {
         this.authMetadata = null;
         this.remoteConnectionIds = [];
         await this.closeStream();
-        await this.closeWebSocket();
         await this.closeDataChannel();
+        await this.closeWebSocket();
         await this.closePeerConnection();
         if (this.e2ee) {
             this.e2ee.terminateWorker();
@@ -2062,7 +2065,7 @@ var sora = {
     },
     version: function () {
         // @ts-ignore
-        return '2021.1.0-canary.5';
+        return '2021.1.0-canary.6';
     },
     helpers: {
         applyMediaStreamConstraints,
