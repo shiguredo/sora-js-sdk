@@ -161,7 +161,7 @@ export default class ConnectionBase {
       if (this.dataChannels["signaling"].readyState === "open") {
         const message = { type: "disconnect" };
         this.dataChannels["signaling"].send(JSON.stringify(message));
-        this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
+        this.callbacks.signaling(createSignalingEvent("disconnect", message, "datachannel"));
       }
       // DataChannel 切断を待つ
       setTimeout(() => {
