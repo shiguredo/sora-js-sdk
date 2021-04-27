@@ -72,6 +72,7 @@
         "selector": "variable",
         "format": ["camelCase", "UPPER_CASE"]
       }
-    ]
+    ],
+    "curly": "error"
   }
 }
