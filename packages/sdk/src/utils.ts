@@ -152,11 +152,21 @@ export function createSignalingMessage(
   const videoPropertyKeys = ["videoCodecType", "videoBitRate"];
   const copyOptions = Object.assign({}, options);
   (Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
-    if (key === "audio" && typeof copyOptions[key] === "boolean") return;
-    if (key === "video" && typeof copyOptions[key] === "boolean") return;
-    if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
-    if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
-    if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
+    if (key === "audio" && typeof copyOptions[key] === "boolean") {
+      return;
+    }
+    if (key === "video" && typeof copyOptions[key] === "boolean") {
+      return;
+    }
+    if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
+      return;
+    }
+    if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
+      return;
+    }
+    if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
+      return;
+    }
     delete copyOptions[key];
   });
 

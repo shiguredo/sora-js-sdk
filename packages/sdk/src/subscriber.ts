@@ -30,7 +30,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
       this.pc.ontrack = (event): void => {
         this.stream = event.streams[0];
         const streamId = this.stream.id;
-        if (streamId === "default") return;
+        if (streamId === "default") {
+          return;
+        }
         if (this.e2ee) {
           this.e2ee.setupReceiverTransform(event.receiver);
         }
@@ -48,7 +50,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
             }
           }
         };
-        if (-1 < this.remoteConnectionIds.indexOf(streamId)) return;
+        if (-1 < this.remoteConnectionIds.indexOf(streamId)) {
+          return;
+        }
         // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
         event.stream = this.stream;
         this.remoteConnectionIds.push(streamId);
@@ -73,8 +77,12 @@ export default class ConnectionSubscriber extends ConnectionBase {
     if (this.pc) {
       this.pc.ontrack = (event): void => {
         const stream = event.streams[0];
-        if (stream.id === "default") return;
-        if (stream.id === this.connectionId) return;
+        if (stream.id === "default") {
+          return;
+        }
+        if (stream.id === this.connectionId) {
+          return;
+        }
         if (this.e2ee) {
           this.e2ee.setupReceiverTransform(event.receiver);
         }
@@ -92,7 +100,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
             }
           }
         };
-        if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
+        if (-1 < this.remoteConnectionIds.indexOf(stream.id)) {
+          return;
+        }
         // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
         event.stream = stream;
         this.remoteConnectionIds.push(stream.id);

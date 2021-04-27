@@ -57,9 +57,15 @@ export default class ConnectionPublisher extends ConnectionBase {
     if (this.pc) {
       this.pc.ontrack = (event): void => {
         const stream = event.streams[0];
-        if (!stream) return;
-        if (stream.id === "default") return;
-        if (stream.id === this.connectionId) return;
+        if (!stream) {
+          return;
+        }
+        if (stream.id === "default") {
+          return;
+        }
+        if (stream.id === this.connectionId) {
+          return;
+        }
         if (this.e2ee) {
           this.e2ee.setupReceiverTransform(event.receiver);
         }
@@ -77,7 +83,9 @@ export default class ConnectionPublisher extends ConnectionBase {
             }
           }
         };
-        if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
+        if (-1 < this.remoteConnectionIds.indexOf(stream.id)) {
+          return;
+        }
         // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
         event.stream = stream;
         this.remoteConnectionIds.push(stream.id);

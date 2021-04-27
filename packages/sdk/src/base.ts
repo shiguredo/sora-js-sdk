@@ -130,7 +130,9 @@ export default class ConnectionBase {
           "@deprecated closing MediaStream in disconnect will be removed in a future version. Close every track in the MediaStream by yourself."
         );
       }
-      if (!this.stream) return resolve();
+      if (!this.stream) {
+        return resolve();
+      }
       this.stream.getTracks().forEach((t) => {
         t.stop();
       });
@@ -141,7 +143,9 @@ export default class ConnectionBase {
 
   private closeWebSocket(): Promise<void> {
     return new Promise((resolve, _) => {
-      if (!this.ws) return resolve();
+      if (!this.ws) {
+        return resolve();
+      }
       if (this.ws.readyState === 1) {
         const message = { type: "disconnect" };
         this.ws.send(JSON.stringify(message));
@@ -177,7 +181,9 @@ export default class ConnectionBase {
 
   private closePeerConnection(): Promise<void> {
     return new Promise((resolve, _reject) => {
-      if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) return resolve();
+      if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) {
+        return resolve();
+      }
       let counter = 50;
       const timerId = setInterval(() => {
         if (!this.pc) {
