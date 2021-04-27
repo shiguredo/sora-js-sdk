@@ -51,7 +51,6 @@ export default class ConnectionBase {
     private signalingOnMessageTypeUpdate;
     private signalingOnMessageTypeReOffer;
     private signalingOnMessageTypePing;
-    private signalingDataChannelOnMessageTypePing;
     private signalingOnMessageTypeNotify;
     private setSenderParameters;
     private getStats;

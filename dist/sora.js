@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.6
+ * @version: 2021.1.0-canary.7
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.6
+	 * @version: 2021.1.0-canary.7
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -653,8 +653,9 @@
 	        return preKeyBundle;
 	    }
 	    setupSenderTransform(sender) {
-	        if (!sender.track)
+	        if (!sender.track) {
 	            return;
+	        }
 	        // @ts-ignore トライアル段階の API なので無視する
 	        const senderStreams = sender.createEncodedStreams();
 	        const readableStream = senderStreams.readableStream || senderStreams.readable;
@@ -771,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.6";
+	        return "2021.1.0-canary.7";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -830,7 +831,7 @@
 	    const message = {
 	        type: "connect",
 	        // @ts-ignore
-	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.6'}`,
+	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.7'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -900,16 +901,21 @@
 	    const videoPropertyKeys = ["videoCodecType", "videoBitRate"];
 	    const copyOptions = Object.assign({}, options);
 	    Object.keys(copyOptions).forEach((key) => {
-	        if (key === "audio" && typeof copyOptions[key] === "boolean")
+	        if (key === "audio" && typeof copyOptions[key] === "boolean") {
 	            return;
-	        if (key === "video" && typeof copyOptions[key] === "boolean")
+	        }
+	        if (key === "video" && typeof copyOptions[key] === "boolean") {
 	            return;
-	        if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null)
+	        }
+	        if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
 	            return;
-	        if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null)
+	        }
+	        if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
 	            return;
-	        if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null)
+	        }
+	        if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
 	            return;
+	        }
 	        delete copyOptions[key];
 	    });
 	    if (copyOptions.audio !== undefined) {
@@ -1158,8 +1164,9 @@
 	            if (this.debug) {
 	                console.warn("@deprecated closing MediaStream in disconnect will be removed in a future version. Close every track in the MediaStream by yourself.");
 	            }
-	            if (!this.stream)
+	            if (!this.stream) {
 	                return resolve();
+	            }
 	            this.stream.getTracks().forEach((t) => {
 	                t.stop();
 	            });
@@ -1169,8 +1176,9 @@
 	    }
 	    closeWebSocket() {
 	        return new Promise((resolve, _) => {
-	            if (!this.ws)
+	            if (!this.ws) {
 	                return resolve();
+	            }
 	            if (this.ws.readyState === 1) {
 	                const message = { type: "disconnect" };
 	                this.ws.send(JSON.stringify(message));
@@ -1189,7 +1197,7 @@
 	            if (this.dataChannels["signaling"].readyState === "open") {
 	                const message = { type: "disconnect" };
 	                this.dataChannels["signaling"].send(JSON.stringify(message));
-	                this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
+	                this.callbacks.signaling(createSignalingEvent("disconnect", message, "datachannel"));
 	            }
 	            // DataChannel 切断を待つ
 	            setTimeout(() => {
@@ -1204,8 +1212,9 @@
 	    }
 	    closePeerConnection() {
 	        return new Promise((resolve, _reject) => {
-	            if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined)
+	            if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) {
 	                return resolve();
+	            }
 	            let counter = 50;
 	            const timerId = setInterval(() => {
 	                if (!this.pc) {
@@ -1307,6 +1316,10 @@
 	                else if (message.type == "update") {
 	                    this.callbacks.signaling(createSignalingEvent("onmessage-update", message, "websocket"));
 	                    await this.signalingOnMessageTypeUpdate(message);
+	                }
+	                else if (message.type == "re-offer") {
+	                    this.callbacks.signaling(createSignalingEvent("onmessage-re-offer", message, "websocket"));
+	                    await this.signalingOnMessageTypeReOffer(message);
 	                }
 	                else if (message.type == "ping") {
 	                    this.callbacks.signaling(createSignalingEvent("onmessage-ping", message, "websocket"));
@@ -1565,14 +1578,6 @@
 	        this.ws.send(JSON.stringify(pongMessage));
 	        this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
 	    }
-	    signalingDataChannelOnMessageTypePing() {
-	        if (!this.dataChannels.signaling) {
-	            return;
-	        }
-	        const pongMessage = { type: "pong" };
-	        this.dataChannels.signaling.send(JSON.stringify(pongMessage));
-	        this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "datachannel"));
-	    }
 	    signalingOnMessageTypeNotify(message) {
 	        if (message.event_type === "connection.created") {
 	            const connectionId = message.connection_id;
@@ -1683,9 +1688,6 @@
 	                this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
 	                if (message.type === "re-offer") {
 	                    await this.signalingOnMessageTypeReOffer(message);
-	                }
-	                else if (message.type === "ping") {
-	                    this.signalingDataChannelOnMessageTypePing();
 	                }
 	            };
 	        }
@@ -1807,12 +1809,15 @@
 	        if (this.pc) {
 	            this.pc.ontrack = (event) => {
 	                const stream = event.streams[0];
-	                if (!stream)
+	                if (!stream) {
 	                    return;
-	                if (stream.id === "default")
+	                }
+	                if (stream.id === "default") {
 	                    return;
-	                if (stream.id === this.connectionId)
+	                }
+	                if (stream.id === this.connectionId) {
 	                    return;
+	                }
 	                if (this.e2ee) {
 	                    this.e2ee.setupReceiverTransform(event.receiver);
 	                }
@@ -1830,8 +1835,9 @@
 	                        }
 	                    }
 	                };
-	                if (-1 < this.remoteConnectionIds.indexOf(stream.id))
+	                if (-1 < this.remoteConnectionIds.indexOf(stream.id)) {
 	                    return;
+	                }
 	                // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
 	                event.stream = stream;
 	                this.remoteConnectionIds.push(stream.id);
@@ -1890,8 +1896,9 @@
 	            this.pc.ontrack = (event) => {
 	                this.stream = event.streams[0];
 	                const streamId = this.stream.id;
-	                if (streamId === "default")
+	                if (streamId === "default") {
 	                    return;
+	                }
 	                if (this.e2ee) {
 	                    this.e2ee.setupReceiverTransform(event.receiver);
 	                }
@@ -1909,8 +1916,9 @@
 	                        }
 	                    }
 	                };
-	                if (-1 < this.remoteConnectionIds.indexOf(streamId))
+	                if (-1 < this.remoteConnectionIds.indexOf(streamId)) {
 	                    return;
+	                }
 	                // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
 	                event.stream = this.stream;
 	                this.remoteConnectionIds.push(streamId);
@@ -1934,10 +1942,12 @@
 	        if (this.pc) {
 	            this.pc.ontrack = (event) => {
 	                const stream = event.streams[0];
-	                if (stream.id === "default")
+	                if (stream.id === "default") {
 	                    return;
-	                if (stream.id === this.connectionId)
+	                }
+	                if (stream.id === this.connectionId) {
 	                    return;
+	                }
 	                if (this.e2ee) {
 	                    this.e2ee.setupReceiverTransform(event.receiver);
 	                }
@@ -1955,8 +1965,9 @@
 	                        }
 	                    }
 	                };
-	                if (-1 < this.remoteConnectionIds.indexOf(stream.id))
+	                if (-1 < this.remoteConnectionIds.indexOf(stream.id)) {
 	                    return;
+	                }
 	                // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
 	                event.stream = stream;
 	                this.remoteConnectionIds.push(stream.id);
@@ -2071,7 +2082,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2021.1.0-canary.6';
+	        return '2021.1.0-canary.7';
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
