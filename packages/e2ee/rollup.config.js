@@ -20,6 +20,7 @@ export default [
       replace({
         __SORA_E2EE_VERSION__: pkg.version,
         __WORKER_SCRIPT__: workerScript,
+        preventAssignment: true,
       }),
       typescript({
         tsconfig: "./tsconfig.json",
