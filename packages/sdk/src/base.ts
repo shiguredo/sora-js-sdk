@@ -569,15 +569,6 @@ export default class ConnectionBase {
     this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
   }
 
-  private signalingDataChannelOnMessageTypePing(): void {
-    if (!this.dataChannels.signaling) {
-      return;
-    }
-    const pongMessage = { type: "pong" };
-    this.dataChannels.signaling.send(JSON.stringify(pongMessage));
-    this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "datachannel"));
-  }
-
   private signalingOnMessageTypeNotify(message: SignalingNotifyMessage): void {
     if (message.event_type === "connection.created") {
       const connectionId = message.connection_id;
@@ -699,8 +690,6 @@ export default class ConnectionBase {
         this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
         if (message.type === "re-offer") {
           await this.signalingOnMessageTypeReOffer(message);
-        } else if (message.type === "ping") {
-          this.signalingDataChannelOnMessageTypePing();
         }
       };
     } else if (dataChannelEvent.channel.label === "notify") {
