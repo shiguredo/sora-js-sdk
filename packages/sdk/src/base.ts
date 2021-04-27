@@ -292,6 +292,9 @@ export default class ConnectionBase {
         } else if (message.type == "update") {
           this.callbacks.signaling(createSignalingEvent("onmessage-update", message, "websocket"));
           await this.signalingOnMessageTypeUpdate(message);
+        } else if (message.type == "re-offer") {
+          this.callbacks.signaling(createSignalingEvent("onmessage-re-offer", message, "websocket"));
+          await this.signalingOnMessageTypeReOffer(message);
         } else if (message.type == "ping") {
           this.callbacks.signaling(createSignalingEvent("onmessage-ping", message, "websocket"));
           await this.signalingOnMessageTypePing(message);
