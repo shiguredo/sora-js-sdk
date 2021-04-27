@@ -33,7 +33,7 @@
   ],
   "devDependencies": {
     "lerna": "^4.0.0",
-    "npm-check-updates": "^11.1.9",
+    "npm-check-updates": "^11.5.3",
     "serve": "^11.3.2"
   }
 }
