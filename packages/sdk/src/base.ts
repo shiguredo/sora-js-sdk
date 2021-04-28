@@ -23,6 +23,7 @@ import {
   SignalingUpdateMessage,
   SignalingReOfferMessage,
   SignalingNotifyMessage,
+  TransportType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
 
@@ -305,9 +306,9 @@ export default class ConnectionBase {
           this.callbacks.signaling(createSignalingEvent("onmessage-ping", message, "websocket"));
           await this.signalingOnMessageTypePing(message);
         } else if (message.type == "push") {
-          this.callbacks.push(message);
+          this.callbacks.push(message, "websocket");
         } else if (message.type == "notify") {
-          this.signalingOnMessageTypeNotify(message);
+          this.signalingOnMessageTypeNotify(message, "websocket");
         }
       };
     });
@@ -578,7 +579,7 @@ export default class ConnectionBase {
     this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
   }
 
-  private signalingOnMessageTypeNotify(message: SignalingNotifyMessage): void {
+  private signalingOnMessageTypeNotify(message: SignalingNotifyMessage, transportType: TransportType): void {
     if (message.event_type === "connection.created") {
       const connectionId = message.connection_id;
       if (this.connectionId !== connectionId) {
@@ -621,7 +622,7 @@ export default class ConnectionBase {
         this.e2ee.postRemoveRemoteDeriveKey(connectionId);
       }
     }
-    this.callbacks.notify(message);
+    this.callbacks.notify(message, transportType);
   }
 
   private async setSenderParameters(
@@ -704,12 +705,12 @@ export default class ConnectionBase {
     } else if (dataChannelEvent.channel.label === "notify") {
       dataChannelEvent.channel.onmessage = (event): void => {
         const message = JSON.parse(event.data) as SignalingNotifyMessage;
-        this.signalingOnMessageTypeNotify(message);
+        this.signalingOnMessageTypeNotify(message, "datachannel");
       };
     } else if (dataChannelEvent.channel.label === "push") {
       dataChannelEvent.channel.onmessage = (event): void => {
         const message = JSON.parse(event.data) as SignalingPushMessage;
-        this.callbacks.push(message);
+        this.callbacks.push(message, "datachannel");
       };
     } else if (dataChannelEvent.channel.label === "e2ee") {
       dataChannelEvent.channel.onmessage = (event): void => {
