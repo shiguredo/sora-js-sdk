@@ -10,7 +10,8 @@
     - バグ修正
 
 ## develop
-
+- [CHANGE] Notify callback, Push callback の第二引数に TransportType を追加する
+    - @yuitowest
 - [ADD] Switch DataChannel を実装する
     - ConnectionOptions に dataChannelSignaling を追加する
     - ConnectionOptions に ignoreDisconnectWebSocket を追加する
