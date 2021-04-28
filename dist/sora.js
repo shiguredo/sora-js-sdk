@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.7
+ * @version: 2021.1.0-canary.8
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.7
+	 * @version: 2021.1.0-canary.8
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.7";
+	        return "2021.1.0-canary.8";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -831,7 +831,7 @@
 	    const message = {
 	        type: "connect",
 	        // @ts-ignore
-	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.7'}`,
+	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.8'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1326,10 +1326,10 @@
 	                    await this.signalingOnMessageTypePing(message);
 	                }
 	                else if (message.type == "push") {
-	                    this.callbacks.push(message);
+	                    this.callbacks.push(message, "websocket");
 	                }
 	                else if (message.type == "notify") {
-	                    this.signalingOnMessageTypeNotify(message);
+	                    this.signalingOnMessageTypeNotify(message, "websocket");
 	                }
 	            };
 	        });
@@ -1578,7 +1578,7 @@
 	        this.ws.send(JSON.stringify(pongMessage));
 	        this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
 	    }
-	    signalingOnMessageTypeNotify(message) {
+	    signalingOnMessageTypeNotify(message, transportType) {
 	        if (message.event_type === "connection.created") {
 	            const connectionId = message.connection_id;
 	            if (this.connectionId !== connectionId) {
@@ -1617,7 +1617,7 @@
 	                this.e2ee.postRemoveRemoteDeriveKey(connectionId);
 	            }
 	        }
-	        this.callbacks.notify(message);
+	        this.callbacks.notify(message, transportType);
 	    }
 	    async setSenderParameters(transceiver, encodings) {
 	        const originalParameters = transceiver.sender.getParameters();
@@ -1694,13 +1694,13 @@
 	        else if (dataChannelEvent.channel.label === "notify") {
 	            dataChannelEvent.channel.onmessage = (event) => {
 	                const message = JSON.parse(event.data);
-	                this.signalingOnMessageTypeNotify(message);
+	                this.signalingOnMessageTypeNotify(message, "datachannel");
 	            };
 	        }
 	        else if (dataChannelEvent.channel.label === "push") {
 	            dataChannelEvent.channel.onmessage = (event) => {
 	                const message = JSON.parse(event.data);
-	                this.callbacks.push(message);
+	                this.callbacks.push(message, "datachannel");
 	            };
 	        }
 	        else if (dataChannelEvent.channel.label === "e2ee") {
@@ -2082,7 +2082,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2021.1.0-canary.7';
+	        return '2021.1.0-canary.8';
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,

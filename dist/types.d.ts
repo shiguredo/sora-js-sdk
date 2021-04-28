@@ -205,12 +205,12 @@ export declare type ConnectionOptions = {
 };
 export declare type Callbacks = {
     disconnect: (event: CloseEvent) => void;
-    push: (event: SignalingPushMessage) => void;
+    push: (event: SignalingPushMessage, transportType: TransportType) => void;
     addstream: (event: RTCTrackEvent) => void;
     track: (event: RTCTrackEvent) => void;
     removestream: (event: MediaStreamTrackEvent) => void;
     removetrack: (event: MediaStreamTrackEvent) => void;
-    notify: (event: SignalingNotifyMessage) => void;
+    notify: (event: SignalingNotifyMessage, transportType: TransportType) => void;
     log: (title: string, message: JSONType) => void;
     timeout: () => void;
     datachannel: (event: DataChannelEvent) => void;
