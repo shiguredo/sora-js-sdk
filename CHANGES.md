@@ -10,11 +10,8 @@
     - バグ修正
 
 ## develop
+
 - [CHANGE] Notify callback, Push callback の第二引数に TransportType を追加する
-    - @yuitowest
-- [ADD] Switch DataChannel を実装する
-    - ConnectionOptions に dataChannelSignaling を追加する
-    - ConnectionOptions に ignoreDisconnectWebSocket を追加する
     - @yuitowest
 - [CHANGE] role から upstream と downstream を削除する
     - @voluntas
@@ -29,17 +26,21 @@
     - on メソッドに渡す第2引数の型定義を適切なものに修正する
     - trace メソッドに渡す第3引数の型定義をanyからunknownに変更する
     - @yuitowest
-- [UPDATE] パッケージを更新する
-    - typescript を3系から4系に変更
-    - @yuitowest
 - [CHANGE] packages 以下の npm-client を yarn にする
     - @yuitowest
 - [ADD] packages:upgrade コマンドを追加する
     - @yuitowest
-- [CHANGE] Slack 通知を #sora-demo チャネルに向けるようにする
-    - @voluntas
+- [ADD] Switch DataChannel を実装する
+    - ConnectionOptions に dataChannelSignaling を追加する
+    - ConnectionOptions に ignoreDisconnectWebSocket を追加する
+    - @yuitowest
 - [ADD] ConnectionOptions に spotlightFocusRid / spotlightUnfocusRid を追加する
     - @yuitowest
+- [UPDATE] パッケージを更新する
+    - typescript を3系から4系に変更
+    - @yuitowest
+- [UPDATE] サイマルキャストのサンプルを low / middle / high から r0 / r1 / r2 へ変更する
+    - @voluntas
 
 ## 2020.6.2
 - [FIX] simulcast が使用できるかどうかの判定を修正する
