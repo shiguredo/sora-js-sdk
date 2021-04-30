@@ -12,16 +12,16 @@
                 <video id="local-video" autoplay="" playsinline="" controls="" style="width: 320px; height: 180px; border: 1px solid blue;"></video>
             </div>
             <div>
-                <h2>recvonly low<span id="remote-video-client-id-low"></span></h2>
-                <video id="remote-video-low" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
+                <h2>recvonly r0<span id="remote-video-client-id-r0"></span></h2>
+                <video id="remote-video-r0" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
             </div>
             <div>
-                <h2>recvonly middle<span id="remote-video-client-id-middle"></span></h2>
-                <video id="remote-video-middle" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
+                <h2>recvonly r1<span id="remote-video-client-id-r1"></span></h2>
+                <video id="remote-video-r1" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
             </div>
             <div>
-                <h2>recvonly high<span id="remote-video-client-id-high"></span></h2>
-                <video id="remote-video-high" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
+                <h2>recvonly r2<span id="remote-video-client-id-r2"></span></h2>
+                <video id="remote-video-r2" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
             </div>
         </div>
 
@@ -31,9 +31,9 @@ const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://localhost:5000/signaling', debug);
 const sendonly = sora.sendonly(channelId, null, { videoCodecType: 'VP8', videoBitRate: 3000, simulcast: true });
-const recvonlyLow = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'low' });
-const recvonlyMiddle = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'middle' });
-const recvonlyHigh = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'high' });
+const recvonlyR0 = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'r0' });
+const recvonlyR1 = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'r1' });
+const recvonlyR2 = sora.recvonly(channelId, null, { videoCodecType: 'VP8', simulcast: true, SimulcastRid: 'r2' });
 
 document.querySelector('#start').addEventListener('click', function() {
   // sendonly
@@ -50,26 +50,26 @@ document.querySelector('#start').addEventListener('click', function() {
     });
 
   // recvonly
-  recvonlyLow.connect()
+  recvonlyR0.connect()
     .then(stream => {
-      document.querySelector('#remote-video-client-id-low').textContent = '(' + recvonlyLow.clientId + ')';
-      document.querySelector('#remote-video-low').srcObject = stream;
+      document.querySelector('#remote-video-client-id-r0').textContent = '(' + recvonlyr0.clientId + ')';
+      document.querySelector('#remote-video-r0').srcObject = stream;
     })
     .catch(e => {
       console.error(e);
     });
-  recvonlyMiddle.connect()
+  recvonlyR1.connect()
     .then(stream => {
-      document.querySelector('#remote-video-client-id-middle').textContent = '(' + recvonlyMiddle.clientId + ')';
-      document.querySelector('#remote-video-middle').srcObject = stream;
+      document.querySelector('#remote-video-client-id-r1').textContent = '(' + recvonlyR1.clientId + ')';
+      document.querySelector('#remote-video-r1').srcObject = stream;
     })
     .catch(e => {
       console.error(e);
     });
-  recvonlyHigh.connect()
+  recvonlyR2.connect()
     .then(stream => {
-      document.querySelector('#remote-video-client-id-high').textContent = '(' + recvonlyHigh.clientId + ')';
-      document.querySelector('#remote-video-high').srcObject = stream;
+      document.querySelector('#remote-video-client-id-r2').textContent = '(' + recvonlyR2.clientId + ')';
+      document.querySelector('#remote-video-r2').srcObject = stream;
     })
     .catch(e => {
       console.error(e);
