@@ -12,8 +12,6 @@ import {
 import {
   Callbacks,
   ConnectionOptions,
-  DataChannelLabel,
-  isDataChannelLabel,
   JSONType,
   SignalingEvent,
   SignalingMessage,
@@ -56,12 +54,13 @@ export default class ConnectionBase {
   pc: RTCPeerConnection | null;
   encodings: RTCRtpEncodingParameters[];
   dataChannelSignaling: boolean;
+  dataChannelLabels: string[];
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
   protected timeoutTimerId: number;
   protected dataChannels: {
-    [key in DataChannelLabel]?: RTCDataChannel;
+    [key in string]?: RTCDataChannel;
   };
   private ignoreDisconnectWebSocket: boolean;
 
@@ -110,6 +109,7 @@ export default class ConnectionBase {
     this.dataChannels = {};
     this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
+    this.dataChannelLabels = [];
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -171,9 +171,7 @@ export default class ConnectionBase {
       // DataChannel 切断を待つ
       setTimeout(() => {
         Object.keys(this.dataChannels).forEach((key) => {
-          if (isDataChannelLabel(key)) {
-            delete this.dataChannels[key];
-          }
+          delete this.dataChannels[key];
         });
         return resolve();
       }, 100);
@@ -532,6 +530,9 @@ export default class ConnectionBase {
     if (message.data_channel_signaling !== undefined) {
       this.dataChannelSignaling = message.data_channel_signaling;
     }
+    if (message.data_channel_labels !== undefined && Array.isArray(message.data_channel_labels)) {
+      this.dataChannelLabels = message.data_channel_labels;
+    }
     this.trace("SIGNALING OFFER MESSAGE", message);
     this.trace("OFFER SDP", message.sdp);
   }
@@ -660,11 +661,8 @@ export default class ConnectionBase {
     dataChannelEvent.channel.onopen = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
-
-      if (isDataChannelLabel(channel.label)) {
-        this.dataChannels[channel.label] = channel;
-        this.trace("OPEN DATA CHANNEL", channel.label);
-      }
+      this.dataChannels[channel.label] = channel;
+      this.trace("OPEN DATA CHANNEL", channel.label);
       if (channel.label === "signaling" && this.ws) {
         this.ws.onclose = async (e): Promise<void> => {
           if (!this.ignoreDisconnectWebSocket) {
