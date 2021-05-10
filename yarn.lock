@@ -2257,8 +2257,6 @@ get-stream@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/get-stream/-/get-stream-4.1.0.tgz#c1b255575f3dc21d59bfc79cd3d2b46b1c3a54b5"
   integrity sha512-GMat4EJ5161kIy2HevLlr4luNjBgvmj413KaQA7jt4V8B4RDsfpHk7WQ9GVqfYyyx8OS/L66Kox+rJRNklLK7w==
-  dependencies:
-    pump "^3.0.0"
 
 get-stream@^5.1.0:
   version "5.2.0"
@@ -3577,10 +3575,10 @@ npm-bundled@^1.1.1:
   dependencies:
     npm-normalize-package-bin "^1.0.1"
 
-npm-check-updates@^11.5.3:
-  version "11.5.7"
-  resolved "https://registry.yarnpkg.com/npm-check-updates/-/npm-check-updates-11.5.7.tgz#01d0cdf4597696644373f2d4332319a6566ca9e4"
-  integrity sha512-pdsOkBB/Gdl4YmfblZg8QsZLeDP6JveqGlue1WYCbF3TK5AjC2J7ldn5TvXq8SHmaFXi9TETrmbCQ0JEU6O8dA==
+npm-check-updates@^11.5.10:
+  version "11.5.10"
+  resolved "https://registry.yarnpkg.com/npm-check-updates/-/npm-check-updates-11.5.10.tgz#73c5037757c227b3133b46f0fea3828b713f3137"
+  integrity sha512-+nKrlBaDglNQWEV5+bx6ZMJAc6VA/aKbqtKs+fr6ewcedF2hfMxHMZe5b8mW9SUu+bjtt/SrPHxkoAiepZIFpA==
   dependencies:
     chalk "^4.1.1"
     cint "^8.2.1"
