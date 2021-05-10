@@ -722,7 +722,11 @@ export default class ConnectionBase {
         if (event.currentTarget) {
           const channel = event.currentTarget as RTCDataChannel;
           const stats = await this.getStats();
-          channel.send(JSON.stringify(stats));
+          const sendMessage = {
+            type: "stats",
+            reports: stats,
+          };
+          channel.send(JSON.stringify(sendMessage));
         }
       };
     }
