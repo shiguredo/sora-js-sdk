@@ -124,7 +124,7 @@ export default class ConnectionBase {
     }
   }
 
-  private closeStream(): Promise<void> {
+  private stopStream(): Promise<void> {
     return new Promise((resolve, _) => {
       if (this.debug) {
         console.warn(
@@ -142,7 +142,7 @@ export default class ConnectionBase {
     });
   }
 
-  private closeWebSocket(): Promise<void> {
+  private disconnectWebSocket(): Promise<void> {
     return new Promise((resolve, _) => {
       if (!this.ws) {
         return resolve();
@@ -158,7 +158,7 @@ export default class ConnectionBase {
     });
   }
 
-  private closeDataChannel(): Promise<void> {
+  private disconnectDataChannel(): Promise<void> {
     return new Promise((resolve, _) => {
       if (!this.dataChannels["signaling"]) {
         return resolve();
@@ -178,7 +178,7 @@ export default class ConnectionBase {
     });
   }
 
-  private closePeerConnection(): Promise<void> {
+  private disconnectPeerConnection(): Promise<void> {
     return new Promise((resolve, _reject) => {
       if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) {
         return resolve();
@@ -209,10 +209,10 @@ export default class ConnectionBase {
     this.connectionId = null;
     this.authMetadata = null;
     this.remoteConnectionIds = [];
-    await this.closeStream();
-    await this.closeDataChannel();
-    await this.closeWebSocket();
-    await this.closePeerConnection();
+    await this.stopStream();
+    await this.disconnectDataChannel();
+    await this.disconnectWebSocket();
+    await this.disconnectPeerConnection();
     if (this.e2ee) {
       this.e2ee.terminateWorker();
       this.e2ee = null;
