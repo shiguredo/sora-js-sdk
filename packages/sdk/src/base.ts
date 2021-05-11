@@ -65,6 +65,8 @@ export default class ConnectionBase {
   private ignoreDisconnectWebSocket: boolean;
   private closeWebSocket: boolean;
   private connectionTimeout: number;
+  private dataChannelSignalingTimeout: number;
+  private dataChannelSignalingTimeoutId: number;
 
   constructor(
     signalingUrl: string,
@@ -93,6 +95,11 @@ export default class ConnectionBase {
     if (typeof this.options.closeWebSocket === "boolean") {
       this.closeWebSocket = this.options.closeWebSocket;
     }
+    // DataChannel signaling timeout の初期値をセットする
+    this.dataChannelSignalingTimeout = 3000;
+    if (typeof this.options.dataChannelSignalingTimeout === "number") {
+      this.dataChannelSignalingTimeout = this.options.dataChannelSignalingTimeout;
+    }
     this.constraints = null;
     this.debug = debug;
     this.clientId = null;
@@ -118,6 +125,7 @@ export default class ConnectionBase {
     this.authMetadata = null;
     this.e2ee = null;
     this.connectionTimeoutTimerId = 0;
+    this.dataChannelSignalingTimeoutId = 0;
     this.dataChannels = {};
     this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
@@ -464,6 +472,7 @@ export default class ConnectionBase {
           reject(error);
         } else if (this.pc && this.pc.connectionState === "connected") {
           clearInterval(timerId);
+          this.monitorDataChannelMessage();
           resolve();
         }
       }, 100);
@@ -706,31 +715,26 @@ export default class ConnectionBase {
       this.trace("ERROR DATA CHANNEL", channel.label);
     };
     // onmessage
-    if (dataChannelEvent.channel.label === "signaling") {
-      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+    dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+      // DataChannel の timeout 処理を初期化する
+      this.monitorDataChannelMessage();
+      const channel = event.currentTarget as RTCDataChannel;
+      if (channel.label === "signaling") {
         const message = JSON.parse(event.data) as SignalingMessage;
         this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
         if (message.type === "re-offer") {
           await this.signalingOnMessageTypeReOffer(message);
         }
-      };
-    } else if (dataChannelEvent.channel.label === "notify") {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      } else if (channel.label === "notify") {
         const message = JSON.parse(event.data) as SignalingNotifyMessage;
         this.signalingOnMessageTypeNotify(message, "datachannel");
-      };
-    } else if (dataChannelEvent.channel.label === "push") {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      } else if (channel.label === "push") {
         const message = JSON.parse(event.data) as SignalingPushMessage;
         this.callbacks.push(message, "datachannel");
-      };
-    } else if (dataChannelEvent.channel.label === "e2ee") {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      } else if (channel.label === "e2ee") {
         const data = event.data as ArrayBuffer;
         this.signalingOnMessageE2EE(data);
-      };
-    } else if (dataChannelEvent.channel.label === "stats") {
-      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+      } else if (channel.label === "stats") {
         if (event.currentTarget) {
           const channel = event.currentTarget as RTCDataChannel;
           const stats = await this.getStats();
@@ -740,8 +744,8 @@ export default class ConnectionBase {
           };
           channel.send(JSON.stringify(sendMessage));
         }
-      };
-    }
+      }
+    };
   }
 
   private sendMessage(message: { type: string; [key: string]: unknown }): void {
@@ -762,6 +766,13 @@ export default class ConnectionBase {
       this.ws.send(message);
       this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "websocket"));
     }
+  }
+
+  private monitorDataChannelMessage(): void {
+    clearTimeout(this.dataChannelSignalingTimeoutId);
+    this.dataChannelSignalingTimeoutId = setTimeout(async () => {
+      await this.disconnect();
+    }, this.dataChannelSignalingTimeout);
   }
 
   get e2eeSelfFingerprint(): string | undefined {
