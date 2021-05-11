@@ -64,6 +64,7 @@ export default class ConnectionBase {
   };
   private ignoreDisconnectWebSocket: boolean;
   private closeWebSocket: boolean;
+  private connectionTimeout: number;
 
   constructor(
     signalingUrl: string,
@@ -78,9 +79,14 @@ export default class ConnectionBase {
     this.metadata = metadata;
     this.signalingUrl = signalingUrl;
     this.options = options;
-    // client timeout の初期値をセットする
-    if (this.options.timeout === undefined) {
-      this.options.timeout = 60000;
+    // connection timeout の初期値をセットする
+    this.connectionTimeout = 60000;
+    if (typeof this.options.timeout === "number") {
+      console.warn("@deprecated timeout option will be removed in a future version. Use connectionTimeout.");
+      this.connectionTimeout = this.options.timeout;
+    }
+    if (typeof this.options.connectionTimeout === "number") {
+      this.connectionTimeout = this.options.connectionTimeout;
     }
     // closeWebsocket の初期値をセットする
     this.closeWebSocket = true;
@@ -466,7 +472,7 @@ export default class ConnectionBase {
 
   protected setConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
-      if (this.options.timeout && 0 < this.options.timeout) {
+      if (0 < this.connectionTimeout) {
         this.timeoutTimerId = setTimeout(async () => {
           if (
             !this.pc ||
@@ -478,7 +484,7 @@ export default class ConnectionBase {
             await this.disconnect();
             reject(error);
           }
-        }, this.options.timeout);
+        }, this.connectionTimeout);
       }
     });
   }

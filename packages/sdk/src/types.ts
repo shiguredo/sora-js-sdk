@@ -236,7 +236,8 @@ export type ConnectionOptions = {
   simulcast?: boolean;
   simulcastRid?: SimulcastRid;
   clientId?: string;
-  timeout?: number;
+  timeout?: number; // deprecated option
+  connectionTimeout?: number;
   e2ee?: boolean;
   signalingNotifyMetadata?: JSONType;
   dataChannelSignaling?: boolean;
