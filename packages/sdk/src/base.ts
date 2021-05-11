@@ -58,7 +58,7 @@ export default class ConnectionBase {
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
-  protected timeoutTimerId: number;
+  protected connectionTimeoutTimerId: number;
   protected dataChannels: {
     [key in string]?: RTCDataChannel;
   };
@@ -117,7 +117,7 @@ export default class ConnectionBase {
     };
     this.authMetadata = null;
     this.e2ee = null;
-    this.timeoutTimerId = 0;
+    this.connectionTimeoutTimerId = 0;
     this.dataChannels = {};
     this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
@@ -473,7 +473,7 @@ export default class ConnectionBase {
   protected setConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
       if (0 < this.connectionTimeout) {
-        this.timeoutTimerId = setTimeout(async () => {
+        this.connectionTimeoutTimerId = setTimeout(async () => {
           if (
             !this.pc ||
             (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")
@@ -490,7 +490,7 @@ export default class ConnectionBase {
   }
 
   protected clearConnectionTimeout(): void {
-    clearTimeout(this.timeoutTimerId);
+    clearTimeout(this.connectionTimeoutTimerId);
   }
 
   protected trace(title: string, message: unknown): void {
