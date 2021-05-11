@@ -96,7 +96,7 @@ export default class ConnectionBase {
       this.closeWebSocket = this.options.closeWebSocket;
     }
     // DataChannel signaling timeout の初期値をセットする
-    this.dataChannelSignalingTimeout = 3000;
+    this.dataChannelSignalingTimeout = 180000;
     if (typeof this.options.dataChannelSignalingTimeout === "number") {
       this.dataChannelSignalingTimeout = this.options.dataChannelSignalingTimeout;
     }
