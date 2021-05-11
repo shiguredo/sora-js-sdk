@@ -63,6 +63,7 @@ export default class ConnectionBase {
     [key in string]?: RTCDataChannel;
   };
   private ignoreDisconnectWebSocket: boolean;
+  private closeWebSocket: boolean;
 
   constructor(
     signalingUrl: string,
@@ -80,6 +81,11 @@ export default class ConnectionBase {
     // client timeout の初期値をセットする
     if (this.options.timeout === undefined) {
       this.options.timeout = 60000;
+    }
+    // closeWebsocket の初期値をセットする
+    this.closeWebSocket = true;
+    if (typeof this.options.closeWebSocket === "boolean") {
+      this.closeWebSocket = this.options.closeWebSocket;
     }
     this.constraints = null;
     this.debug = debug;
@@ -450,11 +456,6 @@ export default class ConnectionBase {
           error.message = "PeerConnection connectionState did not change to 'connected'";
           clearInterval(timerId);
           reject(error);
-        } else if (!this.ws || this.ws.readyState !== 1) {
-          const error = new Error();
-          error.message = "PeerConnection connectionState did not change to 'connected'";
-          clearInterval(timerId);
-          reject(error);
         } else if (this.pc && this.pc.connectionState === "connected") {
           clearInterval(timerId);
           resolve();
@@ -658,7 +659,7 @@ export default class ConnectionBase {
       this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
     };
     // onopen
-    dataChannelEvent.channel.onopen = (event): void => {
+    dataChannelEvent.channel.onopen = async (event): Promise<void> => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
       this.dataChannels[channel.label] = channel;
@@ -672,6 +673,13 @@ export default class ConnectionBase {
         };
         const signalingEvent = Object.assign(event, { transportType: "datachannel" }) as SignalingEvent;
         this.callbacks.signaling(signalingEvent);
+      }
+      // signaling offer で受け取った labels と open したラベルがすべて一致したかどうか
+      const isOpenAllDataChannels = this.dataChannelLabels.every(
+        (label) => 0 <= Object.keys(this.dataChannels).indexOf(label)
+      );
+      if (isOpenAllDataChannels && this.ignoreDisconnectWebSocket && this.closeWebSocket) {
+        await this.disconnectWebSocket();
       }
     };
     // onclose
