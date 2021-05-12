@@ -1,4 +1,4 @@
-import { Callbacks, ConnectionOptions, DataChannelLabel, JSONType, SignalingOfferMessage, SignalingUpdateMessage, SignalingReOfferMessage } from "./types";
+import { Callbacks, ConnectionOptions, JSONType, SignalingOfferMessage, SignalingUpdateMessage, SignalingReOfferMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
 export default class ConnectionBase {
     role: string;
@@ -16,20 +16,25 @@ export default class ConnectionBase {
     pc: RTCPeerConnection | null;
     encodings: RTCRtpEncodingParameters[];
     dataChannelSignaling: boolean;
+    dataChannelLabels: string[];
     protected ws: WebSocket | null;
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;
-    protected timeoutTimerId: number;
+    protected connectionTimeoutTimerId: number;
     protected dataChannels: {
-        [key in DataChannelLabel]?: RTCDataChannel;
+        [key in string]?: RTCDataChannel;
     };
     private ignoreDisconnectWebSocket;
+    private closeWebSocket;
+    private connectionTimeout;
+    private dataChannelSignalingTimeout;
+    private dataChannelSignalingTimeoutId;
     constructor(signalingUrl: string, role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void;
-    private closeStream;
-    private closeWebSocket;
-    private closeDataChannel;
-    private closePeerConnection;
+    private stopStream;
+    private disconnectWebSocket;
+    private disconnectDataChannel;
+    private disconnectPeerConnection;
     disconnect(): Promise<void>;
     protected setupE2EE(): void;
     protected startE2EE(): void;
@@ -57,6 +62,7 @@ export default class ConnectionBase {
     private onDataChannel;
     private sendMessage;
     private sendE2EEMessage;
+    private monitorDataChannelMessage;
     get e2eeSelfFingerprint(): string | undefined;
     get e2eeRemoteFingerprints(): Record<string, string> | undefined;
 }
