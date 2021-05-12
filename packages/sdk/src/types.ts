@@ -79,6 +79,7 @@ export type SignalingOfferMessage = {
   encodings?: RTCRtpEncodingParameters[];
   ignore_disconnect_websocket?: boolean;
   data_channel_signaling?: boolean;
+  data_channel_labels?: string[];
 };
 
 export type SignalingUpdateMessage = {
@@ -235,11 +236,14 @@ export type ConnectionOptions = {
   simulcast?: boolean;
   simulcastRid?: SimulcastRid;
   clientId?: string;
-  timeout?: number;
+  timeout?: number; // deprecated option
+  connectionTimeout?: number;
   e2ee?: boolean;
   signalingNotifyMetadata?: JSONType;
   dataChannelSignaling?: boolean;
   ignoreDisconnectWebSocket?: boolean;
+  closeWebSocket?: boolean;
+  dataChannelSignalingTimeout?: number;
 };
 
 export type Callbacks = {
@@ -263,14 +267,6 @@ export type PreKeyBundle = {
 };
 
 export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
-
-const DATA_CHANNEL_LABELS = ["signaling", "notify", "e2ee", "stats", "push"] as const;
-
-export type DataChannelLabel = typeof DATA_CHANNEL_LABELS[number];
-
-export function isDataChannelLabel(dataChannelType: string): dataChannelType is DataChannelLabel {
-  return (DATA_CHANNEL_LABELS as readonly string[]).indexOf(dataChannelType) >= 0;
-}
 
 export type TransportType = "websocket" | "datachannel";
 

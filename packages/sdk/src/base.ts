@@ -12,8 +12,6 @@ import {
 import {
   Callbacks,
   ConnectionOptions,
-  DataChannelLabel,
-  isDataChannelLabel,
   JSONType,
   SignalingEvent,
   SignalingMessage,
@@ -56,14 +54,19 @@ export default class ConnectionBase {
   pc: RTCPeerConnection | null;
   encodings: RTCRtpEncodingParameters[];
   dataChannelSignaling: boolean;
+  dataChannelLabels: string[];
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
-  protected timeoutTimerId: number;
+  protected connectionTimeoutTimerId: number;
   protected dataChannels: {
-    [key in DataChannelLabel]?: RTCDataChannel;
+    [key in string]?: RTCDataChannel;
   };
   private ignoreDisconnectWebSocket: boolean;
+  private closeWebSocket: boolean;
+  private connectionTimeout: number;
+  private dataChannelSignalingTimeout: number;
+  private dataChannelSignalingTimeoutId: number;
 
   constructor(
     signalingUrl: string,
@@ -78,9 +81,24 @@ export default class ConnectionBase {
     this.metadata = metadata;
     this.signalingUrl = signalingUrl;
     this.options = options;
-    // client timeout の初期値をセットする
-    if (this.options.timeout === undefined) {
-      this.options.timeout = 60000;
+    // connection timeout の初期値をセットする
+    this.connectionTimeout = 60000;
+    if (typeof this.options.timeout === "number") {
+      console.warn("@deprecated timeout option will be removed in a future version. Use connectionTimeout.");
+      this.connectionTimeout = this.options.timeout;
+    }
+    if (typeof this.options.connectionTimeout === "number") {
+      this.connectionTimeout = this.options.connectionTimeout;
+    }
+    // closeWebsocket の初期値をセットする
+    this.closeWebSocket = true;
+    if (typeof this.options.closeWebSocket === "boolean") {
+      this.closeWebSocket = this.options.closeWebSocket;
+    }
+    // DataChannel signaling timeout の初期値をセットする
+    this.dataChannelSignalingTimeout = 180000;
+    if (typeof this.options.dataChannelSignalingTimeout === "number") {
+      this.dataChannelSignalingTimeout = this.options.dataChannelSignalingTimeout;
     }
     this.constraints = null;
     this.debug = debug;
@@ -106,10 +124,12 @@ export default class ConnectionBase {
     };
     this.authMetadata = null;
     this.e2ee = null;
-    this.timeoutTimerId = 0;
+    this.connectionTimeoutTimerId = 0;
+    this.dataChannelSignalingTimeoutId = 0;
     this.dataChannels = {};
     this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
+    this.dataChannelLabels = [];
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -124,7 +144,7 @@ export default class ConnectionBase {
     }
   }
 
-  private closeStream(): Promise<void> {
+  private stopStream(): Promise<void> {
     return new Promise((resolve, _) => {
       if (this.debug) {
         console.warn(
@@ -142,7 +162,7 @@ export default class ConnectionBase {
     });
   }
 
-  private closeWebSocket(): Promise<void> {
+  private disconnectWebSocket(): Promise<void> {
     return new Promise((resolve, _) => {
       if (!this.ws) {
         return resolve();
@@ -158,7 +178,7 @@ export default class ConnectionBase {
     });
   }
 
-  private closeDataChannel(): Promise<void> {
+  private disconnectDataChannel(): Promise<void> {
     return new Promise((resolve, _) => {
       if (!this.dataChannels["signaling"]) {
         return resolve();
@@ -171,16 +191,14 @@ export default class ConnectionBase {
       // DataChannel 切断を待つ
       setTimeout(() => {
         Object.keys(this.dataChannels).forEach((key) => {
-          if (isDataChannelLabel(key)) {
-            delete this.dataChannels[key];
-          }
+          delete this.dataChannels[key];
         });
         return resolve();
       }, 100);
     });
   }
 
-  private closePeerConnection(): Promise<void> {
+  private disconnectPeerConnection(): Promise<void> {
     return new Promise((resolve, _reject) => {
       if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) {
         return resolve();
@@ -211,10 +229,10 @@ export default class ConnectionBase {
     this.connectionId = null;
     this.authMetadata = null;
     this.remoteConnectionIds = [];
-    await this.closeStream();
-    await this.closeDataChannel();
-    await this.closeWebSocket();
-    await this.closePeerConnection();
+    await this.stopStream();
+    await this.disconnectDataChannel();
+    await this.disconnectWebSocket();
+    await this.disconnectPeerConnection();
     if (this.e2ee) {
       this.e2ee.terminateWorker();
       this.e2ee = null;
@@ -452,13 +470,9 @@ export default class ConnectionBase {
           error.message = "PeerConnection connectionState did not change to 'connected'";
           clearInterval(timerId);
           reject(error);
-        } else if (!this.ws || this.ws.readyState !== 1) {
-          const error = new Error();
-          error.message = "PeerConnection connectionState did not change to 'connected'";
-          clearInterval(timerId);
-          reject(error);
         } else if (this.pc && this.pc.connectionState === "connected") {
           clearInterval(timerId);
+          this.monitorDataChannelMessage();
           resolve();
         }
       }, 100);
@@ -467,8 +481,8 @@ export default class ConnectionBase {
 
   protected setConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
-      if (this.options.timeout && 0 < this.options.timeout) {
-        this.timeoutTimerId = setTimeout(async () => {
+      if (0 < this.connectionTimeout) {
+        this.connectionTimeoutTimerId = setTimeout(async () => {
           if (
             !this.pc ||
             (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")
@@ -479,13 +493,13 @@ export default class ConnectionBase {
             await this.disconnect();
             reject(error);
           }
-        }, this.options.timeout);
+        }, this.connectionTimeout);
       }
     });
   }
 
   protected clearConnectionTimeout(): void {
-    clearTimeout(this.timeoutTimerId);
+    clearTimeout(this.connectionTimeoutTimerId);
   }
 
   protected trace(title: string, message: unknown): void {
@@ -531,6 +545,9 @@ export default class ConnectionBase {
     }
     if (message.data_channel_signaling !== undefined) {
       this.dataChannelSignaling = message.data_channel_signaling;
+    }
+    if (message.data_channel_labels !== undefined && Array.isArray(message.data_channel_labels)) {
+      this.dataChannelLabels = message.data_channel_labels;
     }
     this.trace("SIGNALING OFFER MESSAGE", message);
     this.trace("OFFER SDP", message.sdp);
@@ -657,14 +674,11 @@ export default class ConnectionBase {
       this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
     };
     // onopen
-    dataChannelEvent.channel.onopen = (event): void => {
+    dataChannelEvent.channel.onopen = async (event): Promise<void> => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
-
-      if (isDataChannelLabel(channel.label)) {
-        this.dataChannels[channel.label] = channel;
-        this.trace("OPEN DATA CHANNEL", channel.label);
-      }
+      this.dataChannels[channel.label] = channel;
+      this.trace("OPEN DATA CHANNEL", channel.label);
       if (channel.label === "signaling" && this.ws) {
         this.ws.onclose = async (e): Promise<void> => {
           if (!this.ignoreDisconnectWebSocket) {
@@ -674,6 +688,13 @@ export default class ConnectionBase {
         };
         const signalingEvent = Object.assign(event, { transportType: "datachannel" }) as SignalingEvent;
         this.callbacks.signaling(signalingEvent);
+      }
+      // signaling offer で受け取った labels と open したラベルがすべて一致したかどうか
+      const isOpenAllDataChannels = this.dataChannelLabels.every(
+        (label) => 0 <= Object.keys(this.dataChannels).indexOf(label)
+      );
+      if (isOpenAllDataChannels && this.ignoreDisconnectWebSocket && this.closeWebSocket) {
+        await this.disconnectWebSocket();
       }
     };
     // onclose
@@ -694,31 +715,26 @@ export default class ConnectionBase {
       this.trace("ERROR DATA CHANNEL", channel.label);
     };
     // onmessage
-    if (dataChannelEvent.channel.label === "signaling") {
-      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+    dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+      // DataChannel の timeout 処理を初期化する
+      this.monitorDataChannelMessage();
+      const channel = event.currentTarget as RTCDataChannel;
+      if (channel.label === "signaling") {
         const message = JSON.parse(event.data) as SignalingMessage;
         this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
         if (message.type === "re-offer") {
           await this.signalingOnMessageTypeReOffer(message);
         }
-      };
-    } else if (dataChannelEvent.channel.label === "notify") {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      } else if (channel.label === "notify") {
         const message = JSON.parse(event.data) as SignalingNotifyMessage;
         this.signalingOnMessageTypeNotify(message, "datachannel");
-      };
-    } else if (dataChannelEvent.channel.label === "push") {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      } else if (channel.label === "push") {
         const message = JSON.parse(event.data) as SignalingPushMessage;
         this.callbacks.push(message, "datachannel");
-      };
-    } else if (dataChannelEvent.channel.label === "e2ee") {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      } else if (channel.label === "e2ee") {
         const data = event.data as ArrayBuffer;
         this.signalingOnMessageE2EE(data);
-      };
-    } else if (dataChannelEvent.channel.label === "stats") {
-      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+      } else if (channel.label === "stats") {
         if (event.currentTarget) {
           const channel = event.currentTarget as RTCDataChannel;
           const stats = await this.getStats();
@@ -728,8 +744,8 @@ export default class ConnectionBase {
           };
           channel.send(JSON.stringify(sendMessage));
         }
-      };
-    }
+      }
+    };
   }
 
   private sendMessage(message: { type: string; [key: string]: unknown }): void {
@@ -750,6 +766,13 @@ export default class ConnectionBase {
       this.ws.send(message);
       this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "websocket"));
     }
+  }
+
+  private monitorDataChannelMessage(): void {
+    clearTimeout(this.dataChannelSignalingTimeoutId);
+    this.dataChannelSignalingTimeoutId = setTimeout(async () => {
+      await this.disconnect();
+    }, this.dataChannelSignalingTimeout);
   }
 
   get e2eeSelfFingerprint(): string | undefined {
