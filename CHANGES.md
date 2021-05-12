@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] timeout option を connectionTimeout option に名前を変更する
+    - timeout option を使用している場合は deprecated warning が出るように変更
+    - @yuitowest
 - [CHANGE] Notify callback, Push callback の第二引数に TransportType を追加する
     - @yuitowest
 - [CHANGE] role から upstream と downstream を削除する
