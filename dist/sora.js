@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.10
+ * @version: 2021.1.0-canary.11
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.10
+	 * @version: 2021.1.0-canary.11
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.10";
+	        return "2021.1.0-canary.11";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -831,7 +831,7 @@
 	    const message = {
 	        type: "connect",
 	        // @ts-ignore
-	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.10'}`,
+	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.11'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1475,7 +1475,9 @@
 	                }
 	                else if (this.pc && this.pc.connectionState === "connected") {
 	                    clearInterval(timerId);
-	                    this.monitorDataChannelMessage();
+	                    if (this.dataChannelSignaling) {
+	                        this.monitorDataChannelMessage();
+	                    }
 	                    resolve();
 	                }
 	            }, 100);
@@ -2098,7 +2100,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2021.1.0-canary.10';
+	        return '2021.1.0-canary.11';
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
