@@ -472,7 +472,9 @@ export default class ConnectionBase {
           reject(error);
         } else if (this.pc && this.pc.connectionState === "connected") {
           clearInterval(timerId);
-          this.monitorDataChannelMessage();
+          if (this.dataChannelSignaling) {
+            this.monitorDataChannelMessage();
+          }
           resolve();
         }
       }, 100);
