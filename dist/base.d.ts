@@ -16,7 +16,6 @@ export default class ConnectionBase {
     pc: RTCPeerConnection | null;
     encodings: RTCRtpEncodingParameters[];
     dataChannelSignaling: boolean;
-    dataChannelLabels: string[];
     protected ws: WebSocket | null;
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;
@@ -57,6 +56,7 @@ export default class ConnectionBase {
     private signalingOnMessageTypeReOffer;
     private signalingOnMessageTypePing;
     private signalingOnMessageTypeNotify;
+    private signalingOnMessageTypeSwitch;
     private setSenderParameters;
     private getStats;
     private onDataChannel;

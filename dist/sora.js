@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.11
+ * @version: 2021.1.0-canary.12
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.11
+	 * @version: 2021.1.0-canary.12
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.11";
+	        return "2021.1.0-canary.12";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -831,7 +831,7 @@
 	    const message = {
 	        type: "connect",
 	        // @ts-ignore
-	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.11'}`,
+	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.12'}`,
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1157,7 +1157,6 @@
 	        this.dataChannels = {};
 	        this.ignoreDisconnectWebSocket = false;
 	        this.dataChannelSignaling = false;
-	        this.dataChannelLabels = [];
 	    }
 	    on(kind, callback) {
 	        // @deprecated message
@@ -1191,10 +1190,13 @@
 	            if (!this.ws) {
 	                return resolve();
 	            }
-	            if (this.ws.readyState === 1) {
+	            if (this.ws.readyState === 1 && !this.ignoreDisconnectWebSocket) {
 	                const message = { type: "disconnect" };
 	                this.ws.send(JSON.stringify(message));
 	                this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
+	            }
+	            else {
+	                this.callbacks.signaling(createSignalingEvent("close", {}, "websocket"));
 	            }
 	            this.ws.close();
 	            this.ws = null;
@@ -1340,6 +1342,9 @@
 	                }
 	                else if (message.type == "notify") {
 	                    this.signalingOnMessageTypeNotify(message, "websocket");
+	                }
+	                else if (message.type == "switch") {
+	                    this.signalingOnMessageTypeSwitch();
 	                }
 	            };
 	        });
@@ -1544,9 +1549,6 @@
 	        if (message.data_channel_signaling !== undefined) {
 	            this.dataChannelSignaling = message.data_channel_signaling;
 	        }
-	        if (message.data_channel_labels !== undefined && Array.isArray(message.data_channel_labels)) {
-	            this.dataChannelLabels = message.data_channel_labels;
-	        }
 	        this.trace("SIGNALING OFFER MESSAGE", message);
 	        this.trace("OFFER SDP", message.sdp);
 	    }
@@ -1629,6 +1631,20 @@
 	        }
 	        this.callbacks.notify(message, transportType);
 	    }
+	    signalingOnMessageTypeSwitch() {
+	        this.callbacks.signaling(createSignalingEvent("onmessage-switch", {}, "websocket"));
+	        if (!this.ws) {
+	            return;
+	        }
+	        if (this.ignoreDisconnectWebSocket && this.closeWebSocket) {
+	            this.ws.onmessage = null;
+	            this.ws.onclose = null;
+	            this.ws.onerror = null;
+	            this.ws.close();
+	            this.ws = null;
+	            this.callbacks.signaling(createSignalingEvent("close", {}, "websocket"));
+	        }
+	    }
 	    async setSenderParameters(transceiver, encodings) {
 	        const originalParameters = transceiver.sender.getParameters();
 	        // @ts-ignore
@@ -1656,25 +1672,14 @@
 	            this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
 	        };
 	        // onopen
-	        dataChannelEvent.channel.onopen = async (event) => {
+	        dataChannelEvent.channel.onopen = (event) => {
 	            const channel = event.currentTarget;
 	            this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
 	            this.dataChannels[channel.label] = channel;
 	            this.trace("OPEN DATA CHANNEL", channel.label);
 	            if (channel.label === "signaling" && this.ws) {
-	                this.ws.onclose = async (e) => {
-	                    if (!this.ignoreDisconnectWebSocket) {
-	                        this.callbacks.disconnect(e);
-	                        await this.disconnect();
-	                    }
-	                };
 	                const signalingEvent = Object.assign(event, { transportType: "datachannel" });
 	                this.callbacks.signaling(signalingEvent);
-	            }
-	            // signaling offer で受け取った labels と open したラベルがすべて一致したかどうか
-	            const isOpenAllDataChannels = this.dataChannelLabels.every((label) => 0 <= Object.keys(this.dataChannels).indexOf(label));
-	            if (isOpenAllDataChannels && this.ignoreDisconnectWebSocket && this.closeWebSocket) {
-	                await this.disconnectWebSocket();
 	            }
 	        };
 	        // onclose
@@ -2100,7 +2105,7 @@
 	    },
 	    version: function () {
 	        // @ts-ignore
-	        return '2021.1.0-canary.11';
+	        return '2021.1.0-canary.12';
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
