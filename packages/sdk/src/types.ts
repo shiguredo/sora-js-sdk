@@ -67,7 +67,8 @@ export type SignalingMessage =
   | SignalingReOfferMessage
   | SignalingPingMessage
   | SignalingPushMessage
-  | SignalingNotifyMessage;
+  | SignalingNotifyMessage
+  | SignalingSwitchMessage;
 
 export type SignalingOfferMessage = {
   type: "offer";
@@ -100,6 +101,10 @@ export type SignalingPingMessage = {
 export type SignalingPushMessage = {
   type: "push";
   data: Record<string, unknown>;
+};
+
+export type SignalingSwitchMessage = {
+  type: "switch";
 };
 
 export type SignalingNotifyMessage =
