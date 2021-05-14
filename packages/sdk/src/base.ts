@@ -54,7 +54,6 @@ export default class ConnectionBase {
   pc: RTCPeerConnection | null;
   encodings: RTCRtpEncodingParameters[];
   dataChannelSignaling: boolean;
-  dataChannelLabels: string[];
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
@@ -129,7 +128,6 @@ export default class ConnectionBase {
     this.dataChannels = {};
     this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
-    this.dataChannelLabels = [];
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -167,10 +165,12 @@ export default class ConnectionBase {
       if (!this.ws) {
         return resolve();
       }
-      if (this.ws.readyState === 1) {
+      if (this.ws.readyState === 1 && !this.ignoreDisconnectWebSocket) {
         const message = { type: "disconnect" };
         this.ws.send(JSON.stringify(message));
         this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
+      } else {
+        this.callbacks.signaling(createSignalingEvent("close", {}, "websocket"));
       }
       this.ws.close();
       this.ws = null;
@@ -327,6 +327,8 @@ export default class ConnectionBase {
           this.callbacks.push(message, "websocket");
         } else if (message.type == "notify") {
           this.signalingOnMessageTypeNotify(message, "websocket");
+        } else if (message.type == "switch") {
+          this.signalingOnMessageTypeSwitch();
         }
       };
     });
@@ -548,9 +550,6 @@ export default class ConnectionBase {
     if (message.data_channel_signaling !== undefined) {
       this.dataChannelSignaling = message.data_channel_signaling;
     }
-    if (message.data_channel_labels !== undefined && Array.isArray(message.data_channel_labels)) {
-      this.dataChannelLabels = message.data_channel_labels;
-    }
     this.trace("SIGNALING OFFER MESSAGE", message);
     this.trace("OFFER SDP", message.sdp);
   }
@@ -644,6 +643,21 @@ export default class ConnectionBase {
     this.callbacks.notify(message, transportType);
   }
 
+  private signalingOnMessageTypeSwitch(): void {
+    this.callbacks.signaling(createSignalingEvent("onmessage-switch", {}, "websocket"));
+    if (!this.ws) {
+      return;
+    }
+    if (this.ignoreDisconnectWebSocket && this.closeWebSocket) {
+      this.ws.onmessage = null;
+      this.ws.onclose = null;
+      this.ws.onerror = null;
+      this.ws.close();
+      this.ws = null;
+      this.callbacks.signaling(createSignalingEvent("close", {}, "websocket"));
+    }
+  }
+
   private async setSenderParameters(
     transceiver: RTCRtpTransceiver,
     encodings: RTCRtpEncodingParameters[]
@@ -676,27 +690,14 @@ export default class ConnectionBase {
       this.callbacks.datachannel(createDataChannelEvent("onbufferedamountlow", channel));
     };
     // onopen
-    dataChannelEvent.channel.onopen = async (event): Promise<void> => {
+    dataChannelEvent.channel.onopen = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
       this.dataChannels[channel.label] = channel;
       this.trace("OPEN DATA CHANNEL", channel.label);
       if (channel.label === "signaling" && this.ws) {
-        this.ws.onclose = async (e): Promise<void> => {
-          if (!this.ignoreDisconnectWebSocket) {
-            this.callbacks.disconnect(e);
-            await this.disconnect();
-          }
-        };
         const signalingEvent = Object.assign(event, { transportType: "datachannel" }) as SignalingEvent;
         this.callbacks.signaling(signalingEvent);
-      }
-      // signaling offer で受け取った labels と open したラベルがすべて一致したかどうか
-      const isOpenAllDataChannels = this.dataChannelLabels.every(
-        (label) => 0 <= Object.keys(this.dataChannels).indexOf(label)
-      );
-      if (isOpenAllDataChannels && this.ignoreDisconnectWebSocket && this.closeWebSocket) {
-        await this.disconnectWebSocket();
       }
     };
     // onclose
