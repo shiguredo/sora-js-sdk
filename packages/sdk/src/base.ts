@@ -165,12 +165,10 @@ export default class ConnectionBase {
       if (!this.ws) {
         return resolve();
       }
-      if (this.ws.readyState === 1 && !this.ignoreDisconnectWebSocket) {
+      if (this.ws.readyState === 1) {
         const message = { type: "disconnect" };
         this.ws.send(JSON.stringify(message));
         this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
-      } else {
-        this.callbacks.signaling(createSignalingEvent("close", {}, "websocket"));
       }
       this.ws.close();
       this.ws = null;
@@ -644,7 +642,7 @@ export default class ConnectionBase {
   }
 
   private signalingOnMessageTypeSwitch(): void {
-    this.callbacks.signaling(createSignalingEvent("onmessage-switch", {}, "websocket"));
+    this.callbacks.signaling(createSignalingEvent("onmessage-switch", null, "websocket"));
     if (!this.ws) {
       return;
     }
@@ -654,7 +652,7 @@ export default class ConnectionBase {
       this.ws.onerror = null;
       this.ws.close();
       this.ws = null;
-      this.callbacks.signaling(createSignalingEvent("close", {}, "websocket"));
+      this.callbacks.signaling(createSignalingEvent("close", null, "websocket"));
     }
   }
 
