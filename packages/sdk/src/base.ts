@@ -25,17 +25,11 @@ import {
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
 
-// Override from @type/WebRTC
-interface SoraRTCPeerConnectionStatic extends RTCPeerConnectionStatic {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  generateCertificate(keygenAlgorithm: any): Promise<RTCCertificate>;
+declare global {
+  interface Algorithm {
+    namedCurve: string;
+  }
 }
-
-interface Window {
-  RTCPeerConnection: SoraRTCPeerConnectionStatic;
-}
-
-declare let window: Window;
 
 export default class ConnectionBase {
   role: string;
@@ -358,6 +352,7 @@ export default class ConnectionBase {
       config = Object.assign({ certificates: [certificate] }, config);
     }
     this.trace("PEER CONNECTION CONFIG", config);
+    // @ts-ignore Chrome の場合は第2引数に goog オプションを渡すことができる
     this.pc = new window.RTCPeerConnection(config, this.constraints);
     this.pc.oniceconnectionstatechange = (_): void => {
       if (this.pc) {
