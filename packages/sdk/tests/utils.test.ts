@@ -1,14 +1,13 @@
 /* eslint @typescript-eslint/camelcase: 0 */
 import { createSignalingMessage } from "../src/utils";
 import { AudioCodecType, SpotlightFocusRid, VideoCodecType } from "../src/types";
-import pkg from "../package.json";
 
 const channelId = "7N3fsMHob";
 const role = "sendonly";
 const metadata = "PG9A6RXgYqiqWKOVO";
 const sdp = "v=0...";
 const userAgent = window.navigator.userAgent;
-const soraClient = `Sora JavaScript SDK ${pkg.version}`;
+const soraClient = "Sora JavaScript SDK __SORA_JS_SDK_VERSION__";
 const baseExpectedMessage = Object.freeze({
   type: "connect",
   sora_client: soraClient,
