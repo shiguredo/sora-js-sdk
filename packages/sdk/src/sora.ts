@@ -54,8 +54,7 @@ export default {
     return new SoraConnection(signalingUrl, debug);
   },
   version: function (): string {
-    // @ts-ignore
-    return SORA_JS_SDK_VERSION;
+    return "__SORA_JS_SDK_VERSION__";
   },
   helpers: {
     applyMediaStreamConstraints,

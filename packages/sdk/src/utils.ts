@@ -74,7 +74,7 @@ export function createSignalingMessage(
   const message: SignalingConnectMessage = {
     type: "connect",
     // @ts-ignore
-    sora_client: `Sora JavaScript SDK ${SORA_JS_SDK_VERSION}`,
+    sora_client: `Sora JavaScript SDK __SORA_JS_SDK_VERSION__`,
     environment: window.navigator.userAgent,
     role: role,
     channel_id: channelId,
