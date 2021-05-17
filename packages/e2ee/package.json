@@ -17,7 +17,6 @@
   },
   "devDependencies": {
     "@rollup/plugin-replace": "^2.4.2",
-    "@types/webrtc": "^0.0.27",
     "@typescript-eslint/eslint-plugin": "^4.22.1",
     "@typescript-eslint/parser": "^4.22.1",
     "eslint": "^7.26.0",

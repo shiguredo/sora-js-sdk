@@ -12,9 +12,6 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "newLine": "LF",
-    "types": [
-      "webrtc"
-    ],
     "lib": [
       "esnext",
       "dom",

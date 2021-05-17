@@ -13,8 +13,7 @@
     "resolveJsonModule": true,
     "newLine": "LF",
     "types": [
-      "jest",
-      "webrtc"
+      "jest"
     ],
     "lib": [
       "esnext",
