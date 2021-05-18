@@ -1,5 +1,10 @@
 import { Callbacks, ConnectionOptions, JSONType, SignalingOfferMessage, SignalingUpdateMessage, SignalingReOfferMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
+declare global {
+    interface Algorithm {
+        namedCurve: string;
+    }
+}
 export default class ConnectionBase {
     role: string;
     channelId: string;

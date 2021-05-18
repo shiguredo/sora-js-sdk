@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.12
+ * @version: 2021.1.0-canary.13
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.12
+	 * @version: 2021.1.0-canary.13
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.12";
+	        return "2021.1.0-canary.13";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -830,8 +830,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        // @ts-ignore
-	        sora_client: `Sora JavaScript SDK ${'2021.1.0-canary.12'}`,
+	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.13",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1190,13 +1189,10 @@
 	            if (!this.ws) {
 	                return resolve();
 	            }
-	            if (this.ws.readyState === 1 && !this.ignoreDisconnectWebSocket) {
+	            if (this.ws.readyState === 1) {
 	                const message = { type: "disconnect" };
 	                this.ws.send(JSON.stringify(message));
 	                this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
-	            }
-	            else {
-	                this.callbacks.signaling(createSignalingEvent("close", {}, "websocket"));
 	            }
 	            this.ws.close();
 	            this.ws = null;
@@ -1374,6 +1370,7 @@
 	            config = Object.assign({ certificates: [certificate] }, config);
 	        }
 	        this.trace("PEER CONNECTION CONFIG", config);
+	        // @ts-ignore Chrome の場合は第2引数に goog オプションを渡すことができる
 	        this.pc = new window.RTCPeerConnection(config, this.constraints);
 	        this.pc.oniceconnectionstatechange = (_) => {
 	            if (this.pc) {
@@ -1632,7 +1629,7 @@
 	        this.callbacks.notify(message, transportType);
 	    }
 	    signalingOnMessageTypeSwitch() {
-	        this.callbacks.signaling(createSignalingEvent("onmessage-switch", {}, "websocket"));
+	        this.callbacks.signaling(createSignalingEvent("onmessage-switch", null, "websocket"));
 	        if (!this.ws) {
 	            return;
 	        }
@@ -1642,7 +1639,7 @@
 	            this.ws.onerror = null;
 	            this.ws.close();
 	            this.ws = null;
-	            this.callbacks.signaling(createSignalingEvent("close", {}, "websocket"));
+	            this.callbacks.signaling(createSignalingEvent("close", null, "websocket"));
 	        }
 	    }
 	    async setSenderParameters(transceiver, encodings) {
@@ -2104,8 +2101,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        // @ts-ignore
-	        return '2021.1.0-canary.12';
+	        return "2021.1.0-canary.13";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
