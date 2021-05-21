@@ -81,6 +81,10 @@ export type SignalingOfferMessage = {
   ignore_disconnect_websocket?: boolean;
   data_channel_signaling?: boolean;
   data_channel_labels?: string[];
+  mid?: {
+    audio?: string;
+    video?: string;
+  };
 };
 
 export type SignalingUpdateMessage = {
