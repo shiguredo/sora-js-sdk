@@ -33,8 +33,13 @@ export default class ConnectionBase {
     private connectionTimeout;
     private dataChannelSignalingTimeout;
     private dataChannelSignalingTimeoutId;
+    private mids;
     constructor(signalingUrl: string, role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void;
+    stopAudioTrack(stream: MediaStream): Promise<void>;
+    stopVideoTrack(stream: MediaStream): Promise<void>;
+    replaceAudioTrack(stream: MediaStream, audioTrack: MediaStreamTrack): Promise<void>;
+    replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void>;
     private stopStream;
     private disconnectWebSocket;
     private disconnectDataChannel;
@@ -68,6 +73,10 @@ export default class ConnectionBase {
     private sendMessage;
     private sendE2EEMessage;
     private monitorDataChannelMessage;
+    private getAudioTransceiver;
+    private getVideoTransceiver;
     get e2eeSelfFingerprint(): string | undefined;
     get e2eeRemoteFingerprints(): Record<string, string> | undefined;
+    get audio(): boolean;
+    get video(): boolean;
 }

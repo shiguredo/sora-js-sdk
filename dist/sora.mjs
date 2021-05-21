@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.13
+ * @version: 2021.1.0-canary.14
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.13
+ * @version: 2021.1.0-canary.14
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.13";
+        return "2021.1.0-canary.14";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -824,7 +824,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.0-canary.13",
+        sora_client: "Sora JavaScript SDK 2021.1.0-canary.14",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1150,6 +1150,10 @@ class ConnectionBase {
         this.dataChannels = {};
         this.ignoreDisconnectWebSocket = false;
         this.dataChannelSignaling = false;
+        this.mids = {
+            audio: "",
+            video: "",
+        };
     }
     on(kind, callback) {
         // @deprecated message
@@ -1162,6 +1166,70 @@ class ConnectionBase {
         if (kind in this.callbacks) {
             this.callbacks[kind] = callback;
         }
+    }
+    stopAudioTrack(stream) {
+        for (const track of stream.getAudioTracks()) {
+            track.enabled = false;
+        }
+        return new Promise((resolve) => {
+            // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
+            setTimeout(async () => {
+                for (const track of stream.getAudioTracks()) {
+                    track.stop();
+                    stream.removeTrack(track);
+                    if (this.pc !== null) {
+                        const sender = this.pc.getSenders().find((s) => {
+                            return s.track && s.track.id === track.id;
+                        });
+                        if (sender) {
+                            await sender.replaceTrack(null);
+                        }
+                    }
+                }
+                resolve();
+            }, 100);
+        });
+    }
+    stopVideoTrack(stream) {
+        for (const track of stream.getVideoTracks()) {
+            track.enabled = false;
+        }
+        return new Promise((resolve) => {
+            // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
+            setTimeout(async () => {
+                for (const track of stream.getVideoTracks()) {
+                    track.stop();
+                    stream.removeTrack(track);
+                    if (this.pc !== null) {
+                        const sender = this.pc.getSenders().find((s) => {
+                            return s.track && s.track.id === track.id;
+                        });
+                        if (sender) {
+                            await sender.replaceTrack(null);
+                        }
+                    }
+                }
+                resolve();
+            }, 100);
+        });
+    }
+    async replaceAudioTrack(stream, audioTrack) {
+        await this.stopAudioTrack(stream);
+        const transceiver = this.getAudioTransceiver();
+        if (transceiver === null) {
+            throw new Error("Unable to set an audio track. Audio track sender is undefined");
+        }
+        stream.addTrack(audioTrack);
+        await transceiver.sender.replaceTrack(audioTrack);
+    }
+    async replaceVideoTrack(stream, videoTrack) {
+        await this.stopVideoTrack(stream);
+        const transceiver = this.getVideoTransceiver();
+        if (transceiver === null) {
+            throw new Error("Unable to set video track. Video track sender is undefined");
+        }
+        stream.addTrack(videoTrack);
+        await transceiver.sender.replaceTrack(videoTrack);
     }
     stopStream() {
         return new Promise((resolve, _) => {
@@ -1540,6 +1608,12 @@ class ConnectionBase {
         if (message.data_channel_signaling !== undefined) {
             this.dataChannelSignaling = message.data_channel_signaling;
         }
+        if (message.mid !== undefined && message.mid.audio !== undefined) {
+            this.mids.audio = message.mid.audio;
+        }
+        if (message.mid !== undefined && message.mid.video !== undefined) {
+            this.mids.video = message.mid.video;
+        }
         this.trace("SIGNALING OFFER MESSAGE", message);
         this.trace("OFFER SDP", message.sdp);
     }
@@ -1753,6 +1827,24 @@ class ConnectionBase {
             await this.disconnect();
         }, this.dataChannelSignalingTimeout);
     }
+    getAudioTransceiver() {
+        if (this.pc && this.mids.audio) {
+            const transceiver = this.pc.getTransceivers().find((transceiver) => {
+                return transceiver.mid === this.mids.audio;
+            });
+            return transceiver || null;
+        }
+        return null;
+    }
+    getVideoTransceiver() {
+        if (this.pc && this.mids.video) {
+            const transceiver = this.pc.getTransceivers().find((transceiver) => {
+                return transceiver.mid === this.mids.video;
+            });
+            return transceiver || null;
+        }
+        return null;
+    }
     get e2eeSelfFingerprint() {
         if (this.options.e2ee && this.e2ee) {
             return this.e2ee.selfFingerprint();
@@ -1764,6 +1856,12 @@ class ConnectionBase {
             return this.e2ee.remoteFingerprints();
         }
         return;
+    }
+    get audio() {
+        return this.getAudioTransceiver() !== null;
+    }
+    get video() {
+        return this.getVideoTransceiver() !== null;
     }
 }
 
@@ -2095,7 +2193,7 @@ var sora = {
         return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-        return "2021.1.0-canary.13";
+        return "2021.1.0-canary.14";
     },
     helpers: {
         applyMediaStreamConstraints,
