@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.14
+ * @version: 2021.1.0-canary.15
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.14
+	 * @version: 2021.1.0-canary.15
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.14";
+	        return "2021.1.0-canary.15";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -830,7 +830,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.14",
+	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.15",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1650,16 +1650,15 @@
 	        this.sendReAnswer();
 	    }
 	    async signalingOnMessageTypePing(message) {
-	        if (!this.ws) {
-	            return;
-	        }
 	        const pongMessage = { type: "pong" };
 	        if (message.stats) {
 	            const stats = await this.getStats();
 	            pongMessage.stats = stats;
 	        }
-	        this.ws.send(JSON.stringify(pongMessage));
-	        this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
+	        if (this.ws) {
+	            this.ws.send(JSON.stringify(pongMessage));
+	            this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
+	        }
 	    }
 	    signalingOnMessageTypeNotify(message, transportType) {
 	        if (message.event_type === "connection.created") {
@@ -2199,7 +2198,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.0-canary.14";
+	        return "2021.1.0-canary.15";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
