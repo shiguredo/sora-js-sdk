@@ -60,7 +60,10 @@ export default class ConnectionBase {
   private connectionTimeout: number;
   private dataChannelSignalingTimeout: number;
   private dataChannelSignalingTimeoutId: number;
-
+  private mids: {
+    audio: string;
+    video: string;
+  };
   constructor(
     signalingUrl: string,
     role: string,
@@ -122,6 +125,10 @@ export default class ConnectionBase {
     this.dataChannels = {};
     this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
+    this.mids = {
+      audio: "",
+      video: "",
+    };
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -134,6 +141,74 @@ export default class ConnectionBase {
     if (kind in this.callbacks) {
       this.callbacks[kind] = callback;
     }
+  }
+
+  stopAudioTrack(stream: MediaStream): Promise<void> {
+    for (const track of stream.getAudioTracks()) {
+      track.enabled = false;
+    }
+    return new Promise((resolve) => {
+      // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
+      setTimeout(async () => {
+        for (const track of stream.getAudioTracks()) {
+          track.stop();
+          stream.removeTrack(track);
+          if (this.pc !== null) {
+            const sender = this.pc.getSenders().find((s) => {
+              return s.track && s.track.id === track.id;
+            });
+            if (sender) {
+              await sender.replaceTrack(null);
+            }
+          }
+        }
+        resolve();
+      }, 100);
+    });
+  }
+
+  stopVideoTrack(stream: MediaStream): Promise<void> {
+    for (const track of stream.getVideoTracks()) {
+      track.enabled = false;
+    }
+    return new Promise((resolve) => {
+      // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
+      setTimeout(async () => {
+        for (const track of stream.getVideoTracks()) {
+          track.stop();
+          stream.removeTrack(track);
+          if (this.pc !== null) {
+            const sender = this.pc.getSenders().find((s) => {
+              return s.track && s.track.id === track.id;
+            });
+            if (sender) {
+              await sender.replaceTrack(null);
+            }
+          }
+        }
+        resolve();
+      }, 100);
+    });
+  }
+
+  async replaceAudioTrack(stream: MediaStream, audioTrack: MediaStreamTrack): Promise<void> {
+    await this.stopAudioTrack(stream);
+    const transceiver = this.getAudioTransceiver();
+    if (transceiver === null) {
+      throw new Error("Unable to set an audio track. Audio track sender is undefined");
+    }
+    stream.addTrack(audioTrack);
+    await transceiver.sender.replaceTrack(audioTrack);
+  }
+
+  async replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void> {
+    await this.stopVideoTrack(stream);
+    const transceiver = this.getVideoTransceiver();
+    if (transceiver === null) {
+      throw new Error("Unable to set video track. Video track sender is undefined");
+    }
+    stream.addTrack(videoTrack);
+    await transceiver.sender.replaceTrack(videoTrack);
   }
 
   private stopStream(): Promise<void> {
@@ -543,6 +618,12 @@ export default class ConnectionBase {
     if (message.data_channel_signaling !== undefined) {
       this.dataChannelSignaling = message.data_channel_signaling;
     }
+    if (message.mid !== undefined && message.mid.audio !== undefined) {
+      this.mids.audio = message.mid.audio;
+    }
+    if (message.mid !== undefined && message.mid.video !== undefined) {
+      this.mids.video = message.mid.video;
+    }
     this.trace("SIGNALING OFFER MESSAGE", message);
     this.trace("OFFER SDP", message.sdp);
   }
@@ -771,6 +852,26 @@ export default class ConnectionBase {
     }, this.dataChannelSignalingTimeout);
   }
 
+  private getAudioTransceiver(): RTCRtpTransceiver | null {
+    if (this.pc && this.mids.audio) {
+      const transceiver = this.pc.getTransceivers().find((transceiver) => {
+        return transceiver.mid === this.mids.audio;
+      });
+      return transceiver || null;
+    }
+    return null;
+  }
+
+  private getVideoTransceiver(): RTCRtpTransceiver | null {
+    if (this.pc && this.mids.video) {
+      const transceiver = this.pc.getTransceivers().find((transceiver) => {
+        return transceiver.mid === this.mids.video;
+      });
+      return transceiver || null;
+    }
+    return null;
+  }
+
   get e2eeSelfFingerprint(): string | undefined {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.selfFingerprint();
@@ -783,5 +884,13 @@ export default class ConnectionBase {
       return this.e2ee.remoteFingerprints();
     }
     return;
+  }
+
+  get audio(): boolean {
+    return this.getAudioTransceiver() !== null;
+  }
+
+  get video(): boolean {
+    return this.getVideoTransceiver() !== null;
   }
 }
