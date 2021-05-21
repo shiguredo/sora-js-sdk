@@ -659,16 +659,15 @@ export default class ConnectionBase {
   }
 
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
-    if (!this.ws) {
-      return;
-    }
     const pongMessage: { type: "pong"; stats?: RTCStatsReport[] } = { type: "pong" };
     if (message.stats) {
       const stats = await this.getStats();
       pongMessage.stats = stats;
     }
-    this.ws.send(JSON.stringify(pongMessage));
-    this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
+    if (this.ws) {
+      this.ws.send(JSON.stringify(pongMessage));
+      this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
+    }
   }
 
   private signalingOnMessageTypeNotify(message: SignalingNotifyMessage, transportType: TransportType): void {
