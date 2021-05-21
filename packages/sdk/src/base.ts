@@ -234,7 +234,7 @@ export default class ConnectionBase {
       if (!this.ws) {
         return resolve();
       }
-      if (this.ws.readyState === 1) {
+      if (this.ws.readyState === 1 && Object.keys(this.dataChannels).length === 0) {
         const message = { type: "disconnect" };
         this.ws.send(JSON.stringify(message));
         this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
