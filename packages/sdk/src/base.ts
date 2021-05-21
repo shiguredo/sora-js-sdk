@@ -562,6 +562,7 @@ export default class ConnectionBase {
             const error = new Error();
             error.message = "CONNECTION TIMEOUT";
             this.callbacks.timeout();
+            this.trace("DISCONNECT", "Signaling connection timeout");
             await this.disconnect();
             reject(error);
           }
@@ -601,6 +602,7 @@ export default class ConnectionBase {
     this.connectionId = message.connection_id;
     if (this.ws) {
       this.ws.onclose = async (e): Promise<void> => {
+        this.trace("DISCONNECT", "Trigger event WebSocket onclose");
         this.callbacks.disconnect(e);
         await this.disconnect();
       };
@@ -780,6 +782,7 @@ export default class ConnectionBase {
       this.trace("CLOSE DATA CHANNEL", channel.label);
       if (this.ignoreDisconnectWebSocket && channel.label === "signaling") {
         const closeEvent = new CloseEvent("close", { code: 4999 });
+        this.trace("DISCONNECT", "Trigger event DataChannel label 'signaling' onclose");
         this.callbacks.disconnect(closeEvent);
         await this.disconnect();
       }
@@ -847,6 +850,7 @@ export default class ConnectionBase {
   private monitorDataChannelMessage(): void {
     clearTimeout(this.dataChannelSignalingTimeoutId);
     this.dataChannelSignalingTimeoutId = setTimeout(async () => {
+      this.trace("DISCONNECT", "DataChannel packet monitoring timeout");
       await this.disconnect();
     }, this.dataChannelSignalingTimeout);
   }
