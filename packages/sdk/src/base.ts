@@ -542,9 +542,6 @@ export default class ConnectionBase {
           reject(error);
         } else if (this.pc && this.pc.connectionState === "connected") {
           clearInterval(timerId);
-          if (this.dataChannelSignaling) {
-            this.monitorDataChannelMessage();
-          }
           resolve();
         }
       }, 100);
@@ -732,6 +729,8 @@ export default class ConnectionBase {
       this.ws.close();
       this.ws = null;
       this.callbacks.signaling(createSignalingEvent("close", null, "websocket"));
+    } else {
+      this.monitorDataChannelMessage();
     }
   }
 
@@ -798,7 +797,9 @@ export default class ConnectionBase {
     // onmessage
     dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
       // DataChannel の timeout 処理を初期化する
-      this.monitorDataChannelMessage();
+      if (0 < this.dataChannelSignalingTimeoutId) {
+        this.monitorDataChannelMessage();
+      }
       const channel = event.currentTarget as RTCDataChannel;
       if (channel.label === "signaling") {
         const message = JSON.parse(event.data) as SignalingMessage;
