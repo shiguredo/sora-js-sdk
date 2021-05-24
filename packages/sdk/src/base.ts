@@ -60,10 +60,12 @@ export default class ConnectionBase {
   private connectionTimeout: number;
   private dataChannelSignalingTimeout: number;
   private dataChannelSignalingTimeoutId: number;
+  private disconnectWaitTimeout: number;
   private mids: {
     audio: string;
     video: string;
   };
+  private signalingSwitched: boolean;
   constructor(
     signalingUrl: string,
     role: string,
@@ -95,6 +97,11 @@ export default class ConnectionBase {
     this.dataChannelSignalingTimeout = 180000;
     if (typeof this.options.dataChannelSignalingTimeout === "number") {
       this.dataChannelSignalingTimeout = this.options.dataChannelSignalingTimeout;
+    }
+    // WebSocket/DataChannel の disconnect timeout の初期値をセットする
+    this.disconnectWaitTimeout = 3000;
+    if (typeof this.options.disconnectWaitTimeout === "number") {
+      this.disconnectWaitTimeout = this.options.disconnectWaitTimeout;
     }
     this.constraints = null;
     this.debug = debug;
@@ -129,6 +136,7 @@ export default class ConnectionBase {
       audio: "",
       video: "",
     };
+    this.signalingSwitched = false;
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -234,34 +242,81 @@ export default class ConnectionBase {
       if (!this.ws) {
         return resolve();
       }
-      if (this.ws.readyState === 1 && Object.keys(this.dataChannels).length === 0) {
+      this.ws.onclose = () => {
+        if (this.ws) {
+          this.ws.close();
+          this.ws = null;
+        }
+        return resolve();
+      };
+      if (this.ws.readyState === 1 && !this.signalingSwitched) {
         const message = { type: "disconnect" };
         this.ws.send(JSON.stringify(message));
-        this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
+        this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "websocket"));
       }
-      this.ws.close();
-      this.ws = null;
-      return resolve();
+      // WebSocket 切断を待つ
+      setTimeout(() => {
+        if (this.ws) {
+          this.ws.onmessage = null;
+          this.ws.onclose = null;
+          this.ws.close();
+          this.ws = null;
+        }
+        return resolve();
+      }, this.disconnectWaitTimeout);
     });
   }
 
   private disconnectDataChannel(): Promise<void> {
+    if (this.signalingSwitched) {
+      return new Promise((resolve, _) => {
+        if (!this.dataChannels["signaling"]) {
+          return resolve();
+        }
+        this.dataChannels["signaling"].onmessage = null;
+        this.dataChannels["signaling"].onclose = () => {
+          for (const key of Object.keys(this.dataChannels)) {
+            const dataChannel = this.dataChannels[key];
+            if (dataChannel) {
+              dataChannel.onmessage = null;
+              dataChannel.onclose = null;
+              dataChannel.close();
+            }
+            delete this.dataChannels[key];
+          }
+          return resolve();
+        };
+        if (this.dataChannels["signaling"].readyState === "open") {
+          const message = { type: "disconnect" };
+          this.dataChannels["signaling"].send(JSON.stringify(message));
+          this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "datachannel"));
+        }
+        // DataChannel 切断を待つ
+        setTimeout(() => {
+          for (const key of Object.keys(this.dataChannels)) {
+            const dataChannel = this.dataChannels[key];
+            if (dataChannel) {
+              dataChannel.onmessage = null;
+              dataChannel.onclose = null;
+              dataChannel.close();
+            }
+            delete this.dataChannels[key];
+          }
+          return resolve();
+        }, this.disconnectWaitTimeout);
+      });
+    }
     return new Promise((resolve, _) => {
-      if (!this.dataChannels["signaling"]) {
-        return resolve();
+      for (const key of Object.keys(this.dataChannels)) {
+        const dataChannel = this.dataChannels[key];
+        if (dataChannel) {
+          dataChannel.onmessage = null;
+          dataChannel.onclose = null;
+          dataChannel.close();
+        }
+        delete this.dataChannels[key];
       }
-      if (this.dataChannels["signaling"].readyState === "open") {
-        const message = { type: "disconnect" };
-        this.dataChannels["signaling"].send(JSON.stringify(message));
-        this.callbacks.signaling(createSignalingEvent("disconnect", message, "datachannel"));
-      }
-      // DataChannel 切断を待つ
-      setTimeout(() => {
-        Object.keys(this.dataChannels).forEach((key) => {
-          delete this.dataChannels[key];
-        });
-        return resolve();
-      }, 100);
+      return resolve();
     });
   }
 
@@ -719,6 +774,7 @@ export default class ConnectionBase {
 
   private signalingOnMessageTypeSwitch(): void {
     this.callbacks.signaling(createSignalingEvent("onmessage-switch", null, "websocket"));
+    this.signalingSwitched = true;
     if (!this.ws) {
       return;
     }
@@ -729,7 +785,6 @@ export default class ConnectionBase {
       this.ws.close();
       this.ws = null;
       this.callbacks.signaling(createSignalingEvent("close", null, "websocket"));
-    } else {
       this.monitorDataChannelMessage();
     }
   }
