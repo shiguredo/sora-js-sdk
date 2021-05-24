@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.15
+ * @version: 2021.1.0-canary.16
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.15
+ * @version: 2021.1.0-canary.16
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.15";
+        return "2021.1.0-canary.16";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -824,7 +824,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.0-canary.15",
+        sora_client: "Sora JavaScript SDK 2021.1.0-canary.16",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1251,7 +1251,7 @@ class ConnectionBase {
             if (!this.ws) {
                 return resolve();
             }
-            if (this.ws.readyState === 1) {
+            if (this.ws.readyState === 1 && Object.keys(this.dataChannels).length === 0) {
                 const message = { type: "disconnect" };
                 this.ws.send(JSON.stringify(message));
                 this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
@@ -1556,6 +1556,7 @@ class ConnectionBase {
                         const error = new Error();
                         error.message = "CONNECTION TIMEOUT";
                         this.callbacks.timeout();
+                        this.trace("DISCONNECT", "Signaling connection timeout");
                         await this.disconnect();
                         reject(error);
                     }
@@ -1591,10 +1592,13 @@ class ConnectionBase {
         this.connectionId = message.connection_id;
         if (this.ws) {
             this.ws.onclose = async (e) => {
+                this.trace("DISCONNECT", "Trigger event WebSocket onclose");
                 this.callbacks.disconnect(e);
                 await this.disconnect();
             };
-            this.ws.onerror = null;
+            this.ws.onerror = (event) => {
+                this.callbacks.signaling(createSignalingEvent("onerror", event, "websocket"));
+            };
         }
         if (message.metadata !== undefined) {
             this.authMetadata = message.metadata;
@@ -1753,6 +1757,7 @@ class ConnectionBase {
             this.trace("CLOSE DATA CHANNEL", channel.label);
             if (this.ignoreDisconnectWebSocket && channel.label === "signaling") {
                 const closeEvent = new CloseEvent("close", { code: 4999 });
+                this.trace("DISCONNECT", "Trigger event DataChannel label 'signaling' onclose");
                 this.callbacks.disconnect(closeEvent);
                 await this.disconnect();
             }
@@ -1823,6 +1828,7 @@ class ConnectionBase {
     monitorDataChannelMessage() {
         clearTimeout(this.dataChannelSignalingTimeoutId);
         this.dataChannelSignalingTimeoutId = setTimeout(async () => {
+            this.trace("DISCONNECT", "DataChannel packet monitoring timeout");
             await this.disconnect();
         }, this.dataChannelSignalingTimeout);
     }
@@ -2192,7 +2198,7 @@ var sora = {
         return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-        return "2021.1.0-canary.15";
+        return "2021.1.0-canary.16";
     },
     helpers: {
         applyMediaStreamConstraints,
