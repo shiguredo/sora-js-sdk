@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.16
+ * @version: 2021.1.0-canary.17
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.16
+	 * @version: 2021.1.0-canary.17
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.16";
+	        return "2021.1.0-canary.17";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -830,7 +830,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.16",
+	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.17",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1127,6 +1127,11 @@
 	        if (typeof this.options.dataChannelSignalingTimeout === "number") {
 	            this.dataChannelSignalingTimeout = this.options.dataChannelSignalingTimeout;
 	        }
+	        // WebSocket/DataChannel の disconnect timeout の初期値をセットする
+	        this.disconnectWaitTimeout = 3000;
+	        if (typeof this.options.disconnectWaitTimeout === "number") {
+	            this.disconnectWaitTimeout = this.options.disconnectWaitTimeout;
+	        }
 	        this.constraints = null;
 	        this.debug = debug;
 	        this.clientId = null;
@@ -1160,6 +1165,7 @@
 	            audio: "",
 	            video: "",
 	        };
+	        this.signalingSwitched = false;
 	    }
 	    on(kind, callback) {
 	        // @deprecated message
@@ -1257,33 +1263,80 @@
 	            if (!this.ws) {
 	                return resolve();
 	            }
-	            if (this.ws.readyState === 1 && Object.keys(this.dataChannels).length === 0) {
+	            this.ws.onclose = () => {
+	                if (this.ws) {
+	                    this.ws.close();
+	                    this.ws = null;
+	                }
+	                return resolve();
+	            };
+	            if (this.ws.readyState === 1 && !this.signalingSwitched) {
 	                const message = { type: "disconnect" };
 	                this.ws.send(JSON.stringify(message));
-	                this.callbacks.signaling(createSignalingEvent("disconnect", message, "websocket"));
+	                this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "websocket"));
 	            }
-	            this.ws.close();
-	            this.ws = null;
-	            return resolve();
+	            // WebSocket 切断を待つ
+	            setTimeout(() => {
+	                if (this.ws) {
+	                    this.ws.onmessage = null;
+	                    this.ws.onclose = null;
+	                    this.ws.close();
+	                    this.ws = null;
+	                }
+	                return resolve();
+	            }, this.disconnectWaitTimeout);
 	        });
 	    }
 	    disconnectDataChannel() {
+	        if (this.signalingSwitched) {
+	            return new Promise((resolve, _) => {
+	                if (!this.dataChannels["signaling"]) {
+	                    return resolve();
+	                }
+	                this.dataChannels["signaling"].onmessage = null;
+	                this.dataChannels["signaling"].onclose = () => {
+	                    for (const key of Object.keys(this.dataChannels)) {
+	                        const dataChannel = this.dataChannels[key];
+	                        if (dataChannel) {
+	                            dataChannel.onmessage = null;
+	                            dataChannel.onclose = null;
+	                            dataChannel.close();
+	                        }
+	                        delete this.dataChannels[key];
+	                    }
+	                    return resolve();
+	                };
+	                if (this.dataChannels["signaling"].readyState === "open") {
+	                    const message = { type: "disconnect" };
+	                    this.dataChannels["signaling"].send(JSON.stringify(message));
+	                    this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "datachannel"));
+	                }
+	                // DataChannel 切断を待つ
+	                setTimeout(() => {
+	                    for (const key of Object.keys(this.dataChannels)) {
+	                        const dataChannel = this.dataChannels[key];
+	                        if (dataChannel) {
+	                            dataChannel.onmessage = null;
+	                            dataChannel.onclose = null;
+	                            dataChannel.close();
+	                        }
+	                        delete this.dataChannels[key];
+	                    }
+	                    return resolve();
+	                }, this.disconnectWaitTimeout);
+	            });
+	        }
 	        return new Promise((resolve, _) => {
-	            if (!this.dataChannels["signaling"]) {
-	                return resolve();
+	            for (const key of Object.keys(this.dataChannels)) {
+	                const dataChannel = this.dataChannels[key];
+	                if (dataChannel) {
+	                    dataChannel.onmessage = null;
+	                    dataChannel.onclose = null;
+	                    dataChannel.close();
+	                }
+	                delete this.dataChannels[key];
 	            }
-	            if (this.dataChannels["signaling"].readyState === "open") {
-	                const message = { type: "disconnect" };
-	                this.dataChannels["signaling"].send(JSON.stringify(message));
-	                this.callbacks.signaling(createSignalingEvent("disconnect", message, "datachannel"));
-	            }
-	            // DataChannel 切断を待つ
-	            setTimeout(() => {
-	                Object.keys(this.dataChannels).forEach((key) => {
-	                    delete this.dataChannels[key];
-	                });
-	                return resolve();
-	            }, 100);
+	            return resolve();
 	        });
 	    }
 	    disconnectPeerConnection() {
@@ -1545,9 +1598,6 @@
 	                }
 	                else if (this.pc && this.pc.connectionState === "connected") {
 	                    clearInterval(timerId);
-	                    if (this.dataChannelSignaling) {
-	                        this.monitorDataChannelMessage();
-	                    }
 	                    resolve();
 	                }
 	            }, 100);
@@ -1707,6 +1757,7 @@
 	    }
 	    signalingOnMessageTypeSwitch() {
 	        this.callbacks.signaling(createSignalingEvent("onmessage-switch", null, "websocket"));
+	        this.signalingSwitched = true;
 	        if (!this.ws) {
 	            return;
 	        }
@@ -1717,6 +1768,7 @@
 	            this.ws.close();
 	            this.ws = null;
 	            this.callbacks.signaling(createSignalingEvent("close", null, "websocket"));
+	            this.monitorDataChannelMessage();
 	        }
 	    }
 	    async setSenderParameters(transceiver, encodings) {
@@ -1777,7 +1829,9 @@
 	        // onmessage
 	        dataChannelEvent.channel.onmessage = async (event) => {
 	            // DataChannel の timeout 処理を初期化する
-	            this.monitorDataChannelMessage();
+	            if (0 < this.dataChannelSignalingTimeoutId) {
+	                this.monitorDataChannelMessage();
+	            }
 	            const channel = event.currentTarget;
 	            if (channel.label === "signaling") {
 	                const message = JSON.parse(event.data);
@@ -2204,7 +2258,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.0-canary.16";
+	        return "2021.1.0-canary.17";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,

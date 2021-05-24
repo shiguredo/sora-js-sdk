@@ -33,7 +33,9 @@ export default class ConnectionBase {
     private connectionTimeout;
     private dataChannelSignalingTimeout;
     private dataChannelSignalingTimeoutId;
+    private disconnectWaitTimeout;
     private mids;
+    private signalingSwitched;
     constructor(signalingUrl: string, role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void;
     stopAudioTrack(stream: MediaStream): Promise<void>;
