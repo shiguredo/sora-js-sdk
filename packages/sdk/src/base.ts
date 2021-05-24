@@ -606,7 +606,9 @@ export default class ConnectionBase {
         this.callbacks.disconnect(e);
         await this.disconnect();
       };
-      this.ws.onerror = null;
+      this.ws.onerror = (event) => {
+        this.callbacks.signaling(createSignalingEvent("onerror", event, "websocket"));
+      };
     }
     if (message.metadata !== undefined) {
       this.authMetadata = message.metadata;
