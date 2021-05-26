@@ -43,9 +43,10 @@ export default class ConnectionBase {
     replaceAudioTrack(stream: MediaStream, audioTrack: MediaStreamTrack): Promise<void>;
     replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void>;
     private stopStream;
-    private disconnectWebSocket;
-    private disconnectDataChannel;
-    private disconnectPeerConnection;
+    private terminateWebSocket;
+    private terminateDataChannel;
+    private terminatePeerConnection;
+    private terminate;
     disconnect(): Promise<void>;
     protected setupE2EE(): void;
     protected startE2EE(): void;

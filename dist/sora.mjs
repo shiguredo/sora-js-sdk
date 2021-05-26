@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.17
+ * @version: 2021.1.0-canary.18
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.17
+ * @version: 2021.1.0-canary.18
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.17";
+        return "2021.1.0-canary.18";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -824,7 +824,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.0-canary.17",
+        sora_client: "Sora JavaScript SDK 2021.1.0-canary.18",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1252,17 +1252,17 @@ class ConnectionBase {
             return resolve();
         });
     }
-    disconnectWebSocket() {
+    terminateWebSocket() {
         return new Promise((resolve, _) => {
             if (!this.ws) {
-                return resolve();
+                return resolve(null);
             }
-            this.ws.onclose = () => {
+            this.ws.onclose = (event) => {
                 if (this.ws) {
                     this.ws.close();
                     this.ws = null;
                 }
-                return resolve();
+                return resolve(event);
             };
             if (this.ws.readyState === 1 && !this.signalingSwitched) {
                 const message = { type: "disconnect" };
@@ -1272,32 +1272,31 @@ class ConnectionBase {
             // WebSocket 切断を待つ
             setTimeout(() => {
                 if (this.ws) {
-                    this.ws.onmessage = null;
-                    this.ws.onclose = null;
                     this.ws.close();
                     this.ws = null;
                 }
-                return resolve();
+                return resolve(null);
             }, this.disconnectWaitTimeout);
         });
     }
-    disconnectDataChannel() {
+    terminateDataChannel() {
+        const deleteChannels = () => {
+            for (const key of Object.keys(this.dataChannels)) {
+                const dataChannel = this.dataChannels[key];
+                if (dataChannel) {
+                    dataChannel.close();
+                }
+                delete this.dataChannels[key];
+            }
+        };
+        clearInterval(this.dataChannelSignalingTimeoutId);
         if (this.signalingSwitched) {
             return new Promise((resolve, _) => {
                 if (!this.dataChannels["signaling"]) {
                     return resolve();
                 }
-                this.dataChannels["signaling"].onmessage = null;
                 this.dataChannels["signaling"].onclose = () => {
-                    for (const key of Object.keys(this.dataChannels)) {
-                        const dataChannel = this.dataChannels[key];
-                        if (dataChannel) {
-                            dataChannel.onmessage = null;
-                            dataChannel.onclose = null;
-                            dataChannel.close();
-                        }
-                        delete this.dataChannels[key];
-                    }
+                    deleteChannels();
                     return resolve();
                 };
                 if (this.dataChannels["signaling"].readyState === "open") {
@@ -1307,33 +1306,17 @@ class ConnectionBase {
                 }
                 // DataChannel 切断を待つ
                 setTimeout(() => {
-                    for (const key of Object.keys(this.dataChannels)) {
-                        const dataChannel = this.dataChannels[key];
-                        if (dataChannel) {
-                            dataChannel.onmessage = null;
-                            dataChannel.onclose = null;
-                            dataChannel.close();
-                        }
-                        delete this.dataChannels[key];
-                    }
+                    deleteChannels();
                     return resolve();
                 }, this.disconnectWaitTimeout);
             });
         }
         return new Promise((resolve, _) => {
-            for (const key of Object.keys(this.dataChannels)) {
-                const dataChannel = this.dataChannels[key];
-                if (dataChannel) {
-                    dataChannel.onmessage = null;
-                    dataChannel.onclose = null;
-                    dataChannel.close();
-                }
-                delete this.dataChannels[key];
-            }
+            deleteChannels();
             return resolve();
         });
     }
-    disconnectPeerConnection() {
+    terminatePeerConnection() {
         return new Promise((resolve, _reject) => {
             if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) {
                 return resolve();
@@ -1358,26 +1341,103 @@ class ConnectionBase {
             this.pc.close();
         });
     }
-    async disconnect() {
+    async terminate(closeEvent) {
+        await this.stopStream();
+        // callback を止める
+        if (this.pc) {
+            this.pc.ondatachannel = null;
+        }
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.onmessage = null;
+        }
+        for (const key of Object.keys(this.dataChannels)) {
+            const dataChannel = this.dataChannels[key];
+            if (dataChannel) {
+                dataChannel.onmessage = null;
+                dataChannel.onclose = null;
+            }
+        }
+        await this.terminateDataChannel();
+        await this.terminateWebSocket();
+        await this.terminatePeerConnection();
+        if (this.e2ee) {
+            this.e2ee.terminateWorker();
+        }
         this.clientId = null;
         this.connectionId = null;
-        this.authMetadata = null;
         this.remoteConnectionIds = [];
+        this.stream = null;
+        this.ws = null;
+        this.pc = null;
+        this.encodings = [];
+        this.authMetadata = null;
+        this.e2ee = null;
+        this.dataChannels = {};
+        this.ignoreDisconnectWebSocket = false;
+        this.dataChannelSignaling = false;
+        this.mids = {
+            audio: "",
+            video: "",
+        };
+        this.signalingSwitched = false;
+        this.callbacks.disconnect(closeEvent);
+    }
+    async disconnect() {
         await this.stopStream();
-        await this.disconnectDataChannel();
-        await this.disconnectWebSocket();
-        await this.disconnectPeerConnection();
+        // callback を止める
+        if (this.pc) {
+            this.pc.ondatachannel = null;
+        }
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.onmessage = null;
+        }
+        for (const key of Object.keys(this.dataChannels)) {
+            const dataChannel = this.dataChannels[key];
+            if (dataChannel) {
+                dataChannel.onmessage = null;
+                dataChannel.onclose = null;
+            }
+        }
+        const dataChannelCloseEvent = new CloseEvent("close", { code: 4997 });
+        await this.terminateDataChannel();
+        const webSocketCloseEvent = await this.terminateWebSocket();
+        await this.terminatePeerConnection();
         if (this.e2ee) {
             this.e2ee.terminateWorker();
             this.e2ee = null;
         }
-        return;
+        if (this.signalingSwitched) {
+            this.callbacks.disconnect(dataChannelCloseEvent);
+        }
+        else if (webSocketCloseEvent !== null) {
+            this.callbacks.disconnect(webSocketCloseEvent);
+        }
+        this.clientId = null;
+        this.connectionId = null;
+        this.remoteConnectionIds = [];
+        this.stream = null;
+        this.ws = null;
+        this.pc = null;
+        this.encodings = [];
+        this.authMetadata = null;
+        this.e2ee = null;
+        this.dataChannels = {};
+        this.ignoreDisconnectWebSocket = false;
+        this.dataChannelSignaling = false;
+        this.mids = {
+            audio: "",
+            video: "",
+        };
+        this.signalingSwitched = false;
     }
     setupE2EE() {
         if (this.options.e2ee === true) {
             this.e2ee = new SoraE2EE();
             this.e2ee.onWorkerDisconnect = async () => {
-                await this.disconnect();
+                const closeEvent = new CloseEvent("close", { code: 4998 });
+                await this.terminate(closeEvent);
             };
             this.e2ee.startWorker();
         }
@@ -1455,7 +1515,7 @@ class ConnectionBase {
                     this.signalingOnMessageTypeNotify(message, "websocket");
                 }
                 else if (message.type == "switch") {
-                    this.signalingOnMessageTypeSwitch();
+                    await this.signalingOnMessageTypeSwitch();
                 }
             };
         });
@@ -1641,10 +1701,9 @@ class ConnectionBase {
         this.clientId = message.client_id;
         this.connectionId = message.connection_id;
         if (this.ws) {
-            this.ws.onclose = async (e) => {
+            this.ws.onclose = async (event) => {
                 this.trace("DISCONNECT", "Trigger event WebSocket onclose");
-                this.callbacks.disconnect(e);
-                await this.disconnect();
+                await this.terminate(event);
             };
             this.ws.onerror = (event) => {
                 this.callbacks.signaling(createSignalingEvent("onerror", event, "websocket"));
@@ -1749,18 +1808,14 @@ class ConnectionBase {
         }
         this.callbacks.notify(message, transportType);
     }
-    signalingOnMessageTypeSwitch() {
+    async signalingOnMessageTypeSwitch() {
         this.callbacks.signaling(createSignalingEvent("onmessage-switch", null, "websocket"));
         this.signalingSwitched = true;
         if (!this.ws) {
             return;
         }
         if (this.ignoreDisconnectWebSocket && this.closeWebSocket) {
-            this.ws.onmessage = null;
-            this.ws.onclose = null;
-            this.ws.onerror = null;
-            this.ws.close();
-            this.ws = null;
+            await this.terminateWebSocket();
             this.callbacks.signaling(createSignalingEvent("close", null, "websocket"));
             this.monitorDataChannelMessage();
         }
@@ -1807,12 +1862,8 @@ class ConnectionBase {
             const channel = event.currentTarget;
             this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
             this.trace("CLOSE DATA CHANNEL", channel.label);
-            if (this.ignoreDisconnectWebSocket && channel.label === "signaling") {
-                const closeEvent = new CloseEvent("close", { code: 4999 });
-                this.trace("DISCONNECT", "Trigger event DataChannel label 'signaling' onclose");
-                this.callbacks.disconnect(closeEvent);
-                await this.disconnect();
-            }
+            const closeEvent = new CloseEvent("close", { code: 4999 });
+            await this.terminate(closeEvent);
         };
         // onerror
         dataChannelEvent.channel.onerror = (event) => {
@@ -1883,7 +1934,8 @@ class ConnectionBase {
         clearTimeout(this.dataChannelSignalingTimeoutId);
         this.dataChannelSignalingTimeoutId = setTimeout(async () => {
             this.trace("DISCONNECT", "DataChannel packet monitoring timeout");
-            await this.disconnect();
+            const closeEvent = new CloseEvent("close", { code: 4999 });
+            await this.terminate(closeEvent);
         }, this.dataChannelSignalingTimeout);
     }
     getAudioTransceiver() {
@@ -2252,7 +2304,7 @@ var sora = {
         return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-        return "2021.1.0-canary.17";
+        return "2021.1.0-canary.18";
     },
     helpers: {
         applyMediaStreamConstraints,
