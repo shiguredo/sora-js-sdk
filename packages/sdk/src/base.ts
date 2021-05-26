@@ -238,6 +238,7 @@ export default class ConnectionBase {
   }
 
   private terminateWebSocket(): Promise<CloseEvent | null> {
+    let timerId = 0;
     return new Promise((resolve, _) => {
       if (!this.ws) {
         return resolve(null);
@@ -247,6 +248,7 @@ export default class ConnectionBase {
           this.ws.close();
           this.ws = null;
         }
+        clearTimeout(timerId);
         return resolve(event);
       };
       if (this.ws.readyState === 1 && !this.signalingSwitched) {
@@ -255,12 +257,16 @@ export default class ConnectionBase {
         this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "websocket"));
       }
       // WebSocket 切断を待つ
-      setTimeout(() => {
+      timerId = setTimeout(() => {
         if (this.ws) {
           this.ws.close();
           this.ws = null;
         }
-        return resolve(null);
+        // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
+        timerId = setTimeout(() => {
+          const closeEvent = new CloseEvent("close", { code: 4996 });
+          return resolve(closeEvent);
+        }, 500);
       }, this.disconnectWaitTimeout);
     });
   }
