@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.19
+ * @version: 2021.1.0-canary.20
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.19
+ * @version: 2021.1.0-canary.20
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.19";
+        return "2021.1.0-canary.20";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -824,7 +824,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.0-canary.19",
+        sora_client: "Sora JavaScript SDK 2021.1.0-canary.20",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1254,6 +1254,13 @@ class ConnectionBase {
     }
     terminateWebSocket() {
         let timerId = 0;
+        if (this.signalingSwitched) {
+            if (this.ws) {
+                this.ws.close();
+                this.ws = null;
+            }
+            return Promise.resolve(null);
+        }
         return new Promise((resolve, _) => {
             if (!this.ws) {
                 return resolve(null);
@@ -1266,23 +1273,23 @@ class ConnectionBase {
                 clearTimeout(timerId);
                 return resolve(event);
             };
-            if (this.ws.readyState === 1 && !this.signalingSwitched) {
+            if (this.ws.readyState === 1) {
                 const message = { type: "disconnect" };
                 this.ws.send(JSON.stringify(message));
                 this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "websocket"));
-            }
-            // WebSocket 切断を待つ
-            timerId = setTimeout(() => {
-                if (this.ws) {
-                    this.ws.close();
-                    this.ws = null;
-                }
-                // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
+                // WebSocket 切断を待つ
                 timerId = setTimeout(() => {
-                    const closeEvent = new CloseEvent("close", { code: 4996 });
-                    return resolve(closeEvent);
-                }, 500);
-            }, this.disconnectWaitTimeout);
+                    if (this.ws) {
+                        this.ws.close();
+                        this.ws = null;
+                    }
+                    // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
+                    timerId = setTimeout(() => {
+                        const closeEvent = new CloseEvent("close", { code: 4996 });
+                        return resolve(closeEvent);
+                    }, 500);
+                }, this.disconnectWaitTimeout);
+            }
         });
     }
     terminateDataChannel() {
@@ -1317,10 +1324,8 @@ class ConnectionBase {
                 }, this.disconnectWaitTimeout);
             });
         }
-        return new Promise((resolve, _) => {
-            deleteChannels();
-            return resolve();
-        });
+        deleteChannels();
+        return Promise.resolve();
     }
     terminatePeerConnection() {
         return new Promise((resolve, _reject) => {
@@ -1724,8 +1729,14 @@ class ConnectionBase {
         if (message.ignore_disconnect_websocket !== undefined) {
             this.ignoreDisconnectWebSocket = message.ignore_disconnect_websocket;
         }
+        else {
+            this.ignoreDisconnectWebSocket = false;
+        }
         if (message.data_channel_signaling !== undefined) {
             this.dataChannelSignaling = message.data_channel_signaling;
+        }
+        else {
+            this.dataChannelSignaling = false;
         }
         if (message.mid !== undefined && message.mid.audio !== undefined) {
             this.mids.audio = message.mid.audio;
@@ -2310,7 +2321,7 @@ var sora = {
         return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-        return "2021.1.0-canary.19";
+        return "2021.1.0-canary.20";
     },
     helpers: {
         applyMediaStreamConstraints,
