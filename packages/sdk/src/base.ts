@@ -239,6 +239,13 @@ export default class ConnectionBase {
 
   private terminateWebSocket(): Promise<CloseEvent | null> {
     let timerId = 0;
+    if (this.signalingSwitched) {
+      if (this.ws) {
+        this.ws.close();
+        this.ws = null;
+      }
+      return Promise.resolve(null);
+    }
     return new Promise((resolve, _) => {
       if (!this.ws) {
         return resolve(null);
@@ -251,23 +258,23 @@ export default class ConnectionBase {
         clearTimeout(timerId);
         return resolve(event);
       };
-      if (this.ws.readyState === 1 && !this.signalingSwitched) {
+      if (this.ws.readyState === 1) {
         const message = { type: "disconnect" };
         this.ws.send(JSON.stringify(message));
         this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "websocket"));
-      }
-      // WebSocket 切断を待つ
-      timerId = setTimeout(() => {
-        if (this.ws) {
-          this.ws.close();
-          this.ws = null;
-        }
-        // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
+        // WebSocket 切断を待つ
         timerId = setTimeout(() => {
-          const closeEvent = new CloseEvent("close", { code: 4996 });
-          return resolve(closeEvent);
-        }, 500);
-      }, this.disconnectWaitTimeout);
+          if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+          }
+          // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
+          timerId = setTimeout(() => {
+            const closeEvent = new CloseEvent("close", { code: 4996 });
+            return resolve(closeEvent);
+          }, 500);
+        }, this.disconnectWaitTimeout);
+      }
     });
   }
 
@@ -304,10 +311,8 @@ export default class ConnectionBase {
         }, this.disconnectWaitTimeout);
       });
     }
-    return new Promise((resolve, _) => {
-      deleteChannels();
-      return resolve();
-    });
+    deleteChannels();
+    return Promise.resolve();
   }
 
   private terminatePeerConnection(): Promise<void> {
