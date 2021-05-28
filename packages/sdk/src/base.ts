@@ -241,6 +241,7 @@ export default class ConnectionBase {
     let timerId = 0;
     if (this.signalingSwitched) {
       if (this.ws) {
+        this.ws.onclose = null;
         this.ws.close();
         this.ws = null;
       }
