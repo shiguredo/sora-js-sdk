@@ -736,9 +736,13 @@ export default class ConnectionBase {
     }
     if (message.ignore_disconnect_websocket !== undefined) {
       this.ignoreDisconnectWebSocket = message.ignore_disconnect_websocket;
+    } else {
+      this.ignoreDisconnectWebSocket = false;
     }
     if (message.data_channel_signaling !== undefined) {
       this.dataChannelSignaling = message.data_channel_signaling;
+    } else {
+      this.dataChannelSignaling = false;
     }
     if (message.mid !== undefined && message.mid.audio !== undefined) {
       this.mids.audio = message.mid.audio;
