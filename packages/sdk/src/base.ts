@@ -1,13 +1,14 @@
 import {
-  createSignalingMessage,
-  getPreKeyBundle,
-  getSignalingNotifyData,
-  getSignalingNotifyAuthnMetadata,
-  createDataChannelEvent,
-  createSignalingEvent,
-  trace,
-  isSafari,
   ConnectError,
+  createDataChannelEvent,
+  createDataChannelSignalingEvent,
+  createSignalingMessage,
+  createWebSocketSignalingEvent,
+  getPreKeyBundle,
+  getSignalingNotifyAuthnMetadata,
+  getSignalingNotifyData,
+  isSafari,
+  trace,
 } from "./utils";
 import {
   Callbacks,
@@ -262,7 +263,7 @@ export default class ConnectionBase {
       if (this.ws.readyState === 1) {
         const message = { type: "disconnect" };
         this.ws.send(JSON.stringify(message));
-        this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "websocket"));
+        this.callbacks.signaling(createWebSocketSignalingEvent("send-disconnect", message));
         // WebSocket 切断を待つ
         timerId = setTimeout(() => {
           if (this.ws) {
@@ -303,7 +304,7 @@ export default class ConnectionBase {
         if (this.dataChannels["signaling"].readyState === "open") {
           const message = { type: "disconnect" };
           this.dataChannels["signaling"].send(JSON.stringify(message));
-          this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "datachannel"));
+          this.callbacks.signaling(createDataChannelSignalingEvent("send-disconnect", message));
         }
         // DataChannel 切断を待つ
         setTimeout(() => {
@@ -463,7 +464,7 @@ export default class ConnectionBase {
     return new Promise((resolve, reject) => {
       if (this.ws === null) {
         this.ws = new WebSocket(this.signalingUrl);
-        this.callbacks.signaling(createSignalingEvent("connect", this.signalingUrl, "websocket"));
+        this.callbacks.signaling(createWebSocketSignalingEvent("connect", this.signalingUrl));
       }
       this.ws.binaryType = "arraybuffer";
       this.ws.onclose = (event): void => {
@@ -492,31 +493,29 @@ export default class ConnectionBase {
         this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
         if (this.ws) {
           this.ws.send(JSON.stringify(signalingMessage));
-          this.callbacks.signaling(
-            createSignalingEvent(`send-${signalingMessage.type}`, signalingMessage, "websocket")
-          );
+          this.callbacks.signaling(createWebSocketSignalingEvent(`send-${signalingMessage.type}`, signalingMessage));
         }
       };
       this.ws.onmessage = async (event): Promise<void> => {
         // E2EE 時専用処理
         if (event.data instanceof ArrayBuffer) {
-          this.callbacks.signaling(createSignalingEvent("onmessage-e2ee", event.data, "websocket"));
+          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-e2ee", event.data));
           this.signalingOnMessageE2EE(event.data);
           return;
         }
         const message = JSON.parse(event.data) as SignalingMessage;
         if (message.type == "offer") {
-          this.callbacks.signaling(createSignalingEvent("onmessage-offer", message, "websocket"));
+          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-offer", message));
           this.signalingOnMessageTypeOffer(message);
           resolve(message);
         } else if (message.type == "update") {
-          this.callbacks.signaling(createSignalingEvent("onmessage-update", message, "websocket"));
+          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-update", message));
           await this.signalingOnMessageTypeUpdate(message);
         } else if (message.type == "re-offer") {
-          this.callbacks.signaling(createSignalingEvent("onmessage-re-offer", message, "websocket"));
+          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-re-offer", message));
           await this.signalingOnMessageTypeReOffer(message);
         } else if (message.type == "ping") {
-          this.callbacks.signaling(createSignalingEvent("onmessage-ping", message, "websocket"));
+          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-ping", message));
           await this.signalingOnMessageTypePing(message);
         } else if (message.type == "push") {
           this.callbacks.push(message, "websocket");
@@ -618,7 +617,7 @@ export default class ConnectionBase {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
       const message = { type: "answer", sdp: this.pc.localDescription.sdp };
       this.ws.send(JSON.stringify(message));
-      this.callbacks.signaling(createSignalingEvent("send-answer", message, "websocket"));
+      this.callbacks.signaling(createWebSocketSignalingEvent("send-answer", message));
     }
     return;
   }
@@ -716,7 +715,7 @@ export default class ConnectionBase {
       result.messages.forEach((message) => {
         if (this.ws) {
           this.ws.send(message.buffer);
-          this.callbacks.signaling(createSignalingEvent("send-e2ee", message.buffer, "websocket"));
+          this.callbacks.signaling(createWebSocketSignalingEvent("send-e2ee", message.buffer));
         }
       });
     }
@@ -731,7 +730,7 @@ export default class ConnectionBase {
         await this.terminate(event);
       };
       this.ws.onerror = (event) => {
-        this.callbacks.signaling(createSignalingEvent("onerror", event, "websocket"));
+        this.callbacks.signaling(createWebSocketSignalingEvent("onerror", event));
       };
     }
     if (message.metadata !== undefined) {
@@ -798,7 +797,7 @@ export default class ConnectionBase {
     }
     if (this.ws) {
       this.ws.send(JSON.stringify(pongMessage));
-      this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
+      this.callbacks.signaling(createWebSocketSignalingEvent("send-pong", pongMessage));
     }
   }
 
@@ -849,14 +848,14 @@ export default class ConnectionBase {
   }
 
   private async signalingOnMessageTypeSwitch(): Promise<void> {
-    this.callbacks.signaling(createSignalingEvent("onmessage-switch", null, "websocket"));
+    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-switch", null));
     this.signalingSwitched = true;
     if (!this.ws) {
       return;
     }
     if (this.ignoreDisconnectWebSocket && this.closeWebSocket) {
       await this.terminateWebSocket();
-      this.callbacks.signaling(createSignalingEvent("close", null, "websocket"));
+      this.callbacks.signaling(createWebSocketSignalingEvent("close", null));
       this.monitorDataChannelMessage();
     }
   }
@@ -926,7 +925,7 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel;
       if (channel.label === "signaling") {
         const message = JSON.parse(event.data) as SignalingMessage;
-        this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
+        this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-${message.type}`, message));
         if (message.type === "re-offer") {
           await this.signalingOnMessageTypeReOffer(message);
         }
@@ -956,20 +955,20 @@ export default class ConnectionBase {
   private sendMessage(message: { type: string; [key: string]: unknown }): void {
     if (this.dataChannels.signaling) {
       this.dataChannels.signaling.send(JSON.stringify(message));
-      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "datachannel"));
+      this.callbacks.signaling(createDataChannelSignalingEvent(`send-${message.type}`, message));
     } else if (this.ws !== null) {
       this.ws.send(JSON.stringify(message));
-      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "websocket"));
+      this.callbacks.signaling(createWebSocketSignalingEvent(`send-${message.type}`, message));
     }
   }
 
   private sendE2EEMessage(message: ArrayBuffer): void {
     if (this.dataChannels.e2ee) {
       this.dataChannels.e2ee.send(message);
-      this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "datachannel"));
+      this.callbacks.signaling(createDataChannelSignalingEvent("send-e2ee", message));
     } else if (this.ws !== null) {
       this.ws.send(message);
-      this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "websocket"));
+      this.callbacks.signaling(createWebSocketSignalingEvent("send-e2ee", message));
     }
   }
 
