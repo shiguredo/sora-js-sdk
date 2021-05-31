@@ -59,8 +59,6 @@ export default class ConnectionBase {
   private ignoreDisconnectWebSocket: boolean;
   private closeWebSocket: boolean;
   private connectionTimeout: number;
-  private dataChannelSignalingTimeout: number;
-  private dataChannelSignalingTimeoutId: number;
   private disconnectWaitTimeout: number;
   private mids: {
     audio: string;
@@ -94,11 +92,6 @@ export default class ConnectionBase {
     if (typeof this.options.closeWebSocket === "boolean") {
       this.closeWebSocket = this.options.closeWebSocket;
     }
-    // DataChannel signaling timeout の初期値をセットする
-    this.dataChannelSignalingTimeout = 180000;
-    if (typeof this.options.dataChannelSignalingTimeout === "number") {
-      this.dataChannelSignalingTimeout = this.options.dataChannelSignalingTimeout;
-    }
     // WebSocket/DataChannel の disconnect timeout の初期値をセットする
     this.disconnectWaitTimeout = 3000;
     if (typeof this.options.disconnectWaitTimeout === "number") {
@@ -129,7 +122,6 @@ export default class ConnectionBase {
     this.authMetadata = null;
     this.e2ee = null;
     this.connectionTimeoutTimerId = 0;
-    this.dataChannelSignalingTimeoutId = 0;
     this.dataChannels = {};
     this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
@@ -291,7 +283,6 @@ export default class ConnectionBase {
       }
     };
 
-    clearInterval(this.dataChannelSignalingTimeoutId);
     if (this.signalingSwitched) {
       return new Promise((resolve, _) => {
         if (!this.dataChannels["signaling"]) {
@@ -856,7 +847,6 @@ export default class ConnectionBase {
     if (this.ignoreDisconnectWebSocket && this.closeWebSocket) {
       await this.terminateWebSocket();
       this.callbacks.signaling(createWebSocketSignalingEvent("close", null));
-      this.monitorDataChannelMessage();
     }
   }
 
@@ -918,10 +908,6 @@ export default class ConnectionBase {
     };
     // onmessage
     dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
-      // DataChannel の timeout 処理を初期化する
-      if (0 < this.dataChannelSignalingTimeoutId) {
-        this.monitorDataChannelMessage();
-      }
       const channel = event.currentTarget as RTCDataChannel;
       if (channel.label === "signaling") {
         const message = JSON.parse(event.data) as SignalingMessage;
@@ -970,15 +956,6 @@ export default class ConnectionBase {
       this.ws.send(message);
       this.callbacks.signaling(createWebSocketSignalingEvent("send-e2ee", message));
     }
-  }
-
-  private monitorDataChannelMessage(): void {
-    clearTimeout(this.dataChannelSignalingTimeoutId);
-    this.dataChannelSignalingTimeoutId = setTimeout(async () => {
-      this.trace("DISCONNECT", "DataChannel packet monitoring timeout");
-      const closeEvent = new CloseEvent("close", { code: 4999 });
-      await this.terminate(closeEvent);
-    }, this.dataChannelSignalingTimeout);
   }
 
   private getAudioTransceiver(): RTCRtpTransceiver | null {
