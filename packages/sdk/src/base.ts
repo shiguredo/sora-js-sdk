@@ -908,24 +908,31 @@ export default class ConnectionBase {
       this.trace("ERROR DATA CHANNEL", channel.label);
     };
     // onmessage
-    dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
-      const channel = event.currentTarget as RTCDataChannel;
-      if (channel.label === "signaling") {
+    if (dataChannelEvent.channel.label === "signaling") {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const message = JSON.parse(event.data) as SignalingMessage;
         this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-${message.type}`, message));
         if (message.type === "re-offer") {
           await this.signalingOnMessageTypeReOffer(message);
         }
-      } else if (channel.label === "notify") {
+      };
+    } else if (dataChannelEvent.channel.label === "notify") {
+      dataChannelEvent.channel.onmessage = (event): void => {
         const message = JSON.parse(event.data) as SignalingNotifyMessage;
         this.signalingOnMessageTypeNotify(message, "datachannel");
-      } else if (channel.label === "push") {
+      };
+    } else if (dataChannelEvent.channel.label === "push") {
+      dataChannelEvent.channel.onmessage = (event): void => {
         const message = JSON.parse(event.data) as SignalingPushMessage;
         this.callbacks.push(message, "datachannel");
-      } else if (channel.label === "e2ee") {
+      };
+    } else if (dataChannelEvent.channel.label === "e2ee") {
+      dataChannelEvent.channel.onmessage = (event): void => {
         const data = event.data as ArrayBuffer;
         this.signalingOnMessageE2EE(data);
-      } else if (channel.label === "stats") {
+      };
+    } else if (dataChannelEvent.channel.label === "stats") {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         if (event.currentTarget) {
           const channel = event.currentTarget as RTCDataChannel;
           const stats = await this.getStats();
@@ -935,8 +942,8 @@ export default class ConnectionBase {
           };
           channel.send(JSON.stringify(sendMessage));
         }
-      }
-    };
+      };
+    }
   }
 
   private sendMessage(message: { type: string; [key: string]: unknown }): void {
