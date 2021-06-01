@@ -704,10 +704,7 @@ export default class ConnectionBase {
       const result = this.e2ee.receiveMessage(message);
       this.e2ee.postRemoteSecretKeyMaterials(result);
       result.messages.forEach((message) => {
-        if (this.ws) {
-          this.ws.send(message.buffer);
-          this.callbacks.signaling(createWebSocketSignalingEvent("send-e2ee", message.buffer));
-        }
+        this.sendE2EEMessage(message.buffer);
       });
     }
   }
