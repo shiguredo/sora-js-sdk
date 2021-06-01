@@ -510,10 +510,13 @@ export default class ConnectionBase {
           await this.signalingOnMessageTypePing(message);
         } else if (message.type == "push") {
           this.callbacks.push(message, "websocket");
+          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-push", message));
         } else if (message.type == "notify") {
           this.signalingOnMessageTypeNotify(message, "websocket");
+          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-notify", message));
         } else if (message.type == "switch") {
           await this.signalingOnMessageTypeSwitch();
+          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-switch", message));
         }
       };
     });
@@ -836,7 +839,6 @@ export default class ConnectionBase {
   }
 
   private async signalingOnMessageTypeSwitch(): Promise<void> {
-    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-switch", null));
     this.signalingSwitched = true;
     if (!this.ws) {
       return;
@@ -917,16 +919,19 @@ export default class ConnectionBase {
       dataChannelEvent.channel.onmessage = (event): void => {
         const message = JSON.parse(event.data) as SignalingNotifyMessage;
         this.signalingOnMessageTypeNotify(message, "datachannel");
+        this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-notify`, message));
       };
     } else if (dataChannelEvent.channel.label === "push") {
       dataChannelEvent.channel.onmessage = (event): void => {
         const message = JSON.parse(event.data) as SignalingPushMessage;
         this.callbacks.push(message, "datachannel");
+        this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-push`, message));
       };
     } else if (dataChannelEvent.channel.label === "e2ee") {
       dataChannelEvent.channel.onmessage = (event): void => {
         const data = event.data as ArrayBuffer;
         this.signalingOnMessageE2EE(data);
+        this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-e2ee`, data));
       };
     } else if (dataChannelEvent.channel.label === "stats") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
@@ -939,6 +944,8 @@ export default class ConnectionBase {
           };
           channel.send(JSON.stringify(sendMessage));
         }
+        const message = JSON.parse(event.data) as SignalingMessage;
+        this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-stats`, message));
       };
     }
   }
