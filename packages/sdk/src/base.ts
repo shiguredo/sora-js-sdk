@@ -509,14 +509,14 @@ export default class ConnectionBase {
           this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-ping", message));
           await this.signalingOnMessageTypePing(message);
         } else if (message.type == "push") {
-          this.callbacks.push(message, "websocket");
           this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-push", message));
+          this.callbacks.push(message, "websocket");
         } else if (message.type == "notify") {
-          this.signalingOnMessageTypeNotify(message, "websocket");
           this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-notify", message));
+          this.signalingOnMessageTypeNotify(message, "websocket");
         } else if (message.type == "switch") {
-          await this.signalingOnMessageTypeSwitch();
           this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-switch", message));
+          await this.signalingOnMessageTypeSwitch();
         }
       };
     });
