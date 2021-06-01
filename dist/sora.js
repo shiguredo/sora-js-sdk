@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.21
+ * @version: 2021.1.0-canary.22
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.21
+	 * @version: 2021.1.0-canary.22
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.21";
+	        return "2021.1.0-canary.22";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -830,7 +830,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.21",
+	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.22",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1082,6 +1082,12 @@
 	    event.transportType = transportType;
 	    return event;
 	}
+	function createWebSocketSignalingEvent(eventType, data) {
+	    return createSignalingEvent(eventType, data, "websocket");
+	}
+	function createDataChannelSignalingEvent(eventType, data) {
+	    return createSignalingEvent(eventType, data, "datachannel");
+	}
 	function createDataChannelEvent(eventType, channel) {
 	    const event = new Event(eventType);
 	    event.binaryType = channel.binaryType;
@@ -1122,11 +1128,6 @@
 	        if (typeof this.options.closeWebSocket === "boolean") {
 	            this.closeWebSocket = this.options.closeWebSocket;
 	        }
-	        // DataChannel signaling timeout の初期値をセットする
-	        this.dataChannelSignalingTimeout = 180000;
-	        if (typeof this.options.dataChannelSignalingTimeout === "number") {
-	            this.dataChannelSignalingTimeout = this.options.dataChannelSignalingTimeout;
-	        }
 	        // WebSocket/DataChannel の disconnect timeout の初期値をセットする
 	        this.disconnectWaitTimeout = 3000;
 	        if (typeof this.options.disconnectWaitTimeout === "number") {
@@ -1157,7 +1158,6 @@
 	        this.authMetadata = null;
 	        this.e2ee = null;
 	        this.connectionTimeoutTimerId = 0;
-	        this.dataChannelSignalingTimeoutId = 0;
 	        this.dataChannels = {};
 	        this.ignoreDisconnectWebSocket = false;
 	        this.dataChannelSignaling = false;
@@ -1283,7 +1283,7 @@
 	            if (this.ws.readyState === 1) {
 	                const message = { type: "disconnect" };
 	                this.ws.send(JSON.stringify(message));
-	                this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "websocket"));
+	                this.callbacks.signaling(createWebSocketSignalingEvent("send-disconnect", message));
 	                // WebSocket 切断を待つ
 	                timerId = setTimeout(() => {
 	                    if (this.ws) {
@@ -1309,7 +1309,6 @@
 	                delete this.dataChannels[key];
 	            }
 	        };
-	        clearInterval(this.dataChannelSignalingTimeoutId);
 	        if (this.signalingSwitched) {
 	            return new Promise((resolve, _) => {
 	                if (!this.dataChannels["signaling"]) {
@@ -1322,7 +1321,7 @@
 	                if (this.dataChannels["signaling"].readyState === "open") {
 	                    const message = { type: "disconnect" };
 	                    this.dataChannels["signaling"].send(JSON.stringify(message));
-	                    this.callbacks.signaling(createSignalingEvent("send-disconnect", message, "datachannel"));
+	                    this.callbacks.signaling(createDataChannelSignalingEvent("send-disconnect", message));
 	                }
 	                // DataChannel 切断を待つ
 	                setTimeout(() => {
@@ -1477,7 +1476,7 @@
 	        return new Promise((resolve, reject) => {
 	            if (this.ws === null) {
 	                this.ws = new WebSocket(this.signalingUrl);
-	                this.callbacks.signaling(createSignalingEvent("connect", this.signalingUrl, "websocket"));
+	                this.callbacks.signaling(createWebSocketSignalingEvent("connect", this.signalingUrl));
 	            }
 	            this.ws.binaryType = "arraybuffer";
 	            this.ws.onclose = (event) => {
@@ -1498,42 +1497,45 @@
 	                this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
 	                if (this.ws) {
 	                    this.ws.send(JSON.stringify(signalingMessage));
-	                    this.callbacks.signaling(createSignalingEvent(`send-${signalingMessage.type}`, signalingMessage, "websocket"));
+	                    this.callbacks.signaling(createWebSocketSignalingEvent(`send-${signalingMessage.type}`, signalingMessage));
 	                }
 	            };
 	            this.ws.onmessage = async (event) => {
 	                // E2EE 時専用処理
 	                if (event.data instanceof ArrayBuffer) {
-	                    this.callbacks.signaling(createSignalingEvent("onmessage-e2ee", event.data, "websocket"));
+	                    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-e2ee", event.data));
 	                    this.signalingOnMessageE2EE(event.data);
 	                    return;
 	                }
 	                const message = JSON.parse(event.data);
 	                if (message.type == "offer") {
-	                    this.callbacks.signaling(createSignalingEvent("onmessage-offer", message, "websocket"));
+	                    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-offer", message));
 	                    this.signalingOnMessageTypeOffer(message);
 	                    resolve(message);
 	                }
 	                else if (message.type == "update") {
-	                    this.callbacks.signaling(createSignalingEvent("onmessage-update", message, "websocket"));
+	                    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-update", message));
 	                    await this.signalingOnMessageTypeUpdate(message);
 	                }
 	                else if (message.type == "re-offer") {
-	                    this.callbacks.signaling(createSignalingEvent("onmessage-re-offer", message, "websocket"));
+	                    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-re-offer", message));
 	                    await this.signalingOnMessageTypeReOffer(message);
 	                }
 	                else if (message.type == "ping") {
-	                    this.callbacks.signaling(createSignalingEvent("onmessage-ping", message, "websocket"));
+	                    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-ping", message));
 	                    await this.signalingOnMessageTypePing(message);
 	                }
 	                else if (message.type == "push") {
 	                    this.callbacks.push(message, "websocket");
+	                    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-push", message));
 	                }
 	                else if (message.type == "notify") {
 	                    this.signalingOnMessageTypeNotify(message, "websocket");
+	                    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-notify", message));
 	                }
 	                else if (message.type == "switch") {
 	                    await this.signalingOnMessageTypeSwitch();
+	                    this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-switch", message));
 	                }
 	            };
 	        });
@@ -1617,7 +1619,7 @@
 	            this.trace("ANSWER SDP", this.pc.localDescription.sdp);
 	            const message = { type: "answer", sdp: this.pc.localDescription.sdp };
 	            this.ws.send(JSON.stringify(message));
-	            this.callbacks.signaling(createSignalingEvent("send-answer", message, "websocket"));
+	            this.callbacks.signaling(createWebSocketSignalingEvent("send-answer", message));
 	        }
 	        return;
 	    }
@@ -1708,10 +1710,7 @@
 	            const result = this.e2ee.receiveMessage(message);
 	            this.e2ee.postRemoteSecretKeyMaterials(result);
 	            result.messages.forEach((message) => {
-	                if (this.ws) {
-	                    this.ws.send(message.buffer);
-	                    this.callbacks.signaling(createSignalingEvent("send-e2ee", message.buffer, "websocket"));
-	                }
+	                this.sendE2EEMessage(message.buffer);
 	            });
 	        }
 	    }
@@ -1724,7 +1723,7 @@
 	                await this.terminate(event);
 	            };
 	            this.ws.onerror = (event) => {
-	                this.callbacks.signaling(createSignalingEvent("onerror", event, "websocket"));
+	                this.callbacks.signaling(createWebSocketSignalingEvent("onerror", event));
 	            };
 	        }
 	        if (message.metadata !== undefined) {
@@ -1788,7 +1787,7 @@
 	        }
 	        if (this.ws) {
 	            this.ws.send(JSON.stringify(pongMessage));
-	            this.callbacks.signaling(createSignalingEvent("send-pong", pongMessage, "websocket"));
+	            this.callbacks.signaling(createWebSocketSignalingEvent("send-pong", pongMessage));
 	        }
 	    }
 	    signalingOnMessageTypeNotify(message, transportType) {
@@ -1833,15 +1832,13 @@
 	        this.callbacks.notify(message, transportType);
 	    }
 	    async signalingOnMessageTypeSwitch() {
-	        this.callbacks.signaling(createSignalingEvent("onmessage-switch", null, "websocket"));
 	        this.signalingSwitched = true;
 	        if (!this.ws) {
 	            return;
 	        }
 	        if (this.ignoreDisconnectWebSocket && this.closeWebSocket) {
 	            await this.terminateWebSocket();
-	            this.callbacks.signaling(createSignalingEvent("close", null, "websocket"));
-	            this.monitorDataChannelMessage();
+	            this.callbacks.signaling(createWebSocketSignalingEvent("close", null));
 	        }
 	    }
 	    async setSenderParameters(transceiver, encodings) {
@@ -1873,6 +1870,7 @@
 	        // onopen
 	        dataChannelEvent.channel.onopen = (event) => {
 	            const channel = event.currentTarget;
+	            channel.bufferedAmountLowThreshold = 65536;
 	            this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
 	            this.dataChannels[channel.label] = channel;
 	            this.trace("OPEN DATA CHANNEL", channel.label);
@@ -1896,32 +1894,38 @@
 	            this.trace("ERROR DATA CHANNEL", channel.label);
 	        };
 	        // onmessage
-	        dataChannelEvent.channel.onmessage = async (event) => {
-	            // DataChannel の timeout 処理を初期化する
-	            if (0 < this.dataChannelSignalingTimeoutId) {
-	                this.monitorDataChannelMessage();
-	            }
-	            const channel = event.currentTarget;
-	            if (channel.label === "signaling") {
+	        if (dataChannelEvent.channel.label === "signaling") {
+	            dataChannelEvent.channel.onmessage = async (event) => {
 	                const message = JSON.parse(event.data);
-	                this.callbacks.signaling(createSignalingEvent(`onmessage-${message.type}`, message, "datachannel"));
+	                this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-${message.type}`, message));
 	                if (message.type === "re-offer") {
 	                    await this.signalingOnMessageTypeReOffer(message);
 	                }
-	            }
-	            else if (channel.label === "notify") {
+	            };
+	        }
+	        else if (dataChannelEvent.channel.label === "notify") {
+	            dataChannelEvent.channel.onmessage = (event) => {
 	                const message = JSON.parse(event.data);
 	                this.signalingOnMessageTypeNotify(message, "datachannel");
-	            }
-	            else if (channel.label === "push") {
+	                this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-notify`, message));
+	            };
+	        }
+	        else if (dataChannelEvent.channel.label === "push") {
+	            dataChannelEvent.channel.onmessage = (event) => {
 	                const message = JSON.parse(event.data);
 	                this.callbacks.push(message, "datachannel");
-	            }
-	            else if (channel.label === "e2ee") {
+	                this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-push`, message));
+	            };
+	        }
+	        else if (dataChannelEvent.channel.label === "e2ee") {
+	            dataChannelEvent.channel.onmessage = (event) => {
 	                const data = event.data;
 	                this.signalingOnMessageE2EE(data);
-	            }
-	            else if (channel.label === "stats") {
+	                this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-e2ee`, data));
+	            };
+	        }
+	        else if (dataChannelEvent.channel.label === "stats") {
+	            dataChannelEvent.channel.onmessage = async (event) => {
 	                if (event.currentTarget) {
 	                    const channel = event.currentTarget;
 	                    const stats = await this.getStats();
@@ -1931,36 +1935,30 @@
 	                    };
 	                    channel.send(JSON.stringify(sendMessage));
 	                }
-	            }
-	        };
+	                const message = JSON.parse(event.data);
+	                this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-stats`, message));
+	            };
+	        }
 	    }
 	    sendMessage(message) {
 	        if (this.dataChannels.signaling) {
 	            this.dataChannels.signaling.send(JSON.stringify(message));
-	            this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "datachannel"));
+	            this.callbacks.signaling(createDataChannelSignalingEvent(`send-${message.type}`, message));
 	        }
 	        else if (this.ws !== null) {
 	            this.ws.send(JSON.stringify(message));
-	            this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "websocket"));
+	            this.callbacks.signaling(createWebSocketSignalingEvent(`send-${message.type}`, message));
 	        }
 	    }
 	    sendE2EEMessage(message) {
 	        if (this.dataChannels.e2ee) {
 	            this.dataChannels.e2ee.send(message);
-	            this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "datachannel"));
+	            this.callbacks.signaling(createDataChannelSignalingEvent("send-e2ee", message));
 	        }
 	        else if (this.ws !== null) {
 	            this.ws.send(message);
-	            this.callbacks.signaling(createSignalingEvent("send-e2ee", message, "websocket"));
+	            this.callbacks.signaling(createWebSocketSignalingEvent("send-e2ee", message));
 	        }
-	    }
-	    monitorDataChannelMessage() {
-	        clearTimeout(this.dataChannelSignalingTimeoutId);
-	        this.dataChannelSignalingTimeoutId = setTimeout(async () => {
-	            this.trace("DISCONNECT", "DataChannel packet monitoring timeout");
-	            const closeEvent = new CloseEvent("close", { code: 4999 });
-	            await this.terminate(closeEvent);
-	        }, this.dataChannelSignalingTimeout);
 	    }
 	    getAudioTransceiver() {
 	        if (this.pc && this.mids.audio) {
@@ -2328,7 +2326,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.0-canary.21";
+	        return "2021.1.0-canary.22";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,

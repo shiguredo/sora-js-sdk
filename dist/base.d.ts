@@ -31,8 +31,6 @@ export default class ConnectionBase {
     private ignoreDisconnectWebSocket;
     private closeWebSocket;
     private connectionTimeout;
-    private dataChannelSignalingTimeout;
-    private dataChannelSignalingTimeoutId;
     private disconnectWaitTimeout;
     private mids;
     private signalingSwitched;
@@ -75,7 +73,6 @@ export default class ConnectionBase {
     private onDataChannel;
     private sendMessage;
     private sendE2EEMessage;
-    private monitorDataChannelMessage;
     private getAudioTransceiver;
     private getVideoTransceiver;
     get e2eeSelfFingerprint(): string | undefined;
