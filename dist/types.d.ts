@@ -51,7 +51,7 @@ export declare type SignalingConnectMessage = {
     data_channel_signaling?: boolean;
     ignore_disconnect_websocket?: boolean;
 };
-export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingSwitchMessage;
+export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingSwitchedMessage;
 export declare type SignalingOfferMessage = {
     type: "offer";
     sdp: string;
@@ -84,8 +84,9 @@ export declare type SignalingPushMessage = {
     type: "push";
     data: Record<string, unknown>;
 };
-export declare type SignalingSwitchMessage = {
-    type: "switch";
+export declare type SignalingSwitchedMessage = {
+    type: "switched";
+    ignore_disconnect_websocket: boolean;
 };
 export declare type SignalingNotifyMessage = SignalingNotifyConnectionCreated | SignalingNotifyConnectionUpdated | SignalingNotifyConnectionDestroyed | SignalingNotifySpotlightChanged | SignalingNotifySpotlightFocused | SignalingNotifySpotlightUnfocused | SignalingNotifyNetworkStatus;
 export declare type SignalingNotifyMetadata = {
@@ -211,8 +212,6 @@ export declare type ConnectionOptions = {
     signalingNotifyMetadata?: JSONType;
     dataChannelSignaling?: boolean;
     ignoreDisconnectWebSocket?: boolean;
-    closeWebSocket?: boolean;
-    dataChannelSignalingTimeout?: number;
     disconnectWaitTimeout?: number;
 };
 export declare type Callbacks = {

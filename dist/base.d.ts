@@ -20,7 +20,6 @@ export default class ConnectionBase {
     authMetadata: JSONType;
     pc: RTCPeerConnection | null;
     encodings: RTCRtpEncodingParameters[];
-    dataChannelSignaling: boolean;
     protected ws: WebSocket | null;
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;
@@ -28,8 +27,6 @@ export default class ConnectionBase {
     protected dataChannels: {
         [key in string]?: RTCDataChannel;
     };
-    private ignoreDisconnectWebSocket;
-    private closeWebSocket;
     private connectionTimeout;
     private disconnectWaitTimeout;
     private mids;
@@ -67,7 +64,7 @@ export default class ConnectionBase {
     private signalingOnMessageTypeReOffer;
     private signalingOnMessageTypePing;
     private signalingOnMessageTypeNotify;
-    private signalingOnMessageTypeSwitch;
+    private signalingOnMessageTypeSwitched;
     private setSenderParameters;
     private getStats;
     private onDataChannel;
