@@ -49,7 +49,6 @@ export default class ConnectionBase {
   authMetadata: JSONType;
   pc: RTCPeerConnection | null;
   encodings: RTCRtpEncodingParameters[];
-  dataChannelSignaling: boolean;
   protected ws: WebSocket | null;
   protected callbacks: Callbacks;
   protected e2ee: SoraE2EE | null;
@@ -117,7 +116,6 @@ export default class ConnectionBase {
     this.e2ee = null;
     this.connectionTimeoutTimerId = 0;
     this.dataChannels = {};
-    this.dataChannelSignaling = false;
     this.mids = {
       audio: "",
       video: "",
@@ -360,7 +358,6 @@ export default class ConnectionBase {
     this.authMetadata = null;
     this.e2ee = null;
     this.dataChannels = {};
-    this.dataChannelSignaling = false;
     this.mids = {
       audio: "",
       video: "",
@@ -409,7 +406,6 @@ export default class ConnectionBase {
     this.authMetadata = null;
     this.e2ee = null;
     this.dataChannels = {};
-    this.dataChannelSignaling = false;
     this.mids = {
       audio: "",
       video: "",
@@ -720,11 +716,6 @@ export default class ConnectionBase {
     }
     if (Array.isArray(message.encodings)) {
       this.encodings = message.encodings;
-    }
-    if (message.data_channel_signaling !== undefined) {
-      this.dataChannelSignaling = message.data_channel_signaling;
-    } else {
-      this.dataChannelSignaling = false;
     }
     if (message.mid !== undefined && message.mid.audio !== undefined) {
       this.mids.audio = message.mid.audio;
