@@ -22,6 +22,7 @@ import {
   SignalingUpdateMessage,
   SignalingReOfferMessage,
   SignalingNotifyMessage,
+  SignalingSwitchMessage,
   TransportType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
@@ -56,7 +57,6 @@ export default class ConnectionBase {
   protected dataChannels: {
     [key in string]?: RTCDataChannel;
   };
-  private ignoreDisconnectWebSocket: boolean;
   private connectionTimeout: number;
   private disconnectWaitTimeout: number;
   private mids: {
@@ -117,7 +117,6 @@ export default class ConnectionBase {
     this.e2ee = null;
     this.connectionTimeoutTimerId = 0;
     this.dataChannels = {};
-    this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
     this.mids = {
       audio: "",
@@ -361,7 +360,6 @@ export default class ConnectionBase {
     this.authMetadata = null;
     this.e2ee = null;
     this.dataChannels = {};
-    this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
     this.mids = {
       audio: "",
@@ -411,7 +409,6 @@ export default class ConnectionBase {
     this.authMetadata = null;
     this.e2ee = null;
     this.dataChannels = {};
-    this.ignoreDisconnectWebSocket = false;
     this.dataChannelSignaling = false;
     this.mids = {
       audio: "",
@@ -510,7 +507,7 @@ export default class ConnectionBase {
           this.signalingOnMessageTypeNotify(message, "websocket");
         } else if (message.type == "switch") {
           this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-switch", message));
-          await this.signalingOnMessageTypeSwitch();
+          await this.signalingOnMessageTypeSwitch(message);
         }
       };
     });
@@ -724,11 +721,6 @@ export default class ConnectionBase {
     if (Array.isArray(message.encodings)) {
       this.encodings = message.encodings;
     }
-    if (message.ignore_disconnect_websocket !== undefined) {
-      this.ignoreDisconnectWebSocket = message.ignore_disconnect_websocket;
-    } else {
-      this.ignoreDisconnectWebSocket = false;
-    }
     if (message.data_channel_signaling !== undefined) {
       this.dataChannelSignaling = message.data_channel_signaling;
     } else {
@@ -832,12 +824,11 @@ export default class ConnectionBase {
     this.callbacks.notify(message, transportType);
   }
 
-  private async signalingOnMessageTypeSwitch(): Promise<void> {
-    this.signalingSwitched = true;
+  private async signalingOnMessageTypeSwitch(message: SignalingSwitchMessage): Promise<void> {
     if (!this.ws) {
       return;
     }
-    if (this.ignoreDisconnectWebSocket) {
+    if (message["ignore_disconnect_websocket"]) {
       await this.terminateWebSocket();
       this.callbacks.signaling(createWebSocketSignalingEvent("close", null));
     }

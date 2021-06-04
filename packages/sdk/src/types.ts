@@ -109,6 +109,7 @@ export type SignalingPushMessage = {
 
 export type SignalingSwitchMessage = {
   type: "switch";
+  ignore_disconnect_websocket: boolean;
 };
 
 export type SignalingNotifyMessage =
