@@ -68,7 +68,7 @@ export type SignalingMessage =
   | SignalingPingMessage
   | SignalingPushMessage
   | SignalingNotifyMessage
-  | SignalingSwitchMessage;
+  | SignalingSwitchedMessage;
 
 export type SignalingOfferMessage = {
   type: "offer";
@@ -107,8 +107,8 @@ export type SignalingPushMessage = {
   data: Record<string, unknown>;
 };
 
-export type SignalingSwitchMessage = {
-  type: "switch";
+export type SignalingSwitchedMessage = {
+  type: "switched";
   ignore_disconnect_websocket: boolean;
 };
 

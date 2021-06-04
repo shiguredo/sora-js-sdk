@@ -22,7 +22,7 @@ import {
   SignalingUpdateMessage,
   SignalingReOfferMessage,
   SignalingNotifyMessage,
-  SignalingSwitchMessage,
+  SignalingSwitchedMessage,
   TransportType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
@@ -501,9 +501,9 @@ export default class ConnectionBase {
         } else if (message.type == "notify") {
           this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-notify", message));
           this.signalingOnMessageTypeNotify(message, "websocket");
-        } else if (message.type == "switch") {
-          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-switch", message));
-          await this.signalingOnMessageTypeSwitch(message);
+        } else if (message.type == "switched") {
+          this.callbacks.signaling(createWebSocketSignalingEvent("onmessage-switched", message));
+          await this.signalingOnMessageTypeSwitched(message);
         }
       };
     });
@@ -815,7 +815,7 @@ export default class ConnectionBase {
     this.callbacks.notify(message, transportType);
   }
 
-  private async signalingOnMessageTypeSwitch(message: SignalingSwitchMessage): Promise<void> {
+  private async signalingOnMessageTypeSwitched(message: SignalingSwitchedMessage): Promise<void> {
     if (!this.ws) {
       return;
     }
