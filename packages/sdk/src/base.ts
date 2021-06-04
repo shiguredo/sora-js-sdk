@@ -57,7 +57,6 @@ export default class ConnectionBase {
     [key in string]?: RTCDataChannel;
   };
   private ignoreDisconnectWebSocket: boolean;
-  private closeWebSocket: boolean;
   private connectionTimeout: number;
   private disconnectWaitTimeout: number;
   private mids: {
@@ -86,11 +85,6 @@ export default class ConnectionBase {
     }
     if (typeof this.options.connectionTimeout === "number") {
       this.connectionTimeout = this.options.connectionTimeout;
-    }
-    // closeWebsocket の初期値をセットする
-    this.closeWebSocket = true;
-    if (typeof this.options.closeWebSocket === "boolean") {
-      this.closeWebSocket = this.options.closeWebSocket;
     }
     // WebSocket/DataChannel の disconnect timeout の初期値をセットする
     this.disconnectWaitTimeout = 3000;
@@ -843,7 +837,7 @@ export default class ConnectionBase {
     if (!this.ws) {
       return;
     }
-    if (this.ignoreDisconnectWebSocket && this.closeWebSocket) {
+    if (this.ignoreDisconnectWebSocket) {
       await this.terminateWebSocket();
       this.callbacks.signaling(createWebSocketSignalingEvent("close", null));
     }

@@ -251,7 +251,6 @@ export type ConnectionOptions = {
   signalingNotifyMetadata?: JSONType;
   dataChannelSignaling?: boolean;
   ignoreDisconnectWebSocket?: boolean;
-  closeWebSocket?: boolean;
   disconnectWaitTimeout?: number;
 };
 
