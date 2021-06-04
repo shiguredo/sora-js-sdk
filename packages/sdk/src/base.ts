@@ -816,6 +816,7 @@ export default class ConnectionBase {
   }
 
   private async signalingOnMessageTypeSwitched(message: SignalingSwitchedMessage): Promise<void> {
+    this.signalingSwitched = true;
     if (!this.ws) {
       return;
     }
