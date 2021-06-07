@@ -27,7 +27,7 @@ Please read https://github.com/shiguredo/oss before use.
 
 ## システム条件
 
-- WebRTC SFU Sora 2020.3 以降
+- WebRTC SFU Sora 2021.1 以降
 - TypeScript 3.8 以降
 
 ## サンプル
@@ -46,13 +46,6 @@ Please read https://github.com/shiguredo/oss before use.
     - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_recvonly.html
 - Simulcast
     - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/simulcast.html
-
-## Issues について
-
-質問やバグ報告の場合は、次の開発環境のバージョンを **「メジャーバージョン、マイナーバージョン、メンテナンスバージョン」** まで含めて書いてください。
-
-- Sora JavaScript SDK のバージョン
-- 利用ブラウザのバージョン
 
 ## E2EE について
 
