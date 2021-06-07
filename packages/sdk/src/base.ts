@@ -1,3 +1,4 @@
+import { unzlibSync, zlibSync } from "fflate";
 import {
   ConnectError,
   createDataChannelEvent,
@@ -22,6 +23,7 @@ import {
   SignalingUpdateMessage,
   SignalingReOfferMessage,
   SignalingNotifyMessage,
+  SignalingReqStatsMessage,
   SignalingSwitchedMessage,
   TransportType,
 } from "./types";
@@ -55,6 +57,9 @@ export default class ConnectionBase {
   protected connectionTimeoutTimerId: number;
   protected dataChannels: {
     [key in string]?: RTCDataChannel;
+  };
+  private dataChannelsCompress: {
+    [key in string]?: boolean;
   };
   private connectionTimeout: number;
   private disconnectWaitTimeout: number;
@@ -121,6 +126,7 @@ export default class ConnectionBase {
       video: "",
     };
     this.signalingSwitched = false;
+    this.dataChannelsCompress = {};
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -723,6 +729,11 @@ export default class ConnectionBase {
     if (message.mid !== undefined && message.mid.video !== undefined) {
       this.mids.video = message.mid.video;
     }
+    if (message.data_channels) {
+      for (const o of message.data_channels) {
+        this.dataChannelsCompress[o.label] = o.compress;
+      }
+    }
     this.trace("SIGNALING OFFER MESSAGE", message);
     this.trace("OFFER SDP", message.sdp);
   }
@@ -886,7 +897,12 @@ export default class ConnectionBase {
     // onmessage
     if (dataChannelEvent.channel.label === "signaling") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
-        const message = JSON.parse(event.data) as SignalingMessage;
+        let data = event.data as string;
+        if (this.dataChannelsCompress.signaling === true) {
+          const unzlibMessage = unzlibSync(new Uint8Array(event.data));
+          data = new TextDecoder().decode(unzlibMessage);
+        }
+        const message = JSON.parse(data) as SignalingMessage;
         this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-${message.type}`, message));
         if (message.type === "re-offer") {
           await this.signalingOnMessageTypeReOffer(message);
@@ -894,13 +910,23 @@ export default class ConnectionBase {
       };
     } else if (dataChannelEvent.channel.label === "notify") {
       dataChannelEvent.channel.onmessage = (event): void => {
-        const message = JSON.parse(event.data) as SignalingNotifyMessage;
+        let data = event.data as string;
+        if (this.dataChannelsCompress.notify === true) {
+          const unzlibMessage = unzlibSync(new Uint8Array(event.data));
+          data = new TextDecoder().decode(unzlibMessage);
+        }
+        const message = JSON.parse(data) as SignalingNotifyMessage;
         this.signalingOnMessageTypeNotify(message, "datachannel");
         this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-notify`, message));
       };
     } else if (dataChannelEvent.channel.label === "push") {
       dataChannelEvent.channel.onmessage = (event): void => {
-        const message = JSON.parse(event.data) as SignalingPushMessage;
+        let data = event.data as string;
+        if (this.dataChannelsCompress.push === true) {
+          const unzlibMessage = unzlibSync(new Uint8Array(event.data));
+          data = new TextDecoder().decode(unzlibMessage);
+        }
+        const message = JSON.parse(data) as SignalingPushMessage;
         this.callbacks.push(message, "datachannel");
         this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-push`, message));
       };
@@ -912,24 +938,28 @@ export default class ConnectionBase {
       };
     } else if (dataChannelEvent.channel.label === "stats") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
-        if (event.currentTarget) {
-          const channel = event.currentTarget as RTCDataChannel;
-          const stats = await this.getStats();
-          const sendMessage = {
-            type: "stats",
-            reports: stats,
-          };
-          channel.send(JSON.stringify(sendMessage));
+        let data = event.data as string;
+        if (this.dataChannelsCompress.stats === true) {
+          const unzlibMessage = unzlibSync(new Uint8Array(event.data));
+          data = new TextDecoder().decode(unzlibMessage);
         }
-        const message = JSON.parse(event.data) as SignalingMessage;
+        const message = JSON.parse(data) as SignalingReqStatsMessage;
         this.callbacks.signaling(createDataChannelSignalingEvent(`onmessage-stats`, message));
+        const stats = await this.getStats();
+        this.sendStatsMessage(stats);
       };
     }
   }
 
   private sendMessage(message: { type: string; [key: string]: unknown }): void {
     if (this.dataChannels.signaling) {
-      this.dataChannels.signaling.send(JSON.stringify(message));
+      if (this.dataChannelsCompress.signaling === true) {
+        const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+        const zlibMessage = zlibSync(binaryMessage, {});
+        this.dataChannels.signaling.send(zlibMessage);
+      } else {
+        this.dataChannels.signaling.send(JSON.stringify(message));
+      }
       this.callbacks.signaling(createDataChannelSignalingEvent(`send-${message.type}`, message));
     } else if (this.ws !== null) {
       this.ws.send(JSON.stringify(message));
@@ -944,6 +974,23 @@ export default class ConnectionBase {
     } else if (this.ws !== null) {
       this.ws.send(message);
       this.callbacks.signaling(createWebSocketSignalingEvent("send-e2ee", message));
+    }
+  }
+
+  private sendStatsMessage(reports: RTCStatsReport[]): void {
+    if (this.dataChannels.stats) {
+      const message = {
+        type: "stats",
+        reports: reports,
+      };
+      if (this.dataChannelsCompress.stats === true) {
+        const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+        const zlibMessage = zlibSync(binaryMessage, {});
+        this.dataChannels.stats.send(zlibMessage);
+      } else {
+        this.dataChannels.stats.send(JSON.stringify(message));
+      }
+      this.callbacks.signaling(createDataChannelSignalingEvent("send-stats", message));
     }
   }
 

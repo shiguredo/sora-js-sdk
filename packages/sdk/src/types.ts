@@ -68,6 +68,7 @@ export type SignalingMessage =
   | SignalingPingMessage
   | SignalingPushMessage
   | SignalingNotifyMessage
+  | SignalingReqStatsMessage
   | SignalingSwitchedMessage;
 
 export type SignalingOfferMessage = {
@@ -80,7 +81,10 @@ export type SignalingOfferMessage = {
   encodings?: RTCRtpEncodingParameters[];
   ignore_disconnect_websocket?: boolean;
   data_channel_signaling?: boolean;
-  data_channel_labels?: string[];
+  data_channels?: Array<{
+    label: string;
+    compress: boolean;
+  }>;
   mid?: {
     audio?: string;
     video?: string;
@@ -105,6 +109,10 @@ export type SignalingPingMessage = {
 export type SignalingPushMessage = {
   type: "push";
   data: Record<string, unknown>;
+};
+
+export type SignalingReqStatsMessage = {
+  type: "req-stats";
 };
 
 export type SignalingSwitchedMessage = {
