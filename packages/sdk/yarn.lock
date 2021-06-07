@@ -1747,6 +1747,11 @@ fb-watchman@^2.0.0:
   dependencies:
     bser "2.1.1"
 
+fflate@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/fflate/-/fflate-0.7.0.tgz#b589a7ec7cb4ea989573d1063777a355606b4fe1"
+  integrity sha512-rL8N1NGlP36Hj8S+h6cyQs1RLKNp40e+BjAelaT738RrhSr9Ud99imQ2be9OYrCsIlnVcTM/Ru6c01YN5cK+dQ==
+
 file-entry-cache@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/file-entry-cache/-/file-entry-cache-6.0.1.tgz#211b2dd9659cb0394b073e7323ac3c933d522027"

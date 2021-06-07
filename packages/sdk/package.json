@@ -35,6 +35,7 @@
     "typescript": "^4.3.2"
   },
   "dependencies": {
-    "@sora/e2ee": "^2021.1.0-canary.24"
+    "@sora/e2ee": "^2021.1.0-canary.24",
+    "fflate": "^0.7.0"
   }
 }
