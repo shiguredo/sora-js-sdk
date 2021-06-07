@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] fflate を導入して DataChannel zlib 対応を追加する
+    - @yuitowest
 - [CHANGE] get audio, get video を追加して接続がそれぞれに対応しているかを返すようにする
     - @yuitowest
 - [CHANGE] stopAudioTrack, stopVideoTrack, replaceAudioTrack, replaceVideoTrack を追加する

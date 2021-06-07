@@ -27,6 +27,7 @@ export default class ConnectionBase {
     protected dataChannels: {
         [key in string]?: RTCDataChannel;
     };
+    private dataChannelsCompress;
     private connectionTimeout;
     private disconnectWaitTimeout;
     private mids;
@@ -70,6 +71,7 @@ export default class ConnectionBase {
     private onDataChannel;
     private sendMessage;
     private sendE2EEMessage;
+    private sendStatsMessage;
     private getAudioTransceiver;
     private getVideoTransceiver;
     get e2eeSelfFingerprint(): string | undefined;

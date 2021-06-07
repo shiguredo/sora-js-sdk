@@ -51,7 +51,7 @@ export declare type SignalingConnectMessage = {
     data_channel_signaling?: boolean;
     ignore_disconnect_websocket?: boolean;
 };
-export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingSwitchedMessage;
+export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage;
 export declare type SignalingOfferMessage = {
     type: "offer";
     sdp: string;
@@ -62,7 +62,10 @@ export declare type SignalingOfferMessage = {
     encodings?: RTCRtpEncodingParameters[];
     ignore_disconnect_websocket?: boolean;
     data_channel_signaling?: boolean;
-    data_channel_labels?: string[];
+    data_channels?: Array<{
+        label: string;
+        compress: boolean;
+    }>;
     mid?: {
         audio?: string;
         video?: string;
@@ -83,6 +86,9 @@ export declare type SignalingPingMessage = {
 export declare type SignalingPushMessage = {
     type: "push";
     data: Record<string, unknown>;
+};
+export declare type SignalingReqStatsMessage = {
+    type: "req-stats";
 };
 export declare type SignalingSwitchedMessage = {
     type: "switched";
