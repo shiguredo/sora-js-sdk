@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.25
+ * @version: 2021.1.0-canary.26
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.25
+ * @version: 2021.1.0-canary.26
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.25";
+        return "2021.1.0-canary.26";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -1593,7 +1593,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.0-canary.25",
+        sora_client: "Sora JavaScript SDK 2021.1.0-canary.26",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -2068,16 +2068,23 @@ class ConnectionBase {
         };
         if (this.signalingSwitched) {
             return new Promise((resolve, _) => {
-                if (!this.dataChannels["signaling"]) {
+                if (!this.dataChannels.signaling) {
                     return resolve();
                 }
-                this.dataChannels["signaling"].onclose = () => {
+                this.dataChannels.signaling.onclose = () => {
                     deleteChannels();
                     return resolve();
                 };
-                if (this.dataChannels["signaling"].readyState === "open") {
+                if (this.dataChannels.signaling.readyState === "open") {
                     const message = { type: "disconnect" };
-                    this.dataChannels["signaling"].send(JSON.stringify(message));
+                    if (this.dataChannelsCompress.signaling === true) {
+                        const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+                        const zlibMessage = zlibSync(binaryMessage, {});
+                        this.dataChannels.signaling.send(zlibMessage);
+                    }
+                    else {
+                        this.dataChannels.signaling.send(JSON.stringify(message));
+                    }
                     this.callbacks.signaling(createDataChannelSignalingEvent("send-disconnect", message));
                 }
                 // DataChannel 切断を待つ
@@ -3109,7 +3116,7 @@ var sora = {
         return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-        return "2021.1.0-canary.25";
+        return "2021.1.0-canary.26";
     },
     helpers: {
         applyMediaStreamConstraints,
