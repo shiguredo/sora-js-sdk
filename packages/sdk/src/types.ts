@@ -141,8 +141,8 @@ export type SignalingNotifyConnectionCreated = {
   type: "notify";
   event_type: "connection.created";
   role: Role;
-  client_id: string;
-  connection_id: string;
+  client_id?: string;
+  connection_id?: string;
   audio?: boolean;
   video?: boolean;
   authn_metadata?: JSONType;
@@ -162,8 +162,8 @@ export type SignalingNotifyConnectionUpdated = {
   type: "notify";
   event_type: "connection.updated";
   role: Role;
-  client_id: string;
-  connection_id: string;
+  client_id?: string;
+  connection_id?: string;
   audio?: boolean;
   video?: boolean;
   minutes: number;
@@ -178,8 +178,8 @@ export type SignalingNotifyConnectionDestroyed = {
   type: "notify";
   event_type: "connection.destroyed";
   role: Role;
-  client_id: string;
-  connection_id: string;
+  client_id?: string;
+  connection_id?: string;
   audio?: boolean;
   video?: boolean;
   minutes: number;
