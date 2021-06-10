@@ -260,11 +260,17 @@ export default class ConnectionBase {
             this.ws = null;
           }
           // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
-          timerId = setTimeout(() => {
-            const closeEvent = new CloseEvent("close", { code: 4996 });
+          setTimeout(() => {
+            const closeEvent = new CloseEvent("close", { code: 4995 });
             return resolve(closeEvent);
           }, 500);
         }, this.disconnectWaitTimeout);
+      } else {
+        // ws の state が open ではない場合は後処理をして終わる
+        this.ws.close();
+        this.ws = null;
+        const closeEvent = new CloseEvent("close", { code: 4996 });
+        return resolve(closeEvent);
       }
     });
   }
