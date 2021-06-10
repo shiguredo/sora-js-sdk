@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.27
+ * @version: 2021.1.0-canary.28
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.27
+ * @version: 2021.1.0-canary.28
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.27";
+        return "2021.1.0-canary.28";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -1593,7 +1593,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.0-canary.27",
+        sora_client: "Sora JavaScript SDK 2021.1.0-canary.28",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -2048,11 +2048,18 @@ class ConnectionBase {
                         this.ws = null;
                     }
                     // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
-                    timerId = setTimeout(() => {
-                        const closeEvent = new CloseEvent("close", { code: 4996 });
+                    setTimeout(() => {
+                        const closeEvent = new CloseEvent("close", { code: 4995 });
                         return resolve(closeEvent);
                     }, 500);
                 }, this.disconnectWaitTimeout);
+            }
+            else {
+                // ws の state が open ではない場合は後処理をして終わる
+                this.ws.close();
+                this.ws = null;
+                const closeEvent = new CloseEvent("close", { code: 4996 });
+                return resolve(closeEvent);
             }
         });
     }
@@ -2078,17 +2085,20 @@ class ConnectionBase {
                     deleteChannels();
                     return resolve();
                 };
-                if (this.dataChannels.signaling.readyState === "open") {
-                    const message = { type: "disconnect" };
-                    if (this.dataChannelsCompress.signaling === true) {
-                        const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
-                        const zlibMessage = zlibSync(binaryMessage, {});
+                const message = { type: "disconnect" };
+                if (this.dataChannelsCompress.signaling === true) {
+                    const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+                    const zlibMessage = zlibSync(binaryMessage, {});
+                    if (this.dataChannels.signaling.readyState === "open") {
                         this.dataChannels.signaling.send(zlibMessage);
+                        this.callbacks.signaling(createDataChannelSignalingEvent("send-disconnect", message));
                     }
-                    else {
+                }
+                else {
+                    if (this.dataChannels.signaling.readyState === "open") {
                         this.dataChannels.signaling.send(JSON.stringify(message));
+                        this.callbacks.signaling(createDataChannelSignalingEvent("send-disconnect", message));
                     }
-                    this.callbacks.signaling(createDataChannelSignalingEvent("send-disconnect", message));
                 }
                 // DataChannel 切断を待つ
                 setTimeout(() => {
@@ -3130,7 +3140,7 @@ var sora = {
         return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-        return "2021.1.0-canary.27";
+        return "2021.1.0-canary.28";
     },
     helpers: {
         applyMediaStreamConstraints,
