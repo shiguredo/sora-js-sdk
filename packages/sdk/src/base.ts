@@ -878,6 +878,7 @@ export default class ConnectionBase {
     dataChannelEvent.channel.onopen = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
       channel.bufferedAmountLowThreshold = 65536;
+      channel.binaryType = "arraybuffer";
       this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
       this.dataChannels[channel.label] = channel;
       this.trace("OPEN DATA CHANNEL", channel.label);
