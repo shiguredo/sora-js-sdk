@@ -292,16 +292,19 @@ export default class ConnectionBase {
           deleteChannels();
           return resolve();
         };
-        if (this.dataChannels.signaling.readyState === "open") {
-          const message = { type: "disconnect" };
-          if (this.dataChannelsCompress.signaling === true) {
-            const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
-            const zlibMessage = zlibSync(binaryMessage, {});
+        const message = { type: "disconnect" };
+        if (this.dataChannelsCompress.signaling === true) {
+          const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+          const zlibMessage = zlibSync(binaryMessage, {});
+          if (this.dataChannels.signaling.readyState === "open") {
             this.dataChannels.signaling.send(zlibMessage);
-          } else {
-            this.dataChannels.signaling.send(JSON.stringify(message));
+            this.callbacks.signaling(createDataChannelSignalingEvent("send-disconnect", message));
           }
-          this.callbacks.signaling(createDataChannelSignalingEvent("send-disconnect", message));
+        } else {
+          if (this.dataChannels.signaling.readyState === "open") {
+            this.dataChannels.signaling.send(JSON.stringify(message));
+            this.callbacks.signaling(createDataChannelSignalingEvent("send-disconnect", message));
+          }
         }
         // DataChannel 切断を待つ
         setTimeout(() => {
