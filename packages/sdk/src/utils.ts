@@ -1,7 +1,6 @@
 import {
   ConnectionOptions,
   Browser,
-  DataChannelEvent,
   JSONType,
   PreKeyBundle,
   SignalingConnectMessage,
@@ -9,6 +8,7 @@ import {
   SignalingNotifyMetadata,
   SignalingNotifyConnectionCreated,
   SignalingNotifyConnectionDestroyed,
+  TimelineEvent,
   TransportType,
 } from "./types";
 
@@ -350,21 +350,41 @@ export function createWebSocketSignalingEvent(eventType: string, data: unknown):
 export function createDataChannelSignalingEvent(eventType: string, data: unknown): SignalingEvent {
   return createSignalingEvent(eventType, data, "datachannel");
 }
-export function createDataChannelEvent(eventType: string, channel: RTCDataChannel): DataChannelEvent {
-  const event = new Event(eventType) as DataChannelEvent;
-  event.binaryType = channel.binaryType;
-  event.bufferedAmount = channel.bufferedAmount;
-  event.bufferedAmountLowThreshold = channel.bufferedAmountLowThreshold;
-  event.id = channel.id;
-  event.label = channel.label;
-  event.maxPacketLifeTime = channel.maxPacketLifeTime;
-  event.maxRetransmits = channel.maxRetransmits;
-  event.negotiated = channel.negotiated;
-  event.ordered = channel.ordered;
-  event.protocol = channel.protocol;
-  event.readyState = channel.readyState;
-  // @ts-ignore w3c 仕様には存在しない property
-  // eslint-disable-next-line
-  event.reliable = channel.reliable;
+
+export function createDataChannelData(channel: RTCDataChannel): Record<string, unknown> {
+  return {
+    binaryType: channel.binaryType,
+    bufferedAmount: channel.bufferedAmount,
+    bufferedAmountLowThreshold: channel.bufferedAmountLowThreshold,
+    id: channel.id,
+    label: channel.label,
+    maxPacketLifeTime: channel.maxPacketLifeTime,
+    maxRetransmits: channel.maxRetransmits,
+    negotiated: channel.negotiated,
+    ordered: channel.ordered,
+    protocol: channel.protocol,
+    readyState: channel.readyState,
+    // @ts-ignore w3c 仕様には存在しない property
+    reliable: channel.reliable,
+  };
+}
+
+export function createTimelineEvent(
+  eventType: string,
+  data: unknown,
+  transportType: TransportType,
+  dataChannelId?: number | null,
+  dataChannelLabel?: string
+): TimelineEvent {
+  const event = new Event(eventType) as TimelineEvent;
+  // data をコピーする
+  try {
+    event.data = JSON.parse(JSON.stringify(data)) as unknown;
+  } catch (_) {
+    event.data = data;
+  }
+  event.transportType = transportType;
+  event.dataChannelId = dataChannelId;
+  event.dataChannelLabel = dataChannelLabel;
   return event;
 }

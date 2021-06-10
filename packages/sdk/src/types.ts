@@ -273,7 +273,7 @@ export type Callbacks = {
   notify: (event: SignalingNotifyMessage, transportType: TransportType) => void;
   log: (title: string, message: JSONType) => void;
   timeout: () => void;
-  datachannel: (event: DataChannelEvent) => void;
+  timeline: (event: TimelineEvent) => void;
   signaling: (event: SignalingEvent) => void;
 };
 
@@ -285,7 +285,7 @@ export type PreKeyBundle = {
 
 export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
 
-export type TransportType = "websocket" | "datachannel";
+export type TransportType = "websocket" | "datachannel" | "peerconnection";
 
 export interface SignalingEvent extends Event {
   transportType?: TransportType;
@@ -306,4 +306,12 @@ export interface DataChannelEvent extends Event {
   protocol: RTCDataChannel["protocol"];
   readyState: RTCDataChannel["readyState"];
   reliable: boolean;
+}
+
+export interface TimelineEvent extends Event {
+  transportType?: TransportType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any;
+  dataChannelId?: number | null;
+  dataChannelLabel?: string;
 }
