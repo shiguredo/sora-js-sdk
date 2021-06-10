@@ -285,7 +285,10 @@ export default class ConnectionBase {
         if (!this.dataChannels.signaling) {
           return resolve();
         }
-        this.dataChannels.signaling.onclose = () => {
+        this.dataChannels.signaling.onclose = (event) => {
+          const channel = event.currentTarget as RTCDataChannel;
+          this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
+          this.trace("CLOSE DATA CHANNEL", channel.label);
           deleteChannels();
           return resolve();
         };
@@ -351,7 +354,12 @@ export default class ConnectionBase {
       const dataChannel = this.dataChannels[key];
       if (dataChannel) {
         dataChannel.onmessage = null;
-        dataChannel.onclose = null;
+        // onclose はログを吐く専用に残す
+        dataChannel.onclose = (event) => {
+          const channel = event.currentTarget as RTCDataChannel;
+          this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
+          this.trace("CLOSE DATA CHANNEL", channel.label);
+        };
       }
     }
     await this.terminateDataChannel();
@@ -392,7 +400,12 @@ export default class ConnectionBase {
       const dataChannel = this.dataChannels[key];
       if (dataChannel) {
         dataChannel.onmessage = null;
-        dataChannel.onclose = null;
+        // onclose はログを吐く専用に残す
+        dataChannel.onclose = (event) => {
+          const channel = event.currentTarget as RTCDataChannel;
+          this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
+          this.trace("CLOSE DATA CHANNEL", channel.label);
+        };
       }
     }
     const dataChannelCloseEvent = new CloseEvent("close", { code: 4997 });
