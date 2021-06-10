@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.26
+ * @version: 2021.1.0-canary.27
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.26
+	 * @version: 2021.1.0-canary.27
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.26";
+	        return "2021.1.0-canary.27";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -1599,7 +1599,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.26",
+	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.27",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -2077,7 +2077,10 @@
 	                if (!this.dataChannels.signaling) {
 	                    return resolve();
 	                }
-	                this.dataChannels.signaling.onclose = () => {
+	                this.dataChannels.signaling.onclose = (event) => {
+	                    const channel = event.currentTarget;
+	                    this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
+	                    this.trace("CLOSE DATA CHANNEL", channel.label);
 	                    deleteChannels();
 	                    return resolve();
 	                };
@@ -2142,7 +2145,12 @@
 	            const dataChannel = this.dataChannels[key];
 	            if (dataChannel) {
 	                dataChannel.onmessage = null;
-	                dataChannel.onclose = null;
+	                // onclose はログを吐く専用に残す
+	                dataChannel.onclose = (event) => {
+	                    const channel = event.currentTarget;
+	                    this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
+	                    this.trace("CLOSE DATA CHANNEL", channel.label);
+	                };
 	            }
 	        }
 	        await this.terminateDataChannel();
@@ -2182,7 +2190,12 @@
 	            const dataChannel = this.dataChannels[key];
 	            if (dataChannel) {
 	                dataChannel.onmessage = null;
-	                dataChannel.onclose = null;
+	                // onclose はログを吐く専用に残す
+	                dataChannel.onclose = (event) => {
+	                    const channel = event.currentTarget;
+	                    this.callbacks.datachannel(createDataChannelEvent("onclose", channel));
+	                    this.trace("CLOSE DATA CHANNEL", channel.label);
+	                };
 	            }
 	        }
 	        const dataChannelCloseEvent = new CloseEvent("close", { code: 4997 });
@@ -2630,6 +2643,7 @@
 	        dataChannelEvent.channel.onopen = (event) => {
 	            const channel = event.currentTarget;
 	            channel.bufferedAmountLowThreshold = 65536;
+	            channel.binaryType = "arraybuffer";
 	            this.callbacks.datachannel(createDataChannelEvent("onopen", channel));
 	            this.dataChannels[channel.label] = channel;
 	            this.trace("OPEN DATA CHANNEL", channel.label);
@@ -3122,7 +3136,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.0-canary.26";
+	        return "2021.1.0-canary.27";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
