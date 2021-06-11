@@ -302,13 +302,25 @@ export default class ConnectionBase {
           const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
           const zlibMessage = zlibSync(binaryMessage, {});
           if (this.dataChannels.signaling.readyState === "open") {
-            this.dataChannels.signaling.send(zlibMessage);
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+            try {
+              this.dataChannels.signaling.send(zlibMessage);
+              this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            } catch (e) {
+              const errorMessage = (e as Error).message;
+              this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            }
           }
         } else {
           if (this.dataChannels.signaling.readyState === "open") {
-            this.dataChannels.signaling.send(JSON.stringify(message));
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+            try {
+              this.dataChannels.signaling.send(JSON.stringify(message));
+              this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            } catch (e) {
+              const errorMessage = (e as Error).message;
+              this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            }
           }
         }
         // DataChannel 切断を待つ
