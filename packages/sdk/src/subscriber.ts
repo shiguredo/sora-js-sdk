@@ -28,6 +28,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
+        this.writePeerConnectionTimelineLog("ontrack");
         this.stream = event.streams[0];
         const streamId = this.stream.id;
         if (streamId === "default") {
@@ -76,6 +77,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
+        this.writePeerConnectionTimelineLog("ontrack");
         const stream = event.streams[0];
         if (stream.id === "default") {
           return;
