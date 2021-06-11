@@ -2,9 +2,9 @@ import { unzlibSync, zlibSync } from "fflate";
 import {
   ConnectError,
   createDataChannelData,
-  createDataChannelSignalingEvent,
+  createSignalingEvent,
   createSignalingMessage,
-  createWebSocketSignalingEvent,
+  createTimelineEvent,
   getPreKeyBundle,
   getSignalingNotifyAuthnMetadata,
   getSignalingNotifyData,
@@ -24,7 +24,6 @@ import {
   SignalingNotifyMessage,
   SignalingReqStatsMessage,
   SignalingSwitchedMessage,
-  TimelineEvent,
   TransportType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
@@ -231,7 +230,6 @@ export default class ConnectionBase {
     let timerId = 0;
     if (this.signalingSwitched) {
       if (this.ws) {
-        this.ws.onclose = null;
         this.ws.close();
         this.ws = null;
       }
@@ -247,6 +245,7 @@ export default class ConnectionBase {
           this.ws = null;
         }
         clearTimeout(timerId);
+        this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
         return resolve(event);
       };
       if (this.ws.readyState === 1) {
@@ -293,7 +292,7 @@ export default class ConnectionBase {
         }
         this.dataChannels.signaling.onclose = (event) => {
           const channel = event.currentTarget as RTCDataChannel;
-          this.writeDataChannelSignalingLog("onclose", message, channel);
+          this.writeDataChannelSignalingLog("onclose", channel);
           this.trace("CLOSE DATA CHANNEL", channel.label);
           deleteChannels();
           return resolve();
@@ -304,12 +303,12 @@ export default class ConnectionBase {
           const zlibMessage = zlibSync(binaryMessage, {});
           if (this.dataChannels.signaling.readyState === "open") {
             this.dataChannels.signaling.send(zlibMessage);
-            this.writeDataChannelSignalingLog("send-disconnect", message, this.dataChannels.signaling);
+            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
           }
         } else {
           if (this.dataChannels.signaling.readyState === "open") {
             this.dataChannels.signaling.send(JSON.stringify(message));
-            this.writeDataChannelSignalingLog("send-disconnect", message, this.dataChannels.signaling);
+            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
           }
         }
         // DataChannel 切断を待つ
@@ -356,7 +355,10 @@ export default class ConnectionBase {
       this.pc.ondatachannel = null;
     }
     if (this.ws) {
-      this.ws.onclose = null;
+      // onclose はログを吐く専用に残す
+      this.ws.onclose = (_) => {
+        this.writeWebSocketTimelineLog("onclose");
+      };
       this.ws.onmessage = null;
     }
     for (const key of Object.keys(this.dataChannels)) {
@@ -366,7 +368,7 @@ export default class ConnectionBase {
         // onclose はログを吐く専用に残す
         dataChannel.onclose = (event) => {
           const channel = event.currentTarget as RTCDataChannel;
-          this.writeDataChannelTimelineLog("onclose", createDataChannelData(channel), channel);
+          this.writeDataChannelTimelineLog("onclose", channel);
           this.trace("CLOSE DATA CHANNEL", channel.label);
         };
       }
@@ -402,7 +404,10 @@ export default class ConnectionBase {
       this.pc.ondatachannel = null;
     }
     if (this.ws) {
-      this.ws.onclose = null;
+      // onclose はログを吐く専用に残す
+      this.ws.onclose = (_) => {
+        this.writeWebSocketTimelineLog("onclose");
+      };
       this.ws.onmessage = null;
     }
     for (const key of Object.keys(this.dataChannels)) {
@@ -412,7 +417,7 @@ export default class ConnectionBase {
         // onclose はログを吐く専用に残す
         dataChannel.onclose = (event) => {
           const channel = event.currentTarget as RTCDataChannel;
-          this.writeDataChannelTimelineLog("onclose", createDataChannelData(channel), channel);
+          this.writeDataChannelTimelineLog("onclose", channel);
           this.trace("CLOSE DATA CHANNEL", channel.label);
         };
       }
@@ -420,7 +425,7 @@ export default class ConnectionBase {
     const dataChannelCloseEvent = new CloseEvent("close", { code: 4997 });
     await this.terminateDataChannel();
     const webSocketCloseEvent = await this.terminateWebSocket();
-    await this.terminatePeerConnection();
+    // await this.terminatePeerConnection();
     if (this.e2ee) {
       this.e2ee.terminateWorker();
       this.e2ee = null;
@@ -485,10 +490,11 @@ export default class ConnectionBase {
         );
         error.code = event.code;
         error.reason = event.reason;
+        this.writeWebSocketTimelineLog("onclose", error);
         reject(error);
       };
       this.ws.onopen = async (_): Promise<void> => {
-        this.writeWebSocketSignalingLog("onopen", null);
+        this.writeWebSocketSignalingLog("onopen");
         const signalingMessage = createSignalingMessage(
           offer.sdp || "",
           this.role,
@@ -526,7 +532,6 @@ export default class ConnectionBase {
           this.writeWebSocketSignalingLog("onmessage-re-offer", message);
           await this.signalingOnMessageTypeReOffer(message);
         } else if (message.type == "ping") {
-          this.writeWebSocketTimelineLog("onmessage-ping", message);
           await this.signalingOnMessageTypePing(message);
         } else if (message.type == "push") {
           this.callbacks.push(message, "websocket");
@@ -570,7 +575,30 @@ export default class ConnectionBase {
     this.pc = new window.RTCPeerConnection(config, this.constraints);
     this.pc.oniceconnectionstatechange = (_): void => {
       if (this.pc) {
+        this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
+          connectionState: this.pc.connectionState,
+          iceConnectionState: this.pc.iceConnectionState,
+          iceGatheringState: this.pc.iceGatheringState,
+        });
         this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
+      }
+    };
+    this.pc.onicegatheringstatechange = (_): void => {
+      if (this.pc) {
+        this.writePeerConnectionTimelineLog("onicegatheringstatechange", {
+          connectionState: this.pc.connectionState,
+          iceConnectionState: this.pc.iceConnectionState,
+          iceGatheringState: this.pc.iceGatheringState,
+        });
+      }
+    };
+    this.pc.onconnectionstatechange = (_): void => {
+      if (this.pc) {
+        this.writePeerConnectionTimelineLog("onconnectionstatechange", {
+          connectionState: this.pc.connectionState,
+          iceConnectionState: this.pc.iceConnectionState,
+          iceGatheringState: this.pc.iceGatheringState,
+        });
       }
     };
     this.pc.ondatachannel = (event): void => {
@@ -649,6 +677,7 @@ export default class ConnectionBase {
       }, 100);
       if (this.pc) {
         this.pc.onicecandidate = (event): void => {
+          this.writePeerConnectionTimelineLog("onicecandidate", event.candidate);
           if (this.pc) {
             this.trace("ONICECANDIDATE ICEGATHERINGSTATE", this.pc.iceGatheringState);
           }
@@ -719,6 +748,31 @@ export default class ConnectionBase {
     trace(this.clientId, title, message);
   }
 
+  protected writeWebSocketSignalingLog(eventType: string, data?: unknown): void {
+    this.callbacks.signaling(createSignalingEvent(eventType, data, "websocket"));
+    this.writeWebSocketTimelineLog(eventType, data);
+  }
+
+  protected writeDataChannelSignalingLog(eventType: string, channel: RTCDataChannel, data?: unknown): void {
+    this.callbacks.signaling(createSignalingEvent(eventType, data, "datachannel"));
+    this.writeDataChannelTimelineLog(eventType, channel, data);
+  }
+
+  protected writeWebSocketTimelineLog(eventType: string, data?: unknown): void {
+    const event = createTimelineEvent(eventType, data, "websocket");
+    this.callbacks.timeline(event);
+  }
+
+  protected writeDataChannelTimelineLog(eventType: string, channel: RTCDataChannel, data?: unknown): void {
+    const event = createTimelineEvent(eventType, data, "datachannel", channel.id, channel.label);
+    this.callbacks.timeline(event);
+  }
+
+  protected writePeerConnectionTimelineLog(eventType: string, data?: unknown): void {
+    const event = createTimelineEvent(eventType, data, "peerconnection");
+    this.callbacks.timeline(event);
+  }
+
   private signalingOnMessageE2EE(data: ArrayBuffer): void {
     if (this.e2ee) {
       const message = new Uint8Array(data);
@@ -736,6 +790,7 @@ export default class ConnectionBase {
     if (this.ws) {
       this.ws.onclose = async (event): Promise<void> => {
         this.trace("DISCONNECT", "Trigger event WebSocket onclose");
+        this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
         await this.terminate(event);
       };
       this.ws.onerror = (event) => {
@@ -801,7 +856,6 @@ export default class ConnectionBase {
     }
     if (this.ws) {
       this.ws.send(JSON.stringify(pongMessage));
-      this.writeWebSocketTimelineLog("send-pong", pongMessage);
     }
   }
 
@@ -857,8 +911,11 @@ export default class ConnectionBase {
       return;
     }
     if (message["ignore_disconnect_websocket"]) {
-      await this.terminateWebSocket();
-      this.writeWebSocketSignalingLog("close", null);
+      if (this.ws) {
+        this.ws.onclose = null;
+        await this.terminateWebSocket();
+      }
+      this.writeWebSocketSignalingLog("close");
     }
   }
 
@@ -888,11 +945,11 @@ export default class ConnectionBase {
 
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
     const dataChannel = dataChannelEvent.channel;
-    this.writeDataChannelTimelineLog("ondatachannel", createDataChannelData(dataChannel), dataChannel);
+    this.writeDataChannelTimelineLog("ondatachannel", dataChannel, createDataChannelData(dataChannel));
     // onbufferedamountlow
     dataChannelEvent.channel.onbufferedamountlow = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
-      this.writeDataChannelTimelineLog("onbufferedamountlow", createDataChannelData(channel), channel);
+      this.writeDataChannelTimelineLog("onbufferedamountlow", channel);
     };
     // onopen
     dataChannelEvent.channel.onopen = (event): void => {
@@ -902,15 +959,15 @@ export default class ConnectionBase {
       this.dataChannels[channel.label] = channel;
       this.trace("OPEN DATA CHANNEL", channel.label);
       if (channel.label === "signaling" && this.ws) {
-        this.writeDataChannelSignalingLog("onopen", null, channel);
+        this.writeDataChannelSignalingLog("onopen", channel);
       } else {
-        this.writeDataChannelTimelineLog("onopen", null, channel);
+        this.writeDataChannelTimelineLog("onopen", channel);
       }
     };
     // onclose
     dataChannelEvent.channel.onclose = async (event): Promise<void> => {
       const channel = event.currentTarget as RTCDataChannel;
-      this.writeDataChannelTimelineLog("onclose", createDataChannelData(channel), channel);
+      this.writeDataChannelTimelineLog("onclose", channel);
       this.trace("CLOSE DATA CHANNEL", channel.label);
       const closeEvent = new CloseEvent("close", { code: 4999 });
       await this.terminate(closeEvent);
@@ -918,7 +975,7 @@ export default class ConnectionBase {
     // onerror
     dataChannelEvent.channel.onerror = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
-      this.writeDataChannelTimelineLog("onerror", createDataChannelData(channel), channel);
+      this.writeDataChannelTimelineLog("onerror", channel);
       this.trace("ERROR DATA CHANNEL", channel.label);
     };
     // onmessage
@@ -931,7 +988,7 @@ export default class ConnectionBase {
           data = new TextDecoder().decode(unzlibMessage);
         }
         const message = JSON.parse(data) as SignalingMessage;
-        this.writeDataChannelSignalingLog(`onmessage-${message.type}`, message, channel);
+        this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message);
         if (message.type === "re-offer") {
           await this.signalingOnMessageTypeReOffer(message);
         }
@@ -961,20 +1018,20 @@ export default class ConnectionBase {
         const channel = event.currentTarget as RTCDataChannel;
         const data = event.data as ArrayBuffer;
         this.signalingOnMessageE2EE(data);
-        this.writeDataChannelSignalingLog("onmessage-e2ee", data, channel);
+        this.writeDataChannelSignalingLog("onmessage-e2ee", channel, data);
       };
     } else if (dataChannelEvent.channel.label === "stats") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
-        const channel = event.currentTarget as RTCDataChannel;
         let data = event.data as string;
         if (this.dataChannelsCompress.stats === true) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
         const message = JSON.parse(data) as SignalingReqStatsMessage;
-        this.writeDataChannelTimelineLog("onmessage-stats", message, channel);
-        const stats = await this.getStats();
-        this.sendStatsMessage(stats);
+        if (message.type === "req-stats") {
+          const stats = await this.getStats();
+          this.sendStatsMessage(stats);
+        }
       };
     }
   }
@@ -988,19 +1045,17 @@ export default class ConnectionBase {
       } else {
         this.dataChannels.signaling.send(JSON.stringify(message));
       }
-      // TODO(yuito): ログを出す場合と出さない場合を分ける必要がある
-      this.callbacks.signaling(createDataChannelSignalingEvent(`send-${message.type}`, message));
+      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "datachannel"));
     } else if (this.ws !== null) {
-      // TODO(yuito): ログを出す場合と出さない場合を分ける必要がある
       this.ws.send(JSON.stringify(message));
-      this.callbacks.signaling(createWebSocketSignalingEvent(`send-${message.type}`, message));
+      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "websocket"));
     }
   }
 
   private sendE2EEMessage(message: ArrayBuffer): void {
     if (this.dataChannels.e2ee) {
       this.dataChannels.e2ee.send(message);
-      this.writeDataChannelSignalingLog("send-e2ee", message, this.dataChannels.e2ee);
+      this.writeDataChannelSignalingLog("send-e2ee", this.dataChannels.e2ee, message);
     } else if (this.ws !== null) {
       this.ws.send(message);
       this.writeWebSocketSignalingLog("send-e2ee", message);
@@ -1020,7 +1075,6 @@ export default class ConnectionBase {
       } else {
         this.dataChannels.stats.send(JSON.stringify(message));
       }
-      this.writeDataChannelTimelineLog("send-stats", message, this.dataChannels.stats);
     }
   }
 
@@ -1042,36 +1096,6 @@ export default class ConnectionBase {
       return transceiver || null;
     }
     return null;
-  }
-
-  private writeWebSocketSignalingLog(eventType: string, data: unknown): void {
-    this.callbacks.signaling(createWebSocketSignalingEvent(eventType, data));
-    this.writeWebSocketTimelineLog(eventType, data);
-  }
-
-  private writeDataChannelSignalingLog(eventType: string, data: unknown, channel: RTCDataChannel): void {
-    this.callbacks.signaling(createDataChannelSignalingEvent(eventType, data));
-    this.writeDataChannelTimelineLog(eventType, data, channel);
-  }
-
-  private writeWebSocketTimelineLog(eventType: string, data: unknown): void {
-    const event = new Event(eventType) as TimelineEvent;
-    event.data = data;
-    event.transportType = "websocket";
-    this.callbacks.timeline(event);
-  }
-
-  private writeDataChannelTimelineLog(eventType: string, data: unknown, channel: RTCDataChannel): void {
-    const event = new Event(eventType) as TimelineEvent;
-    event.data = data;
-    event.transportType = "datachannel";
-    if (channel.id !== undefined) {
-      event.dataChannelId = channel.id;
-    }
-    if (channel.label !== undefined) {
-      event.dataChannelLabel = channel.label;
-    }
-    this.callbacks.timeline(event);
   }
 
   get e2eeSelfFingerprint(): string | undefined {

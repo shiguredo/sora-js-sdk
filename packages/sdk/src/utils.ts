@@ -331,7 +331,7 @@ export class ConnectError extends Error {
   reason?: string;
 }
 
-function createSignalingEvent(eventType: string, data: unknown, transportType: TransportType): SignalingEvent {
+export function createSignalingEvent(eventType: string, data: unknown, transportType: TransportType): SignalingEvent {
   const event = new Event(eventType) as SignalingEvent;
   // data をコピーする
   try {
@@ -341,14 +341,6 @@ function createSignalingEvent(eventType: string, data: unknown, transportType: T
   }
   event.transportType = transportType;
   return event;
-}
-
-export function createWebSocketSignalingEvent(eventType: string, data: unknown): SignalingEvent {
-  return createSignalingEvent(eventType, data, "websocket");
-}
-
-export function createDataChannelSignalingEvent(eventType: string, data: unknown): SignalingEvent {
-  return createSignalingEvent(eventType, data, "datachannel");
 }
 
 export function createDataChannelData(channel: RTCDataChannel): Record<string, unknown> {

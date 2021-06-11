@@ -293,21 +293,6 @@ export interface SignalingEvent extends Event {
   data?: any;
 }
 
-export interface DataChannelEvent extends Event {
-  binaryType: RTCDataChannel["binaryType"];
-  bufferedAmount: RTCDataChannel["bufferedAmount"];
-  bufferedAmountLowThreshold: RTCDataChannel["bufferedAmountLowThreshold"];
-  id: RTCDataChannel["id"];
-  label: RTCDataChannel["label"];
-  maxPacketLifeTime: RTCDataChannel["maxPacketLifeTime"];
-  maxRetransmits: RTCDataChannel["maxRetransmits"];
-  negotiated: RTCDataChannel["negotiated"];
-  ordered: RTCDataChannel["ordered"];
-  protocol: RTCDataChannel["protocol"];
-  readyState: RTCDataChannel["readyState"];
-  reliable: boolean;
-}
-
 export interface TimelineEvent extends Event {
   transportType?: TransportType;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
