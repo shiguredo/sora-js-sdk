@@ -1,6 +1,6 @@
 {
   "name": "@sora/sdk",
-  "version": "2021.1.0-canary.28",
+  "version": "2021.1.0-canary.29",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "main": "dist/sora.min.js",
@@ -35,7 +35,7 @@
     "typescript": "^4.3.2"
   },
   "dependencies": {
-    "@sora/e2ee": "^2021.1.0-canary.28",
+    "@sora/e2ee": "^2021.1.0-canary.29",
     "fflate": "^0.7.0"
   }
 }

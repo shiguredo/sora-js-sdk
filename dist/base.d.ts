@@ -57,6 +57,11 @@ export default class ConnectionBase {
     protected setConnectionTimeout(): Promise<MediaStream>;
     protected clearConnectionTimeout(): void;
     protected trace(title: string, message: unknown): void;
+    protected writeWebSocketSignalingLog(eventType: string, data?: unknown): void;
+    protected writeDataChannelSignalingLog(eventType: string, channel: RTCDataChannel, data?: unknown): void;
+    protected writeWebSocketTimelineLog(eventType: string, data?: unknown): void;
+    protected writeDataChannelTimelineLog(eventType: string, channel: RTCDataChannel, data?: unknown): void;
+    protected writePeerConnectionTimelineLog(eventType: string, data?: unknown): void;
     private signalingOnMessageE2EE;
     private signalingOnMessageTypeOffer;
     private sendUpdateAnswer;
