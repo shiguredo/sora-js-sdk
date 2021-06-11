@@ -425,7 +425,7 @@ export default class ConnectionBase {
     const dataChannelCloseEvent = new CloseEvent("close", { code: 4997 });
     await this.terminateDataChannel();
     const webSocketCloseEvent = await this.terminateWebSocket();
-    // await this.terminatePeerConnection();
+    await this.terminatePeerConnection();
     if (this.e2ee) {
       this.e2ee.terminateWorker();
       this.e2ee = null;
