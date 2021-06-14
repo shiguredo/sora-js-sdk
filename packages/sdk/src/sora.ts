@@ -3,13 +3,7 @@ import SoraE2EE from "@sora/e2ee";
 import ConnectionBase from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
-import {
-  applyMediaStreamConstraints,
-  stopAudioMediaDevice,
-  stopVideoMediaDevice,
-  startAudioMediaDevice,
-  startVideoMediaDevice,
-} from "./helpers";
+import { applyMediaStreamConstraints } from "./helpers";
 import { AudioCodecType, Callbacks, ConnectionOptions, JSONType, Role, SimulcastRid, VideoCodecType } from "./types";
 
 class SoraConnection {
@@ -58,10 +52,6 @@ export default {
   },
   helpers: {
     applyMediaStreamConstraints,
-    startAudioMediaDevice,
-    startVideoMediaDevice,
-    stopAudioMediaDevice,
-    stopVideoMediaDevice,
   },
 };
 
