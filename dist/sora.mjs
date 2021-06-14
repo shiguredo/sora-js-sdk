@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.29
+ * @version: 2021.1.0-canary.30
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0-canary.29
+ * @version: 2021.1.0-canary.30
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0-canary.29";
+        return "2021.1.0-canary.30";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -1593,7 +1593,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.0-canary.29",
+        sora_client: "Sora JavaScript SDK 2021.1.0-canary.30",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -2338,6 +2338,12 @@ class ConnectionBase {
                     this.callbacks.push(message, "websocket");
                 }
                 else if (message.type == "notify") {
+                    if (message.event_type === "connection.created") {
+                        this.writeWebSocketTimelineLog("notify-connection.created", message);
+                    }
+                    else if (message.event_type === "connection.destroyed") {
+                        this.writeWebSocketTimelineLog("notify-connection.destroyed", message);
+                    }
                     this.signalingOnMessageTypeNotify(message, "websocket");
                 }
                 else if (message.type == "switched") {
@@ -2761,12 +2767,19 @@ class ConnectionBase {
         }
         else if (dataChannelEvent.channel.label === "notify") {
             dataChannelEvent.channel.onmessage = (event) => {
+                const channel = event.currentTarget;
                 let data = event.data;
                 if (this.dataChannelsCompress.notify === true) {
                     const unzlibMessage = unzlibSync(new Uint8Array(event.data));
                     data = new TextDecoder().decode(unzlibMessage);
                 }
                 const message = JSON.parse(data);
+                if (message.event_type === "connection.created") {
+                    this.writeDataChannelTimelineLog("notify-connection.created", channel, message);
+                }
+                else if (message.event_type === "connection.destroyed") {
+                    this.writeDataChannelTimelineLog("notify-connection.destroyed", channel, message);
+                }
                 this.signalingOnMessageTypeNotify(message, "datachannel");
             };
         }
@@ -3216,7 +3229,7 @@ var sora = {
         return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-        return "2021.1.0-canary.29";
+        return "2021.1.0-canary.30";
     },
     helpers: {
         applyMediaStreamConstraints,
