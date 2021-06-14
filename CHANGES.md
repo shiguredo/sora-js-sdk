@@ -13,9 +13,9 @@
 
 - [CHANGE] fflate を導入して DataChannel zlib 対応を追加する
     - @yuitowest
-- [CHANGE] get audio, get video を追加して接続がそれぞれに対応しているかを返すようにする
+- [ADD] get audio, get video を追加して接続がそれぞれに対応しているかを返すようにする
     - @yuitowest
-- [CHANGE] stopAudioTrack, stopVideoTrack, replaceAudioTrack, replaceVideoTrack を追加する
+- [ADD] stopAudioTrack, stopVideoTrack, replaceAudioTrack, replaceVideoTrack を追加する
     - @yuitowest
 - [CHANGE] timeout option を connectionTimeout option に名前を変更する
     - timeout option を使用している場合は deprecated warning が出るように変更
