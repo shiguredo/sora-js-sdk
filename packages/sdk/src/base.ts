@@ -548,6 +548,11 @@ export default class ConnectionBase {
         } else if (message.type == "push") {
           this.callbacks.push(message, "websocket");
         } else if (message.type == "notify") {
+          if (message.event_type === "connection.created") {
+            this.writeWebSocketTimelineLog("notify-connection.created", message);
+          } else if (message.event_type === "connection.destroyed") {
+            this.writeWebSocketTimelineLog("notify-connection.destroyed", message);
+          }
           this.signalingOnMessageTypeNotify(message, "websocket");
         } else if (message.type == "switched") {
           this.writeWebSocketSignalingLog("onmessage-switched", message);
@@ -1007,12 +1012,18 @@ export default class ConnectionBase {
       };
     } else if (dataChannelEvent.channel.label === "notify") {
       dataChannelEvent.channel.onmessage = (event): void => {
+        const channel = event.currentTarget as RTCDataChannel;
         let data = event.data as string;
         if (this.dataChannelsCompress.notify === true) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
         const message = JSON.parse(data) as SignalingNotifyMessage;
+        if (message.event_type === "connection.created") {
+          this.writeDataChannelTimelineLog("notify-connection.created", channel, message);
+        } else if (message.event_type === "connection.destroyed") {
+          this.writeDataChannelTimelineLog("notify-connection.destroyed", channel, message);
+        }
         this.signalingOnMessageTypeNotify(message, "datachannel");
       };
     } else if (dataChannelEvent.channel.label === "push") {
