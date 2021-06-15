@@ -489,7 +489,7 @@ export default class ConnectionBase {
   }
 
   protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage> {
-    this.trace("CREATE OFFER SDP", offer);
+    this.trace("CREATE OFFER", offer);
     return new Promise((resolve, reject) => {
       if (this.ws === null) {
         this.ws = new WebSocket(this.signalingUrl);
