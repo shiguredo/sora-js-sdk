@@ -640,6 +640,13 @@ export default class ConnectionBase {
     if (!this.pc) {
       return;
     }
+    // mid と transceiver.direction を合わせる
+    for (const mid of Object.values(this.mids)) {
+      const transceiver = this.pc.getTransceivers().find((t) => t.mid === mid);
+      if (transceiver && transceiver.direction === "recvonly") {
+        transceiver.direction = "sendrecv";
+      }
+    }
     // simulcast の場合
     if (this.options.simulcast && (this.role === "sendrecv" || this.role === "sendonly")) {
       const transceiver = this.pc.getTransceivers().find((t) => {
