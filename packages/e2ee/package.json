@@ -1,6 +1,6 @@
 {
   "name": "@sora/e2ee",
-  "version": "2021.1.0-canary.30",
+  "version": "2021.1.0-canary.31",
   "description": "WebRTC SFU Sora JavaScript E2EE Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
@@ -28,6 +28,6 @@
     "typescript": "^4.3.2"
   },
   "dependencies": {
-    "@sora/go-wasm": "^2021.1.0-canary.30"
+    "@sora/go-wasm": "^2021.1.0-canary.31"
   }
 }
