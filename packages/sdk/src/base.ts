@@ -356,7 +356,7 @@ export default class ConnectionBase {
           clearInterval(timerId);
           return resolve();
         }
-      }, 100);
+      }, 10);
       this.pc.close();
     });
   }
@@ -713,7 +713,7 @@ export default class ConnectionBase {
           clearInterval(timerId);
           resolve();
         }
-      }, 100);
+      }, 10);
       if (this.pc) {
         this.pc.onicecandidate = (event): void => {
           this.writePeerConnectionTimelineLog("onicecandidate", event.candidate);
@@ -751,7 +751,7 @@ export default class ConnectionBase {
           clearInterval(timerId);
           resolve();
         }
-      }, 100);
+      }, 10);
     });
   }
 
