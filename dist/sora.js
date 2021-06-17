@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.32
+ * @version: 2021.1.0-canary.33
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.32
+	 * @version: 2021.1.0-canary.33
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.32";
+	        return "2021.1.0-canary.33";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -1599,7 +1599,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.32",
+	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.33",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1752,7 +1752,7 @@
 	            message.video["bit_rate"] = copyOptions.videoBitRate;
 	        }
 	    }
-	    if (message.simulcast && !enabledSimulcast()) {
+	    if (message.simulcast && !enabledSimulcast() && role !== "recvonly") {
 	        throw new Error("Simulcast can not be used with this browser");
 	    }
 	    if (options.e2ee === true) {
@@ -2158,7 +2158,7 @@
 	                    clearInterval(timerId);
 	                    return resolve();
 	                }
-	            }, 100);
+	            }, 10);
 	            this.pc.close();
 	        });
 	    }
@@ -2292,7 +2292,7 @@
 	        return new Promise((resolve, reject) => {
 	            if (this.ws === null) {
 	                this.ws = new WebSocket(this.signalingUrl);
-	                this.writeWebSocketSignalingLog("connect", this.signalingUrl);
+	                this.writeWebSocketSignalingLog("new-websocket", this.signalingUrl);
 	            }
 	            this.ws.binaryType = "arraybuffer";
 	            this.ws.onclose = (event) => {
@@ -2304,7 +2304,14 @@
 	            };
 	            this.ws.onopen = async (_) => {
 	                this.writeWebSocketSignalingLog("onopen");
-	                const signalingMessage = createSignalingMessage(offer.sdp || "", this.role, this.channelId, this.metadata, this.options);
+	                let signalingMessage;
+	                try {
+	                    signalingMessage = createSignalingMessage(offer.sdp || "", this.role, this.channelId, this.metadata, this.options);
+	                }
+	                catch (error) {
+	                    reject(error);
+	                    return;
+	                }
 	                if (signalingMessage.e2ee && this.e2ee) {
 	                    const initResult = await this.e2ee.init();
 	                    // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
@@ -2367,10 +2374,12 @@
 	            pc.addTransceiver("audio", { direction: "recvonly" });
 	            const offer = await pc.createOffer();
 	            pc.close();
+	            this.writePeerConnectionTimelineLog("create-offer", offer);
 	            return offer;
 	        }
 	        const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
 	        pc.close();
+	        this.writePeerConnectionTimelineLog("create-offer", offer);
 	        return offer;
 	    }
 	    async connectPeerConnection(message) {
@@ -2384,6 +2393,7 @@
 	            config = Object.assign({ certificates: [certificate] }, config);
 	        }
 	        this.trace("PEER CONNECTION CONFIG", config);
+	        this.writePeerConnectionTimelineLog("new-peerconnection", config);
 	        // @ts-ignore Chrome の場合は第2引数に goog オプションを渡すことができる
 	        this.pc = new window.RTCPeerConnection(config, this.constraints);
 	        this.pc.oniceconnectionstatechange = (_) => {
@@ -2423,7 +2433,9 @@
 	        if (!this.pc) {
 	            return;
 	        }
-	        await this.pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: message.sdp }));
+	        const sessionDescription = new RTCSessionDescription({ type: "offer", sdp: message.sdp });
+	        await this.pc.setRemoteDescription(sessionDescription);
+	        this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
 	        return;
 	    }
 	    async createAnswer(message) {
@@ -2460,7 +2472,9 @@
 	            }
 	        }
 	        const sessionDescription = await this.pc.createAnswer();
+	        this.writePeerConnectionTimelineLog("create-answer", sessionDescription);
 	        await this.pc.setLocalDescription(sessionDescription);
+	        this.writePeerConnectionTimelineLog("set-local-description", sessionDescription);
 	        return;
 	    }
 	    sendAnswer() {
@@ -2479,13 +2493,14 @@
 	                    clearInterval(timerId);
 	                    const error = new Error();
 	                    error.message = "ICECANDIDATE TIMEOUT";
+	                    this.writePeerConnectionTimelineLog("ice-connection-timeout");
 	                    reject(error);
 	                }
 	                else if (this.pc && this.pc.iceConnectionState === "connected") {
 	                    clearInterval(timerId);
 	                    resolve();
 	                }
-	            }, 100);
+	            }, 10);
 	            if (this.pc) {
 	                this.pc.onicecandidate = (event) => {
 	                    this.writePeerConnectionTimelineLog("onicecandidate", event.candidate);
@@ -2512,6 +2527,7 @@
 	            // connectionState が存在しない場合はそのまま抜ける
 	            if (this.pc && this.pc.connectionState === undefined) {
 	                resolve();
+	                return;
 	            }
 	            const timerId = setInterval(() => {
 	                if (!this.pc) {
@@ -2524,7 +2540,7 @@
 	                    clearInterval(timerId);
 	                    resolve();
 	                }
-	            }, 100);
+	            }, 10);
 	        });
 	    }
 	    setConnectionTimeout() {
@@ -2537,6 +2553,9 @@
 	                        error.message = "CONNECTION TIMEOUT";
 	                        this.callbacks.timeout();
 	                        this.trace("DISCONNECT", "Signaling connection timeout");
+	                        this.writePeerConnectionTimelineLog("signaling-connection-timeout", {
+	                            connectionTimeout: this.connectionTimeout,
+	                        });
 	                        await this.disconnect();
 	                        reject(error);
 	                    }
@@ -2713,6 +2732,7 @@
 	        originalParameters.encodings = encodings;
 	        await transceiver.sender.setParameters(originalParameters);
 	        this.trace("TRANSCEIVER SENDER SET_PARAMETERS", originalParameters);
+	        this.writePeerConnectionTimelineLog("transceiver-sender-set-parameters", originalParameters);
 	        return;
 	    }
 	    async getStats() {
@@ -2913,10 +2933,12 @@
 
 	class ConnectionPublisher extends ConnectionBase {
 	    async connect(stream) {
+	        this.writePeerConnectionTimelineLog("start-connecting-to-sora");
 	        if (this.options.multistream) {
 	            return await Promise.race([
 	                this.multiStream(stream).finally(() => {
 	                    this.clearConnectionTimeout();
+	                    this.writePeerConnectionTimelineLog("connected-to-sora");
 	                }),
 	                this.setConnectionTimeout(),
 	            ]);
@@ -2925,6 +2947,7 @@
 	            return await Promise.race([
 	                this.singleStream(stream).finally(() => {
 	                    this.clearConnectionTimeout();
+	                    this.writePeerConnectionTimelineLog("connected-to-sora");
 	                }),
 	                this.setConnectionTimeout(),
 	            ]);
@@ -3027,10 +3050,12 @@
 
 	class ConnectionSubscriber extends ConnectionBase {
 	    async connect() {
+	        this.writePeerConnectionTimelineLog("start-connecting-to-sora");
 	        if (this.options.multistream) {
 	            return await Promise.race([
 	                this.multiStream().finally(() => {
 	                    this.clearConnectionTimeout();
+	                    this.writePeerConnectionTimelineLog("connected-to-sora");
 	                }),
 	                this.setConnectionTimeout(),
 	            ]);
@@ -3039,6 +3064,7 @@
 	            return await Promise.race([
 	                this.singleStream().finally(() => {
 	                    this.clearConnectionTimeout();
+	                    this.writePeerConnectionTimelineLog("connected-to-sora");
 	                }),
 	                this.setConnectionTimeout(),
 	            ]);
@@ -3181,7 +3207,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.0-canary.32";
+	        return "2021.1.0-canary.33";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
