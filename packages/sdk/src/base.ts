@@ -494,7 +494,7 @@ export default class ConnectionBase {
     return new Promise((resolve, reject) => {
       if (this.ws === null) {
         this.ws = new WebSocket(this.signalingUrl);
-        this.writeWebSocketSignalingLog("connect", this.signalingUrl);
+        this.writeWebSocketSignalingLog("new-websocket", this.signalingUrl);
       }
       this.ws.binaryType = "arraybuffer";
       this.ws.onclose = (event): void => {
@@ -577,10 +577,12 @@ export default class ConnectionBase {
       pc.addTransceiver("audio", { direction: "recvonly" });
       const offer = await pc.createOffer();
       pc.close();
+      this.writePeerConnectionTimelineLog("create-offer", offer);
       return offer;
     }
     const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
     pc.close();
+    this.writePeerConnectionTimelineLog("create-offer", offer);
     return offer;
   }
 
@@ -595,6 +597,7 @@ export default class ConnectionBase {
       config = Object.assign({ certificates: [certificate] }, config);
     }
     this.trace("PEER CONNECTION CONFIG", config);
+    this.writePeerConnectionTimelineLog("new-peerconnection", config);
     // @ts-ignore Chrome の場合は第2引数に goog オプションを渡すことができる
     this.pc = new window.RTCPeerConnection(config, this.constraints);
     this.pc.oniceconnectionstatechange = (_): void => {
@@ -637,7 +640,9 @@ export default class ConnectionBase {
     if (!this.pc) {
       return;
     }
-    await this.pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: message.sdp }));
+    const sessionDescription = new RTCSessionDescription({ type: "offer", sdp: message.sdp });
+    await this.pc.setRemoteDescription(sessionDescription);
+    this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
     return;
   }
 
@@ -679,7 +684,9 @@ export default class ConnectionBase {
       }
     }
     const sessionDescription = await this.pc.createAnswer();
+    this.writePeerConnectionTimelineLog("create-answer", sessionDescription);
     await this.pc.setLocalDescription(sessionDescription);
+    this.writePeerConnectionTimelineLog("set-local-description", sessionDescription);
     return;
   }
 
@@ -700,6 +707,7 @@ export default class ConnectionBase {
           clearInterval(timerId);
           const error = new Error();
           error.message = "ICECANDIDATE TIMEOUT";
+          this.writePeerConnectionTimelineLog("ice-connection-timeout");
           reject(error);
         } else if (this.pc && this.pc.iceConnectionState === "connected") {
           clearInterval(timerId);
@@ -759,6 +767,9 @@ export default class ConnectionBase {
             error.message = "CONNECTION TIMEOUT";
             this.callbacks.timeout();
             this.trace("DISCONNECT", "Signaling connection timeout");
+            this.writePeerConnectionTimelineLog("signaling-connection-timeout", {
+              connectionTimeout: this.connectionTimeout,
+            });
             await this.disconnect();
             reject(error);
           }
@@ -959,6 +970,7 @@ export default class ConnectionBase {
     originalParameters.encodings = encodings;
     await transceiver.sender.setParameters(originalParameters);
     this.trace("TRANSCEIVER SENDER SET_PARAMETERS", originalParameters);
+    this.writePeerConnectionTimelineLog("transceiver-sender-set-parameters", originalParameters);
     return;
   }
 
