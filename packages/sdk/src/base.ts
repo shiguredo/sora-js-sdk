@@ -740,6 +740,7 @@ export default class ConnectionBase {
       // connectionState が存在しない場合はそのまま抜ける
       if (this.pc && this.pc.connectionState === undefined) {
         resolve();
+        return;
       }
       const timerId = setInterval(() => {
         if (!this.pc) {
