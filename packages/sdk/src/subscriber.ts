@@ -2,10 +2,12 @@ import ConnectionBase from "./base";
 
 export default class ConnectionSubscriber extends ConnectionBase {
   async connect(): Promise<MediaStream | void> {
+    this.writePeerConnectionTimelineLog("start-connecting-to-sora");
     if (this.options.multistream) {
       return await Promise.race([
         this.multiStream().finally(() => {
           this.clearConnectionTimeout();
+          this.writePeerConnectionTimelineLog("connected-to-sora");
         }),
         this.setConnectionTimeout(),
       ]);
@@ -13,6 +15,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
       return await Promise.race([
         this.singleStream().finally(() => {
           this.clearConnectionTimeout();
+          this.writePeerConnectionTimelineLog("connected-to-sora");
         }),
         this.setConnectionTimeout(),
       ]);
