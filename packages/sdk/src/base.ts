@@ -15,6 +15,7 @@ import {
   Callbacks,
   ConnectionOptions,
   JSONType,
+  SignalingConnectMessage,
   SignalingMessage,
   SignalingPingMessage,
   SignalingPushMessage,
@@ -507,13 +508,19 @@ export default class ConnectionBase {
       };
       this.ws.onopen = async (_): Promise<void> => {
         this.writeWebSocketSignalingLog("onopen");
-        const signalingMessage = createSignalingMessage(
-          offer.sdp || "",
-          this.role,
-          this.channelId,
-          this.metadata,
-          this.options
-        );
+        let signalingMessage: SignalingConnectMessage;
+        try {
+          signalingMessage = createSignalingMessage(
+            offer.sdp || "",
+            this.role,
+            this.channelId,
+            this.metadata,
+            this.options
+          );
+        } catch (error) {
+          reject(error);
+          return;
+        }
         if (signalingMessage.e2ee && this.e2ee) {
           const initResult = await this.e2ee.init();
           // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる

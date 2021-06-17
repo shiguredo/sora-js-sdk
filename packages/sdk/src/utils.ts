@@ -237,7 +237,7 @@ export function createSignalingMessage(
     }
   }
 
-  if (message.simulcast && !enabledSimulcast()) {
+  if (message.simulcast && !enabledSimulcast() && role !== "recvonly") {
     throw new Error("Simulcast can not be used with this browser");
   }
 
