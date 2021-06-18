@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0-canary.33
+ * @version: 2021.1.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.1.0-canary.33
+	 * @version: 2021.1.0
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.1.0-canary.33";
+	        return "2021.1.0";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -1599,7 +1599,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.0-canary.33",
+	        sora_client: "Sora JavaScript SDK 2021.1.0",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -3207,7 +3207,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.0-canary.33";
+	        return "2021.1.0";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
