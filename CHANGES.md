@@ -9,7 +9,7 @@
 - FIX
     - バグ修正
 
-## develop
+## 2021.1.0
 
 - [CHANGE] fflate を導入して DataChannel zlib 対応を追加する
     - @yuitowest
