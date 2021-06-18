@@ -2,10 +2,23 @@ import ConnectionBase from "./base";
 
 export default class ConnectionPublisher extends ConnectionBase {
   async connect(stream: MediaStream): Promise<MediaStream> {
+    this.writePeerConnectionTimelineLog("start-connecting-to-sora");
     if (this.options.multistream) {
-      return await Promise.race([this.multiStream(stream), this.setConnectionTimeout()]);
+      return await Promise.race([
+        this.multiStream(stream).finally(() => {
+          this.clearConnectionTimeout();
+          this.writePeerConnectionTimelineLog("connected-to-sora");
+        }),
+        this.setConnectionTimeout(),
+      ]);
     } else {
-      return await Promise.race([this.singleStream(stream), this.setConnectionTimeout()]);
+      return await Promise.race([
+        this.singleStream(stream).finally(() => {
+          this.clearConnectionTimeout();
+          this.writePeerConnectionTimelineLog("connected-to-sora");
+        }),
+        this.setConnectionTimeout(),
+      ]);
     }
   }
 
@@ -46,10 +59,17 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
+        this.writePeerConnectionTimelineLog("ontrack");
         const stream = event.streams[0];
-        if (!stream) return;
-        if (stream.id === "default") return;
-        if (stream.id === this.connectionId) return;
+        if (!stream) {
+          return;
+        }
+        if (stream.id === "default") {
+          return;
+        }
+        if (stream.id === this.connectionId) {
+          return;
+        }
         if (this.e2ee) {
           this.e2ee.setupReceiverTransform(event.receiver);
         }
@@ -67,7 +87,9 @@ export default class ConnectionPublisher extends ConnectionBase {
             }
           }
         };
-        if (-1 < this.remoteConnectionIds.indexOf(stream.id)) return;
+        if (-1 < this.remoteConnectionIds.indexOf(stream.id)) {
+          return;
+        }
         // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
         event.stream = stream;
         this.remoteConnectionIds.push(stream.id);

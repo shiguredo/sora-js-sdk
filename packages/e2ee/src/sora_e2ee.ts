@@ -120,7 +120,9 @@ class SoraE2EE {
   }
 
   setupSenderTransform(sender: RTCRtpSender): void {
-    if (!sender.track) return;
+    if (!sender.track) {
+      return;
+    }
     // @ts-ignore トライアル段階の API なので無視する
     const senderStreams = sender.createEncodedStreams();
     const readableStream = senderStreams.readableStream || senderStreams.readable;

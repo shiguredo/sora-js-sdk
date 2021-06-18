@@ -1,4 +1,16 @@
-import { ConnectionOptions, Browser, Json, PreKeyBundle, SignalingConnectMessage } from "./types";
+import {
+  ConnectionOptions,
+  Browser,
+  JSONType,
+  PreKeyBundle,
+  SignalingConnectMessage,
+  SignalingEvent,
+  SignalingNotifyMetadata,
+  SignalingNotifyConnectionCreated,
+  SignalingNotifyConnectionDestroyed,
+  TimelineEvent,
+  TransportType,
+} from "./types";
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
@@ -38,10 +50,6 @@ function enabledSimulcast(): boolean {
   return hasAllRequiredHeaderExtensions;
 }
 
-export function isEdge(): boolean {
-  return browser() === "edge";
-}
-
 export function isSafari(): boolean {
   return browser() === "safari";
 }
@@ -54,16 +62,10 @@ export function createSignalingMessage(
   offerSDP: string,
   role: string,
   channelId: string | null | undefined,
-  metadata: Json | undefined,
+  metadata: JSONType | undefined,
   options: ConnectionOptions
 ): SignalingConnectMessage {
-  if (
-    role !== "upstream" &&
-    role !== "downstream" &&
-    role !== "sendrecv" &&
-    role !== "sendonly" &&
-    role !== "recvonly"
-  ) {
+  if (role !== "sendrecv" && role !== "sendonly" && role !== "recvonly") {
     throw new Error("Unknown role type");
   }
   if (channelId === null || channelId === undefined) {
@@ -71,12 +73,9 @@ export function createSignalingMessage(
   }
   const message: SignalingConnectMessage = {
     type: "connect",
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/camelcase
-    sora_client: `Sora JavaScript SDK ${SORA_JS_SDK_VERSION}`,
+    sora_client: "Sora JavaScript SDK __SORA_JS_SDK_VERSION__",
     environment: window.navigator.userAgent,
     role: role,
-    // eslint-disable-next-line @typescript-eslint/camelcase
     channel_id: channelId,
     sdp: offerSDP,
     audio: true,
@@ -88,9 +87,9 @@ export function createSignalingMessage(
   }
 
   if ("signalingNotifyMetadata" in options) {
-    // eslint-disable-next-line @typescript-eslint/camelcase
     message.signaling_notify_metadata = options.signalingNotifyMetadata;
   }
+
   if ("multistream" in options && options.multistream === true) {
     // multistream
     message.multistream = true;
@@ -98,8 +97,16 @@ export function createSignalingMessage(
     if ("spotlight" in options) {
       message.spotlight = options.spotlight;
       if ("spotlightNumber" in options) {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         message.spotlight_number = options.spotlightNumber;
+      }
+    }
+    if (message.spotlight === true) {
+      const spotlightFocusRids = ["none", "r0", "r1", "r2"];
+      if (options.spotlightFocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightFocusRid)) {
+        message.spotlight_focus_rid = options.spotlightFocusRid;
+      }
+      if (options.spotlightUnfocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightUnfocusRid)) {
+        message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
       }
     }
   }
@@ -111,15 +118,21 @@ export function createSignalingMessage(
     }
     const simalcastRids = ["r0", "r1", "r2"];
     if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
-      // eslint-disable-next-line @typescript-eslint/camelcase
       message.simulcast_rid = options.simulcastRid;
     }
   }
 
   // client_id
   if ("clientId" in options && options.clientId !== undefined) {
-    // eslint-disable-next-line @typescript-eslint/camelcase
     message.client_id = options.clientId;
+  }
+
+  if ("dataChannelSignaling" in options && typeof options.dataChannelSignaling === "boolean") {
+    message.data_channel_signaling = options.dataChannelSignaling;
+  }
+
+  if ("ignoreDisconnectWebSocket" in options && typeof options.ignoreDisconnectWebSocket === "boolean") {
+    message.ignore_disconnect_websocket = options.ignoreDisconnectWebSocket;
   }
 
   // parse options
@@ -138,11 +151,21 @@ export function createSignalingMessage(
   const videoPropertyKeys = ["videoCodecType", "videoBitRate"];
   const copyOptions = Object.assign({}, options);
   (Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
-    if (key === "audio" && typeof copyOptions[key] === "boolean") return;
-    if (key === "video" && typeof copyOptions[key] === "boolean") return;
-    if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
-    if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
-    if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) return;
+    if (key === "audio" && typeof copyOptions[key] === "boolean") {
+      return;
+    }
+    if (key === "video" && typeof copyOptions[key] === "boolean") {
+      return;
+    }
+    if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
+      return;
+    }
+    if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
+      return;
+    }
+    if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
+      return;
+    }
     delete copyOptions[key];
   });
 
@@ -168,13 +191,11 @@ export function createSignalingMessage(
     if (typeof message.audio != "object") {
       message.audio = {};
     }
-    // eslint-disable-next-line @typescript-eslint/camelcase
     message.audio.opus_params = {};
     if ("audioOpusParamsChannels" in copyOptions) {
       message.audio.opus_params.channels = copyOptions.audioOpusParamsChannels;
     }
     if ("audioOpusParamsClockRate" in copyOptions) {
-      // eslint-disable-next-line @typescript-eslint/camelcase
       message.audio.opus_params.clock_rate = copyOptions.audioOpusParamsClockRate;
     }
     if ("audioOpusParamsMaxplaybackrate" in copyOptions) {
@@ -184,7 +205,6 @@ export function createSignalingMessage(
       message.audio.opus_params.stereo = copyOptions.audioOpusParamsStereo;
     }
     if ("audioOpusParamsSpropStereo" in copyOptions) {
-      // eslint-disable-next-line @typescript-eslint/camelcase
       message.audio.opus_params.sprop_stereo = copyOptions.audioOpusParamsSpropStereo;
     }
     if ("audioOpusParamsMinptime" in copyOptions) {
@@ -217,17 +237,14 @@ export function createSignalingMessage(
     }
   }
 
-  if (message.simulcast && !enabledSimulcast()) {
+  if (message.simulcast && !enabledSimulcast() && role !== "recvonly") {
     throw new Error("Simulcast can not be used with this browser");
   }
 
   if (options.e2ee === true) {
-    // eslint-disable-next-line @typescript-eslint/camelcase
     if (message.signaling_notify_metadata === undefined) {
-      // eslint-disable-next-line @typescript-eslint/camelcase
       message.signaling_notify_metadata = {};
     }
-    // eslint-disable-next-line @typescript-eslint/camelcase
     if (message.signaling_notify_metadata === null || typeof message.signaling_notify_metadata !== "object") {
       throw new Error("E2EE failed. Options signalingNotifyMetadata must be type 'object'");
     }
@@ -239,36 +256,59 @@ export function createSignalingMessage(
     }
     message.e2ee = true;
   }
+
   return message;
 }
 
-export function getSignalingNotifyAuthnMetadata(message: Record<string, unknown>): Json {
+export function getSignalingNotifyAuthnMetadata(
+  message: SignalingNotifyConnectionCreated | SignalingNotifyConnectionDestroyed | SignalingNotifyMetadata
+): JSONType {
   if (message.authn_metadata !== undefined) {
-    return message.authn_metadata as Json;
+    return message.authn_metadata;
   } else if (message.metadata !== undefined) {
-    return message.metadata as Json;
+    return message.metadata;
   }
   return null;
 }
 
-export function getSignalingNotifyData(message: Record<string, unknown>): Record<string, unknown>[] {
-  if (message.data !== undefined && Array.isArray(message.data)) {
+export function getSignalingNotifyData(message: SignalingNotifyConnectionCreated): SignalingNotifyMetadata[] {
+  if (message.data && Array.isArray(message.data)) {
     return message.data;
-  } else if (message.metadata_list !== undefined && Array.isArray(message.metadata_list)) {
+  } else if (message.metadata_list && Array.isArray(message.metadata_list)) {
     return message.metadata_list;
   }
   return [];
 }
 
-export function getPreKeyBundle(message: Json): PreKeyBundle | null {
+export function getPreKeyBundle(message: JSONType): PreKeyBundle | null {
   if (typeof message === "object" && message !== null && "pre_key_bundle" in message) {
     return message.pre_key_bundle as PreKeyBundle;
   }
   return null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function trace(clientId: string | null, title: string, value: any): void {
+export function trace(clientId: string | null, title: string, value: unknown): void {
+  const dump = (record: unknown) => {
+    if (record && typeof record === "object") {
+      let keys = null;
+      try {
+        keys = Object.keys(JSON.parse(JSON.stringify(record)));
+      } catch (_) {
+        // 何もしない
+      }
+      if (keys && Array.isArray(keys)) {
+        keys.forEach((key) => {
+          console.group(key);
+          dump((record as Record<string, unknown>)[key]);
+          console.groupEnd();
+        });
+      } else {
+        console.info(record);
+      }
+    } else {
+      console.info(record);
+    }
+  };
   let prefix = "";
   if (window.performance) {
     prefix = "[" + (window.performance.now() / 1000).toFixed(3) + "]";
@@ -277,14 +317,66 @@ export function trace(clientId: string | null, title: string, value: any): void 
     prefix = prefix + "[" + clientId + "]";
   }
 
-  if (isEdge()) {
-    console.log(prefix + " " + title + "\n", value); // eslint-disable-line
+  if (console.info !== undefined && console.group !== undefined) {
+    console.group(prefix + " " + title);
+    dump(value);
+    console.groupEnd();
   } else {
-    console.info(prefix + " " + title + "\n", value); // eslint-disable-line
+    console.log(prefix + " " + title + "\n", value);
   }
 }
 
 export class ConnectError extends Error {
   code?: number;
   reason?: string;
+}
+
+export function createSignalingEvent(eventType: string, data: unknown, transportType: TransportType): SignalingEvent {
+  const event = new Event(eventType) as SignalingEvent;
+  // data をコピーする
+  try {
+    event.data = JSON.parse(JSON.stringify(data)) as unknown;
+  } catch (_) {
+    event.data = data;
+  }
+  event.transportType = transportType;
+  return event;
+}
+
+export function createDataChannelData(channel: RTCDataChannel): Record<string, unknown> {
+  return {
+    binaryType: channel.binaryType,
+    bufferedAmount: channel.bufferedAmount,
+    bufferedAmountLowThreshold: channel.bufferedAmountLowThreshold,
+    id: channel.id,
+    label: channel.label,
+    maxPacketLifeTime: channel.maxPacketLifeTime,
+    maxRetransmits: channel.maxRetransmits,
+    negotiated: channel.negotiated,
+    ordered: channel.ordered,
+    protocol: channel.protocol,
+    readyState: channel.readyState,
+    // @ts-ignore w3c 仕様には存在しない property
+    reliable: channel.reliable,
+  };
+}
+
+export function createTimelineEvent(
+  eventType: string,
+  data: unknown,
+  transportType: TransportType,
+  dataChannelId?: number | null,
+  dataChannelLabel?: string
+): TimelineEvent {
+  const event = new Event(eventType) as TimelineEvent;
+  // data をコピーする
+  try {
+    event.data = JSON.parse(JSON.stringify(data)) as unknown;
+  } catch (_) {
+    event.data = data;
+  }
+  event.transportType = transportType;
+  event.dataChannelId = dataChannelId;
+  event.dataChannelLabel = dataChannelLabel;
+  return event;
 }

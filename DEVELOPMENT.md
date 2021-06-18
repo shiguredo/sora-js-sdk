@@ -24,3 +24,11 @@ sora-js-sdk のトップディレクトリでコマンドを実行すること�
 - `yarn fmt` packages 以下のコードに formatter を実行する
 - `yarn test` packages 以下のテストを実行する
 
+## パッケージ更新
+sora-js-sdk の package 更新
+- `yarn upgrade` を実行する
+
+sora-js-sdk/packages の package 更新
+- `yarn packages:upgrade` を実行する
+- `yarn test` を実行する
+- `yarn build` を実行する

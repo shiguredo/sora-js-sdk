@@ -19,7 +19,8 @@ export default [
     input: 'src/sora.ts',
     plugins: [
       replace({
-        SORA_JS_SDK_VERSION: `'${pkg.version}'`
+        __SORA_JS_SDK_VERSION__: pkg.version,
+        preventAssignment: true
       }),
       resolve(),
       typescript({
@@ -39,7 +40,8 @@ export default [
     input: 'src/sora.ts',
     plugins: [
       replace({
-        SORA_JS_SDK_VERSION: `'${pkg.version}'`
+        __SORA_JS_SDK_VERSION__: pkg.version,
+        preventAssignment: true
       }),
       resolve(),
       typescript({
@@ -62,7 +64,8 @@ export default [
     input: 'src/sora.ts',
     plugins: [
       replace({
-        SORA_JS_SDK_VERSION: `'${pkg.version}'`
+        __SORA_JS_SDK_VERSION__: pkg.version,
+        preventAssignment: true
       }),
       resolve(),
       typescript({

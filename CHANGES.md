@@ -9,12 +9,55 @@
 - FIX
     - バグ修正
 
+## 2021.1.0
+
+- [CHANGE] fflate を導入して DataChannel zlib 対応を追加する
+    - @yuitowest
+- [ADD] get audio, get video を追加して接続がそれぞれに対応しているかを返すようにする
+    - @yuitowest
+- [ADD] stopAudioTrack, stopVideoTrack, replaceAudioTrack, replaceVideoTrack を追加する
+    - @yuitowest
+- [CHANGE] timeout option を connectionTimeout option に名前を変更する
+    - timeout option を使用している場合は deprecated warning が出るように変更
+    - @yuitowest
+- [CHANGE] Notify callback, Push callback の第二引数に TransportType を追加する
+    - @yuitowest
+- [CHANGE] role から upstream と downstream を削除する
+    - @voluntas
+- [CHANGE] publisher と subscriber を削除する
+    - @voluntas
+- [CHANGE] helper メソッドを追加
+    - @yuitowest
+- [CHANGE] シグナリングメッセージに型定義を追加
+    - @yuitowest
+- [CHANGE] 型定義の修正
+    - Callbacks の各 callback 型定義を Function から適切なものに修正する
+    - on メソッドに渡す第2引数の型定義を適切なものに修正する
+    - trace メソッドに渡す第3引数の型定義をanyからunknownに変更する
+    - @yuitowest
+- [CHANGE] packages 以下の npm-client を yarn にする
+    - @yuitowest
+- [ADD] packages:upgrade コマンドを追加する
+    - @yuitowest
+- [ADD] Switch DataChannel を実装する
+    - ConnectionOptions に dataChannelSignaling を追加する
+    - ConnectionOptions に ignoreDisconnectWebSocket を追加する
+    - @yuitowest
+- [ADD] ConnectionOptions に spotlightFocusRid / spotlightUnfocusRid を追加する
+    - @yuitowest
+- [UPDATE] パッケージを更新する
+    - typescript を3系から4系に変更
+    - @yuitowest
+- [UPDATE] サイマルキャストのサンプルを low / middle / high から r0 / r1 / r2 へ変更する
+    - @voluntas
+
 ## 2020.6.2
 - [FIX] simulcast が使用できるかどうかの判定を修正する
     - UserAgent を用いた判定から RTCRtpSender.getCapabilities を用いた判定に変更
     - @yuitowest
 
 ## 2020.6.1
+
 - [FIX] simulcast 時に setParameters するための RTCRtpTransceiver 検索条件を変更する
     - getUserMedia constraints の audio/video と Sora signaling の audio/video が一致しなかった場合に `DOMException: Read-only field modified in setParameters().` が発生する
     - encodings が readonly な RTCRtpSender を持つ RTCRtpTransceiver を検索条件から除外して対応
@@ -23,13 +66,14 @@
 ## 2020.6.0
 - [UPDATE] e2ee 処理で signaling notify 時に metadata / authn_metadata どちらでも動作するように修正する
     - @yuitowest
-- [FIX] type offer 時に受け取った encodings を type update 時にも setParametes するように修正する
-    - @yuitowest
-- [ADD] connect 時の例外に code と reason を含めるようにする
+- [UPDATE] connect 時の例外に code と reason を含めるようにする
     - WebSocket の onclose が発火した場合のみ Error オブジェクトに close event の code と reason を含める
+    - @yuitowest
+- [FIX] type offer 時に受け取った encodings を type update 時にも setParametes するように修正する
     - @yuitowest
 
 ## 2020.5.0
+
 - [UPDATE] clientId option に空文字列を渡せるように修正する
     - @yuitowest
 - [CHANGE] オプションの e2ee を boolean のみに変更する

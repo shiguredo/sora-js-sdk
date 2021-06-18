@@ -1,14 +1,13 @@
 /* eslint @typescript-eslint/camelcase: 0 */
 import { createSignalingMessage } from "../src/utils";
-import { AudioCodecType, SimulcastRid, VideoCodecType } from "../src/types";
-import pkg from "../package.json";
+import { AudioCodecType, SpotlightFocusRid, VideoCodecType } from "../src/types";
 
 const channelId = "7N3fsMHob";
-const role = "upstream";
+const role = "sendonly";
 const metadata = "PG9A6RXgYqiqWKOVO";
 const sdp = "v=0...";
 const userAgent = window.navigator.userAgent;
-const soraClient = `Sora JavaScript SDK ${pkg.version}`;
+const soraClient = "Sora JavaScript SDK __SORA_JS_SDK_VERSION__";
 const baseExpectedMessage = Object.freeze({
   type: "connect",
   sora_client: soraClient,
@@ -22,14 +21,14 @@ const baseExpectedMessage = Object.freeze({
 });
 
 test("createSignalingMessage simple", () => {
-  // upstream
+  // sendonly
   expect(createSignalingMessage(sdp, role, channelId, null, {})).toEqual(baseExpectedMessage);
 
-  // downstream
+  // recvonly
   const diff = {
-    role: "downstream",
+    role: "recvonly",
   };
-  expect(createSignalingMessage(sdp, "downstream", channelId, null, {})).toEqual(
+  expect(createSignalingMessage(sdp, "recvonly", channelId, null, {})).toEqual(
     Object.assign({}, baseExpectedMessage, diff)
   );
 });
@@ -120,6 +119,35 @@ test("createSignalingMessage multistream option", () => {
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
+  );
+  // multistream spotlight focus rid
+  const spotlightFocusRid: SpotlightFocusRid = "r0";
+  const options4 = {
+    multistream: true,
+    spotlight: true,
+    spotlightFocusRid: spotlightFocusRid,
+  };
+  const diff4 = {
+    multistream: true,
+    spotlight: true,
+    spotlight_focus_rid: spotlightFocusRid,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff4)
+  );
+  // multistream spotlight unfocus rid
+  const options5 = {
+    multistream: true,
+    spotlight: true,
+    spotlightUnfocusRid: spotlightFocusRid,
+  };
+  const diff5 = {
+    multistream: true,
+    spotlight: true,
+    spotlight_unfocus_rid: spotlightFocusRid,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options5)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff5)
   );
 });
 
@@ -418,6 +446,64 @@ test("createSignalingMessage signalingMetadata option", () => {
   };
   const diff3 = {
     signaling_notify_metadata: null,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff3)
+  );
+});
+
+test("createSignalingMessage dataChannelSignaling option", () => {
+  const options1 = {
+    dataChannelSignaling: true,
+  };
+  const diff1 = {
+    data_channel_signaling: true,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff1)
+  );
+  const options2 = {
+    dataChannelSignaling: false,
+  };
+  const diff2 = {
+    data_channel_signaling: false,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+  const options3 = {
+    dataChannelSignaling: undefined,
+  };
+  const diff3 = {
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff3)
+  );
+});
+
+test("createSignalingMessage ignoreDisconnectWebSocket option", () => {
+  const options1 = {
+    ignoreDisconnectWebSocket: true,
+  };
+  const diff1 = {
+    ignore_disconnect_websocket: true,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff1)
+  );
+  const options2 = {
+    ignoreDisconnectWebSocket: false,
+  };
+  const diff2 = {
+    ignore_disconnect_websocket: false,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+  const options3 = {
+    ignoreDisconnectWebSocket: undefined,
+  };
+  const diff3 = {
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)

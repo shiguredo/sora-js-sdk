@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ['10', '12', '14', '15']
+        node: ['12', '14', '15', '16']
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -31,13 +31,14 @@ jobs:
             ${{ runner.os }}-yarn-
       - run: yarn install
       - run: yarn bootstrap
+      - run: yarn build
       - run: yarn lint
       - run: yarn test
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2.1.0
         env:
-          SLACK_CHANNEL: sora-sdk
+          SLACK_CHANNEL: sora-demo
           SLACK_COLOR: danger
           SLACK_TITLE: Failure test
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

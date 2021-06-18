@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
+    "target": "es2020",
+    "module": "es2020",
     "strict": true,
     "declaration": true,
     "strictNullChecks": true,
@@ -12,9 +12,6 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "newLine": "LF",
-    "types": [
-      "webrtc"
-    ],
     "lib": [
       "esnext",
       "dom",

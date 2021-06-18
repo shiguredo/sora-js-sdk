@@ -36,7 +36,7 @@ const recvonly1 = sora.recvonly(channelId);
 const recvonly2 = sora.recvonly(channelId);
 
 document.querySelector('#start').addEventListener('click', function() {
-  // upstream
+  // sendonly
   navigator.mediaDevices.getUserMedia({audio: true, video: true})
     .then(mediaStream => {
       sendonly.connect(mediaStream)
@@ -48,7 +48,7 @@ document.querySelector('#start').addEventListener('click', function() {
     .catch(e => {
       console.error(e);
     });
-  // downstream
+  // recvonly
   recvonly1.connect()
     .then(stream => {
       document.querySelector('#remote-video-client-id-1').textContent = '(' + recvonly1.clientId + ')';
