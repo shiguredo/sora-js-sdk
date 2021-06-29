@@ -9,6 +9,10 @@
 - FIX
     - バグ修正
 
+## 2021.1.1
+
+- [FIX] 接続処理が途中で失敗した場合の timeline ログに connected のログが出力されていた問題を修正する
+
 ## 2021.1.0
 
 - [CHANGE] fflate を導入して DataChannel zlib 対応を追加する
