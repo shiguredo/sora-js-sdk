@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.0
+ * @version: 2021.1.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1599,7 +1599,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.0",
+	        sora_client: "Sora JavaScript SDK 2021.1.1",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -2935,23 +2935,23 @@
 	    async connect(stream) {
 	        this.writePeerConnectionTimelineLog("start-connecting-to-sora");
 	        if (this.options.multistream) {
-	            return await Promise.race([
+	            await Promise.race([
 	                this.multiStream(stream).finally(() => {
 	                    this.clearConnectionTimeout();
-	                    this.writePeerConnectionTimelineLog("connected-to-sora");
 	                }),
 	                this.setConnectionTimeout(),
 	            ]);
 	        }
 	        else {
-	            return await Promise.race([
+	            await Promise.race([
 	                this.singleStream(stream).finally(() => {
 	                    this.clearConnectionTimeout();
-	                    this.writePeerConnectionTimelineLog("connected-to-sora");
 	                }),
 	                this.setConnectionTimeout(),
 	            ]);
 	        }
+	        this.writePeerConnectionTimelineLog("connected-to-sora");
+	        return stream;
 	    }
 	    async singleStream(stream) {
 	        await this.disconnect();
@@ -3052,22 +3052,24 @@
 	    async connect() {
 	        this.writePeerConnectionTimelineLog("start-connecting-to-sora");
 	        if (this.options.multistream) {
-	            return await Promise.race([
+	            await Promise.race([
 	                this.multiStream().finally(() => {
 	                    this.clearConnectionTimeout();
-	                    this.writePeerConnectionTimelineLog("connected-to-sora");
 	                }),
 	                this.setConnectionTimeout(),
 	            ]);
+	            this.writePeerConnectionTimelineLog("connected-to-sora");
+	            return;
 	        }
 	        else {
-	            return await Promise.race([
+	            const stream = await Promise.race([
 	                this.singleStream().finally(() => {
 	                    this.clearConnectionTimeout();
-	                    this.writePeerConnectionTimelineLog("connected-to-sora");
 	                }),
 	                this.setConnectionTimeout(),
 	            ]);
+	            this.writePeerConnectionTimelineLog("connected-to-sora");
+	            return stream;
 	        }
 	    }
 	    async singleStream() {
@@ -3207,7 +3209,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.0";
+	        return "2021.1.1";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
