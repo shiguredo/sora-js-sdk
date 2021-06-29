@@ -4,22 +4,22 @@ export default class ConnectionPublisher extends ConnectionBase {
   async connect(stream: MediaStream): Promise<MediaStream> {
     this.writePeerConnectionTimelineLog("start-connecting-to-sora");
     if (this.options.multistream) {
-      return await Promise.race([
+      await Promise.race([
         this.multiStream(stream).finally(() => {
           this.clearConnectionTimeout();
-          this.writePeerConnectionTimelineLog("connected-to-sora");
         }),
         this.setConnectionTimeout(),
       ]);
     } else {
-      return await Promise.race([
+      await Promise.race([
         this.singleStream(stream).finally(() => {
           this.clearConnectionTimeout();
-          this.writePeerConnectionTimelineLog("connected-to-sora");
         }),
         this.setConnectionTimeout(),
       ]);
     }
+    this.writePeerConnectionTimelineLog("connected-to-sora");
+    return stream;
   }
 
   private async singleStream(stream: MediaStream): Promise<MediaStream> {
