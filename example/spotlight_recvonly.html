@@ -20,7 +20,8 @@ const debug = false;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
 const options = {
   multistream: true,
-  spotlight: 2
+  simulcast: true,
+  spotlight: true,
 }
 const recvonly = sora.recvonly(channelId, null, options);
 
@@ -42,8 +43,6 @@ document.querySelector('#start-recvonly').addEventListener('click', function() {
       remoteVideo.autoplay = true;
       remoteVideo.playsinline = true;
       remoteVideo.controls = true;
-      remoteVideo.width = '320';
-      remoteVideo.height = '240';
       remoteVideo.srcObject = stream;
       remoteVideos.appendChild(remoteVideo);
     }
