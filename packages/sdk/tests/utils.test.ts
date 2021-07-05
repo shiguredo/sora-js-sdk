@@ -94,61 +94,6 @@ test("createSignalingMessage multistream option", () => {
   expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
-  // multistream spotlight
-  const options2 = {
-    multistream: true,
-    spotlight: 1,
-  };
-  const diff2 = {
-    multistream: true,
-    spotlight: 1,
-  };
-  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff2)
-  );
-  // multistream new spotlight
-  const options3 = {
-    multistream: true,
-    spotlight: true,
-    spotlightNumber: 2,
-  };
-  const diff3 = {
-    multistream: true,
-    spotlight: true,
-    spotlight_number: 2,
-  };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff3)
-  );
-  // multistream spotlight focus rid
-  const spotlightFocusRid: SpotlightFocusRid = "r0";
-  const options4 = {
-    multistream: true,
-    spotlight: true,
-    spotlightFocusRid: spotlightFocusRid,
-  };
-  const diff4 = {
-    multistream: true,
-    spotlight: true,
-    spotlight_focus_rid: spotlightFocusRid,
-  };
-  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff4)
-  );
-  // multistream spotlight unfocus rid
-  const options5 = {
-    multistream: true,
-    spotlight: true,
-    spotlightUnfocusRid: spotlightFocusRid,
-  };
-  const diff5 = {
-    multistream: true,
-    spotlight: true,
-    spotlight_unfocus_rid: spotlightFocusRid,
-  };
-  expect(createSignalingMessage(sdp, role, channelId, null, options5)).toEqual(
-    Object.assign({}, baseExpectedMessage, diff5)
-  );
 });
 
 test("createSignalingMessage audio option", () => {
