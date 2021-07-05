@@ -9,9 +9,16 @@
 - FIX
     - バグ修正
 
+## develop
+
+- [CHANGE] spotlight_legacy 対応を削除する
+    - ConnectionOptions の spotlight オプションの型を boolean のみに変更する
+    - @yuitowest
+
 ## 2021.1.1
 
 - [FIX] 接続処理が途中で失敗した場合の timeline ログに connected のログが出力されていた問題を修正する
+    - @yuitowest
 
 ## 2021.1.0
 
