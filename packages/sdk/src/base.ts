@@ -410,6 +410,49 @@ export default class ConnectionBase {
     this.callbacks.disconnect(closeEvent);
   }
 
+  private async abend(closeEvent: CloseEvent): Promise<void> {
+    await this.stopStream();
+    if (this.ws) {
+      this.ws.onclose = null;
+      this.ws.onmessage = null;
+      this.ws.close();
+      this.ws = null;
+    }
+    for (const key of Object.keys(this.dataChannels)) {
+      const dataChannel = this.dataChannels[key];
+      if (dataChannel) {
+        dataChannel.onmessage = null;
+        dataChannel.onclose = null;
+        dataChannel.onerror = null;
+        dataChannel.close();
+      }
+    }
+    if (this.pc) {
+      this.pc.ondatachannel = null;
+      this.pc.close();
+      this.pc = null;
+    }
+    if (this.e2ee) {
+      this.e2ee.terminateWorker();
+    }
+    this.clientId = null;
+    this.connectionId = null;
+    this.remoteConnectionIds = [];
+    this.stream = null;
+    this.ws = null;
+    this.pc = null;
+    this.encodings = [];
+    this.authMetadata = null;
+    this.e2ee = null;
+    this.dataChannels = {};
+    this.mids = {
+      audio: "",
+      video: "",
+    };
+    this.signalingSwitched = false;
+    this.callbacks.disconnect(closeEvent);
+  }
+
   async disconnect(): Promise<void> {
     await this.stopStream();
     // callback を止める
