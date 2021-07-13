@@ -70,6 +70,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     this.sendAnswer();
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
+    this.monitorPeerConnectionState();
     return this.stream || new MediaStream();
   }
 
@@ -121,6 +122,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     this.sendAnswer();
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
+    this.monitorPeerConnectionState();
     return;
   }
 }
