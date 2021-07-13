@@ -1,5 +1,13 @@
 import { unzlibSync, zlibSync } from "fflate";
 import {
+  E2EE_WORKER_DISCONNECT_EVENT_INIT,
+  PEER_CONNECTION_CONNECTION_STATE_FAILED_EVENT_INIT,
+  PEER_CONNECTION_ICE_CONNECTION_STATE_DISCONNECTED_EVENT_INIT,
+  PEER_CONNECTION_ICE_CONNECTION_STATE_FAILED_EVENT_INIT,
+  TERMINATE_DATA_CHANNEL_EVENT_INIT,
+  TERMINATE_WEBSOCKET_EVENT_INIT,
+} from "./constants";
+import {
   ConnectError,
   createDataChannelData,
   createSignalingEvent,
@@ -264,16 +272,14 @@ export default class ConnectionBase {
           }
           // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
           setTimeout(() => {
-            const closeEvent = new CloseEvent("close", { code: 4995 });
-            return resolve(closeEvent);
+            return resolve(new CloseEvent("close", TERMINATE_WEBSOCKET_EVENT_INIT));
           }, 500);
         }, this.disconnectWaitTimeout);
       } else {
         // ws の state が open ではない場合は後処理をして終わる
         this.ws.close();
         this.ws = null;
-        const closeEvent = new CloseEvent("close", { code: 4996 });
-        return resolve(closeEvent);
+        return resolve(new CloseEvent("close", TERMINATE_WEBSOCKET_EVENT_INIT));
       }
     });
   }
@@ -453,6 +459,7 @@ export default class ConnectionBase {
       video: "",
     };
     this.signalingSwitched = false;
+    this.callbacks.error(closeEvent);
     this.callbacks.disconnect(closeEvent);
   }
 
@@ -481,7 +488,6 @@ export default class ConnectionBase {
         };
       }
     }
-    const dataChannelCloseEvent = new CloseEvent("close", { code: 4997 });
     await this.terminateDataChannel();
     const webSocketCloseEvent = await this.terminateWebSocket();
     await this.terminatePeerConnection();
@@ -490,7 +496,7 @@ export default class ConnectionBase {
       this.e2ee = null;
     }
     if (this.signalingSwitched) {
-      this.callbacks.disconnect(dataChannelCloseEvent);
+      this.callbacks.disconnect(new CloseEvent("close", TERMINATE_DATA_CHANNEL_EVENT_INIT));
     } else if (webSocketCloseEvent !== null) {
       this.callbacks.disconnect(webSocketCloseEvent);
     }
@@ -515,8 +521,7 @@ export default class ConnectionBase {
     if (this.options.e2ee === true) {
       this.e2ee = new SoraE2EE();
       this.e2ee.onWorkerDisconnect = async (): Promise<void> => {
-        const closeEvent = new CloseEvent("close", { code: 4998 });
-        await this.terminate(closeEvent);
+        await this.abend(new CloseEvent("close", E2EE_WORKER_DISCONNECT_EVENT_INIT));
       };
       this.e2ee.startWorker();
     }
@@ -839,13 +844,10 @@ export default class ConnectionBase {
         this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
         clearTimeout(this.iceConnectionStateChangeTimerId);
         if (this.pc.connectionState === undefined && this.pc.iceConnectionState === "failed") {
-          const closeEvent = new CloseEvent("close", { code: 4999 });
-          await this.terminate(closeEvent);
+          await this.abend(new CloseEvent("close", PEER_CONNECTION_ICE_CONNECTION_STATE_FAILED_EVENT_INIT));
         } else if (this.pc.connectionState === undefined && this.pc.iceConnectionState === "disconnected") {
           this.iceConnectionStateChangeTimerId = setTimeout(async () => {
-            // TODO(yuito): code を適切なものに書き換える
-            const closeEvent = new CloseEvent("close", { code: 4999 });
-            await this.abend(closeEvent);
+            await this.abend(new CloseEvent("close", PEER_CONNECTION_ICE_CONNECTION_STATE_DISCONNECTED_EVENT_INIT));
           }, 10000);
         }
       }
@@ -859,9 +861,7 @@ export default class ConnectionBase {
         });
         this.trace("ONCONNECTIONSTATECHANGE CONNECTIONSTATE", this.pc.connectionState);
         if (this.pc.connectionState === "failed") {
-          // TODO(yuito): code を適切なものに書き換える
-          const closeEvent = new CloseEvent("close", { code: 4999 });
-          await this.abend(closeEvent);
+          await this.abend(new CloseEvent("close", PEER_CONNECTION_CONNECTION_STATE_FAILED_EVENT_INIT));
         }
       }
     };
@@ -1101,8 +1101,7 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel;
       this.writeDataChannelTimelineLog("onclose", channel);
       this.trace("CLOSE DATA CHANNEL", channel.label);
-      const closeEvent = new CloseEvent("close", { code: 4999 });
-      await this.terminate(closeEvent);
+      await this.terminate(new CloseEvent("close", TERMINATE_DATA_CHANNEL_EVENT_INIT));
     };
     // onerror
     dataChannelEvent.channel.onerror = (event): void => {
