@@ -117,6 +117,7 @@ export default class ConnectionBase {
       timeout: (): void => {},
       timeline: (): void => {},
       signaling: (): void => {},
+      error: (): void => {},
     };
     this.authMetadata = null;
     this.e2ee = null;
