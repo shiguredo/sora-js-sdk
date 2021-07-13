@@ -18,3 +18,8 @@ export const PEER_CONNECTION_ICE_CONNECTION_STATE_DISCONNECTED_EVENT_INIT = {
   code: 4906,
   reason: "PeerConnection iceConnectionState changed to 'disconnected'",
 };
+
+export const WEBSOCKET_ONERROR_EVENT_INIT = {
+  code: 4907,
+  reason: "WebSocket onerror was called",
+};

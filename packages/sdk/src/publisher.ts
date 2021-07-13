@@ -18,7 +18,7 @@ export default class ConnectionPublisher extends ConnectionBase {
         this.setConnectionTimeout(),
       ]);
     }
-    this.writePeerConnectionTimelineLog("connected-to-sora");
+    this.writePeerConnectionTimelineLog("connected");
     return stream;
   }
 

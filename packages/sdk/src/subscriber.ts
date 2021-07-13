@@ -10,7 +10,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
         }),
         this.setConnectionTimeout(),
       ]);
-      this.writePeerConnectionTimelineLog("connected-to-sora");
+      this.writePeerConnectionTimelineLog("connected");
       return;
     } else {
       const stream = await Promise.race([
@@ -19,7 +19,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
         }),
         this.setConnectionTimeout(),
       ]);
-      this.writePeerConnectionTimelineLog("connected-to-sora");
+      this.writePeerConnectionTimelineLog("connected");
       return stream;
     }
   }

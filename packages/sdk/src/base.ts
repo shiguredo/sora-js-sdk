@@ -6,6 +6,7 @@ import {
   PEER_CONNECTION_ICE_CONNECTION_STATE_FAILED_EVENT_INIT,
   TERMINATE_DATA_CHANNEL_EVENT_INIT,
   TERMINATE_WEBSOCKET_EVENT_INIT,
+  WEBSOCKET_ONERROR_EVENT_INIT,
 } from "./constants";
 import {
   ConnectError,
@@ -371,10 +372,17 @@ export default class ConnectionBase {
   }
 
   private async terminate(closeEvent: CloseEvent): Promise<void> {
+    // 各種 timer を止める
+    this.clearConnectionTimeout();
+    this.clearIceConnectionStateChange();
+    // stream を止める
     await this.stopStream();
-    // callback を止める
+    // 各 callback を変更する
     if (this.pc) {
       this.pc.ondatachannel = null;
+      this.pc.onicecandidate = null;
+      this.pc.oniceconnectionstatechange = null;
+      this.pc.onconnectionstatechange = null;
     }
     if (this.ws) {
       // onclose はログを吐く専用に残す
@@ -382,6 +390,7 @@ export default class ConnectionBase {
         this.writeWebSocketTimelineLog("onclose");
       };
       this.ws.onmessage = null;
+      this.ws.onerror = null;
     }
     for (const key of Object.keys(this.dataChannels)) {
       const dataChannel = this.dataChannels[key];
@@ -401,6 +410,8 @@ export default class ConnectionBase {
     if (this.e2ee) {
       this.e2ee.terminateWorker();
     }
+    this.callbacks.disconnect(closeEvent);
+    this.writePeerConnectionTimelineLog("terminated");
     this.clientId = null;
     this.connectionId = null;
     this.remoteConnectionIds = [];
@@ -416,16 +427,19 @@ export default class ConnectionBase {
       video: "",
     };
     this.signalingSwitched = false;
-    this.callbacks.disconnect(closeEvent);
   }
 
   private async abend(closeEvent: CloseEvent): Promise<void> {
+    // 各種 timer を止める
+    this.clearConnectionTimeout();
+    this.clearIceConnectionStateChange();
+    // stream を止める
     await this.stopStream();
+    // 各 callback を変更する
     if (this.ws) {
       this.ws.onclose = null;
       this.ws.onmessage = null;
-      this.ws.close();
-      this.ws = null;
+      this.ws.onerror = null;
     }
     for (const key of Object.keys(this.dataChannels)) {
       const dataChannel = this.dataChannels[key];
@@ -433,17 +447,34 @@ export default class ConnectionBase {
         dataChannel.onmessage = null;
         dataChannel.onclose = null;
         dataChannel.onerror = null;
-        dataChannel.close();
       }
     }
     if (this.pc) {
       this.pc.ondatachannel = null;
+      this.pc.onicecandidate = null;
+      this.pc.oniceconnectionstatechange = null;
+      this.pc.onconnectionstatechange = null;
+    }
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    for (const key of Object.keys(this.dataChannels)) {
+      const dataChannel = this.dataChannels[key];
+      if (dataChannel) {
+        dataChannel.close();
+      }
+    }
+    if (this.pc) {
       this.pc.close();
       this.pc = null;
     }
     if (this.e2ee) {
       this.e2ee.terminateWorker();
     }
+    this.callbacks.error(closeEvent);
+    this.callbacks.disconnect(closeEvent);
+    this.writePeerConnectionTimelineLog("abend", { connectionId: this.connectionId });
     this.clientId = null;
     this.connectionId = null;
     this.remoteConnectionIds = [];
@@ -459,15 +490,22 @@ export default class ConnectionBase {
       video: "",
     };
     this.signalingSwitched = false;
-    this.callbacks.error(closeEvent);
-    this.callbacks.disconnect(closeEvent);
+    clearTimeout(this.iceConnectionStateChangeTimerId);
+    this.iceConnectionStateChangeTimerId = 0;
   }
 
   async disconnect(): Promise<void> {
+    // 各種 timer を止める
+    this.clearConnectionTimeout();
+    this.clearIceConnectionStateChange();
+    // stream を止める
     await this.stopStream();
-    // callback を止める
+    // 各 callback を変更する
     if (this.pc) {
       this.pc.ondatachannel = null;
+      this.pc.onicecandidate = null;
+      this.pc.oniceconnectionstatechange = null;
+      this.pc.onconnectionstatechange = null;
     }
     if (this.ws) {
       // onclose はログを吐く専用に残す
@@ -475,6 +513,7 @@ export default class ConnectionBase {
         this.writeWebSocketTimelineLog("onclose");
       };
       this.ws.onmessage = null;
+      this.ws.onerror = null;
     }
     for (const key of Object.keys(this.dataChannels)) {
       const dataChannel = this.dataChannels[key];
@@ -488,6 +527,7 @@ export default class ConnectionBase {
         };
       }
     }
+    // 切断処理
     await this.terminateDataChannel();
     const webSocketCloseEvent = await this.terminateWebSocket();
     await this.terminatePeerConnection();
@@ -500,6 +540,7 @@ export default class ConnectionBase {
     } else if (webSocketCloseEvent !== null) {
       this.callbacks.disconnect(webSocketCloseEvent);
     }
+    this.writePeerConnectionTimelineLog("disconnected", { connectionId: this.connectionId });
     this.clientId = null;
     this.connectionId = null;
     this.remoteConnectionIds = [];
@@ -869,6 +910,12 @@ export default class ConnectionBase {
 
   protected clearConnectionTimeout(): void {
     clearTimeout(this.connectionTimeoutTimerId);
+    this.connectionTimeoutTimerId = 0;
+  }
+
+  protected clearIceConnectionStateChange(): void {
+    clearTimeout(this.iceConnectionStateChangeTimerId);
+    this.iceConnectionStateChangeTimerId = 0;
   }
 
   protected trace(title: string, message: unknown): void {
@@ -924,8 +971,9 @@ export default class ConnectionBase {
         this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
         await this.terminate(event);
       };
-      this.ws.onerror = (event) => {
+      this.ws.onerror = async (event) => {
         this.writeWebSocketSignalingLog("onerror", event);
+        await this.abend(new CloseEvent("close", WEBSOCKET_ONERROR_EVENT_INIT));
       };
     }
     if (message.metadata !== undefined) {
