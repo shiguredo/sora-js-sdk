@@ -490,8 +490,6 @@ export default class ConnectionBase {
       video: "",
     };
     this.signalingSwitched = false;
-    clearTimeout(this.iceConnectionStateChangeTimerId);
-    this.iceConnectionStateChangeTimerId = 0;
   }
 
   async disconnect(): Promise<void> {
@@ -883,7 +881,7 @@ export default class ConnectionBase {
           iceGatheringState: this.pc.iceGatheringState,
         });
         this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
-        clearTimeout(this.iceConnectionStateChangeTimerId);
+        this.clearIceConnectionStateChange();
         if (this.pc.connectionState === undefined && this.pc.iceConnectionState === "failed") {
           await this.abend(new CloseEvent("close", PEER_CONNECTION_ICE_CONNECTION_STATE_FAILED_EVENT_INIT));
         } else if (this.pc.connectionState === undefined && this.pc.iceConnectionState === "disconnected") {
