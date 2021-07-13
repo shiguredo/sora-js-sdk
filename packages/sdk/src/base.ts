@@ -68,6 +68,7 @@ export default class ConnectionBase {
     video: string;
   };
   private signalingSwitched: boolean;
+  private iceConnectionStateChangeTimerId: number;
   constructor(
     signalingUrl: string,
     role: string,
@@ -127,6 +128,7 @@ export default class ConnectionBase {
     };
     this.signalingSwitched = false;
     this.dataChannelsCompress = {};
+    this.iceConnectionStateChangeTimerId = 0;
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -820,6 +822,48 @@ export default class ConnectionBase {
         }, this.connectionTimeout);
       }
     });
+  }
+
+  protected monitorPeerConnectionState(): void {
+    if (!this.pc) {
+      return;
+    }
+    this.pc.oniceconnectionstatechange = async (_): Promise<void> => {
+      if (this.pc) {
+        this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
+          connectionState: this.pc.connectionState,
+          iceConnectionState: this.pc.iceConnectionState,
+          iceGatheringState: this.pc.iceGatheringState,
+        });
+        this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
+        clearTimeout(this.iceConnectionStateChangeTimerId);
+        if (this.pc.connectionState === undefined && this.pc.iceConnectionState === "failed") {
+          const closeEvent = new CloseEvent("close", { code: 4999 });
+          await this.terminate(closeEvent);
+        } else if (this.pc.connectionState === undefined && this.pc.iceConnectionState === "disconnected") {
+          this.iceConnectionStateChangeTimerId = setTimeout(async () => {
+            // TODO(yuito): code を適切なものに書き換える
+            const closeEvent = new CloseEvent("close", { code: 4999 });
+            await this.abend(closeEvent);
+          }, 10000);
+        }
+      }
+    };
+    this.pc.onconnectionstatechange = async (_): Promise<void> => {
+      if (this.pc) {
+        this.writePeerConnectionTimelineLog("onconnectionstatechange", {
+          connectionState: this.pc.connectionState,
+          iceConnectionState: this.pc.iceConnectionState,
+          iceGatheringState: this.pc.iceGatheringState,
+        });
+        this.trace("ONCONNECTIONSTATECHANGE CONNECTIONSTATE", this.pc.connectionState);
+        if (this.pc.connectionState === "failed") {
+          // TODO(yuito): code を適切なものに書き換える
+          const closeEvent = new CloseEvent("close", { code: 4999 });
+          await this.abend(closeEvent);
+        }
+      }
+    };
   }
 
   protected clearConnectionTimeout(): void {
