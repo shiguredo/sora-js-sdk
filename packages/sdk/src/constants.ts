@@ -23,3 +23,8 @@ export const WEBSOCKET_ONERROR_EVENT_INIT = {
   code: 4907,
   reason: "WebSocket onerror was called",
 };
+
+export const SIGNALING_CONNECTION_TIMEOUT_EVENT_INIT = {
+  code: 4908,
+  reason: "Signaling connection timeout",
+};

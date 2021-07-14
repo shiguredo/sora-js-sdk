@@ -9,8 +9,11 @@ export default class ConnectionSubscriber extends ConnectionBase {
           this.clearSignalingConnectionTimeout();
         }),
         this.monitorSignalingConnectionTimeout(),
+        this.monitorSignalingWebSocketOnClose(),
       ]);
       this.writePeerConnectionTimelineLog("connected");
+      this.monitorPeerConnectionState();
+      this.monitorWebSocketOnClose();
       return;
     } else {
       const stream = await Promise.race([
@@ -18,8 +21,11 @@ export default class ConnectionSubscriber extends ConnectionBase {
           this.clearSignalingConnectionTimeout();
         }),
         this.monitorSignalingConnectionTimeout(),
+        this.monitorSignalingWebSocketOnClose(),
       ]);
       this.writePeerConnectionTimelineLog("connected");
+      this.monitorPeerConnectionState();
+      this.monitorWebSocketOnClose();
       return stream;
     }
   }
@@ -70,7 +76,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
     this.sendAnswer();
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
-    this.monitorPeerConnectionState();
     return this.stream || new MediaStream();
   }
 
@@ -122,7 +127,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
     this.sendAnswer();
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
-    this.monitorPeerConnectionState();
     return;
   }
 }

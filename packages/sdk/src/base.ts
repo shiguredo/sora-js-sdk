@@ -4,6 +4,7 @@ import {
   PEER_CONNECTION_CONNECTION_STATE_FAILED_EVENT_INIT,
   PEER_CONNECTION_ICE_CONNECTION_STATE_DISCONNECTED_EVENT_INIT,
   PEER_CONNECTION_ICE_CONNECTION_STATE_FAILED_EVENT_INIT,
+  SIGNALING_CONNECTION_TIMEOUT_EVENT_INIT,
   TERMINATE_DATA_CHANNEL_EVENT_INIT,
   TERMINATE_WEBSOCKET_EVENT_INIT,
   WEBSOCKET_ONERROR_EVENT_INIT,
@@ -587,13 +588,14 @@ export default class ConnectionBase {
         this.writeWebSocketSignalingLog("new-websocket", this.signalingUrl);
       }
       this.ws.binaryType = "arraybuffer";
-      this.ws.onclose = (event): void => {
+      this.ws.onclose = async (event): Promise<void> => {
         const error = new ConnectError(
           `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
         );
         error.code = event.code;
         error.reason = event.reason;
         this.writeWebSocketTimelineLog("onclose", error);
+        await this.terminate(event);
         reject(error);
       };
       this.ws.onopen = async (_): Promise<void> => {
@@ -861,11 +863,37 @@ export default class ConnectionBase {
             this.writePeerConnectionTimelineLog("signaling-connection-timeout", {
               connectionTimeout: this.connectionTimeout,
             });
-            await this.disconnect();
+            await this.terminate(new CloseEvent("close", SIGNALING_CONNECTION_TIMEOUT_EVENT_INIT));
             reject(error);
           }
         }, this.connectionTimeout);
       }
+    });
+  }
+
+  protected monitorSignalingWebSocketOnClose(): Promise<MediaStream> {
+    return new Promise((_, reject) => {
+      let counter = 0;
+      const timerId = setInterval(() => {
+        counter++;
+        if (this.ws !== null) {
+          this.ws.onclose = async (event): Promise<void> => {
+            const error = new ConnectError(
+              `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
+            );
+            error.code = event.code;
+            error.reason = event.reason;
+            this.writeWebSocketTimelineLog("onclose", error);
+            await this.terminate(event);
+            reject(error);
+          };
+          clearInterval(timerId);
+        }
+        // 1秒以内に new WebSocket が実行されない場合は別の reject が発火するので timer を止める
+        if (10 <= counter) {
+          clearInterval(timerId);
+        }
+      }, 100);
     });
   }
 
@@ -903,6 +931,17 @@ export default class ConnectionBase {
           await this.abend(new CloseEvent("close", PEER_CONNECTION_CONNECTION_STATE_FAILED_EVENT_INIT));
         }
       }
+    };
+  }
+
+  protected monitorWebSocketOnClose(): void {
+    if (!this.ws) {
+      return;
+    }
+    this.ws.onclose = async (event) => {
+      this.trace("DISCONNECT", "Trigger event WebSocket onclose");
+      this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
+      await this.terminate(event);
     };
   }
 
@@ -964,11 +1003,6 @@ export default class ConnectionBase {
     this.clientId = message.client_id;
     this.connectionId = message.connection_id;
     if (this.ws) {
-      this.ws.onclose = async (event): Promise<void> => {
-        this.trace("DISCONNECT", "Trigger event WebSocket onclose");
-        this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
-        await this.terminate(event);
-      };
       this.ws.onerror = async (event) => {
         this.writeWebSocketSignalingLog("onerror", event);
         await this.abend(new CloseEvent("close", WEBSOCKET_ONERROR_EVENT_INIT));

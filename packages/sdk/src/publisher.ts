@@ -9,6 +9,7 @@ export default class ConnectionPublisher extends ConnectionBase {
           this.clearSignalingConnectionTimeout();
         }),
         this.monitorSignalingConnectionTimeout(),
+        this.monitorSignalingWebSocketOnClose(),
       ]);
     } else {
       await Promise.race([
@@ -16,9 +17,12 @@ export default class ConnectionPublisher extends ConnectionBase {
           this.clearSignalingConnectionTimeout();
         }),
         this.monitorSignalingConnectionTimeout(),
+        this.monitorSignalingWebSocketOnClose(),
       ]);
     }
     this.writePeerConnectionTimelineLog("connected");
+    this.monitorPeerConnectionState();
+    this.monitorWebSocketOnClose();
     return stream;
   }
 
@@ -47,7 +51,6 @@ export default class ConnectionPublisher extends ConnectionBase {
     }
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
-    this.monitorPeerConnectionState();
     return stream;
   }
 
@@ -115,7 +118,6 @@ export default class ConnectionPublisher extends ConnectionBase {
     }
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
-    this.monitorPeerConnectionState();
     return stream;
   }
 }
