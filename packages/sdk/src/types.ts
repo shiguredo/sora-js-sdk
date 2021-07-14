@@ -275,7 +275,6 @@ export type Callbacks = {
   timeout: () => void;
   timeline: (event: TimelineEvent) => void;
   signaling: (event: SignalingEvent) => void;
-  error: (event: CloseEvent) => void;
 };
 
 export type PreKeyBundle = {

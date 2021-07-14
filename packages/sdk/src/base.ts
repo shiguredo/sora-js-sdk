@@ -127,7 +127,6 @@ export default class ConnectionBase {
       timeout: (): void => {},
       timeline: (): void => {},
       signaling: (): void => {},
-      error: (): void => {},
     };
     this.authMetadata = null;
     this.e2ee = null;
@@ -473,7 +472,6 @@ export default class ConnectionBase {
     if (this.e2ee) {
       this.e2ee.terminateWorker();
     }
-    this.callbacks.error(closeEvent);
     this.callbacks.disconnect(closeEvent);
     this.writePeerConnectionTimelineLog("abend", { connectionId: this.connectionId });
     this.clientId = null;
