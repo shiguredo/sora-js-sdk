@@ -373,7 +373,7 @@ export default class ConnectionBase {
 
   private async terminate(closeEvent: CloseEvent): Promise<void> {
     // 各種 timer を止める
-    this.clearConnectionTimeout();
+    this.clearSignalingConnectionTimeout();
     this.clearIceConnectionStateChange();
     // stream を止める
     await this.stopStream();
@@ -431,7 +431,7 @@ export default class ConnectionBase {
 
   private async abend(closeEvent: CloseEvent): Promise<void> {
     // 各種 timer を止める
-    this.clearConnectionTimeout();
+    this.clearSignalingConnectionTimeout();
     this.clearIceConnectionStateChange();
     // stream を止める
     await this.stopStream();
@@ -494,7 +494,7 @@ export default class ConnectionBase {
 
   async disconnect(): Promise<void> {
     // 各種 timer を止める
-    this.clearConnectionTimeout();
+    this.clearSignalingConnectionTimeout();
     this.clearIceConnectionStateChange();
     // stream を止める
     await this.stopStream();
@@ -846,7 +846,7 @@ export default class ConnectionBase {
     });
   }
 
-  protected setConnectionTimeout(): Promise<MediaStream> {
+  protected monitorSignalingConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
       if (0 < this.connectionTimeout) {
         this.connectionTimeoutTimerId = setTimeout(async () => {
@@ -906,7 +906,7 @@ export default class ConnectionBase {
     };
   }
 
-  protected clearConnectionTimeout(): void {
+  protected clearSignalingConnectionTimeout(): void {
     clearTimeout(this.connectionTimeoutTimerId);
     this.connectionTimeoutTimerId = 0;
   }

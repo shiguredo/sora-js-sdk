@@ -6,16 +6,16 @@ export default class ConnectionPublisher extends ConnectionBase {
     if (this.options.multistream) {
       await Promise.race([
         this.multiStream(stream).finally(() => {
-          this.clearConnectionTimeout();
+          this.clearSignalingConnectionTimeout();
         }),
-        this.setConnectionTimeout(),
+        this.monitorSignalingConnectionTimeout(),
       ]);
     } else {
       await Promise.race([
         this.singleStream(stream).finally(() => {
-          this.clearConnectionTimeout();
+          this.clearSignalingConnectionTimeout();
         }),
-        this.setConnectionTimeout(),
+        this.monitorSignalingConnectionTimeout(),
       ]);
     }
     this.writePeerConnectionTimelineLog("connected");

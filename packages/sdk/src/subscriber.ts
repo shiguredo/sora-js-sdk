@@ -6,18 +6,18 @@ export default class ConnectionSubscriber extends ConnectionBase {
     if (this.options.multistream) {
       await Promise.race([
         this.multiStream().finally(() => {
-          this.clearConnectionTimeout();
+          this.clearSignalingConnectionTimeout();
         }),
-        this.setConnectionTimeout(),
+        this.monitorSignalingConnectionTimeout(),
       ]);
       this.writePeerConnectionTimelineLog("connected");
       return;
     } else {
       const stream = await Promise.race([
         this.singleStream().finally(() => {
-          this.clearConnectionTimeout();
+          this.clearSignalingConnectionTimeout();
         }),
-        this.setConnectionTimeout(),
+        this.monitorSignalingConnectionTimeout(),
       ]);
       this.writePeerConnectionTimelineLog("connected");
       return stream;
