@@ -2,7 +2,7 @@ import ConnectionBase from "./base";
 
 export default class ConnectionPublisher extends ConnectionBase {
   async connect(stream: MediaStream): Promise<MediaStream> {
-    this.writePeerConnectionTimelineLog("start-connecting-to-sora");
+    this.writePeerConnectionTimelineLog("connecting");
     if (this.options.multistream) {
       await Promise.race([
         this.multiStream(stream).finally(() => {

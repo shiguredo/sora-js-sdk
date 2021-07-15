@@ -533,11 +533,12 @@ export default class ConnectionBase {
       this.e2ee = null;
     }
     if (this.signalingSwitched) {
+      this.writePeerConnectionTimelineLog("disconnected", { connectionId: this.connectionId });
       this.callbacks.disconnect(new CloseEvent("close", TERMINATE_DATA_CHANNEL_EVENT_INIT));
     } else if (webSocketCloseEvent !== null) {
+      this.writePeerConnectionTimelineLog("disconnected", { connectionId: this.connectionId });
       this.callbacks.disconnect(webSocketCloseEvent);
     }
-    this.writePeerConnectionTimelineLog("disconnected", { connectionId: this.connectionId });
     this.clientId = null;
     this.connectionId = null;
     this.remoteConnectionIds = [];
