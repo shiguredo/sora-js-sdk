@@ -9,6 +9,12 @@
 - FIX
     - バグ修正
 
+## 2021.1.2
+- [ADD] PeerConnection の connectionState, iceConnectionState が不正な値になった場合に切断処理をするように修正する
+- [CHANGE] 切断時の CloseEvent を細分化して code, reason の種類を追加する
+- [CHANGE] timeline ログのメッセージを修正する
+- [ADD] types.ts にあるいくつかの type 情報を module から import できるようにする
+
 ## 2021.1.1
 
 - [FIX] 接続処理が途中で失敗した場合の timeline ログに connected のログが出力されていた問題を修正する
