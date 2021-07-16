@@ -1,5 +1,6 @@
 import { unzlibSync, zlibSync } from "fflate";
 import {
+  DISCONNECT_DATA_CHANNEL_EVENT_INIT,
   E2EE_WORKER_DISCONNECT_EVENT_INIT,
   PEER_CONNECTION_CONNECTION_STATE_FAILED_EVENT_INIT,
   PEER_CONNECTION_ICE_CONNECTION_STATE_DISCONNECTED_EVENT_INIT,
@@ -411,7 +412,7 @@ export default class ConnectionBase {
       this.e2ee.terminateWorker();
     }
     this.callbacks.disconnect(closeEvent);
-    this.writePeerConnectionTimelineLog("terminated");
+    this.writePeerConnectionTimelineLog("terminated", { code: closeEvent.code, reason: closeEvent.reason });
     this.clientId = null;
     this.connectionId = null;
     this.remoteConnectionIds = [];
@@ -473,7 +474,7 @@ export default class ConnectionBase {
       this.e2ee.terminateWorker();
     }
     this.callbacks.disconnect(closeEvent);
-    this.writePeerConnectionTimelineLog("abend", { connectionId: this.connectionId });
+    this.writePeerConnectionTimelineLog("abend", { code: closeEvent.code, reason: closeEvent.reason });
     this.clientId = null;
     this.connectionId = null;
     this.remoteConnectionIds = [];
@@ -533,11 +534,18 @@ export default class ConnectionBase {
       this.e2ee = null;
     }
     if (this.signalingSwitched) {
-      this.writePeerConnectionTimelineLog("disconnected", { connectionId: this.connectionId });
-      this.callbacks.disconnect(new CloseEvent("close", TERMINATE_DATA_CHANNEL_EVENT_INIT));
+      const dataChannelCloseEvent = new CloseEvent("close", DISCONNECT_DATA_CHANNEL_EVENT_INIT);
+      this.callbacks.disconnect(dataChannelCloseEvent);
+      this.writePeerConnectionTimelineLog("disconnected", {
+        code: dataChannelCloseEvent.code,
+        reason: dataChannelCloseEvent.reason,
+      });
     } else if (webSocketCloseEvent !== null) {
-      this.writePeerConnectionTimelineLog("disconnected", { connectionId: this.connectionId });
       this.callbacks.disconnect(webSocketCloseEvent);
+      this.writePeerConnectionTimelineLog("disconnected", {
+        code: webSocketCloseEvent.code,
+        reason: webSocketCloseEvent.reason,
+      });
     }
     this.clientId = null;
     this.connectionId = null;
