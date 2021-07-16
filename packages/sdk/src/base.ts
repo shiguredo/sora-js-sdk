@@ -1,5 +1,16 @@
 import { unzlibSync, zlibSync } from "fflate";
 import {
+  DISCONNECT_DATA_CHANNEL_EVENT_INIT,
+  E2EE_WORKER_DISCONNECT_EVENT_INIT,
+  PEER_CONNECTION_CONNECTION_STATE_FAILED_EVENT_INIT,
+  PEER_CONNECTION_ICE_CONNECTION_STATE_DISCONNECTED_EVENT_INIT,
+  PEER_CONNECTION_ICE_CONNECTION_STATE_FAILED_EVENT_INIT,
+  SIGNALING_CONNECTION_TIMEOUT_EVENT_INIT,
+  TERMINATE_DATA_CHANNEL_EVENT_INIT,
+  TERMINATE_WEBSOCKET_EVENT_INIT,
+  WEBSOCKET_ONERROR_EVENT_INIT,
+} from "./constants";
+import {
   ConnectError,
   createDataChannelData,
   createSignalingEvent,
@@ -68,6 +79,7 @@ export default class ConnectionBase {
     video: string;
   };
   private signalingSwitched: boolean;
+  private iceConnectionStateChangeTimerId: number;
   constructor(
     signalingUrl: string,
     role: string,
@@ -127,6 +139,7 @@ export default class ConnectionBase {
     };
     this.signalingSwitched = false;
     this.dataChannelsCompress = {};
+    this.iceConnectionStateChangeTimerId = 0;
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -261,16 +274,14 @@ export default class ConnectionBase {
           }
           // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
           setTimeout(() => {
-            const closeEvent = new CloseEvent("close", { code: 4995 });
-            return resolve(closeEvent);
+            return resolve(new CloseEvent("close", TERMINATE_WEBSOCKET_EVENT_INIT));
           }, 500);
         }, this.disconnectWaitTimeout);
       } else {
         // ws の state が open ではない場合は後処理をして終わる
         this.ws.close();
         this.ws = null;
-        const closeEvent = new CloseEvent("close", { code: 4996 });
-        return resolve(closeEvent);
+        return resolve(new CloseEvent("close", TERMINATE_WEBSOCKET_EVENT_INIT));
       }
     });
   }
@@ -362,10 +373,17 @@ export default class ConnectionBase {
   }
 
   private async terminate(closeEvent: CloseEvent): Promise<void> {
+    // 各種 timer を止める
+    this.clearSignalingConnectionTimeout();
+    this.clearIceConnectionStateChange();
+    // stream を止める
     await this.stopStream();
-    // callback を止める
+    // 各 callback を変更する
     if (this.pc) {
       this.pc.ondatachannel = null;
+      this.pc.onicecandidate = null;
+      this.pc.oniceconnectionstatechange = null;
+      this.pc.onconnectionstatechange = null;
     }
     if (this.ws) {
       // onclose はログを吐く専用に残す
@@ -373,6 +391,7 @@ export default class ConnectionBase {
         this.writeWebSocketTimelineLog("onclose");
       };
       this.ws.onmessage = null;
+      this.ws.onerror = null;
     }
     for (const key of Object.keys(this.dataChannels)) {
       const dataChannel = this.dataChannels[key];
@@ -392,6 +411,8 @@ export default class ConnectionBase {
     if (this.e2ee) {
       this.e2ee.terminateWorker();
     }
+    this.callbacks.disconnect(closeEvent);
+    this.writePeerConnectionTimelineLog("terminated", { code: closeEvent.code, reason: closeEvent.reason });
     this.clientId = null;
     this.connectionId = null;
     this.remoteConnectionIds = [];
@@ -407,14 +428,82 @@ export default class ConnectionBase {
       video: "",
     };
     this.signalingSwitched = false;
+  }
+
+  private async abend(closeEvent: CloseEvent): Promise<void> {
+    // 各種 timer を止める
+    this.clearSignalingConnectionTimeout();
+    this.clearIceConnectionStateChange();
+    // stream を止める
+    await this.stopStream();
+    // 各 callback を変更する
+    if (this.ws) {
+      this.ws.onclose = null;
+      this.ws.onmessage = null;
+      this.ws.onerror = null;
+    }
+    for (const key of Object.keys(this.dataChannels)) {
+      const dataChannel = this.dataChannels[key];
+      if (dataChannel) {
+        dataChannel.onmessage = null;
+        dataChannel.onclose = null;
+        dataChannel.onerror = null;
+      }
+    }
+    if (this.pc) {
+      this.pc.ondatachannel = null;
+      this.pc.onicecandidate = null;
+      this.pc.oniceconnectionstatechange = null;
+      this.pc.onconnectionstatechange = null;
+    }
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    for (const key of Object.keys(this.dataChannels)) {
+      const dataChannel = this.dataChannels[key];
+      if (dataChannel) {
+        dataChannel.close();
+      }
+    }
+    if (this.pc) {
+      this.pc.close();
+      this.pc = null;
+    }
+    if (this.e2ee) {
+      this.e2ee.terminateWorker();
+    }
     this.callbacks.disconnect(closeEvent);
+    this.writePeerConnectionTimelineLog("abend", { code: closeEvent.code, reason: closeEvent.reason });
+    this.clientId = null;
+    this.connectionId = null;
+    this.remoteConnectionIds = [];
+    this.stream = null;
+    this.ws = null;
+    this.pc = null;
+    this.encodings = [];
+    this.authMetadata = null;
+    this.e2ee = null;
+    this.dataChannels = {};
+    this.mids = {
+      audio: "",
+      video: "",
+    };
+    this.signalingSwitched = false;
   }
 
   async disconnect(): Promise<void> {
+    // 各種 timer を止める
+    this.clearSignalingConnectionTimeout();
+    this.clearIceConnectionStateChange();
+    // stream を止める
     await this.stopStream();
-    // callback を止める
+    // 各 callback を変更する
     if (this.pc) {
       this.pc.ondatachannel = null;
+      this.pc.onicecandidate = null;
+      this.pc.oniceconnectionstatechange = null;
+      this.pc.onconnectionstatechange = null;
     }
     if (this.ws) {
       // onclose はログを吐く専用に残す
@@ -422,6 +511,7 @@ export default class ConnectionBase {
         this.writeWebSocketTimelineLog("onclose");
       };
       this.ws.onmessage = null;
+      this.ws.onerror = null;
     }
     for (const key of Object.keys(this.dataChannels)) {
       const dataChannel = this.dataChannels[key];
@@ -435,7 +525,7 @@ export default class ConnectionBase {
         };
       }
     }
-    const dataChannelCloseEvent = new CloseEvent("close", { code: 4997 });
+    // 切断処理
     await this.terminateDataChannel();
     const webSocketCloseEvent = await this.terminateWebSocket();
     await this.terminatePeerConnection();
@@ -444,9 +534,18 @@ export default class ConnectionBase {
       this.e2ee = null;
     }
     if (this.signalingSwitched) {
+      const dataChannelCloseEvent = new CloseEvent("close", DISCONNECT_DATA_CHANNEL_EVENT_INIT);
       this.callbacks.disconnect(dataChannelCloseEvent);
+      this.writePeerConnectionTimelineLog("disconnected", {
+        code: dataChannelCloseEvent.code,
+        reason: dataChannelCloseEvent.reason,
+      });
     } else if (webSocketCloseEvent !== null) {
       this.callbacks.disconnect(webSocketCloseEvent);
+      this.writePeerConnectionTimelineLog("disconnected", {
+        code: webSocketCloseEvent.code,
+        reason: webSocketCloseEvent.reason,
+      });
     }
     this.clientId = null;
     this.connectionId = null;
@@ -469,8 +568,7 @@ export default class ConnectionBase {
     if (this.options.e2ee === true) {
       this.e2ee = new SoraE2EE();
       this.e2ee.onWorkerDisconnect = async (): Promise<void> => {
-        const closeEvent = new CloseEvent("close", { code: 4998 });
-        await this.terminate(closeEvent);
+        await this.abend(new CloseEvent("close", E2EE_WORKER_DISCONNECT_EVENT_INIT));
       };
       this.e2ee.startWorker();
     }
@@ -497,13 +595,14 @@ export default class ConnectionBase {
         this.writeWebSocketSignalingLog("new-websocket", this.signalingUrl);
       }
       this.ws.binaryType = "arraybuffer";
-      this.ws.onclose = (event): void => {
+      this.ws.onclose = async (event): Promise<void> => {
         const error = new ConnectError(
           `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
         );
         error.code = event.code;
         error.reason = event.reason;
         this.writeWebSocketTimelineLog("onclose", error);
+        await this.terminate(event);
         reject(error);
       };
       this.ws.onopen = async (_): Promise<void> => {
@@ -756,7 +855,7 @@ export default class ConnectionBase {
     });
   }
 
-  protected setConnectionTimeout(): Promise<MediaStream> {
+  protected monitorSignalingConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
       if (0 < this.connectionTimeout) {
         this.connectionTimeoutTimerId = setTimeout(async () => {
@@ -771,7 +870,7 @@ export default class ConnectionBase {
             this.writePeerConnectionTimelineLog("signaling-connection-timeout", {
               connectionTimeout: this.connectionTimeout,
             });
-            await this.disconnect();
+            await this.terminate(new CloseEvent("close", SIGNALING_CONNECTION_TIMEOUT_EVENT_INIT));
             reject(error);
           }
         }, this.connectionTimeout);
@@ -779,8 +878,88 @@ export default class ConnectionBase {
     });
   }
 
-  protected clearConnectionTimeout(): void {
+  protected monitorSignalingWebSocketOnClose(): Promise<MediaStream> {
+    return new Promise((_, reject) => {
+      let counter = 0;
+      const timerId = setInterval(() => {
+        counter++;
+        if (this.ws !== null) {
+          this.ws.onclose = async (event): Promise<void> => {
+            const error = new ConnectError(
+              `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
+            );
+            error.code = event.code;
+            error.reason = event.reason;
+            this.writeWebSocketTimelineLog("onclose", error);
+            await this.terminate(event);
+            reject(error);
+          };
+          clearInterval(timerId);
+        }
+        // 1秒以内に new WebSocket が実行されない場合は別の reject が発火するので timer を止める
+        if (10 <= counter) {
+          clearInterval(timerId);
+        }
+      }, 100);
+    });
+  }
+
+  protected monitorPeerConnectionState(): void {
+    if (!this.pc) {
+      return;
+    }
+    this.pc.oniceconnectionstatechange = async (_): Promise<void> => {
+      if (this.pc) {
+        this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
+          connectionState: this.pc.connectionState,
+          iceConnectionState: this.pc.iceConnectionState,
+          iceGatheringState: this.pc.iceGatheringState,
+        });
+        this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
+        this.clearIceConnectionStateChange();
+        if (this.pc.connectionState === undefined && this.pc.iceConnectionState === "failed") {
+          await this.abend(new CloseEvent("close", PEER_CONNECTION_ICE_CONNECTION_STATE_FAILED_EVENT_INIT));
+        } else if (this.pc.connectionState === undefined && this.pc.iceConnectionState === "disconnected") {
+          this.iceConnectionStateChangeTimerId = setTimeout(async () => {
+            await this.abend(new CloseEvent("close", PEER_CONNECTION_ICE_CONNECTION_STATE_DISCONNECTED_EVENT_INIT));
+          }, 10000);
+        }
+      }
+    };
+    this.pc.onconnectionstatechange = async (_): Promise<void> => {
+      if (this.pc) {
+        this.writePeerConnectionTimelineLog("onconnectionstatechange", {
+          connectionState: this.pc.connectionState,
+          iceConnectionState: this.pc.iceConnectionState,
+          iceGatheringState: this.pc.iceGatheringState,
+        });
+        this.trace("ONCONNECTIONSTATECHANGE CONNECTIONSTATE", this.pc.connectionState);
+        if (this.pc.connectionState === "failed") {
+          await this.abend(new CloseEvent("close", PEER_CONNECTION_CONNECTION_STATE_FAILED_EVENT_INIT));
+        }
+      }
+    };
+  }
+
+  protected monitorWebSocketOnClose(): void {
+    if (!this.ws) {
+      return;
+    }
+    this.ws.onclose = async (event) => {
+      this.trace("DISCONNECT", "Trigger event WebSocket onclose");
+      this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
+      await this.terminate(event);
+    };
+  }
+
+  protected clearSignalingConnectionTimeout(): void {
     clearTimeout(this.connectionTimeoutTimerId);
+    this.connectionTimeoutTimerId = 0;
+  }
+
+  protected clearIceConnectionStateChange(): void {
+    clearTimeout(this.iceConnectionStateChangeTimerId);
+    this.iceConnectionStateChangeTimerId = 0;
   }
 
   protected trace(title: string, message: unknown): void {
@@ -831,13 +1010,9 @@ export default class ConnectionBase {
     this.clientId = message.client_id;
     this.connectionId = message.connection_id;
     if (this.ws) {
-      this.ws.onclose = async (event): Promise<void> => {
-        this.trace("DISCONNECT", "Trigger event WebSocket onclose");
-        this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
-        await this.terminate(event);
-      };
-      this.ws.onerror = (event) => {
+      this.ws.onerror = async (event) => {
         this.writeWebSocketSignalingLog("onerror", event);
+        await this.abend(new CloseEvent("close", WEBSOCKET_ONERROR_EVENT_INIT));
       };
     }
     if (message.metadata !== undefined) {
@@ -1013,8 +1188,7 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel;
       this.writeDataChannelTimelineLog("onclose", channel);
       this.trace("CLOSE DATA CHANNEL", channel.label);
-      const closeEvent = new CloseEvent("close", { code: 4999 });
-      await this.terminate(closeEvent);
+      await this.terminate(new CloseEvent("close", TERMINATE_DATA_CHANNEL_EVENT_INIT));
     };
     // onerror
     dataChannelEvent.channel.onerror = (event): void => {
