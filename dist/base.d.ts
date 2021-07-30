@@ -1,4 +1,4 @@
-import { Callbacks, ConnectionOptions, JSONType, SignalingOfferMessage, SignalingUpdateMessage, SignalingReOfferMessage } from "./types";
+import { Callbacks, ConnectionOptions, JSONType, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
 declare global {
     interface Algorithm {
@@ -24,6 +24,8 @@ export default class ConnectionBase {
     protected callbacks: Callbacks;
     protected e2ee: SoraE2EE | null;
     protected connectionTimeoutTimerId: number;
+    protected monitorSignalingWebSocketEventTimerId: number;
+    protected monitorIceConnectionStateChangeTimerId: number;
     protected dataChannels: {
         [key in string]?: RTCDataChannel;
     };
@@ -39,10 +41,22 @@ export default class ConnectionBase {
     replaceAudioTrack(stream: MediaStream, audioTrack: MediaStreamTrack): Promise<void>;
     replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void>;
     private stopStream;
-    private terminateWebSocket;
-    private terminateDataChannel;
-    private terminatePeerConnection;
-    private terminate;
+    /**
+     * connect 処理中に例外が発生した場合の切断処理
+     */
+    private signalingTerminate;
+    /**
+     * PeerConnection の state に異常が発生した場合の切断処理
+     */
+    private abendPeerConnectionState;
+    /**
+     * 何かしらの異常があった場合の切断処理
+     */
+    private abend;
+    private initializeConnection;
+    private disconnectWebSocket;
+    private disconnectDataChannel;
+    private disconnectPeerConnection;
     disconnect(): Promise<void>;
     protected setupE2EE(): void;
     protected startE2EE(): void;
@@ -54,14 +68,20 @@ export default class ConnectionBase {
     protected sendAnswer(): void;
     protected onIceCandidate(): Promise<void>;
     protected waitChangeConnectionStateConnected(): Promise<void>;
+    protected monitorSignalingWebSocketEvent(): Promise<void>;
+    protected monitorWebSocketEvent(): void;
+    protected monitorPeerConnectionState(): void;
     protected setConnectionTimeout(): Promise<MediaStream>;
     protected clearConnectionTimeout(): void;
+    protected clearMonitorSignalingWebSocketEvent(): void;
+    protected clearMonitorIceConnectionStateChange(): void;
     protected trace(title: string, message: unknown): void;
     protected writeWebSocketSignalingLog(eventType: string, data?: unknown): void;
     protected writeDataChannelSignalingLog(eventType: string, channel: RTCDataChannel, data?: unknown): void;
     protected writeWebSocketTimelineLog(eventType: string, data?: unknown): void;
     protected writeDataChannelTimelineLog(eventType: string, channel: RTCDataChannel, data?: unknown): void;
     protected writePeerConnectionTimelineLog(eventType: string, data?: unknown): void;
+    protected writeSoraTimelineLog(eventType: string, data?: unknown): void;
     private signalingOnMessageE2EE;
     private signalingOnMessageTypeOffer;
     private sendUpdateAnswer;
@@ -79,6 +99,7 @@ export default class ConnectionBase {
     private sendStatsMessage;
     private getAudioTransceiver;
     private getVideoTransceiver;
+    private soraCloseEvent;
     get e2eeSelfFingerprint(): string | undefined;
     get e2eeRemoteFingerprints(): Record<string, string> | undefined;
     get audio(): boolean;

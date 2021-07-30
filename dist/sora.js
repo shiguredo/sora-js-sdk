@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.1
+ * @version: 2021.1.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1599,7 +1599,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.1",
+	        sora_client: "Sora JavaScript SDK 2021.1.2",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1868,7 +1868,7 @@
 	        reliable: channel.reliable,
 	    };
 	}
-	function createTimelineEvent(eventType, data, transportType, dataChannelId, dataChannelLabel) {
+	function createTimelineEvent(eventType, data, logType, dataChannelId, dataChannelLabel) {
 	    const event = new Event(eventType);
 	    // data をコピーする
 	    try {
@@ -1877,7 +1877,7 @@
 	    catch (_) {
 	        event.data = data;
 	    }
-	    event.transportType = transportType;
+	    event.logType = logType;
 	    event.dataChannelId = dataChannelId;
 	    event.dataChannelLabel = dataChannelLabel;
 	    return event;
@@ -1929,6 +1929,8 @@
 	        this.authMetadata = null;
 	        this.e2ee = null;
 	        this.connectionTimeoutTimerId = 0;
+	        this.monitorSignalingWebSocketEventTimerId = 0;
+	        this.monitorIceConnectionStateChangeTimerId = 0;
 	        this.dataChannels = {};
 	        this.mids = {
 	            audio: "",
@@ -2028,7 +2030,159 @@
 	            return resolve();
 	        });
 	    }
-	    terminateWebSocket() {
+	    /**
+	     * connect 処理中に例外が発生した場合の切断処理
+	     */
+	    async signalingTerminate() {
+	        await this.stopStream();
+	        for (const key of Object.keys(this.dataChannels)) {
+	            const dataChannel = this.dataChannels[key];
+	            if (dataChannel) {
+	                dataChannel.close();
+	            }
+	            delete this.dataChannels[key];
+	        }
+	        if (this.ws) {
+	            this.ws.close();
+	            this.ws = null;
+	        }
+	        if (this.pc) {
+	            this.pc.close();
+	        }
+	        if (this.e2ee) {
+	            this.e2ee.terminateWorker();
+	        }
+	        this.initializeConnection();
+	    }
+	    /**
+	     * PeerConnection の state に異常が発生した場合の切断処理
+	     */
+	    async abendPeerConnectionState(title) {
+	        this.clearMonitorIceConnectionStateChange();
+	        await this.stopStream();
+	        // callback を止める
+	        if (this.pc) {
+	            this.pc.ondatachannel = null;
+	            this.pc.oniceconnectionstatechange = null;
+	            this.pc.onicegatheringstatechange = null;
+	            this.pc.onconnectionstatechange = null;
+	        }
+	        if (this.ws) {
+	            // onclose はログを吐く専用に残す
+	            this.ws.onclose = (_) => {
+	                this.writeWebSocketTimelineLog("onclose");
+	            };
+	            this.ws.onmessage = null;
+	            this.ws.onerror = null;
+	        }
+	        for (const key of Object.keys(this.dataChannels)) {
+	            const dataChannel = this.dataChannels[key];
+	            if (dataChannel) {
+	                // onclose はログを吐く専用に残す
+	                dataChannel.onclose = (event) => {
+	                    const channel = event.currentTarget;
+	                    this.writeDataChannelTimelineLog("onclose", channel);
+	                    this.trace("CLOSE DATA CHANNEL", channel.label);
+	                };
+	                dataChannel.onmessage = null;
+	                dataChannel.onerror = null;
+	            }
+	        }
+	        // DataChannel を終了する
+	        for (const key of Object.keys(this.dataChannels)) {
+	            const dataChannel = this.dataChannels[key];
+	            if (dataChannel) {
+	                dataChannel.close();
+	            }
+	            delete this.dataChannels[key];
+	        }
+	        // WebSocket を終了する
+	        if (this.ws) {
+	            this.ws.close();
+	            this.ws = null;
+	        }
+	        // PeerConnection を終了する
+	        if (this.pc) {
+	            this.pc.close();
+	        }
+	        // E2EE worker を終了する
+	        if (this.e2ee) {
+	            this.e2ee.terminateWorker();
+	        }
+	        this.initializeConnection();
+	        const event = this.soraCloseEvent("abend", title);
+	        this.callbacks.disconnect(event);
+	        this.writeSoraTimelineLog("disconnect-abend", event);
+	    }
+	    /**
+	     * 何かしらの異常があった場合の切断処理
+	     */
+	    async abend(title, params) {
+	        this.clearMonitorIceConnectionStateChange();
+	        await this.stopStream();
+	        // callback を止める
+	        if (this.pc) {
+	            this.pc.ondatachannel = null;
+	            this.pc.oniceconnectionstatechange = null;
+	            this.pc.onicegatheringstatechange = null;
+	            this.pc.onconnectionstatechange = null;
+	        }
+	        if (this.ws) {
+	            // onclose はログを吐く専用に残す
+	            this.ws.onclose = (_) => {
+	                this.writeWebSocketTimelineLog("onclose");
+	            };
+	            this.ws.onmessage = null;
+	            this.ws.onerror = null;
+	        }
+	        for (const key of Object.keys(this.dataChannels)) {
+	            const dataChannel = this.dataChannels[key];
+	            if (dataChannel) {
+	                // onclose はログを吐く専用に残す
+	                dataChannel.onclose = (event) => {
+	                    const channel = event.currentTarget;
+	                    this.writeDataChannelTimelineLog("onclose", channel);
+	                    this.trace("CLOSE DATA CHANNEL", channel.label);
+	                };
+	                dataChannel.onmessage = null;
+	                dataChannel.onerror = null;
+	            }
+	        }
+	        try {
+	            await this.disconnectDataChannel(title);
+	        }
+	        catch (_) {
+	            // 異常終了時の DataChannel の wait timeout は何もしない
+	        }
+	        await this.disconnectWebSocket(title);
+	        await this.disconnectPeerConnection();
+	        if (this.e2ee) {
+	            this.e2ee.terminateWorker();
+	        }
+	        this.initializeConnection();
+	        const event = this.soraCloseEvent("abend", title, params);
+	        this.writeSoraTimelineLog("disconnect-abend", event);
+	        this.callbacks.disconnect(this.soraCloseEvent("abend", title, params));
+	    }
+	    initializeConnection() {
+	        this.clientId = null;
+	        this.connectionId = null;
+	        this.remoteConnectionIds = [];
+	        this.stream = null;
+	        this.ws = null;
+	        this.pc = null;
+	        this.encodings = [];
+	        this.authMetadata = null;
+	        this.e2ee = null;
+	        this.dataChannels = {};
+	        this.mids = {
+	            audio: "",
+	            video: "",
+	        };
+	        this.signalingSwitched = false;
+	        this.clearConnectionTimeout();
+	    }
+	    disconnectWebSocket(title) {
 	        let timerId = 0;
 	        if (this.signalingSwitched) {
 	            if (this.ws) {
@@ -2048,10 +2202,10 @@
 	                }
 	                clearTimeout(timerId);
 	                this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
-	                return resolve(event);
+	                return resolve({ code: event.code, reason: event.reason });
 	            };
 	            if (this.ws.readyState === 1) {
-	                const message = { type: "disconnect" };
+	                const message = { type: "disconnect", reason: title };
 	                this.ws.send(JSON.stringify(message));
 	                this.writeWebSocketSignalingLog("send-disconnect", message);
 	                // WebSocket 切断を待つ
@@ -2060,24 +2214,19 @@
 	                        this.ws.close();
 	                        this.ws = null;
 	                    }
-	                    // ws close で onclose が呼ばれない、または途中で ws が null になった場合の対応
-	                    setTimeout(() => {
-	                        const closeEvent = new CloseEvent("close", { code: 4995 });
-	                        return resolve(closeEvent);
-	                    }, 500);
 	                }, this.disconnectWaitTimeout);
 	            }
 	            else {
 	                // ws の state が open ではない場合は後処理をして終わる
 	                this.ws.close();
 	                this.ws = null;
-	                const closeEvent = new CloseEvent("close", { code: 4996 });
-	                return resolve(closeEvent);
+	                return resolve(null);
 	            }
 	        });
 	    }
-	    terminateDataChannel() {
-	        const deleteChannels = () => {
+	    disconnectDataChannel(title) {
+	        // DataChannel の強制終了処理
+	        const closeDataChannels = () => {
 	            for (const key of Object.keys(this.dataChannels)) {
 	                const dataChannel = this.dataChannels[key];
 	                if (dataChannel) {
@@ -2086,135 +2235,101 @@
 	                delete this.dataChannels[key];
 	            }
 	        };
-	        if (this.signalingSwitched) {
-	            return new Promise((resolve, _) => {
-	                if (!this.dataChannels.signaling) {
-	                    return resolve();
-	                }
-	                this.dataChannels.signaling.onclose = (event) => {
-	                    const channel = event.currentTarget;
-	                    this.writeDataChannelSignalingLog("onclose", channel);
-	                    this.trace("CLOSE DATA CHANNEL", channel.label);
-	                    deleteChannels();
-	                    return resolve();
-	                };
-	                const message = { type: "disconnect" };
-	                if (this.dataChannelsCompress.signaling === true) {
-	                    const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
-	                    const zlibMessage = zlibSync(binaryMessage, {});
-	                    if (this.dataChannels.signaling.readyState === "open") {
-	                        // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-	                        try {
-	                            this.dataChannels.signaling.send(zlibMessage);
-	                            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
-	                        }
-	                        catch (e) {
-	                            const errorMessage = e.message;
-	                            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
-	                        }
-	                    }
-	                }
-	                else {
-	                    if (this.dataChannels.signaling.readyState === "open") {
-	                        // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-	                        try {
-	                            this.dataChannels.signaling.send(JSON.stringify(message));
-	                            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
-	                        }
-	                        catch (e) {
-	                            const errorMessage = e.message;
-	                            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
-	                        }
-	                    }
-	                }
-	                // DataChannel 切断を待つ
-	                setTimeout(() => {
-	                    deleteChannels();
-	                    return resolve();
-	                }, this.disconnectWaitTimeout);
-	            });
-	        }
-	        deleteChannels();
-	        return Promise.resolve();
-	    }
-	    terminatePeerConnection() {
-	        return new Promise((resolve, _reject) => {
-	            if (!this.pc || this.pc.connectionState === "closed" || this.pc.connectionState === undefined) {
+	        return new Promise((resolve, reject) => {
+	            // DataChannel label signaling が存在しない場合は強制終了処理をする
+	            if (!this.dataChannels.signaling) {
+	                closeDataChannels();
 	                return resolve();
 	            }
-	            let counter = 50;
-	            const timerId = setInterval(() => {
-	                if (!this.pc) {
-	                    clearInterval(timerId);
-	                    return resolve();
+	            // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
+	            const disconnectWaitTimeoutId = setTimeout(() => {
+	                closeDataChannels();
+	                return reject();
+	            }, this.disconnectWaitTimeout);
+	            const onClosePromises = [];
+	            for (const key of Object.keys(this.dataChannels)) {
+	                const dataChannel = this.dataChannels[key];
+	                if (dataChannel) {
+	                    // onerror が発火した場合は強制終了処理をする
+	                    dataChannel.onerror = () => {
+	                        clearTimeout(disconnectWaitTimeoutId);
+	                        closeDataChannels();
+	                        resolve();
+	                    };
+	                    // onclose がすべて発火したかどうかを拾うための Promsie を生成する
+	                    const p = () => {
+	                        return new Promise((res, rej) => {
+	                            dataChannel.onerror = () => {
+	                                rej();
+	                            };
+	                            dataChannel.onclose = (event) => {
+	                                const channel = event.currentTarget;
+	                                this.writeDataChannelTimelineLog("onclose", channel);
+	                                this.trace("CLOSE DATA CHANNEL", channel.label);
+	                                res();
+	                            };
+	                        });
+	                    };
+	                    onClosePromises.push(p());
 	                }
-	                if (this.pc.connectionState === "closed") {
-	                    clearInterval(timerId);
-	                    this.pc = null;
-	                    return resolve();
+	            }
+	            // すべての DataChannel で onclose が発火した場合は resolve にする
+	            Promise.all(onClosePromises)
+	                .then(() => {
+	                resolve();
+	            })
+	                .finally(() => {
+	                closeDataChannels();
+	                clearTimeout(disconnectWaitTimeoutId);
+	            });
+	            const message = { type: "disconnect", reason: title };
+	            if (this.dataChannelsCompress.signaling === true) {
+	                const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+	                const zlibMessage = zlibSync(binaryMessage, {});
+	                if (this.dataChannels.signaling.readyState === "open") {
+	                    // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+	                    try {
+	                        this.dataChannels.signaling.send(zlibMessage);
+	                        this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+	                    }
+	                    catch (e) {
+	                        const errorMessage = e.message;
+	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+	                    }
 	                }
-	                --counter;
-	                if (counter < 0) {
-	                    clearInterval(timerId);
-	                    return resolve();
+	            }
+	            else {
+	                if (this.dataChannels.signaling.readyState === "open") {
+	                    // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+	                    try {
+	                        this.dataChannels.signaling.send(JSON.stringify(message));
+	                        this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+	                    }
+	                    catch (e) {
+	                        const errorMessage = e.message;
+	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+	                    }
 	                }
-	            }, 10);
-	            this.pc.close();
+	            }
 	        });
 	    }
-	    async terminate(closeEvent) {
-	        await this.stopStream();
-	        // callback を止める
-	        if (this.pc) {
-	            this.pc.ondatachannel = null;
-	        }
-	        if (this.ws) {
-	            // onclose はログを吐く専用に残す
-	            this.ws.onclose = (_) => {
-	                this.writeWebSocketTimelineLog("onclose");
-	            };
-	            this.ws.onmessage = null;
-	        }
-	        for (const key of Object.keys(this.dataChannels)) {
-	            const dataChannel = this.dataChannels[key];
-	            if (dataChannel) {
-	                dataChannel.onmessage = null;
-	                // onclose はログを吐く専用に残す
-	                dataChannel.onclose = (event) => {
-	                    const channel = event.currentTarget;
-	                    this.writeDataChannelTimelineLog("onclose", channel);
-	                    this.trace("CLOSE DATA CHANNEL", channel.label);
-	                };
+	    disconnectPeerConnection() {
+	        return new Promise((resolve, _) => {
+	            if (this.pc && this.pc.connectionState !== "closed") {
+	                this.pc.close();
 	            }
-	        }
-	        await this.terminateDataChannel();
-	        await this.terminateWebSocket();
-	        await this.terminatePeerConnection();
-	        if (this.e2ee) {
-	            this.e2ee.terminateWorker();
-	        }
-	        this.clientId = null;
-	        this.connectionId = null;
-	        this.remoteConnectionIds = [];
-	        this.stream = null;
-	        this.ws = null;
-	        this.pc = null;
-	        this.encodings = [];
-	        this.authMetadata = null;
-	        this.e2ee = null;
-	        this.dataChannels = {};
-	        this.mids = {
-	            audio: "",
-	            video: "",
-	        };
-	        this.signalingSwitched = false;
-	        this.callbacks.disconnect(closeEvent);
+	            return resolve();
+	        });
 	    }
 	    async disconnect() {
+	        this.clearMonitorIceConnectionStateChange();
 	        await this.stopStream();
 	        // callback を止める
 	        if (this.pc) {
 	            this.pc.ondatachannel = null;
+	            this.pc.oniceconnectionstatechange = null;
+	            this.pc.onicegatheringstatechange = null;
+	            this.pc.onconnectionstatechange = null;
 	        }
 	        if (this.ws) {
 	            // onclose はログを吐く専用に残す
@@ -2222,55 +2337,48 @@
 	                this.writeWebSocketTimelineLog("onclose");
 	            };
 	            this.ws.onmessage = null;
+	            this.ws.onerror = null;
 	        }
 	        for (const key of Object.keys(this.dataChannels)) {
 	            const dataChannel = this.dataChannels[key];
 	            if (dataChannel) {
 	                dataChannel.onmessage = null;
-	                // onclose はログを吐く専用に残す
-	                dataChannel.onclose = (event) => {
-	                    const channel = event.currentTarget;
-	                    this.writeDataChannelTimelineLog("onclose", channel);
-	                    this.trace("CLOSE DATA CHANNEL", channel.label);
-	                };
 	            }
 	        }
-	        const dataChannelCloseEvent = new CloseEvent("close", { code: 4997 });
-	        await this.terminateDataChannel();
-	        const webSocketCloseEvent = await this.terminateWebSocket();
-	        await this.terminatePeerConnection();
+	        let event = null;
+	        if (this.signalingSwitched) {
+	            event = this.soraCloseEvent("normal", "DISCONNECT", { code: 4999, reason: "" });
+	            // DataChannel の切断処理がタイムアウトした場合は event を abend に差し替える
+	            try {
+	                await this.disconnectDataChannel("NO-ERROR");
+	            }
+	            catch (_) {
+	                event = this.soraCloseEvent("abend", "DISCONNECT-TIMEOUT");
+	            }
+	            await this.disconnectWebSocket("NO-ERROR");
+	            await this.disconnectPeerConnection();
+	        }
+	        else {
+	            const reason = await this.disconnectWebSocket("NO-ERROR");
+	            await this.disconnectPeerConnection();
+	            if (reason !== null) {
+	                event = this.soraCloseEvent("normal", "DISCONNECT", reason);
+	            }
+	        }
 	        if (this.e2ee) {
 	            this.e2ee.terminateWorker();
-	            this.e2ee = null;
 	        }
-	        if (this.signalingSwitched) {
-	            this.callbacks.disconnect(dataChannelCloseEvent);
+	        this.initializeConnection();
+	        if (event) {
+	            this.writeSoraTimelineLog("disconnect-normal", event);
+	            this.callbacks.disconnect(event);
 	        }
-	        else if (webSocketCloseEvent !== null) {
-	            this.callbacks.disconnect(webSocketCloseEvent);
-	        }
-	        this.clientId = null;
-	        this.connectionId = null;
-	        this.remoteConnectionIds = [];
-	        this.stream = null;
-	        this.ws = null;
-	        this.pc = null;
-	        this.encodings = [];
-	        this.authMetadata = null;
-	        this.e2ee = null;
-	        this.dataChannels = {};
-	        this.mids = {
-	            audio: "",
-	            video: "",
-	        };
-	        this.signalingSwitched = false;
 	    }
 	    setupE2EE() {
 	        if (this.options.e2ee === true) {
 	            this.e2ee = new SoraE2EE();
 	            this.e2ee.onWorkerDisconnect = async () => {
-	                const closeEvent = new CloseEvent("close", { code: 4998 });
-	                await this.terminate(closeEvent);
+	                await this.abend("INTERNAL-ERROR", { reason: "CRASH-E2EE-WORKER" });
 	            };
 	            this.e2ee.startWorker();
 	        }
@@ -2295,11 +2403,12 @@
 	                this.writeWebSocketSignalingLog("new-websocket", this.signalingUrl);
 	            }
 	            this.ws.binaryType = "arraybuffer";
-	            this.ws.onclose = (event) => {
+	            this.ws.onclose = async (event) => {
 	                const error = new ConnectError(`Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`);
 	                error.code = event.code;
 	                error.reason = event.reason;
 	                this.writeWebSocketTimelineLog("onclose", error);
+	                await this.signalingTerminate();
 	                reject(error);
 	            };
 	            this.ws.onopen = async (_) => {
@@ -2361,7 +2470,7 @@
 	                }
 	                else if (message.type == "switched") {
 	                    this.writeWebSocketSignalingLog("onmessage-switched", message);
-	                    await this.signalingOnMessageTypeSwitched(message);
+	                    this.signalingOnMessageTypeSwitched(message);
 	                }
 	            };
 	        });
@@ -2487,21 +2596,21 @@
 	        return;
 	    }
 	    onIceCandidate() {
-	        return new Promise((resolve, reject) => {
-	            const timerId = setInterval(() => {
-	                if (this.pc === null) {
-	                    clearInterval(timerId);
-	                    const error = new Error();
-	                    error.message = "ICECANDIDATE TIMEOUT";
-	                    this.writePeerConnectionTimelineLog("ice-connection-timeout");
-	                    reject(error);
-	                }
-	                else if (this.pc && this.pc.iceConnectionState === "connected") {
-	                    clearInterval(timerId);
-	                    resolve();
-	                }
-	            }, 10);
+	        return new Promise((resolve, _) => {
 	            if (this.pc) {
+	                this.pc.oniceconnectionstatechange = (_) => {
+	                    if (this.pc) {
+	                        this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
+	                            connectionState: this.pc.connectionState,
+	                            iceConnectionState: this.pc.iceConnectionState,
+	                            iceGatheringState: this.pc.iceGatheringState,
+	                        });
+	                        this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
+	                        if (this.pc.iceConnectionState === "connected") {
+	                            resolve();
+	                        }
+	                    }
+	                };
 	                this.pc.onicecandidate = (event) => {
 	                    this.writePeerConnectionTimelineLog("onicecandidate", event.candidate);
 	                    if (this.pc) {
@@ -2509,7 +2618,6 @@
 	                    }
 	                    // TODO(yuito): Firefox は <empty string> を投げてくるようになったので対応する
 	                    if (event.candidate === null) {
-	                        clearInterval(timerId);
 	                        resolve();
 	                    }
 	                    else {
@@ -2543,6 +2651,92 @@
 	            }, 10);
 	        });
 	    }
+	    monitorSignalingWebSocketEvent() {
+	        // シグナリング時に意図しない WebSocket の切断を監視する
+	        return new Promise((_, reject) => {
+	            this.monitorSignalingWebSocketEventTimerId = setInterval(() => {
+	                if (!this.ws) {
+	                    return;
+	                }
+	                this.clearMonitorSignalingWebSocketEvent();
+	                this.ws.onclose = async (event) => {
+	                    const error = new ConnectError(`Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`);
+	                    error.code = event.code;
+	                    error.reason = event.reason;
+	                    this.writeWebSocketTimelineLog("onclose", error);
+	                    await this.signalingTerminate();
+	                    reject(error);
+	                };
+	                this.ws.onerror = async (_) => {
+	                    const error = new ConnectError(`Signaling failed. WebSocket onerror was called`);
+	                    this.writeWebSocketSignalingLog("onerror", error);
+	                    await this.signalingTerminate();
+	                    reject(error);
+	                };
+	            }, 100);
+	        });
+	    }
+	    monitorWebSocketEvent() {
+	        // 接続後の意図しない WebSocket の切断を監視する
+	        if (!this.ws) {
+	            return;
+	        }
+	        this.ws.onclose = async (event) => {
+	            this.writeWebSocketTimelineLog("onclose");
+	            if (event.code === 1000 || event.code === 1005) {
+	                await this.disconnect();
+	            }
+	            else {
+	                await this.abend("WEBSOCKET-ONCLOSE", { code: event.code, reason: event.reason });
+	            }
+	        };
+	        this.ws.onerror = async (_) => {
+	            this.writeWebSocketSignalingLog("onerror");
+	            await this.abend("WEBSOCKET-ONERROR");
+	        };
+	    }
+	    monitorPeerConnectionState() {
+	        // PeerConnection の ConnectionState, iceConnectionState を監視して不正な場合に切断する
+	        if (!this.pc) {
+	            return;
+	        }
+	        this.pc.oniceconnectionstatechange = async (_) => {
+	            // connectionState が undefined の場合は iceConnectionState を見て判定する
+	            if (this.pc && this.pc.connectionState === undefined) {
+	                this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
+	                    connectionState: this.pc.connectionState,
+	                    iceConnectionState: this.pc.iceConnectionState,
+	                    iceGatheringState: this.pc.iceGatheringState,
+	                });
+	                this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
+	                clearTimeout(this.monitorIceConnectionStateChangeTimerId);
+	                // iceConnectionState "failed" で切断する
+	                if (this.pc.iceConnectionState === "failed") {
+	                    await this.abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED");
+	                }
+	                // iceConnectionState "disconnected" になってから 10000ms の間変化がない場合切断する
+	                else if (this.pc.iceConnectionState === "disconnected") {
+	                    this.monitorIceConnectionStateChangeTimerId = setTimeout(async () => {
+	                        if (this.pc && this.pc.iceConnectionState === "disconnected") {
+	                            await this.abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT");
+	                        }
+	                    }, 10000);
+	                }
+	            }
+	        };
+	        this.pc.onconnectionstatechange = async (_) => {
+	            if (this.pc) {
+	                this.writePeerConnectionTimelineLog("onconnectionstatechange", {
+	                    connectionState: this.pc.connectionState,
+	                    iceConnectionState: this.pc.iceConnectionState,
+	                    iceGatheringState: this.pc.iceGatheringState,
+	                });
+	                if (this.pc.connectionState === "failed") {
+	                    await this.abendPeerConnectionState("CONNECTION-STATE-FAILED");
+	                }
+	            }
+	        };
+	    }
 	    setConnectionTimeout() {
 	        return new Promise((_, reject) => {
 	            if (0 < this.connectionTimeout) {
@@ -2550,13 +2744,13 @@
 	                    if (!this.pc ||
 	                        (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")) {
 	                        const error = new Error();
-	                        error.message = "CONNECTION TIMEOUT";
+	                        error.message = "Signaling connection timeout";
 	                        this.callbacks.timeout();
 	                        this.trace("DISCONNECT", "Signaling connection timeout");
 	                        this.writePeerConnectionTimelineLog("signaling-connection-timeout", {
 	                            connectionTimeout: this.connectionTimeout,
 	                        });
-	                        await this.disconnect();
+	                        await this.signalingTerminate();
 	                        reject(error);
 	                    }
 	                }, this.connectionTimeout);
@@ -2565,6 +2759,12 @@
 	    }
 	    clearConnectionTimeout() {
 	        clearTimeout(this.connectionTimeoutTimerId);
+	    }
+	    clearMonitorSignalingWebSocketEvent() {
+	        clearInterval(this.monitorSignalingWebSocketEventTimerId);
+	    }
+	    clearMonitorIceConnectionStateChange() {
+	        clearInterval(this.monitorIceConnectionStateChangeTimerId);
 	    }
 	    trace(title, message) {
 	        this.callbacks.log(title, message);
@@ -2593,6 +2793,10 @@
 	        const event = createTimelineEvent(eventType, data, "peerconnection");
 	        this.callbacks.timeline(event);
 	    }
+	    writeSoraTimelineLog(eventType, data) {
+	        const event = createTimelineEvent(eventType, data, "sora");
+	        this.callbacks.timeline(event);
+	    }
 	    signalingOnMessageE2EE(data) {
 	        if (this.e2ee) {
 	            const message = new Uint8Array(data);
@@ -2606,16 +2810,6 @@
 	    signalingOnMessageTypeOffer(message) {
 	        this.clientId = message.client_id;
 	        this.connectionId = message.connection_id;
-	        if (this.ws) {
-	            this.ws.onclose = async (event) => {
-	                this.trace("DISCONNECT", "Trigger event WebSocket onclose");
-	                this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
-	                await this.terminate(event);
-	            };
-	            this.ws.onerror = (event) => {
-	                this.writeWebSocketSignalingLog("onerror", event);
-	            };
-	        }
 	        if (message.metadata !== undefined) {
 	            this.authMetadata = message.metadata;
 	        }
@@ -2713,7 +2907,7 @@
 	        }
 	        this.callbacks.notify(message, transportType);
 	    }
-	    async signalingOnMessageTypeSwitched(message) {
+	    signalingOnMessageTypeSwitched(message) {
 	        this.signalingSwitched = true;
 	        if (!this.ws) {
 	            return;
@@ -2721,7 +2915,8 @@
 	        if (message["ignore_disconnect_websocket"]) {
 	            if (this.ws) {
 	                this.ws.onclose = null;
-	                await this.terminateWebSocket();
+	                this.ws.close();
+	                this.ws = null;
 	            }
 	            this.writeWebSocketSignalingLog("close");
 	        }
@@ -2773,14 +2968,14 @@
 	            const channel = event.currentTarget;
 	            this.writeDataChannelTimelineLog("onclose", channel);
 	            this.trace("CLOSE DATA CHANNEL", channel.label);
-	            const closeEvent = new CloseEvent("close", { code: 4999 });
-	            await this.terminate(closeEvent);
+	            await this.disconnect();
 	        };
 	        // onerror
-	        dataChannelEvent.channel.onerror = (event) => {
+	        dataChannelEvent.channel.onerror = async (event) => {
 	            const channel = event.currentTarget;
 	            this.writeDataChannelTimelineLog("onerror", channel);
 	            this.trace("ERROR DATA CHANNEL", channel.label);
+	            await this.abend("DATA-CHANNEL-ONERROR", { label: channel.label });
 	        };
 	        // onmessage
 	        if (dataChannelEvent.channel.label === "signaling") {
@@ -2911,6 +3106,26 @@
 	        }
 	        return null;
 	    }
+	    soraCloseEvent(type, title, initDict) {
+	        const soraCloseEvent = class SoraCloseEvent extends Event {
+	            constructor(type, title, initDict) {
+	                super(type);
+	                if (initDict) {
+	                    if (initDict.code) {
+	                        this.code = initDict.code;
+	                    }
+	                    if (initDict.reason) {
+	                        this.reason = initDict.reason;
+	                    }
+	                    if (initDict.params) {
+	                        this.params = initDict.params;
+	                    }
+	                }
+	                this.title = title;
+	            }
+	        };
+	        return new soraCloseEvent(type, title, initDict);
+	    }
 	    get e2eeSelfFingerprint() {
 	        if (this.options.e2ee && this.e2ee) {
 	            return this.e2ee.selfFingerprint();
@@ -2933,24 +3148,28 @@
 
 	class ConnectionPublisher extends ConnectionBase {
 	    async connect(stream) {
-	        this.writePeerConnectionTimelineLog("start-connecting-to-sora");
 	        if (this.options.multistream) {
 	            await Promise.race([
 	                this.multiStream(stream).finally(() => {
 	                    this.clearConnectionTimeout();
+	                    this.clearMonitorSignalingWebSocketEvent();
 	                }),
 	                this.setConnectionTimeout(),
+	                this.monitorSignalingWebSocketEvent(),
 	            ]);
 	        }
 	        else {
 	            await Promise.race([
 	                this.singleStream(stream).finally(() => {
 	                    this.clearConnectionTimeout();
+	                    this.clearMonitorSignalingWebSocketEvent();
 	                }),
 	                this.setConnectionTimeout(),
+	                this.monitorSignalingWebSocketEvent(),
 	            ]);
 	        }
-	        this.writePeerConnectionTimelineLog("connected-to-sora");
+	        this.monitorWebSocketEvent();
+	        this.monitorPeerConnectionState();
 	        return stream;
 	    }
 	    async singleStream(stream) {
@@ -3050,25 +3269,30 @@
 
 	class ConnectionSubscriber extends ConnectionBase {
 	    async connect() {
-	        this.writePeerConnectionTimelineLog("start-connecting-to-sora");
 	        if (this.options.multistream) {
 	            await Promise.race([
 	                this.multiStream().finally(() => {
 	                    this.clearConnectionTimeout();
+	                    this.clearMonitorSignalingWebSocketEvent();
 	                }),
 	                this.setConnectionTimeout(),
+	                this.monitorSignalingWebSocketEvent(),
 	            ]);
-	            this.writePeerConnectionTimelineLog("connected-to-sora");
+	            this.monitorWebSocketEvent();
+	            this.monitorPeerConnectionState();
 	            return;
 	        }
 	        else {
 	            const stream = await Promise.race([
 	                this.singleStream().finally(() => {
 	                    this.clearConnectionTimeout();
+	                    this.clearMonitorSignalingWebSocketEvent();
 	                }),
 	                this.setConnectionTimeout(),
+	                this.monitorSignalingWebSocketEvent(),
 	            ]);
-	            this.writePeerConnectionTimelineLog("connected-to-sora");
+	            this.monitorWebSocketEvent();
+	            this.monitorPeerConnectionState();
 	            return stream;
 	        }
 	    }
@@ -3209,7 +3433,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.1";
+	        return "2021.1.2";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,

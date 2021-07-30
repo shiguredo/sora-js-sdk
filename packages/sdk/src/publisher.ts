@@ -2,23 +2,27 @@ import ConnectionBase from "./base";
 
 export default class ConnectionPublisher extends ConnectionBase {
   async connect(stream: MediaStream): Promise<MediaStream> {
-    this.writePeerConnectionTimelineLog("start-connecting-to-sora");
     if (this.options.multistream) {
       await Promise.race([
         this.multiStream(stream).finally(() => {
           this.clearConnectionTimeout();
+          this.clearMonitorSignalingWebSocketEvent();
         }),
         this.setConnectionTimeout(),
+        this.monitorSignalingWebSocketEvent(),
       ]);
     } else {
       await Promise.race([
         this.singleStream(stream).finally(() => {
           this.clearConnectionTimeout();
+          this.clearMonitorSignalingWebSocketEvent();
         }),
         this.setConnectionTimeout(),
+        this.monitorSignalingWebSocketEvent(),
       ]);
     }
-    this.writePeerConnectionTimelineLog("connected-to-sora");
+    this.monitorWebSocketEvent();
+    this.monitorPeerConnectionState();
     return stream;
   }
 

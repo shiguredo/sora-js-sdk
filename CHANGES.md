@@ -15,6 +15,26 @@
     - ConnectionOptions の spotlight オプションの型を boolean のみに変更する
     - @yuitowest
 
+## 2021.1.2
+- [CHANGE] disconnect API を修正する
+    - type: disconnect メッセージに reason を追加するように修正する
+- [CHANGE] disconnect callback を修正する
+    - disconnect callback が受け取る event を CloseEvent から SoraCloseEvent に変更する
+    - disconnect callback が受け取る event の type は "close" のみから "normal" か "abend" のどちらかが返るように変更する
+    - disconnect callback が受け取る event の code, reason は undefined のパターンを追加する
+    - disconnect callback が受け取る event に title を追加する
+    - disconnect callback が受け取る event に params を追加する
+- [CHANGE] connect signaling 時の意図しない WebSocket の切断時のメッセージを統一する
+    - "Signaling failed. {reason}" に統一する
+- [CHANGE] timeline callback Event の property を変更する
+    - transportType を logType に変更する
+- [CHANGE] signaling callback Event の property を変更する
+    - transportType は必須項目にする
+- [UPDATE] PeerConnecion の状態が不正な場合に切断処理に入るようにする
+    - PeerConnecion connectionState が "failed" になった場合は切断する
+    - PeerConnecion connectionState が undefined の場合 iceConnectionState が "disconnect" になって1000ms変化がない場合は切断する
+- [UPDATE] 型を export する
+
 ## 2021.1.1
 
 - [FIX] 接続処理が途中で失敗した場合の timeline ログに connected のログが出力されていた問題を修正する

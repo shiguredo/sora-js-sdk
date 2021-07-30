@@ -221,7 +221,7 @@ export declare type ConnectionOptions = {
     disconnectWaitTimeout?: number;
 };
 export declare type Callbacks = {
-    disconnect: (event: CloseEvent) => void;
+    disconnect: (event: SoraCloseEvent) => void;
     push: (event: SignalingPushMessage, transportType: TransportType) => void;
     addstream: (event: RTCTrackEvent) => void;
     track: (event: RTCTrackEvent) => void;
@@ -240,13 +240,27 @@ export declare type PreKeyBundle = {
 };
 export declare type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
 export declare type TransportType = "websocket" | "datachannel" | "peerconnection";
+export declare type TimelineEventLogType = "websocket" | "datachannel" | "peerconnection" | "sora";
 export interface SignalingEvent extends Event {
-    transportType?: TransportType;
+    transportType: TransportType;
     data?: any;
 }
 export interface TimelineEvent extends Event {
-    transportType?: TransportType;
+    logType: TimelineEventLogType;
     data?: any;
     dataChannelId?: number | null;
     dataChannelLabel?: string;
 }
+export interface SoraCloseEvent extends Event {
+    title: string;
+    code?: number;
+    reason?: string;
+    params?: Record<string, unknown>;
+}
+export declare type SoraCloseEventType = "normal" | "abend";
+export declare type SoraCloseEventInitDict = {
+    code?: number;
+    reason?: string;
+    params?: Record<string, unknown>;
+};
+export declare type SoraAbendTitle = "CONNECTION-STATE-FAILED" | "DATA-CHANNEL-ONERROR" | "ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT" | "ICE-CONNECTION-STATE-FAILED" | "INTERNAL-ERROR" | "WEBSOCKET-ONCLOSE" | "WEBSOCKET-ONERROR";
