@@ -566,7 +566,6 @@ export default class ConnectionBase {
       }
       await this.disconnectWebSocket("NO-ERROR");
       await this.disconnectPeerConnection();
-      this.callbacks.disconnect(event);
     } else {
       const reason = await this.disconnectWebSocket("NO-ERROR");
       await this.disconnectPeerConnection();
