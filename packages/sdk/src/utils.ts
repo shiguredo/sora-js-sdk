@@ -9,6 +9,7 @@ import {
   SignalingNotifyConnectionCreated,
   SignalingNotifyConnectionDestroyed,
   TimelineEvent,
+  TimelineEventLogType,
   TransportType,
 } from "./types";
 
@@ -364,7 +365,7 @@ export function createDataChannelData(channel: RTCDataChannel): Record<string, u
 export function createTimelineEvent(
   eventType: string,
   data: unknown,
-  transportType: TransportType,
+  logType: TimelineEventLogType,
   dataChannelId?: number | null,
   dataChannelLabel?: string
 ): TimelineEvent {
@@ -375,7 +376,7 @@ export function createTimelineEvent(
   } catch (_) {
     event.data = data;
   }
-  event.transportType = transportType;
+  event.logType = logType;
   event.dataChannelId = dataChannelId;
   event.dataChannelLabel = dataChannelLabel;
   return event;

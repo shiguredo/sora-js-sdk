@@ -4,7 +4,30 @@ import ConnectionBase from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
-import { AudioCodecType, Callbacks, ConnectionOptions, JSONType, Role, SimulcastRid, VideoCodecType } from "./types";
+import type {
+  AudioCodecType,
+  Callbacks,
+  ConnectionOptions,
+  JSONType,
+  Role,
+  SignalingEvent,
+  SignalingNotifyConnectionCreated,
+  SignalingNotifyConnectionDestroyed,
+  SignalingNotifyConnectionUpdated,
+  SignalingNotifyMessage,
+  SignalingNotifyMetadata,
+  SignalingNotifyNetworkStatus,
+  SignalingNotifySpotlightChanged,
+  SignalingNotifySpotlightFocused,
+  SignalingNotifySpotlightUnfocused,
+  Simulcast,
+  SimulcastRid,
+  SpotlightFocusRid,
+  TimelineEvent,
+  TimelineEventLogType,
+  TransportType,
+  VideoCodecType,
+} from "./types";
 
 class SoraConnection {
   signalingUrl: string;
@@ -63,7 +86,22 @@ export type {
   ConnectionPublisher,
   ConnectionSubscriber,
   Role,
+  SignalingEvent,
+  SignalingNotifyConnectionCreated,
+  SignalingNotifyConnectionDestroyed,
+  SignalingNotifyConnectionUpdated,
+  SignalingNotifyMessage,
+  SignalingNotifyMetadata,
+  SignalingNotifyNetworkStatus,
+  SignalingNotifySpotlightChanged,
+  SignalingNotifySpotlightFocused,
+  SignalingNotifySpotlightUnfocused,
+  Simulcast,
   SimulcastRid,
   SoraConnection,
+  SpotlightFocusRid,
+  TimelineEvent,
+  TimelineEventLogType,
+  TransportType,
   VideoCodecType,
 };
