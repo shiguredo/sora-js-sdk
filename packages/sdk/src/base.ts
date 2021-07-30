@@ -467,9 +467,13 @@ export default class ConnectionBase {
             closeDataChannels();
             resolve();
           };
-          // onclose がすべて発火したかどうかを拾うための Promsie を生成する
+          // すべての DataChannel の readyState が "closed" になったことを確認する Promsie を生成する
           const p = (): Promise<void> => {
             return new Promise((res, rej) => {
+              if (dataChannel.readyState === "closed") {
+                res();
+                return;
+              }
               dataChannel.onerror = () => {
                 rej();
               };
@@ -477,7 +481,9 @@ export default class ConnectionBase {
                 const channel = event.currentTarget as RTCDataChannel;
                 this.writeDataChannelTimelineLog("onclose", channel);
                 this.trace("CLOSE DATA CHANNEL", channel.label);
-                res();
+                if (channel.readyState === "closed") {
+                  res();
+                }
               };
             });
           };
@@ -578,7 +584,11 @@ export default class ConnectionBase {
     }
     this.initializeConnection();
     if (event) {
-      this.writeSoraTimelineLog("disconnect-normal", event);
+      if (event.type === "abend") {
+        this.writeSoraTimelineLog("disconnect-abend", event);
+      } else if (event.type === "normal") {
+        this.writeSoraTimelineLog("disconnect-normal", event);
+      }
       this.callbacks.disconnect(event);
     }
   }

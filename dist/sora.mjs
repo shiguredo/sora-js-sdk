@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.2
+ * @version: 2021.1.3
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1593,7 +1593,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.2",
+        sora_client: "Sora JavaScript SDK 2021.1.3",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -2250,9 +2250,13 @@ class ConnectionBase {
                         closeDataChannels();
                         resolve();
                     };
-                    // onclose がすべて発火したかどうかを拾うための Promsie を生成する
+                    // すべての DataChannel の readyState が "closed" になったことを確認する Promsie を生成する
                     const p = () => {
                         return new Promise((res, rej) => {
+                            if (dataChannel.readyState === "closed") {
+                                res();
+                                return;
+                            }
                             dataChannel.onerror = () => {
                                 rej();
                             };
@@ -2260,7 +2264,9 @@ class ConnectionBase {
                                 const channel = event.currentTarget;
                                 this.writeDataChannelTimelineLog("onclose", channel);
                                 this.trace("CLOSE DATA CHANNEL", channel.label);
-                                res();
+                                if (channel.readyState === "closed") {
+                                    res();
+                                }
                             };
                         });
                     };
@@ -2364,7 +2370,12 @@ class ConnectionBase {
         }
         this.initializeConnection();
         if (event) {
-            this.writeSoraTimelineLog("disconnect-normal", event);
+            if (event.type === "abend") {
+                this.writeSoraTimelineLog("disconnect-abend", event);
+            }
+            else if (event.type === "normal") {
+                this.writeSoraTimelineLog("disconnect-normal", event);
+            }
             this.callbacks.disconnect(event);
         }
     }
@@ -3427,7 +3438,7 @@ var sora = {
         return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-        return "2021.1.2";
+        return "2021.1.3";
     },
     helpers: {
         applyMediaStreamConstraints,

@@ -10,10 +10,13 @@
     - バグ修正
 
 ## develop
-
 - [CHANGE] spotlight_legacy 対応を削除する
     - ConnectionOptions の spotlight オプションの型を boolean のみに変更する
     - @yuitowest
+
+## 2021.1.3
+- [FIX] DataChannel 切断処理を修正する
+    - 切断タイムアウト処理時にすでに DataChannel の readyState が "closed" 状態であれば onclose を待たないように修正する
 
 ## 2021.1.2
 - [CHANGE] disconnect API を修正する
