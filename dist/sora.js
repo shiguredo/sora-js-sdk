@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.3
+ * @version: 2021.1.4
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1599,7 +1599,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.3",
+	        sora_client: "Sora JavaScript SDK 2021.1.4",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -2069,8 +2069,8 @@
 	        }
 	        if (this.ws) {
 	            // onclose はログを吐く専用に残す
-	            this.ws.onclose = (_) => {
-	                this.writeWebSocketTimelineLog("onclose");
+	            this.ws.onclose = (event) => {
+	                this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
 	            };
 	            this.ws.onmessage = null;
 	            this.ws.onerror = null;
@@ -2129,8 +2129,8 @@
 	        }
 	        if (this.ws) {
 	            // onclose はログを吐く専用に残す
-	            this.ws.onclose = (_) => {
-	                this.writeWebSocketTimelineLog("onclose");
+	            this.ws.onclose = (event) => {
+	                this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
 	            };
 	            this.ws.onmessage = null;
 	            this.ws.onerror = null;
@@ -2230,6 +2230,7 @@
 	            for (const key of Object.keys(this.dataChannels)) {
 	                const dataChannel = this.dataChannels[key];
 	                if (dataChannel) {
+	                    dataChannel.onerror = null;
 	                    dataChannel.close();
 	                }
 	                delete this.dataChannels[key];
@@ -2339,8 +2340,8 @@
 	        }
 	        if (this.ws) {
 	            // onclose はログを吐く専用に残す
-	            this.ws.onclose = (_) => {
-	                this.writeWebSocketTimelineLog("onclose");
+	            this.ws.onclose = (event) => {
+	                this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
 	            };
 	            this.ws.onmessage = null;
 	            this.ws.onerror = null;
@@ -2693,7 +2694,7 @@
 	            return;
 	        }
 	        this.ws.onclose = async (event) => {
-	            this.writeWebSocketTimelineLog("onclose");
+	            this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
 	            if (event.code === 1000 || event.code === 1005) {
 	                await this.disconnect();
 	            }
@@ -2986,7 +2987,7 @@
 	            const channel = event.currentTarget;
 	            this.writeDataChannelTimelineLog("onerror", channel);
 	            this.trace("ERROR DATA CHANNEL", channel.label);
-	            await this.abend("DATA-CHANNEL-ONERROR", { label: channel.label });
+	            await this.abend("DATA-CHANNEL-ONERROR", { params: { label: channel.label } });
 	        };
 	        // onmessage
 	        if (dataChannelEvent.channel.label === "signaling") {
@@ -3444,7 +3445,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.3";
+	        return "2021.1.4";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
