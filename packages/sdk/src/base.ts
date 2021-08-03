@@ -276,8 +276,8 @@ export default class ConnectionBase {
     }
     if (this.ws) {
       // onclose はログを吐く専用に残す
-      this.ws.onclose = (_) => {
-        this.writeWebSocketTimelineLog("onclose");
+      this.ws.onclose = (event) => {
+        this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
       };
       this.ws.onmessage = null;
       this.ws.onerror = null;
@@ -337,8 +337,8 @@ export default class ConnectionBase {
     }
     if (this.ws) {
       // onclose はログを吐く専用に残す
-      this.ws.onclose = (_) => {
-        this.writeWebSocketTimelineLog("onclose");
+      this.ws.onclose = (event) => {
+        this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
       };
       this.ws.onmessage = null;
       this.ws.onerror = null;
@@ -550,8 +550,8 @@ export default class ConnectionBase {
     }
     if (this.ws) {
       // onclose はログを吐く専用に残す
-      this.ws.onclose = (_) => {
-        this.writeWebSocketTimelineLog("onclose");
+      this.ws.onclose = (event) => {
+        this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
       };
       this.ws.onmessage = null;
       this.ws.onerror = null;
@@ -919,7 +919,7 @@ export default class ConnectionBase {
       return;
     }
     this.ws.onclose = async (event) => {
-      this.writeWebSocketTimelineLog("onclose");
+      this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
       if (event.code === 1000 || event.code === 1005) {
         await this.disconnect();
       } else {
@@ -1243,7 +1243,7 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel;
       this.writeDataChannelTimelineLog("onerror", channel);
       this.trace("ERROR DATA CHANNEL", channel.label);
-      await this.abend("DATA-CHANNEL-ONERROR", { label: channel.label });
+      await this.abend("DATA-CHANNEL-ONERROR", { params: { label: channel.label } });
     };
     // onmessage
     if (dataChannelEvent.channel.label === "signaling") {
