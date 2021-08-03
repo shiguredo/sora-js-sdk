@@ -14,29 +14,43 @@
     - ConnectionOptions の spotlight オプションの型を boolean のみに変更する
     - @yuitowest
 
+## 2021.1.4
+- [FIX] DataChannel 切断のタイムアウト処理中に WebSocket が切断すると Uncaught (in promise) が発生する問題を修正する
+    - @yuitowest
+- [UPDATE] 切断処理中の WebSocket の onclose タイムラインログに code と reason を入れるようにする
+    - @yuitowest
+
 ## 2021.1.3
 - [FIX] DataChannel 切断処理を修正する
     - 切断タイムアウト処理時にすでに DataChannel の readyState が "closed" 状態であれば onclose を待たないように修正する
+    - @yuitowest
 
 ## 2021.1.2
 - [CHANGE] disconnect API を修正する
     - type: disconnect メッセージに reason を追加するように修正する
+    - @yuitowest
 - [CHANGE] disconnect callback を修正する
     - disconnect callback が受け取る event を CloseEvent から SoraCloseEvent に変更する
     - disconnect callback が受け取る event の type は "close" のみから "normal" か "abend" のどちらかが返るように変更する
     - disconnect callback が受け取る event の code, reason は undefined のパターンを追加する
     - disconnect callback が受け取る event に title を追加する
     - disconnect callback が受け取る event に params を追加する
+    - @yuitowest
 - [CHANGE] connect signaling 時の意図しない WebSocket の切断時のメッセージを統一する
     - "Signaling failed. {reason}" に統一する
+    - @yuitowest
 - [CHANGE] timeline callback Event の property を変更する
     - transportType を logType に変更する
+    - @yuitowest
 - [CHANGE] signaling callback Event の property を変更する
     - transportType は必須項目にする
+    - @yuitowest
 - [UPDATE] PeerConnecion の状態が不正な場合に切断処理に入るようにする
     - PeerConnecion connectionState が "failed" になった場合は切断する
     - PeerConnecion connectionState が undefined の場合 iceConnectionState が "disconnect" になって1000ms変化がない場合は切断する
+    - @yuitowest
 - [UPDATE] 型を export する
+    - @yuitowest
 
 ## 2021.1.1
 
