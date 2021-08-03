@@ -440,6 +440,7 @@ export default class ConnectionBase {
       for (const key of Object.keys(this.dataChannels)) {
         const dataChannel = this.dataChannels[key];
         if (dataChannel) {
+          dataChannel.onerror = null;
           dataChannel.close();
         }
         delete this.dataChannels[key];
