@@ -368,6 +368,12 @@ export default class ConnectionBase {
       this.e2ee.terminateWorker();
     }
     this.initializeConnection();
+    if (title === "WEBSOCKET-ONCLOSE" && params && (params.code === 1000 || params.code === 1005)) {
+      const event = this.soraCloseEvent("normal", "DISCONNECT", params);
+      this.writeSoraTimelineLog("disconnect-normal", event);
+      this.callbacks.disconnect(event);
+      return;
+    }
     const event = this.soraCloseEvent("abend", title, params);
     this.writeSoraTimelineLog("disconnect-abend", event);
     this.callbacks.disconnect(this.soraCloseEvent("abend", title, params));
@@ -920,11 +926,7 @@ export default class ConnectionBase {
     }
     this.ws.onclose = async (event) => {
       this.writeWebSocketTimelineLog("onclose", { code: event.code, reason: event.reason });
-      if (event.code === 1000 || event.code === 1005) {
-        await this.disconnect();
-      } else {
-        await this.abend("WEBSOCKET-ONCLOSE", { code: event.code, reason: event.reason });
-      }
+      await this.abend("WEBSOCKET-ONCLOSE", { code: event.code, reason: event.reason });
     };
     this.ws.onerror = async (_) => {
       this.writeWebSocketSignalingLog("onerror");
