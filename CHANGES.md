@@ -9,6 +9,12 @@
 - FIX
     - バグ修正
 
+## 2021.1.5
+- [FIX] dataChannelSignaling false の場合に Disconnect API 経由で切断すると disconnect callback が発火しない問題を修正する
+    - @yuitowest
+- [UPDATE] 非同期で disconnect を複数回呼んだ場合の処理を修正する
+    - @yuitowest
+
 ## 2021.1.4
 - [FIX] DataChannel 切断のタイムアウト処理中に WebSocket が切断すると Uncaught (in promise) が発生する問題を修正する
     - @yuitowest
