@@ -38,12 +38,21 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
-        this.writePeerConnectionTimelineLog("ontrack");
         this.stream = event.streams[0];
         const streamId = this.stream.id;
         if (streamId === "default") {
           return;
         }
+        const data = {
+          "stream.id": streamId,
+          id: event.track.id,
+          label: event.track.label,
+          enabled: event.track.enabled,
+          kind: event.track.kind,
+          muted: event.track.muted,
+          readyState: event.track.readyState,
+        };
+        this.writePeerConnectionTimelineLog("ontrack", data);
         if (this.e2ee) {
           this.e2ee.setupReceiverTransform(event.receiver);
         }
@@ -87,7 +96,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
-        this.writePeerConnectionTimelineLog("ontrack");
         const stream = event.streams[0];
         if (stream.id === "default") {
           return;
@@ -95,6 +103,16 @@ export default class ConnectionSubscriber extends ConnectionBase {
         if (stream.id === this.connectionId) {
           return;
         }
+        const data = {
+          "stream.id": stream.id,
+          id: event.track.id,
+          label: event.track.label,
+          enabled: event.track.enabled,
+          kind: event.track.kind,
+          muted: event.track.muted,
+          readyState: event.track.readyState,
+        };
+        this.writePeerConnectionTimelineLog("ontrack", data);
         if (this.e2ee) {
           this.e2ee.setupReceiverTransform(event.receiver);
         }

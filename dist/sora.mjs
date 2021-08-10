@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.5
+ * @version: 2021.1.6
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1593,7 +1593,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.5",
+        sora_client: "Sora JavaScript SDK 2021.1.6",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -3105,11 +3105,11 @@ class ConnectionBase {
             else {
                 this.dataChannels.signaling.send(JSON.stringify(message));
             }
-            this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "datachannel"));
+            this.writeDataChannelSignalingLog(`send-${message.type}`, this.dataChannels.signaling, message);
         }
         else if (this.ws !== null) {
             this.ws.send(JSON.stringify(message));
-            this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "websocket"));
+            this.writeWebSocketSignalingLog(`send-${message.type}`, message);
         }
     }
     sendE2EEMessage(message) {
@@ -3258,11 +3258,20 @@ class ConnectionPublisher extends ConnectionBase {
         await this.connectPeerConnection(signalingMessage);
         if (this.pc) {
             this.pc.ontrack = (event) => {
-                this.writePeerConnectionTimelineLog("ontrack");
                 const stream = event.streams[0];
                 if (!stream) {
                     return;
                 }
+                const data = {
+                    "stream.id": stream.id,
+                    id: event.track.id,
+                    label: event.track.label,
+                    enabled: event.track.enabled,
+                    kind: event.track.kind,
+                    muted: event.track.muted,
+                    readyState: event.track.readyState,
+                };
+                this.writePeerConnectionTimelineLog("ontrack", data);
                 if (stream.id === "default") {
                     return;
                 }
@@ -3355,12 +3364,21 @@ class ConnectionSubscriber extends ConnectionBase {
         await this.connectPeerConnection(signalingMessage);
         if (this.pc) {
             this.pc.ontrack = (event) => {
-                this.writePeerConnectionTimelineLog("ontrack");
                 this.stream = event.streams[0];
                 const streamId = this.stream.id;
                 if (streamId === "default") {
                     return;
                 }
+                const data = {
+                    "stream.id": streamId,
+                    id: event.track.id,
+                    label: event.track.label,
+                    enabled: event.track.enabled,
+                    kind: event.track.kind,
+                    muted: event.track.muted,
+                    readyState: event.track.readyState,
+                };
+                this.writePeerConnectionTimelineLog("ontrack", data);
                 if (this.e2ee) {
                     this.e2ee.setupReceiverTransform(event.receiver);
                 }
@@ -3403,7 +3421,6 @@ class ConnectionSubscriber extends ConnectionBase {
         await this.connectPeerConnection(signalingMessage);
         if (this.pc) {
             this.pc.ontrack = (event) => {
-                this.writePeerConnectionTimelineLog("ontrack");
                 const stream = event.streams[0];
                 if (stream.id === "default") {
                     return;
@@ -3411,6 +3428,16 @@ class ConnectionSubscriber extends ConnectionBase {
                 if (stream.id === this.connectionId) {
                     return;
                 }
+                const data = {
+                    "stream.id": stream.id,
+                    id: event.track.id,
+                    label: event.track.label,
+                    enabled: event.track.enabled,
+                    kind: event.track.kind,
+                    muted: event.track.muted,
+                    readyState: event.track.readyState,
+                };
+                this.writePeerConnectionTimelineLog("ontrack", data);
                 if (this.e2ee) {
                     this.e2ee.setupReceiverTransform(event.receiver);
                 }
@@ -3483,7 +3510,7 @@ var sora = {
         return new SoraConnection(signalingUrl, debug);
     },
     version: function () {
-        return "2021.1.5";
+        return "2021.1.6";
     },
     helpers: {
         applyMediaStreamConstraints,

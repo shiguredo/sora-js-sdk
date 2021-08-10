@@ -63,11 +63,20 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
-        this.writePeerConnectionTimelineLog("ontrack");
         const stream = event.streams[0];
         if (!stream) {
           return;
         }
+        const data = {
+          "stream.id": stream.id,
+          id: event.track.id,
+          label: event.track.label,
+          enabled: event.track.enabled,
+          kind: event.track.kind,
+          muted: event.track.muted,
+          readyState: event.track.readyState,
+        };
+        this.writePeerConnectionTimelineLog("ontrack", data);
         if (stream.id === "default") {
           return;
         }
