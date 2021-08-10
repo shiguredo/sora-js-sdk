@@ -1359,10 +1359,10 @@ export default class ConnectionBase {
       } else {
         this.dataChannels.signaling.send(JSON.stringify(message));
       }
-      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "datachannel"));
+      this.writeDataChannelSignalingLog(`send-${message.type}`, this.dataChannels.signaling, message);
     } else if (this.ws !== null) {
       this.ws.send(JSON.stringify(message));
-      this.callbacks.signaling(createSignalingEvent(`send-${message.type}`, message, "websocket"));
+      this.writeWebSocketSignalingLog(`send-${message.type}`, message);
     }
   }
 
