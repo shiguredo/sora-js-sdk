@@ -9,6 +9,12 @@
 - FIX
     - バグ修正
 
+## 2021.1.6
+- [FIX] timeline ログに re-answer のログが出力されていなかったので修正する
+    - @yuitowest
+- [UPDATE] timeline ログの ontrack ログに詳細情報を追加する
+    - @yuitowest
+
 ## 2021.1.5
 - [FIX] dataChannelSignaling false の場合に Disconnect API 経由で切断すると disconnect callback が発火しない問題を修正する
     - @yuitowest
