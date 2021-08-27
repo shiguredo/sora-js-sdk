@@ -1,6 +1,5 @@
-/* eslint @typescript-eslint/camelcase: 0 */
 import { createSignalingMessage } from "../src/utils";
-import { AudioCodecType, SpotlightFocusRid, VideoCodecType } from "../src/types";
+import { AudioCodecType, VideoCodecType } from "../src/types";
 
 const channelId = "7N3fsMHob";
 const role = "sendonly";
@@ -22,29 +21,29 @@ const baseExpectedMessage = Object.freeze({
 
 test("createSignalingMessage simple", () => {
   // sendonly
-  expect(createSignalingMessage(sdp, role, channelId, null, {})).toEqual(baseExpectedMessage);
+  expect(createSignalingMessage(sdp, role, channelId, null, {}, false)).toEqual(baseExpectedMessage);
 
   // recvonly
   const diff = {
     role: "recvonly",
   };
-  expect(createSignalingMessage(sdp, "recvonly", channelId, null, {})).toEqual(
+  expect(createSignalingMessage(sdp, "recvonly", channelId, null, {}, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff)
   );
 });
 
 test("createSignalingMessage role", () => {
   expect(() => {
-    createSignalingMessage(sdp, "test", channelId, metadata, {});
+    createSignalingMessage(sdp, "test", channelId, metadata, {}, false);
   }).toThrow(Error("Unknown role type"));
 });
 
 test("createSignalingMessage channelId", () => {
   expect(() => {
-    createSignalingMessage(sdp, role, null, metadata, {});
+    createSignalingMessage(sdp, role, null, metadata, {}, false);
   }).toThrow(Error("channelId can not be null or undefined"));
   expect(() => {
-    createSignalingMessage(sdp, role, undefined, metadata, {});
+    createSignalingMessage(sdp, role, undefined, metadata, {}, false);
   }).toThrow(Error("channelId can not be null or undefined"));
 });
 
@@ -52,10 +51,10 @@ test("createSignalingMessage metadata", () => {
   const diff = {
     metadata: metadata,
   };
-  expect(createSignalingMessage(sdp, role, channelId, metadata, {})).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, metadata, {}, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff)
   );
-  expect(createSignalingMessage(sdp, role, channelId, null, {})).toEqual(baseExpectedMessage);
+  expect(createSignalingMessage(sdp, role, channelId, null, {}, false)).toEqual(baseExpectedMessage);
 });
 
 test("createSignalingMessage clientId option", () => {
@@ -65,7 +64,7 @@ test("createSignalingMessage clientId option", () => {
   const diff1 = {
     client_id: option1.clientId,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, option1)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, option1, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
   const option2 = {
@@ -74,13 +73,13 @@ test("createSignalingMessage clientId option", () => {
   const diff2 = {
     client_id: option2.clientId,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, option2)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, option2, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
   const option3 = {
     clientId: undefined,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, option3)).toEqual(baseExpectedMessage);
+  expect(createSignalingMessage(sdp, role, channelId, null, option3, false)).toEqual(baseExpectedMessage);
 });
 
 test("createSignalingMessage multistream option", () => {
@@ -91,7 +90,7 @@ test("createSignalingMessage multistream option", () => {
   const diff1 = {
     multistream: true,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
 });
@@ -106,17 +105,17 @@ test("createSignalingMessage audio option", () => {
   const diff1 = {
     audio: false,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
   const options2 = {
     audio: true,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(baseExpectedMessage);
+  expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(baseExpectedMessage);
   const options3 = {
     audio: undefined,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(baseExpectedMessage);
+  expect(createSignalingMessage(sdp, role, channelId, null, options3, false)).toEqual(baseExpectedMessage);
   const options4 = {
     audioCodecType: audioCodecType,
     audioBitRate: 100,
@@ -127,7 +126,7 @@ test("createSignalingMessage audio option", () => {
       bit_rate: options4.audioBitRate,
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options4, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff4)
   );
 });
@@ -140,7 +139,7 @@ test("createSignalingMessage audio opus params option", () => {
   const diff1 = {
     audio: false,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
 
@@ -154,7 +153,7 @@ test("createSignalingMessage audio opus params option", () => {
       },
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
 
@@ -168,7 +167,7 @@ test("createSignalingMessage audio opus params option", () => {
       },
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options3, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
 
@@ -182,7 +181,7 @@ test("createSignalingMessage audio opus params option", () => {
       },
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options4, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff4)
   );
 
@@ -196,7 +195,7 @@ test("createSignalingMessage audio opus params option", () => {
       },
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options5)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options5, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff5)
   );
 
@@ -210,7 +209,7 @@ test("createSignalingMessage audio opus params option", () => {
       },
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options6)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options6, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff6)
   );
 
@@ -224,7 +223,7 @@ test("createSignalingMessage audio opus params option", () => {
       },
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options7)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options7, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff7)
   );
 
@@ -238,7 +237,7 @@ test("createSignalingMessage audio opus params option", () => {
       },
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options8)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options8, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff8)
   );
 
@@ -252,7 +251,7 @@ test("createSignalingMessage audio opus params option", () => {
       },
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options9)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options9, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff9)
   );
 
@@ -266,7 +265,7 @@ test("createSignalingMessage audio opus params option", () => {
       },
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options10)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options10, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff10)
   );
 });
@@ -281,17 +280,17 @@ test("createSignalingMessage video option", () => {
   const diff1 = {
     video: false,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
   const options2 = {
     video: true,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(baseExpectedMessage);
+  expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(baseExpectedMessage);
   const options3 = {
     video: undefined,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(baseExpectedMessage);
+  expect(createSignalingMessage(sdp, role, channelId, null, options3, false)).toEqual(baseExpectedMessage);
   const options4 = {
     videoCodecType: videoCodecType,
     videoBitRate: 100,
@@ -302,7 +301,7 @@ test("createSignalingMessage video option", () => {
       bit_rate: options4.videoBitRate,
     },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options4, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff4)
   );
 });
@@ -319,7 +318,7 @@ test("createSignalingMessage e2ee option", () => {
     },
     signaling_notify_metadata: {},
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
   const options2 = {
@@ -332,7 +331,7 @@ test("createSignalingMessage e2ee option", () => {
     video: false,
     signaling_notify_metadata: {},
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
   const options3 = {
@@ -347,7 +346,7 @@ test("createSignalingMessage e2ee option", () => {
     },
     signaling_notify_metadata: {},
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options3, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
   const options4 = {
@@ -362,7 +361,7 @@ test("createSignalingMessage e2ee option", () => {
     },
     signaling_notify_metadata: {},
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options4)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options4, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff4)
   );
 });
@@ -374,7 +373,7 @@ test("createSignalingMessage signalingMetadata option", () => {
   const diff1 = {
     signaling_notify_metadata: "metadata",
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
   const options2 = {
@@ -383,7 +382,7 @@ test("createSignalingMessage signalingMetadata option", () => {
   const diff2 = {
     signaling_notify_metadata: { key: "value" },
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
   const options3 = {
@@ -392,7 +391,7 @@ test("createSignalingMessage signalingMetadata option", () => {
   const diff3 = {
     signaling_notify_metadata: null,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options3, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
 });
@@ -404,7 +403,7 @@ test("createSignalingMessage dataChannelSignaling option", () => {
   const diff1 = {
     data_channel_signaling: true,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
   const options2 = {
@@ -413,7 +412,7 @@ test("createSignalingMessage dataChannelSignaling option", () => {
   const diff2 = {
     data_channel_signaling: false,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
   const options3 = {
@@ -421,7 +420,7 @@ test("createSignalingMessage dataChannelSignaling option", () => {
   };
   const diff3 = {
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options3, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
 });
@@ -433,7 +432,7 @@ test("createSignalingMessage ignoreDisconnectWebSocket option", () => {
   const diff1 = {
     ignore_disconnect_websocket: true,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options1)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff1)
   );
   const options2 = {
@@ -442,7 +441,7 @@ test("createSignalingMessage ignoreDisconnectWebSocket option", () => {
   const diff2 = {
     ignore_disconnect_websocket: false,
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options2)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff2)
   );
   const options3 = {
@@ -450,7 +449,13 @@ test("createSignalingMessage ignoreDisconnectWebSocket option", () => {
   };
   const diff3 = {
   };
-  expect(createSignalingMessage(sdp, role, channelId, null, options3)).toEqual(
+  expect(createSignalingMessage(sdp, role, channelId, null, options3, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
+  );
+});
+
+test("createSignalingMessage redirect", () => {
+  expect(createSignalingMessage(sdp, role, channelId, null, {}, true)).toEqual(
+    Object.assign({}, baseExpectedMessage, { redirect: true })
   );
 });
