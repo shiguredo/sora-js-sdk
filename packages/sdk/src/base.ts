@@ -23,6 +23,7 @@ import {
   SignalingPingMessage,
   SignalingPushMessage,
   SignalingReOfferMessage,
+  SignalingRedirectMessage,
   SignalingReqStatsMessage,
   SignalingSwitchedMessage,
   SignalingUpdateMessage,
@@ -738,6 +739,10 @@ export default class ConnectionBase {
         } else if (message.type == "switched") {
           this.writeWebSocketSignalingLog("onmessage-switched", message);
           this.signalingOnMessageTypeSwitched(message);
+        } else if (message.type == "redirect") {
+          this.writeWebSocketSignalingLog("onmessage-redirect", message);
+          const redirectMessage = await this.signalingOnMessageTypeRedirect(message);
+          resolve(redirectMessage);
         }
       };
     });
@@ -1224,6 +1229,19 @@ export default class ConnectionBase {
       }
       this.writeWebSocketSignalingLog("close");
     }
+  }
+
+  private async signalingOnMessageTypeRedirect(message: SignalingRedirectMessage): Promise<SignalingOfferMessage> {
+    if (this.ws) {
+      this.ws.onclose = null;
+      this.ws.onerror = null;
+      this.ws.close();
+      this.ws = null;
+    }
+    this.signalingUrl = message.location;
+    const offer = await this.createOffer();
+    const signalingMessage = await this.signaling(offer);
+    return signalingMessage;
   }
 
   private async setSenderParameters(

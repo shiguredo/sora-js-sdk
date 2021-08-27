@@ -69,7 +69,8 @@ export type SignalingMessage =
   | SignalingPushMessage
   | SignalingNotifyMessage
   | SignalingReqStatsMessage
-  | SignalingSwitchedMessage;
+  | SignalingSwitchedMessage
+  | SignalingRedirectMessage;
 
 export type SignalingOfferMessage = {
   type: "offer";
@@ -118,6 +119,11 @@ export type SignalingReqStatsMessage = {
 export type SignalingSwitchedMessage = {
   type: "switched";
   ignore_disconnect_websocket: boolean;
+};
+
+export type SignalingRedirectMessage = {
+  type: "redirect";
+  location: string;
 };
 
 export type SignalingNotifyMessage =
