@@ -663,7 +663,7 @@ export default class ConnectionBase {
     }
   }
 
-  protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage> {
+  protected signaling(offer: RTCSessionDescriptionInit, redirect = false): Promise<SignalingOfferMessage> {
     this.trace("CREATE OFFER", offer);
     return new Promise((resolve, reject) => {
       if (this.ws === null) {
@@ -690,7 +690,8 @@ export default class ConnectionBase {
             this.role,
             this.channelId,
             this.metadata,
-            this.options
+            this.options,
+            redirect
           );
         } catch (error) {
           reject(error);
@@ -1240,7 +1241,7 @@ export default class ConnectionBase {
     }
     this.signalingUrl = message.location;
     const offer = await this.createOffer();
-    const signalingMessage = await this.signaling(offer);
+    const signalingMessage = await this.signaling(offer, true);
     return signalingMessage;
   }
 

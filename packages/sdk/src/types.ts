@@ -59,6 +59,7 @@ export type SignalingConnectMessage = {
   spotlight_unfocus_rid?: SpotlightFocusRid;
   data_channel_signaling?: boolean;
   ignore_disconnect_websocket?: boolean;
+  redirect?: true;
 };
 
 export type SignalingMessage =
