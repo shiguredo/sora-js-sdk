@@ -663,7 +663,8 @@ export default class ConnectionBase {
     }
   }
 
-  protected signaling(offer: RTCSessionDescriptionInit, redirect = false): Promise<SignalingOfferMessage> {
+  protected async signaling(redirect = false): Promise<SignalingOfferMessage> {
+    const offer = await this.createOffer();
     this.trace("CREATE OFFER", offer);
     return new Promise((resolve, reject) => {
       if (this.ws === null) {
@@ -747,23 +748,6 @@ export default class ConnectionBase {
         }
       };
     });
-  }
-
-  protected async createOffer(): Promise<RTCSessionDescriptionInit> {
-    const config = { iceServers: [] };
-    const pc = new window.RTCPeerConnection(config);
-    if (isSafari()) {
-      pc.addTransceiver("video", { direction: "recvonly" });
-      pc.addTransceiver("audio", { direction: "recvonly" });
-      const offer = await pc.createOffer();
-      pc.close();
-      this.writePeerConnectionTimelineLog("create-offer", offer);
-      return offer;
-    }
-    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-    pc.close();
-    this.writePeerConnectionTimelineLog("create-offer", offer);
-    return offer;
   }
 
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
@@ -1095,6 +1079,23 @@ export default class ConnectionBase {
     this.callbacks.timeline(event);
   }
 
+  private async createOffer(): Promise<RTCSessionDescriptionInit> {
+    const config = { iceServers: [] };
+    const pc = new window.RTCPeerConnection(config);
+    if (isSafari()) {
+      pc.addTransceiver("video", { direction: "recvonly" });
+      pc.addTransceiver("audio", { direction: "recvonly" });
+      const offer = await pc.createOffer();
+      pc.close();
+      this.writePeerConnectionTimelineLog("create-offer", offer);
+      return offer;
+    }
+    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+    pc.close();
+    this.writePeerConnectionTimelineLog("create-offer", offer);
+    return offer;
+  }
+
   private signalingOnMessageE2EE(data: ArrayBuffer): void {
     if (this.e2ee) {
       const message = new Uint8Array(data);
@@ -1240,8 +1241,7 @@ export default class ConnectionBase {
       this.ws = null;
     }
     this.signalingUrl = message.location;
-    const offer = await this.createOffer();
-    const signalingMessage = await this.signaling(offer, true);
+    const signalingMessage = await this.signaling(true);
     return signalingMessage;
   }
 
