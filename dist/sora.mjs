@@ -900,7 +900,7 @@ var bits16 = function (d, p) {
     return ((d[o] | (d[o + 1] << 8) | (d[o + 2] << 16)) >> (p & 7));
 };
 // get end of byte
-var shft = function (p) { return ((p / 8) | 0) + (p & 7 && 1); };
+var shft = function (p) { return ((p + 7) / 8) | 0; };
 // typed array slice - allows garbage collector to free original reference,
 // while being more compatible than .slice
 var slc = function (v, s, e) {
@@ -944,7 +944,7 @@ var err = function (ind, msg, nt) {
 var inflt = function (dat, buf, st) {
     // source length
     var sl = dat.length;
-    if (!sl || (st && !st.l && sl < 5))
+    if (!sl || (st && st.f && !st.l))
         return buf || new u8(0);
     // have to estimate size
     var noBuf = !buf || st;
@@ -973,7 +973,7 @@ var inflt = function (dat, buf, st) {
     do {
         if (!lm) {
             // BFINAL - this is only 1 when last chunk is next
-            st.f = final = bits(dat, pos, 1);
+            final = bits(dat, pos, 1);
             // type: 0 = no compression, 1 = fixed huffman, 2 = dynamic huffman
             var type = bits(dat, pos + 1, 3);
             pos += 3;
@@ -991,7 +991,7 @@ var inflt = function (dat, buf, st) {
                 // Copy over uncompressed data
                 buf.set(dat.subarray(s, t), bt);
                 // Get new bitpos, update byte count
-                st.b = bt += l, st.p = pos = t * 8;
+                st.b = bt += l, st.p = pos = t * 8, st.f = final;
                 continue;
             }
             else if (type == 1)
@@ -1113,7 +1113,7 @@ var inflt = function (dat, buf, st) {
                 bt = end;
             }
         }
-        st.l = lm, st.p = lpos, st.b = bt;
+        st.l = lm, st.p = lpos, st.b = bt, st.f = final;
         if (lm)
             final = 1, st.m = lbt, st.d = dm, st.n = dbt;
     } while (!final);
@@ -1473,7 +1473,7 @@ var adler = function () {
         p: function (d) {
             // closures have awful performance
             var n = a, m = b;
-            var l = d.length;
+            var l = d.length | 0;
             for (var i = 0; i != l;) {
                 var e = Math.min(i + 2655, l);
                 for (; i < e; ++i)
@@ -3517,4 +3517,4 @@ var sora = {
     },
 };
 
-export default sora;
+export { sora as default };
