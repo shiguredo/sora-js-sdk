@@ -29,7 +29,8 @@ export default class ConnectionPublisher extends ConnectionBase {
   private async singleStream(stream: MediaStream): Promise<MediaStream> {
     await this.disconnect();
     this.setupE2EE();
-    const signalingMessage = await this.signaling();
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     await this.setRemoteDescription(signalingMessage);
@@ -56,7 +57,8 @@ export default class ConnectionPublisher extends ConnectionBase {
   private async multiStream(stream: MediaStream): Promise<MediaStream> {
     await this.disconnect();
     this.setupE2EE();
-    const signalingMessage = await this.signaling();
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {

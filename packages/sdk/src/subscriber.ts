@@ -32,7 +32,8 @@ export default class ConnectionSubscriber extends ConnectionBase {
   private async singleStream(): Promise<MediaStream> {
     await this.disconnect();
     this.setupE2EE();
-    const signalingMessage = await this.signaling();
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
@@ -89,7 +90,8 @@ export default class ConnectionSubscriber extends ConnectionBase {
   private async multiStream(): Promise<void> {
     await this.disconnect();
     this.setupE2EE();
-    const signalingMessage = await this.signaling();
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {

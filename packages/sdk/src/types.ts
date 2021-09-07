@@ -268,6 +268,7 @@ export type ConnectionOptions = {
   dataChannelSignaling?: boolean;
   ignoreDisconnectWebSocket?: boolean;
   disconnectWaitTimeout?: number;
+  signalingCandidateTimeout?: number;
 };
 
 export type Callbacks = {

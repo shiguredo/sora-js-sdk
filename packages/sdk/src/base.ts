@@ -45,7 +45,7 @@ export default class ConnectionBase {
   role: string;
   channelId: string;
   metadata: JSONType | undefined;
-  signalingUrl: string;
+  signalingUrlCandidates: string | string[];
   options: ConnectionOptions;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constraints: any;
@@ -70,6 +70,7 @@ export default class ConnectionBase {
     [key in string]?: boolean;
   };
   private connectionTimeout: number;
+  private signalingCandidateTimeout: number;
   private disconnectWaitTimeout: number;
   private mids: {
     audio: string;
@@ -77,7 +78,7 @@ export default class ConnectionBase {
   };
   private signalingSwitched: boolean;
   constructor(
-    signalingUrl: string,
+    signalingUrlCandidates: string | string[],
     role: string,
     channelId: string,
     metadata: JSONType,
@@ -87,7 +88,7 @@ export default class ConnectionBase {
     this.role = role;
     this.channelId = channelId;
     this.metadata = metadata;
-    this.signalingUrl = signalingUrl;
+    this.signalingUrlCandidates = signalingUrlCandidates;
     this.options = options;
     // connection timeout の初期値をセットする
     this.connectionTimeout = 60000;
@@ -102,6 +103,11 @@ export default class ConnectionBase {
     this.disconnectWaitTimeout = 3000;
     if (typeof this.options.disconnectWaitTimeout === "number") {
       this.disconnectWaitTimeout = this.options.disconnectWaitTimeout;
+    }
+    // signalingUrlCandidates に設定されている URL への接続チェック timeout の初期値をセットする
+    this.signalingCandidateTimeout = 3000;
+    if (typeof this.options.signalingCandidateTimeout === "number") {
+      this.signalingCandidateTimeout = this.options.signalingCandidateTimeout;
     }
     this.constraints = null;
     this.debug = debug;
@@ -663,16 +669,120 @@ export default class ConnectionBase {
     }
   }
 
-  protected async signaling(redirect = false): Promise<SignalingOfferMessage> {
+  protected async getSignalingWebSocket(signalingUrlCandidates: string | string[]): Promise<WebSocket> {
+    if (typeof signalingUrlCandidates === "string") {
+      // signaling url の候補が文字列の場合
+      const signalingUrl = signalingUrlCandidates;
+      return new Promise((resolve, reject) => {
+        const ws = new WebSocket(signalingUrl);
+        ws.onclose = (event): void => {
+          const error = new ConnectError(
+            `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
+          );
+          error.code = event.code;
+          error.reason = event.reason;
+          this.writeWebSocketTimelineLog("onclose", error);
+          reject(error);
+        };
+        ws.onopen = (_): void => {
+          resolve(ws);
+        };
+      });
+    } else if (Array.isArray(signalingUrlCandidates)) {
+      // signaling url の候補が Array の場合
+      // すでに候補の WebSocket が発見されているかどうかのフラグ
+      let resolved = false;
+      const testSignalingUrlCandidate = (signalingUrl: string): Promise<WebSocket> => {
+        return new Promise((resolve, reject) => {
+          const ws = new WebSocket(signalingUrl);
+          // 一定時間経過しても反応がなかった場合は処理を中断する
+          const timerId = setTimeout(() => {
+            this.writeWebSocketSignalingLog("signaling-url-canidate", {
+              type: "timeout",
+              url: ws.url,
+            });
+            if (ws && !resolved) {
+              ws.onclose = null;
+              ws.onerror = null;
+              ws.onopen = null;
+              ws.close();
+              reject();
+            }
+          }, this.signalingCandidateTimeout);
+          ws.onclose = (event): void => {
+            this.writeWebSocketSignalingLog("signaling-url-canidate", {
+              type: "close",
+              url: ws.url,
+              message: `WebSocket closed`,
+              code: event.code,
+              reason: event.reason,
+            });
+            if (ws) {
+              ws.close();
+            }
+            clearInterval(timerId);
+            reject();
+          };
+          ws.onerror = (_): void => {
+            this.writeWebSocketSignalingLog("signaling-url-canidate", {
+              type: "error",
+              url: ws.url,
+              message: `Failed to connect WebSocket`,
+            });
+            if (ws) {
+              ws.onclose = null;
+              ws.close();
+            }
+            clearInterval(timerId);
+            reject();
+          };
+          ws.onopen = (_): void => {
+            if (ws) {
+              clearInterval(timerId);
+              if (resolved) {
+                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                  type: "open",
+                  url: ws.url,
+                  selected: false,
+                });
+                ws.onerror = null;
+                ws.onclose = null;
+                ws.onopen = null;
+                ws.close();
+                reject();
+              } else {
+                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                  type: "open",
+                  url: ws.url,
+                  selected: true,
+                });
+                ws.onerror = null;
+                ws.onclose = null;
+                ws.onopen = null;
+                resolved = true;
+                resolve(ws);
+              }
+            }
+          };
+        });
+      };
+      try {
+        return await Promise.any(signalingUrlCandidates.map((signalingUrl) => testSignalingUrlCandidate(signalingUrl)));
+      } catch (e) {
+        throw new ConnectError("Signaling failed. All signaling URL candidates failed to connect");
+      }
+    }
+    throw new ConnectError("Signaling failed. Invalid format signaling URL candidates");
+  }
+
+  protected async signaling(ws: WebSocket, redirect = false): Promise<SignalingOfferMessage> {
     const offer = await this.createOffer();
     this.trace("CREATE OFFER", offer);
     return new Promise((resolve, reject) => {
-      if (this.ws === null) {
-        this.ws = new WebSocket(this.signalingUrl);
-        this.writeWebSocketSignalingLog("new-websocket", this.signalingUrl);
-      }
-      this.ws.binaryType = "arraybuffer";
-      this.ws.onclose = async (event): Promise<void> => {
+      this.writeWebSocketSignalingLog("new-websocket", ws.url);
+      // websocket の各 callback を設定する
+      ws.binaryType = "arraybuffer";
+      ws.onclose = async (event): Promise<void> => {
         const error = new ConnectError(
           `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
         );
@@ -682,34 +792,7 @@ export default class ConnectionBase {
         await this.signalingTerminate();
         reject(error);
       };
-      this.ws.onopen = async (_): Promise<void> => {
-        this.writeWebSocketSignalingLog("onopen");
-        let signalingMessage: SignalingConnectMessage;
-        try {
-          signalingMessage = createSignalingMessage(
-            offer.sdp || "",
-            this.role,
-            this.channelId,
-            this.metadata,
-            this.options,
-            redirect
-          );
-        } catch (error) {
-          reject(error);
-          return;
-        }
-        if (signalingMessage.e2ee && this.e2ee) {
-          const initResult = await this.e2ee.init();
-          // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
-          signalingMessage["signaling_notify_metadata"]["pre_key_bundle"] = initResult;
-        }
-        this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
-        if (this.ws) {
-          this.ws.send(JSON.stringify(signalingMessage));
-          this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage);
-        }
-      };
-      this.ws.onmessage = async (event): Promise<void> => {
+      ws.onmessage = async (event): Promise<void> => {
         // E2EE 時専用処理
         if (event.data instanceof ArrayBuffer) {
           this.writeWebSocketSignalingLog("onmessage-e2ee", event.data);
@@ -747,6 +830,34 @@ export default class ConnectionBase {
           resolve(redirectMessage);
         }
       };
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      (async () => {
+        let signalingMessage: SignalingConnectMessage;
+        try {
+          signalingMessage = createSignalingMessage(
+            offer.sdp || "",
+            this.role,
+            this.channelId,
+            this.metadata,
+            this.options,
+            redirect
+          );
+        } catch (error) {
+          reject(error);
+          return;
+        }
+        if (signalingMessage.e2ee && this.e2ee) {
+          const initResult = await this.e2ee.init();
+          // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
+          signalingMessage["signaling_notify_metadata"]["pre_key_bundle"] = initResult;
+        }
+        this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
+        if (ws) {
+          ws.send(JSON.stringify(signalingMessage));
+          this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage);
+          this.ws = ws;
+        }
+      })();
     });
   }
 
@@ -1240,8 +1351,8 @@ export default class ConnectionBase {
       this.ws.close();
       this.ws = null;
     }
-    this.signalingUrl = message.location;
-    const signalingMessage = await this.signaling(true);
+    const ws = await this.getSignalingWebSocket(message.location);
+    const signalingMessage = await this.signaling(ws, true);
     return signalingMessage;
   }
 
@@ -1477,5 +1588,16 @@ export default class ConnectionBase {
 
   get video(): boolean {
     return this.getVideoTransceiver() !== null;
+  }
+
+  get signalingUrl(): string | string[] {
+    return this.signalingUrlCandidates;
+  }
+
+  get connectedSignalingUrl(): string {
+    if (!this.ws) {
+      return "";
+    }
+    return this.ws.url;
   }
 }
