@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.6
+ * @version: 2021.2.0-canary.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0
+ * @version: 2021.2.0-canary.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.1.0";
+        return "2021.2.0-canary.0";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -1584,7 +1584,7 @@ function enabledSimulcast() {
 function isSafari() {
     return browser() === "safari";
 }
-function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
+function createSignalingMessage(offerSDP, role, channelId, metadata, options, redirect) {
     if (role !== "sendrecv" && role !== "sendonly" && role !== "recvonly") {
         throw new Error("Unknown role type");
     }
@@ -1593,7 +1593,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.1.6",
+        sora_client: "Sora JavaScript SDK 2021.2.0-canary.0",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1603,6 +1603,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options) {
     };
     if (metadata !== undefined) {
         message.metadata = metadata;
+    }
+    if (redirect) {
+        message.redirect = true;
     }
     if ("signalingNotifyMetadata" in options) {
         message.signaling_notify_metadata = options.signalingNotifyMetadata;
@@ -1878,11 +1881,11 @@ function createTimelineEvent(eventType, data, logType, dataChannelId, dataChanne
 }
 
 class ConnectionBase {
-    constructor(signalingUrl, role, channelId, metadata, options, debug) {
+    constructor(signalingUrlCandidates, role, channelId, metadata, options, debug) {
         this.role = role;
         this.channelId = channelId;
         this.metadata = metadata;
-        this.signalingUrl = signalingUrl;
+        this.signalingUrlCandidates = signalingUrlCandidates;
         this.options = options;
         // connection timeout の初期値をセットする
         this.connectionTimeout = 60000;
@@ -1897,6 +1900,11 @@ class ConnectionBase {
         this.disconnectWaitTimeout = 3000;
         if (typeof this.options.disconnectWaitTimeout === "number") {
             this.disconnectWaitTimeout = this.options.disconnectWaitTimeout;
+        }
+        // signalingUrlCandidates に設定されている URL への接続チェック timeout の初期値をセットする
+        this.signalingCandidateTimeout = 3000;
+        if (typeof this.options.signalingCandidateTimeout === "number") {
+            this.signalingCandidateTimeout = this.options.signalingCandidateTimeout;
         }
         this.constraints = null;
         this.debug = debug;
@@ -2450,15 +2458,120 @@ class ConnectionBase {
             this.e2ee.postSelfSecretKeyMaterial(this.connectionId, result.selfKeyId, result.selfSecretKeyMaterial);
         }
     }
-    signaling(offer) {
+    async getSignalingWebSocket(signalingUrlCandidates) {
+        if (typeof signalingUrlCandidates === "string") {
+            // signaling url の候補が文字列の場合
+            const signalingUrl = signalingUrlCandidates;
+            return new Promise((resolve, reject) => {
+                const ws = new WebSocket(signalingUrl);
+                ws.onclose = (event) => {
+                    const error = new ConnectError(`Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`);
+                    error.code = event.code;
+                    error.reason = event.reason;
+                    this.writeWebSocketTimelineLog("onclose", error);
+                    reject(error);
+                };
+                ws.onopen = (_) => {
+                    resolve(ws);
+                };
+            });
+        }
+        else if (Array.isArray(signalingUrlCandidates)) {
+            // signaling url の候補が Array の場合
+            // すでに候補の WebSocket が発見されているかどうかのフラグ
+            let resolved = false;
+            const testSignalingUrlCandidate = (signalingUrl) => {
+                return new Promise((resolve, reject) => {
+                    const ws = new WebSocket(signalingUrl);
+                    // 一定時間経過しても反応がなかった場合は処理を中断する
+                    const timerId = setTimeout(() => {
+                        this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                            type: "timeout",
+                            url: ws.url,
+                        });
+                        if (ws && !resolved) {
+                            ws.onclose = null;
+                            ws.onerror = null;
+                            ws.onopen = null;
+                            ws.close();
+                            reject();
+                        }
+                    }, this.signalingCandidateTimeout);
+                    ws.onclose = (event) => {
+                        this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                            type: "close",
+                            url: ws.url,
+                            message: `WebSocket closed`,
+                            code: event.code,
+                            reason: event.reason,
+                        });
+                        if (ws) {
+                            ws.close();
+                        }
+                        clearInterval(timerId);
+                        reject();
+                    };
+                    ws.onerror = (_) => {
+                        this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                            type: "error",
+                            url: ws.url,
+                            message: `Failed to connect WebSocket`,
+                        });
+                        if (ws) {
+                            ws.onclose = null;
+                            ws.close();
+                        }
+                        clearInterval(timerId);
+                        reject();
+                    };
+                    ws.onopen = (_) => {
+                        if (ws) {
+                            clearInterval(timerId);
+                            if (resolved) {
+                                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                                    type: "open",
+                                    url: ws.url,
+                                    selected: false,
+                                });
+                                ws.onerror = null;
+                                ws.onclose = null;
+                                ws.onopen = null;
+                                ws.close();
+                                reject();
+                            }
+                            else {
+                                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                                    type: "open",
+                                    url: ws.url,
+                                    selected: true,
+                                });
+                                ws.onerror = null;
+                                ws.onclose = null;
+                                ws.onopen = null;
+                                resolved = true;
+                                resolve(ws);
+                            }
+                        }
+                    };
+                });
+            };
+            try {
+                return await Promise.any(signalingUrlCandidates.map((signalingUrl) => testSignalingUrlCandidate(signalingUrl)));
+            }
+            catch (e) {
+                throw new ConnectError("Signaling failed. All signaling URL candidates failed to connect");
+            }
+        }
+        throw new ConnectError("Signaling failed. Invalid format signaling URL candidates");
+    }
+    async signaling(ws, redirect = false) {
+        const offer = await this.createOffer();
         this.trace("CREATE OFFER", offer);
         return new Promise((resolve, reject) => {
-            if (this.ws === null) {
-                this.ws = new WebSocket(this.signalingUrl);
-                this.writeWebSocketSignalingLog("new-websocket", this.signalingUrl);
-            }
-            this.ws.binaryType = "arraybuffer";
-            this.ws.onclose = async (event) => {
+            this.writeWebSocketSignalingLog("new-websocket", ws.url);
+            // websocket の各 callback を設定する
+            ws.binaryType = "arraybuffer";
+            ws.onclose = async (event) => {
                 const error = new ConnectError(`Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`);
                 error.code = event.code;
                 error.reason = event.reason;
@@ -2466,28 +2579,7 @@ class ConnectionBase {
                 await this.signalingTerminate();
                 reject(error);
             };
-            this.ws.onopen = async (_) => {
-                this.writeWebSocketSignalingLog("onopen");
-                let signalingMessage;
-                try {
-                    signalingMessage = createSignalingMessage(offer.sdp || "", this.role, this.channelId, this.metadata, this.options);
-                }
-                catch (error) {
-                    reject(error);
-                    return;
-                }
-                if (signalingMessage.e2ee && this.e2ee) {
-                    const initResult = await this.e2ee.init();
-                    // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
-                    signalingMessage["signaling_notify_metadata"]["pre_key_bundle"] = initResult;
-                }
-                this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
-                if (this.ws) {
-                    this.ws.send(JSON.stringify(signalingMessage));
-                    this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage);
-                }
-            };
-            this.ws.onmessage = async (event) => {
+            ws.onmessage = async (event) => {
                 // E2EE 時専用処理
                 if (event.data instanceof ArrayBuffer) {
                     this.writeWebSocketSignalingLog("onmessage-e2ee", event.data);
@@ -2527,24 +2619,35 @@ class ConnectionBase {
                     this.writeWebSocketSignalingLog("onmessage-switched", message);
                     this.signalingOnMessageTypeSwitched(message);
                 }
+                else if (message.type == "redirect") {
+                    this.writeWebSocketSignalingLog("onmessage-redirect", message);
+                    const redirectMessage = await this.signalingOnMessageTypeRedirect(message);
+                    resolve(redirectMessage);
+                }
             };
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            (async () => {
+                let signalingMessage;
+                try {
+                    signalingMessage = createSignalingMessage(offer.sdp || "", this.role, this.channelId, this.metadata, this.options, redirect);
+                }
+                catch (error) {
+                    reject(error);
+                    return;
+                }
+                if (signalingMessage.e2ee && this.e2ee) {
+                    const initResult = await this.e2ee.init();
+                    // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
+                    signalingMessage["signaling_notify_metadata"]["pre_key_bundle"] = initResult;
+                }
+                this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
+                if (ws) {
+                    ws.send(JSON.stringify(signalingMessage));
+                    this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage);
+                    this.ws = ws;
+                }
+            })();
         });
-    }
-    async createOffer() {
-        const config = { iceServers: [] };
-        const pc = new window.RTCPeerConnection(config);
-        if (isSafari()) {
-            pc.addTransceiver("video", { direction: "recvonly" });
-            pc.addTransceiver("audio", { direction: "recvonly" });
-            const offer = await pc.createOffer();
-            pc.close();
-            this.writePeerConnectionTimelineLog("create-offer", offer);
-            return offer;
-        }
-        const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-        pc.close();
-        this.writePeerConnectionTimelineLog("create-offer", offer);
-        return offer;
     }
     async connectPeerConnection(message) {
         let config = Object.assign({}, message.config);
@@ -2847,6 +2950,22 @@ class ConnectionBase {
         const event = createTimelineEvent(eventType, data, "sora");
         this.callbacks.timeline(event);
     }
+    async createOffer() {
+        const config = { iceServers: [] };
+        const pc = new window.RTCPeerConnection(config);
+        if (isSafari()) {
+            pc.addTransceiver("video", { direction: "recvonly" });
+            pc.addTransceiver("audio", { direction: "recvonly" });
+            const offer = await pc.createOffer();
+            pc.close();
+            this.writePeerConnectionTimelineLog("create-offer", offer);
+            return offer;
+        }
+        const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+        pc.close();
+        this.writePeerConnectionTimelineLog("create-offer", offer);
+        return offer;
+    }
     signalingOnMessageE2EE(data) {
         if (this.e2ee) {
             const message = new Uint8Array(data);
@@ -2970,6 +3089,17 @@ class ConnectionBase {
             }
             this.writeWebSocketSignalingLog("close");
         }
+    }
+    async signalingOnMessageTypeRedirect(message) {
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.onerror = null;
+            this.ws.close();
+            this.ws = null;
+        }
+        const ws = await this.getSignalingWebSocket(message.location);
+        const signalingMessage = await this.signaling(ws, true);
+        return signalingMessage;
     }
     async setSenderParameters(transceiver, encodings) {
         const originalParameters = transceiver.sender.getParameters();
@@ -3194,6 +3324,15 @@ class ConnectionBase {
     get video() {
         return this.getVideoTransceiver() !== null;
     }
+    get signalingUrl() {
+        return this.signalingUrlCandidates;
+    }
+    get connectedSignalingUrl() {
+        if (!this.ws) {
+            return "";
+        }
+        return this.ws.url;
+    }
 }
 
 class ConnectionPublisher extends ConnectionBase {
@@ -3225,8 +3364,8 @@ class ConnectionPublisher extends ConnectionBase {
     async singleStream(stream) {
         await this.disconnect();
         this.setupE2EE();
-        const offer = await this.createOffer();
-        const signalingMessage = await this.signaling(offer);
+        const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+        const signalingMessage = await this.signaling(ws);
         this.startE2EE();
         await this.connectPeerConnection(signalingMessage);
         await this.setRemoteDescription(signalingMessage);
@@ -3252,8 +3391,8 @@ class ConnectionPublisher extends ConnectionBase {
     async multiStream(stream) {
         await this.disconnect();
         this.setupE2EE();
-        const offer = await this.createOffer();
-        const signalingMessage = await this.signaling(offer);
+        const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+        const signalingMessage = await this.signaling(ws);
         this.startE2EE();
         await this.connectPeerConnection(signalingMessage);
         if (this.pc) {
@@ -3358,8 +3497,8 @@ class ConnectionSubscriber extends ConnectionBase {
     async singleStream() {
         await this.disconnect();
         this.setupE2EE();
-        const offer = await this.createOffer();
-        const signalingMessage = await this.signaling(offer);
+        const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+        const signalingMessage = await this.signaling(ws);
         this.startE2EE();
         await this.connectPeerConnection(signalingMessage);
         if (this.pc) {
@@ -3415,8 +3554,8 @@ class ConnectionSubscriber extends ConnectionBase {
     async multiStream() {
         await this.disconnect();
         this.setupE2EE();
-        const offer = await this.createOffer();
-        const signalingMessage = await this.signaling(offer);
+        const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+        const signalingMessage = await this.signaling(ws);
         this.startE2EE();
         await this.connectPeerConnection(signalingMessage);
         if (this.pc) {
@@ -3488,29 +3627,33 @@ async function applyMediaStreamConstraints(mediastream, constraints) {
 }
 
 class SoraConnection {
-    constructor(signalingUrl, debug = false) {
-        this.signalingUrl = signalingUrl;
+    constructor(signalingUrlCandidates, debug = false) {
+        this.signalingUrlCandidates = signalingUrlCandidates;
         this.debug = debug;
     }
     sendrecv(channelId, metadata = null, options = { audio: true, video: true }) {
-        return new ConnectionPublisher(this.signalingUrl, "sendrecv", channelId, metadata, options, this.debug);
+        return new ConnectionPublisher(this.signalingUrlCandidates, "sendrecv", channelId, metadata, options, this.debug);
     }
     sendonly(channelId, metadata = null, options = { audio: true, video: true }) {
-        return new ConnectionPublisher(this.signalingUrl, "sendonly", channelId, metadata, options, this.debug);
+        return new ConnectionPublisher(this.signalingUrlCandidates, "sendonly", channelId, metadata, options, this.debug);
     }
     recvonly(channelId, metadata = null, options = { audio: true, video: true }) {
-        return new ConnectionSubscriber(this.signalingUrl, "recvonly", channelId, metadata, options, this.debug);
+        return new ConnectionSubscriber(this.signalingUrlCandidates, "recvonly", channelId, metadata, options, this.debug);
+    }
+    // @deprecated 後方互換のため残す
+    get signalingUrl() {
+        return this.signalingUrlCandidates;
     }
 }
 var sora = {
     initE2EE: async function (wasmUrl) {
         await SoraE2EE.loadWasm(wasmUrl);
     },
-    connection: function (signalingUrl, debug = false) {
-        return new SoraConnection(signalingUrl, debug);
+    connection: function (signalingUrlCandidates, debug = false) {
+        return new SoraConnection(signalingUrlCandidates, debug);
     },
     version: function () {
-        return "2021.1.6";
+        return "2021.2.0-canary.0";
     },
     helpers: {
         applyMediaStreamConstraints,

@@ -50,8 +50,9 @@ export declare type SignalingConnectMessage = {
     spotlight_unfocus_rid?: SpotlightFocusRid;
     data_channel_signaling?: boolean;
     ignore_disconnect_websocket?: boolean;
+    redirect?: true;
 };
-export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage;
+export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage | SignalingRedirectMessage;
 export declare type SignalingOfferMessage = {
     type: "offer";
     sdp: string;
@@ -93,6 +94,10 @@ export declare type SignalingReqStatsMessage = {
 export declare type SignalingSwitchedMessage = {
     type: "switched";
     ignore_disconnect_websocket: boolean;
+};
+export declare type SignalingRedirectMessage = {
+    type: "redirect";
+    location: string;
 };
 export declare type SignalingNotifyMessage = SignalingNotifyConnectionCreated | SignalingNotifyConnectionUpdated | SignalingNotifyConnectionDestroyed | SignalingNotifySpotlightChanged | SignalingNotifySpotlightFocused | SignalingNotifySpotlightUnfocused | SignalingNotifyNetworkStatus;
 export declare type SignalingNotifyMetadata = {
@@ -219,6 +224,7 @@ export declare type ConnectionOptions = {
     dataChannelSignaling?: boolean;
     ignoreDisconnectWebSocket?: boolean;
     disconnectWaitTimeout?: number;
+    signalingCandidateTimeout?: number;
 };
 export declare type Callbacks = {
     disconnect: (event: SoraCloseEvent) => void;

@@ -9,7 +9,7 @@ export default class ConnectionBase {
     role: string;
     channelId: string;
     metadata: JSONType | undefined;
-    signalingUrl: string;
+    signalingUrlCandidates: string | string[];
     options: ConnectionOptions;
     constraints: any;
     debug: boolean;
@@ -31,10 +31,11 @@ export default class ConnectionBase {
     };
     private dataChannelsCompress;
     private connectionTimeout;
+    private signalingCandidateTimeout;
     private disconnectWaitTimeout;
     private mids;
     private signalingSwitched;
-    constructor(signalingUrl: string, role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
+    constructor(signalingUrlCandidates: string | string[], role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void;
     stopAudioTrack(stream: MediaStream): Promise<void>;
     stopVideoTrack(stream: MediaStream): Promise<void>;
@@ -60,8 +61,8 @@ export default class ConnectionBase {
     disconnect(): Promise<void>;
     protected setupE2EE(): void;
     protected startE2EE(): void;
-    protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage>;
-    protected createOffer(): Promise<RTCSessionDescriptionInit>;
+    protected getSignalingWebSocket(signalingUrlCandidates: string | string[]): Promise<WebSocket>;
+    protected signaling(ws: WebSocket, redirect?: boolean): Promise<SignalingOfferMessage>;
     protected connectPeerConnection(message: SignalingOfferMessage): Promise<void>;
     protected setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
     protected createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
@@ -82,6 +83,7 @@ export default class ConnectionBase {
     protected writeDataChannelTimelineLog(eventType: string, channel: RTCDataChannel, data?: unknown): void;
     protected writePeerConnectionTimelineLog(eventType: string, data?: unknown): void;
     protected writeSoraTimelineLog(eventType: string, data?: unknown): void;
+    private createOffer;
     private signalingOnMessageE2EE;
     private signalingOnMessageTypeOffer;
     private sendUpdateAnswer;
@@ -91,6 +93,7 @@ export default class ConnectionBase {
     private signalingOnMessageTypePing;
     private signalingOnMessageTypeNotify;
     private signalingOnMessageTypeSwitched;
+    private signalingOnMessageTypeRedirect;
     private setSenderParameters;
     private getStats;
     private onDataChannel;
@@ -104,4 +107,6 @@ export default class ConnectionBase {
     get e2eeRemoteFingerprints(): Record<string, string> | undefined;
     get audio(): boolean;
     get video(): boolean;
+    get signalingUrl(): string | string[];
+    get connectedSignalingUrl(): string;
 }

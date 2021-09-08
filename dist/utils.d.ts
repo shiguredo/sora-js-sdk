@@ -1,7 +1,7 @@
 import { ConnectionOptions, JSONType, PreKeyBundle, SignalingConnectMessage, SignalingEvent, SignalingNotifyMetadata, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, TimelineEvent, TimelineEventLogType, TransportType } from "./types";
 export declare function isSafari(): boolean;
 export declare function isChrome(): boolean;
-export declare function createSignalingMessage(offerSDP: string, role: string, channelId: string | null | undefined, metadata: JSONType | undefined, options: ConnectionOptions): SignalingConnectMessage;
+export declare function createSignalingMessage(offerSDP: string, role: string, channelId: string | null | undefined, metadata: JSONType | undefined, options: ConnectionOptions, redirect: boolean): SignalingConnectMessage;
 export declare function getSignalingNotifyAuthnMetadata(message: SignalingNotifyConnectionCreated | SignalingNotifyConnectionDestroyed | SignalingNotifyMetadata): JSONType;
 export declare function getSignalingNotifyData(message: SignalingNotifyConnectionCreated): SignalingNotifyMetadata[];
 export declare function getPreKeyBundle(message: JSONType): PreKeyBundle | null;
