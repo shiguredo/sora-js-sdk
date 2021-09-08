@@ -59,6 +59,7 @@ export type SignalingConnectMessage = {
   spotlight_unfocus_rid?: SpotlightFocusRid;
   data_channel_signaling?: boolean;
   ignore_disconnect_websocket?: boolean;
+  redirect?: true;
 };
 
 export type SignalingMessage =
@@ -69,7 +70,8 @@ export type SignalingMessage =
   | SignalingPushMessage
   | SignalingNotifyMessage
   | SignalingReqStatsMessage
-  | SignalingSwitchedMessage;
+  | SignalingSwitchedMessage
+  | SignalingRedirectMessage;
 
 export type SignalingOfferMessage = {
   type: "offer";
@@ -118,6 +120,11 @@ export type SignalingReqStatsMessage = {
 export type SignalingSwitchedMessage = {
   type: "switched";
   ignore_disconnect_websocket: boolean;
+};
+
+export type SignalingRedirectMessage = {
+  type: "redirect";
+  location: string;
 };
 
 export type SignalingNotifyMessage =
@@ -261,6 +268,7 @@ export type ConnectionOptions = {
   dataChannelSignaling?: boolean;
   ignoreDisconnectWebSocket?: boolean;
   disconnectWaitTimeout?: number;
+  signalingCandidateTimeout?: number;
 };
 
 export type Callbacks = {

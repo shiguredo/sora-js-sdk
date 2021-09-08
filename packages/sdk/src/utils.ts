@@ -64,7 +64,8 @@ export function createSignalingMessage(
   role: string,
   channelId: string | null | undefined,
   metadata: JSONType | undefined,
-  options: ConnectionOptions
+  options: ConnectionOptions,
+  redirect: boolean
 ): SignalingConnectMessage {
   if (role !== "sendrecv" && role !== "sendonly" && role !== "recvonly") {
     throw new Error("Unknown role type");
@@ -85,6 +86,10 @@ export function createSignalingMessage(
 
   if (metadata !== undefined) {
     message.metadata = metadata;
+  }
+
+  if (redirect) {
+    message.redirect = true;
   }
 
   if ("signalingNotifyMetadata" in options) {

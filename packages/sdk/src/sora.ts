@@ -30,11 +30,11 @@ import type {
 } from "./types";
 
 class SoraConnection {
-  signalingUrl: string;
+  signalingUrlCandidates: string | string[];
   debug: boolean;
 
-  constructor(signalingUrl: string, debug = false) {
-    this.signalingUrl = signalingUrl;
+  constructor(signalingUrlCandidates: string | string[], debug = false) {
+    this.signalingUrlCandidates = signalingUrlCandidates;
     this.debug = debug;
   }
 
@@ -43,7 +43,7 @@ class SoraConnection {
     metadata: JSONType = null,
     options: ConnectionOptions = { audio: true, video: true }
   ): ConnectionPublisher {
-    return new ConnectionPublisher(this.signalingUrl, "sendrecv", channelId, metadata, options, this.debug);
+    return new ConnectionPublisher(this.signalingUrlCandidates, "sendrecv", channelId, metadata, options, this.debug);
   }
 
   sendonly(
@@ -51,7 +51,7 @@ class SoraConnection {
     metadata: JSONType = null,
     options: ConnectionOptions = { audio: true, video: true }
   ): ConnectionPublisher {
-    return new ConnectionPublisher(this.signalingUrl, "sendonly", channelId, metadata, options, this.debug);
+    return new ConnectionPublisher(this.signalingUrlCandidates, "sendonly", channelId, metadata, options, this.debug);
   }
 
   recvonly(
@@ -59,7 +59,12 @@ class SoraConnection {
     metadata: JSONType = null,
     options: ConnectionOptions = { audio: true, video: true }
   ): ConnectionSubscriber {
-    return new ConnectionSubscriber(this.signalingUrl, "recvonly", channelId, metadata, options, this.debug);
+    return new ConnectionSubscriber(this.signalingUrlCandidates, "recvonly", channelId, metadata, options, this.debug);
+  }
+
+  // @deprecated 後方互換のため残す
+  get signalingUrl(): string | string[] {
+    return this.signalingUrlCandidates;
   }
 }
 
@@ -67,8 +72,8 @@ export default {
   initE2EE: async function (wasmUrl: string): Promise<void> {
     await SoraE2EE.loadWasm(wasmUrl);
   },
-  connection: function (signalingUrl: string, debug = false): SoraConnection {
-    return new SoraConnection(signalingUrl, debug);
+  connection: function (signalingUrlCandidates: string | string[], debug = false): SoraConnection {
+    return new SoraConnection(signalingUrlCandidates, debug);
   },
   version: function (): string {
     return "__SORA_JS_SDK_VERSION__";

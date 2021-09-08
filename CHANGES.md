@@ -10,8 +10,20 @@
     - バグ修正
 
 ## develop
+- [CHANGE] 複数 Signaling URL への接続に対応する
+    - Connection オブジェクト第一引数の type を `string` から `string | string[]` に変更する
+    - Connection オブジェクト signalingUrl プロパティの戻り値の type を `string` から `string | string[]` に変更する
+    - SendRecv オブジェクト signalingUrl プロパティの戻り値の type を `string` から `string | string[]` に変更する
+    - Connection オブジェクトに signalingUrlCandidates プロパティを追加する
+    - SendRecv オブジェクト に signalingUrlCandidates プロパティを追加する
+    - SendRecv オブジェクト に connectedSignalingUrl プロパティを追加する
+    - SendRecv オブジェクト に signalingCandidateTimeout オプションを追加する
+    - @yuitowest
+- [UPDATE] type redirect 対応を追加する
+    - @yuitowest
 - [CHANGE] spotlight_legacy 対応を削除する
     - ConnectionOptions の spotlight オプションの型を boolean のみに変更する
+    - @yuitowest
 
 ## 2021.1.6
 - [FIX] timeline ログに re-answer のログが出力されていなかったので修正する
