@@ -9,6 +9,10 @@
 - FIX
     - バグ修正
 
+## 2021.1.7
+- [ADD] SoraCloseEvent 関連の type を export する
+    - @yuitowest
+
 ## 2021.1.6
 - [FIX] timeline ログに re-answer のログが出力されていなかったので修正する
     - @yuitowest
