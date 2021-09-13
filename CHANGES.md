@@ -23,6 +23,9 @@
     - @yuitowest
 - [CHANGE] spotlight_legacy 対応を削除する
     - ConnectionOptions の spotlight オプションの型を boolean のみに変更する
+
+## 2021.1.7
+- [ADD] SoraCloseEvent 関連の type を export する
     - @yuitowest
 
 ## 2021.1.6

@@ -2,7 +2,7 @@ import ConnectionBase from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
-import type { AudioCodecType, Callbacks, ConnectionOptions, JSONType, Role, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, SignalingNotifyConnectionUpdated, SignalingNotifyMessage, SignalingNotifyMetadata, SignalingNotifyNetworkStatus, SignalingNotifySpotlightChanged, SignalingNotifySpotlightFocused, SignalingNotifySpotlightUnfocused, Simulcast, SimulcastRid, SpotlightFocusRid, TimelineEvent, TimelineEventLogType, TransportType, VideoCodecType } from "./types";
+import type { AudioCodecType, Callbacks, ConnectionOptions, JSONType, Role, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, SignalingNotifyConnectionUpdated, SignalingNotifyMessage, SignalingNotifyMetadata, SignalingNotifyNetworkStatus, SignalingNotifySpotlightChanged, SignalingNotifySpotlightFocused, SignalingNotifySpotlightUnfocused, Simulcast, SimulcastRid, SoraAbendTitle, SoraCloseEvent, SoraCloseEventInitDict, SoraCloseEventType, SpotlightFocusRid, TimelineEvent, TimelineEventLogType, TransportType, VideoCodecType } from "./types";
 declare class SoraConnection {
     signalingUrlCandidates: string | string[];
     debug: boolean;
@@ -21,4 +21,4 @@ declare const _default: {
     };
 };
 export default _default;
-export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, Role, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, SignalingNotifyConnectionUpdated, SignalingNotifyMessage, SignalingNotifyMetadata, SignalingNotifyNetworkStatus, SignalingNotifySpotlightChanged, SignalingNotifySpotlightFocused, SignalingNotifySpotlightUnfocused, Simulcast, SimulcastRid, SoraConnection, SpotlightFocusRid, TimelineEvent, TimelineEventLogType, TransportType, VideoCodecType, };
+export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, Role, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, SignalingNotifyConnectionUpdated, SignalingNotifyMessage, SignalingNotifyMetadata, SignalingNotifyNetworkStatus, SignalingNotifySpotlightChanged, SignalingNotifySpotlightFocused, SignalingNotifySpotlightUnfocused, Simulcast, SimulcastRid, SoraAbendTitle, SoraCloseEvent, SoraCloseEventInitDict, SoraCloseEventType, SoraConnection, SpotlightFocusRid, TimelineEvent, TimelineEventLogType, TransportType, VideoCodecType, };
