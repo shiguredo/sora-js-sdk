@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.1.6
+ * @version: 2021.1.7
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1599,7 +1599,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.1.6",
+	        sora_client: "Sora JavaScript SDK 2021.1.7",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -3516,7 +3516,7 @@
 	        return new SoraConnection(signalingUrl, debug);
 	    },
 	    version: function () {
-	        return "2021.1.6";
+	        return "2021.1.7";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
