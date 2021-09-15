@@ -2,8 +2,11 @@ import {
   ConnectionOptions,
   Browser,
   JSONType,
+  MessagingDataChannel,
+  MessagingEvent,
   PreKeyBundle,
   SignalingConnectMessage,
+  SignalingConnectMessagingDataChannel,
   SignalingEvent,
   SignalingNotifyMetadata,
   SignalingNotifyConnectionCreated,
@@ -49,6 +52,38 @@ function enabledSimulcast(): boolean {
   const headerExtensions = capabilities.headerExtensions.map((h) => h.uri);
   const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTEMSIONS.every((h) => headerExtensions.includes(h));
   return hasAllRequiredHeaderExtensions;
+}
+
+function parseMessagingDataChannel(params: unknown): SignalingConnectMessagingDataChannel {
+  if (typeof params !== "object" || params === null) {
+    throw new Error("Messaging DataChannel failed. Options messagingDataChannel must be type 'object'");
+  }
+  const messagingDataChannel = params as MessagingDataChannel;
+  const result: SignalingConnectMessagingDataChannel = {};
+  if (typeof messagingDataChannel.label === "string") {
+    result.label = messagingDataChannel.label;
+  }
+  if (typeof messagingDataChannel.direction === "string") {
+    result.direction = messagingDataChannel.direction;
+  }
+  if (typeof messagingDataChannel.ordered === "boolean") {
+    result.ordered = messagingDataChannel.ordered;
+  }
+  if (typeof messagingDataChannel.compress === "boolean") {
+    result.compress = messagingDataChannel.compress;
+  }
+  if (typeof messagingDataChannel.maxPacketLifeTime === "number") {
+    result.max_packet_life_time = messagingDataChannel.maxPacketLifeTime;
+  }
+  return result;
+}
+
+function parseMessagingDataChannels(messagingDataChannels: unknown[]): SignalingConnectMessagingDataChannel[] {
+  const result: SignalingConnectMessagingDataChannel[] = [];
+  for (const messagingDataChannel of messagingDataChannels) {
+    result.push(parseMessagingDataChannel(messagingDataChannel));
+  }
+  return result;
 }
 
 export function isSafari(): boolean {
@@ -263,6 +298,10 @@ export function createSignalingMessage(
     message.e2ee = true;
   }
 
+  if (Array.isArray(options.messagingDataChannels) && 0 < options.messagingDataChannels.length) {
+    message.data_channel_messaging = parseMessagingDataChannels(options.messagingDataChannels);
+  }
+
   return message;
 }
 
@@ -384,5 +423,12 @@ export function createTimelineEvent(
   event.logType = logType;
   event.dataChannelId = dataChannelId;
   event.dataChannelLabel = dataChannelLabel;
+  return event;
+}
+
+export function createMessagingEvent(label: string, data: JSONType): MessagingEvent {
+  const event = new Event("messaging") as MessagingEvent;
+  event.label = label;
+  event.data = data;
   return event;
 }
