@@ -3,6 +3,7 @@ import { unzlibSync, zlibSync } from "fflate";
 import {
   ConnectError,
   createDataChannelData,
+  createMessagingEvent,
   createSignalingEvent,
   createSignalingMessage,
   createTimelineEvent,
@@ -130,6 +131,7 @@ export default class ConnectionBase {
       timeout: (): void => {},
       timeline: (): void => {},
       signaling: (): void => {},
+      messaging: (): void => {},
     };
     this.authMetadata = null;
     this.e2ee = null;
@@ -1003,7 +1005,7 @@ export default class ConnectionBase {
             const candidate = event.candidate.toJSON();
             const message = Object.assign(candidate, { type: "candidate" }) as { type: string; [key: string]: unknown };
             this.trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
-            this.sendMessage(message);
+            this.sendSignalingMessage(message);
           }
         };
       }
@@ -1245,14 +1247,14 @@ export default class ConnectionBase {
   private sendUpdateAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      this.sendMessage({ type: "update", sdp: this.pc.localDescription.sdp });
+      this.sendSignalingMessage({ type: "update", sdp: this.pc.localDescription.sdp });
     }
   }
 
   private sendReAnswer(): void {
     if (this.pc && this.pc.localDescription) {
       this.trace("RE ANSWER SDP", this.pc.localDescription.sdp);
-      this.sendMessage({ type: "re-answer", sdp: this.pc.localDescription.sdp });
+      this.sendSignalingMessage({ type: "re-answer", sdp: this.pc.localDescription.sdp });
     }
   }
 
@@ -1477,10 +1479,24 @@ export default class ConnectionBase {
           this.sendStatsMessage(stats);
         }
       };
+    } else if (/^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(dataChannelEvent.channel.label)) {
+      dataChannelEvent.channel.onmessage = (event): void => {
+        if (event.target === null) {
+          return;
+        }
+        const dataChannel = event.target as RTCDataChannel;
+        let data = event.data as string;
+        if (this.dataChannelsCompress[dataChannel.label] === true) {
+          const unzlibMessage = unzlibSync(new Uint8Array(event.data));
+          data = new TextDecoder().decode(unzlibMessage);
+        }
+        const message = JSON.parse(data) as JSONType;
+        this.callbacks.messaging(createMessagingEvent(dataChannel.label, message));
+      };
     }
   }
 
-  private sendMessage(message: { type: string; [key: string]: unknown }): void {
+  private sendSignalingMessage(message: { type: string; [key: string]: unknown }): void {
     if (this.dataChannels.signaling) {
       if (this.dataChannelsCompress.signaling === true) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
@@ -1566,6 +1582,24 @@ export default class ConnectionBase {
       }
     };
     return new soraCloseEvent(type, title, initDict);
+  }
+
+  sendMessage(label: string, message: JSONType): void {
+    const dataChannel = this.dataChannels[label];
+    // 接続していない場合は何もしない
+    if (this.pc === null) {
+      return;
+    }
+    if (dataChannel === undefined) {
+      throw new Error("Could not find DataChannel");
+    }
+    if (this.dataChannelsCompress[label] === true) {
+      const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+      const zlibMessage = zlibSync(binaryMessage, {});
+      dataChannel.send(zlibMessage);
+    } else {
+      dataChannel.send(JSON.stringify(message));
+    }
   }
 
   get e2eeSelfFingerprint(): string | undefined {

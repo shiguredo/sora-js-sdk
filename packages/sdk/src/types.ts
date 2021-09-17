@@ -37,6 +37,16 @@ export type SignalingVideo =
 
 export type Role = "sendrecv" | "sendonly" | "recvonly";
 
+export type SignalingConnectMessagingDataChannel = {
+  label?: string;
+  direction?: MessagingDataChannelDirection;
+  compress?: boolean;
+  max_packet_life_time?: number;
+  max_retransmits?: number;
+  protocol?: string;
+  ordered?: boolean;
+};
+
 export type SignalingConnectMessage = {
   type: "connect";
   role: Role;
@@ -60,6 +70,7 @@ export type SignalingConnectMessage = {
   data_channel_signaling?: boolean;
   ignore_disconnect_websocket?: boolean;
   redirect?: true;
+  data_channel_messaging?: SignalingConnectMessagingDataChannel[];
 };
 
 export type SignalingMessage =
@@ -237,6 +248,18 @@ export type SignalingNotifyNetworkStatus = {
   unstable_level: 0 | 1 | 2 | 3;
 };
 
+export type MessagingDataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
+
+export type MessagingDataChannel = {
+  label: string;
+  direction: MessagingDataChannelDirection;
+  compress?: boolean;
+  maxPacketLifeTime?: number;
+  maxRetransmits?: number;
+  protocol?: string;
+  ordered?: boolean;
+};
+
 export type ConnectionOptions = {
   audio?: boolean;
   audioCodecType?: AudioCodecType;
@@ -269,6 +292,7 @@ export type ConnectionOptions = {
   ignoreDisconnectWebSocket?: boolean;
   disconnectWaitTimeout?: number;
   signalingCandidateTimeout?: number;
+  messagingDataChannels?: MessagingDataChannel[];
 };
 
 export type Callbacks = {
@@ -283,6 +307,7 @@ export type Callbacks = {
   timeout: () => void;
   timeline: (event: TimelineEvent) => void;
   signaling: (event: SignalingEvent) => void;
+  messaging: (event: MessagingEvent) => void;
 };
 
 export type PreKeyBundle = {
@@ -301,6 +326,11 @@ export interface SignalingEvent extends Event {
   transportType: TransportType;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
+}
+
+export interface MessagingEvent extends Event {
+  label: string;
+  data: JSONType;
 }
 
 export interface TimelineEvent extends Event {

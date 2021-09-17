@@ -1,5 +1,5 @@
 import { createSignalingMessage } from "../src/utils";
-import { AudioCodecType, VideoCodecType } from "../src/types";
+import { AudioCodecType, MessagingDataChannelDirection, VideoCodecType } from "../src/types";
 
 const channelId = "7N3fsMHob";
 const role = "sendonly";
@@ -418,8 +418,7 @@ test("createSignalingMessage dataChannelSignaling option", () => {
   const options3 = {
     dataChannelSignaling: undefined,
   };
-  const diff3 = {
-  };
+  const diff3 = {};
   expect(createSignalingMessage(sdp, role, channelId, null, options3, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
@@ -447,8 +446,7 @@ test("createSignalingMessage ignoreDisconnectWebSocket option", () => {
   const options3 = {
     ignoreDisconnectWebSocket: undefined,
   };
-  const diff3 = {
-  };
+  const diff3 = {};
   expect(createSignalingMessage(sdp, role, channelId, null, options3, false)).toEqual(
     Object.assign({}, baseExpectedMessage, diff3)
   );
@@ -457,5 +455,71 @@ test("createSignalingMessage ignoreDisconnectWebSocket option", () => {
 test("createSignalingMessage redirect", () => {
   expect(createSignalingMessage(sdp, role, channelId, null, {}, true)).toEqual(
     Object.assign({}, baseExpectedMessage, { redirect: true })
+  );
+});
+
+test("createSignalingMessage messagingDataChannels option", () => {
+  // array 以外の場合は無視
+  const options1 = {
+    messagingDataChannels: "test",
+  };
+  // @ts-ignore option で指定されている型以外を引数に指定する
+  expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(baseExpectedMessage);
+
+  // array が空の場合は追加されない
+  const options2 = {
+    messagingDataChannels: [],
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(baseExpectedMessage);
+
+  // messagingDataChannel に object 以外が含まれる場合は例外が発生する
+  const options3 = {
+    messagingDataChannels: [{ label: "test", direction: "sendrecv" }, "test"],
+  };
+  expect(() => {
+    // @ts-ignore option で指定されている型以外を引数に指定する
+    createSignalingMessage(sdp, role, channelId, null, options3, false);
+  }).toThrow("Messaging DataChannel failed. Options messagingDataChannel must be type 'object'");
+
+  // messagingDataChannel に null が含まれる場合は例外が発生する
+  const options4 = {
+    messagingDataChannels: [{ label: "test", direction: "sendrecv" }, null],
+  };
+  expect(() => {
+    // @ts-ignore option で指定されている型以外を引数に指定する
+    createSignalingMessage(sdp, role, channelId, null, options4, false);
+  }).toThrow("Messaging DataChannel failed. Options messagingDataChannel must be type 'object'");
+
+  // 正常系
+  const options5 = {
+    messagingDataChannels: [
+      { label: "test", direction: "sendrecv" as MessagingDataChannelDirection },
+      {
+        label: "test2",
+        direction: "sendonly" as MessagingDataChannelDirection,
+        ordered: true,
+        maxPacketLifeTime: 100,
+        maxRetransmits: 100,
+        protocol: "protocol",
+        compress: false,
+      },
+    ],
+  };
+  const diff5 = {
+    data_channel_messaging: [
+      { label: "test", direction: "sendrecv" },
+      {
+        label: "test2",
+        direction: "sendonly",
+        ordered: true,
+        max_packet_life_time: 100,
+        max_retransmits: 100,
+        protocol: "protocol",
+        compress: false,
+      },
+    ],
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, options5, false)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff5)
   );
 });
