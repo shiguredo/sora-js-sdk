@@ -248,9 +248,7 @@ export type SignalingNotifyNetworkStatus = {
   unstable_level: 0 | 1 | 2 | 3;
 };
 
-const messagingDataChannelDirections = ["sendonly", "sendrecv", "recvonly"] as const;
-
-export type MessagingDataChannelDirection = typeof messagingDataChannelDirections[number];
+export type MessagingDataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
 
 export type MessagingDataChannel = {
   label: string;
