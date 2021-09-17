@@ -10,6 +10,9 @@
     - バグ修正
 
 ## develop
+- [ADD] DataChannel メッセージング機能を追加する
+    - sendrecv オブジェクトに sendMessage API を追加する
+    - on callback に "message" を追加する
 - [CHANGE] 複数 Signaling URL への接続に対応する
     - Connection オブジェクト第一引数の type を `string` から `string | string[]` に変更する
     - Connection オブジェクト signalingUrl プロパティの戻り値の type を `string` から `string | string[]` に変更する
