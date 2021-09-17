@@ -28,6 +28,15 @@ export declare type SignalingVideo = boolean | {
     bit_rate?: number;
 };
 export declare type Role = "sendrecv" | "sendonly" | "recvonly";
+export declare type SignalingConnectMessagingDataChannel = {
+    label?: string;
+    direction?: MessagingDataChannelDirection;
+    compress?: boolean;
+    max_packet_life_time?: number;
+    max_retransmits?: number;
+    protocol?: string;
+    ordered?: boolean;
+};
 export declare type SignalingConnectMessage = {
     type: "connect";
     role: Role;
@@ -51,6 +60,7 @@ export declare type SignalingConnectMessage = {
     data_channel_signaling?: boolean;
     ignore_disconnect_websocket?: boolean;
     redirect?: true;
+    data_channel_messaging?: SignalingConnectMessagingDataChannel[];
 };
 export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage | SignalingRedirectMessage;
 export declare type SignalingOfferMessage = {
@@ -193,6 +203,16 @@ export declare type SignalingNotifyNetworkStatus = {
     event_type: "network.status";
     unstable_level: 0 | 1 | 2 | 3;
 };
+export declare type MessagingDataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
+export declare type MessagingDataChannel = {
+    label: string;
+    direction: MessagingDataChannelDirection;
+    compress?: boolean;
+    maxPacketLifeTime?: number;
+    maxRetransmits?: number;
+    protocol?: string;
+    ordered?: boolean;
+};
 export declare type ConnectionOptions = {
     audio?: boolean;
     audioCodecType?: AudioCodecType;
@@ -225,6 +245,7 @@ export declare type ConnectionOptions = {
     ignoreDisconnectWebSocket?: boolean;
     disconnectWaitTimeout?: number;
     signalingCandidateTimeout?: number;
+    messagingDataChannels?: MessagingDataChannel[];
 };
 export declare type Callbacks = {
     disconnect: (event: SoraCloseEvent) => void;
@@ -238,6 +259,7 @@ export declare type Callbacks = {
     timeout: () => void;
     timeline: (event: TimelineEvent) => void;
     signaling: (event: SignalingEvent) => void;
+    messaging: (event: MessagingEvent) => void;
 };
 export declare type PreKeyBundle = {
     identityKey: string;
@@ -250,6 +272,10 @@ export declare type TimelineEventLogType = "websocket" | "datachannel" | "peerco
 export interface SignalingEvent extends Event {
     transportType: TransportType;
     data?: any;
+}
+export interface MessagingEvent extends Event {
+    label: string;
+    data: JSONType;
 }
 export interface TimelineEvent extends Event {
     logType: TimelineEventLogType;

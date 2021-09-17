@@ -97,12 +97,13 @@ export default class ConnectionBase {
     private setSenderParameters;
     private getStats;
     private onDataChannel;
-    private sendMessage;
+    private sendSignalingMessage;
     private sendE2EEMessage;
     private sendStatsMessage;
     private getAudioTransceiver;
     private getVideoTransceiver;
     private soraCloseEvent;
+    sendMessage(label: string, message: JSONType): void;
     get e2eeSelfFingerprint(): string | undefined;
     get e2eeRemoteFingerprints(): Record<string, string> | undefined;
     get audio(): boolean;

@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.2.0-canary.0
+ * @version: 2021.2.0-canary.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.2.0-canary.0
+ * @version: 2021.2.0-canary.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.2.0-canary.0";
+        return "2021.2.0-canary.1";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -1581,6 +1581,42 @@ function enabledSimulcast() {
     const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTEMSIONS.every((h) => headerExtensions.includes(h));
     return hasAllRequiredHeaderExtensions;
 }
+function parseMessagingDataChannel(params) {
+    if (typeof params !== "object" || params === null) {
+        throw new Error("Messaging DataChannel failed. Options messagingDataChannel must be type 'object'");
+    }
+    const messagingDataChannel = params;
+    const result = {};
+    if (typeof messagingDataChannel.label === "string") {
+        result.label = messagingDataChannel.label;
+    }
+    if (typeof messagingDataChannel.direction === "string") {
+        result.direction = messagingDataChannel.direction;
+    }
+    if (typeof messagingDataChannel.ordered === "boolean") {
+        result.ordered = messagingDataChannel.ordered;
+    }
+    if (typeof messagingDataChannel.compress === "boolean") {
+        result.compress = messagingDataChannel.compress;
+    }
+    if (typeof messagingDataChannel.maxPacketLifeTime === "number") {
+        result.max_packet_life_time = messagingDataChannel.maxPacketLifeTime;
+    }
+    if (typeof messagingDataChannel.maxRetransmits === "number") {
+        result.max_retransmits = messagingDataChannel.maxRetransmits;
+    }
+    if (typeof messagingDataChannel.protocol === "string") {
+        result.protocol = messagingDataChannel.protocol;
+    }
+    return result;
+}
+function parseMessagingDataChannels(messagingDataChannels) {
+    const result = [];
+    for (const messagingDataChannel of messagingDataChannels) {
+        result.push(parseMessagingDataChannel(messagingDataChannel));
+    }
+    return result;
+}
 function isSafari() {
     return browser() === "safari";
 }
@@ -1593,7 +1629,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.2.0-canary.0",
+        sora_client: "Sora JavaScript SDK 2021.2.0-canary.1",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1767,6 +1803,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
         }
         message.e2ee = true;
     }
+    if (Array.isArray(options.messagingDataChannels) && 0 < options.messagingDataChannels.length) {
+        message.data_channel_messaging = parseMessagingDataChannels(options.messagingDataChannels);
+    }
     return message;
 }
 function getSignalingNotifyAuthnMetadata(message) {
@@ -1879,6 +1918,12 @@ function createTimelineEvent(eventType, data, logType, dataChannelId, dataChanne
     event.dataChannelLabel = dataChannelLabel;
     return event;
 }
+function createMessagingEvent(label, data) {
+    const event = new Event("messaging");
+    event.label = label;
+    event.data = data;
+    return event;
+}
 
 class ConnectionBase {
     constructor(signalingUrlCandidates, role, channelId, metadata, options, debug) {
@@ -1927,6 +1972,7 @@ class ConnectionBase {
             timeout: () => { },
             timeline: () => { },
             signaling: () => { },
+            messaging: () => { },
         };
         this.authMetadata = null;
         this.e2ee = null;
@@ -2782,7 +2828,7 @@ class ConnectionBase {
                         const candidate = event.candidate.toJSON();
                         const message = Object.assign(candidate, { type: "candidate" });
                         this.trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
-                        this.sendMessage(message);
+                        this.sendSignalingMessage(message);
                     }
                 };
             }
@@ -3002,13 +3048,13 @@ class ConnectionBase {
     sendUpdateAnswer() {
         if (this.pc && this.ws && this.pc.localDescription) {
             this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-            this.sendMessage({ type: "update", sdp: this.pc.localDescription.sdp });
+            this.sendSignalingMessage({ type: "update", sdp: this.pc.localDescription.sdp });
         }
     }
     sendReAnswer() {
         if (this.pc && this.pc.localDescription) {
             this.trace("RE ANSWER SDP", this.pc.localDescription.sdp);
-            this.sendMessage({ type: "re-answer", sdp: this.pc.localDescription.sdp });
+            this.sendSignalingMessage({ type: "re-answer", sdp: this.pc.localDescription.sdp });
         }
     }
     async signalingOnMessageTypeUpdate(message) {
@@ -3224,8 +3270,23 @@ class ConnectionBase {
                 }
             };
         }
+        else if (/^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(dataChannelEvent.channel.label)) {
+            dataChannelEvent.channel.onmessage = (event) => {
+                if (event.target === null) {
+                    return;
+                }
+                const dataChannel = event.target;
+                let data = event.data;
+                if (this.dataChannelsCompress[dataChannel.label] === true) {
+                    const unzlibMessage = unzlibSync(new Uint8Array(event.data));
+                    data = new TextDecoder().decode(unzlibMessage);
+                }
+                const message = JSON.parse(data);
+                this.callbacks.messaging(createMessagingEvent(dataChannel.label, message));
+            };
+        }
     }
-    sendMessage(message) {
+    sendSignalingMessage(message) {
         if (this.dataChannels.signaling) {
             if (this.dataChannelsCompress.signaling === true) {
                 const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
@@ -3305,6 +3366,24 @@ class ConnectionBase {
             }
         };
         return new soraCloseEvent(type, title, initDict);
+    }
+    sendMessage(label, message) {
+        const dataChannel = this.dataChannels[label];
+        // 接続していない場合は何もしない
+        if (this.pc === null) {
+            return;
+        }
+        if (dataChannel === undefined) {
+            throw new Error("Could not find DataChannel");
+        }
+        if (this.dataChannelsCompress[label] === true) {
+            const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+            const zlibMessage = zlibSync(binaryMessage, {});
+            dataChannel.send(zlibMessage);
+        }
+        else {
+            dataChannel.send(JSON.stringify(message));
+        }
     }
     get e2eeSelfFingerprint() {
         if (this.options.e2ee && this.e2ee) {
@@ -3653,7 +3732,7 @@ var sora = {
         return new SoraConnection(signalingUrlCandidates, debug);
     },
     version: function () {
-        return "2021.2.0-canary.0";
+        return "2021.2.0-canary.1";
     },
     helpers: {
         applyMediaStreamConstraints,
