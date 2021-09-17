@@ -1586,8 +1586,12 @@ export default class ConnectionBase {
 
   sendMessage(label: string, message: JSONType): void {
     const dataChannel = this.dataChannels[label];
+    // 接続していない場合は何もしない
+    if (this.pc === null) {
+      return;
+    }
     if (dataChannel === undefined) {
-      throw new Error("error5");
+      throw new Error("Could not find DataChannel");
     }
     if (this.dataChannelsCompress[label] === true) {
       const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
