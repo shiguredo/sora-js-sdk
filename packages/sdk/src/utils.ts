@@ -75,6 +75,12 @@ function parseMessagingDataChannel(params: unknown): SignalingConnectMessagingDa
   if (typeof messagingDataChannel.maxPacketLifeTime === "number") {
     result.max_packet_life_time = messagingDataChannel.maxPacketLifeTime;
   }
+  if (typeof messagingDataChannel.maxRetransmits === "number") {
+    result.max_retransmits = messagingDataChannel.maxRetransmits;
+  }
+  if (typeof messagingDataChannel.protocol === "string") {
+    result.protocol = messagingDataChannel.protocol;
+  }
   return result;
 }
 
