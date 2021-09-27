@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
  * undefined
- * @version: 2021.2.0-canary.1
+ * @version: 2021.2.0-canary.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -598,7 +598,7 @@ function WasmExec () {
 /**
  * @sora/e2ee
  * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.2.0-canary.1
+ * @version: 2021.2.0-canary.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -766,7 +766,7 @@ class SoraE2EE {
         }
     }
     static version() {
-        return "2021.2.0-canary.1";
+        return "2021.2.0-canary.2";
     }
     static wasmVersion() {
         return window.e2ee.version();
@@ -1629,7 +1629,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.2.0-canary.1",
+        sora_client: "Sora JavaScript SDK 2021.2.0-canary.2",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1985,7 +1985,7 @@ class ConnectionBase {
             video: "",
         };
         this.signalingSwitched = false;
-        this.dataChannelsCompress = {};
+        this.signalingOfferMessageDataChannels = {};
     }
     on(kind, callback) {
         // @deprecated message
@@ -2199,7 +2199,8 @@ class ConnectionBase {
         // 終了処理を開始する
         if (this.dataChannels.signaling) {
             const message = { type: "disconnect", reason: title };
-            if (this.dataChannelsCompress.signaling === true) {
+            if (this.signalingOfferMessageDataChannels.signaling &&
+                this.signalingOfferMessageDataChannels.signaling.compress === true) {
                 const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
                 const zlibMessage = zlibSync(binaryMessage, {});
                 if (this.dataChannels.signaling.readyState === "open") {
@@ -2268,6 +2269,7 @@ class ConnectionBase {
             video: "",
         };
         this.signalingSwitched = false;
+        this.signalingOfferMessageDataChannels = {};
         this.clearConnectionTimeout();
     }
     disconnectWebSocket(title) {
@@ -2385,7 +2387,8 @@ class ConnectionBase {
                 clearTimeout(disconnectWaitTimeoutId);
             });
             const message = { type: "disconnect", reason: "NO-ERROR" };
-            if (this.dataChannelsCompress.signaling === true) {
+            if (this.signalingOfferMessageDataChannels.signaling &&
+                this.signalingOfferMessageDataChannels.signaling.compress === true) {
                 const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
                 const zlibMessage = zlibSync(binaryMessage, {});
                 if (this.dataChannels.signaling.readyState === "open") {
@@ -3038,8 +3041,8 @@ class ConnectionBase {
             this.mids.video = message.mid.video;
         }
         if (message.data_channels) {
-            for (const o of message.data_channels) {
-                this.dataChannelsCompress[o.label] = o.compress;
+            for (const dc of message.data_channels) {
+                this.signalingOfferMessageDataChannels[dc.label] = dc;
             }
         }
         this.trace("SIGNALING OFFER MESSAGE", message);
@@ -3208,7 +3211,8 @@ class ConnectionBase {
             dataChannelEvent.channel.onmessage = async (event) => {
                 const channel = event.currentTarget;
                 let data = event.data;
-                if (this.dataChannelsCompress.signaling === true) {
+                if (this.signalingOfferMessageDataChannels.signaling &&
+                    this.signalingOfferMessageDataChannels.signaling.compress === true) {
                     const unzlibMessage = unzlibSync(new Uint8Array(event.data));
                     data = new TextDecoder().decode(unzlibMessage);
                 }
@@ -3223,7 +3227,8 @@ class ConnectionBase {
             dataChannelEvent.channel.onmessage = (event) => {
                 const channel = event.currentTarget;
                 let data = event.data;
-                if (this.dataChannelsCompress.notify === true) {
+                if (this.signalingOfferMessageDataChannels.notify &&
+                    this.signalingOfferMessageDataChannels.notify.compress === true) {
                     const unzlibMessage = unzlibSync(new Uint8Array(event.data));
                     data = new TextDecoder().decode(unzlibMessage);
                 }
@@ -3240,7 +3245,8 @@ class ConnectionBase {
         else if (dataChannelEvent.channel.label === "push") {
             dataChannelEvent.channel.onmessage = (event) => {
                 let data = event.data;
-                if (this.dataChannelsCompress.push === true) {
+                if (this.signalingOfferMessageDataChannels.push &&
+                    this.signalingOfferMessageDataChannels.push.compress === true) {
                     const unzlibMessage = unzlibSync(new Uint8Array(event.data));
                     data = new TextDecoder().decode(unzlibMessage);
                 }
@@ -3259,7 +3265,8 @@ class ConnectionBase {
         else if (dataChannelEvent.channel.label === "stats") {
             dataChannelEvent.channel.onmessage = async (event) => {
                 let data = event.data;
-                if (this.dataChannelsCompress.stats === true) {
+                if (this.signalingOfferMessageDataChannels.stats &&
+                    this.signalingOfferMessageDataChannels.stats.compress === true) {
                     const unzlibMessage = unzlibSync(new Uint8Array(event.data));
                     data = new TextDecoder().decode(unzlibMessage);
                 }
@@ -3277,7 +3284,8 @@ class ConnectionBase {
                 }
                 const dataChannel = event.target;
                 let data = event.data;
-                if (this.dataChannelsCompress[dataChannel.label] === true) {
+                const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
+                if (settings !== undefined && settings.compress === true) {
                     const unzlibMessage = unzlibSync(new Uint8Array(event.data));
                     data = new TextDecoder().decode(unzlibMessage);
                 }
@@ -3288,7 +3296,8 @@ class ConnectionBase {
     }
     sendSignalingMessage(message) {
         if (this.dataChannels.signaling) {
-            if (this.dataChannelsCompress.signaling === true) {
+            if (this.signalingOfferMessageDataChannels.signaling &&
+                this.signalingOfferMessageDataChannels.signaling.compress === true) {
                 const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
                 const zlibMessage = zlibSync(binaryMessage, {});
                 this.dataChannels.signaling.send(zlibMessage);
@@ -3319,7 +3328,8 @@ class ConnectionBase {
                 type: "stats",
                 reports: reports,
             };
-            if (this.dataChannelsCompress.stats === true) {
+            if (this.signalingOfferMessageDataChannels.stats &&
+                this.signalingOfferMessageDataChannels.stats.compress === true) {
                 const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
                 const zlibMessage = zlibSync(binaryMessage, {});
                 this.dataChannels.stats.send(zlibMessage);
@@ -3376,7 +3386,8 @@ class ConnectionBase {
         if (dataChannel === undefined) {
             throw new Error("Could not find DataChannel");
         }
-        if (this.dataChannelsCompress[label] === true) {
+        const settings = this.signalingOfferMessageDataChannels[label];
+        if (settings !== undefined && settings.compress === true) {
             const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
             const zlibMessage = zlibSync(binaryMessage, {});
             dataChannel.send(zlibMessage);
@@ -3411,6 +3422,37 @@ class ConnectionBase {
             return "";
         }
         return this.ws.url;
+    }
+    get messagingDataChannels() {
+        const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
+            return /^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(label);
+        });
+        const result = [];
+        for (const label of messagingDataChannellabels) {
+            const dataChannel = this.dataChannels[label];
+            if (!dataChannel) {
+                continue;
+            }
+            const settings = this.signalingOfferMessageDataChannels[label];
+            if (!settings) {
+                continue;
+            }
+            const messagingDataChannel = {
+                label: dataChannel.label,
+                ordered: dataChannel.ordered,
+                protocol: dataChannel.protocol,
+                compress: settings.compress,
+                direction: settings.direction,
+            };
+            if (typeof dataChannel.maxPacketLifeTime === "number") {
+                messagingDataChannel.maxPacketLifeTime = dataChannel.maxPacketLifeTime;
+            }
+            if (typeof dataChannel.maxRetransmits === "number") {
+                messagingDataChannel.maxRetransmits = dataChannel.maxRetransmits;
+            }
+            result.push(messagingDataChannel);
+        }
+        return result;
     }
 }
 
@@ -3732,7 +3774,7 @@ var sora = {
         return new SoraConnection(signalingUrlCandidates, debug);
     },
     version: function () {
-        return "2021.2.0-canary.1";
+        return "2021.2.0-canary.2";
     },
     helpers: {
         applyMediaStreamConstraints,

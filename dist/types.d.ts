@@ -63,6 +63,11 @@ export declare type SignalingConnectMessage = {
     data_channel_messaging?: SignalingConnectMessagingDataChannel[];
 };
 export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage | SignalingRedirectMessage;
+export declare type SignalingOfferMessageDataChannel = {
+    label: string;
+    direction: MessagingDataChannelDirection;
+    compress: boolean;
+};
 export declare type SignalingOfferMessage = {
     type: "offer";
     sdp: string;
@@ -73,10 +78,7 @@ export declare type SignalingOfferMessage = {
     encodings?: RTCRtpEncodingParameters[];
     ignore_disconnect_websocket?: boolean;
     data_channel_signaling?: boolean;
-    data_channels?: Array<{
-        label: string;
-        compress: boolean;
-    }>;
+    data_channels?: SignalingOfferMessageDataChannel[];
     mid?: {
         audio?: string;
         video?: string;
