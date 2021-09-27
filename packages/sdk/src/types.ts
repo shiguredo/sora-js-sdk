@@ -84,6 +84,12 @@ export type SignalingMessage =
   | SignalingSwitchedMessage
   | SignalingRedirectMessage;
 
+export type SignalingOfferMessageDataChannel = {
+  label: string;
+  direction: MessagingDataChannelDirection;
+  compress: boolean;
+};
+
 export type SignalingOfferMessage = {
   type: "offer";
   sdp: string;
@@ -94,10 +100,7 @@ export type SignalingOfferMessage = {
   encodings?: RTCRtpEncodingParameters[];
   ignore_disconnect_websocket?: boolean;
   data_channel_signaling?: boolean;
-  data_channels?: Array<{
-    label: string;
-    compress: boolean;
-  }>;
+  data_channels?: SignalingOfferMessageDataChannel[];
   mid?: {
     audio?: string;
     video?: string;

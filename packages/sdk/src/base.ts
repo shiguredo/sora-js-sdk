@@ -17,10 +17,12 @@ import {
   Callbacks,
   ConnectionOptions,
   JSONType,
+  MessagingDataChannel,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
   SignalingOfferMessage,
+  SignalingOfferMessageDataChannel,
   SignalingPingMessage,
   SignalingPushMessage,
   SignalingReOfferMessage,
@@ -67,9 +69,6 @@ export default class ConnectionBase {
   protected dataChannels: {
     [key in string]?: RTCDataChannel;
   };
-  private dataChannelsCompress: {
-    [key in string]?: boolean;
-  };
   private connectionTimeout: number;
   private signalingCandidateTimeout: number;
   private disconnectWaitTimeout: number;
@@ -78,6 +77,9 @@ export default class ConnectionBase {
     video: string;
   };
   private signalingSwitched: boolean;
+  private signalingOfferMessageDataChannels: {
+    [key in string]?: SignalingOfferMessageDataChannel;
+  };
   constructor(
     signalingUrlCandidates: string | string[],
     role: string,
@@ -144,7 +146,7 @@ export default class ConnectionBase {
       video: "",
     };
     this.signalingSwitched = false;
-    this.dataChannelsCompress = {};
+    this.signalingOfferMessageDataChannels = {};
   }
 
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
@@ -368,7 +370,10 @@ export default class ConnectionBase {
     // 終了処理を開始する
     if (this.dataChannels.signaling) {
       const message = { type: "disconnect", reason: title };
-      if (this.dataChannelsCompress.signaling === true) {
+      if (
+        this.signalingOfferMessageDataChannels.signaling &&
+        this.signalingOfferMessageDataChannels.signaling.compress === true
+      ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
         if (this.dataChannels.signaling.readyState === "open") {
@@ -435,6 +440,7 @@ export default class ConnectionBase {
       video: "",
     };
     this.signalingSwitched = false;
+    this.signalingOfferMessageDataChannels = {};
     this.clearConnectionTimeout();
   }
 
@@ -553,7 +559,10 @@ export default class ConnectionBase {
           clearTimeout(disconnectWaitTimeoutId);
         });
       const message = { type: "disconnect", reason: "NO-ERROR" };
-      if (this.dataChannelsCompress.signaling === true) {
+      if (
+        this.signalingOfferMessageDataChannels.signaling &&
+        this.signalingOfferMessageDataChannels.signaling.compress === true
+      ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
         if (this.dataChannels.signaling.readyState === "open") {
@@ -1236,8 +1245,8 @@ export default class ConnectionBase {
       this.mids.video = message.mid.video;
     }
     if (message.data_channels) {
-      for (const o of message.data_channels) {
-        this.dataChannelsCompress[o.label] = o.compress;
+      for (const dc of message.data_channels) {
+        this.signalingOfferMessageDataChannels[dc.label] = dc;
       }
     }
     this.trace("SIGNALING OFFER MESSAGE", message);
@@ -1423,7 +1432,10 @@ export default class ConnectionBase {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel;
         let data = event.data as string;
-        if (this.dataChannelsCompress.signaling === true) {
+        if (
+          this.signalingOfferMessageDataChannels.signaling &&
+          this.signalingOfferMessageDataChannels.signaling.compress === true
+        ) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
@@ -1437,7 +1449,10 @@ export default class ConnectionBase {
       dataChannelEvent.channel.onmessage = (event): void => {
         const channel = event.currentTarget as RTCDataChannel;
         let data = event.data as string;
-        if (this.dataChannelsCompress.notify === true) {
+        if (
+          this.signalingOfferMessageDataChannels.notify &&
+          this.signalingOfferMessageDataChannels.notify.compress === true
+        ) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
@@ -1452,7 +1467,10 @@ export default class ConnectionBase {
     } else if (dataChannelEvent.channel.label === "push") {
       dataChannelEvent.channel.onmessage = (event): void => {
         let data = event.data as string;
-        if (this.dataChannelsCompress.push === true) {
+        if (
+          this.signalingOfferMessageDataChannels.push &&
+          this.signalingOfferMessageDataChannels.push.compress === true
+        ) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
@@ -1469,7 +1487,10 @@ export default class ConnectionBase {
     } else if (dataChannelEvent.channel.label === "stats") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         let data = event.data as string;
-        if (this.dataChannelsCompress.stats === true) {
+        if (
+          this.signalingOfferMessageDataChannels.stats &&
+          this.signalingOfferMessageDataChannels.stats.compress === true
+        ) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
@@ -1486,7 +1507,8 @@ export default class ConnectionBase {
         }
         const dataChannel = event.target as RTCDataChannel;
         let data = event.data as string;
-        if (this.dataChannelsCompress[dataChannel.label] === true) {
+        const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
+        if (settings !== undefined && settings.compress === true) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
@@ -1498,7 +1520,10 @@ export default class ConnectionBase {
 
   private sendSignalingMessage(message: { type: string; [key: string]: unknown }): void {
     if (this.dataChannels.signaling) {
-      if (this.dataChannelsCompress.signaling === true) {
+      if (
+        this.signalingOfferMessageDataChannels.signaling &&
+        this.signalingOfferMessageDataChannels.signaling.compress === true
+      ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
         this.dataChannels.signaling.send(zlibMessage);
@@ -1528,7 +1553,10 @@ export default class ConnectionBase {
         type: "stats",
         reports: reports,
       };
-      if (this.dataChannelsCompress.stats === true) {
+      if (
+        this.signalingOfferMessageDataChannels.stats &&
+        this.signalingOfferMessageDataChannels.stats.compress === true
+      ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
         this.dataChannels.stats.send(zlibMessage);
@@ -1593,7 +1621,8 @@ export default class ConnectionBase {
     if (dataChannel === undefined) {
       throw new Error("Could not find DataChannel");
     }
-    if (this.dataChannelsCompress[label] === true) {
+    const settings = this.signalingOfferMessageDataChannels[label];
+    if (settings !== undefined && settings.compress === true) {
       const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
       const zlibMessage = zlibSync(binaryMessage, {});
       dataChannel.send(zlibMessage);
@@ -1633,5 +1662,37 @@ export default class ConnectionBase {
       return "";
     }
     return this.ws.url;
+  }
+
+  get messagingDataChannels(): MessagingDataChannel[] {
+    const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
+      return /^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(label);
+    });
+    const result: MessagingDataChannel[] = [];
+    for (const label of messagingDataChannellabels) {
+      const dataChannel = this.dataChannels[label];
+      if (!dataChannel) {
+        continue;
+      }
+      const settings = this.signalingOfferMessageDataChannels[label];
+      if (!settings) {
+        continue;
+      }
+      const messagingDataChannel: MessagingDataChannel = {
+        label: dataChannel.label,
+        ordered: dataChannel.ordered,
+        protocol: dataChannel.protocol,
+        compress: settings.compress,
+        direction: settings.direction,
+      };
+      if (typeof dataChannel.maxPacketLifeTime === "number") {
+        messagingDataChannel.maxPacketLifeTime = dataChannel.maxPacketLifeTime;
+      }
+      if (typeof dataChannel.maxRetransmits === "number") {
+        messagingDataChannel.maxRetransmits = dataChannel.maxRetransmits;
+      }
+      result.push(messagingDataChannel);
+    }
+    return result;
   }
 }
