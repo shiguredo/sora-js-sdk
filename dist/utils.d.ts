@@ -1,4 +1,4 @@
-import { ConnectionOptions, JSONType, MessagingEvent, PreKeyBundle, SignalingConnectMessage, SignalingEvent, SignalingNotifyMetadata, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, TimelineEvent, TimelineEventLogType, TransportType } from "./types";
+import { ConnectionOptions, JSONType, DataChannelMessageEvent, PreKeyBundle, SignalingConnectMessage, SignalingEvent, SignalingNotifyMetadata, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, TimelineEvent, TimelineEventLogType, TransportType } from "./types";
 export declare function isSafari(): boolean;
 export declare function isChrome(): boolean;
 export declare function createSignalingMessage(offerSDP: string, role: string, channelId: string | null | undefined, metadata: JSONType | undefined, options: ConnectionOptions, redirect: boolean): SignalingConnectMessage;
@@ -13,4 +13,4 @@ export declare class ConnectError extends Error {
 export declare function createSignalingEvent(eventType: string, data: unknown, transportType: TransportType): SignalingEvent;
 export declare function createDataChannelData(channel: RTCDataChannel): Record<string, unknown>;
 export declare function createTimelineEvent(eventType: string, data: unknown, logType: TimelineEventLogType, dataChannelId?: number | null, dataChannelLabel?: string): TimelineEvent;
-export declare function createMessagingEvent(label: string, data: JSONType): MessagingEvent;
+export declare function createDataChannelMessageEvent(label: string, data: JSONType): DataChannelMessageEvent;

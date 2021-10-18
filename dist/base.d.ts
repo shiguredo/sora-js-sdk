@@ -1,4 +1,4 @@
-import { Callbacks, ConnectionOptions, JSONType, MessagingDataChannel, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage } from "./types";
+import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
 declare global {
     interface Algorithm {
@@ -110,5 +110,5 @@ export default class ConnectionBase {
     get video(): boolean;
     get signalingUrl(): string | string[];
     get connectedSignalingUrl(): string;
-    get messagingDataChannels(): MessagingDataChannel[];
+    get messagingDataChannels(): DataChannelConfiguration[];
 }

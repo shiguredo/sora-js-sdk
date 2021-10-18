@@ -1,7 +1,7 @@
 /**
  * @sora/sdk
- * undefined
- * @version: 2021.2.0-canary.2
+ * WebRTC SFU Sora JavaScript SDK
+ * @version: 2021.2.0-canary.3
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -10,7 +10,7 @@
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 	typeof define === 'function' && define.amd ? define(factory) :
 	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Sora = factory());
-}(this, (function () { 'use strict';
+})(this, (function () { 'use strict';
 
 	// Copyright 2018 The Go Authors. All rights reserved.
 	// Use of this source code is governed by a BSD-style
@@ -604,7 +604,7 @@
 	/**
 	 * @sora/e2ee
 	 * WebRTC SFU Sora JavaScript E2EE Library
-	 * @version: 2021.2.0-canary.2
+	 * @version: 2021.2.0-canary.3
 	 * @author: Shiguredo Inc.
 	 * @license: Apache-2.0
 	 **/
@@ -772,7 +772,7 @@
 	        }
 	    }
 	    static version() {
-	        return "2021.2.0-canary.2";
+	        return "2021.2.0-canary.3";
 	    }
 	    static wasmVersion() {
 	        return window.e2ee.version();
@@ -1587,39 +1587,39 @@
 	    const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTEMSIONS.every((h) => headerExtensions.includes(h));
 	    return hasAllRequiredHeaderExtensions;
 	}
-	function parseMessagingDataChannel(params) {
-	    if (typeof params !== "object" || params === null) {
-	        throw new Error("Messaging DataChannel failed. Options messagingDataChannel must be type 'object'");
+	function parseDataChannelConfiguration(dataChannelConfiguration) {
+	    if (typeof dataChannelConfiguration !== "object" || dataChannelConfiguration === null) {
+	        throw new Error("Failed to parse options dataChannels. Options dataChannels element must be type 'object'");
 	    }
-	    const messagingDataChannel = params;
+	    const configuration = dataChannelConfiguration;
 	    const result = {};
-	    if (typeof messagingDataChannel.label === "string") {
-	        result.label = messagingDataChannel.label;
+	    if (typeof configuration.label === "string") {
+	        result.label = configuration.label;
 	    }
-	    if (typeof messagingDataChannel.direction === "string") {
-	        result.direction = messagingDataChannel.direction;
+	    if (typeof configuration.direction === "string") {
+	        result.direction = configuration.direction;
 	    }
-	    if (typeof messagingDataChannel.ordered === "boolean") {
-	        result.ordered = messagingDataChannel.ordered;
+	    if (typeof configuration.ordered === "boolean") {
+	        result.ordered = configuration.ordered;
 	    }
-	    if (typeof messagingDataChannel.compress === "boolean") {
-	        result.compress = messagingDataChannel.compress;
+	    if (typeof configuration.compress === "boolean") {
+	        result.compress = configuration.compress;
 	    }
-	    if (typeof messagingDataChannel.maxPacketLifeTime === "number") {
-	        result.max_packet_life_time = messagingDataChannel.maxPacketLifeTime;
+	    if (typeof configuration.maxPacketLifeTime === "number") {
+	        result.max_packet_life_time = configuration.maxPacketLifeTime;
 	    }
-	    if (typeof messagingDataChannel.maxRetransmits === "number") {
-	        result.max_retransmits = messagingDataChannel.maxRetransmits;
+	    if (typeof configuration.maxRetransmits === "number") {
+	        result.max_retransmits = configuration.maxRetransmits;
 	    }
-	    if (typeof messagingDataChannel.protocol === "string") {
-	        result.protocol = messagingDataChannel.protocol;
+	    if (typeof configuration.protocol === "string") {
+	        result.protocol = configuration.protocol;
 	    }
 	    return result;
 	}
-	function parseMessagingDataChannels(messagingDataChannels) {
+	function parseDataChannelConfigurations(dataChannelConfigurations) {
 	    const result = [];
-	    for (const messagingDataChannel of messagingDataChannels) {
-	        result.push(parseMessagingDataChannel(messagingDataChannel));
+	    for (const dataChannelConfiguration of dataChannelConfigurations) {
+	        result.push(parseDataChannelConfiguration(dataChannelConfiguration));
 	    }
 	    return result;
 	}
@@ -1635,7 +1635,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.2.0-canary.2",
+	        sora_client: "Sora JavaScript SDK 2021.2.0-canary.3",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1809,8 +1809,8 @@
 	        }
 	        message.e2ee = true;
 	    }
-	    if (Array.isArray(options.messagingDataChannels) && 0 < options.messagingDataChannels.length) {
-	        message.data_channel_messaging = parseMessagingDataChannels(options.messagingDataChannels);
+	    if (Array.isArray(options.dataChannels) && 0 < options.dataChannels.length) {
+	        message.data_channels = parseDataChannelConfigurations(options.dataChannels);
 	    }
 	    return message;
 	}
@@ -1924,8 +1924,8 @@
 	    event.dataChannelLabel = dataChannelLabel;
 	    return event;
 	}
-	function createMessagingEvent(label, data) {
-	    const event = new Event("messaging");
+	function createDataChannelMessageEvent(label, data) {
+	    const event = new Event("message");
 	    event.label = label;
 	    event.data = data;
 	    return event;
@@ -1978,7 +1978,7 @@
 	            timeout: () => { },
 	            timeline: () => { },
 	            signaling: () => { },
-	            messaging: () => { },
+	            message: () => { },
 	        };
 	        this.authMetadata = null;
 	        this.e2ee = null;
@@ -2454,6 +2454,12 @@
 	            const dataChannel = this.dataChannels[key];
 	            if (dataChannel) {
 	                dataChannel.onmessage = null;
+	                // onclose はログを吐く専用に残す
+	                dataChannel.onclose = (event) => {
+	                    const channel = event.currentTarget;
+	                    this.writeDataChannelTimelineLog("onclose", channel);
+	                    this.trace("CLOSE DATA CHANNEL", channel.label);
+	                };
 	            }
 	        }
 	        let event = null;
@@ -3296,7 +3302,7 @@
 	                    data = new TextDecoder().decode(unzlibMessage);
 	                }
 	                const message = JSON.parse(data);
-	                this.callbacks.messaging(createMessagingEvent(dataChannel.label, message));
+	                this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, message));
 	            };
 	        }
 	    }
@@ -3780,7 +3786,7 @@
 	        return new SoraConnection(signalingUrlCandidates, debug);
 	    },
 	    version: function () {
-	        return "2021.2.0-canary.2";
+	        return "2021.2.0-canary.3";
 	    },
 	    helpers: {
 	        applyMediaStreamConstraints,
@@ -3789,4 +3795,4 @@
 
 	return sora;
 
-})));
+}));
