@@ -17,7 +17,7 @@ import {
   Callbacks,
   ConnectionOptions,
   JSONType,
-  MessagingDataChannel,
+  DataChannelConfiguration,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
@@ -1664,11 +1664,11 @@ export default class ConnectionBase {
     return this.ws.url;
   }
 
-  get messagingDataChannels(): MessagingDataChannel[] {
+  get messagingDataChannels(): DataChannelConfiguration[] {
     const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
       return /^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(label);
     });
-    const result: MessagingDataChannel[] = [];
+    const result: DataChannelConfiguration[] = [];
     for (const label of messagingDataChannellabels) {
       const dataChannel = this.dataChannels[label];
       if (!dataChannel) {
@@ -1678,7 +1678,7 @@ export default class ConnectionBase {
       if (!settings) {
         continue;
       }
-      const messagingDataChannel: MessagingDataChannel = {
+      const messagingDataChannel: DataChannelConfiguration = {
         label: dataChannel.label,
         ordered: dataChannel.ordered,
         protocol: dataChannel.protocol,

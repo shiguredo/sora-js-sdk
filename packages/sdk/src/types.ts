@@ -253,7 +253,7 @@ export type SignalingNotifyNetworkStatus = {
 
 export type DataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
 
-export type MessagingDataChannel = {
+export type DataChannelConfiguration = {
   label: string;
   direction: DataChannelDirection;
   compress?: boolean;
@@ -295,7 +295,7 @@ export type ConnectionOptions = {
   ignoreDisconnectWebSocket?: boolean;
   disconnectWaitTimeout?: number;
   signalingCandidateTimeout?: number;
-  messagingDataChannels?: MessagingDataChannel[];
+  dataChannels?: DataChannelConfiguration[];
 };
 
 export type Callbacks = {

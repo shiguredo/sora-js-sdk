@@ -2,7 +2,7 @@ import {
   ConnectionOptions,
   Browser,
   JSONType,
-  MessagingDataChannel,
+  DataChannelConfiguration,
   MessagingEvent,
   PreKeyBundle,
   SignalingConnectMessage,
@@ -54,40 +54,40 @@ function enabledSimulcast(): boolean {
   return hasAllRequiredHeaderExtensions;
 }
 
-function parseMessagingDataChannel(params: unknown): SignalingConnectDataChannel {
-  if (typeof params !== "object" || params === null) {
-    throw new Error("Messaging DataChannel failed. Options messagingDataChannel must be type 'object'");
+function parseDataChannelConfiguration(dataChannelConfiguration: unknown): SignalingConnectDataChannel {
+  if (typeof dataChannelConfiguration !== "object" || dataChannelConfiguration === null) {
+    throw new Error("Failed to parse options dataChannels. Options dataChannels element must be type 'object'");
   }
-  const messagingDataChannel = params as MessagingDataChannel;
+  const configuration = dataChannelConfiguration as DataChannelConfiguration;
   const result: SignalingConnectDataChannel = {};
-  if (typeof messagingDataChannel.label === "string") {
-    result.label = messagingDataChannel.label;
+  if (typeof configuration.label === "string") {
+    result.label = configuration.label;
   }
-  if (typeof messagingDataChannel.direction === "string") {
-    result.direction = messagingDataChannel.direction;
+  if (typeof configuration.direction === "string") {
+    result.direction = configuration.direction;
   }
-  if (typeof messagingDataChannel.ordered === "boolean") {
-    result.ordered = messagingDataChannel.ordered;
+  if (typeof configuration.ordered === "boolean") {
+    result.ordered = configuration.ordered;
   }
-  if (typeof messagingDataChannel.compress === "boolean") {
-    result.compress = messagingDataChannel.compress;
+  if (typeof configuration.compress === "boolean") {
+    result.compress = configuration.compress;
   }
-  if (typeof messagingDataChannel.maxPacketLifeTime === "number") {
-    result.max_packet_life_time = messagingDataChannel.maxPacketLifeTime;
+  if (typeof configuration.maxPacketLifeTime === "number") {
+    result.max_packet_life_time = configuration.maxPacketLifeTime;
   }
-  if (typeof messagingDataChannel.maxRetransmits === "number") {
-    result.max_retransmits = messagingDataChannel.maxRetransmits;
+  if (typeof configuration.maxRetransmits === "number") {
+    result.max_retransmits = configuration.maxRetransmits;
   }
-  if (typeof messagingDataChannel.protocol === "string") {
-    result.protocol = messagingDataChannel.protocol;
+  if (typeof configuration.protocol === "string") {
+    result.protocol = configuration.protocol;
   }
   return result;
 }
 
-function parseMessagingDataChannels(messagingDataChannels: unknown[]): SignalingConnectDataChannel[] {
+function parseDataChannelConfigurations(dataChannelConfigurations: unknown[]): SignalingConnectDataChannel[] {
   const result: SignalingConnectDataChannel[] = [];
-  for (const messagingDataChannel of messagingDataChannels) {
-    result.push(parseMessagingDataChannel(messagingDataChannel));
+  for (const dataChannelConfiguration of dataChannelConfigurations) {
+    result.push(parseDataChannelConfiguration(dataChannelConfiguration));
   }
   return result;
 }
@@ -304,8 +304,8 @@ export function createSignalingMessage(
     message.e2ee = true;
   }
 
-  if (Array.isArray(options.messagingDataChannels) && 0 < options.messagingDataChannels.length) {
-    message.data_channels = parseMessagingDataChannels(options.messagingDataChannels);
+  if (Array.isArray(options.dataChannels) && 0 < options.dataChannels.length) {
+    message.data_channels = parseDataChannelConfigurations(options.dataChannels);
   }
 
   return message;
