@@ -472,7 +472,7 @@ test("createSignalingMessage dataChannels option", () => {
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(baseExpectedMessage);
 
-  // messagingDataChannel に object 以外が含まれる場合は例外が発生する
+  // dataChannel に object 以外が含まれる場合は例外が発生する
   const options3 = {
     dataChannels: [{ label: "test", direction: "sendrecv" }, "test"],
   };
@@ -481,7 +481,7 @@ test("createSignalingMessage dataChannels option", () => {
     createSignalingMessage(sdp, role, channelId, null, options3, false);
   }).toThrow("Failed to parse options dataChannels. Options dataChannels element must be type 'object'");
 
-  // messagingDataChannel に null が含まれる場合は例外が発生する
+  // dataChannel に null が含まれる場合は例外が発生する
   const options4 = {
     dataChannels: [{ label: "test", direction: "sendrecv" }, null],
   };
