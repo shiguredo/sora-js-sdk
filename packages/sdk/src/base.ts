@@ -621,6 +621,12 @@ export default class ConnectionBase {
       const dataChannel = this.dataChannels[key];
       if (dataChannel) {
         dataChannel.onmessage = null;
+        // onclose はログを吐く専用に残す
+        dataChannel.onclose = (event): void => {
+          const channel = event.currentTarget as RTCDataChannel;
+          this.writeDataChannelTimelineLog("onclose", channel);
+          this.trace("CLOSE DATA CHANNEL", channel.label);
+        };
       }
     }
     let event = null;
