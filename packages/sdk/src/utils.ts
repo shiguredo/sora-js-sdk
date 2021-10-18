@@ -6,7 +6,7 @@ import {
   MessagingEvent,
   PreKeyBundle,
   SignalingConnectMessage,
-  SignalingConnectMessagingDataChannel,
+  SignalingConnectDataChannel,
   SignalingEvent,
   SignalingNotifyMetadata,
   SignalingNotifyConnectionCreated,
@@ -54,12 +54,12 @@ function enabledSimulcast(): boolean {
   return hasAllRequiredHeaderExtensions;
 }
 
-function parseMessagingDataChannel(params: unknown): SignalingConnectMessagingDataChannel {
+function parseMessagingDataChannel(params: unknown): SignalingConnectDataChannel {
   if (typeof params !== "object" || params === null) {
     throw new Error("Messaging DataChannel failed. Options messagingDataChannel must be type 'object'");
   }
   const messagingDataChannel = params as MessagingDataChannel;
-  const result: SignalingConnectMessagingDataChannel = {};
+  const result: SignalingConnectDataChannel = {};
   if (typeof messagingDataChannel.label === "string") {
     result.label = messagingDataChannel.label;
   }
@@ -84,8 +84,8 @@ function parseMessagingDataChannel(params: unknown): SignalingConnectMessagingDa
   return result;
 }
 
-function parseMessagingDataChannels(messagingDataChannels: unknown[]): SignalingConnectMessagingDataChannel[] {
-  const result: SignalingConnectMessagingDataChannel[] = [];
+function parseMessagingDataChannels(messagingDataChannels: unknown[]): SignalingConnectDataChannel[] {
+  const result: SignalingConnectDataChannel[] = [];
   for (const messagingDataChannel of messagingDataChannels) {
     result.push(parseMessagingDataChannel(messagingDataChannel));
   }
@@ -305,7 +305,7 @@ export function createSignalingMessage(
   }
 
   if (Array.isArray(options.messagingDataChannels) && 0 < options.messagingDataChannels.length) {
-    message.data_channel_messaging = parseMessagingDataChannels(options.messagingDataChannels);
+    message.data_channels = parseMessagingDataChannels(options.messagingDataChannels);
   }
 
   return message;

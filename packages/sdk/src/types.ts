@@ -37,9 +37,9 @@ export type SignalingVideo =
 
 export type Role = "sendrecv" | "sendonly" | "recvonly";
 
-export type SignalingConnectMessagingDataChannel = {
+export type SignalingConnectDataChannel = {
   label?: string;
-  direction?: MessagingDataChannelDirection;
+  direction?: DataChannelDirection;
   compress?: boolean;
   max_packet_life_time?: number;
   max_retransmits?: number;
@@ -70,7 +70,7 @@ export type SignalingConnectMessage = {
   data_channel_signaling?: boolean;
   ignore_disconnect_websocket?: boolean;
   redirect?: true;
-  data_channel_messaging?: SignalingConnectMessagingDataChannel[];
+  data_channels?: SignalingConnectDataChannel[];
 };
 
 export type SignalingMessage =
@@ -86,7 +86,7 @@ export type SignalingMessage =
 
 export type SignalingOfferMessageDataChannel = {
   label: string;
-  direction: MessagingDataChannelDirection;
+  direction: DataChannelDirection;
   compress: boolean;
 };
 
@@ -251,11 +251,11 @@ export type SignalingNotifyNetworkStatus = {
   unstable_level: 0 | 1 | 2 | 3;
 };
 
-export type MessagingDataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
+export type DataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
 
 export type MessagingDataChannel = {
   label: string;
-  direction: MessagingDataChannelDirection;
+  direction: DataChannelDirection;
   compress?: boolean;
   maxPacketLifeTime?: number;
   maxRetransmits?: number;
