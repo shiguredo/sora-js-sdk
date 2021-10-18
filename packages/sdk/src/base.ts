@@ -3,7 +3,7 @@ import { unzlibSync, zlibSync } from "fflate";
 import {
   ConnectError,
   createDataChannelData,
-  createMessagingEvent,
+  createDataChannelMessageEvent,
   createSignalingEvent,
   createSignalingMessage,
   createTimelineEvent,
@@ -17,7 +17,7 @@ import {
   Callbacks,
   ConnectionOptions,
   JSONType,
-  MessagingDataChannel,
+  DataChannelConfiguration,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
@@ -133,7 +133,7 @@ export default class ConnectionBase {
       timeout: (): void => {},
       timeline: (): void => {},
       signaling: (): void => {},
-      messaging: (): void => {},
+      message: (): void => {},
     };
     this.authMetadata = null;
     this.e2ee = null;
@@ -1513,7 +1513,7 @@ export default class ConnectionBase {
           data = new TextDecoder().decode(unzlibMessage);
         }
         const message = JSON.parse(data) as JSONType;
-        this.callbacks.messaging(createMessagingEvent(dataChannel.label, message));
+        this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, message));
       };
     }
   }
@@ -1664,11 +1664,11 @@ export default class ConnectionBase {
     return this.ws.url;
   }
 
-  get messagingDataChannels(): MessagingDataChannel[] {
+  get messagingDataChannels(): DataChannelConfiguration[] {
     const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
       return /^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(label);
     });
-    const result: MessagingDataChannel[] = [];
+    const result: DataChannelConfiguration[] = [];
     for (const label of messagingDataChannellabels) {
       const dataChannel = this.dataChannels[label];
       if (!dataChannel) {
@@ -1678,7 +1678,7 @@ export default class ConnectionBase {
       if (!settings) {
         continue;
       }
-      const messagingDataChannel: MessagingDataChannel = {
+      const messagingDataChannel: DataChannelConfiguration = {
         label: dataChannel.label,
         ordered: dataChannel.ordered,
         protocol: dataChannel.protocol,
