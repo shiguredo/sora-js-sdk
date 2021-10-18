@@ -3,7 +3,7 @@ import { unzlibSync, zlibSync } from "fflate";
 import {
   ConnectError,
   createDataChannelData,
-  createMessagingEvent,
+  createDataChannelMessageEvent,
   createSignalingEvent,
   createSignalingMessage,
   createTimelineEvent,
@@ -133,7 +133,7 @@ export default class ConnectionBase {
       timeout: (): void => {},
       timeline: (): void => {},
       signaling: (): void => {},
-      messaging: (): void => {},
+      message: (): void => {},
     };
     this.authMetadata = null;
     this.e2ee = null;
@@ -1513,7 +1513,7 @@ export default class ConnectionBase {
           data = new TextDecoder().decode(unzlibMessage);
         }
         const message = JSON.parse(data) as JSONType;
-        this.callbacks.messaging(createMessagingEvent(dataChannel.label, message));
+        this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, message));
       };
     }
   }

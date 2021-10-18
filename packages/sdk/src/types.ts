@@ -310,7 +310,7 @@ export type Callbacks = {
   timeout: () => void;
   timeline: (event: TimelineEvent) => void;
   signaling: (event: SignalingEvent) => void;
-  messaging: (event: MessagingEvent) => void;
+  message: (event: DataChannelMessageEvent) => void;
 };
 
 export type PreKeyBundle = {
@@ -331,7 +331,7 @@ export interface SignalingEvent extends Event {
   data?: any;
 }
 
-export interface MessagingEvent extends Event {
+export interface DataChannelMessageEvent extends Event {
   label: string;
   data: JSONType;
 }

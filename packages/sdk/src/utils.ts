@@ -3,7 +3,7 @@ import {
   Browser,
   JSONType,
   DataChannelConfiguration,
-  MessagingEvent,
+  DataChannelMessageEvent,
   PreKeyBundle,
   SignalingConnectMessage,
   SignalingConnectDataChannel,
@@ -432,8 +432,8 @@ export function createTimelineEvent(
   return event;
 }
 
-export function createMessagingEvent(label: string, data: JSONType): MessagingEvent {
-  const event = new Event("messaging") as MessagingEvent;
+export function createDataChannelMessageEvent(label: string, data: JSONType): DataChannelMessageEvent {
+  const event = new Event("message") as DataChannelMessageEvent;
   event.label = label;
   event.data = data;
   return event;
