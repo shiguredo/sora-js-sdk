@@ -1,5 +1,5 @@
 import { createSignalingMessage } from "../src/utils";
-import { AudioCodecType, MessagingDataChannelDirection, VideoCodecType } from "../src/types";
+import { AudioCodecType, DataChannelDirection, VideoCodecType } from "../src/types";
 
 const channelId = "7N3fsMHob";
 const role = "sendonly";
@@ -458,45 +458,45 @@ test("createSignalingMessage redirect", () => {
   );
 });
 
-test("createSignalingMessage messagingDataChannels option", () => {
+test("createSignalingMessage dataChannels option", () => {
   // array 以外の場合は無視
   const options1 = {
-    messagingDataChannels: "test",
+    dataChannels: "test",
   };
   // @ts-ignore option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, role, channelId, null, options1, false)).toEqual(baseExpectedMessage);
 
   // array が空の場合は追加されない
   const options2 = {
-    messagingDataChannels: [],
+    dataChannels: [],
   };
   expect(createSignalingMessage(sdp, role, channelId, null, options2, false)).toEqual(baseExpectedMessage);
 
   // messagingDataChannel に object 以外が含まれる場合は例外が発生する
   const options3 = {
-    messagingDataChannels: [{ label: "test", direction: "sendrecv" }, "test"],
+    dataChannels: [{ label: "test", direction: "sendrecv" }, "test"],
   };
   expect(() => {
     // @ts-ignore option で指定されている型以外を引数に指定する
     createSignalingMessage(sdp, role, channelId, null, options3, false);
-  }).toThrow("Messaging DataChannel failed. Options messagingDataChannel must be type 'object'");
+  }).toThrow("Failed to parse options dataChannels. Options dataChannels element must be type 'object'");
 
   // messagingDataChannel に null が含まれる場合は例外が発生する
   const options4 = {
-    messagingDataChannels: [{ label: "test", direction: "sendrecv" }, null],
+    dataChannels: [{ label: "test", direction: "sendrecv" }, null],
   };
   expect(() => {
     // @ts-ignore option で指定されている型以外を引数に指定する
     createSignalingMessage(sdp, role, channelId, null, options4, false);
-  }).toThrow("Messaging DataChannel failed. Options messagingDataChannel must be type 'object'");
+  }).toThrow("Failed to parse options dataChannels. Options dataChannels element must be type 'object'");
 
   // 正常系
   const options5 = {
-    messagingDataChannels: [
-      { label: "test", direction: "sendrecv" as MessagingDataChannelDirection },
+    dataChannels: [
+      { label: "test", direction: "sendrecv" as DataChannelDirection },
       {
         label: "test2",
-        direction: "sendonly" as MessagingDataChannelDirection,
+        direction: "sendonly" as DataChannelDirection,
         ordered: true,
         maxPacketLifeTime: 100,
         maxRetransmits: 100,
@@ -506,7 +506,7 @@ test("createSignalingMessage messagingDataChannels option", () => {
     ],
   };
   const diff5 = {
-    data_channel_messaging: [
+    data_channels: [
       { label: "test", direction: "sendrecv" },
       {
         label: "test2",
