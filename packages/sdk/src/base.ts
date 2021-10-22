@@ -45,38 +45,119 @@ declare global {
 }
 
 export default class ConnectionBase {
+  /**
+   * ロール(sendonly | sendrecv | recvonly).
+   */
   role: string;
+  /**
+   * チャネルID.
+   */
   channelId: string;
+  /**
+   * メタデータ.
+   */
   metadata: JSONType | undefined;
+  /**
+   * シグナリングに使用する URL.
+   */
   signalingUrlCandidates: string | string[];
+  /**
+   * 接続オプション.
+   */
   options: ConnectionOptions;
+  /**
+   * PeerConnection に渡す configuration.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constraints: any;
+  /**
+   * デバッグフラグ.
+   */
   debug: boolean;
+  /**
+   * クライアントID.
+   */
   clientId: string | null;
+  /**
+   * コネクションID.
+   */
   connectionId: string | null;
+  /**
+   * リモートコネクションIDのリスト.
+   */
   remoteConnectionIds: string[];
+  /**
+   * メディアストリーム.
+   */
   stream: MediaStream | null;
+  /**
+   * type offer に含まれる認証 metadata.
+   */
   authMetadata: JSONType;
+  /**
+   * PeerConnection インスタンス.
+   */
   pc: RTCPeerConnection | null;
+  /**
+   * サイマルキャストで使用する RTCRtpEncodingParameters のリスト.
+   */
   encodings: RTCRtpEncodingParameters[];
+  /**
+   * WebSocket インスタンス.
+   */
   protected ws: WebSocket | null;
+  /**
+   * イベントコールバックのリスト.
+   */
   protected callbacks: Callbacks;
+  /**
+   * E2EE インスタンス.
+   */
   protected e2ee: SoraE2EE | null;
+  /**
+   * 初回シグナリング時接続タイムアウト用のタイマーID.
+   */
   protected connectionTimeoutTimerId: number;
+  /**
+   * WebSocket 切断監視用のタイマーID.
+   */
   protected monitorSignalingWebSocketEventTimerId: number;
+  /**
+   * PeerConnection state 切断監視用のタイマーID.
+   */
   protected monitorIceConnectionStateChangeTimerId: number;
+  /**
+   * 接続中の DataChannel リスト.
+   */
   protected dataChannels: {
     [key in string]?: RTCDataChannel;
   };
+  /**
+   * 初回シグナリング接続時のタイムアウトに使用するタイムアウト時間(デフォルト 60000ms)
+   */
   private connectionTimeout: number;
+  /**
+   * シグナリング候補のURLへの接続確認タイムアウトに使用するタイムアウト時間(デフォルト 3000ms)
+   */
   private signalingCandidateTimeout: number;
+  /**
+   * 切断処理のタイムアウトに使用するタイムアウト時間(デフォルト 3000ms)
+   */
   private disconnectWaitTimeout: number;
+  /**
+   * audio / video の msid
+   */
   private mids: {
     audio: string;
     video: string;
   };
+  /**
+   * シグナリングを DataChannel へ switch したかどうかのフラグ
+   */
   private signalingSwitched: boolean;
+  /**
+   * シグナリング type offer に含まれる DataChannel レコード
+   */
   private signalingOfferMessageDataChannels: {
     [key in string]?: SignalingOfferMessageDataChannel;
   };
@@ -149,6 +230,18 @@ export default class ConnectionBase {
     this.signalingOfferMessageDataChannels = {};
   }
 
+  /**
+   * SendRecv Object で発火するイベントのコールバックを設定するメソッド.
+   *
+   * @remarks
+   * addstream イベントは非推奨です.track イベントを使用してください.
+   * removestream イベントは非推奨です.removetrack イベントを使用してください.
+   *
+   * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message)
+   * @param callback - コールバック関数
+   *
+   * @public
+   */
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
     // @deprecated message
     if (kind === "addstream") {
@@ -161,6 +254,16 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * audio track を停止するメソッド.
+   *
+   * @remarks
+   * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します.
+   *
+   * @param stream - audio track を削除する MediaStream
+   *
+   * @public
+   */
   stopAudioTrack(stream: MediaStream): Promise<void> {
     for (const track of stream.getAudioTracks()) {
       track.enabled = false;
@@ -185,6 +288,16 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * video track を停止するメソッド.
+   *
+   * @remarks
+   * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します.
+   *
+   * @param stream - video track を削除する MediaStream
+   *
+   * @public
+   */
   stopVideoTrack(stream: MediaStream): Promise<void> {
     for (const track of stream.getVideoTracks()) {
       track.enabled = false;
@@ -209,6 +322,17 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * audio track を入れ替えするメソッド.
+   *
+   * @remarks
+   * stream の audio track を停止後、新しい audio track をセットします.
+   *
+   * @param stream - audio track を削除する MediaStream
+   * @param audioTrack - 新しい audio track
+   *
+   * @public
+   */
   async replaceAudioTrack(stream: MediaStream, audioTrack: MediaStreamTrack): Promise<void> {
     await this.stopAudioTrack(stream);
     const transceiver = this.getAudioTransceiver();
@@ -219,6 +343,17 @@ export default class ConnectionBase {
     await transceiver.sender.replaceTrack(audioTrack);
   }
 
+  /**
+   * video track を入れ替えするメソッド.
+   *
+   * @remarks
+   * stream の video track を停止後、新しい video track をセットします.
+   *
+   * @param stream - video track を削除する MediaStream
+   * @param videoTrack - 新しい video track
+   *
+   * @public
+   */
   async replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void> {
     await this.stopVideoTrack(stream);
     const transceiver = this.getVideoTransceiver();
@@ -229,6 +364,9 @@ export default class ConnectionBase {
     await transceiver.sender.replaceTrack(videoTrack);
   }
 
+  /**
+   * stream を停止するメソッド.
+   */
   private stopStream(): Promise<void> {
     return new Promise((resolve, _) => {
       if (this.debug) {
@@ -248,7 +386,7 @@ export default class ConnectionBase {
   }
 
   /**
-   * connect 処理中に例外が発生した場合の切断処理
+   * connect 処理中に例外が発生した場合の切断処理をするメソッド.
    */
   private async signalingTerminate(): Promise<void> {
     await this.stopStream();
@@ -273,7 +411,9 @@ export default class ConnectionBase {
   }
 
   /**
-   * PeerConnection の state に異常が発生した場合の切断処理
+   * PeerConnection の state に異常が発生した場合の切断処理をするメソッド.
+   *
+   * @param title - disconnect callback に渡すイベントのタイトル
    */
   private async abendPeerConnectionState(title: SoraAbendTitle): Promise<void> {
     this.clearMonitorIceConnectionStateChange();
@@ -335,6 +475,9 @@ export default class ConnectionBase {
 
   /**
    * 何かしらの異常があった場合の切断処理
+   *
+   * @param title - disconnect callback に渡すイベントのタイトル
+   * @param params - 切断時の状況を入れる Record
    */
   private async abend(title: SoraAbendTitle, params?: Record<string, unknown>): Promise<void> {
     this.clearMonitorIceConnectionStateChange();
@@ -424,6 +567,9 @@ export default class ConnectionBase {
     this.callbacks.disconnect(this.soraCloseEvent("abend", title, params));
   }
 
+  /**
+   * 接続状態の初期化をするメソッド.
+   */
   private initializeConnection(): void {
     this.clientId = null;
     this.connectionId = null;
@@ -444,6 +590,14 @@ export default class ConnectionBase {
     this.clearConnectionTimeout();
   }
 
+  /**
+   * WebSocket を切断するメソッド.
+   *
+   * @remarks
+   * 正常/異常どちらの切断でも使用する.
+   *
+   * @param title - type disconnect 時の reason
+   */
   private disconnectWebSocket(title: SoraAbendTitle | "NO-ERROR"): Promise<{ code: number; reason: string } | null> {
     let timerId = 0;
     if (this.signalingSwitched) {
@@ -487,6 +641,12 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * DataChannel を切断するメソッド.
+   *
+   * @remarks
+   * 正常/異常どちらの切断でも使用する.
+   */
   private disconnectDataChannel(): Promise<{ code: number; reason: string } | null> {
     // DataChannel の強制終了処理
     const closeDataChannels = () => {
@@ -590,6 +750,12 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * PeerConnection を切断するメソッド.
+   *
+   * @remarks
+   * 正常/異常どちらの切断でも使用する.
+   */
   private disconnectPeerConnection(): Promise<void> {
     return new Promise((resolve, _) => {
       if (this.pc && this.pc.connectionState !== "closed") {
@@ -599,6 +765,11 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * 切断処理をするメソッド.
+   *
+   * @public
+   */
   async disconnect(): Promise<void> {
     this.clearMonitorIceConnectionStateChange();
     await this.stopStream();
@@ -663,6 +834,9 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * E2EE の初期設定をするメソッド.
+   */
   protected setupE2EE(): void {
     if (this.options.e2ee === true) {
       this.e2ee = new SoraE2EE();
@@ -673,6 +847,9 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * E2EE を開始するメソッド.
+   */
   protected startE2EE(): void {
     if (this.options.e2ee === true && this.e2ee) {
       if (!this.connectionId) {
@@ -686,6 +863,18 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングに使う WebSocket インスタンスを作成するメソッド.
+   *
+   * @remarks
+   * シグナリング候補の URL 一覧に順に接続します.
+   * 接続できた URL がない場合は例外が発生します.
+   *
+   * @param signalingUrlCandidates - シグナリング候補の URL. 後方互換のため string | string[] を受け取る
+   *
+   * @returns
+   * 接続できた WebScoket インスタンスを返します.
+   */
   protected async getSignalingWebSocket(signalingUrlCandidates: string | string[]): Promise<WebSocket> {
     if (typeof signalingUrlCandidates === "string") {
       // signaling url の候補が文字列の場合
@@ -792,6 +981,19 @@ export default class ConnectionBase {
     throw new ConnectError("Signaling failed. Invalid format signaling URL candidates");
   }
 
+  /**
+   * シグナリング処理を行うメソッド.
+   *
+   * @remarks
+   * シグナリング候補の URL 一覧に順に接続します.
+   * 接続できた URL がない場合は例外が発生します.
+   *
+   * @param ws - WebSocket インスタンス
+   * @param redirect - クラスター接続時にリダイレクトされた場合のフラグ
+   *
+   * @returns
+   * Sora から受け取った type offer メッセージを返します.
+   */
   protected async signaling(ws: WebSocket, redirect = false): Promise<SignalingOfferMessage> {
     const offer = await this.createOffer();
     this.trace("CREATE OFFER", offer);
@@ -878,6 +1080,11 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * PeerConnection 接続処理をするメソッド.
+   *
+   * @param message - シグナリング処理で受け取った type offer メッセージ
+   */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
     if (this.e2ee) {
@@ -926,6 +1133,11 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * setRemoteDescription 処理を行うメソッド.
+   *
+   * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
+   */
   protected async setRemoteDescription(
     message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage
   ): Promise<void> {
@@ -938,6 +1150,14 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * createAnswer 処理を行うメソッド.
+   *
+   * @remarks
+   * サイマルキャスト用の setParameters 処理もここで行う.
+   *
+   * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
+   */
   protected async createAnswer(
     message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage
   ): Promise<void> {
@@ -982,6 +1202,9 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * シグナリングサーバーに type answer を投げるメソッド.
+   */
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
@@ -992,6 +1215,9 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * iceCnadidate 処理をするメソッド.
+   */
   protected onIceCandidate(): Promise<void> {
     return new Promise((resolve, _) => {
       if (this.pc) {
@@ -1027,6 +1253,12 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * connectionState が "connected" になるのを監視するメソッド.
+   *
+   * @remarks
+   * PeerConnection.connectionState が実装されていない場合は何もしない
+   */
   protected waitChangeConnectionStateConnected(): Promise<void> {
     return new Promise((resolve, reject) => {
       // connectionState が存在しない場合はそのまま抜ける
@@ -1048,8 +1280,13 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * 初回シグナリング接続時の WebSocket の切断を監視するメソッド.
+   *
+   * @remarks
+   * 意図しない切断があった場合には異常終了処理を実行する
+   */
   protected monitorSignalingWebSocketEvent(): Promise<void> {
-    // シグナリング時に意図しない WebSocket の切断を監視する
     return new Promise((_, reject) => {
       this.monitorSignalingWebSocketEventTimerId = setInterval(() => {
         if (!this.ws) {
@@ -1076,8 +1313,13 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * WebSocket の切断を監視するメソッド.
+   *
+   * @remarks
+   * 意図しない切断があった場合には異常終了処理を実行する
+   */
   protected monitorWebSocketEvent(): void {
-    // 接続後の意図しない WebSocket の切断を監視する
     if (!this.ws) {
       return;
     }
@@ -1091,8 +1333,13 @@ export default class ConnectionBase {
     };
   }
 
+  /**
+   * 初回シグナリング後 PeerConnection の state を監視するメソッド.
+   *
+   * @remarks
+   * connectionState, iceConnectionState を監視して不正な場合に切断する.
+   */
   protected monitorPeerConnectionState(): void {
-    // PeerConnection の ConnectionState, iceConnectionState を監視して不正な場合に切断する
     if (!this.pc) {
       return;
     }
@@ -1134,6 +1381,9 @@ export default class ConnectionBase {
     };
   }
 
+  /**
+   * 初回シグナリングの接続タイムアウト処理をするメソッド.
+   */
   protected setConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
       if (0 < this.connectionTimeout) {
@@ -1157,18 +1407,33 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * setConnectionTimeout でセットしたタイマーを止めるメソッド.
+   */
   protected clearConnectionTimeout(): void {
     clearTimeout(this.connectionTimeoutTimerId);
   }
 
+  /**
+   * monitorSignalingWebSocketEvent でセットしたタイマーを止めるメソッド.
+   */
   protected clearMonitorSignalingWebSocketEvent(): void {
     clearInterval(this.monitorSignalingWebSocketEventTimerId);
   }
 
+  /**
+   * monitorPeerConnectionState でセットしたタイマーを止めるメソッド.
+   */
   protected clearMonitorIceConnectionStateChange(): void {
     clearInterval(this.monitorIceConnectionStateChangeTimerId);
   }
 
+  /**
+   * trace log を出力するメソッド.
+   *
+   * @param title - ログのタイトル
+   * @param message - ログの本文
+   */
   protected trace(title: string, message: unknown): void {
     this.callbacks.log(title, message as JSONType);
     if (!this.debug) {
@@ -1177,36 +1442,81 @@ export default class ConnectionBase {
     trace(this.clientId, title, message);
   }
 
+  /**
+   * WebSocket のシグナリングログ処理をするメソッド.
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeWebSocketSignalingLog(eventType: string, data?: unknown): void {
     this.callbacks.signaling(createSignalingEvent(eventType, data, "websocket"));
     this.writeWebSocketTimelineLog(eventType, data);
   }
 
+  /**
+   * DataChannel のシグナリングログ処理をするメソッド.
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeDataChannelSignalingLog(eventType: string, channel: RTCDataChannel, data?: unknown): void {
     this.callbacks.signaling(createSignalingEvent(eventType, data, "datachannel"));
     this.writeDataChannelTimelineLog(eventType, channel, data);
   }
 
+  /**
+   * WebSocket のタイムラインログ処理をするメソッド.
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeWebSocketTimelineLog(eventType: string, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "websocket");
     this.callbacks.timeline(event);
   }
 
+  /**
+   * DataChannel のタイムラインログ処理をするメソッド.
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeDataChannelTimelineLog(eventType: string, channel: RTCDataChannel, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "datachannel", channel.id, channel.label);
     this.callbacks.timeline(event);
   }
 
+  /**
+   * PeerConnection のタイムラインログ処理をするメソッド.
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writePeerConnectionTimelineLog(eventType: string, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "peerconnection");
     this.callbacks.timeline(event);
   }
 
+  /**
+   * Sora との接続のタイムラインログ処理をするメソッド.
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeSoraTimelineLog(eventType: string, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "sora");
     this.callbacks.timeline(event);
   }
 
+  /**
+   * createOffer 処理をするメソッド.
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   *
+   * @returns
+   * 生成した RTCSessionDescription を返します.
+   */
   private async createOffer(): Promise<RTCSessionDescriptionInit> {
     const config = { iceServers: [] };
     const pc = new window.RTCPeerConnection(config);
@@ -1224,6 +1534,11 @@ export default class ConnectionBase {
     return offer;
   }
 
+  /**
+   * シグナリングサーバーから受け取った type e2ee メッセージを処理をするメソッド.
+   *
+   * @param data - E2EE 用バイナリメッセージ
+   */
   private signalingOnMessageE2EE(data: ArrayBuffer): void {
     if (this.e2ee) {
       const message = new Uint8Array(data);
@@ -1235,6 +1550,11 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーから受け取った type offer メッセージを処理をするメソッド.
+   *
+   * @param message - type offer メッセージ
+   */
   private signalingOnMessageTypeOffer(message: SignalingOfferMessage): void {
     this.clientId = message.client_id;
     this.connectionId = message.connection_id;
@@ -1259,6 +1579,9 @@ export default class ConnectionBase {
     this.trace("OFFER SDP", message.sdp);
   }
 
+  /**
+   * シグナリングサーバーに type update を投げるメソッド.
+   */
   private sendUpdateAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
@@ -1266,6 +1589,9 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーに type re-answer を投げるメソッド.
+   */
   private sendReAnswer(): void {
     if (this.pc && this.pc.localDescription) {
       this.trace("RE ANSWER SDP", this.pc.localDescription.sdp);
@@ -1273,6 +1599,11 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーから受け取った type update メッセージを処理をするメソッド.
+   *
+   * @param message - type update メッセージ
+   */
   private async signalingOnMessageTypeUpdate(message: SignalingUpdateMessage): Promise<void> {
     this.trace("SIGNALING UPDATE MESSGE", message);
     this.trace("UPDATE SDP", message.sdp);
@@ -1281,6 +1612,11 @@ export default class ConnectionBase {
     this.sendUpdateAnswer();
   }
 
+  /**
+   * シグナリングサーバーから受け取った type re-offer メッセージを処理をするメソッド.
+   *
+   * @param message - type re-offer メッセージ
+   */
   private async signalingOnMessageTypeReOffer(message: SignalingReOfferMessage): Promise<void> {
     this.trace("SIGNALING RE OFFER MESSGE", message);
     this.trace("RE OFFER SDP", message.sdp);
@@ -1289,6 +1625,11 @@ export default class ConnectionBase {
     this.sendReAnswer();
   }
 
+  /**
+   * シグナリングサーバーから受け取った type ping メッセージを処理をするメソッド.
+   *
+   * @param message - type ping メッセージ
+   */
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
     const pongMessage: { type: "pong"; stats?: RTCStatsReport[] } = { type: "pong" };
     if (message.stats) {
@@ -1300,6 +1641,11 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーから受け取った type notify メッセージを処理をするメソッド.
+   *
+   * @param message - type notify メッセージ
+   */
   private signalingOnMessageTypeNotify(message: SignalingNotifyMessage, transportType: TransportType): void {
     if (message.event_type === "connection.created") {
       const connectionId = message.connection_id;
@@ -1346,6 +1692,11 @@ export default class ConnectionBase {
     this.callbacks.notify(message, transportType);
   }
 
+  /**
+   * シグナリングサーバーから受け取った type switched メッセージを処理をするメソッド.
+   *
+   * @param message - type switched メッセージ
+   */
   private signalingOnMessageTypeSwitched(message: SignalingSwitchedMessage): void {
     this.signalingSwitched = true;
     if (!this.ws) {
@@ -1361,6 +1712,11 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーから受け取った type redirect メッセージを処理をするメソッド.
+   *
+   * @param message - type redirect メッセージ
+   */
   private async signalingOnMessageTypeRedirect(message: SignalingRedirectMessage): Promise<SignalingOfferMessage> {
     if (this.ws) {
       this.ws.onclose = null;
@@ -1373,6 +1729,12 @@ export default class ConnectionBase {
     return signalingMessage;
   }
 
+  /**
+   * sender の parameters に encodings をセットするメソッド.
+   *
+   * @remarks
+   * サイマルキャスト用の処理.
+   */
   private async setSenderParameters(
     transceiver: RTCRtpTransceiver,
     encodings: RTCRtpEncodingParameters[]
@@ -1386,6 +1748,9 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * PeerConnection から RTCStatsReport を取得するためのメソッド.
+   */
   private async getStats(): Promise<RTCStatsReport[]> {
     const stats: RTCStatsReport[] = [];
     if (!this.pc) {
@@ -1398,6 +1763,11 @@ export default class ConnectionBase {
     return stats;
   }
 
+  /**
+   * PeerConnection の ondatachannel callback メソッド.
+   *
+   * @param dataChannelEvent - DataChannel イベント
+   */
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
     const dataChannel = dataChannelEvent.channel;
     this.writeDataChannelTimelineLog("ondatachannel", dataChannel, createDataChannelData(dataChannel));
@@ -1524,6 +1894,11 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーへメッセージを送信するメソッド.
+   *
+   * @param message - 送信するメッセージ
+   */
   private sendSignalingMessage(message: { type: string; [key: string]: unknown }): void {
     if (this.dataChannels.signaling) {
       if (
@@ -1543,6 +1918,11 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーに E2E 用メッセージを投げるメソッド.
+   *
+   * @param message - 送信するバイナリメッセージ
+   */
   private sendE2EEMessage(message: ArrayBuffer): void {
     if (this.dataChannels.e2ee) {
       this.dataChannels.e2ee.send(message);
@@ -1553,6 +1933,11 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーに stats メッセージを投げるメソッド.
+   *
+   * @param reports - RTCStatsReport のリスト
+   */
   private sendStatsMessage(reports: RTCStatsReport[]): void {
     if (this.dataChannels.stats) {
       const message = {
@@ -1572,6 +1957,9 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * audio transceiver を取得するメソッド.
+   */
   private getAudioTransceiver(): RTCRtpTransceiver | null {
     if (this.pc && this.mids.audio) {
       const transceiver = this.pc.getTransceivers().find((transceiver) => {
@@ -1582,6 +1970,9 @@ export default class ConnectionBase {
     return null;
   }
 
+  /**
+   * video transceiver を取得するメソッド.
+   */
   private getVideoTransceiver(): RTCRtpTransceiver | null {
     if (this.pc && this.mids.video) {
       const transceiver = this.pc.getTransceivers().find((transceiver) => {
@@ -1592,6 +1983,13 @@ export default class ConnectionBase {
     return null;
   }
 
+  /**
+   * disconnect callback に渡す Event オブジェクトを生成するためのメソッド.
+   *
+   * @param type - Event タイプ(normal | abend)
+   * @param title - Event タイトル
+   * @param initDict - Event に設定するオプションパラメーター
+   */
   private soraCloseEvent(type: SoraCloseEventType, title: string, initDict?: SoraCloseEventInitDict): SoraCloseEvent {
     const soraCloseEvent = class SoraCloseEvent extends Event {
       title: string;
@@ -1618,6 +2016,12 @@ export default class ConnectionBase {
     return new soraCloseEvent(type, title, initDict);
   }
 
+  /**
+   * DataChannel を使用してメッセージを送信するメソッド.
+   *
+   * @param label - メッセージを送信する DataChannel のラベル
+   * @param message - JSON
+   */
   sendMessage(label: string, message: JSONType): void {
     const dataChannel = this.dataChannels[label];
     // 接続していない場合は何もしない
@@ -1637,6 +2041,9 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * E2EE の自分のフィンガープリント.
+   */
   get e2eeSelfFingerprint(): string | undefined {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.selfFingerprint();
@@ -1644,6 +2051,9 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * E2EE のリモートのフィンガープリントリスト.
+   */
   get e2eeRemoteFingerprints(): Record<string, string> | undefined {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.remoteFingerprints();
@@ -1651,18 +2061,32 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * audio が有効かどうか.
+   */
   get audio(): boolean {
     return this.getAudioTransceiver() !== null;
   }
 
+  /**
+   * video が有効かどうか.
+   */
   get video(): boolean {
     return this.getVideoTransceiver() !== null;
   }
 
+  /**
+   * シグナリングに使用する URL.
+   *
+   * @deprecated
+   */
   get signalingUrl(): string | string[] {
     return this.signalingUrlCandidates;
   }
 
+  /**
+   * 接続中のシグナリング URL.
+   */
   get connectedSignalingUrl(): string {
     if (!this.ws) {
       return "";
@@ -1670,6 +2094,9 @@ export default class ConnectionBase {
     return this.ws.url;
   }
 
+  /**
+   * DataChannel メッセージング用の DataChannel 情報のリスト.
+   */
   get messagingDataChannels(): DataChannelConfiguration[] {
     const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
       return /^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(label);
