@@ -35,13 +35,19 @@ import type {
   VideoCodecType,
 } from "./types";
 
+/**
+ * Role 毎の Connection インスタンスを生成するためのクラス
+ *
+ * @param signalingUrlCandidates - シグナリングに使用する URL の候補
+ * @param debug - デバッグフラグ
+ */
 class SoraConnection {
   /**
-   * シグナリングに使用する URL の候補.
+   * シグナリングに使用する URL の候補
    */
   signalingUrlCandidates: string | string[];
   /**
-   * デバッグフラグ.
+   * デバッグフラグ
    */
   debug: boolean;
 
@@ -50,14 +56,14 @@ class SoraConnection {
     this.debug = debug;
   }
   /**
-   * role sendrecv で接続するための Connecion インスタンスを生成するメソッド.
+   * role sendrecv で接続するための Connecion インスタンスを生成するメソッド
    *
    * @param channelId - チャネルID
    * @param metadata - メタデータ
    * @param options - コネクションオプション
    *
    * @returns
-   * role sendrecv な Connection オブジェクトを返します.
+   * role sendrecv な Connection オブジェクトを返します
    *
    * @public
    */
@@ -69,14 +75,14 @@ class SoraConnection {
     return new ConnectionPublisher(this.signalingUrlCandidates, "sendrecv", channelId, metadata, options, this.debug);
   }
   /**
-   * role sendonly で接続するための Connecion インスタンスを生成するメソッド.
+   * role sendonly で接続するための Connecion インスタンスを生成するメソッド
    *
    * @param channelId - チャネルID
    * @param metadata - メタデータ
    * @param options - コネクションオプション
    *
    * @returns
-   * role sendonly な Connection オブジェクトを返します.
+   * role sendonly な Connection オブジェクトを返します
    *
    * @public
    */
@@ -88,14 +94,14 @@ class SoraConnection {
     return new ConnectionPublisher(this.signalingUrlCandidates, "sendonly", channelId, metadata, options, this.debug);
   }
   /**
-   * role recvonly で接続するための Connecion インスタンスを生成するメソッド.
+   * role recvonly で接続するための Connecion インスタンスを生成するメソッド
    *
    * @param channelId - チャネルID
    * @param metadata - メタデータ
    * @param options - コネクションオプション
    *
    * @returns
-   * role recvonly な Connection オブジェクトを返します.
+   * role recvonly な Connection オブジェクトを返します
    *
    * @public
    */
@@ -107,7 +113,7 @@ class SoraConnection {
     return new ConnectionSubscriber(this.signalingUrlCandidates, "recvonly", channelId, metadata, options, this.debug);
   }
   /**
-   * シグナリングに使用する URL の候補.
+   * シグナリングに使用する URL の候補
    *
    * @public
    * @deprecated
@@ -117,9 +123,12 @@ class SoraConnection {
   }
 }
 
+/**
+ * Sora JS SDK package
+ */
 export default {
   /**
-   * E2EE で使用する WASM の読み込みを行うメソッド.
+   * E2EE で使用する WASM の読み込みを行うメソッド
    *
    * @param wasmUrl - E2EE WASM の URL
    *
@@ -129,10 +138,10 @@ export default {
     await SoraE2EE.loadWasm(wasmUrl);
   },
   /**
-   * SoraConnection インスタンスを生成するメソッド.
+   * SoraConnection インスタンスを生成するメソッド
    *
-   * @param wasmUrl - シグナリングに使用する URL 候補.
-   * @param debug - デバッグフラグ.
+   * @param wasmUrl - シグナリングに使用する URL 候補
+   * @param debug - デバッグフラグ
    *
    * @public
    */
@@ -140,7 +149,7 @@ export default {
     return new SoraConnection(signalingUrlCandidates, debug);
   },
   /**
-   * SDK のバージョンを返すメソッド.
+   * SDK のバージョンを返すメソッド
    *
    * @public
    */
@@ -148,7 +157,7 @@ export default {
     return "__SORA_JS_SDK_VERSION__";
   },
   /**
-   * WebRTC のユーティリティ関数群.
+   * WebRTC のユーティリティ関数群
    *
    * @public
    */
