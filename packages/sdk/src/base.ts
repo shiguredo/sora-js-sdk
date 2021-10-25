@@ -58,7 +58,7 @@ export default class ConnectionBase {
    */
   metadata: JSONType | undefined;
   /**
-   * シグナリングに使用する URL.
+   * シグナリングに使用する URL 候補.
    */
   signalingUrlCandidates: string | string[];
   /**

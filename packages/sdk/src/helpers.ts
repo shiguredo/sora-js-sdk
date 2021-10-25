@@ -1,4 +1,12 @@
-// MediaStream の constraints を動的に変更
+/**
+ *  MediaStream の constraints を動的に変更するメソッド.
+ *
+ * @param mediastream - メディアストリーム
+ *
+ * @param constraints - メディアストリーム制約
+ *
+ * @public
+ */
 async function applyMediaStreamConstraints(
   mediastream: MediaStream,
   constraints: MediaStreamConstraints
