@@ -8,7 +8,7 @@
   "module": "dist/sora_e2ee.mjs",
   "types": "dist/sora_e2ee.d.ts",
   "scripts": {
-    "build": "yarn build:worker && yarn build:development",
+    "build": "npm run build:worker && npm run build:development",
     "build:development": "NODE_ENV=development rollup -c rollup.config.js",
     "build:worker": "npx tsc --project tsconfig.worker.json",
     "fmt": "prettier --write src",
