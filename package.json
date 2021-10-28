@@ -7,7 +7,11 @@
   "types": "dist/sora.d.ts",
   "scripts": {
     "build": "npm run build -w packages/e2ee && npm run build -w packages/sdk",
-    "start": "npx serve -S -l 8080 ./example"
+    "start": "npx serve -S -l 8080 ./example",
+    "release:major": "./scripts/versioning.sh major",
+    "release:minor": "./scripts/versioning.sh minor",
+    "release:patch": "./scripts/versioning.sh patch",
+    "release:canary": "./scripts/versioning.sh canary"
   },
   "repository": {
     "type": "git",
