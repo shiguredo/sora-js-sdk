@@ -6,6 +6,7 @@
   "module": "dist/sora.mjs",
   "types": "dist/sora.d.ts",
   "scripts": {
+    "build": "npm run build -w packages/e2ee && npm run build -w packages/sdk",
     "start": "npx serve -S -l 8080 ./example"
   },
   "repository": {
