@@ -6,7 +6,10 @@
   "module": "dist/sora.mjs",
   "types": "dist/sora.d.ts",
   "scripts": {
-    "build": "npm run build -w packages/e2ee && npm run build -w packages/sdk",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "fmt": "npm run fmt --workspaces",
+    "test": "npm run test --workspaces",
     "start": "npx serve -S -l 8080 ./example",
     "release:major": "./scripts/versioning.sh major",
     "release:minor": "./scripts/versioning.sh minor",
@@ -34,8 +37,8 @@
     "get-pkg-repo": "4.1.2"
   },
   "workspaces": [
-    "packages/sdk",
+    "packages/go-wasm",
     "packages/e2ee",
-    "packages/go-wasm"
+    "packages/sdk"
   ]
 }
