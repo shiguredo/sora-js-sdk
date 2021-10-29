@@ -1,9 +1,9 @@
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
-import minify from 'rollup-plugin-babel-minify';
+import { terser } from 'rollup-plugin-terser';
 import typescript from 'rollup-plugin-typescript2';
 import replace from '@rollup/plugin-replace';
-import pkg from './package.json';
+import pkg from '../../package.json';
 
 const banner = `/**
  * ${pkg.name}
@@ -48,8 +48,10 @@ export default [
         tsconfig: './tsconfig.json'
       }),
       commonjs(),
-      minify({
-        comments: false
+      terser({
+        output: {
+          comments: false,
+        },
       })
     ],
     output: {

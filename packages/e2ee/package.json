@@ -1,6 +1,6 @@
 {
   "name": "@sora/e2ee",
-  "version": "2021.2.0-canary.3",
+  "version": "2021.1.0",
   "description": "WebRTC SFU Sora JavaScript E2EE Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
@@ -8,7 +8,7 @@
   "module": "dist/sora_e2ee.mjs",
   "types": "dist/sora_e2ee.d.ts",
   "scripts": {
-    "build": "yarn build:worker && yarn build:development",
+    "build": "npm run build:worker && npm run build:development",
     "build:development": "NODE_ENV=development rollup -c rollup.config.js",
     "build:worker": "npx tsc --project tsconfig.worker.json",
     "fmt": "prettier --write src",
@@ -28,6 +28,6 @@
     "typescript": "^4.4.3"
   },
   "dependencies": {
-    "@sora/go-wasm": "^2021.2.0-canary.3"
+    "@sora/go-wasm": "^2021.1.0"
   }
 }
