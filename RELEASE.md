@@ -35,4 +35,4 @@
     - コミットメッセージをバージョンにして差分をコミットする(例. git commit -m "2020.1.0-canary.0")
 - git push -u origin develop master
 - git push origin <tag>
-- npm publish を実行する
+- npm publish --tag canary を実行する
