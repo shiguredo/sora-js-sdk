@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.0-canary.4
+ * @version: 2021.2.0-canary.5
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1629,7 +1629,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.2.0-canary.4",
+        sora_client: "Sora JavaScript SDK 2021.2.0-canary.5",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -3597,8 +3597,7 @@ class ConnectionBase {
                     const unzlibMessage = unzlibSync(new Uint8Array(event.data));
                     data = new TextDecoder().decode(unzlibMessage);
                 }
-                const message = JSON.parse(data);
-                this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, message));
+                this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
             };
         }
     }
@@ -3716,8 +3715,11 @@ class ConnectionBase {
     /**
      * DataChannel を使用してメッセージを送信するメソッド
      *
+     * @remarks
+     * DataChannel の compress option が true の場合、第2引数の message は string のみ
+     *
      * @param label - メッセージを送信する DataChannel のラベル
-     * @param message - JSON
+     * @param message - string | Blob | ArrayBuffer | ArrayBufferView
      */
     sendMessage(label, message) {
         const dataChannel = this.dataChannels[label];
@@ -3730,12 +3732,16 @@ class ConnectionBase {
         }
         const settings = this.signalingOfferMessageDataChannels[label];
         if (settings !== undefined && settings.compress === true) {
-            const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+            if (typeof message !== "string") {
+                throw new Error("'message' must be string if the DataChannel compress option is true");
+            }
+            const binaryMessage = new TextEncoder().encode(message);
             const zlibMessage = zlibSync(binaryMessage, {});
             dataChannel.send(zlibMessage);
         }
         else {
-            dataChannel.send(JSON.stringify(message));
+            // @ts-ignore 引数のメッセージをそのまま投げる
+            dataChannel.send(message);
         }
     }
     /**
@@ -4217,7 +4223,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2021.2.0-canary.4";
+        return "2021.2.0-canary.5";
     },
     /**
      * WebRTC のユーティリティ関数群
