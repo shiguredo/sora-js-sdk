@@ -1895,14 +1895,13 @@ export default class ConnectionBase {
           return;
         }
         const dataChannel = event.target as RTCDataChannel;
-        let data = event.data as string;
+        let data = event.data as string | ArrayBuffer | ArrayBufferView | Blob;
         const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
         if (settings !== undefined && settings.compress === true) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
-        const message = JSON.parse(data) as JSONType;
-        this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, message));
+        this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
       };
     }
   }
@@ -2032,10 +2031,13 @@ export default class ConnectionBase {
   /**
    * DataChannel を使用してメッセージを送信するメソッド
    *
+   * @remarks
+   * DataChannel の compress option が true の場合、第2引数の message は string のみ
+   *
    * @param label - メッセージを送信する DataChannel のラベル
-   * @param message - JSON
+   * @param message - string | Blob | ArrayBuffer | ArrayBufferView
    */
-  sendMessage(label: string, message: JSONType): void {
+  sendMessage(label: string, message: string | Blob | ArrayBuffer | ArrayBufferView): void {
     const dataChannel = this.dataChannels[label];
     // 接続していない場合は何もしない
     if (this.pc === null) {
@@ -2046,11 +2048,15 @@ export default class ConnectionBase {
     }
     const settings = this.signalingOfferMessageDataChannels[label];
     if (settings !== undefined && settings.compress === true) {
-      const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+      if (typeof message !== "string") {
+        throw new Error("'message' must be string if the DataChannel compress option is true");
+      }
+      const binaryMessage = new TextEncoder().encode(message);
       const zlibMessage = zlibSync(binaryMessage, {});
       dataChannel.send(zlibMessage);
     } else {
-      dataChannel.send(JSON.stringify(message));
+      // @ts-ignore 引数のメッセージをそのまま投げる
+      dataChannel.send(message);
     }
   }
 
