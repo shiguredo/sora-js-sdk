@@ -520,13 +520,10 @@ export default class ConnectionBase {
     /**
      * DataChannel を使用してメッセージを送信するメソッド
      *
-     * @remarks
-     * DataChannel の compress option が true の場合、第2引数の message は string のみ
-     *
      * @param label - メッセージを送信する DataChannel のラベル
-     * @param message - string | Blob | ArrayBuffer | ArrayBufferView
+     * @param message - Uint8Array
      */
-    sendMessage(label: string, message: string | Blob | ArrayBuffer | ArrayBufferView): void;
+    sendMessage(label: string, message: Uint8Array): void;
     /**
      * E2EE の自分のフィンガープリント
      */

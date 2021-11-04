@@ -13,4 +13,4 @@ export declare class ConnectError extends Error {
 export declare function createSignalingEvent(eventType: string, data: unknown, transportType: TransportType): SignalingEvent;
 export declare function createDataChannelData(channel: RTCDataChannel): Record<string, unknown>;
 export declare function createTimelineEvent(eventType: string, data: unknown, logType: TimelineEventLogType, dataChannelId?: number | null, dataChannelLabel?: string): TimelineEvent;
-export declare function createDataChannelMessageEvent(label: string, data: string | ArrayBuffer | ArrayBufferView | Blob): DataChannelMessageEvent;
+export declare function createDataChannelMessageEvent(label: string, data: ArrayBuffer): DataChannelMessageEvent;

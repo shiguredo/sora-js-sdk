@@ -277,7 +277,7 @@ export interface SignalingEvent extends Event {
 }
 export interface DataChannelMessageEvent extends Event {
     label: string;
-    data: string | ArrayBuffer | ArrayBufferView | Blob;
+    data: ArrayBuffer;
 }
 export interface TimelineEvent extends Event {
     logType: TimelineEventLogType;
