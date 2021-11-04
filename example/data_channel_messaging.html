@@ -81,7 +81,7 @@ document.querySelector('#start-sendrecv').addEventListener('click', function() {
   });
   sendrecv.on('message', (event) => {
     const message = document.createElement('li');
-    message.textContent = event.data;
+    message.textContent = new TextDecoder().decode(event.data);
     document.querySelector('#received-messages').appendChild(message);
   });
   sendrecv.on('disconnect', (event) => {
@@ -95,10 +95,10 @@ document.querySelector('#stop-sendrecv').addEventListener('click', function() {
       document.querySelector('#sendrecv-remote-videos').innerHTML = null;
     });
 });
-document.querySelector('#send-message').addEventListener('click', function() {
+document.querySelector('#send-message').addEventListener('click', async function() {
   const value = document.querySelector('input[name=message]').value;
   if (value !== "") {
-    sendrecv.sendMessage('#example', value);
+    sendrecv.sendMessage('#example', new TextEncoder().encode(value));
   }
 });
     </script>
