@@ -1,11 +1,11 @@
 <html lang="ja">
     <head>
         <meta charset="utf-8">
-        <title>Messaging DataChannel</title>
+        <title>DataChannel messaging </title>
     </head>
     <body>
         <div class="container">
-            <h1>Messaging DataChannel test</h1>
+            <h1>DataChannel messaging test</h1>
             <p>複数のブラウザで開いて sendMessage することで動作確認できます</p>
             <div style="display: flex;">
                 <div>
@@ -33,9 +33,9 @@ const debug = true;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
 const options = {
   multistream: true,
-  messagingDataChannels: [
+  dataChannels: [
     {
-      label: "#messaging-data-channel-example",
+      label: "#example",
       direction: "sendrecv",
       compress: true,
     },
@@ -79,7 +79,7 @@ document.querySelector('#start-sendrecv').addEventListener('click', function() {
       document.querySelector('#sendrecv-remote-videos').removeChild(remoteVideo);
     }
   });
-  sendrecv.on('messaging', (event) => {
+  sendrecv.on('message', (event) => {
     const message = document.createElement('li');
     message.textContent = event.data;
     document.querySelector('#received-messages').appendChild(message);
@@ -98,7 +98,7 @@ document.querySelector('#stop-sendrecv').addEventListener('click', function() {
 document.querySelector('#send-message').addEventListener('click', function() {
   const value = document.querySelector('input[name=message]').value;
   if (value !== "") {
-    sendrecv.sendMessage('#messaging-data-channel-example', value);
+    sendrecv.sendMessage('#example', value);
   }
 });
     </script>
