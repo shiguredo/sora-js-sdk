@@ -432,10 +432,7 @@ export function createTimelineEvent(
   return event;
 }
 
-export function createDataChannelMessageEvent(
-  label: string,
-  data: string | ArrayBuffer | ArrayBufferView | Blob
-): DataChannelMessageEvent {
+export function createDataChannelMessageEvent(label: string, data: ArrayBuffer): DataChannelMessageEvent {
   const event = new Event("message") as DataChannelMessageEvent;
   event.label = label;
   event.data = data;
