@@ -1898,7 +1898,7 @@ export default class ConnectionBase {
         let data = event.data as ArrayBuffer;
         const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
         if (settings !== undefined && settings.compress === true) {
-          data = unzlibSync(new Uint8Array(event.data));
+          data = unzlibSync(new Uint8Array(event.data)).buffer;
         }
         this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
       };
