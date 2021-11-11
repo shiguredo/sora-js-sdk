@@ -14,7 +14,9 @@
     - @yuitowest
 - [ADD] DataChannel メッセージング機能を追加する
     - sendrecv オブジェクトに sendMessage API を追加する
+    - sendrecv オブジェクトに datachannel プロパティを追加する
     - on callback に "message" を追加する
+    - on callback に "datachannel" を追加する
     - @yuitowest
 - [CHANGE] 複数 Signaling URL への接続に対応する
     - Connection オブジェクト第一引数の type を `string` から `string | string[]` に変更する
