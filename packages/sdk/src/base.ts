@@ -140,7 +140,7 @@ export default class ConnectionBase {
   /**
    * 接続中の DataChannel リスト
    */
-  protected dataChannels: {
+  private soraDataChannels: {
     [key in string]?: RTCDataChannel;
   };
   /**
@@ -233,7 +233,7 @@ export default class ConnectionBase {
     this.connectionTimeoutTimerId = 0;
     this.monitorSignalingWebSocketEventTimerId = 0;
     this.monitorIceConnectionStateChangeTimerId = 0;
-    this.dataChannels = {};
+    this.soraDataChannels = {};
     this.mids = {
       audio: "",
       video: "",
@@ -403,12 +403,12 @@ export default class ConnectionBase {
    */
   private async signalingTerminate(): Promise<void> {
     await this.stopStream();
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         dataChannel.close();
       }
-      delete this.dataChannels[key];
+      delete this.soraDataChannels[key];
     }
     if (this.ws) {
       this.ws.close();
@@ -446,8 +446,8 @@ export default class ConnectionBase {
       this.ws.onmessage = null;
       this.ws.onerror = null;
     }
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         // onclose はログを吐く専用に残す
         dataChannel.onclose = (event) => {
@@ -460,12 +460,12 @@ export default class ConnectionBase {
       }
     }
     // DataChannel を終了する
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         dataChannel.close();
       }
-      delete this.dataChannels[key];
+      delete this.soraDataChannels[key];
     }
     // WebSocket を終了する
     if (this.ws) {
@@ -510,8 +510,8 @@ export default class ConnectionBase {
       this.ws.onmessage = null;
       this.ws.onerror = null;
     }
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         // onclose はログを吐く専用に残す
         dataChannel.onclose = (event) => {
@@ -524,7 +524,7 @@ export default class ConnectionBase {
       }
     }
     // 終了処理を開始する
-    if (this.dataChannels.signaling) {
+    if (this.soraDataChannels.signaling) {
       const message = { type: "disconnect", reason: title };
       if (
         this.signalingOfferMessageDataChannels.signaling &&
@@ -532,36 +532,44 @@ export default class ConnectionBase {
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
-        if (this.dataChannels.signaling.readyState === "open") {
+        if (this.soraDataChannels.signaling.readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.dataChannels.signaling.send(zlibMessage);
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            this.soraDataChannels.signaling.send(zlibMessage);
+            this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
           } catch (e) {
             const errorMessage = (e as Error).message;
-            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            this.writeDataChannelSignalingLog(
+              "failed-to-send-disconnect",
+              this.soraDataChannels.signaling,
+              errorMessage
+            );
           }
         }
       } else {
-        if (this.dataChannels.signaling.readyState === "open") {
+        if (this.soraDataChannels.signaling.readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.dataChannels.signaling.send(JSON.stringify(message));
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            this.soraDataChannels.signaling.send(JSON.stringify(message));
+            this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
           } catch (e) {
             const errorMessage = (e as Error).message;
-            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            this.writeDataChannelSignalingLog(
+              "failed-to-send-disconnect",
+              this.soraDataChannels.signaling,
+              errorMessage
+            );
           }
         }
       }
     }
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         dataChannel.onerror = null;
         dataChannel.close();
       }
-      delete this.dataChannels[key];
+      delete this.soraDataChannels[key];
     }
     await this.disconnectWebSocket(title);
     await this.disconnectPeerConnection();
@@ -593,7 +601,7 @@ export default class ConnectionBase {
     this.encodings = [];
     this.authMetadata = null;
     this.e2ee = null;
-    this.dataChannels = {};
+    this.soraDataChannels = {};
     this.mids = {
       audio: "",
       video: "",
@@ -663,18 +671,18 @@ export default class ConnectionBase {
   private disconnectDataChannel(): Promise<{ code: number; reason: string } | null> {
     // DataChannel の強制終了処理
     const closeDataChannels = () => {
-      for (const key of Object.keys(this.dataChannels)) {
-        const dataChannel = this.dataChannels[key];
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key];
         if (dataChannel) {
           dataChannel.onerror = null;
           dataChannel.close();
         }
-        delete this.dataChannels[key];
+        delete this.soraDataChannels[key];
       }
     };
     return new Promise((resolve, reject) => {
       // DataChannel label signaling が存在しない場合は強制終了処理をする
-      if (!this.dataChannels.signaling) {
+      if (!this.soraDataChannels.signaling) {
         closeDataChannels();
         return resolve({ code: 4999, reason: "" });
       }
@@ -685,8 +693,8 @@ export default class ConnectionBase {
       }, this.disconnectWaitTimeout);
 
       const onClosePromises: Promise<void>[] = [];
-      for (const key of Object.keys(this.dataChannels)) {
-        const dataChannel = this.dataChannels[key];
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key];
         if (dataChannel) {
           // onerror が発火した場合は強制終了処理をする
           dataChannel.onerror = () => {
@@ -721,7 +729,7 @@ export default class ConnectionBase {
       Promise.all(onClosePromises)
         .then(() => {
           // dataChannels が空の場合は切断処理が終わっているとみなす
-          if (0 === Object.keys(this.dataChannels).length) {
+          if (0 === Object.keys(this.soraDataChannels).length) {
             resolve(null);
           } else {
             resolve({ code: 4999, reason: "" });
@@ -738,25 +746,33 @@ export default class ConnectionBase {
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
-        if (this.dataChannels.signaling.readyState === "open") {
+        if (this.soraDataChannels.signaling.readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.dataChannels.signaling.send(zlibMessage);
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            this.soraDataChannels.signaling.send(zlibMessage);
+            this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
           } catch (e) {
             const errorMessage = (e as Error).message;
-            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            this.writeDataChannelSignalingLog(
+              "failed-to-send-disconnect",
+              this.soraDataChannels.signaling,
+              errorMessage
+            );
           }
         }
       } else {
-        if (this.dataChannels.signaling.readyState === "open") {
+        if (this.soraDataChannels.signaling.readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.dataChannels.signaling.send(JSON.stringify(message));
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            this.soraDataChannels.signaling.send(JSON.stringify(message));
+            this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
           } catch (e) {
             const errorMessage = (e as Error).message;
-            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            this.writeDataChannelSignalingLog(
+              "failed-to-send-disconnect",
+              this.soraDataChannels.signaling,
+              errorMessage
+            );
           }
         }
       }
@@ -801,8 +817,8 @@ export default class ConnectionBase {
       this.ws.onmessage = null;
       this.ws.onerror = null;
     }
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         dataChannel.onmessage = null;
         // onclose はログを吐く専用に残す
@@ -1725,7 +1741,7 @@ export default class ConnectionBase {
       }
       this.writeWebSocketSignalingLog("close");
     }
-    for (const channel of this.messagingDataChannels) {
+    for (const channel of this.datachannels) {
       this.callbacks.datachannel(createDataChannelEvent(channel));
     }
   }
@@ -1799,7 +1815,7 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel;
       channel.bufferedAmountLowThreshold = 65536;
       channel.binaryType = "arraybuffer";
-      this.dataChannels[channel.label] = channel;
+      this.soraDataChannels[channel.label] = channel;
       this.trace("OPEN DATA CHANNEL", channel.label);
       if (channel.label === "signaling" && this.ws) {
         this.writeDataChannelSignalingLog("onopen", channel);
@@ -1916,18 +1932,18 @@ export default class ConnectionBase {
    * @param message - 送信するメッセージ
    */
   private sendSignalingMessage(message: { type: string; [key: string]: unknown }): void {
-    if (this.dataChannels.signaling) {
+    if (this.soraDataChannels.signaling) {
       if (
         this.signalingOfferMessageDataChannels.signaling &&
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
-        this.dataChannels.signaling.send(zlibMessage);
+        this.soraDataChannels.signaling.send(zlibMessage);
       } else {
-        this.dataChannels.signaling.send(JSON.stringify(message));
+        this.soraDataChannels.signaling.send(JSON.stringify(message));
       }
-      this.writeDataChannelSignalingLog(`send-${message.type}`, this.dataChannels.signaling, message);
+      this.writeDataChannelSignalingLog(`send-${message.type}`, this.soraDataChannels.signaling, message);
     } else if (this.ws !== null) {
       this.ws.send(JSON.stringify(message));
       this.writeWebSocketSignalingLog(`send-${message.type}`, message);
@@ -1940,9 +1956,9 @@ export default class ConnectionBase {
    * @param message - 送信するバイナリメッセージ
    */
   private sendE2EEMessage(message: ArrayBuffer): void {
-    if (this.dataChannels.e2ee) {
-      this.dataChannels.e2ee.send(message);
-      this.writeDataChannelSignalingLog("send-e2ee", this.dataChannels.e2ee, message);
+    if (this.soraDataChannels.e2ee) {
+      this.soraDataChannels.e2ee.send(message);
+      this.writeDataChannelSignalingLog("send-e2ee", this.soraDataChannels.e2ee, message);
     } else if (this.ws !== null) {
       this.ws.send(message);
       this.writeWebSocketSignalingLog("send-e2ee", message);
@@ -1955,7 +1971,7 @@ export default class ConnectionBase {
    * @param reports - RTCStatsReport のリスト
    */
   private sendStatsMessage(reports: RTCStatsReport[]): void {
-    if (this.dataChannels.stats) {
+    if (this.soraDataChannels.stats) {
       const message = {
         type: "stats",
         reports: reports,
@@ -1966,9 +1982,9 @@ export default class ConnectionBase {
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
-        this.dataChannels.stats.send(zlibMessage);
+        this.soraDataChannels.stats.send(zlibMessage);
       } else {
-        this.dataChannels.stats.send(JSON.stringify(message));
+        this.soraDataChannels.stats.send(JSON.stringify(message));
       }
     }
   }
@@ -2039,7 +2055,7 @@ export default class ConnectionBase {
    * @param message - Uint8Array
    */
   sendMessage(label: string, message: Uint8Array): void {
-    const dataChannel = this.dataChannels[label];
+    const dataChannel = this.soraDataChannels[label];
     // 接続していない場合は何もしない
     if (this.pc === null) {
       return;
@@ -2112,7 +2128,7 @@ export default class ConnectionBase {
   /**
    * DataChannel メッセージング用の DataChannel 情報のリスト
    */
-  get messagingDataChannels(): DataChannelConfiguration[] {
+  get datachannels(): DataChannelConfiguration[] {
     if (!this.signalingSwitched) {
       return [];
     }
@@ -2121,7 +2137,7 @@ export default class ConnectionBase {
     });
     const result: DataChannelConfiguration[] = [];
     for (const label of messagingDataChannellabels) {
-      const dataChannel = this.dataChannels[label];
+      const dataChannel = this.soraDataChannels[label];
       if (!dataChannel) {
         continue;
       }
