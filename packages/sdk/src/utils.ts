@@ -3,6 +3,7 @@ import {
   Browser,
   JSONType,
   DataChannelConfiguration,
+  DataChannelEvent,
   DataChannelMessageEvent,
   PreKeyBundle,
   SignalingConnectMessage,
@@ -436,5 +437,11 @@ export function createDataChannelMessageEvent(label: string, data: ArrayBuffer):
   const event = new Event("message") as DataChannelMessageEvent;
   event.label = label;
   event.data = data;
+  return event;
+}
+
+export function createDataChannelEvent(channel: DataChannelConfiguration): DataChannelEvent {
+  const event = new Event("datachannel") as DataChannelEvent;
+  event.datachannel = channel;
   return event;
 }

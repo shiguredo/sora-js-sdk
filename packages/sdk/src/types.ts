@@ -311,6 +311,7 @@ export type Callbacks = {
   timeline: (event: TimelineEvent) => void;
   signaling: (event: SignalingEvent) => void;
   message: (event: DataChannelMessageEvent) => void;
+  datachannel: (event: DataChannelEvent) => void;
 };
 
 export type PreKeyBundle = {
@@ -334,6 +335,10 @@ export interface SignalingEvent extends Event {
 export interface DataChannelMessageEvent extends Event {
   label: string;
   data: ArrayBuffer;
+}
+
+export interface DataChannelEvent extends Event {
+  datachannel: DataChannelConfiguration;
 }
 
 export interface TimelineEvent extends Event {
