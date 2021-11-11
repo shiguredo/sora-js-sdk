@@ -3,6 +3,7 @@ import { unzlibSync, zlibSync } from "fflate";
 import {
   ConnectError,
   createDataChannelData,
+  createDataChannelEvent,
   createDataChannelMessageEvent,
   createSignalingEvent,
   createSignalingMessage,
@@ -225,6 +226,7 @@ export default class ConnectionBase {
       timeline: (): void => {},
       signaling: (): void => {},
       message: (): void => {},
+      datachannel: (): void => {},
     };
     this.authMetadata = null;
     this.e2ee = null;
@@ -248,7 +250,7 @@ export default class ConnectionBase {
    *
    * removestream イベントは非推奨です.removetrack イベントを使用してください
    *
-   * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message)
+   * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message, datachannel)
    * @param callback - コールバック関数
    *
    * @public
@@ -1723,6 +1725,9 @@ export default class ConnectionBase {
       }
       this.writeWebSocketSignalingLog("close");
     }
+    for (const channel of this.messagingDataChannels) {
+      this.callbacks.datachannel(createDataChannelEvent(channel));
+    }
   }
 
   /**
@@ -2108,6 +2113,9 @@ export default class ConnectionBase {
    * DataChannel メッセージング用の DataChannel 情報のリスト
    */
   get messagingDataChannels(): DataChannelConfiguration[] {
+    if (!this.signalingSwitched) {
+      return [];
+    }
     const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
       return /^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(label);
     });
