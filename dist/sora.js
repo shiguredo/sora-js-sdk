@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.0-canary.7
+ * @version: 2021.2.0-canary.8
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1635,7 +1635,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.2.0-canary.7",
+	        sora_client: "Sora JavaScript SDK 2021.2.0-canary.8",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1930,6 +1930,11 @@
 	    event.data = data;
 	    return event;
 	}
+	function createDataChannelEvent(channel) {
+	    const event = new Event("datachannel");
+	    event.datachannel = channel;
+	    return event;
+	}
 
 	/**
 	 * Sora との WebRTC 接続を扱う基底クラス
@@ -1989,13 +1994,14 @@
 	            timeline: () => { },
 	            signaling: () => { },
 	            message: () => { },
+	            datachannel: () => { },
 	        };
 	        this.authMetadata = null;
 	        this.e2ee = null;
 	        this.connectionTimeoutTimerId = 0;
 	        this.monitorSignalingWebSocketEventTimerId = 0;
 	        this.monitorIceConnectionStateChangeTimerId = 0;
-	        this.dataChannels = {};
+	        this.soraDataChannels = {};
 	        this.mids = {
 	            audio: "",
 	            video: "",
@@ -2011,7 +2017,7 @@
 	     *
 	     * removestream イベントは非推奨です.removetrack イベントを使用してください
 	     *
-	     * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message)
+	     * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message, datachannel)
 	     * @param callback - コールバック関数
 	     *
 	     * @public
@@ -2157,12 +2163,12 @@
 	     */
 	    async signalingTerminate() {
 	        await this.stopStream();
-	        for (const key of Object.keys(this.dataChannels)) {
-	            const dataChannel = this.dataChannels[key];
+	        for (const key of Object.keys(this.soraDataChannels)) {
+	            const dataChannel = this.soraDataChannels[key];
 	            if (dataChannel) {
 	                dataChannel.close();
 	            }
-	            delete this.dataChannels[key];
+	            delete this.soraDataChannels[key];
 	        }
 	        if (this.ws) {
 	            this.ws.close();
@@ -2199,8 +2205,8 @@
 	            this.ws.onmessage = null;
 	            this.ws.onerror = null;
 	        }
-	        for (const key of Object.keys(this.dataChannels)) {
-	            const dataChannel = this.dataChannels[key];
+	        for (const key of Object.keys(this.soraDataChannels)) {
+	            const dataChannel = this.soraDataChannels[key];
 	            if (dataChannel) {
 	                // onclose はログを吐く専用に残す
 	                dataChannel.onclose = (event) => {
@@ -2213,12 +2219,12 @@
 	            }
 	        }
 	        // DataChannel を終了する
-	        for (const key of Object.keys(this.dataChannels)) {
-	            const dataChannel = this.dataChannels[key];
+	        for (const key of Object.keys(this.soraDataChannels)) {
+	            const dataChannel = this.soraDataChannels[key];
 	            if (dataChannel) {
 	                dataChannel.close();
 	            }
-	            delete this.dataChannels[key];
+	            delete this.soraDataChannels[key];
 	        }
 	        // WebSocket を終了する
 	        if (this.ws) {
@@ -2262,8 +2268,8 @@
 	            this.ws.onmessage = null;
 	            this.ws.onerror = null;
 	        }
-	        for (const key of Object.keys(this.dataChannels)) {
-	            const dataChannel = this.dataChannels[key];
+	        for (const key of Object.keys(this.soraDataChannels)) {
+	            const dataChannel = this.soraDataChannels[key];
 	            if (dataChannel) {
 	                // onclose はログを吐く専用に残す
 	                dataChannel.onclose = (event) => {
@@ -2276,45 +2282,45 @@
 	            }
 	        }
 	        // 終了処理を開始する
-	        if (this.dataChannels.signaling) {
+	        if (this.soraDataChannels.signaling) {
 	            const message = { type: "disconnect", reason: title };
 	            if (this.signalingOfferMessageDataChannels.signaling &&
 	                this.signalingOfferMessageDataChannels.signaling.compress === true) {
 	                const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
 	                const zlibMessage = zlibSync(binaryMessage, {});
-	                if (this.dataChannels.signaling.readyState === "open") {
+	                if (this.soraDataChannels.signaling.readyState === "open") {
 	                    // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
 	                    try {
-	                        this.dataChannels.signaling.send(zlibMessage);
-	                        this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+	                        this.soraDataChannels.signaling.send(zlibMessage);
+	                        this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
 	                    }
 	                    catch (e) {
 	                        const errorMessage = e.message;
-	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.soraDataChannels.signaling, errorMessage);
 	                    }
 	                }
 	            }
 	            else {
-	                if (this.dataChannels.signaling.readyState === "open") {
+	                if (this.soraDataChannels.signaling.readyState === "open") {
 	                    // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
 	                    try {
-	                        this.dataChannels.signaling.send(JSON.stringify(message));
-	                        this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+	                        this.soraDataChannels.signaling.send(JSON.stringify(message));
+	                        this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
 	                    }
 	                    catch (e) {
 	                        const errorMessage = e.message;
-	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.soraDataChannels.signaling, errorMessage);
 	                    }
 	                }
 	            }
 	        }
-	        for (const key of Object.keys(this.dataChannels)) {
-	            const dataChannel = this.dataChannels[key];
+	        for (const key of Object.keys(this.soraDataChannels)) {
+	            const dataChannel = this.soraDataChannels[key];
 	            if (dataChannel) {
 	                dataChannel.onerror = null;
 	                dataChannel.close();
 	            }
-	            delete this.dataChannels[key];
+	            delete this.soraDataChannels[key];
 	        }
 	        await this.disconnectWebSocket(title);
 	        await this.disconnectPeerConnection();
@@ -2345,7 +2351,7 @@
 	        this.encodings = [];
 	        this.authMetadata = null;
 	        this.e2ee = null;
-	        this.dataChannels = {};
+	        this.soraDataChannels = {};
 	        this.mids = {
 	            audio: "",
 	            video: "",
@@ -2414,18 +2420,18 @@
 	    disconnectDataChannel() {
 	        // DataChannel の強制終了処理
 	        const closeDataChannels = () => {
-	            for (const key of Object.keys(this.dataChannels)) {
-	                const dataChannel = this.dataChannels[key];
+	            for (const key of Object.keys(this.soraDataChannels)) {
+	                const dataChannel = this.soraDataChannels[key];
 	                if (dataChannel) {
 	                    dataChannel.onerror = null;
 	                    dataChannel.close();
 	                }
-	                delete this.dataChannels[key];
+	                delete this.soraDataChannels[key];
 	            }
 	        };
 	        return new Promise((resolve, reject) => {
 	            // DataChannel label signaling が存在しない場合は強制終了処理をする
-	            if (!this.dataChannels.signaling) {
+	            if (!this.soraDataChannels.signaling) {
 	                closeDataChannels();
 	                return resolve({ code: 4999, reason: "" });
 	            }
@@ -2435,8 +2441,8 @@
 	                return reject();
 	            }, this.disconnectWaitTimeout);
 	            const onClosePromises = [];
-	            for (const key of Object.keys(this.dataChannels)) {
-	                const dataChannel = this.dataChannels[key];
+	            for (const key of Object.keys(this.soraDataChannels)) {
+	                const dataChannel = this.soraDataChannels[key];
 	                if (dataChannel) {
 	                    // onerror が発火した場合は強制終了処理をする
 	                    dataChannel.onerror = () => {
@@ -2471,7 +2477,7 @@
 	            Promise.all(onClosePromises)
 	                .then(() => {
 	                // dataChannels が空の場合は切断処理が終わっているとみなす
-	                if (0 === Object.keys(this.dataChannels).length) {
+	                if (0 === Object.keys(this.soraDataChannels).length) {
 	                    resolve(null);
 	                }
 	                else {
@@ -2487,28 +2493,28 @@
 	                this.signalingOfferMessageDataChannels.signaling.compress === true) {
 	                const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
 	                const zlibMessage = zlibSync(binaryMessage, {});
-	                if (this.dataChannels.signaling.readyState === "open") {
+	                if (this.soraDataChannels.signaling.readyState === "open") {
 	                    // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
 	                    try {
-	                        this.dataChannels.signaling.send(zlibMessage);
-	                        this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+	                        this.soraDataChannels.signaling.send(zlibMessage);
+	                        this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
 	                    }
 	                    catch (e) {
 	                        const errorMessage = e.message;
-	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.soraDataChannels.signaling, errorMessage);
 	                    }
 	                }
 	            }
 	            else {
-	                if (this.dataChannels.signaling.readyState === "open") {
+	                if (this.soraDataChannels.signaling.readyState === "open") {
 	                    // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
 	                    try {
-	                        this.dataChannels.signaling.send(JSON.stringify(message));
-	                        this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+	                        this.soraDataChannels.signaling.send(JSON.stringify(message));
+	                        this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
 	                    }
 	                    catch (e) {
 	                        const errorMessage = e.message;
-	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+	                        this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.soraDataChannels.signaling, errorMessage);
 	                    }
 	                }
 	            }
@@ -2551,8 +2557,8 @@
 	            this.ws.onmessage = null;
 	            this.ws.onerror = null;
 	        }
-	        for (const key of Object.keys(this.dataChannels)) {
-	            const dataChannel = this.dataChannels[key];
+	        for (const key of Object.keys(this.soraDataChannels)) {
+	            const dataChannel = this.soraDataChannels[key];
 	            if (dataChannel) {
 	                dataChannel.onmessage = null;
 	                // onclose はログを吐く専用に残す
@@ -3433,6 +3439,9 @@
 	            }
 	            this.writeWebSocketSignalingLog("close");
 	        }
+	        for (const channel of this.datachannels) {
+	            this.callbacks.datachannel(createDataChannelEvent(channel));
+	        }
 	    }
 	    /**
 	     * シグナリングサーバーから受け取った type redirect メッセージを処理をするメソッド
@@ -3497,7 +3506,7 @@
 	            const channel = event.currentTarget;
 	            channel.bufferedAmountLowThreshold = 65536;
 	            channel.binaryType = "arraybuffer";
-	            this.dataChannels[channel.label] = channel;
+	            this.soraDataChannels[channel.label] = channel;
 	            this.trace("OPEN DATA CHANNEL", channel.label);
 	            if (channel.label === "signaling" && this.ws) {
 	                this.writeDataChannelSignalingLog("onopen", channel);
@@ -3612,17 +3621,17 @@
 	     * @param message - 送信するメッセージ
 	     */
 	    sendSignalingMessage(message) {
-	        if (this.dataChannels.signaling) {
+	        if (this.soraDataChannels.signaling) {
 	            if (this.signalingOfferMessageDataChannels.signaling &&
 	                this.signalingOfferMessageDataChannels.signaling.compress === true) {
 	                const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
 	                const zlibMessage = zlibSync(binaryMessage, {});
-	                this.dataChannels.signaling.send(zlibMessage);
+	                this.soraDataChannels.signaling.send(zlibMessage);
 	            }
 	            else {
-	                this.dataChannels.signaling.send(JSON.stringify(message));
+	                this.soraDataChannels.signaling.send(JSON.stringify(message));
 	            }
-	            this.writeDataChannelSignalingLog(`send-${message.type}`, this.dataChannels.signaling, message);
+	            this.writeDataChannelSignalingLog(`send-${message.type}`, this.soraDataChannels.signaling, message);
 	        }
 	        else if (this.ws !== null) {
 	            this.ws.send(JSON.stringify(message));
@@ -3635,9 +3644,9 @@
 	     * @param message - 送信するバイナリメッセージ
 	     */
 	    sendE2EEMessage(message) {
-	        if (this.dataChannels.e2ee) {
-	            this.dataChannels.e2ee.send(message);
-	            this.writeDataChannelSignalingLog("send-e2ee", this.dataChannels.e2ee, message);
+	        if (this.soraDataChannels.e2ee) {
+	            this.soraDataChannels.e2ee.send(message);
+	            this.writeDataChannelSignalingLog("send-e2ee", this.soraDataChannels.e2ee, message);
 	        }
 	        else if (this.ws !== null) {
 	            this.ws.send(message);
@@ -3650,7 +3659,7 @@
 	     * @param reports - RTCStatsReport のリスト
 	     */
 	    sendStatsMessage(reports) {
-	        if (this.dataChannels.stats) {
+	        if (this.soraDataChannels.stats) {
 	            const message = {
 	                type: "stats",
 	                reports: reports,
@@ -3659,10 +3668,10 @@
 	                this.signalingOfferMessageDataChannels.stats.compress === true) {
 	                const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
 	                const zlibMessage = zlibSync(binaryMessage, {});
-	                this.dataChannels.stats.send(zlibMessage);
+	                this.soraDataChannels.stats.send(zlibMessage);
 	            }
 	            else {
-	                this.dataChannels.stats.send(JSON.stringify(message));
+	                this.soraDataChannels.stats.send(JSON.stringify(message));
 	            }
 	        }
 	    }
@@ -3724,7 +3733,7 @@
 	     * @param message - Uint8Array
 	     */
 	    sendMessage(label, message) {
-	        const dataChannel = this.dataChannels[label];
+	        const dataChannel = this.soraDataChannels[label];
 	        // 接続していない場合は何もしない
 	        if (this.pc === null) {
 	            return;
@@ -3791,13 +3800,16 @@
 	    /**
 	     * DataChannel メッセージング用の DataChannel 情報のリスト
 	     */
-	    get messagingDataChannels() {
+	    get datachannels() {
+	        if (!this.signalingSwitched) {
+	            return [];
+	        }
 	        const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
 	            return /^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(label);
 	        });
 	        const result = [];
 	        for (const label of messagingDataChannellabels) {
-	            const dataChannel = this.dataChannels[label];
+	            const dataChannel = this.soraDataChannels[label];
 	            if (!dataChannel) {
 	                continue;
 	            }
@@ -4220,7 +4232,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2021.2.0-canary.7";
+	        return "2021.2.0-canary.8";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群

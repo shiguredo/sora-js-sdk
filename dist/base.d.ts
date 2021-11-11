@@ -99,9 +99,7 @@ export default class ConnectionBase {
     /**
      * 接続中の DataChannel リスト
      */
-    protected dataChannels: {
-        [key in string]?: RTCDataChannel;
-    };
+    private soraDataChannels;
     /**
      * 初回シグナリング接続時のタイムアウトに使用するタイムアウト時間(デフォルト 60000ms)
      */
@@ -135,7 +133,7 @@ export default class ConnectionBase {
      *
      * removestream イベントは非推奨です.removetrack イベントを使用してください
      *
-     * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message)
+     * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message, datachannel)
      * @param callback - コールバック関数
      *
      * @public
@@ -553,5 +551,5 @@ export default class ConnectionBase {
     /**
      * DataChannel メッセージング用の DataChannel 情報のリスト
      */
-    get messagingDataChannels(): DataChannelConfiguration[];
+    get datachannels(): DataChannelConfiguration[];
 }
