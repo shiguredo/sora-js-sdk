@@ -1205,12 +1205,19 @@ export default class ConnectionBase {
     // simulcast の場合
     if (this.options.simulcast && (this.role === "sendrecv" || this.role === "sendonly")) {
       const transceiver = this.pc.getTransceivers().find((t) => {
-        if (
-          t.mid &&
-          0 <= t.mid.indexOf("video") &&
-          t.sender.track !== null &&
-          (t.currentDirection === null || t.currentDirection === "sendonly")
-        ) {
+        if (t.mid === null) {
+          return;
+        }
+        if (t.sender.track === null) {
+          return;
+        }
+        if (t.currentDirection !== null && t.currentDirection !== "sendonly") {
+          return;
+        }
+        if (this.mids.video !== "" && this.mids.video === t.mid) {
+          return t;
+        }
+        if (0 <= t.mid.indexOf("video")) {
           return t;
         }
       });
