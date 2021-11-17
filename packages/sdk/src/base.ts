@@ -1910,7 +1910,7 @@ export default class ConnectionBase {
           this.sendStatsMessage(stats);
         }
       };
-    } else if (/^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(dataChannelEvent.channel.label)) {
+    } else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
       dataChannelEvent.channel.onmessage = (event): void => {
         if (event.target === null) {
           return;
@@ -2133,7 +2133,7 @@ export default class ConnectionBase {
       return [];
     }
     const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
-      return /^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(label);
+      return /^#.*/.exec(label);
     });
     const result: DataChannelConfiguration[] = [];
     for (const label of messagingDataChannellabels) {
