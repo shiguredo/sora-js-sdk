@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.0-canary.8
+ * @version: 2021.2.0-canary.9
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1629,7 +1629,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.2.0-canary.8",
+        sora_client: "Sora JavaScript SDK 2021.2.0-canary.9",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -3594,7 +3594,7 @@ class ConnectionBase {
                 }
             };
         }
-        else if (/^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(dataChannelEvent.channel.label)) {
+        else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
             dataChannelEvent.channel.onmessage = (event) => {
                 if (event.target === null) {
                     return;
@@ -3799,7 +3799,7 @@ class ConnectionBase {
             return [];
         }
         const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
-            return /^#[a-zA-Z][a-zA-Z-]{1,30}$/.exec(label);
+            return /^#.*/.exec(label);
         });
         const result = [];
         for (const label of messagingDataChannellabels) {
@@ -4226,7 +4226,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2021.2.0-canary.8";
+        return "2021.2.0-canary.9";
     },
     /**
      * WebRTC のユーティリティ関数群
