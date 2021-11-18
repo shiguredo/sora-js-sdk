@@ -10,6 +10,8 @@
     - バグ修正
 
 ## develop
+- [CHANGE] simulcast 時の transceiver 判定条件に offer.mids.video での分岐を追加する
+    - @yuitowest
 - [CHANGE] 複数パッケージの管理を lerna から npm workspace に変更する
     - @yuitowest
 - [ADD] DataChannel メッセージング機能を追加する
