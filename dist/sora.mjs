@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.0-canary.9
+ * @version: 2021.2.0-canary.10
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1629,7 +1629,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.2.0-canary.9",
+        sora_client: "Sora JavaScript SDK 2021.2.0-canary.10",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -2932,10 +2932,19 @@ class ConnectionBase {
         // simulcast の場合
         if (this.options.simulcast && (this.role === "sendrecv" || this.role === "sendonly")) {
             const transceiver = this.pc.getTransceivers().find((t) => {
-                if (t.mid &&
-                    0 <= t.mid.indexOf("video") &&
-                    t.sender.track !== null &&
-                    (t.currentDirection === null || t.currentDirection === "sendonly")) {
+                if (t.mid === null) {
+                    return;
+                }
+                if (t.sender.track === null) {
+                    return;
+                }
+                if (t.currentDirection !== null && t.currentDirection !== "sendonly") {
+                    return;
+                }
+                if (this.mids.video !== "" && this.mids.video === t.mid) {
+                    return t;
+                }
+                if (0 <= t.mid.indexOf("video")) {
                     return t;
                 }
             });
@@ -4226,7 +4235,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2021.2.0-canary.9";
+        return "2021.2.0-canary.10";
     },
     /**
      * WebRTC のユーティリティ関数群
