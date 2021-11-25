@@ -1,6 +1,16 @@
 import ConnectionBase from "./base";
 
+/**
+ * Role が "recvonly" の場合に Sora との WebRTC 接続を扱うクラス
+ */
 export default class ConnectionSubscriber extends ConnectionBase {
+  /**
+   * Sora へ接続するメソッド
+   *
+   * @param stream - メディアストリーム
+   *
+   * @public
+   */
   async connect(): Promise<MediaStream | void> {
     if (this.options.multistream) {
       await Promise.race([
@@ -29,6 +39,11 @@ export default class ConnectionSubscriber extends ConnectionBase {
     }
   }
 
+  /**
+   * シングルストリームで Sora へ接続するメソッド
+   *
+   * @param stream - メディアストリーム
+   */
   private async singleStream(): Promise<MediaStream> {
     await this.disconnect();
     this.setupE2EE();
@@ -87,6 +102,11 @@ export default class ConnectionSubscriber extends ConnectionBase {
     return this.stream || new MediaStream();
   }
 
+  /**
+   * マルチストリームで Sora へ接続するメソッド
+   *
+   * @param stream - メディアストリーム
+   */
   private async multiStream(): Promise<void> {
     await this.disconnect();
     this.setupE2EE();
