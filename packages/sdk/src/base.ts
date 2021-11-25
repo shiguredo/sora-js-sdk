@@ -116,27 +116,19 @@ export default class ConnectionBase {
   /**
    * WebSocket インスタンス
    */
-  protected ws: WebSocket | null;
-  /**
-   * イベントコールバックのリスト
-   */
-  protected callbacks: Callbacks;
-  /**
-   * E2EE インスタンス
-   */
-  protected e2ee: SoraE2EE | null;
+  private ws: WebSocket | null;
   /**
    * 初回シグナリング時接続タイムアウト用のタイマーID
    */
-  protected connectionTimeoutTimerId: number;
+  private connectionTimeoutTimerId: number;
   /**
    * WebSocket 切断監視用のタイマーID
    */
-  protected monitorSignalingWebSocketEventTimerId: number;
+  private monitorSignalingWebSocketEventTimerId: number;
   /**
    * PeerConnection state 切断監視用のタイマーID
    */
-  protected monitorIceConnectionStateChangeTimerId: number;
+  private monitorIceConnectionStateChangeTimerId: number;
   /**
    * 接続中の DataChannel リスト
    */
@@ -172,6 +164,15 @@ export default class ConnectionBase {
   private signalingOfferMessageDataChannels: {
     [key in string]?: SignalingOfferMessageDataChannel;
   };
+  /**
+   * イベントコールバックのリスト
+   */
+  protected callbacks: Callbacks;
+  /**
+   * E2EE インスタンス
+   */
+  protected e2ee: SoraE2EE | null;
+
   constructor(
     signalingUrlCandidates: string | string[],
     role: string,
