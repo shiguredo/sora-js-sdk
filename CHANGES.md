@@ -16,7 +16,7 @@
     - @yuitowest
 - [ADD] DataChannel メッセージング機能を追加する
     - sendrecv オブジェクトに sendMessage API を追加する
-    - sendrecv オブジェクトに datachannel プロパティを追加する
+    - sendrecv オブジェクトに datachannels プロパティを追加する
     - on callback に "message" を追加する
     - on callback に "datachannel" を追加する
     - @yuitowest
