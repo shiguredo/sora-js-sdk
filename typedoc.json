@@ -1,0 +1,10 @@
+{
+  "entryPoints": [
+    "./packages/sdk/src/sora.ts",
+    "./packages/sdk/src/types.ts"
+  ],
+  "tsconfig": "./packages/sdk/tsconfig.json",
+  "disableSources": true,
+  "readme": "./TYPEDOC.md",
+  "out": "apidoc"
+}
