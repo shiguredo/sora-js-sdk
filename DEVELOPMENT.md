@@ -37,3 +37,6 @@ sora-js-sdk/packages の package 更新
 - `npm run build` を実行する
 - `npm run lint` を実行する
 - `npm run test` を実行する
+
+## ドキュメント作成
+- `npm run doc` を実行する
