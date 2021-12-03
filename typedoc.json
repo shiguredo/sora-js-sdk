@@ -5,6 +5,8 @@
   ],
   "tsconfig": "./packages/sdk/tsconfig.json",
   "disableSources": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
   "readme": "./TYPEDOC.md",
   "out": "apidoc"
 }
