@@ -1,7 +1,6 @@
 {
   "entryPoints": [
-    "./packages/sdk/src/sora.ts",
-    "./packages/sdk/src/types.ts"
+    "./packages/sdk/src/sora.ts"
   ],
   "tsconfig": "./packages/sdk/tsconfig.json",
   "disableSources": true,
