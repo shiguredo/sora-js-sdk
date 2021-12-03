@@ -11,6 +11,7 @@
     "fmt": "npm run fmt --workspaces",
     "test": "npm run test --workspaces",
     "start": "npx serve -S -l 8080 ./example",
+    "doc": "npx typedoc",
     "release:major": "./scripts/versioning.sh major",
     "release:minor": "./scripts/versioning.sh minor",
     "release:patch": "./scripts/versioning.sh patch",
