@@ -7,6 +7,12 @@ export default class ConnectionSubscriber extends ConnectionBase {
   /**
    * Sora へ接続するメソッド
    *
+   * @example
+   * ```typescript
+   * const recvonly = connection.sendrecv("sora");
+   * await recvonly.connect();
+   * ```
+   *
    * @param stream - メディアストリーム
    *
    * @public

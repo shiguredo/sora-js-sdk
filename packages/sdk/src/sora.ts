@@ -24,6 +24,7 @@ import type {
   SignalingNotifySpotlightChanged,
   SignalingNotifySpotlightFocused,
   SignalingNotifySpotlightUnfocused,
+  SignalingPushMessage,
   Simulcast,
   SimulcastRid,
   SoraAbendTitle,
@@ -60,6 +61,12 @@ class SoraConnection {
   /**
    * role sendrecv で接続するための Connecion インスタンスを生成するメソッド
    *
+   * @example
+   * ```typescript
+   * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+   * const sendrecv = connection.sendrecv("sora");
+   * ```
+   *
    * @param channelId - チャネルID
    * @param metadata - メタデータ
    * @param options - コネクションオプション
@@ -83,6 +90,12 @@ class SoraConnection {
    * @param metadata - メタデータ
    * @param options - コネクションオプション
    *
+   * @example
+   * ```typescript
+   * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+   * const sendonly = connection.sendonly("sora");
+   * ```
+   *
    * @returns
    * role sendonly な Connection オブジェクトを返します
    *
@@ -97,6 +110,12 @@ class SoraConnection {
   }
   /**
    * role recvonly で接続するための Connecion インスタンスを生成するメソッド
+   *
+   * @example
+   * ```typescript
+   * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+   * const recvonly = connection.recvonly("sora");
+   * ```
    *
    * @param channelId - チャネルID
    * @param metadata - メタデータ
@@ -132,6 +151,10 @@ export default {
   /**
    * E2EE で使用する WASM の読み込みを行うメソッド
    *
+   * @example
+   * ```typescript
+   * Sora.initE2EE("http://192.0.2.100/wasm.wasm");
+   * ```
    * @param wasmUrl - E2EE WASM の URL
    *
    * @public
@@ -142,10 +165,16 @@ export default {
   /**
    * SoraConnection インスタンスを生成するメソッド
    *
-   * @param wasmUrl - シグナリングに使用する URL 候補
+   * @example
+   * ```typescript
+   * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+   * ```
+   *
+   * @param signalingUrlCandidates - シグナリングに使用する URL 候補
    * @param debug - デバッグフラグ
    *
    * @public
+   *
    */
   connection: function (signalingUrlCandidates: string | string[], debug = false): SoraConnection {
     return new SoraConnection(signalingUrlCandidates, debug);
@@ -179,6 +208,7 @@ export type {
   DataChannelDirection,
   DataChannelEvent,
   DataChannelMessageEvent,
+  JSONType,
   Role,
   SignalingEvent,
   SignalingNotifyConnectionCreated,
@@ -190,6 +220,7 @@ export type {
   SignalingNotifySpotlightChanged,
   SignalingNotifySpotlightFocused,
   SignalingNotifySpotlightUnfocused,
+  SignalingPushMessage,
   Simulcast,
   SimulcastRid,
   SoraAbendTitle,

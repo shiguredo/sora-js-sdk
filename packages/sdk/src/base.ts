@@ -246,10 +246,18 @@ export default class ConnectionBase {
   /**
    * SendRecv Object で発火するイベントのコールバックを設定するメソッド
    *
-   * @remarks
-   * addstream イベントは非推奨です.track イベントを使用してください
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * sendrecv.on("track", (event) => {
+   *   // callback 処理
+   * });
+   * ```
    *
-   * removestream イベントは非推奨です.removetrack イベントを使用してください
+   * @remarks
+   * addstream イベントは非推奨です. track イベントを使用してください
+   *
+   * removestream イベントは非推奨です. removetrack イベントを使用してください
    *
    * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message, datachannel)
    * @param callback - コールバック関数
@@ -270,6 +278,15 @@ export default class ConnectionBase {
 
   /**
    * audio track を停止するメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * sendrecv.stopAudioTrack(mediaStream);
+   * ```
    *
    * @remarks
    * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します
@@ -305,6 +322,15 @@ export default class ConnectionBase {
   /**
    * video track を停止するメソッド
    *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * sendrecv.stopVideoTrack(mediaStream);
+   * ```
+   *
    * @remarks
    * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します
    *
@@ -339,6 +365,16 @@ export default class ConnectionBase {
   /**
    * audio track を入れ替えするメソッド
    *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * const replacedMediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
+   * await sendrecv.replaceAudioTrack(mediaStream, replacedMediaStream.getAudioTracks()[0]);
+   * ```
+   *
    * @remarks
    * stream の audio track を停止後、新しい audio track をセットします
    *
@@ -359,6 +395,16 @@ export default class ConnectionBase {
 
   /**
    * video track を入れ替えするメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * const replacedMediaStream = await navigator.mediaDevices.getUserMedia({video: true});
+   * await sendrecv.replaceVideoTrack(mediaStream, replacedMediaStream.getVideoTracks()[0]);
+   * ```
    *
    * @remarks
    * stream の video track を停止後、新しい video track をセットします
@@ -797,6 +843,11 @@ export default class ConnectionBase {
 
   /**
    * 切断処理をするメソッド
+   *
+   * @example
+   * ```
+   * await sendrecv.disconnect();
+   * ```
    *
    * @public
    */
