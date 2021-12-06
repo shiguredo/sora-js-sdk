@@ -15,6 +15,7 @@
 - [UPDATE] 複数パッケージの管理を lerna から npm workspace に変更する
     - @yuitowest
 - [ADD] DataChannel メッセージング機能を追加する
+    - sendrecv オブジェクトのオプションに datachannels を追加する
     - sendrecv オブジェクトに sendMessage API を追加する
     - sendrecv オブジェクトに datachannels プロパティを追加する
     - on callback に "message" を追加する
