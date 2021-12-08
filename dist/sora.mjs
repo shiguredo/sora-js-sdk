@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.0-canary.10
+ * @version: 2021.2.0-canary.11
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1629,7 +1629,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.2.0-canary.10",
+        sora_client: "Sora JavaScript SDK 2021.2.0-canary.11",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -2006,10 +2006,18 @@ class ConnectionBase {
     /**
      * SendRecv Object で発火するイベントのコールバックを設定するメソッド
      *
-     * @remarks
-     * addstream イベントは非推奨です.track イベントを使用してください
+     * @example
+     * ```
+     * const sendrecv = connection.sendrecv("sora");
+     * sendrecv.on("track", (event) => {
+     *   // callback 処理
+     * });
+     * ```
      *
-     * removestream イベントは非推奨です.removetrack イベントを使用してください
+     * @remarks
+     * addstream イベントは非推奨です. track イベントを使用してください
+     *
+     * removestream イベントは非推奨です. removetrack イベントを使用してください
      *
      * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message, datachannel)
      * @param callback - コールバック関数
@@ -2030,6 +2038,15 @@ class ConnectionBase {
     }
     /**
      * audio track を停止するメソッド
+     *
+     * @example
+     * ```
+     * const sendrecv = connection.sendrecv("sora");
+     * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+     * await sendrecv.connect(mediaStream);
+     *
+     * sendrecv.stopAudioTrack(mediaStream);
+     * ```
      *
      * @remarks
      * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します
@@ -2064,6 +2081,15 @@ class ConnectionBase {
     /**
      * video track を停止するメソッド
      *
+     * @example
+     * ```
+     * const sendrecv = connection.sendrecv("sora");
+     * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+     * await sendrecv.connect(mediaStream);
+     *
+     * sendrecv.stopVideoTrack(mediaStream);
+     * ```
+     *
      * @remarks
      * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します
      *
@@ -2097,6 +2123,16 @@ class ConnectionBase {
     /**
      * audio track を入れ替えするメソッド
      *
+     * @example
+     * ```
+     * const sendrecv = connection.sendrecv("sora");
+     * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+     * await sendrecv.connect(mediaStream);
+     *
+     * const replacedMediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
+     * await sendrecv.replaceAudioTrack(mediaStream, replacedMediaStream.getAudioTracks()[0]);
+     * ```
+     *
      * @remarks
      * stream の audio track を停止後、新しい audio track をセットします
      *
@@ -2116,6 +2152,16 @@ class ConnectionBase {
     }
     /**
      * video track を入れ替えするメソッド
+     *
+     * @example
+     * ```
+     * const sendrecv = connection.sendrecv("sora");
+     * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+     * await sendrecv.connect(mediaStream);
+     *
+     * const replacedMediaStream = await navigator.mediaDevices.getUserMedia({video: true});
+     * await sendrecv.replaceVideoTrack(mediaStream, replacedMediaStream.getVideoTracks()[0]);
+     * ```
      *
      * @remarks
      * stream の video track を停止後、新しい video track をセットします
@@ -2394,7 +2440,7 @@ class ConnectionBase {
                         this.ws.close();
                         this.ws = null;
                     }
-                    resolve(null);
+                    resolve({ code: 1006, reason: "" });
                 }, this.disconnectWaitTimeout);
             }
             else {
@@ -2530,6 +2576,11 @@ class ConnectionBase {
     }
     /**
      * 切断処理をするメソッド
+     *
+     * @example
+     * ```
+     * await sendrecv.disconnect();
+     * ```
      *
      * @public
      */
@@ -3839,7 +3890,24 @@ class ConnectionBase {
     }
 }
 
+/**
+ * Role が "sendonly" または "sendrecv" の場合に Sora との WebRTC 接続を扱うクラス
+ */
 class ConnectionPublisher extends ConnectionBase {
+    /**
+     * Sora へ接続するメソッド
+     *
+     * @example
+     * ```typescript
+     * const sendrecv = connection.sendrecv("sora");
+     * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+     * await sendrecv.connect(mediaStream);
+     * ```
+     *
+     * @param stream - メディアストリーム
+     *
+     * @public
+     */
     async connect(stream) {
         if (this.options.multistream) {
             await Promise.race([
@@ -3865,6 +3933,11 @@ class ConnectionPublisher extends ConnectionBase {
         this.monitorPeerConnectionState();
         return stream;
     }
+    /**
+     * シングルストリームで Sora へ接続するメソッド
+     *
+     * @param stream - メディアストリーム
+     */
     async singleStream(stream) {
         await this.disconnect();
         this.setupE2EE();
@@ -3892,6 +3965,11 @@ class ConnectionPublisher extends ConnectionBase {
         await this.waitChangeConnectionStateConnected();
         return stream;
     }
+    /**
+     * マルチストリームで Sora へ接続するメソッド
+     *
+     * @param stream - メディアストリーム
+     */
     async multiStream(stream) {
         await this.disconnect();
         this.setupE2EE();
@@ -3969,7 +4047,23 @@ class ConnectionPublisher extends ConnectionBase {
     }
 }
 
+/**
+ * Role が "recvonly" の場合に Sora との WebRTC 接続を扱うクラス
+ */
 class ConnectionSubscriber extends ConnectionBase {
+    /**
+     * Sora へ接続するメソッド
+     *
+     * @example
+     * ```typescript
+     * const recvonly = connection.sendrecv("sora");
+     * await recvonly.connect();
+     * ```
+     *
+     * @param stream - メディアストリーム
+     *
+     * @public
+     */
     async connect() {
         if (this.options.multistream) {
             await Promise.race([
@@ -3998,6 +4092,11 @@ class ConnectionSubscriber extends ConnectionBase {
             return stream;
         }
     }
+    /**
+     * シングルストリームで Sora へ接続するメソッド
+     *
+     * @param stream - メディアストリーム
+     */
     async singleStream() {
         await this.disconnect();
         this.setupE2EE();
@@ -4055,6 +4154,11 @@ class ConnectionSubscriber extends ConnectionBase {
         await this.waitChangeConnectionStateConnected();
         return this.stream || new MediaStream();
     }
+    /**
+     * マルチストリームで Sora へ接続するメソッド
+     *
+     * @param stream - メディアストリーム
+     */
     async multiStream() {
         await this.disconnect();
         this.setupE2EE();
@@ -4152,6 +4256,12 @@ class SoraConnection {
     /**
      * role sendrecv で接続するための Connecion インスタンスを生成するメソッド
      *
+     * @example
+     * ```typescript
+     * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+     * const sendrecv = connection.sendrecv("sora");
+     * ```
+     *
      * @param channelId - チャネルID
      * @param metadata - メタデータ
      * @param options - コネクションオプション
@@ -4171,6 +4281,12 @@ class SoraConnection {
      * @param metadata - メタデータ
      * @param options - コネクションオプション
      *
+     * @example
+     * ```typescript
+     * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+     * const sendonly = connection.sendonly("sora");
+     * ```
+     *
      * @returns
      * role sendonly な Connection オブジェクトを返します
      *
@@ -4181,6 +4297,12 @@ class SoraConnection {
     }
     /**
      * role recvonly で接続するための Connecion インスタンスを生成するメソッド
+     *
+     * @example
+     * ```typescript
+     * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+     * const recvonly = connection.recvonly("sora");
+     * ```
      *
      * @param channelId - チャネルID
      * @param metadata - メタデータ
@@ -4211,6 +4333,10 @@ var sora = {
     /**
      * E2EE で使用する WASM の読み込みを行うメソッド
      *
+     * @example
+     * ```typescript
+     * Sora.initE2EE("http://192.0.2.100/wasm.wasm");
+     * ```
      * @param wasmUrl - E2EE WASM の URL
      *
      * @public
@@ -4221,10 +4347,16 @@ var sora = {
     /**
      * SoraConnection インスタンスを生成するメソッド
      *
-     * @param wasmUrl - シグナリングに使用する URL 候補
+     * @example
+     * ```typescript
+     * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+     * ```
+     *
+     * @param signalingUrlCandidates - シグナリングに使用する URL 候補
      * @param debug - デバッグフラグ
      *
      * @public
+     *
      */
     connection: function (signalingUrlCandidates, debug = false) {
         return new SoraConnection(signalingUrlCandidates, debug);
@@ -4235,7 +4367,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2021.2.0-canary.10";
+        return "2021.2.0-canary.11";
     },
     /**
      * WebRTC のユーティリティ関数群
