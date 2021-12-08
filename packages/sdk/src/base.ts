@@ -698,7 +698,7 @@ export default class ConnectionBase {
             this.ws.close();
             this.ws = null;
           }
-          resolve(null);
+          resolve({ code: 1006, reason: "" });
         }, this.disconnectWaitTimeout);
       } else {
         // ws の state が open ではない場合は後処理をして終わる
