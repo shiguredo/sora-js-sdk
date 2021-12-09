@@ -31,8 +31,8 @@
     "dist"
   ],
   "devDependencies": {
-    "npm-check-updates": "^11.8.5",
-    "serve": "^12.0.1",
+    "npm-check-updates": "^12.0.3",
+    "serve": "^13.0.2",
     "typedoc": "^0.22.10"
   },
   "resolutions": {
