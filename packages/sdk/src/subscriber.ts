@@ -1,6 +1,22 @@
 import ConnectionBase from "./base";
 
+/**
+ * Role が "recvonly" の場合に Sora との WebRTC 接続を扱うクラス
+ */
 export default class ConnectionSubscriber extends ConnectionBase {
+  /**
+   * Sora へ接続するメソッド
+   *
+   * @example
+   * ```typescript
+   * const recvonly = connection.sendrecv("sora");
+   * await recvonly.connect();
+   * ```
+   *
+   * @param stream - メディアストリーム
+   *
+   * @public
+   */
   async connect(): Promise<MediaStream | void> {
     if (this.options.multistream) {
       await Promise.race([
@@ -29,11 +45,16 @@ export default class ConnectionSubscriber extends ConnectionBase {
     }
   }
 
+  /**
+   * シングルストリームで Sora へ接続するメソッド
+   *
+   * @param stream - メディアストリーム
+   */
   private async singleStream(): Promise<MediaStream> {
     await this.disconnect();
     this.setupE2EE();
-    const offer = await this.createOffer();
-    const signalingMessage = await this.signaling(offer);
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
@@ -87,11 +108,16 @@ export default class ConnectionSubscriber extends ConnectionBase {
     return this.stream || new MediaStream();
   }
 
+  /**
+   * マルチストリームで Sora へ接続するメソッド
+   *
+   * @param stream - メディアストリーム
+   */
   private async multiStream(): Promise<void> {
     await this.disconnect();
     this.setupE2EE();
-    const offer = await this.createOffer();
-    const signalingMessage = await this.signaling(offer);
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {

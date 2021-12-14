@@ -12,33 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ['12', '14', '15', '16']
+        node: ['16']
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-
-      - uses: actions/cache@v2
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-      - run: yarn install
-      - run: yarn bootstrap
-      - run: yarn build
-      - run: yarn lint
-      - run: yarn test
+          cache: npm
+      - run: npm --version
+      - run: npm install
+      - run: npm run build -w packages/e2ee
+      - run: npm run build -w packages/sdk
+      - run: npm run lint -w packages/e2ee
+      - run: npm run lint -w packages/sdk
+      - run: npm run test -w packages/sdk
       - name: Slack Notification
         if: failure()
-        uses: rtCamp/action-slack-notify@v2.1.0
+        uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: sora-demo
+          SLACK_CHANNEL: sora-devtools
           SLACK_COLOR: danger
           SLACK_TITLE: Failure test
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

@@ -37,6 +37,16 @@ export type SignalingVideo =
 
 export type Role = "sendrecv" | "sendonly" | "recvonly";
 
+export type SignalingConnectDataChannel = {
+  label?: string;
+  direction?: DataChannelDirection;
+  compress?: boolean;
+  max_packet_life_time?: number;
+  max_retransmits?: number;
+  protocol?: string;
+  ordered?: boolean;
+};
+
 export type SignalingConnectMessage = {
   type: "connect";
   role: Role;
@@ -45,7 +55,7 @@ export type SignalingConnectMessage = {
   metadata?: JSONType;
   signaling_notify_metadata?: JSONType;
   multistream?: boolean;
-  spotlight?: number | boolean;
+  spotlight?: boolean;
   spotlight_number?: number;
   simulcast?: Simulcast;
   simulcast_rid?: SimulcastRid;
@@ -59,6 +69,8 @@ export type SignalingConnectMessage = {
   spotlight_unfocus_rid?: SpotlightFocusRid;
   data_channel_signaling?: boolean;
   ignore_disconnect_websocket?: boolean;
+  redirect?: true;
+  data_channels?: SignalingConnectDataChannel[];
 };
 
 export type SignalingMessage =
@@ -69,7 +81,14 @@ export type SignalingMessage =
   | SignalingPushMessage
   | SignalingNotifyMessage
   | SignalingReqStatsMessage
-  | SignalingSwitchedMessage;
+  | SignalingSwitchedMessage
+  | SignalingRedirectMessage;
+
+export type SignalingOfferMessageDataChannel = {
+  label: string;
+  direction: DataChannelDirection;
+  compress: boolean;
+};
 
 export type SignalingOfferMessage = {
   type: "offer";
@@ -81,10 +100,7 @@ export type SignalingOfferMessage = {
   encodings?: RTCRtpEncodingParameters[];
   ignore_disconnect_websocket?: boolean;
   data_channel_signaling?: boolean;
-  data_channels?: Array<{
-    label: string;
-    compress: boolean;
-  }>;
+  data_channels?: SignalingOfferMessageDataChannel[];
   mid?: {
     audio?: string;
     video?: string;
@@ -118,6 +134,11 @@ export type SignalingReqStatsMessage = {
 export type SignalingSwitchedMessage = {
   type: "switched";
   ignore_disconnect_websocket: boolean;
+};
+
+export type SignalingRedirectMessage = {
+  type: "redirect";
+  location: string;
 };
 
 export type SignalingNotifyMessage =
@@ -230,6 +251,18 @@ export type SignalingNotifyNetworkStatus = {
   unstable_level: 0 | 1 | 2 | 3;
 };
 
+export type DataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
+
+export type DataChannelConfiguration = {
+  label: string;
+  direction: DataChannelDirection;
+  compress?: boolean;
+  maxPacketLifeTime?: number;
+  maxRetransmits?: number;
+  protocol?: string;
+  ordered?: boolean;
+};
+
 export type ConnectionOptions = {
   audio?: boolean;
   audioCodecType?: AudioCodecType;
@@ -247,7 +280,7 @@ export type ConnectionOptions = {
   videoCodecType?: VideoCodecType;
   videoBitRate?: number;
   multistream?: boolean;
-  spotlight?: boolean | number;
+  spotlight?: boolean;
   spotlightNumber?: number;
   spotlightFocusRid?: SpotlightFocusRid;
   spotlightUnfocusRid?: SpotlightFocusRid;
@@ -261,6 +294,8 @@ export type ConnectionOptions = {
   dataChannelSignaling?: boolean;
   ignoreDisconnectWebSocket?: boolean;
   disconnectWaitTimeout?: number;
+  signalingCandidateTimeout?: number;
+  dataChannels?: DataChannelConfiguration[];
 };
 
 export type Callbacks = {
@@ -275,6 +310,8 @@ export type Callbacks = {
   timeout: () => void;
   timeline: (event: TimelineEvent) => void;
   signaling: (event: SignalingEvent) => void;
+  message: (event: DataChannelMessageEvent) => void;
+  datachannel: (event: DataChannelEvent) => void;
 };
 
 export type PreKeyBundle = {
@@ -293,6 +330,15 @@ export interface SignalingEvent extends Event {
   transportType: TransportType;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
+}
+
+export interface DataChannelMessageEvent extends Event {
+  label: string;
+  data: ArrayBuffer;
+}
+
+export interface DataChannelEvent extends Event {
+  datachannel: DataChannelConfiguration;
 }
 
 export interface TimelineEvent extends Event {

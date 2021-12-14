@@ -2,8 +2,12 @@ import {
   ConnectionOptions,
   Browser,
   JSONType,
+  DataChannelConfiguration,
+  DataChannelEvent,
+  DataChannelMessageEvent,
   PreKeyBundle,
   SignalingConnectMessage,
+  SignalingConnectDataChannel,
   SignalingEvent,
   SignalingNotifyMetadata,
   SignalingNotifyConnectionCreated,
@@ -51,6 +55,44 @@ function enabledSimulcast(): boolean {
   return hasAllRequiredHeaderExtensions;
 }
 
+function parseDataChannelConfiguration(dataChannelConfiguration: unknown): SignalingConnectDataChannel {
+  if (typeof dataChannelConfiguration !== "object" || dataChannelConfiguration === null) {
+    throw new Error("Failed to parse options dataChannels. Options dataChannels element must be type 'object'");
+  }
+  const configuration = dataChannelConfiguration as DataChannelConfiguration;
+  const result: SignalingConnectDataChannel = {};
+  if (typeof configuration.label === "string") {
+    result.label = configuration.label;
+  }
+  if (typeof configuration.direction === "string") {
+    result.direction = configuration.direction;
+  }
+  if (typeof configuration.ordered === "boolean") {
+    result.ordered = configuration.ordered;
+  }
+  if (typeof configuration.compress === "boolean") {
+    result.compress = configuration.compress;
+  }
+  if (typeof configuration.maxPacketLifeTime === "number") {
+    result.max_packet_life_time = configuration.maxPacketLifeTime;
+  }
+  if (typeof configuration.maxRetransmits === "number") {
+    result.max_retransmits = configuration.maxRetransmits;
+  }
+  if (typeof configuration.protocol === "string") {
+    result.protocol = configuration.protocol;
+  }
+  return result;
+}
+
+function parseDataChannelConfigurations(dataChannelConfigurations: unknown[]): SignalingConnectDataChannel[] {
+  const result: SignalingConnectDataChannel[] = [];
+  for (const dataChannelConfiguration of dataChannelConfigurations) {
+    result.push(parseDataChannelConfiguration(dataChannelConfiguration));
+  }
+  return result;
+}
+
 export function isSafari(): boolean {
   return browser() === "safari";
 }
@@ -64,7 +106,8 @@ export function createSignalingMessage(
   role: string,
   channelId: string | null | undefined,
   metadata: JSONType | undefined,
-  options: ConnectionOptions
+  options: ConnectionOptions,
+  redirect: boolean
 ): SignalingConnectMessage {
   if (role !== "sendrecv" && role !== "sendonly" && role !== "recvonly") {
     throw new Error("Unknown role type");
@@ -85,6 +128,10 @@ export function createSignalingMessage(
 
   if (metadata !== undefined) {
     message.metadata = metadata;
+  }
+
+  if (redirect) {
+    message.redirect = true;
   }
 
   if ("signalingNotifyMetadata" in options) {
@@ -258,6 +305,10 @@ export function createSignalingMessage(
     message.e2ee = true;
   }
 
+  if (Array.isArray(options.dataChannels) && 0 < options.dataChannels.length) {
+    message.data_channels = parseDataChannelConfigurations(options.dataChannels);
+  }
+
   return message;
 }
 
@@ -379,5 +430,18 @@ export function createTimelineEvent(
   event.logType = logType;
   event.dataChannelId = dataChannelId;
   event.dataChannelLabel = dataChannelLabel;
+  return event;
+}
+
+export function createDataChannelMessageEvent(label: string, data: ArrayBuffer): DataChannelMessageEvent {
+  const event = new Event("message") as DataChannelMessageEvent;
+  event.label = label;
+  event.data = data;
+  return event;
+}
+
+export function createDataChannelEvent(channel: DataChannelConfiguration): DataChannelEvent {
+  const event = new Event("datachannel") as DataChannelEvent;
+  event.datachannel = channel;
   return event;
 }

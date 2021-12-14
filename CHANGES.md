@@ -9,6 +9,32 @@
 - FIX
     - バグ修正
 
+## 2021.2.0
+- [UPDATE] simulcast 時の transceiver 判定条件に offer.mids.video での分岐を追加する
+    - @yuitowest
+- [UPDATE] 複数パッケージの管理を lerna から npm workspace に変更する
+    - @yuitowest
+- [ADD] DataChannel メッセージング機能を追加する
+    - sendrecv オブジェクトのオプションに datachannels を追加する
+    - sendrecv オブジェクトに sendMessage API を追加する
+    - sendrecv オブジェクトに datachannels プロパティを追加する
+    - on callback に "message" を追加する
+    - on callback に "datachannel" を追加する
+    - @yuitowest
+- [CHANGE] 複数 Signaling URL への接続に対応する
+    - Connection オブジェクト第一引数の type を `string` から `string | string[]` に変更する
+    - Connection オブジェクト signalingUrl プロパティの戻り値の type を `string` から `string | string[]` に変更する
+    - SendRecv オブジェクト signalingUrl プロパティの戻り値の type を `string` から `string | string[]` に変更する
+    - Connection オブジェクトに signalingUrlCandidates プロパティを追加する
+    - SendRecv オブジェクト に signalingUrlCandidates プロパティを追加する
+    - SendRecv オブジェクト に connectedSignalingUrl プロパティを追加する
+    - SendRecv オブジェクト に signalingCandidateTimeout オプションを追加する
+    - @yuitowest
+- [UPDATE] type redirect 対応を追加する
+    - @yuitowest
+- [CHANGE] spotlight_legacy 対応を削除する
+    - ConnectionOptions の spotlight オプションの型を boolean のみに変更する
+
 ## 2021.1.7
 - [ADD] SoraCloseEvent 関連の type を export する
     - @yuitowest
@@ -66,6 +92,7 @@
 ## 2021.1.1
 
 - [FIX] 接続処理が途中で失敗した場合の timeline ログに connected のログが出力されていた問題を修正する
+    - @yuitowest
 
 ## 2021.1.0
 

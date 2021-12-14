@@ -1,0 +1,106 @@
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>DataChannel messaging </title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>DataChannel messaging test</h1>
+            <p>複数のブラウザで開いて sendMessage することで動作確認できます</p>
+            <div style="display: flex;">
+                <div>
+                    <div style="display: flex;">
+                      <input type="text" name="message" />
+                      <button id="send-message" disabled>sendMessage</button><br />
+                    </div>
+                    <button id="start-sendrecv">start</button>
+                    <button id="stop-sendrecv">stop</button><br />
+                    <video id="sendrecv-local-video" autoplay="" playsinline="" controls="" style="width: 320px; height: 240px; border: 1px solid black;"></video>
+                    <div id="sendrecv-remote-videos"></div>
+                    <div>
+                      <h3>messages</h3>
+                      <ul id="received-messages">
+                      </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="./sora.js"></script>
+        <script type="text/javascript">
+const channelId = 'Sora';
+const debug = true;
+const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
+const options = {
+  multistream: true,
+  dataChannels: [
+    {
+      label: "#example",
+      direction: "sendrecv",
+      compress: true,
+    },
+  ],
+}
+const sendrecv = sora.sendrecv(channelId, null, options);
+
+document.querySelector('#start-sendrecv').addEventListener('click', function() {
+  navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    .then(mediaStream => {
+      sendrecv.connect(mediaStream)
+        .then(stream => {
+          document.querySelector('#sendrecv-local-video').srcObject = stream;
+          document.querySelector('#send-message').disabled = false;
+        });
+    })
+    .catch(e => {
+      console.error(e);
+    });
+  sendrecv.on('track', function(event) {
+    const stream = event.streams[0];
+    if (!stream) return;
+    const remoteVideoId = 'sendrecv-remotevideo-' + stream.id;
+    const remoteVideos = document.querySelector('#sendrecv-remote-videos');
+    if (!remoteVideos.querySelector('#' + remoteVideoId)) {
+      const remoteVideo = document.createElement('video');
+      remoteVideo.id = remoteVideoId;
+      remoteVideo.style.border = '1px solid red';
+      remoteVideo.autoplay = true;
+      remoteVideo.playsinline = true;
+      remoteVideo.controls = true;
+      remoteVideo.width = '160';
+      remoteVideo.height = '120';
+      remoteVideo.srcObject = stream;
+      remoteVideos.appendChild(remoteVideo);
+    }
+  });
+  sendrecv.on('removetrack', function(event) {
+    const remoteVideo = document.querySelector('#sendrecv-remotevideo-' + event.target.id);
+    if (remoteVideo) {
+      document.querySelector('#sendrecv-remote-videos').removeChild(remoteVideo);
+    }
+  });
+  sendrecv.on('message', (event) => {
+    const message = document.createElement('li');
+    message.textContent = new TextDecoder().decode(event.data);
+    document.querySelector('#received-messages').appendChild(message);
+  });
+  sendrecv.on('disconnect', (event) => {
+    document.querySelector('#send-message').disabled = true;
+  });
+});
+document.querySelector('#stop-sendrecv').addEventListener('click', function() {
+  sendrecv.disconnect()
+    .then(function() {
+      document.querySelector('#sendrecv-local-video').srcObject = null;
+      document.querySelector('#sendrecv-remote-videos').innerHTML = null;
+    });
+});
+document.querySelector('#send-message').addEventListener('click', async function() {
+  const value = document.querySelector('input[name=message]').value;
+  if (value !== "") {
+    sendrecv.sendMessage('#example', new TextEncoder().encode(value));
+  }
+});
+    </script>
+  </body>
+</html>

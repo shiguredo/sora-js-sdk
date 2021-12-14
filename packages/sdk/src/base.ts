@@ -3,6 +3,8 @@ import { unzlibSync, zlibSync } from "fflate";
 import {
   ConnectError,
   createDataChannelData,
+  createDataChannelEvent,
+  createDataChannelMessageEvent,
   createSignalingEvent,
   createSignalingMessage,
   createTimelineEvent,
@@ -16,13 +18,16 @@ import {
   Callbacks,
   ConnectionOptions,
   JSONType,
+  DataChannelConfiguration,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
   SignalingOfferMessage,
+  SignalingOfferMessageDataChannel,
   SignalingPingMessage,
   SignalingPushMessage,
   SignalingReOfferMessage,
+  SignalingRedirectMessage,
   SignalingReqStatsMessage,
   SignalingSwitchedMessage,
   SignalingUpdateMessage,
@@ -40,43 +45,136 @@ declare global {
   }
 }
 
+/**
+ * Sora との WebRTC 接続を扱う基底クラス
+ *
+ * @param signalingUrlCandidates - シグナリングに使用する URL の候補
+ * @param role - ロール
+ * @param channelId - チャネルID
+ * @param metadata - メタデータ
+ * @param options - コネクションオプション
+ * @param debug - デバッグフラグ
+ */
 export default class ConnectionBase {
+  /**
+   * ロール(sendonly | sendrecv | recvonly)
+   */
   role: string;
+  /**
+   * チャネルID
+   */
   channelId: string;
+  /**
+   * メタデータ
+   */
   metadata: JSONType | undefined;
-  signalingUrl: string;
+  /**
+   * シグナリングに使用する URL 候補
+   */
+  signalingUrlCandidates: string | string[];
+  /**
+   * 接続オプション
+   */
   options: ConnectionOptions;
+  /**
+   * PeerConnection に渡す configuration
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constraints: any;
+  /**
+   * デバッグフラグ
+   */
   debug: boolean;
+  /**
+   * クライアントID
+   */
   clientId: string | null;
+  /**
+   * コネクションID
+   */
   connectionId: string | null;
+  /**
+   * リモートコネクションIDのリスト
+   */
   remoteConnectionIds: string[];
+  /**
+   * メディアストリーム
+   */
   stream: MediaStream | null;
+  /**
+   * type offer に含まれる認証 metadata
+   */
   authMetadata: JSONType;
+  /**
+   * PeerConnection インスタンス
+   */
   pc: RTCPeerConnection | null;
+  /**
+   * サイマルキャストで使用する RTCRtpEncodingParameters のリスト
+   */
   encodings: RTCRtpEncodingParameters[];
-  protected ws: WebSocket | null;
-  protected callbacks: Callbacks;
-  protected e2ee: SoraE2EE | null;
-  protected connectionTimeoutTimerId: number;
-  protected monitorSignalingWebSocketEventTimerId: number;
-  protected monitorIceConnectionStateChangeTimerId: number;
-  protected dataChannels: {
+  /**
+   * WebSocket インスタンス
+   */
+  private ws: WebSocket | null;
+  /**
+   * 初回シグナリング時接続タイムアウト用のタイマーID
+   */
+  private connectionTimeoutTimerId: number;
+  /**
+   * WebSocket 切断監視用のタイマーID
+   */
+  private monitorSignalingWebSocketEventTimerId: number;
+  /**
+   * PeerConnection state 切断監視用のタイマーID
+   */
+  private monitorIceConnectionStateChangeTimerId: number;
+  /**
+   * 接続中の DataChannel リスト
+   */
+  private soraDataChannels: {
     [key in string]?: RTCDataChannel;
   };
-  private dataChannelsCompress: {
-    [key in string]?: boolean;
-  };
+  /**
+   * 初回シグナリング接続時のタイムアウトに使用するタイムアウト時間(デフォルト 60000ms)
+   */
   private connectionTimeout: number;
+  /**
+   * シグナリング候補のURLへの接続確認タイムアウトに使用するタイムアウト時間(デフォルト 3000ms)
+   */
+  private signalingCandidateTimeout: number;
+  /**
+   * 切断処理のタイムアウトに使用するタイムアウト時間(デフォルト 3000ms)
+   */
   private disconnectWaitTimeout: number;
+  /**
+   * audio / video の msid
+   */
   private mids: {
     audio: string;
     video: string;
   };
+  /**
+   * シグナリングを DataChannel へ switch したかどうかのフラグ
+   */
   private signalingSwitched: boolean;
+  /**
+   * シグナリング type offer に含まれる DataChannel レコード
+   */
+  private signalingOfferMessageDataChannels: {
+    [key in string]?: SignalingOfferMessageDataChannel;
+  };
+  /**
+   * イベントコールバックのリスト
+   */
+  protected callbacks: Callbacks;
+  /**
+   * E2EE インスタンス
+   */
+  protected e2ee: SoraE2EE | null;
+
   constructor(
-    signalingUrl: string,
+    signalingUrlCandidates: string | string[],
     role: string,
     channelId: string,
     metadata: JSONType,
@@ -86,7 +184,7 @@ export default class ConnectionBase {
     this.role = role;
     this.channelId = channelId;
     this.metadata = metadata;
-    this.signalingUrl = signalingUrl;
+    this.signalingUrlCandidates = signalingUrlCandidates;
     this.options = options;
     // connection timeout の初期値をセットする
     this.connectionTimeout = 60000;
@@ -101,6 +199,11 @@ export default class ConnectionBase {
     this.disconnectWaitTimeout = 3000;
     if (typeof this.options.disconnectWaitTimeout === "number") {
       this.disconnectWaitTimeout = this.options.disconnectWaitTimeout;
+    }
+    // signalingUrlCandidates に設定されている URL への接続チェック timeout の初期値をセットする
+    this.signalingCandidateTimeout = 3000;
+    if (typeof this.options.signalingCandidateTimeout === "number") {
+      this.signalingCandidateTimeout = this.options.signalingCandidateTimeout;
     }
     this.constraints = null;
     this.debug = debug;
@@ -123,21 +226,44 @@ export default class ConnectionBase {
       timeout: (): void => {},
       timeline: (): void => {},
       signaling: (): void => {},
+      message: (): void => {},
+      datachannel: (): void => {},
     };
     this.authMetadata = null;
     this.e2ee = null;
     this.connectionTimeoutTimerId = 0;
     this.monitorSignalingWebSocketEventTimerId = 0;
     this.monitorIceConnectionStateChangeTimerId = 0;
-    this.dataChannels = {};
+    this.soraDataChannels = {};
     this.mids = {
       audio: "",
       video: "",
     };
     this.signalingSwitched = false;
-    this.dataChannelsCompress = {};
+    this.signalingOfferMessageDataChannels = {};
   }
 
+  /**
+   * SendRecv Object で発火するイベントのコールバックを設定するメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * sendrecv.on("track", (event) => {
+   *   // callback 処理
+   * });
+   * ```
+   *
+   * @remarks
+   * addstream イベントは非推奨です. track イベントを使用してください
+   *
+   * removestream イベントは非推奨です. removetrack イベントを使用してください
+   *
+   * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message, datachannel)
+   * @param callback - コールバック関数
+   *
+   * @public
+   */
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
     // @deprecated message
     if (kind === "addstream") {
@@ -150,6 +276,25 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * audio track を停止するメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * sendrecv.stopAudioTrack(mediaStream);
+   * ```
+   *
+   * @remarks
+   * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します
+   *
+   * @param stream - audio track を削除する MediaStream
+   *
+   * @public
+   */
   stopAudioTrack(stream: MediaStream): Promise<void> {
     for (const track of stream.getAudioTracks()) {
       track.enabled = false;
@@ -174,6 +319,25 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * video track を停止するメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * sendrecv.stopVideoTrack(mediaStream);
+   * ```
+   *
+   * @remarks
+   * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します
+   *
+   * @param stream - video track を削除する MediaStream
+   *
+   * @public
+   */
   stopVideoTrack(stream: MediaStream): Promise<void> {
     for (const track of stream.getVideoTracks()) {
       track.enabled = false;
@@ -198,6 +362,27 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * audio track を入れ替えするメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * const replacedMediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
+   * await sendrecv.replaceAudioTrack(mediaStream, replacedMediaStream.getAudioTracks()[0]);
+   * ```
+   *
+   * @remarks
+   * stream の audio track を停止後、新しい audio track をセットします
+   *
+   * @param stream - audio track を削除する MediaStream
+   * @param audioTrack - 新しい audio track
+   *
+   * @public
+   */
   async replaceAudioTrack(stream: MediaStream, audioTrack: MediaStreamTrack): Promise<void> {
     await this.stopAudioTrack(stream);
     const transceiver = this.getAudioTransceiver();
@@ -208,6 +393,27 @@ export default class ConnectionBase {
     await transceiver.sender.replaceTrack(audioTrack);
   }
 
+  /**
+   * video track を入れ替えするメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * const replacedMediaStream = await navigator.mediaDevices.getUserMedia({video: true});
+   * await sendrecv.replaceVideoTrack(mediaStream, replacedMediaStream.getVideoTracks()[0]);
+   * ```
+   *
+   * @remarks
+   * stream の video track を停止後、新しい video track をセットします
+   *
+   * @param stream - video track を削除する MediaStream
+   * @param videoTrack - 新しい video track
+   *
+   * @public
+   */
   async replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void> {
     await this.stopVideoTrack(stream);
     const transceiver = this.getVideoTransceiver();
@@ -218,6 +424,9 @@ export default class ConnectionBase {
     await transceiver.sender.replaceTrack(videoTrack);
   }
 
+  /**
+   * stream を停止するメソッド
+   */
   private stopStream(): Promise<void> {
     return new Promise((resolve, _) => {
       if (this.debug) {
@@ -237,16 +446,16 @@ export default class ConnectionBase {
   }
 
   /**
-   * connect 処理中に例外が発生した場合の切断処理
+   * connect 処理中に例外が発生した場合の切断処理をするメソッド
    */
   private async signalingTerminate(): Promise<void> {
     await this.stopStream();
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         dataChannel.close();
       }
-      delete this.dataChannels[key];
+      delete this.soraDataChannels[key];
     }
     if (this.ws) {
       this.ws.close();
@@ -262,7 +471,9 @@ export default class ConnectionBase {
   }
 
   /**
-   * PeerConnection の state に異常が発生した場合の切断処理
+   * PeerConnection の state に異常が発生した場合の切断処理をするメソッド
+   *
+   * @param title - disconnect callback に渡すイベントのタイトル
    */
   private async abendPeerConnectionState(title: SoraAbendTitle): Promise<void> {
     this.clearMonitorIceConnectionStateChange();
@@ -282,8 +493,8 @@ export default class ConnectionBase {
       this.ws.onmessage = null;
       this.ws.onerror = null;
     }
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         // onclose はログを吐く専用に残す
         dataChannel.onclose = (event) => {
@@ -296,12 +507,12 @@ export default class ConnectionBase {
       }
     }
     // DataChannel を終了する
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         dataChannel.close();
       }
-      delete this.dataChannels[key];
+      delete this.soraDataChannels[key];
     }
     // WebSocket を終了する
     if (this.ws) {
@@ -324,6 +535,9 @@ export default class ConnectionBase {
 
   /**
    * 何かしらの異常があった場合の切断処理
+   *
+   * @param title - disconnect callback に渡すイベントのタイトル
+   * @param params - 切断時の状況を入れる Record
    */
   private async abend(title: SoraAbendTitle, params?: Record<string, unknown>): Promise<void> {
     this.clearMonitorIceConnectionStateChange();
@@ -343,8 +557,8 @@ export default class ConnectionBase {
       this.ws.onmessage = null;
       this.ws.onerror = null;
     }
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         // onclose はログを吐く専用に残す
         dataChannel.onclose = (event) => {
@@ -357,41 +571,52 @@ export default class ConnectionBase {
       }
     }
     // 終了処理を開始する
-    if (this.dataChannels.signaling) {
+    if (this.soraDataChannels.signaling) {
       const message = { type: "disconnect", reason: title };
-      if (this.dataChannelsCompress.signaling === true) {
+      if (
+        this.signalingOfferMessageDataChannels.signaling &&
+        this.signalingOfferMessageDataChannels.signaling.compress === true
+      ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
-        if (this.dataChannels.signaling.readyState === "open") {
+        if (this.soraDataChannels.signaling.readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.dataChannels.signaling.send(zlibMessage);
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            this.soraDataChannels.signaling.send(zlibMessage);
+            this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
           } catch (e) {
             const errorMessage = (e as Error).message;
-            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            this.writeDataChannelSignalingLog(
+              "failed-to-send-disconnect",
+              this.soraDataChannels.signaling,
+              errorMessage
+            );
           }
         }
       } else {
-        if (this.dataChannels.signaling.readyState === "open") {
+        if (this.soraDataChannels.signaling.readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.dataChannels.signaling.send(JSON.stringify(message));
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            this.soraDataChannels.signaling.send(JSON.stringify(message));
+            this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
           } catch (e) {
             const errorMessage = (e as Error).message;
-            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            this.writeDataChannelSignalingLog(
+              "failed-to-send-disconnect",
+              this.soraDataChannels.signaling,
+              errorMessage
+            );
           }
         }
       }
     }
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         dataChannel.onerror = null;
         dataChannel.close();
       }
-      delete this.dataChannels[key];
+      delete this.soraDataChannels[key];
     }
     await this.disconnectWebSocket(title);
     await this.disconnectPeerConnection();
@@ -410,6 +635,9 @@ export default class ConnectionBase {
     this.callbacks.disconnect(this.soraCloseEvent("abend", title, params));
   }
 
+  /**
+   * 接続状態の初期化をするメソッド
+   */
   private initializeConnection(): void {
     this.clientId = null;
     this.connectionId = null;
@@ -420,15 +648,24 @@ export default class ConnectionBase {
     this.encodings = [];
     this.authMetadata = null;
     this.e2ee = null;
-    this.dataChannels = {};
+    this.soraDataChannels = {};
     this.mids = {
       audio: "",
       video: "",
     };
     this.signalingSwitched = false;
+    this.signalingOfferMessageDataChannels = {};
     this.clearConnectionTimeout();
   }
 
+  /**
+   * WebSocket を切断するメソッド
+   *
+   * @remarks
+   * 正常/異常どちらの切断でも使用する
+   *
+   * @param title - type disconnect 時の reason
+   */
   private disconnectWebSocket(title: SoraAbendTitle | "NO-ERROR"): Promise<{ code: number; reason: string } | null> {
     let timerId = 0;
     if (this.signalingSwitched) {
@@ -461,7 +698,7 @@ export default class ConnectionBase {
             this.ws.close();
             this.ws = null;
           }
-          resolve(null);
+          resolve({ code: 1006, reason: "" });
         }, this.disconnectWaitTimeout);
       } else {
         // ws の state が open ではない場合は後処理をして終わる
@@ -472,21 +709,27 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * DataChannel を切断するメソッド
+   *
+   * @remarks
+   * 正常/異常どちらの切断でも使用する
+   */
   private disconnectDataChannel(): Promise<{ code: number; reason: string } | null> {
     // DataChannel の強制終了処理
     const closeDataChannels = () => {
-      for (const key of Object.keys(this.dataChannels)) {
-        const dataChannel = this.dataChannels[key];
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key];
         if (dataChannel) {
           dataChannel.onerror = null;
           dataChannel.close();
         }
-        delete this.dataChannels[key];
+        delete this.soraDataChannels[key];
       }
     };
     return new Promise((resolve, reject) => {
       // DataChannel label signaling が存在しない場合は強制終了処理をする
-      if (!this.dataChannels.signaling) {
+      if (!this.soraDataChannels.signaling) {
         closeDataChannels();
         return resolve({ code: 4999, reason: "" });
       }
@@ -497,8 +740,8 @@ export default class ConnectionBase {
       }, this.disconnectWaitTimeout);
 
       const onClosePromises: Promise<void>[] = [];
-      for (const key of Object.keys(this.dataChannels)) {
-        const dataChannel = this.dataChannels[key];
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key];
         if (dataChannel) {
           // onerror が発火した場合は強制終了処理をする
           dataChannel.onerror = () => {
@@ -533,7 +776,7 @@ export default class ConnectionBase {
       Promise.all(onClosePromises)
         .then(() => {
           // dataChannels が空の場合は切断処理が終わっているとみなす
-          if (0 === Object.keys(this.dataChannels).length) {
+          if (0 === Object.keys(this.soraDataChannels).length) {
             resolve(null);
           } else {
             resolve({ code: 4999, reason: "" });
@@ -544,34 +787,51 @@ export default class ConnectionBase {
           clearTimeout(disconnectWaitTimeoutId);
         });
       const message = { type: "disconnect", reason: "NO-ERROR" };
-      if (this.dataChannelsCompress.signaling === true) {
+      if (
+        this.signalingOfferMessageDataChannels.signaling &&
+        this.signalingOfferMessageDataChannels.signaling.compress === true
+      ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
-        if (this.dataChannels.signaling.readyState === "open") {
+        if (this.soraDataChannels.signaling.readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.dataChannels.signaling.send(zlibMessage);
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            this.soraDataChannels.signaling.send(zlibMessage);
+            this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
           } catch (e) {
             const errorMessage = (e as Error).message;
-            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            this.writeDataChannelSignalingLog(
+              "failed-to-send-disconnect",
+              this.soraDataChannels.signaling,
+              errorMessage
+            );
           }
         }
       } else {
-        if (this.dataChannels.signaling.readyState === "open") {
+        if (this.soraDataChannels.signaling.readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.dataChannels.signaling.send(JSON.stringify(message));
-            this.writeDataChannelSignalingLog("send-disconnect", this.dataChannels.signaling, message);
+            this.soraDataChannels.signaling.send(JSON.stringify(message));
+            this.writeDataChannelSignalingLog("send-disconnect", this.soraDataChannels.signaling, message);
           } catch (e) {
             const errorMessage = (e as Error).message;
-            this.writeDataChannelSignalingLog("failed-to-send-disconnect", this.dataChannels.signaling, errorMessage);
+            this.writeDataChannelSignalingLog(
+              "failed-to-send-disconnect",
+              this.soraDataChannels.signaling,
+              errorMessage
+            );
           }
         }
       }
     });
   }
 
+  /**
+   * PeerConnection を切断するメソッド
+   *
+   * @remarks
+   * 正常/異常どちらの切断でも使用する
+   */
   private disconnectPeerConnection(): Promise<void> {
     return new Promise((resolve, _) => {
       if (this.pc && this.pc.connectionState !== "closed") {
@@ -581,6 +841,16 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * 切断処理をするメソッド
+   *
+   * @example
+   * ```
+   * await sendrecv.disconnect();
+   * ```
+   *
+   * @public
+   */
   async disconnect(): Promise<void> {
     this.clearMonitorIceConnectionStateChange();
     await this.stopStream();
@@ -599,10 +869,16 @@ export default class ConnectionBase {
       this.ws.onmessage = null;
       this.ws.onerror = null;
     }
-    for (const key of Object.keys(this.dataChannels)) {
-      const dataChannel = this.dataChannels[key];
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
         dataChannel.onmessage = null;
+        // onclose はログを吐く専用に残す
+        dataChannel.onclose = (event): void => {
+          const channel = event.currentTarget as RTCDataChannel;
+          this.writeDataChannelTimelineLog("onclose", channel);
+          this.trace("CLOSE DATA CHANNEL", channel.label);
+        };
       }
     }
     let event = null;
@@ -639,6 +915,9 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * E2EE の初期設定をするメソッド
+   */
   protected setupE2EE(): void {
     if (this.options.e2ee === true) {
       this.e2ee = new SoraE2EE();
@@ -649,6 +928,9 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * E2EE を開始するメソッド
+   */
   protected startE2EE(): void {
     if (this.options.e2ee === true && this.e2ee) {
       if (!this.connectionId) {
@@ -662,15 +944,147 @@ export default class ConnectionBase {
     }
   }
 
-  protected signaling(offer: RTCSessionDescriptionInit): Promise<SignalingOfferMessage> {
+  /**
+   * シグナリングに使う WebSocket インスタンスを作成するメソッド
+   *
+   * @remarks
+   * シグナリング候補の URL 一覧に順に接続します
+   *
+   * 接続できた URL がない場合は例外が発生します
+   *
+   * @param signalingUrlCandidates - シグナリング候補の URL. 後方互換のため string | string[] を受け取る
+   *
+   * @returns
+   * 接続できた WebScoket インスタンスを返します
+   */
+  protected async getSignalingWebSocket(signalingUrlCandidates: string | string[]): Promise<WebSocket> {
+    if (typeof signalingUrlCandidates === "string") {
+      // signaling url の候補が文字列の場合
+      const signalingUrl = signalingUrlCandidates;
+      return new Promise((resolve, reject) => {
+        const ws = new WebSocket(signalingUrl);
+        ws.onclose = (event): void => {
+          const error = new ConnectError(
+            `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
+          );
+          error.code = event.code;
+          error.reason = event.reason;
+          this.writeWebSocketTimelineLog("onclose", error);
+          reject(error);
+        };
+        ws.onopen = (_): void => {
+          resolve(ws);
+        };
+      });
+    } else if (Array.isArray(signalingUrlCandidates)) {
+      // signaling url の候補が Array の場合
+      // すでに候補の WebSocket が発見されているかどうかのフラグ
+      let resolved = false;
+      const testSignalingUrlCandidate = (signalingUrl: string): Promise<WebSocket> => {
+        return new Promise((resolve, reject) => {
+          const ws = new WebSocket(signalingUrl);
+          // 一定時間経過しても反応がなかった場合は処理を中断する
+          const timerId = setTimeout(() => {
+            this.writeWebSocketSignalingLog("signaling-url-canidate", {
+              type: "timeout",
+              url: ws.url,
+            });
+            if (ws && !resolved) {
+              ws.onclose = null;
+              ws.onerror = null;
+              ws.onopen = null;
+              ws.close();
+              reject();
+            }
+          }, this.signalingCandidateTimeout);
+          ws.onclose = (event): void => {
+            this.writeWebSocketSignalingLog("signaling-url-canidate", {
+              type: "close",
+              url: ws.url,
+              message: `WebSocket closed`,
+              code: event.code,
+              reason: event.reason,
+            });
+            if (ws) {
+              ws.close();
+            }
+            clearInterval(timerId);
+            reject();
+          };
+          ws.onerror = (_): void => {
+            this.writeWebSocketSignalingLog("signaling-url-canidate", {
+              type: "error",
+              url: ws.url,
+              message: `Failed to connect WebSocket`,
+            });
+            if (ws) {
+              ws.onclose = null;
+              ws.close();
+            }
+            clearInterval(timerId);
+            reject();
+          };
+          ws.onopen = (_): void => {
+            if (ws) {
+              clearInterval(timerId);
+              if (resolved) {
+                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                  type: "open",
+                  url: ws.url,
+                  selected: false,
+                });
+                ws.onerror = null;
+                ws.onclose = null;
+                ws.onopen = null;
+                ws.close();
+                reject();
+              } else {
+                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                  type: "open",
+                  url: ws.url,
+                  selected: true,
+                });
+                ws.onerror = null;
+                ws.onclose = null;
+                ws.onopen = null;
+                resolved = true;
+                resolve(ws);
+              }
+            }
+          };
+        });
+      };
+      try {
+        return await Promise.any(signalingUrlCandidates.map((signalingUrl) => testSignalingUrlCandidate(signalingUrl)));
+      } catch (e) {
+        throw new ConnectError("Signaling failed. All signaling URL candidates failed to connect");
+      }
+    }
+    throw new ConnectError("Signaling failed. Invalid format signaling URL candidates");
+  }
+
+  /**
+   * シグナリング処理を行うメソッド
+   *
+   * @remarks
+   * シグナリング候補の URL 一覧に順に接続します
+   *
+   * 接続できた URL がない場合は例外が発生します
+   *
+   * @param ws - WebSocket インスタンス
+   * @param redirect - クラスター接続時にリダイレクトされた場合のフラグ
+   *
+   * @returns
+   * Sora から受け取った type offer メッセージを返します
+   */
+  protected async signaling(ws: WebSocket, redirect = false): Promise<SignalingOfferMessage> {
+    const offer = await this.createOffer();
     this.trace("CREATE OFFER", offer);
     return new Promise((resolve, reject) => {
-      if (this.ws === null) {
-        this.ws = new WebSocket(this.signalingUrl);
-        this.writeWebSocketSignalingLog("new-websocket", this.signalingUrl);
-      }
-      this.ws.binaryType = "arraybuffer";
-      this.ws.onclose = async (event): Promise<void> => {
+      this.writeWebSocketSignalingLog("new-websocket", ws.url);
+      // websocket の各 callback を設定する
+      ws.binaryType = "arraybuffer";
+      ws.onclose = async (event): Promise<void> => {
         const error = new ConnectError(
           `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
         );
@@ -680,33 +1094,7 @@ export default class ConnectionBase {
         await this.signalingTerminate();
         reject(error);
       };
-      this.ws.onopen = async (_): Promise<void> => {
-        this.writeWebSocketSignalingLog("onopen");
-        let signalingMessage: SignalingConnectMessage;
-        try {
-          signalingMessage = createSignalingMessage(
-            offer.sdp || "",
-            this.role,
-            this.channelId,
-            this.metadata,
-            this.options
-          );
-        } catch (error) {
-          reject(error);
-          return;
-        }
-        if (signalingMessage.e2ee && this.e2ee) {
-          const initResult = await this.e2ee.init();
-          // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
-          signalingMessage["signaling_notify_metadata"]["pre_key_bundle"] = initResult;
-        }
-        this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
-        if (this.ws) {
-          this.ws.send(JSON.stringify(signalingMessage));
-          this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage);
-        }
-      };
-      this.ws.onmessage = async (event): Promise<void> => {
+      ws.onmessage = async (event): Promise<void> => {
         // E2EE 時専用処理
         if (event.data instanceof ArrayBuffer) {
           this.writeWebSocketSignalingLog("onmessage-e2ee", event.data);
@@ -738,28 +1126,48 @@ export default class ConnectionBase {
         } else if (message.type == "switched") {
           this.writeWebSocketSignalingLog("onmessage-switched", message);
           this.signalingOnMessageTypeSwitched(message);
+        } else if (message.type == "redirect") {
+          this.writeWebSocketSignalingLog("onmessage-redirect", message);
+          const redirectMessage = await this.signalingOnMessageTypeRedirect(message);
+          resolve(redirectMessage);
         }
       };
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      (async () => {
+        let signalingMessage: SignalingConnectMessage;
+        try {
+          signalingMessage = createSignalingMessage(
+            offer.sdp || "",
+            this.role,
+            this.channelId,
+            this.metadata,
+            this.options,
+            redirect
+          );
+        } catch (error) {
+          reject(error);
+          return;
+        }
+        if (signalingMessage.e2ee && this.e2ee) {
+          const initResult = await this.e2ee.init();
+          // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
+          signalingMessage["signaling_notify_metadata"]["pre_key_bundle"] = initResult;
+        }
+        this.trace("SIGNALING CONNECT MESSAGE", signalingMessage);
+        if (ws) {
+          ws.send(JSON.stringify(signalingMessage));
+          this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage);
+          this.ws = ws;
+        }
+      })();
     });
   }
 
-  protected async createOffer(): Promise<RTCSessionDescriptionInit> {
-    const config = { iceServers: [] };
-    const pc = new window.RTCPeerConnection(config);
-    if (isSafari()) {
-      pc.addTransceiver("video", { direction: "recvonly" });
-      pc.addTransceiver("audio", { direction: "recvonly" });
-      const offer = await pc.createOffer();
-      pc.close();
-      this.writePeerConnectionTimelineLog("create-offer", offer);
-      return offer;
-    }
-    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-    pc.close();
-    this.writePeerConnectionTimelineLog("create-offer", offer);
-    return offer;
-  }
-
+  /**
+   * PeerConnection 接続処理をするメソッド
+   *
+   * @param message - シグナリング処理で受け取った type offer メッセージ
+   */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
     if (this.e2ee) {
@@ -808,6 +1216,11 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * setRemoteDescription 処理を行うメソッド
+   *
+   * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
+   */
   protected async setRemoteDescription(
     message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage
   ): Promise<void> {
@@ -820,6 +1233,14 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * createAnswer 処理を行うメソッド
+   *
+   * @remarks
+   * サイマルキャスト用の setParameters 処理もここで行う
+   *
+   * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
+   */
   protected async createAnswer(
     message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage
   ): Promise<void> {
@@ -836,12 +1257,19 @@ export default class ConnectionBase {
     // simulcast の場合
     if (this.options.simulcast && (this.role === "sendrecv" || this.role === "sendonly")) {
       const transceiver = this.pc.getTransceivers().find((t) => {
-        if (
-          t.mid &&
-          0 <= t.mid.indexOf("video") &&
-          t.sender.track !== null &&
-          (t.currentDirection === null || t.currentDirection === "sendonly")
-        ) {
+        if (t.mid === null) {
+          return;
+        }
+        if (t.sender.track === null) {
+          return;
+        }
+        if (t.currentDirection !== null && t.currentDirection !== "sendonly") {
+          return;
+        }
+        if (this.mids.video !== "" && this.mids.video === t.mid) {
+          return t;
+        }
+        if (0 <= t.mid.indexOf("video")) {
           return t;
         }
       });
@@ -864,6 +1292,9 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * シグナリングサーバーに type answer を投げるメソッド
+   */
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
@@ -874,6 +1305,9 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * iceCnadidate 処理をするメソッド
+   */
   protected onIceCandidate(): Promise<void> {
     return new Promise((resolve, _) => {
       if (this.pc) {
@@ -902,13 +1336,19 @@ export default class ConnectionBase {
             const candidate = event.candidate.toJSON();
             const message = Object.assign(candidate, { type: "candidate" }) as { type: string; [key: string]: unknown };
             this.trace("ONICECANDIDATE CANDIDATE MESSAGE", message);
-            this.sendMessage(message);
+            this.sendSignalingMessage(message);
           }
         };
       }
     });
   }
 
+  /**
+   * connectionState が "connected" になるのを監視するメソッド
+   *
+   * @remarks
+   * PeerConnection.connectionState が実装されていない場合は何もしない
+   */
   protected waitChangeConnectionStateConnected(): Promise<void> {
     return new Promise((resolve, reject) => {
       // connectionState が存在しない場合はそのまま抜ける
@@ -930,8 +1370,13 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * 初回シグナリング接続時の WebSocket の切断を監視するメソッド
+   *
+   * @remarks
+   * 意図しない切断があった場合には異常終了処理を実行する
+   */
   protected monitorSignalingWebSocketEvent(): Promise<void> {
-    // シグナリング時に意図しない WebSocket の切断を監視する
     return new Promise((_, reject) => {
       this.monitorSignalingWebSocketEventTimerId = setInterval(() => {
         if (!this.ws) {
@@ -958,8 +1403,13 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * WebSocket の切断を監視するメソッド
+   *
+   * @remarks
+   * 意図しない切断があった場合には異常終了処理を実行する
+   */
   protected monitorWebSocketEvent(): void {
-    // 接続後の意図しない WebSocket の切断を監視する
     if (!this.ws) {
       return;
     }
@@ -973,8 +1423,13 @@ export default class ConnectionBase {
     };
   }
 
+  /**
+   * 初回シグナリング後 PeerConnection の state を監視するメソッド
+   *
+   * @remarks
+   * connectionState, iceConnectionState を監視して不正な場合に切断する
+   */
   protected monitorPeerConnectionState(): void {
-    // PeerConnection の ConnectionState, iceConnectionState を監視して不正な場合に切断する
     if (!this.pc) {
       return;
     }
@@ -1016,6 +1471,9 @@ export default class ConnectionBase {
     };
   }
 
+  /**
+   * 初回シグナリングの接続タイムアウト処理をするメソッド
+   */
   protected setConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
       if (0 < this.connectionTimeout) {
@@ -1039,18 +1497,33 @@ export default class ConnectionBase {
     });
   }
 
+  /**
+   * setConnectionTimeout でセットしたタイマーを止めるメソッド
+   */
   protected clearConnectionTimeout(): void {
     clearTimeout(this.connectionTimeoutTimerId);
   }
 
+  /**
+   * monitorSignalingWebSocketEvent でセットしたタイマーを止めるメソッド
+   */
   protected clearMonitorSignalingWebSocketEvent(): void {
     clearInterval(this.monitorSignalingWebSocketEventTimerId);
   }
 
+  /**
+   * monitorPeerConnectionState でセットしたタイマーを止めるメソッド
+   */
   protected clearMonitorIceConnectionStateChange(): void {
     clearInterval(this.monitorIceConnectionStateChangeTimerId);
   }
 
+  /**
+   * trace log を出力するメソッド
+   *
+   * @param title - ログのタイトル
+   * @param message - ログの本文
+   */
   protected trace(title: string, message: unknown): void {
     this.callbacks.log(title, message as JSONType);
     if (!this.debug) {
@@ -1059,36 +1532,103 @@ export default class ConnectionBase {
     trace(this.clientId, title, message);
   }
 
+  /**
+   * WebSocket のシグナリングログ処理をするメソッド
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeWebSocketSignalingLog(eventType: string, data?: unknown): void {
     this.callbacks.signaling(createSignalingEvent(eventType, data, "websocket"));
     this.writeWebSocketTimelineLog(eventType, data);
   }
 
+  /**
+   * DataChannel のシグナリングログ処理をするメソッド
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeDataChannelSignalingLog(eventType: string, channel: RTCDataChannel, data?: unknown): void {
     this.callbacks.signaling(createSignalingEvent(eventType, data, "datachannel"));
     this.writeDataChannelTimelineLog(eventType, channel, data);
   }
 
+  /**
+   * WebSocket のタイムラインログ処理をするメソッド
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeWebSocketTimelineLog(eventType: string, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "websocket");
     this.callbacks.timeline(event);
   }
 
+  /**
+   * DataChannel のタイムラインログ処理をするメソッド
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeDataChannelTimelineLog(eventType: string, channel: RTCDataChannel, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "datachannel", channel.id, channel.label);
     this.callbacks.timeline(event);
   }
 
+  /**
+   * PeerConnection のタイムラインログ処理をするメソッド
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writePeerConnectionTimelineLog(eventType: string, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "peerconnection");
     this.callbacks.timeline(event);
   }
 
+  /**
+   * Sora との接続のタイムラインログ処理をするメソッド
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   */
   protected writeSoraTimelineLog(eventType: string, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "sora");
     this.callbacks.timeline(event);
   }
 
+  /**
+   * createOffer 処理をするメソッド
+   *
+   * @param eventType - イベントタイプ
+   * @param data - イベントデータ
+   *
+   * @returns
+   * 生成した RTCSessionDescription を返します
+   */
+  private async createOffer(): Promise<RTCSessionDescriptionInit> {
+    const config = { iceServers: [] };
+    const pc = new window.RTCPeerConnection(config);
+    if (isSafari()) {
+      pc.addTransceiver("video", { direction: "recvonly" });
+      pc.addTransceiver("audio", { direction: "recvonly" });
+      const offer = await pc.createOffer();
+      pc.close();
+      this.writePeerConnectionTimelineLog("create-offer", offer);
+      return offer;
+    }
+    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+    pc.close();
+    this.writePeerConnectionTimelineLog("create-offer", offer);
+    return offer;
+  }
+
+  /**
+   * シグナリングサーバーから受け取った type e2ee メッセージを処理をするメソッド
+   *
+   * @param data - E2EE 用バイナリメッセージ
+   */
   private signalingOnMessageE2EE(data: ArrayBuffer): void {
     if (this.e2ee) {
       const message = new Uint8Array(data);
@@ -1100,6 +1640,11 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーから受け取った type offer メッセージを処理をするメソッド
+   *
+   * @param message - type offer メッセージ
+   */
   private signalingOnMessageTypeOffer(message: SignalingOfferMessage): void {
     this.clientId = message.client_id;
     this.connectionId = message.connection_id;
@@ -1116,28 +1661,39 @@ export default class ConnectionBase {
       this.mids.video = message.mid.video;
     }
     if (message.data_channels) {
-      for (const o of message.data_channels) {
-        this.dataChannelsCompress[o.label] = o.compress;
+      for (const dc of message.data_channels) {
+        this.signalingOfferMessageDataChannels[dc.label] = dc;
       }
     }
     this.trace("SIGNALING OFFER MESSAGE", message);
     this.trace("OFFER SDP", message.sdp);
   }
 
+  /**
+   * シグナリングサーバーに type update を投げるメソッド
+   */
   private sendUpdateAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      this.sendMessage({ type: "update", sdp: this.pc.localDescription.sdp });
+      this.sendSignalingMessage({ type: "update", sdp: this.pc.localDescription.sdp });
     }
   }
 
+  /**
+   * シグナリングサーバーに type re-answer を投げるメソッド
+   */
   private sendReAnswer(): void {
     if (this.pc && this.pc.localDescription) {
       this.trace("RE ANSWER SDP", this.pc.localDescription.sdp);
-      this.sendMessage({ type: "re-answer", sdp: this.pc.localDescription.sdp });
+      this.sendSignalingMessage({ type: "re-answer", sdp: this.pc.localDescription.sdp });
     }
   }
 
+  /**
+   * シグナリングサーバーから受け取った type update メッセージを処理をするメソッド
+   *
+   * @param message - type update メッセージ
+   */
   private async signalingOnMessageTypeUpdate(message: SignalingUpdateMessage): Promise<void> {
     this.trace("SIGNALING UPDATE MESSGE", message);
     this.trace("UPDATE SDP", message.sdp);
@@ -1146,6 +1702,11 @@ export default class ConnectionBase {
     this.sendUpdateAnswer();
   }
 
+  /**
+   * シグナリングサーバーから受け取った type re-offer メッセージを処理をするメソッド
+   *
+   * @param message - type re-offer メッセージ
+   */
   private async signalingOnMessageTypeReOffer(message: SignalingReOfferMessage): Promise<void> {
     this.trace("SIGNALING RE OFFER MESSGE", message);
     this.trace("RE OFFER SDP", message.sdp);
@@ -1154,6 +1715,11 @@ export default class ConnectionBase {
     this.sendReAnswer();
   }
 
+  /**
+   * シグナリングサーバーから受け取った type ping メッセージを処理をするメソッド
+   *
+   * @param message - type ping メッセージ
+   */
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
     const pongMessage: { type: "pong"; stats?: RTCStatsReport[] } = { type: "pong" };
     if (message.stats) {
@@ -1165,6 +1731,11 @@ export default class ConnectionBase {
     }
   }
 
+  /**
+   * シグナリングサーバーから受け取った type notify メッセージを処理をするメソッド
+   *
+   * @param message - type notify メッセージ
+   */
   private signalingOnMessageTypeNotify(message: SignalingNotifyMessage, transportType: TransportType): void {
     if (message.event_type === "connection.created") {
       const connectionId = message.connection_id;
@@ -1211,6 +1782,11 @@ export default class ConnectionBase {
     this.callbacks.notify(message, transportType);
   }
 
+  /**
+   * シグナリングサーバーから受け取った type switched メッセージを処理をするメソッド
+   *
+   * @param message - type switched メッセージ
+   */
   private signalingOnMessageTypeSwitched(message: SignalingSwitchedMessage): void {
     this.signalingSwitched = true;
     if (!this.ws) {
@@ -1224,8 +1800,34 @@ export default class ConnectionBase {
       }
       this.writeWebSocketSignalingLog("close");
     }
+    for (const channel of this.datachannels) {
+      this.callbacks.datachannel(createDataChannelEvent(channel));
+    }
   }
 
+  /**
+   * シグナリングサーバーから受け取った type redirect メッセージを処理をするメソッド
+   *
+   * @param message - type redirect メッセージ
+   */
+  private async signalingOnMessageTypeRedirect(message: SignalingRedirectMessage): Promise<SignalingOfferMessage> {
+    if (this.ws) {
+      this.ws.onclose = null;
+      this.ws.onerror = null;
+      this.ws.close();
+      this.ws = null;
+    }
+    const ws = await this.getSignalingWebSocket(message.location);
+    const signalingMessage = await this.signaling(ws, true);
+    return signalingMessage;
+  }
+
+  /**
+   * sender の parameters に encodings をセットするメソッド
+   *
+   * @remarks
+   * サイマルキャスト用の処理
+   */
   private async setSenderParameters(
     transceiver: RTCRtpTransceiver,
     encodings: RTCRtpEncodingParameters[]
@@ -1239,6 +1841,9 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * PeerConnection から RTCStatsReport を取得するためのメソッド
+   */
   private async getStats(): Promise<RTCStatsReport[]> {
     const stats: RTCStatsReport[] = [];
     if (!this.pc) {
@@ -1251,6 +1856,11 @@ export default class ConnectionBase {
     return stats;
   }
 
+  /**
+   * PeerConnection の ondatachannel callback メソッド
+   *
+   * @param dataChannelEvent - DataChannel イベント
+   */
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
     const dataChannel = dataChannelEvent.channel;
     this.writeDataChannelTimelineLog("ondatachannel", dataChannel, createDataChannelData(dataChannel));
@@ -1264,7 +1874,7 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel;
       channel.bufferedAmountLowThreshold = 65536;
       channel.binaryType = "arraybuffer";
-      this.dataChannels[channel.label] = channel;
+      this.soraDataChannels[channel.label] = channel;
       this.trace("OPEN DATA CHANNEL", channel.label);
       if (channel.label === "signaling" && this.ws) {
         this.writeDataChannelSignalingLog("onopen", channel);
@@ -1291,7 +1901,10 @@ export default class ConnectionBase {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel;
         let data = event.data as string;
-        if (this.dataChannelsCompress.signaling === true) {
+        if (
+          this.signalingOfferMessageDataChannels.signaling &&
+          this.signalingOfferMessageDataChannels.signaling.compress === true
+        ) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
@@ -1305,7 +1918,10 @@ export default class ConnectionBase {
       dataChannelEvent.channel.onmessage = (event): void => {
         const channel = event.currentTarget as RTCDataChannel;
         let data = event.data as string;
-        if (this.dataChannelsCompress.notify === true) {
+        if (
+          this.signalingOfferMessageDataChannels.notify &&
+          this.signalingOfferMessageDataChannels.notify.compress === true
+        ) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
@@ -1320,7 +1936,10 @@ export default class ConnectionBase {
     } else if (dataChannelEvent.channel.label === "push") {
       dataChannelEvent.channel.onmessage = (event): void => {
         let data = event.data as string;
-        if (this.dataChannelsCompress.push === true) {
+        if (
+          this.signalingOfferMessageDataChannels.push &&
+          this.signalingOfferMessageDataChannels.push.compress === true
+        ) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
@@ -1337,7 +1956,10 @@ export default class ConnectionBase {
     } else if (dataChannelEvent.channel.label === "stats") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         let data = event.data as string;
-        if (this.dataChannelsCompress.stats === true) {
+        if (
+          this.signalingOfferMessageDataChannels.stats &&
+          this.signalingOfferMessageDataChannels.stats.compress === true
+        ) {
           const unzlibMessage = unzlibSync(new Uint8Array(event.data));
           data = new TextDecoder().decode(unzlibMessage);
         }
@@ -1347,51 +1969,88 @@ export default class ConnectionBase {
           this.sendStatsMessage(stats);
         }
       };
+    } else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
+      dataChannelEvent.channel.onmessage = (event): void => {
+        if (event.target === null) {
+          return;
+        }
+        const dataChannel = event.target as RTCDataChannel;
+        let data = event.data as ArrayBuffer;
+        const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
+        if (settings !== undefined && settings.compress === true) {
+          data = unzlibSync(new Uint8Array(event.data)).buffer;
+        }
+        this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
+      };
     }
   }
 
-  private sendMessage(message: { type: string; [key: string]: unknown }): void {
-    if (this.dataChannels.signaling) {
-      if (this.dataChannelsCompress.signaling === true) {
+  /**
+   * シグナリングサーバーへメッセージを送信するメソッド
+   *
+   * @param message - 送信するメッセージ
+   */
+  private sendSignalingMessage(message: { type: string; [key: string]: unknown }): void {
+    if (this.soraDataChannels.signaling) {
+      if (
+        this.signalingOfferMessageDataChannels.signaling &&
+        this.signalingOfferMessageDataChannels.signaling.compress === true
+      ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
-        this.dataChannels.signaling.send(zlibMessage);
+        this.soraDataChannels.signaling.send(zlibMessage);
       } else {
-        this.dataChannels.signaling.send(JSON.stringify(message));
+        this.soraDataChannels.signaling.send(JSON.stringify(message));
       }
-      this.writeDataChannelSignalingLog(`send-${message.type}`, this.dataChannels.signaling, message);
+      this.writeDataChannelSignalingLog(`send-${message.type}`, this.soraDataChannels.signaling, message);
     } else if (this.ws !== null) {
       this.ws.send(JSON.stringify(message));
       this.writeWebSocketSignalingLog(`send-${message.type}`, message);
     }
   }
 
+  /**
+   * シグナリングサーバーに E2E 用メッセージを投げるメソッド
+   *
+   * @param message - 送信するバイナリメッセージ
+   */
   private sendE2EEMessage(message: ArrayBuffer): void {
-    if (this.dataChannels.e2ee) {
-      this.dataChannels.e2ee.send(message);
-      this.writeDataChannelSignalingLog("send-e2ee", this.dataChannels.e2ee, message);
+    if (this.soraDataChannels.e2ee) {
+      this.soraDataChannels.e2ee.send(message);
+      this.writeDataChannelSignalingLog("send-e2ee", this.soraDataChannels.e2ee, message);
     } else if (this.ws !== null) {
       this.ws.send(message);
       this.writeWebSocketSignalingLog("send-e2ee", message);
     }
   }
 
+  /**
+   * シグナリングサーバーに stats メッセージを投げるメソッド
+   *
+   * @param reports - RTCStatsReport のリスト
+   */
   private sendStatsMessage(reports: RTCStatsReport[]): void {
-    if (this.dataChannels.stats) {
+    if (this.soraDataChannels.stats) {
       const message = {
         type: "stats",
         reports: reports,
       };
-      if (this.dataChannelsCompress.stats === true) {
+      if (
+        this.signalingOfferMessageDataChannels.stats &&
+        this.signalingOfferMessageDataChannels.stats.compress === true
+      ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const zlibMessage = zlibSync(binaryMessage, {});
-        this.dataChannels.stats.send(zlibMessage);
+        this.soraDataChannels.stats.send(zlibMessage);
       } else {
-        this.dataChannels.stats.send(JSON.stringify(message));
+        this.soraDataChannels.stats.send(JSON.stringify(message));
       }
     }
   }
 
+  /**
+   * audio transceiver を取得するメソッド
+   */
   private getAudioTransceiver(): RTCRtpTransceiver | null {
     if (this.pc && this.mids.audio) {
       const transceiver = this.pc.getTransceivers().find((transceiver) => {
@@ -1402,6 +2061,9 @@ export default class ConnectionBase {
     return null;
   }
 
+  /**
+   * video transceiver を取得するメソッド
+   */
   private getVideoTransceiver(): RTCRtpTransceiver | null {
     if (this.pc && this.mids.video) {
       const transceiver = this.pc.getTransceivers().find((transceiver) => {
@@ -1412,6 +2074,13 @@ export default class ConnectionBase {
     return null;
   }
 
+  /**
+   * disconnect callback に渡す Event オブジェクトを生成するためのメソッド
+   *
+   * @param type - Event タイプ(normal | abend)
+   * @param title - Event タイトル
+   * @param initDict - Event に設定するオプションパラメーター
+   */
   private soraCloseEvent(type: SoraCloseEventType, title: string, initDict?: SoraCloseEventInitDict): SoraCloseEvent {
     const soraCloseEvent = class SoraCloseEvent extends Event {
       title: string;
@@ -1438,6 +2107,33 @@ export default class ConnectionBase {
     return new soraCloseEvent(type, title, initDict);
   }
 
+  /**
+   * DataChannel を使用してメッセージを送信するメソッド
+   *
+   * @param label - メッセージを送信する DataChannel のラベル
+   * @param message - Uint8Array
+   */
+  sendMessage(label: string, message: Uint8Array): void {
+    const dataChannel = this.soraDataChannels[label];
+    // 接続していない場合は何もしない
+    if (this.pc === null) {
+      return;
+    }
+    if (dataChannel === undefined) {
+      throw new Error("Could not find DataChannel");
+    }
+    const settings = this.signalingOfferMessageDataChannels[label];
+    if (settings !== undefined && settings.compress === true) {
+      const zlibMessage = zlibSync(message, {});
+      dataChannel.send(zlibMessage);
+    } else {
+      dataChannel.send(message);
+    }
+  }
+
+  /**
+   * E2EE の自分のフィンガープリント
+   */
   get e2eeSelfFingerprint(): string | undefined {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.selfFingerprint();
@@ -1445,6 +2141,9 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * E2EE のリモートのフィンガープリントリスト
+   */
   get e2eeRemoteFingerprints(): Record<string, string> | undefined {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.remoteFingerprints();
@@ -1452,11 +2151,74 @@ export default class ConnectionBase {
     return;
   }
 
+  /**
+   * audio が有効かどうか
+   */
   get audio(): boolean {
     return this.getAudioTransceiver() !== null;
   }
 
+  /**
+   * video が有効かどうか
+   */
   get video(): boolean {
     return this.getVideoTransceiver() !== null;
+  }
+
+  /**
+   * シグナリングに使用する URL
+   *
+   * @deprecated
+   */
+  get signalingUrl(): string | string[] {
+    return this.signalingUrlCandidates;
+  }
+
+  /**
+   * 接続中のシグナリング URL
+   */
+  get connectedSignalingUrl(): string {
+    if (!this.ws) {
+      return "";
+    }
+    return this.ws.url;
+  }
+
+  /**
+   * DataChannel メッセージング用の DataChannel 情報のリスト
+   */
+  get datachannels(): DataChannelConfiguration[] {
+    if (!this.signalingSwitched) {
+      return [];
+    }
+    const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter((label) => {
+      return /^#.*/.exec(label);
+    });
+    const result: DataChannelConfiguration[] = [];
+    for (const label of messagingDataChannellabels) {
+      const dataChannel = this.soraDataChannels[label];
+      if (!dataChannel) {
+        continue;
+      }
+      const settings = this.signalingOfferMessageDataChannels[label];
+      if (!settings) {
+        continue;
+      }
+      const messagingDataChannel: DataChannelConfiguration = {
+        label: dataChannel.label,
+        ordered: dataChannel.ordered,
+        protocol: dataChannel.protocol,
+        compress: settings.compress,
+        direction: settings.direction,
+      };
+      if (typeof dataChannel.maxPacketLifeTime === "number") {
+        messagingDataChannel.maxPacketLifeTime = dataChannel.maxPacketLifeTime;
+      }
+      if (typeof dataChannel.maxRetransmits === "number") {
+        messagingDataChannel.maxRetransmits = dataChannel.maxRetransmits;
+      }
+      result.push(messagingDataChannel);
+    }
+    return result;
   }
 }

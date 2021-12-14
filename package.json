@@ -1,22 +1,21 @@
 {
   "name": "sora-js-sdk",
-  "version": "2021.1.7",
+  "version": "2021.2.0",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.min.js",
   "module": "dist/sora.mjs",
   "types": "dist/sora.d.ts",
   "scripts": {
-    "bootstrap": "npx lerna bootstrap --npm-client yarn",
-    "build": "npx lerna run --npm-client yarn build",
-    "lint": "npx lerna run --npm-client yarn lint",
-    "fmt": "npx lerna run --npm-client yarn fmt",
-    "test": "npx lerna run --npm-client yarn test",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "fmt": "npm run fmt --workspaces",
+    "test": "npm run test --workspaces",
     "start": "npx serve -S -l 8080 ./example",
-    "packages:upgrade": "npx lerna clean -y && npx lerna exec -- npx ncu -u && yarn bootstrap",
-    "release:major": "./scripts/versioning.sh major && npx lerna run build",
-    "release:minor": "./scripts/versioning.sh minor && npx lerna run build",
-    "release:patch": "./scripts/versioning.sh patch && npx lerna run build",
-    "release:canary": "./scripts/versioning.sh canary && npx lerna run build"
+    "doc": "npx typedoc",
+    "release:major": "./scripts/versioning.sh major",
+    "release:minor": "./scripts/versioning.sh minor",
+    "release:patch": "./scripts/versioning.sh patch",
+    "release:canary": "./scripts/versioning.sh canary"
   },
   "repository": {
     "type": "git",
@@ -32,11 +31,16 @@
     "dist"
   ],
   "devDependencies": {
-    "lerna": "^4.0.0",
-    "npm-check-updates": "^11.6.0",
-    "serve": "^11.3.2"
+    "npm-check-updates": "^12.0.3",
+    "serve": "^13.0.2",
+    "typedoc": "^0.22.10"
   },
   "resolutions": {
     "get-pkg-repo": "4.1.2"
-  }
+  },
+  "workspaces": [
+    "packages/go-wasm",
+    "packages/e2ee",
+    "packages/sdk"
+  ]
 }

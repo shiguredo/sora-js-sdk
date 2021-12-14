@@ -8,7 +8,7 @@
   "module": "dist/sora_e2ee.mjs",
   "types": "dist/sora_e2ee.d.ts",
   "scripts": {
-    "build": "yarn build:worker && yarn build:development",
+    "build": "npm run build:worker && npm run build:development",
     "build:development": "NODE_ENV=development rollup -c rollup.config.js",
     "build:worker": "npx tsc --project tsconfig.worker.json",
     "fmt": "prettier --write src",
@@ -16,16 +16,16 @@
     "test": "echo \"no test\""
   },
   "devDependencies": {
-    "@rollup/plugin-replace": "^2.4.2",
-    "@typescript-eslint/eslint-plugin": "^4.25.0",
-    "@typescript-eslint/parser": "^4.25.0",
-    "eslint": "^7.27.0",
+    "@rollup/plugin-replace": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^3.4.0",
-    "prettier": "^2.3.0",
-    "rollup": "^2.50.5",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.4.1",
+    "rollup": "^2.58.0",
     "rollup-plugin-typescript2": "^0.30.0",
-    "typescript": "^4.3.2"
+    "typescript": "^4.4.3"
   },
   "dependencies": {
     "@sora/go-wasm": "^2021.1.0"

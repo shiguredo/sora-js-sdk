@@ -28,6 +28,15 @@ export declare type SignalingVideo = boolean | {
     bit_rate?: number;
 };
 export declare type Role = "sendrecv" | "sendonly" | "recvonly";
+export declare type SignalingConnectDataChannel = {
+    label?: string;
+    direction?: DataChannelDirection;
+    compress?: boolean;
+    max_packet_life_time?: number;
+    max_retransmits?: number;
+    protocol?: string;
+    ordered?: boolean;
+};
 export declare type SignalingConnectMessage = {
     type: "connect";
     role: Role;
@@ -36,7 +45,7 @@ export declare type SignalingConnectMessage = {
     metadata?: JSONType;
     signaling_notify_metadata?: JSONType;
     multistream?: boolean;
-    spotlight?: number | boolean;
+    spotlight?: boolean;
     spotlight_number?: number;
     simulcast?: Simulcast;
     simulcast_rid?: SimulcastRid;
@@ -50,8 +59,15 @@ export declare type SignalingConnectMessage = {
     spotlight_unfocus_rid?: SpotlightFocusRid;
     data_channel_signaling?: boolean;
     ignore_disconnect_websocket?: boolean;
+    redirect?: true;
+    data_channels?: SignalingConnectDataChannel[];
 };
-export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage;
+export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage | SignalingRedirectMessage;
+export declare type SignalingOfferMessageDataChannel = {
+    label: string;
+    direction: DataChannelDirection;
+    compress: boolean;
+};
 export declare type SignalingOfferMessage = {
     type: "offer";
     sdp: string;
@@ -62,10 +78,7 @@ export declare type SignalingOfferMessage = {
     encodings?: RTCRtpEncodingParameters[];
     ignore_disconnect_websocket?: boolean;
     data_channel_signaling?: boolean;
-    data_channels?: Array<{
-        label: string;
-        compress: boolean;
-    }>;
+    data_channels?: SignalingOfferMessageDataChannel[];
     mid?: {
         audio?: string;
         video?: string;
@@ -93,6 +106,10 @@ export declare type SignalingReqStatsMessage = {
 export declare type SignalingSwitchedMessage = {
     type: "switched";
     ignore_disconnect_websocket: boolean;
+};
+export declare type SignalingRedirectMessage = {
+    type: "redirect";
+    location: string;
 };
 export declare type SignalingNotifyMessage = SignalingNotifyConnectionCreated | SignalingNotifyConnectionUpdated | SignalingNotifyConnectionDestroyed | SignalingNotifySpotlightChanged | SignalingNotifySpotlightFocused | SignalingNotifySpotlightUnfocused | SignalingNotifyNetworkStatus;
 export declare type SignalingNotifyMetadata = {
@@ -188,6 +205,16 @@ export declare type SignalingNotifyNetworkStatus = {
     event_type: "network.status";
     unstable_level: 0 | 1 | 2 | 3;
 };
+export declare type DataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
+export declare type DataChannelConfiguration = {
+    label: string;
+    direction: DataChannelDirection;
+    compress?: boolean;
+    maxPacketLifeTime?: number;
+    maxRetransmits?: number;
+    protocol?: string;
+    ordered?: boolean;
+};
 export declare type ConnectionOptions = {
     audio?: boolean;
     audioCodecType?: AudioCodecType;
@@ -205,7 +232,7 @@ export declare type ConnectionOptions = {
     videoCodecType?: VideoCodecType;
     videoBitRate?: number;
     multistream?: boolean;
-    spotlight?: boolean | number;
+    spotlight?: boolean;
     spotlightNumber?: number;
     spotlightFocusRid?: SpotlightFocusRid;
     spotlightUnfocusRid?: SpotlightFocusRid;
@@ -219,6 +246,8 @@ export declare type ConnectionOptions = {
     dataChannelSignaling?: boolean;
     ignoreDisconnectWebSocket?: boolean;
     disconnectWaitTimeout?: number;
+    signalingCandidateTimeout?: number;
+    dataChannels?: DataChannelConfiguration[];
 };
 export declare type Callbacks = {
     disconnect: (event: SoraCloseEvent) => void;
@@ -232,6 +261,8 @@ export declare type Callbacks = {
     timeout: () => void;
     timeline: (event: TimelineEvent) => void;
     signaling: (event: SignalingEvent) => void;
+    message: (event: DataChannelMessageEvent) => void;
+    datachannel: (event: DataChannelEvent) => void;
 };
 export declare type PreKeyBundle = {
     identityKey: string;
@@ -244,6 +275,13 @@ export declare type TimelineEventLogType = "websocket" | "datachannel" | "peerco
 export interface SignalingEvent extends Event {
     transportType: TransportType;
     data?: any;
+}
+export interface DataChannelMessageEvent extends Event {
+    label: string;
+    data: ArrayBuffer;
+}
+export interface DataChannelEvent extends Event {
+    datachannel: DataChannelConfiguration;
 }
 export interface TimelineEvent extends Event {
     logType: TimelineEventLogType;

@@ -31,7 +31,9 @@ const debug = false;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
 const options = {
   multistream: true,
-  spotlight: 2
+  simulcast: true,
+  spotlight: true,
+  spotlightNumber: 1,
 }
 const sendrecv1 = sora.sendrecv(channelId, null, options);
 const sendrecv2 = sora.sendrecv(channelId, null, options);
@@ -60,8 +62,6 @@ document.querySelector('#start-sendrecv1').addEventListener('click', function() 
       remoteVideo.autoplay = true;
       remoteVideo.playsinline = true;
       remoteVideo.controls = true;
-      remoteVideo.width = '160';
-      remoteVideo.height = '120';
       remoteVideo.srcObject = stream;
       remoteVideos.appendChild(remoteVideo);
     }

@@ -1,6 +1,23 @@
 import ConnectionBase from "./base";
 
+/**
+ * Role が "sendonly" または "sendrecv" の場合に Sora との WebRTC 接続を扱うクラス
+ */
 export default class ConnectionPublisher extends ConnectionBase {
+  /**
+   * Sora へ接続するメソッド
+   *
+   * @example
+   * ```typescript
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   * ```
+   *
+   * @param stream - メディアストリーム
+   *
+   * @public
+   */
   async connect(stream: MediaStream): Promise<MediaStream> {
     if (this.options.multistream) {
       await Promise.race([
@@ -26,11 +43,16 @@ export default class ConnectionPublisher extends ConnectionBase {
     return stream;
   }
 
+  /**
+   * シングルストリームで Sora へ接続するメソッド
+   *
+   * @param stream - メディアストリーム
+   */
   private async singleStream(stream: MediaStream): Promise<MediaStream> {
     await this.disconnect();
     this.setupE2EE();
-    const offer = await this.createOffer();
-    const signalingMessage = await this.signaling(offer);
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     await this.setRemoteDescription(signalingMessage);
@@ -54,11 +76,16 @@ export default class ConnectionPublisher extends ConnectionBase {
     return stream;
   }
 
+  /**
+   * マルチストリームで Sora へ接続するメソッド
+   *
+   * @param stream - メディアストリーム
+   */
   private async multiStream(stream: MediaStream): Promise<MediaStream> {
     await this.disconnect();
     this.setupE2EE();
-    const offer = await this.createOffer();
-    const signalingMessage = await this.signaling(offer);
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
