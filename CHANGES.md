@@ -9,7 +9,7 @@
 - FIX
     - バグ修正
 
-## develop
+## 2021.2.0
 - [UPDATE] simulcast 時の transceiver 判定条件に offer.mids.video での分岐を追加する
     - @yuitowest
 - [UPDATE] 複数パッケージの管理を lerna から npm workspace に変更する
