@@ -9,6 +9,11 @@
 - FIX
     - バグ修正
 
+## develop
+- [UPDATE] パッケージを更新する
+    - fflate "0.7.1" -> "0.7.2"
+    - typescript "4.4.3" -> "4.5.4"
+
 ## 2021.2.0
 - [UPDATE] simulcast 時の transceiver 判定条件に offer.mids.video での分岐を追加する
     - @yuitowest
