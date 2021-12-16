@@ -1,3 +1,5 @@
+import { unzlibSync } from "fflate";
+
 import {
   ConnectionOptions,
   Browser,
@@ -344,6 +346,7 @@ export function trace(clientId: string | null, title: string, value: unknown): v
     if (record && typeof record === "object") {
       let keys = null;
       try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         keys = Object.keys(JSON.parse(JSON.stringify(record)));
       } catch (_) {
         // 何もしない
@@ -444,4 +447,12 @@ export function createDataChannelEvent(channel: DataChannelConfiguration): DataC
   const event = new Event("datachannel") as DataChannelEvent;
   event.datachannel = channel;
   return event;
+}
+
+export function parseDataChannelEventData(eventData: unknown, compress: boolean): string {
+  if (compress) {
+    const unzlibMessage = unzlibSync(new Uint8Array(eventData as Uint8Array));
+    return new TextDecoder().decode(unzlibMessage);
+  }
+  return eventData as string;
 }

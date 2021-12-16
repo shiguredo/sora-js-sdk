@@ -17,7 +17,8 @@
       "dom",
       "dom.iterable",
       "scripthost"
-    ]
+    ],
+    "declarationDir": "."
   },
   "include": [
     "src/sora_e2ee.ts"
