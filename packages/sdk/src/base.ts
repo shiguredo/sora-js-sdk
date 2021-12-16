@@ -12,6 +12,7 @@ import {
   getSignalingNotifyAuthnMetadata,
   getSignalingNotifyData,
   isSafari,
+  parseDataChannelEventData,
   trace,
 } from "./utils";
 import {
@@ -1101,6 +1102,9 @@ export default class ConnectionBase {
           this.signalingOnMessageE2EE(event.data);
           return;
         }
+        if (typeof event.data !== "string") {
+          throw new Error("Received invalid signaling data");
+        }
         const message = JSON.parse(event.data) as SignalingMessage;
         if (message.type == "offer") {
           this.writeWebSocketSignalingLog("onmessage-offer", message);
@@ -1851,7 +1855,7 @@ export default class ConnectionBase {
     }
     const reports = await this.pc.getStats();
     reports.forEach((s) => {
-      stats.push(s);
+      stats.push(s as RTCStatsReport);
     });
     return stats;
   }
@@ -1900,14 +1904,15 @@ export default class ConnectionBase {
     if (dataChannelEvent.channel.label === "signaling") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel;
-        let data = event.data as string;
-        if (
-          this.signalingOfferMessageDataChannels.signaling &&
-          this.signalingOfferMessageDataChannels.signaling.compress === true
-        ) {
-          const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-          data = new TextDecoder().decode(unzlibMessage);
+        const label = channel.label;
+        const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+        if (!dataChannelSettings) {
+          console.warn(
+            `Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`
+          );
+          return;
         }
+        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
         const message = JSON.parse(data) as SignalingMessage;
         this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message);
         if (message.type === "re-offer") {
@@ -1917,14 +1922,15 @@ export default class ConnectionBase {
     } else if (dataChannelEvent.channel.label === "notify") {
       dataChannelEvent.channel.onmessage = (event): void => {
         const channel = event.currentTarget as RTCDataChannel;
-        let data = event.data as string;
-        if (
-          this.signalingOfferMessageDataChannels.notify &&
-          this.signalingOfferMessageDataChannels.notify.compress === true
-        ) {
-          const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-          data = new TextDecoder().decode(unzlibMessage);
+        const label = channel.label;
+        const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+        if (!dataChannelSettings) {
+          console.warn(
+            `Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`
+          );
+          return;
         }
+        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
         const message = JSON.parse(data) as SignalingNotifyMessage;
         if (message.event_type === "connection.created") {
           this.writeDataChannelTimelineLog("notify-connection.created", channel, message);
@@ -1935,14 +1941,16 @@ export default class ConnectionBase {
       };
     } else if (dataChannelEvent.channel.label === "push") {
       dataChannelEvent.channel.onmessage = (event): void => {
-        let data = event.data as string;
-        if (
-          this.signalingOfferMessageDataChannels.push &&
-          this.signalingOfferMessageDataChannels.push.compress === true
-        ) {
-          const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-          data = new TextDecoder().decode(unzlibMessage);
+        const channel = event.currentTarget as RTCDataChannel;
+        const label = channel.label;
+        const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+        if (!dataChannelSettings) {
+          console.warn(
+            `Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`
+          );
+          return;
         }
+        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
         const message = JSON.parse(data) as SignalingPushMessage;
         this.callbacks.push(message, "datachannel");
       };
@@ -1955,14 +1963,16 @@ export default class ConnectionBase {
       };
     } else if (dataChannelEvent.channel.label === "stats") {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
-        let data = event.data as string;
-        if (
-          this.signalingOfferMessageDataChannels.stats &&
-          this.signalingOfferMessageDataChannels.stats.compress === true
-        ) {
-          const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-          data = new TextDecoder().decode(unzlibMessage);
+        const channel = event.currentTarget as RTCDataChannel;
+        const label = channel.label;
+        const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+        if (!dataChannelSettings) {
+          console.warn(
+            `Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`
+          );
+          return;
         }
+        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
         const message = JSON.parse(data) as SignalingReqStatsMessage;
         if (message.type === "req-stats") {
           const stats = await this.getStats();
@@ -1971,14 +1981,21 @@ export default class ConnectionBase {
       };
     } else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
       dataChannelEvent.channel.onmessage = (event): void => {
-        if (event.target === null) {
+        if (event.currentTarget === null) {
           return;
         }
-        const dataChannel = event.target as RTCDataChannel;
+        const channel = event.currentTarget as RTCDataChannel;
+        const label = channel.label;
+        const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+        if (!dataChannelSettings) {
+          console.warn(
+            `Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`
+          );
+          return;
+        }
         let data = event.data as ArrayBuffer;
-        const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
-        if (settings !== undefined && settings.compress === true) {
-          data = unzlibSync(new Uint8Array(event.data)).buffer;
+        if (dataChannelSettings.compress === true) {
+          data = unzlibSync(new Uint8Array(data)).buffer;
         }
         this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
       };
