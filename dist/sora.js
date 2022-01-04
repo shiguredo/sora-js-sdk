@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.0
+ * @version: 2022.1.0-canary.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -828,8 +828,10 @@
 	    // u16 "map": index -> # of codes with bit length = index
 	    var l = new u16(mb);
 	    // length of cd must be 288 (total # of codes)
-	    for (; i < s; ++i)
-	        ++l[cd[i] - 1];
+	    for (; i < s; ++i) {
+	        if (cd[i])
+	            ++l[cd[i] - 1];
+	    }
 	    // u16 "map": index -> minimum code for bit length = index
 	    var le = new u16(mb);
 	    for (i = 0; i < mb; ++i) {
@@ -1363,15 +1365,11 @@
 	        for (var i = 0; i <= s; i += 65535) {
 	            // end
 	            var e = i + 65535;
-	            if (e < s) {
-	                // write full block
-	                pos = wfblk(w, pos, dat.subarray(i, e));
-	            }
-	            else {
+	            if (e >= s) {
 	                // write final block
-	                w[i] = lst;
-	                pos = wfblk(w, pos, dat.subarray(i, s));
+	                w[pos >> 3] = lst;
 	            }
+	            pos = wfblk(w, pos + 1, dat.subarray(i, e));
 	        }
 	    }
 	    else {
@@ -1635,7 +1633,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.2.0",
+	        sora_client: "Sora JavaScript SDK 2022.1.0-canary.0",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1843,6 +1841,7 @@
 	        if (record && typeof record === "object") {
 	            let keys = null;
 	            try {
+	                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	                keys = Object.keys(JSON.parse(JSON.stringify(record)));
 	            }
 	            catch (_) {
@@ -1934,6 +1933,13 @@
 	    const event = new Event("datachannel");
 	    event.datachannel = channel;
 	    return event;
+	}
+	function parseDataChannelEventData(eventData, compress) {
+	    if (compress) {
+	        const unzlibMessage = unzlibSync(new Uint8Array(eventData));
+	        return new TextDecoder().decode(unzlibMessage);
+	    }
+	    return eventData;
 	}
 
 	/**
@@ -2838,6 +2844,9 @@
 	                    this.signalingOnMessageE2EE(event.data);
 	                    return;
 	                }
+	                if (typeof event.data !== "string") {
+	                    throw new Error("Received invalid signaling data");
+	                }
 	                const message = JSON.parse(event.data);
 	                if (message.type == "offer") {
 	                    this.writeWebSocketSignalingLog("onmessage-offer", message);
@@ -3593,12 +3602,13 @@
 	        if (dataChannelEvent.channel.label === "signaling") {
 	            dataChannelEvent.channel.onmessage = async (event) => {
 	                const channel = event.currentTarget;
-	                let data = event.data;
-	                if (this.signalingOfferMessageDataChannels.signaling &&
-	                    this.signalingOfferMessageDataChannels.signaling.compress === true) {
-	                    const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-	                    data = new TextDecoder().decode(unzlibMessage);
+	                const label = channel.label;
+	                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+	                if (!dataChannelSettings) {
+	                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
+	                    return;
 	                }
+	                const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
 	                const message = JSON.parse(data);
 	                this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message);
 	                if (message.type === "re-offer") {
@@ -3609,12 +3619,13 @@
 	        else if (dataChannelEvent.channel.label === "notify") {
 	            dataChannelEvent.channel.onmessage = (event) => {
 	                const channel = event.currentTarget;
-	                let data = event.data;
-	                if (this.signalingOfferMessageDataChannels.notify &&
-	                    this.signalingOfferMessageDataChannels.notify.compress === true) {
-	                    const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-	                    data = new TextDecoder().decode(unzlibMessage);
+	                const label = channel.label;
+	                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+	                if (!dataChannelSettings) {
+	                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
+	                    return;
 	                }
+	                const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
 	                const message = JSON.parse(data);
 	                if (message.event_type === "connection.created") {
 	                    this.writeDataChannelTimelineLog("notify-connection.created", channel, message);
@@ -3627,12 +3638,14 @@
 	        }
 	        else if (dataChannelEvent.channel.label === "push") {
 	            dataChannelEvent.channel.onmessage = (event) => {
-	                let data = event.data;
-	                if (this.signalingOfferMessageDataChannels.push &&
-	                    this.signalingOfferMessageDataChannels.push.compress === true) {
-	                    const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-	                    data = new TextDecoder().decode(unzlibMessage);
+	                const channel = event.currentTarget;
+	                const label = channel.label;
+	                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+	                if (!dataChannelSettings) {
+	                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
+	                    return;
 	                }
+	                const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
 	                const message = JSON.parse(data);
 	                this.callbacks.push(message, "datachannel");
 	            };
@@ -3647,12 +3660,14 @@
 	        }
 	        else if (dataChannelEvent.channel.label === "stats") {
 	            dataChannelEvent.channel.onmessage = async (event) => {
-	                let data = event.data;
-	                if (this.signalingOfferMessageDataChannels.stats &&
-	                    this.signalingOfferMessageDataChannels.stats.compress === true) {
-	                    const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-	                    data = new TextDecoder().decode(unzlibMessage);
+	                const channel = event.currentTarget;
+	                const label = channel.label;
+	                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+	                if (!dataChannelSettings) {
+	                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
+	                    return;
 	                }
+	                const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
 	                const message = JSON.parse(data);
 	                if (message.type === "req-stats") {
 	                    const stats = await this.getStats();
@@ -3662,14 +3677,19 @@
 	        }
 	        else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
 	            dataChannelEvent.channel.onmessage = (event) => {
-	                if (event.target === null) {
+	                if (event.currentTarget === null) {
 	                    return;
 	                }
-	                const dataChannel = event.target;
+	                const channel = event.currentTarget;
+	                const label = channel.label;
+	                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+	                if (!dataChannelSettings) {
+	                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
+	                    return;
+	                }
 	                let data = event.data;
-	                const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
-	                if (settings !== undefined && settings.compress === true) {
-	                    data = unzlibSync(new Uint8Array(event.data)).buffer;
+	                if (dataChannelSettings.compress === true) {
+	                    data = unzlibSync(new Uint8Array(data)).buffer;
 	                }
 	                this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
 	            };
@@ -4135,7 +4155,8 @@
 	                    this.callbacks.removetrack(event);
 	                    if (event.target) {
 	                        // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-	                        const index = this.remoteConnectionIds.indexOf(event.target.id);
+	                        const targetId = event.target.id;
+	                        const index = this.remoteConnectionIds.indexOf(targetId);
 	                        if (-1 < index) {
 	                            delete this.remoteConnectionIds[index];
 	                            // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
@@ -4199,7 +4220,8 @@
 	                    this.callbacks.removetrack(event);
 	                    if (event.target) {
 	                        // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-	                        const index = this.remoteConnectionIds.indexOf(event.target.id);
+	                        const targetId = event.target.id;
+	                        const index = this.remoteConnectionIds.indexOf(targetId);
 	                        if (-1 < index) {
 	                            delete this.remoteConnectionIds[index];
 	                            // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
@@ -4373,7 +4395,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2021.2.0";
+	        return "2022.1.0-canary.0";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群
