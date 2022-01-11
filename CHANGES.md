@@ -10,6 +10,8 @@
     - バグ修正
 
 ## develop
+- [UPDATE] sendrecv API を使用して接続する場合に multistream option の初期値が true になるよう修正する
+- [UPDATE] sendrecv API を使用して multistream: false で接続した場合、Sora との接続前に例外が発生するように修正する
 - [UPDATE] パッケージを更新する
     - fflate "0.7.1" -> "0.7.2"
     - typescript "4.4.3" -> "4.5.4"
