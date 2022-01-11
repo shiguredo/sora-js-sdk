@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.1.0-canary.0
+ * @version: 2022.1.0-canary.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1633,7 +1633,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2022.1.0-canary.0",
+	        sora_client: "Sora JavaScript SDK 2022.1.0-canary.1",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1641,6 +1641,10 @@
 	        audio: true,
 	        video: true,
 	    };
+	    // role: sendrecv で multistream: false の場合は例外を発生させる
+	    if (role === "sendrecv" && options.multistream !== true) {
+	        throw new Error("Failed to parse options. Options multistream must be true when connecting using 'sendrecv'");
+	    }
 	    if (metadata !== undefined) {
 	        message.metadata = metadata;
 	    }
@@ -4300,7 +4304,9 @@
 	     * @public
 	     */
 	    sendrecv(channelId, metadata = null, options = { audio: true, video: true }) {
-	        return new ConnectionPublisher(this.signalingUrlCandidates, "sendrecv", channelId, metadata, options, this.debug);
+	        // sendrecv の場合、multistream に初期値を指定する
+	        const sendrecvOptions = Object.assign({ multistream: true }, options);
+	        return new ConnectionPublisher(this.signalingUrlCandidates, "sendrecv", channelId, metadata, sendrecvOptions, this.debug);
 	    }
 	    /**
 	     * role sendonly で接続するための Connecion インスタンスを生成するメソッド
@@ -4395,7 +4401,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2022.1.0-canary.0";
+	        return "2022.1.0-canary.1";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群
