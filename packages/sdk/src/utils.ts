@@ -127,6 +127,10 @@ export function createSignalingMessage(
     audio: true,
     video: true,
   };
+  // role: sendrecv で multistream: false の場合は例外を発生させる
+  if (role === "sendrecv" && options.multistream !== true) {
+    throw new Error("Failed to parse options. Options multistream must be true when connecting using 'sendrecv'");
+  }
 
   if (metadata !== undefined) {
     message.metadata = metadata;
