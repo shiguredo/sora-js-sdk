@@ -81,7 +81,16 @@ class SoraConnection {
     metadata: JSONType = null,
     options: ConnectionOptions = { audio: true, video: true }
   ): ConnectionPublisher {
-    return new ConnectionPublisher(this.signalingUrlCandidates, "sendrecv", channelId, metadata, options, this.debug);
+    // sendrecv の場合、multistream に初期値を指定する
+    const sendrecvOptions: ConnectionOptions = Object.assign({ multistream: true }, options);
+    return new ConnectionPublisher(
+      this.signalingUrlCandidates,
+      "sendrecv",
+      channelId,
+      metadata,
+      sendrecvOptions,
+      this.debug
+    );
   }
   /**
    * role sendonly で接続するための Connecion インスタンスを生成するメソッド
