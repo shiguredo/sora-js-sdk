@@ -1132,8 +1132,12 @@ export default class ConnectionBase {
           this.signalingOnMessageTypeSwitched(message);
         } else if (message.type == "redirect") {
           this.writeWebSocketSignalingLog("onmessage-redirect", message);
-          const redirectMessage = await this.signalingOnMessageTypeRedirect(message);
-          resolve(redirectMessage);
+          try {
+            const redirectMessage = await this.signalingOnMessageTypeRedirect(message);
+            resolve(redirectMessage);
+          } catch (error) {
+            reject(error);
+          }
         }
       };
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
