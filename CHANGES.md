@@ -9,6 +9,10 @@
 - FIX
     - バグ修正
 
+## 2021.2.1
+- [FIX] type redirect 時のシグナリングで接続エラーになった場合、例外が発火しなかった問題を修正する
+    - @yuitowest
+
 ## 2021.2.0
 - [UPDATE] simulcast 時の transceiver 判定条件に offer.mids.video での分岐を追加する
     - @yuitowest
