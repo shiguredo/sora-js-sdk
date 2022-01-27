@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.0
+ * @version: 2021.2.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1629,7 +1629,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.2.0",
+        sora_client: "Sora JavaScript SDK 2021.2.1",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -2867,8 +2867,13 @@ class ConnectionBase {
                 }
                 else if (message.type == "redirect") {
                     this.writeWebSocketSignalingLog("onmessage-redirect", message);
-                    const redirectMessage = await this.signalingOnMessageTypeRedirect(message);
-                    resolve(redirectMessage);
+                    try {
+                        const redirectMessage = await this.signalingOnMessageTypeRedirect(message);
+                        resolve(redirectMessage);
+                    }
+                    catch (error) {
+                        reject(error);
+                    }
                 }
             };
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -4367,7 +4372,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2021.2.0";
+        return "2021.2.1";
     },
     /**
      * WebRTC のユーティリティ関数群
