@@ -9,6 +9,12 @@
 - FIX
     - バグ修正
 
+## 2021.2.2
+- [FIX] fflate package のバージョンを 0.7.1 から 0.7.3 に更新する
+    - 0.7.3 https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#073
+    - 0.7.2 https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#072
+    - @yuitowest
+
 ## 2021.2.1
 - [FIX] type redirect 時のシグナリングで接続エラーになった場合、例外が発火しなかった問題を修正する
     - @yuitowest
