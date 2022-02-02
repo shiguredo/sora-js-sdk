@@ -28,7 +28,7 @@
     "dist"
   ],
   "devDependencies": {
-    "npm-check-updates": "^12.1.0",
+    "npm-check-updates": "^12.2.1",
     "serve": "^13.0.2",
     "typedoc": "^0.22.11"
   },
