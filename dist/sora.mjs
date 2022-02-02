@@ -911,7 +911,7 @@ var slc = function (v, s, e) {
     if (e == null || e > v.length)
         e = v.length;
     // can't use .constructor in case user-supplied
-    var n = new (v instanceof u16 ? u16 : v instanceof u32 ? u32 : u8)(e - s);
+    var n = new (v.BYTES_PER_ELEMENT == 2 ? u16 : v.BYTES_PER_ELEMENT == 4 ? u32 : u8)(e - s);
     n.set(v.subarray(s, e));
     return n;
 };

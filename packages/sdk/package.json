@@ -27,6 +27,6 @@
   },
   "dependencies": {
     "@sora/e2ee": "^2021.1.0",
-    "fflate": "^0.7.2"
+    "fflate": "^0.7.3"
   }
 }
