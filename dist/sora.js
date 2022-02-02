@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.1
+ * @version: 2021.2.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -828,8 +828,10 @@
 	    // u16 "map": index -> # of codes with bit length = index
 	    var l = new u16(mb);
 	    // length of cd must be 288 (total # of codes)
-	    for (; i < s; ++i)
-	        ++l[cd[i] - 1];
+	    for (; i < s; ++i) {
+	        if (cd[i])
+	            ++l[cd[i] - 1];
+	    }
 	    // u16 "map": index -> minimum code for bit length = index
 	    var le = new u16(mb);
 	    for (i = 0; i < mb; ++i) {
@@ -915,7 +917,7 @@
 	    if (e == null || e > v.length)
 	        e = v.length;
 	    // can't use .constructor in case user-supplied
-	    var n = new (v instanceof u16 ? u16 : v instanceof u32 ? u32 : u8)(e - s);
+	    var n = new (v.BYTES_PER_ELEMENT == 2 ? u16 : v.BYTES_PER_ELEMENT == 4 ? u32 : u8)(e - s);
 	    n.set(v.subarray(s, e));
 	    return n;
 	};
@@ -1363,15 +1365,11 @@
 	        for (var i = 0; i <= s; i += 65535) {
 	            // end
 	            var e = i + 65535;
-	            if (e < s) {
-	                // write full block
-	                pos = wfblk(w, pos, dat.subarray(i, e));
-	            }
-	            else {
+	            if (e >= s) {
 	                // write final block
-	                w[i] = lst;
-	                pos = wfblk(w, pos, dat.subarray(i, s));
+	                w[pos >> 3] = lst;
 	            }
+	            pos = wfblk(w, pos + 1, dat.subarray(i, e));
 	        }
 	    }
 	    else {
@@ -1635,7 +1633,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2021.2.1",
+	        sora_client: "Sora JavaScript SDK 2021.2.2",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -4378,7 +4376,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2021.2.1";
+	        return "2021.2.2";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群
