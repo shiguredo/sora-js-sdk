@@ -1978,13 +1978,24 @@ export default class ConnectionBase {
         if (event.target === null) {
           return;
         }
+
         const dataChannel = event.target as RTCDataChannel;
-        let data = event.data as ArrayBuffer;
-        const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
-        if (settings !== undefined && settings.compress === true) {
-          data = unzlibSync(new Uint8Array(event.data)).buffer;
+        let data: ArrayBuffer | undefined = undefined;
+        if (typeof event.data === "string") {
+          data = new TextEncoder().encode(event.data);
+        } else if (event.data instanceof ArrayBuffer) {
+          data = event.data;
+        } else {
+          console.warn("Received onmessage event data is not of type String or ArrayBuffer.");
         }
-        this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
+
+        if (data !== undefined) {
+          const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
+          if (settings !== undefined && settings.compress === true) {
+            data = unzlibSync(new Uint8Array(data)).buffer;
+          }
+          this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
+        }
       };
     }
   }
