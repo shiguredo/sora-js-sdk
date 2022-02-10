@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.2
+ * @version: 2021.2.3
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1627,7 +1627,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.2.2",
+        sora_client: "Sora JavaScript SDK 2021.2.3",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -3663,12 +3663,23 @@ class ConnectionBase {
                     return;
                 }
                 const dataChannel = event.target;
-                let data = event.data;
-                const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
-                if (settings !== undefined && settings.compress === true) {
-                    data = unzlibSync(new Uint8Array(event.data)).buffer;
+                let data = undefined;
+                if (typeof event.data === "string") {
+                    data = new TextEncoder().encode(event.data);
                 }
-                this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
+                else if (event.data instanceof ArrayBuffer) {
+                    data = event.data;
+                }
+                else {
+                    console.warn("Received onmessage event data is not of type String or ArrayBuffer.");
+                }
+                if (data !== undefined) {
+                    const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
+                    if (settings !== undefined && settings.compress === true) {
+                        data = unzlibSync(new Uint8Array(data)).buffer;
+                    }
+                    this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
+                }
             };
         }
     }
@@ -4370,7 +4381,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2021.2.2";
+        return "2021.2.3";
     },
     /**
      * WebRTC のユーティリティ関数群
