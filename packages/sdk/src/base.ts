@@ -1997,11 +1997,22 @@ export default class ConnectionBase {
           );
           return;
         }
-        let data = event.data as ArrayBuffer;
-        if (dataChannelSettings.compress === true) {
-          data = unzlibSync(new Uint8Array(data)).buffer;
+        const dataChannel = event.target as RTCDataChannel;
+        let data: ArrayBuffer | undefined = undefined;
+        if (typeof event.data === "string") {
+          data = new TextEncoder().encode(event.data);
+        } else if (event.data instanceof ArrayBuffer) {
+          data = event.data;
+        } else {
+          console.warn("Received onmessage event data is not of type String or ArrayBuffer.");
         }
-        this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
+
+        if (data !== undefined) {
+          if (dataChannelSettings.compress === true) {
+            data = unzlibSync(new Uint8Array(data)).buffer;
+          }
+          this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
+        }
       };
     }
   }
