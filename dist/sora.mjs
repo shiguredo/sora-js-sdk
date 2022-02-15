@@ -3690,11 +3690,23 @@ class ConnectionBase {
                     console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
                     return;
                 }
-                let data = event.data;
-                if (dataChannelSettings.compress === true) {
-                    data = unzlibSync(new Uint8Array(data)).buffer;
+                const dataChannel = event.target;
+                let data = undefined;
+                if (typeof event.data === "string") {
+                    data = new TextEncoder().encode(event.data);
                 }
-                this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
+                else if (event.data instanceof ArrayBuffer) {
+                    data = event.data;
+                }
+                else {
+                    console.warn("Received onmessage event data is not of type String or ArrayBuffer.");
+                }
+                if (data !== undefined) {
+                    if (dataChannelSettings.compress === true) {
+                        data = unzlibSync(new Uint8Array(data)).buffer;
+                    }
+                    this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
+                }
             };
         }
     }

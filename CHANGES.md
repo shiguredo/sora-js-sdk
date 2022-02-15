@@ -16,6 +16,10 @@
     - fflate "0.7.1" -> "0.7.2"
     - typescript "4.4.3" -> "4.5.4"
 
+## 2021.2.3
+- [FIX] メッセージング機能で文字列データが送信されてきた場合にそのまま message callback に渡していた問題を修正する
+    - @yuitowest
+
 ## 2021.2.2
 - [FIX] fflate package のバージョンを 0.7.1 から 0.7.3 に更新する
     - 0.7.3 https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#073
