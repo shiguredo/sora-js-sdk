@@ -15,6 +15,9 @@
 - [UPDATE] パッケージを更新する
     - fflate "0.7.1" -> "0.7.2"
     - typescript "4.4.3" -> "4.5.4"
+- [CHANGE] connectedSignalingUrl は現在接続中の WebSocket の URL ではなく type offer メッセージを受信した URL を返すようにする
+    - ignoreDisconnectWebSocket を使用して WebSocket を切断した場合にも URL を返すように修正する
+- [UPDATE] SendRecv オブジェクト に contactSignalingUrl プロパティを追加する
 
 ## 2021.2.3
 - [FIX] メッセージング機能で文字列データが送信されてきた場合にそのまま message callback に渡していた問題を修正する
