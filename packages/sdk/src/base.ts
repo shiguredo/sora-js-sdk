@@ -115,6 +115,14 @@ export default class ConnectionBase {
    */
   encodings: RTCRtpEncodingParameters[];
   /**
+   * WS シグナリングで type offer メッセージを受信したシグナリング URL
+   */
+  connectedSignalingUrl: string;
+  /**
+   * WS シグナリングで最初に type connect を送信したシグナリング URL
+   */
+  contactSignalingUrl: string;
+  /**
    * WebSocket インスタンス
    */
   private ws: WebSocket | null;
@@ -242,6 +250,8 @@ export default class ConnectionBase {
     };
     this.signalingSwitched = false;
     this.signalingOfferMessageDataChannels = {};
+    this.connectedSignalingUrl = "";
+    this.contactSignalingUrl = "";
   }
 
   /**
@@ -656,6 +666,8 @@ export default class ConnectionBase {
     };
     this.signalingSwitched = false;
     this.signalingOfferMessageDataChannels = {};
+    this.contactSignalingUrl = "";
+    this.connectedSignalingUrl = "";
     this.clearConnectionTimeout();
   }
 
@@ -1109,6 +1121,7 @@ export default class ConnectionBase {
         if (message.type == "offer") {
           this.writeWebSocketSignalingLog("onmessage-offer", message);
           this.signalingOnMessageTypeOffer(message);
+          this.connectedSignalingUrl = ws.url;
           resolve(message);
         } else if (message.type == "update") {
           this.writeWebSocketSignalingLog("onmessage-update", message);
@@ -1166,6 +1179,11 @@ export default class ConnectionBase {
           ws.send(JSON.stringify(signalingMessage));
           this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage);
           this.ws = ws;
+          // 初回に接続した URL を状態管理する
+          if (!redirect) {
+            this.contactSignalingUrl = ws.url;
+            this.writeWebSocketSignalingLog("contact-signaling-url", this.contactSignalingUrl);
+          }
         }
       })();
     });
@@ -2204,16 +2222,6 @@ export default class ConnectionBase {
    */
   get signalingUrl(): string | string[] {
     return this.signalingUrlCandidates;
-  }
-
-  /**
-   * 接続中のシグナリング URL
-   */
-  get connectedSignalingUrl(): string {
-    if (!this.ws) {
-      return "";
-    }
-    return this.ws.url;
   }
 
   /**
