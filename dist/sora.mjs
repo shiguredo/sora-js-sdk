@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.1.0-canary.1
+ * @version: 2022.1.0-canary.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1627,7 +1627,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2022.1.0-canary.1",
+        sora_client: "Sora JavaScript SDK 2022.1.0-canary.2",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -2012,6 +2012,8 @@ class ConnectionBase {
         };
         this.signalingSwitched = false;
         this.signalingOfferMessageDataChannels = {};
+        this.connectedSignalingUrl = "";
+        this.contactSignalingUrl = "";
     }
     /**
      * SendRecv Object で発火するイベントのコールバックを設定するメソッド
@@ -2408,6 +2410,8 @@ class ConnectionBase {
         };
         this.signalingSwitched = false;
         this.signalingOfferMessageDataChannels = {};
+        this.contactSignalingUrl = "";
+        this.connectedSignalingUrl = "";
         this.clearConnectionTimeout();
     }
     /**
@@ -2727,7 +2731,7 @@ class ConnectionBase {
                     const ws = new WebSocket(signalingUrl);
                     // 一定時間経過しても反応がなかった場合は処理を中断する
                     const timerId = setTimeout(() => {
-                        this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                        this.writeWebSocketSignalingLog("signaling-url-candidate", {
                             type: "timeout",
                             url: ws.url,
                         });
@@ -2740,7 +2744,7 @@ class ConnectionBase {
                         }
                     }, this.signalingCandidateTimeout);
                     ws.onclose = (event) => {
-                        this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                        this.writeWebSocketSignalingLog("signaling-url-candidate", {
                             type: "close",
                             url: ws.url,
                             message: `WebSocket closed`,
@@ -2754,7 +2758,7 @@ class ConnectionBase {
                         reject();
                     };
                     ws.onerror = (_) => {
-                        this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                        this.writeWebSocketSignalingLog("signaling-url-candidate", {
                             type: "error",
                             url: ws.url,
                             message: `Failed to connect WebSocket`,
@@ -2770,7 +2774,7 @@ class ConnectionBase {
                         if (ws) {
                             clearInterval(timerId);
                             if (resolved) {
-                                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                                this.writeWebSocketSignalingLog("signaling-url-candidate", {
                                     type: "open",
                                     url: ws.url,
                                     selected: false,
@@ -2782,7 +2786,7 @@ class ConnectionBase {
                                 reject();
                             }
                             else {
-                                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                                this.writeWebSocketSignalingLog("signaling-url-candidate", {
                                     type: "open",
                                     url: ws.url,
                                     selected: true,
@@ -2849,6 +2853,7 @@ class ConnectionBase {
                 if (message.type == "offer") {
                     this.writeWebSocketSignalingLog("onmessage-offer", message);
                     this.signalingOnMessageTypeOffer(message);
+                    this.connectedSignalingUrl = ws.url;
                     resolve(message);
                 }
                 else if (message.type == "update") {
@@ -2909,6 +2914,11 @@ class ConnectionBase {
                     ws.send(JSON.stringify(signalingMessage));
                     this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage);
                     this.ws = ws;
+                    // 初回に接続した URL を状態管理する
+                    if (!redirect) {
+                        this.contactSignalingUrl = ws.url;
+                        this.writeWebSocketSignalingLog("contact-signaling-url", this.contactSignalingUrl);
+                    }
                 }
             })();
         });
@@ -3884,15 +3894,6 @@ class ConnectionBase {
         return this.signalingUrlCandidates;
     }
     /**
-     * 接続中のシグナリング URL
-     */
-    get connectedSignalingUrl() {
-        if (!this.ws) {
-            return "";
-        }
-        return this.ws.url;
-    }
-    /**
      * DataChannel メッセージング用の DataChannel 情報のリスト
      */
     get datachannels() {
@@ -4412,7 +4413,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2022.1.0-canary.1";
+        return "2022.1.0-canary.2";
     },
     /**
      * WebRTC のユーティリティ関数群

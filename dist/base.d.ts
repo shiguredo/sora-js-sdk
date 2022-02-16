@@ -73,6 +73,14 @@ export default class ConnectionBase {
      */
     encodings: RTCRtpEncodingParameters[];
     /**
+     * WS シグナリングで type offer メッセージを受信したシグナリング URL
+     */
+    connectedSignalingUrl: string;
+    /**
+     * WS シグナリングで最初に type connect を送信したシグナリング URL
+     */
+    contactSignalingUrl: string;
+    /**
      * WebSocket インスタンス
      */
     private ws;
@@ -595,10 +603,6 @@ export default class ConnectionBase {
      * @deprecated
      */
     get signalingUrl(): string | string[];
-    /**
-     * 接続中のシグナリング URL
-     */
-    get connectedSignalingUrl(): string;
     /**
      * DataChannel メッセージング用の DataChannel 情報のリスト
      */
