@@ -998,7 +998,7 @@ export default class ConnectionBase {
           const ws = new WebSocket(signalingUrl);
           // 一定時間経過しても反応がなかった場合は処理を中断する
           const timerId = setTimeout(() => {
-            this.writeWebSocketSignalingLog("signaling-url-canidate", {
+            this.writeWebSocketSignalingLog("signaling-url-candidate", {
               type: "timeout",
               url: ws.url,
             });
@@ -1011,7 +1011,7 @@ export default class ConnectionBase {
             }
           }, this.signalingCandidateTimeout);
           ws.onclose = (event): void => {
-            this.writeWebSocketSignalingLog("signaling-url-canidate", {
+            this.writeWebSocketSignalingLog("signaling-url-candidate", {
               type: "close",
               url: ws.url,
               message: `WebSocket closed`,
@@ -1025,7 +1025,7 @@ export default class ConnectionBase {
             reject();
           };
           ws.onerror = (_): void => {
-            this.writeWebSocketSignalingLog("signaling-url-canidate", {
+            this.writeWebSocketSignalingLog("signaling-url-candidate", {
               type: "error",
               url: ws.url,
               message: `Failed to connect WebSocket`,
@@ -1041,7 +1041,7 @@ export default class ConnectionBase {
             if (ws) {
               clearInterval(timerId);
               if (resolved) {
-                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                this.writeWebSocketSignalingLog("signaling-url-candidate", {
                   type: "open",
                   url: ws.url,
                   selected: false,
@@ -1052,7 +1052,7 @@ export default class ConnectionBase {
                 ws.close();
                 reject();
               } else {
-                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                this.writeWebSocketSignalingLog("signaling-url-candidate", {
                   type: "open",
                   url: ws.url,
                   selected: true,
