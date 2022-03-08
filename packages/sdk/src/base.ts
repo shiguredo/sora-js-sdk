@@ -2172,6 +2172,9 @@ export default class ConnectionBase {
     if (dataChannel === undefined) {
       throw new Error("Could not find DataChannel");
     }
+    if (dataChannel.readyState !== "open") {
+      throw new Error("Messaging DataChannel is not open");
+    }
     const settings = this.signalingOfferMessageDataChannels[label];
     if (settings !== undefined && settings.compress === true) {
       const zlibMessage = zlibSync(message, {});
