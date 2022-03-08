@@ -1889,6 +1889,9 @@ export default class ConnectionBase {
    */
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
     const dataChannel = dataChannelEvent.channel;
+    dataChannel.bufferedAmountLowThreshold = 65536;
+    dataChannel.binaryType = "arraybuffer";
+    this.soraDataChannels[dataChannel.label] = dataChannel;
     this.writeDataChannelTimelineLog("ondatachannel", dataChannel, createDataChannelData(dataChannel));
     // onbufferedamountlow
     dataChannelEvent.channel.onbufferedamountlow = (event): void => {
@@ -1898,9 +1901,6 @@ export default class ConnectionBase {
     // onopen
     dataChannelEvent.channel.onopen = (event): void => {
       const channel = event.currentTarget as RTCDataChannel;
-      channel.bufferedAmountLowThreshold = 65536;
-      channel.binaryType = "arraybuffer";
-      this.soraDataChannels[channel.label] = channel;
       this.trace("OPEN DATA CHANNEL", channel.label);
       if (channel.label === "signaling" && this.ws) {
         this.writeDataChannelSignalingLog("onopen", channel);
