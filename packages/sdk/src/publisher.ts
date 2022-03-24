@@ -95,6 +95,7 @@ export default class ConnectionPublisher extends ConnectionBase {
           return;
         }
         const data = {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           "stream.id": stream.id,
           id: event.track.id,
           label: event.track.label,
