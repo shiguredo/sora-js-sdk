@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.1.0-canary.3
+ * @version: 2022.1.0-canary.4
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1633,7 +1633,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2022.1.0-canary.3",
+	        sora_client: "Sora JavaScript SDK 2022.1.0-canary.4",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -1684,9 +1684,11 @@
 	            message.simulcast_rid = options.simulcastRid;
 	        }
 	    }
-	    // client_id
 	    if ("clientId" in options && options.clientId !== undefined) {
 	        message.client_id = options.clientId;
+	    }
+	    if ("bundleId" in options && options.bundleId !== undefined) {
+	        message.bundle_id = options.bundleId;
 	    }
 	    if ("dataChannelSignaling" in options && typeof options.dataChannelSignaling === "boolean") {
 	        message.data_channel_signaling = options.dataChannelSignaling;
@@ -4416,7 +4418,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2022.1.0-canary.3";
+	        return "2022.1.0-canary.4";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群
