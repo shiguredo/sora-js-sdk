@@ -460,9 +460,6 @@ export default class ConnectionBase {
     /**
      * createOffer 処理をするメソッド
      *
-     * @param eventType - イベントタイプ
-     * @param data - イベントデータ
-     *
      * @returns
      * 生成した RTCSessionDescription を返します
      */

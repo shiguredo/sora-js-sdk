@@ -10,14 +10,21 @@
     - バグ修正
 
 ## develop
+- [ADD] sendrecv オブジェクトのオプションに bundle_id を追加する
+    - @yuitowest
 - [UPDATE] sendrecv API を使用して接続する場合に multistream option の初期値が true になるよう修正する
+    - @yuitowest
 - [UPDATE] sendrecv API を使用して multistream: false で接続した場合、Sora との接続前に例外が発生するように修正する
+    - @yuitowest
 - [UPDATE] パッケージを更新する
     - fflate "0.7.1" -> "0.7.2"
     - typescript "4.4.3" -> "4.5.4"
+    - @yuitowest
 - [CHANGE] connectedSignalingUrl は現在接続中の WebSocket の URL ではなく type offer メッセージを受信した URL を返すようにする
     - ignoreDisconnectWebSocket を使用して WebSocket を切断した場合にも URL を返すように修正する
+    - @yuitowest
 - [UPDATE] SendRecv オブジェクト に contactSignalingUrl プロパティを追加する
+    - @yuitowest
 
 ## 2021.2.3
 - [FIX] メッセージング機能で文字列データが送信されてきた場合にそのまま message callback に渡していた問題を修正する
