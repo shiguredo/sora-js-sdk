@@ -523,3 +523,28 @@ test("createSignalingMessage dataChannels option", () => {
     Object.assign({}, baseExpectedMessage, diff5)
   );
 });
+
+test("createSignalingMessage bundleId option", () => {
+  const option1 = {
+    bundleId: "bundleId",
+  };
+  const diff1 = {
+    bundle_id: option1.bundleId,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, option1, false)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff1)
+  );
+  const option2 = {
+    bundleId: "",
+  };
+  const diff2 = {
+    bundle_id: option2.bundleId,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, option2, false)).toEqual(
+    Object.assign({}, baseExpectedMessage, diff2)
+  );
+  const option3 = {
+    bundleId: undefined,
+  };
+  expect(createSignalingMessage(sdp, role, channelId, null, option3, false)).toEqual(baseExpectedMessage);
+});

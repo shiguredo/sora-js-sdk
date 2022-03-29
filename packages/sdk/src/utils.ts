@@ -176,9 +176,12 @@ export function createSignalingMessage(
     }
   }
 
-  // client_id
   if ("clientId" in options && options.clientId !== undefined) {
     message.client_id = options.clientId;
+  }
+
+  if ("bundleId" in options && options.bundleId !== undefined) {
+    message.bundle_id = options.bundleId;
   }
 
   if ("dataChannelSignaling" in options && typeof options.dataChannelSignaling === "boolean") {
