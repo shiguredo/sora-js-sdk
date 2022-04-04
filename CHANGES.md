@@ -10,6 +10,14 @@
     - バグ修正
 
 ## develop
+- [CHANGE] ConnectionOptions からシグナリング type: connect メッセージを生成する仕組みを変更する
+    - multistream オプションが false の場合、シグナリングメッセージに multistream: false を含めるように変更する
+    - spotlight オプションは multistream: true の場合のみシグナリングメッセージに含まれていたが、multistream フラグに関係なく含まれるように変更する
+    - spotlightFocusRid オプションは spotlight: true の場合のみシグナリングメッセージに含まれていたが、spotlight フラグに関係なく含まれるように変更する
+    - spotlightUnfocusRid オプションは spotlight: true の場合のみシグナリングメッセージに含まれていたが、spotlight フラグに関係なく含まれるように変更する
+    - spotlightNumber オプションは spotlight: true の場合のみシグナリングメッセージに含まれていたが、spotlight フラグに関係なく含まれるように変更する
+    - simulcastRid オプションは simulcast: true の場合のみシグナリングメッセージに含まれていたが、simulcast フラグに関係なく含まれるように変更する
+
 - [ADD] sendrecv オブジェクトのオプションに bundle_id を追加する
     - @yuitowest
 - [UPDATE] sendrecv API を使用して接続する場合に multistream option の初期値が true になるよう修正する
