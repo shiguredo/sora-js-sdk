@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.1.0-canary.4
+ * @version: 2022.1.0-canary.5
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1627,7 +1627,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2022.1.0-canary.4",
+        sora_client: "Sora JavaScript SDK 2022.1.0-canary.5",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1639,55 +1639,48 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     if (role === "sendrecv" && options.multistream !== true) {
         throw new Error("Failed to parse options. Options multistream must be true when connecting using 'sendrecv'");
     }
+    if (redirect === true) {
+        message.redirect = true;
+    }
+    if (typeof options.multistream === "boolean") {
+        message.multistream = options.multistream;
+    }
+    if (typeof options.simulcast === "boolean") {
+        message.simulcast = options.simulcast;
+    }
+    const simalcastRids = ["r0", "r1", "r2"];
+    if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
+        message.simulcast_rid = options.simulcastRid;
+    }
+    if (typeof options.spotlight === "boolean") {
+        message.spotlight = options.spotlight;
+    }
+    if ("spotlightNumber" in options) {
+        message.spotlight_number = options.spotlightNumber;
+    }
+    const spotlightFocusRids = ["none", "r0", "r1", "r2"];
+    if (options.spotlightFocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightFocusRid)) {
+        message.spotlight_focus_rid = options.spotlightFocusRid;
+    }
+    if (options.spotlightUnfocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightUnfocusRid)) {
+        message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
+    }
     if (metadata !== undefined) {
         message.metadata = metadata;
     }
-    if (redirect) {
-        message.redirect = true;
-    }
-    if ("signalingNotifyMetadata" in options) {
+    if (options.signalingNotifyMetadata !== undefined) {
         message.signaling_notify_metadata = options.signalingNotifyMetadata;
     }
-    if ("multistream" in options && options.multistream === true) {
-        // multistream
-        message.multistream = true;
-        // spotlight
-        if ("spotlight" in options) {
-            message.spotlight = options.spotlight;
-            if ("spotlightNumber" in options) {
-                message.spotlight_number = options.spotlightNumber;
-            }
-        }
-        if (message.spotlight === true) {
-            const spotlightFocusRids = ["none", "r0", "r1", "r2"];
-            if (options.spotlightFocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightFocusRid)) {
-                message.spotlight_focus_rid = options.spotlightFocusRid;
-            }
-            if (options.spotlightUnfocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightUnfocusRid)) {
-                message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
-            }
-        }
-    }
-    if ("simulcast" in options || "simulcastRid" in options) {
-        // simulcast
-        if ("simulcast" in options && options.simulcast === true) {
-            message.simulcast = true;
-        }
-        const simalcastRids = ["r0", "r1", "r2"];
-        if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
-            message.simulcast_rid = options.simulcastRid;
-        }
-    }
-    if ("clientId" in options && options.clientId !== undefined) {
+    if (options.clientId !== undefined) {
         message.client_id = options.clientId;
     }
-    if ("bundleId" in options && options.bundleId !== undefined) {
+    if (options.bundleId !== undefined) {
         message.bundle_id = options.bundleId;
     }
-    if ("dataChannelSignaling" in options && typeof options.dataChannelSignaling === "boolean") {
+    if (typeof options.dataChannelSignaling === "boolean") {
         message.data_channel_signaling = options.dataChannelSignaling;
     }
-    if ("ignoreDisconnectWebSocket" in options && typeof options.ignoreDisconnectWebSocket === "boolean") {
+    if (typeof options.ignoreDisconnectWebSocket === "boolean") {
         message.ignore_disconnect_websocket = options.ignoreDisconnectWebSocket;
     }
     // parse options
@@ -1792,6 +1785,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     if (message.simulcast && !enabledSimulcast() && role !== "recvonly") {
         throw new Error("Simulcast can not be used with this browser");
     }
+    if (typeof options.e2ee === "boolean") {
+        message.e2ee = options.e2ee;
+    }
     if (options.e2ee === true) {
         if (message.signaling_notify_metadata === undefined) {
             message.signaling_notify_metadata = {};
@@ -1805,7 +1801,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
         if (message.video) {
             message.video["codec_type"] = "VP8";
         }
-        message.e2ee = true;
     }
     if (Array.isArray(options.dataChannels) && 0 < options.dataChannels.length) {
         message.data_channels = parseDataChannelConfigurations(options.dataChannels);
@@ -4412,7 +4407,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2022.1.0-canary.4";
+        return "2022.1.0-canary.5";
     },
     /**
      * WebRTC のユーティリティ関数群
