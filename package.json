@@ -28,9 +28,9 @@
     "dist"
   ],
   "devDependencies": {
-    "npm-check-updates": "^12.5.4",
+    "npm-check-updates": "^12.5.9",
     "serve": "^13.0.2",
-    "typedoc": "^0.22.13"
+    "typedoc": "^0.22.15"
   },
   "resolutions": {
     "get-pkg-repo": "4.1.2"
