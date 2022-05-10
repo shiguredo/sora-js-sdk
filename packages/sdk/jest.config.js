@@ -117,7 +117,7 @@ module.exports = {
   // restoreMocks: false,
 
   // The root directory that Jest should scan for tests and modules within
-  rootDir: path.join(__dirname, "../../"),
+  rootDir: __dirname,
 
   // A list of paths to directories that Jest should use to search for files in
   // roots: [
@@ -137,7 +137,7 @@ module.exports = {
   // snapshotSerializers: [],
 
   // The test environment that will be used for testing
-  testEnvironment: "jsdom",
+  testEnvironment: "jest-environment-jsdom",
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},
