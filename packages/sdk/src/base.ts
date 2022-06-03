@@ -436,31 +436,9 @@ export default class ConnectionBase {
   }
 
   /**
-   * stream を停止するメソッド
-   */
-  private stopStream(): Promise<void> {
-    return new Promise((resolve, _) => {
-      if (this.debug) {
-        console.warn(
-          "@deprecated closing MediaStream in disconnect will be removed in a future version. Close every track in the MediaStream by yourself."
-        );
-      }
-      if (!this.stream) {
-        return resolve();
-      }
-      this.stream.getTracks().forEach((t) => {
-        t.stop();
-      });
-      this.stream = null;
-      return resolve();
-    });
-  }
-
-  /**
    * connect 処理中に例外が発生した場合の切断処理をするメソッド
    */
-  private async signalingTerminate(): Promise<void> {
-    await this.stopStream();
+  private signalingTerminate(): void {
     for (const key of Object.keys(this.soraDataChannels)) {
       const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
@@ -486,9 +464,8 @@ export default class ConnectionBase {
    *
    * @param title - disconnect callback に渡すイベントのタイトル
    */
-  private async abendPeerConnectionState(title: SoraAbendTitle): Promise<void> {
+  private abendPeerConnectionState(title: SoraAbendTitle): void {
     this.clearMonitorIceConnectionStateChange();
-    await this.stopStream();
     // callback を止める
     if (this.pc) {
       this.pc.ondatachannel = null;
@@ -552,7 +529,6 @@ export default class ConnectionBase {
    */
   private async abend(title: SoraAbendTitle, params?: Record<string, unknown>): Promise<void> {
     this.clearMonitorIceConnectionStateChange();
-    await this.stopStream();
     // callback を止める
     if (this.pc) {
       this.pc.ondatachannel = null;
@@ -866,7 +842,6 @@ export default class ConnectionBase {
    */
   async disconnect(): Promise<void> {
     this.clearMonitorIceConnectionStateChange();
-    await this.stopStream();
     // callback を止める
     if (this.pc) {
       this.pc.ondatachannel = null;
@@ -1097,14 +1072,14 @@ export default class ConnectionBase {
       this.writeWebSocketSignalingLog("new-websocket", ws.url);
       // websocket の各 callback を設定する
       ws.binaryType = "arraybuffer";
-      ws.onclose = async (event): Promise<void> => {
+      ws.onclose = (event) => {
         const error = new ConnectError(
           `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
         );
         error.code = event.code;
         error.reason = event.reason;
         this.writeWebSocketTimelineLog("onclose", error);
-        await this.signalingTerminate();
+        this.signalingTerminate();
         reject(error);
       };
       ws.onmessage = async (event): Promise<void> => {
@@ -1409,20 +1384,20 @@ export default class ConnectionBase {
           return;
         }
         this.clearMonitorSignalingWebSocketEvent();
-        this.ws.onclose = async (event) => {
+        this.ws.onclose = (event) => {
           const error = new ConnectError(
             `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`
           );
           error.code = event.code;
           error.reason = event.reason;
           this.writeWebSocketTimelineLog("onclose", error);
-          await this.signalingTerminate();
+          this.signalingTerminate();
           reject(error);
         };
-        this.ws.onerror = async (_) => {
+        this.ws.onerror = (_) => {
           const error = new ConnectError(`Signaling failed. WebSocket onerror was called`);
           this.writeWebSocketSignalingLog("onerror", error);
-          await this.signalingTerminate();
+          this.signalingTerminate();
           reject(error);
         };
       }, 100);
@@ -1459,7 +1434,7 @@ export default class ConnectionBase {
     if (!this.pc) {
       return;
     }
-    this.pc.oniceconnectionstatechange = async (_): Promise<void> => {
+    this.pc.oniceconnectionstatechange = (_) => {
       // connectionState が undefined の場合は iceConnectionState を見て判定する
       if (this.pc && this.pc.connectionState === undefined) {
         this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
@@ -1471,19 +1446,19 @@ export default class ConnectionBase {
         clearTimeout(this.monitorIceConnectionStateChangeTimerId);
         // iceConnectionState "failed" で切断する
         if (this.pc.iceConnectionState === "failed") {
-          await this.abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED");
+          this.abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED");
         }
         // iceConnectionState "disconnected" になってから 10000ms の間変化がない場合切断する
         else if (this.pc.iceConnectionState === "disconnected") {
-          this.monitorIceConnectionStateChangeTimerId = setTimeout(async () => {
+          this.monitorIceConnectionStateChangeTimerId = setTimeout(() => {
             if (this.pc && this.pc.iceConnectionState === "disconnected") {
-              await this.abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT");
+              this.abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT");
             }
           }, 10000);
         }
       }
     };
-    this.pc.onconnectionstatechange = async (_): Promise<void> => {
+    this.pc.onconnectionstatechange = (_) => {
       if (this.pc) {
         this.writePeerConnectionTimelineLog("onconnectionstatechange", {
           connectionState: this.pc.connectionState,
@@ -1491,7 +1466,7 @@ export default class ConnectionBase {
           iceGatheringState: this.pc.iceGatheringState,
         });
         if (this.pc.connectionState === "failed") {
-          await this.abendPeerConnectionState("CONNECTION-STATE-FAILED");
+          this.abendPeerConnectionState("CONNECTION-STATE-FAILED");
         }
       }
     };
@@ -1503,7 +1478,7 @@ export default class ConnectionBase {
   protected setConnectionTimeout(): Promise<MediaStream> {
     return new Promise((_, reject) => {
       if (0 < this.connectionTimeout) {
-        this.connectionTimeoutTimerId = setTimeout(async () => {
+        this.connectionTimeoutTimerId = setTimeout(() => {
           if (
             !this.pc ||
             (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")
@@ -1515,7 +1490,7 @@ export default class ConnectionBase {
             this.writePeerConnectionTimelineLog("signaling-connection-timeout", {
               connectionTimeout: this.connectionTimeout,
             });
-            await this.signalingTerminate();
+            this.signalingTerminate();
             reject(error);
           }
         }, this.connectionTimeout);
