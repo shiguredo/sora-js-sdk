@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.1.0-canary.5
+ * @version: 2022.1.0-canary.6
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -1633,7 +1633,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2022.1.0-canary.5",
+	        sora_client: "Sora JavaScript SDK 2022.1.0-canary.6",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -2196,28 +2196,9 @@
 	        await transceiver.sender.replaceTrack(videoTrack);
 	    }
 	    /**
-	     * stream を停止するメソッド
-	     */
-	    stopStream() {
-	        return new Promise((resolve, _) => {
-	            if (this.debug) {
-	                console.warn("@deprecated closing MediaStream in disconnect will be removed in a future version. Close every track in the MediaStream by yourself.");
-	            }
-	            if (!this.stream) {
-	                return resolve();
-	            }
-	            this.stream.getTracks().forEach((t) => {
-	                t.stop();
-	            });
-	            this.stream = null;
-	            return resolve();
-	        });
-	    }
-	    /**
 	     * connect 処理中に例外が発生した場合の切断処理をするメソッド
 	     */
-	    async signalingTerminate() {
-	        await this.stopStream();
+	    signalingTerminate() {
 	        for (const key of Object.keys(this.soraDataChannels)) {
 	            const dataChannel = this.soraDataChannels[key];
 	            if (dataChannel) {
@@ -2242,9 +2223,8 @@
 	     *
 	     * @param title - disconnect callback に渡すイベントのタイトル
 	     */
-	    async abendPeerConnectionState(title) {
+	    abendPeerConnectionState(title) {
 	        this.clearMonitorIceConnectionStateChange();
-	        await this.stopStream();
 	        // callback を止める
 	        if (this.pc) {
 	            this.pc.ondatachannel = null;
@@ -2307,7 +2287,6 @@
 	     */
 	    async abend(title, params) {
 	        this.clearMonitorIceConnectionStateChange();
-	        await this.stopStream();
 	        // callback を止める
 	        if (this.pc) {
 	            this.pc.ondatachannel = null;
@@ -2603,7 +2582,6 @@
 	     */
 	    async disconnect() {
 	        this.clearMonitorIceConnectionStateChange();
-	        await this.stopStream();
 	        // callback を止める
 	        if (this.pc) {
 	            this.pc.ondatachannel = null;
@@ -2834,12 +2812,12 @@
 	            this.writeWebSocketSignalingLog("new-websocket", ws.url);
 	            // websocket の各 callback を設定する
 	            ws.binaryType = "arraybuffer";
-	            ws.onclose = async (event) => {
+	            ws.onclose = (event) => {
 	                const error = new ConnectError(`Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`);
 	                error.code = event.code;
 	                error.reason = event.reason;
 	                this.writeWebSocketTimelineLog("onclose", error);
-	                await this.signalingTerminate();
+	                this.signalingTerminate();
 	                reject(error);
 	            };
 	            ws.onmessage = async (event) => {
@@ -3138,18 +3116,18 @@
 	                    return;
 	                }
 	                this.clearMonitorSignalingWebSocketEvent();
-	                this.ws.onclose = async (event) => {
+	                this.ws.onclose = (event) => {
 	                    const error = new ConnectError(`Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`);
 	                    error.code = event.code;
 	                    error.reason = event.reason;
 	                    this.writeWebSocketTimelineLog("onclose", error);
-	                    await this.signalingTerminate();
+	                    this.signalingTerminate();
 	                    reject(error);
 	                };
-	                this.ws.onerror = async (_) => {
+	                this.ws.onerror = (_) => {
 	                    const error = new ConnectError(`Signaling failed. WebSocket onerror was called`);
 	                    this.writeWebSocketSignalingLog("onerror", error);
-	                    await this.signalingTerminate();
+	                    this.signalingTerminate();
 	                    reject(error);
 	                };
 	            }, 100);
@@ -3184,7 +3162,7 @@
 	        if (!this.pc) {
 	            return;
 	        }
-	        this.pc.oniceconnectionstatechange = async (_) => {
+	        this.pc.oniceconnectionstatechange = (_) => {
 	            // connectionState が undefined の場合は iceConnectionState を見て判定する
 	            if (this.pc && this.pc.connectionState === undefined) {
 	                this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
@@ -3196,19 +3174,19 @@
 	                clearTimeout(this.monitorIceConnectionStateChangeTimerId);
 	                // iceConnectionState "failed" で切断する
 	                if (this.pc.iceConnectionState === "failed") {
-	                    await this.abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED");
+	                    this.abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED");
 	                }
 	                // iceConnectionState "disconnected" になってから 10000ms の間変化がない場合切断する
 	                else if (this.pc.iceConnectionState === "disconnected") {
-	                    this.monitorIceConnectionStateChangeTimerId = setTimeout(async () => {
+	                    this.monitorIceConnectionStateChangeTimerId = setTimeout(() => {
 	                        if (this.pc && this.pc.iceConnectionState === "disconnected") {
-	                            await this.abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT");
+	                            this.abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT");
 	                        }
 	                    }, 10000);
 	                }
 	            }
 	        };
-	        this.pc.onconnectionstatechange = async (_) => {
+	        this.pc.onconnectionstatechange = (_) => {
 	            if (this.pc) {
 	                this.writePeerConnectionTimelineLog("onconnectionstatechange", {
 	                    connectionState: this.pc.connectionState,
@@ -3216,7 +3194,7 @@
 	                    iceGatheringState: this.pc.iceGatheringState,
 	                });
 	                if (this.pc.connectionState === "failed") {
-	                    await this.abendPeerConnectionState("CONNECTION-STATE-FAILED");
+	                    this.abendPeerConnectionState("CONNECTION-STATE-FAILED");
 	                }
 	            }
 	        };
@@ -3227,7 +3205,7 @@
 	    setConnectionTimeout() {
 	        return new Promise((_, reject) => {
 	            if (0 < this.connectionTimeout) {
-	                this.connectionTimeoutTimerId = setTimeout(async () => {
+	                this.connectionTimeoutTimerId = setTimeout(() => {
 	                    if (!this.pc ||
 	                        (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")) {
 	                        const error = new Error();
@@ -3237,7 +3215,7 @@
 	                        this.writePeerConnectionTimelineLog("signaling-connection-timeout", {
 	                            connectionTimeout: this.connectionTimeout,
 	                        });
-	                        await this.signalingTerminate();
+	                        this.signalingTerminate();
 	                        reject(error);
 	                    }
 	                }, this.connectionTimeout);
@@ -4413,7 +4391,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2022.1.0-canary.5";
+	        return "2022.1.0-canary.6";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群

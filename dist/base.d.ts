@@ -240,10 +240,6 @@ export default class ConnectionBase {
      */
     replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void>;
     /**
-     * stream を停止するメソッド
-     */
-    private stopStream;
-    /**
      * connect 処理中に例外が発生した場合の切断処理をするメソッド
      */
     private signalingTerminate;
