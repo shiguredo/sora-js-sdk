@@ -1,11 +1,11 @@
 <html lang="ja">
     <head>
         <meta charset="utf-8">
-        <title>Multistream Sendonly test</title>
+        <title>Sendonly test</title>
     </head>
     <body>
         <div class="container">
-            <h1>Multistream Sendonly test</h1>
+            <h1>Sendonly test</h1>
             <div>
                 <h2>sendonly1</h2>
                 <button id="start-sendonly">start</button>
@@ -24,23 +24,15 @@ const options = {
 }
 const sendonly = sora.sendonly(channelId, null, options);
 
-document.querySelector('#start-sendonly').addEventListener('click', function() {
-  navigator.mediaDevices.getUserMedia({audio: true, video: true})
-    .then(mediaStream => {
-      sendonly.connect(mediaStream)
-        .then(stream => {
-          document.querySelector('#sendonly-local-video').srcObject = stream;
-        });
-    })
-    .catch(e => {
-      console.error(e);
-    });
+document.querySelector('#start-sendonly').addEventListener('click', async () => {
+  const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+  await sendonly.connect(mediaStream)
+  document.querySelector('#sendonly-local-video').srcObject = mediaStream;
 });
-document.querySelector('#stop-sendonly').addEventListener('click', function() {
-  sendonly.disconnect()
-    .then(function() {
-      document.querySelector('#sendonly-local-video').srcObject = null;
-    });
+
+document.querySelector('#stop-sendonly').addEventListener('click', async () => {
+  await sendonly.disconnect()
+  document.querySelector('#sendonly-local-video').srcObject = null;
 });
     </script>
   </body>
