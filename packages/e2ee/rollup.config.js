@@ -1,5 +1,6 @@
 import fs from "fs";
-import typescript from "rollup-plugin-typescript2";
+import resolve from "@rollup/plugin-node-resolve";
+import typescript from "@rollup/plugin-typescript";
 import replace from "@rollup/plugin-replace";
 import pkg from "./package.json";
 
@@ -22,6 +23,7 @@ export default [
         __WORKER_SCRIPT__: workerScript,
         preventAssignment: true,
       }),
+      resolve(),
       typescript({
         tsconfig: "./tsconfig.json",
       }),

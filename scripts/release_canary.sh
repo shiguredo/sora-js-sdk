@@ -2,21 +2,10 @@
 
 version=`cat ./package.json | jq -r -c ".version"`
 
-
-if [ $1 = "canary" ]; then
-  if [[ ${version} =~ ^.*canary.*$ ]]; then
-    npm version prerelease --preid canary --no-git-tag-version > /dev/null;
-  else
-    npm version preminor --preid canary --no-git-tag-version > /dev/null;
-  fi
-elif [ $1 = "major" ]; then
-  npm version major --no-git-tag-version > /dev/null;
-elif [ $1 = "minor" ]; then
-  npm version minor --no-git-tag-version > /dev/null;
-elif [ $1 = "patch" ]; then
-  npm version patch --no-git-tag-version > /dev/null;
+if [[ ${version} =~ ^.*canary.*$ ]]; then
+  npm version prerelease --preid canary --no-git-tag-version > /dev/null;
 else
-  exit 1;
+  npm version preminor --preid canary --no-git-tag-version > /dev/null;
 fi
 
 echo "==== sora-js-sdk@${version} $1 update ===="

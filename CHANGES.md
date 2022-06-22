@@ -9,6 +9,33 @@
 - FIX
     - バグ修正
 
+## 2022.1.0
+- [CHANGE] 切断処理時に MediaStream の停止処理をしないように変更する
+    - @yuitowest
+- [CHANGE] ConnectionOptions からシグナリング type: connect メッセージを生成する仕組みを変更する
+    - multistream オプションが false の場合、シグナリングメッセージに multistream: false を含めるように変更する
+    - spotlight オプションは multistream: true の場合のみシグナリングメッセージに含まれていたが、multistream フラグに関係なく含まれるように変更する
+    - spotlightFocusRid オプションは spotlight: true の場合のみシグナリングメッセージに含まれていたが、spotlight フラグに関係なく含まれるように変更する
+    - spotlightUnfocusRid オプションは spotlight: true の場合のみシグナリングメッセージに含まれていたが、spotlight フラグに関係なく含まれるように変更する
+    - spotlightNumber オプションは spotlight: true の場合のみシグナリングメッセージに含まれていたが、spotlight フラグに関係なく含まれるように変更する
+    - simulcastRid オプションは simulcast: true の場合のみシグナリングメッセージに含まれていたが、simulcast フラグに関係なく含まれるように変更する
+    - @yuitowest
+- [ADD] sendrecv オブジェクトのオプションに bundle_id を追加する
+    - @yuitowest
+- [UPDATE] sendrecv API を使用して接続する場合に multistream option の初期値が true になるよう修正する
+    - @yuitowest
+- [UPDATE] sendrecv API を使用して multistream: false で接続した場合、Sora との接続前に例外が発生するように修正する
+    - @yuitowest
+- [UPDATE] パッケージを更新する
+    - fflate "0.7.1" -> "0.7.2"
+    - typescript "4.4.3" -> "4.5.4"
+    - @yuitowest
+- [CHANGE] connectedSignalingUrl は現在接続中の WebSocket の URL ではなく type offer メッセージを受信した URL を返すようにする
+    - ignoreDisconnectWebSocket を使用して WebSocket を切断した場合にも URL を返すように修正する
+    - @yuitowest
+- [UPDATE] SendRecv オブジェクト に contactSignalingUrl プロパティを追加する
+    - @yuitowest
+
 ## 2021.2.3
 - [FIX] メッセージング機能で文字列データが送信されてきた場合にそのまま message callback に渡していた問題を修正する
     - @yuitowest

@@ -1,3 +1,5 @@
+import { unzlibSync } from "fflate";
+
 import {
   ConnectionOptions,
   Browser,
@@ -125,61 +127,53 @@ export function createSignalingMessage(
     audio: true,
     video: true,
   };
-
+  // role: sendrecv で multistream: false の場合は例外を発生させる
+  if (role === "sendrecv" && options.multistream !== true) {
+    throw new Error("Failed to parse options. Options multistream must be true when connecting using 'sendrecv'");
+  }
+  if (redirect === true) {
+    message.redirect = true;
+  }
+  if (typeof options.multistream === "boolean") {
+    message.multistream = options.multistream;
+  }
+  if (typeof options.simulcast === "boolean") {
+    message.simulcast = options.simulcast;
+  }
+  const simalcastRids = ["r0", "r1", "r2"];
+  if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
+    message.simulcast_rid = options.simulcastRid;
+  }
+  if (typeof options.spotlight === "boolean") {
+    message.spotlight = options.spotlight;
+  }
+  if ("spotlightNumber" in options) {
+    message.spotlight_number = options.spotlightNumber;
+  }
+  const spotlightFocusRids = ["none", "r0", "r1", "r2"];
+  if (options.spotlightFocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightFocusRid)) {
+    message.spotlight_focus_rid = options.spotlightFocusRid;
+  }
+  if (options.spotlightUnfocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightUnfocusRid)) {
+    message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
+  }
   if (metadata !== undefined) {
     message.metadata = metadata;
   }
-
-  if (redirect) {
-    message.redirect = true;
-  }
-
-  if ("signalingNotifyMetadata" in options) {
+  if (options.signalingNotifyMetadata !== undefined) {
     message.signaling_notify_metadata = options.signalingNotifyMetadata;
   }
-
-  if ("multistream" in options && options.multistream === true) {
-    // multistream
-    message.multistream = true;
-    // spotlight
-    if ("spotlight" in options) {
-      message.spotlight = options.spotlight;
-      if ("spotlightNumber" in options) {
-        message.spotlight_number = options.spotlightNumber;
-      }
-    }
-    if (message.spotlight === true) {
-      const spotlightFocusRids = ["none", "r0", "r1", "r2"];
-      if (options.spotlightFocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightFocusRid)) {
-        message.spotlight_focus_rid = options.spotlightFocusRid;
-      }
-      if (options.spotlightUnfocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightUnfocusRid)) {
-        message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
-      }
-    }
-  }
-
-  if ("simulcast" in options || "simulcastRid" in options) {
-    // simulcast
-    if ("simulcast" in options && options.simulcast === true) {
-      message.simulcast = true;
-    }
-    const simalcastRids = ["r0", "r1", "r2"];
-    if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
-      message.simulcast_rid = options.simulcastRid;
-    }
-  }
-
-  // client_id
-  if ("clientId" in options && options.clientId !== undefined) {
+  if (options.clientId !== undefined) {
     message.client_id = options.clientId;
   }
-
-  if ("dataChannelSignaling" in options && typeof options.dataChannelSignaling === "boolean") {
+  if (options.bundleId !== undefined) {
+    message.bundle_id = options.bundleId;
+  }
+  if (typeof options.dataChannelSignaling === "boolean") {
     message.data_channel_signaling = options.dataChannelSignaling;
   }
 
-  if ("ignoreDisconnectWebSocket" in options && typeof options.ignoreDisconnectWebSocket === "boolean") {
+  if (typeof options.ignoreDisconnectWebSocket === "boolean") {
     message.ignore_disconnect_websocket = options.ignoreDisconnectWebSocket;
   }
 
@@ -288,7 +282,9 @@ export function createSignalingMessage(
   if (message.simulcast && !enabledSimulcast() && role !== "recvonly") {
     throw new Error("Simulcast can not be used with this browser");
   }
-
+  if (typeof options.e2ee === "boolean") {
+    message.e2ee = options.e2ee;
+  }
   if (options.e2ee === true) {
     if (message.signaling_notify_metadata === undefined) {
       message.signaling_notify_metadata = {};
@@ -302,7 +298,6 @@ export function createSignalingMessage(
     if (message.video) {
       message.video["codec_type"] = "VP8";
     }
-    message.e2ee = true;
   }
 
   if (Array.isArray(options.dataChannels) && 0 < options.dataChannels.length) {
@@ -344,6 +339,7 @@ export function trace(clientId: string | null, title: string, value: unknown): v
     if (record && typeof record === "object") {
       let keys = null;
       try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         keys = Object.keys(JSON.parse(JSON.stringify(record)));
       } catch (_) {
         // 何もしない
@@ -444,4 +440,12 @@ export function createDataChannelEvent(channel: DataChannelConfiguration): DataC
   const event = new Event("datachannel") as DataChannelEvent;
   event.datachannel = channel;
   return event;
+}
+
+export function parseDataChannelEventData(eventData: unknown, compress: boolean): string {
+  if (compress) {
+    const unzlibMessage = unzlibSync(new Uint8Array(eventData as Uint8Array));
+    return new TextDecoder().decode(unzlibMessage);
+  }
+  return eventData as string;
 }

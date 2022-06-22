@@ -13,8 +13,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
    * await recvonly.connect();
    * ```
    *
-   * @param stream - メディアストリーム
-   *
    * @public
    */
   async connect(): Promise<MediaStream | void> {
@@ -47,8 +45,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
 
   /**
    * シングルストリームで Sora へ接続するメソッド
-   *
-   * @param stream - メディアストリーム
    */
   private async singleStream(): Promise<MediaStream> {
     await this.disconnect();
@@ -65,6 +61,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
           return;
         }
         const data = {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           "stream.id": streamId,
           id: event.track.id,
           label: event.track.label,
@@ -82,7 +79,8 @@ export default class ConnectionSubscriber extends ConnectionBase {
           this.callbacks.removetrack(event);
           if (event.target) {
             // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-            const index = this.remoteConnectionIds.indexOf(event.target.id);
+            const targetId = event.target.id as string;
+            const index = this.remoteConnectionIds.indexOf(targetId);
             if (-1 < index) {
               delete this.remoteConnectionIds[index];
               // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
@@ -110,8 +108,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
 
   /**
    * マルチストリームで Sora へ接続するメソッド
-   *
-   * @param stream - メディアストリーム
    */
   private async multiStream(): Promise<void> {
     await this.disconnect();
@@ -130,6 +126,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
           return;
         }
         const data = {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           "stream.id": stream.id,
           id: event.track.id,
           label: event.track.label,
@@ -147,7 +144,8 @@ export default class ConnectionSubscriber extends ConnectionBase {
           this.callbacks.removetrack(event);
           if (event.target) {
             // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-            const index = this.remoteConnectionIds.indexOf(event.target.id);
+            const targetId = event.target.id as string;
+            const index = this.remoteConnectionIds.indexOf(targetId);
             if (-1 < index) {
               delete this.remoteConnectionIds[index];
               // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す

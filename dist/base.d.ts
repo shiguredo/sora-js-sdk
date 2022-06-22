@@ -73,6 +73,14 @@ export default class ConnectionBase {
      */
     encodings: RTCRtpEncodingParameters[];
     /**
+     * WS シグナリングで type offer メッセージを受信したシグナリング URL
+     */
+    connectedSignalingUrl: string;
+    /**
+     * WS シグナリングで最初に type connect を送信したシグナリング URL
+     */
+    contactSignalingUrl: string;
+    /**
      * WebSocket インスタンス
      */
     private ws;
@@ -231,10 +239,6 @@ export default class ConnectionBase {
      * @public
      */
     replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void>;
-    /**
-     * stream を停止するメソッド
-     */
-    private stopStream;
     /**
      * connect 処理中に例外が発生した場合の切断処理をするメソッド
      */
@@ -452,9 +456,6 @@ export default class ConnectionBase {
     /**
      * createOffer 処理をするメソッド
      *
-     * @param eventType - イベントタイプ
-     * @param data - イベントデータ
-     *
      * @returns
      * 生成した RTCSessionDescription を返します
      */
@@ -595,10 +596,6 @@ export default class ConnectionBase {
      * @deprecated
      */
     get signalingUrl(): string | string[];
-    /**
-     * 接続中のシグナリング URL
-     */
-    get connectedSignalingUrl(): string;
     /**
      * DataChannel メッセージング用の DataChannel 情報のリスト
      */

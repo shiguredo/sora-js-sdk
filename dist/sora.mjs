@@ -1,7 +1,15 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2021.2.3
+ * @version: 2022.1.0
+ * @author: Shiguredo Inc.
+ * @license: Apache-2.0
+ **/
+
+/**
+ * @sora/e2ee
+ * WebRTC SFU Sora JavaScript E2EE Library
+ * @version: 2021.1.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -594,14 +602,6 @@ function WasmExec () {
 		}
 	})();
 }
-
-/**
- * @sora/e2ee
- * WebRTC SFU Sora JavaScript E2EE Library
- * @version: 2021.1.0
- * @author: Shiguredo Inc.
- * @license: Apache-2.0
- **/
 
 const WORKER_SCRIPT = "InVzZSBzdHJpY3QiOwovKiBlc2xpbnQtZGlzYWJsZSBAdHlwZXNjcmlwdC1lc2xpbnQvbm8tdW51c2VkLXZhcnMgKi8KY29uc3QgY29ubmVjdGlvbklkTGVuZ3RoID0gMjY7CmZ1bmN0aW9uIGJ5dGVDb3VudChuKSB7CiAgICBpZiAobiA9PSAwKSB7CiAgICAgICAgcmV0dXJuIDE7CiAgICB9CiAgICAvLyBsb2cyNTYoeCkgPSBsb2coeCkgLyBsb2coMjU2KQogICAgcmV0dXJuIE1hdGguZmxvb3IoTWF0aC5sb2cobikgLyBNYXRoLmxvZygyICoqIDgpICsgMSk7Cn0KZnVuY3Rpb24gYXJyYXlCdWZmZXJUb051bWJlcihhcnJheUJ1ZmZlcikgewogICAgLy8gMzJiaXQg44G+44Gn44KS5oOz5a6aIChCaWdJbnQg44G444Gu5pu444GN5o+b44GI5pmC44Gr6KaB5L+u5q2jKQogICAgY29uc3QgbmV3QXJyYXlCdWZmZXIgPSBuZXcgQXJyYXlCdWZmZXIoVWludDMyQXJyYXkuQllURVNfUEVSX0VMRU1FTlQpOwogICAgY29uc3QgbmV3RGF0YVZpZXcgPSBuZXcgRGF0YVZpZXcobmV3QXJyYXlCdWZmZXIpOwogICAgY29uc3QgZGF0YVZpZXcgPSBuZXcgRGF0YVZpZXcoYXJyYXlCdWZmZXIpOwogICAgY29uc3QgcGFkZGluZ0xlbmd0aCA9IFVpbnQzMkFycmF5LkJZVEVTX1BFUl9FTEVNRU5UIC0gZGF0YVZpZXcuYnl0ZUxlbmd0aDsKICAgIGZvciAobGV0IGkgPSAwOyBpIDwgcGFkZGluZ0xlbmd0aDsgaSArPSAxKSB7CiAgICAgICAgbmV3RGF0YVZpZXcuc2V0VWludDgoaSwgMCk7CiAgICB9CiAgICBmb3IgKGxldCBpID0gcGFkZGluZ0xlbmd0aCwgaiA9IDA7IGkgPCBVaW50MzJBcnJheS5CWVRFU19QRVJfRUxFTUVOVDsgaSArPSAxLCBqICs9IDEpIHsKICAgICAgICBuZXdEYXRhVmlldy5zZXRVaW50OChpLCBkYXRhVmlldy5nZXRVaW50OChqKSk7CiAgICB9CiAgICByZXR1cm4gbmV3RGF0YVZpZXcuZ2V0VWludDMyKDApOwp9CmZ1bmN0aW9uIGVuY29kZVNGcmFtZUhlYWRlcihzLCBjb3VudCwga2V5SWQpIHsKICAgIC8vICAwIDEgMiAzIDQgNSA2IDcKICAgIC8vICstKy0rLSstKy0rLSstKy0rLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tKy0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLSsKICAgIC8vIHxTfExFTiAgfDF8S0xFTiB8ICAgS0lELi4uIChsZW5ndGg9S0xFTikgICAgfCAgICBDVFIuLi4gKGxlbmd0aD1MRU4pICAgIHwKICAgIC8vICstKy0rLSstKy0rLSstKy0rLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tKy0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLSsKICAgIC8vIFM6IDEgYml0CiAgICAvLyBMRU46IDMgYml0CiAgICAvLyBYOiAxIGJpdAogICAgLy8gS0xFTjogMyBiaXQKICAgIC8vIEtJRDogS0xFTiBieXRlCiAgICAvLyBDVFI6IExFTiBieXRlCiAgICAvLyBUT0RPOiBrZXlJZCAoS0lEKSDjgYwgTnVtYmVyLk1BWF9TQUZFX0lOVEVHRVIsIDcgYnl0ZSDjgpLotoXjgYjjgabjgYTjgZ/loLTlkIjjga/jgqjjg6njg7zjgYvkvovlpJYKICAgIC8vIFRPRE86IGNvdW50IChDVFIpIOOBjCBOdW1iZXIuTUFYX1NBRkVfSU5URUdFUiwgNyBieXRlIOOCkui2heOBiOOBpuOBhOOBn+WgtOWQiOOBr+OCqOODqeODvOOBi+S+i+WklgogICAgaWYgKG1heEtleUlkIDwga2V5SWQgfHwgbWF4Q291bnQgPCBjb3VudCkgewogICAgICAgIHRocm93IG5ldyBFcnJvcigiRVhDRUVERUQtTUFYSU1VTS1CUk9BRENBU1RJTkctVElNRSIpOwogICAgfQogICAgY29uc3Qga2xlbiA9IGJ5dGVDb3VudChrZXlJZCk7CiAgICBjb25zdCBsZW4gPSBieXRlQ291bnQoY291bnQpOwogICAgY29uc3QgaGVhZGVyQnVmZmVyID0gbmV3IEFycmF5QnVmZmVyKDEgKyBrbGVuICsgbGVuKTsKICAgIGNvbnN0IGhlYWRlckRhdGFWaWV3ID0gbmV3IERhdGFWaWV3KGhlYWRlckJ1ZmZlcik7CiAgICAvLyBTLCBMRU4sIDEsIEtMRU4g44GnIDEgYnl0ZQogICAgaGVhZGVyRGF0YVZpZXcuc2V0VWludDgoMCwgKHMgPDwgNykgKyAobGVuIDw8IDQpICsgKDEgPDwgMykgKyBrbGVuKTsKICAgIGNvbnN0IGhlYWRlclVpbnQ4QXJyYXkgPSBuZXcgVWludDhBcnJheShoZWFkZXJCdWZmZXIpOwogICAgY29uc3Qga2V5SWRCdWZmZXIgPSBuZXcgQXJyYXlCdWZmZXIoVWludDMyQXJyYXkuQllURVNfUEVSX0VMRU1FTlQpOwogICAgY29uc3Qga2V5SWREYXRhVmlldyA9IG5ldyBEYXRhVmlldyhrZXlJZEJ1ZmZlcik7CiAgICBrZXlJZERhdGFWaWV3LnNldFVpbnQzMigwLCBrZXlJZCk7CiAgICBjb25zdCBrZXlJZFVpbnQ4QXJyYXkgPSBuZXcgVWludDhBcnJheShrZXlJZEJ1ZmZlcik7CiAgICBoZWFkZXJVaW50OEFycmF5LnNldChrZXlJZFVpbnQ4QXJyYXkuc3ViYXJyYXkoVWludDMyQXJyYXkuQllURVNfUEVSX0VMRU1FTlQgLSBrbGVuKSwgMSk7CiAgICBjb25zdCBjb3VudEJ1ZmZlciA9IG5ldyBBcnJheUJ1ZmZlcihVaW50MzJBcnJheS5CWVRFU19QRVJfRUxFTUVOVCk7CiAgICBjb25zdCBjb3VudERhdGFWaWV3ID0gbmV3IERhdGFWaWV3KGNvdW50QnVmZmVyKTsKICAgIGNvdW50RGF0YVZpZXcuc2V0VWludDMyKDAsIGNvdW50KTsKICAgIGNvbnN0IGNvdW50VWludDhBcnJheSA9IG5ldyBVaW50OEFycmF5KGNvdW50QnVmZmVyKTsKICAgIGhlYWRlclVpbnQ4QXJyYXkuc2V0KGNvdW50VWludDhBcnJheS5zdWJhcnJheShVaW50MzJBcnJheS5CWVRFU19QRVJfRUxFTUVOVCAtIGxlbiksIGtsZW4gKyAxKTsKICAgIHJldHVybiBoZWFkZXJVaW50OEFycmF5Owp9CmZ1bmN0aW9uIHNwbGl0SGVhZGVyKHNmcmFtZSkgewogICAgY29uc3Qgc2ZyYW1lRGF0YVZpZXcgPSBuZXcgRGF0YVZpZXcoc2ZyYW1lKTsKICAgIGNvbnN0IGhlYWRlciA9IHNmcmFtZURhdGFWaWV3LmdldFVpbnQ4KDApOwogICAgY29uc3QgbGVuID0gKGhlYWRlciAmIDB4NzApID4+IDQ7CiAgICBjb25zdCBrbGVuID0gaGVhZGVyICYgMHgwNzsKICAgIGNvbnN0IHNmcmFtZUhlYWRlckxlbmd0aCA9IDEgKyBrbGVuICsgbGVuOwogICAgY29uc3Qgc2ZyYW1lSGVhZGVyID0gc2ZyYW1lLnNsaWNlKDAsIHNmcmFtZUhlYWRlckxlbmd0aCk7CiAgICBpZiAoc2ZyYW1lSGVhZGVyLmJ5dGVMZW5ndGggPCBzZnJhbWVIZWFkZXJMZW5ndGgpIHsKICAgICAgICB0aHJvdyBuZXcgRXJyb3IoIlVORVhQRUNURUQtU0ZSQU1FLUxFTkdUSCIpOwogICAgfQogICAgY29uc3QgY29ubmVjdGlvbklkID0gc2ZyYW1lLnNsaWNlKHNmcmFtZUhlYWRlckxlbmd0aCwgc2ZyYW1lSGVhZGVyTGVuZ3RoICsgY29ubmVjdGlvbklkTGVuZ3RoKTsKICAgIGNvbnN0IGVuY3J5cHRlZEZyYW1lID0gc2ZyYW1lLnNsaWNlKHNmcmFtZUhlYWRlckxlbmd0aCArIGNvbm5lY3Rpb25JZExlbmd0aCwgc2ZyYW1lLmJ5dGVMZW5ndGgpOwogICAgcmV0dXJuIFtzZnJhbWVIZWFkZXIsIGNvbm5lY3Rpb25JZCwgZW5jcnlwdGVkRnJhbWVdOwp9CmZ1bmN0aW9uIHBhcnNlU0ZyYW1lSGVhZGVyKHNmcmFtZUhlYWRlcikgewogICAgY29uc3Qgc2ZyYW1lSGVhZGVyRGF0YVZpZXcgPSBuZXcgRGF0YVZpZXcoc2ZyYW1lSGVhZGVyKTsKICAgIGNvbnN0IGhlYWRlciA9IHNmcmFtZUhlYWRlckRhdGFWaWV3LmdldFVpbnQ4KDApOwogICAgY29uc3QgcyA9IChoZWFkZXIgJiAweDgwKSA+PiA3OwogICAgY29uc3QgbGVuID0gKGhlYWRlciAmIDB4NzApID4+IDQ7CiAgICBjb25zdCB4ID0gKGhlYWRlciAmIDB4MDgpID4+IDM7CiAgICBjb25zdCBrbGVuID0gaGVhZGVyICYgMHgwNzsKICAgIC8vIHggZmxhZwogICAgaWYgKHggIT09IDEpIHsKICAgICAgICB0aHJvdyBuZXcgRXJyb3IoIlVORVhQRUNURUQtWC1GTEFHIik7CiAgICB9CiAgICBjb25zdCBoZWFkZXJMZW5ndGggPSAxICsga2xlbiArIGxlbjsKICAgIGlmIChzZnJhbWVIZWFkZXJEYXRhVmlldy5ieXRlTGVuZ3RoIDwgaGVhZGVyTGVuZ3RoKSB7CiAgICAgICAgdGhyb3cgbmV3IEVycm9yKCJVTkVYUEVDVEVELVNGUkFNRS1IRUFERVItTEVOR1RIIik7CiAgICB9CiAgICBjb25zdCBrZXlJZEJ1ZmZlciA9IHNmcmFtZUhlYWRlci5zbGljZSgxLCAxICsga2xlbik7CiAgICBjb25zdCBrZXlJZCA9IGFycmF5QnVmZmVyVG9OdW1iZXIoa2V5SWRCdWZmZXIpOwogICAgY29uc3QgY291bnRCdWZmZXIgPSBzZnJhbWVIZWFkZXIuc2xpY2UoMSArIGtsZW4sIGhlYWRlckxlbmd0aCk7CiAgICBjb25zdCBjb3VudCA9IGFycmF5QnVmZmVyVG9OdW1iZXIoY291bnRCdWZmZXIpOwogICAgcmV0dXJuIFtzLCBjb3VudCwga2V5SWRdOwp9Ci8qIGVzbGludC1kaXNhYmxlIEB0eXBlc2NyaXB0LWVzbGludC90cmlwbGUtc2xhc2gtcmVmZXJlbmNlLCBAdHlwZXNjcmlwdC1lc2xpbnQvbm8tdW51c2VkLXZhcnMgKi8KLy8vIDxyZWZlcmVuY2UgcGF0aD0iLi9zZnJhbWUudHMiLz4KLy8gVE9ETzog5omx44GG5pWw5YCk44GM5aSn44GN44GE566H5omA44Gn44GvIE51bWJlciDjgYvjgokgQmlnSW50IOOBq+e9ruOBjeaPm+OBiOOCiwovLyBUT0RPOiBCaWdJbnQg44Gr572u44GN5o+b44GI44KL6Zqb44Gr5aSJ5pu044GZ44KLCmNvbnN0IG1heEtleUlkID0gMiAqKiAzMjsKY29uc3QgbWF4Q291bnQgPSAyICoqIDMyOwpjb25zdCBzZWxmRGVyaXZlS2V5TWFwID0gbmV3IE1hcCgpOwpjb25zdCBjb3VudE1hcCA9IG5ldyBNYXAoKTsKY29uc3Qgd3JpdGVJVk1hcCA9IG5ldyBNYXAoKTsKY29uc3QgcmVtb3RlRGVyaXZlS2V5TWFwID0gbmV3IE1hcCgpOwpjb25zdCBsYXRlc3RSZW1vdGVLZXlJZE1hcCA9IG5ldyBNYXAoKTsKY29uc3QgbGl0dGxlRW5kaWFuID0gdHJ1ZTsKY29uc3QgYmlnRW5kaWFuID0gIWxpdHRsZUVuZGlhbjsKY29uc3QgdGV4dEVuY29kZXIgPSBuZXcgVGV4dEVuY29kZXIoKTsKY29uc3QgdGV4dERlY29kZXIgPSBuZXcgVGV4dERlY29kZXIoKTsKLy8gVlA4IOOBruOBvwovLyBUT0RPKG5ha2FpKTogVlA5IC8gQVYxIOOCguWwhuadpeeahOOBq+WvvuW/nOOCguiAg+OBiOOCiwpjb25zdCB1bmVuY3J5cHRlZEJ5dGVzID0gewogICAgLy8gSSDjg5Xjg6zjg7zjg6AKICAgIGtleTogMTAsCiAgICAvLyDpnZ4gSSDjg5Xjg6zjg7zjg6AKICAgIGRlbHRhOiAzLAogICAgLy8g44Kq44O844OH44Kj44KqCiAgICB1bmRlZmluZWQ6IDEsCn07CmZ1bmN0aW9uIGdldENvdW50KGNvbm5lY3Rpb25JZCkgewogICAgcmV0dXJuIGNvdW50TWFwLmdldChjb25uZWN0aW9uSWQpIHx8IDA7Cn0KZnVuY3Rpb24gc2V0Q291bnQoY29ubmVjdGlvbklkLCBjb3VudCkgewogICAgcmV0dXJuIGNvdW50TWFwLnNldChjb25uZWN0aW9uSWQsIGNvdW50KTsKfQpmdW5jdGlvbiBnZXRSZW1vdGVEZXJpdmVLZXkoY29ubmVjdGlvbklkLCBrZXlJZCkgewogICAgaWYgKCFyZW1vdGVEZXJpdmVLZXlNYXAuaGFzKGNvbm5lY3Rpb25JZCkpIHsKICAgICAgICB0aHJvdyBuZXcgRXJyb3IoIlJFTU9URS1ERVJJVkVLRVktTUFQLU5PVC1GT1VORCIpOwogICAgfQogICAgY29uc3QgZGVyaXZlS2V5TWFwID0gcmVtb3RlRGVyaXZlS2V5TWFwLmdldChjb25uZWN0aW9uSWQpOwogICAgaWYgKCFkZXJpdmVLZXlNYXApIHsKICAgICAgICByZXR1cm47CiAgICB9CiAgICByZXR1cm4gZGVyaXZlS2V5TWFwLmdldChrZXlJZCk7Cn0KZnVuY3Rpb24gc2V0UmVtb3RlRGVyaXZlS2V5KGNvbm5lY3Rpb25JZCwga2V5SWQsIGRlcml2ZUtleSkgewogICAgbGV0IGRlcml2ZUtleU1hcCA9IHJlbW90ZURlcml2ZUtleU1hcC5nZXQoY29ubmVjdGlvbklkKTsKICAgIGlmICghZGVyaXZlS2V5TWFwKSB7CiAgICAgICAgZGVyaXZlS2V5TWFwID0gbmV3IE1hcCgpOwogICAgfQogICAgZGVyaXZlS2V5TWFwLnNldChrZXlJZCwgZGVyaXZlS2V5KTsKICAgIHJlbW90ZURlcml2ZUtleU1hcC5zZXQoY29ubmVjdGlvbklkLCBkZXJpdmVLZXlNYXApOwp9CmZ1bmN0aW9uIHNldExhdGVzdFJlbW90ZUtleUlkKGNvbm5lY3Rpb25JZCwga2V5SWQpIHsKICAgIGNvbnN0IGxhdGVzdFJlbW90ZUtleUlkID0gbGF0ZXN0UmVtb3RlS2V5SWRNYXAuZ2V0KGNvbm5lY3Rpb25JZCk7CiAgICBpZiAobGF0ZXN0UmVtb3RlS2V5SWQpIHsKICAgICAgICBpZiAobGF0ZXN0UmVtb3RlS2V5SWQgPCBrZXlJZCkgewogICAgICAgICAgICBsYXRlc3RSZW1vdGVLZXlJZE1hcC5zZXQoY29ubmVjdGlvbklkLCBrZXlJZCk7CiAgICAgICAgfQogICAgfQogICAgZWxzZSB7CiAgICAgICAgbGF0ZXN0UmVtb3RlS2V5SWRNYXAuc2V0KGNvbm5lY3Rpb25JZCwga2V5SWQpOwogICAgfQp9CmZ1bmN0aW9uIHJlbW92ZU9sZFJlbW90ZURlcml2ZUtleXMoKSB7CiAgICBsYXRlc3RSZW1vdGVLZXlJZE1hcC5mb3JFYWNoKChsYXRlc3RLZXlJZCwgY29ubmVjdGlvbklkKSA9PiB7CiAgICAgICAgY29uc3QgZGVyaXZlS2V5TWFwID0gcmVtb3RlRGVyaXZlS2V5TWFwLmdldChjb25uZWN0aW9uSWQpOwogICAgICAgIGlmIChkZXJpdmVLZXlNYXApIHsKICAgICAgICAgICAgZGVyaXZlS2V5TWFwLmZvckVhY2goKF8sIGtleUlkKSA9PiB7CiAgICAgICAgICAgICAgICBpZiAobGF0ZXN0S2V5SWQgIT09IGtleUlkKSB7CiAgICAgICAgICAgICAgICAgICAgZGVyaXZlS2V5TWFwLmRlbGV0ZShrZXlJZCk7CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0pOwogICAgICAgIH0KICAgIH0pOwp9CmZ1bmN0aW9uIHJlbW92ZURlcml2ZUtleShjb25uZWN0aW9uSWQpIHsKICAgIGxhdGVzdFJlbW90ZUtleUlkTWFwLmRlbGV0ZShjb25uZWN0aW9uSWQpOwogICAgcmVtb3RlRGVyaXZlS2V5TWFwLmRlbGV0ZShjb25uZWN0aW9uSWQpOwp9CmZ1bmN0aW9uIGdldExhdGVzdFNlbGZEZXJpdmVLZXkoKSB7CiAgICBjb25zdCBkZXJpdmVLZXkgPSBzZWxmRGVyaXZlS2V5TWFwLmdldCgibGF0ZXN0Iik7CiAgICBpZiAoIWRlcml2ZUtleSkgewogICAgICAgIHRocm93IG5ldyBFcnJvcigiTEFURVNULVNFTEYtREVSSVZFS0VZLU5PVF9GT1VORCIpOwogICAgfQogICAgcmV0dXJuIGRlcml2ZUtleTsKfQpmdW5jdGlvbiBzZXRTZWxmRGVyaXZlS2V5KGNvbm5lY3Rpb25JZCwga2V5SWQsIGRlcml2ZUtleSkgewogICAgY29uc3QgY3VycmVudFNlbGZEZXJpdmVLZXkgPSBzZWxmRGVyaXZlS2V5TWFwLmdldCgibGF0ZXN0Iik7CiAgICBpZiAoY3VycmVudFNlbGZEZXJpdmVLZXkpIHsKICAgICAgICBpZiAoY3VycmVudFNlbGZEZXJpdmVLZXlbImtleUlkIl0gPCBrZXlJZCkgewogICAgICAgICAgICBjb25zdCBuZXh0U2VsZkRlcml2ZUtleSA9IHsgY29ubmVjdGlvbklkLCBrZXlJZCwgZGVyaXZlS2V5IH07CiAgICAgICAgICAgIHNlbGZEZXJpdmVLZXlNYXAuc2V0KCJsYXRlc3QiLCBuZXh0U2VsZkRlcml2ZUtleSk7CiAgICAgICAgfQogICAgfQogICAgZWxzZSB7CiAgICAgICAgY29uc3QgbmV4dFNlbGZEZXJpdmVLZXkgPSB7IGNvbm5lY3Rpb25JZCwga2V5SWQsIGRlcml2ZUtleSB9OwogICAgICAgIHNlbGZEZXJpdmVLZXlNYXAuc2V0KCJsYXRlc3QiLCBuZXh0U2VsZkRlcml2ZUtleSk7CiAgICB9Cn0KZnVuY3Rpb24gc2lsZW5jZUZyYW1lKGVuY29kZWRGcmFtZSkgewogICAgLy8gY29ubmVjdGlvbi5jcmVhdGVkLCByZWNlaXZlTWVzc2FnZSDlj5fkv6HliY3jga7loLTlkIgKICAgIGlmIChlbmNvZGVkRnJhbWUudHlwZSA9PT0gdW5kZWZpbmVkKSB7CiAgICAgICAgLy8g6Z+z5aOw44Gv5pqX5Y+35YyW44Gv44GE44KL44Go6IGe44GR44Gf44KC44Gu44GY44KD44Gq44GE44Gu44Gn572u44GN5o+b44GI44KLCiAgICAgICAgY29uc3QgbmV3RGF0YSA9IG5ldyBBcnJheUJ1ZmZlcigzKTsKICAgICAgICBjb25zdCBuZXdVaW50OCA9IG5ldyBVaW50OEFycmF5KG5ld0RhdGEpOwogICAgICAgIC8vIE9wdXMg44K144Kk44Os44Oz44K544OV44Os44O844OgCiAgICAgICAgbmV3VWludDguc2V0KFsweGQ4LCAweGZmLCAweGZlXSk7CiAgICAgICAgZW5jb2RlZEZyYW1lLmRhdGEgPSBuZXdEYXRhOwogICAgfQogICAgZWxzZSB7CiAgICAgICAgLy8g5pig5YOP44GM5q2j5bi444GY44KD44Gq44GE44Gf44KBIFBMSSDjgrnjg4jjg7zjg6DjgYznmbrnlJ/jgZfjgabjgZfjgb7jgYYKICAgICAgICAvLyDjgZ3jga7jgZ/jgoEgMzIweDI0MCDjga7nnJ/jgaPpu5LjgarnlLvpnaLjgavnva7jgY3mj5vjgYjjgosKICAgICAgICBjb25zdCBuZXdEYXRhID0gbmV3IEFycmF5QnVmZmVyKDYwKTsKICAgICAgICBjb25zdCBuZXdVaW50OCA9IG5ldyBVaW50OEFycmF5KG5ld0RhdGEpOwogICAgICAgIC8vIHByZXR0aWVyLWlnbm9yZQogICAgICAgIG5ld1VpbnQ4LnNldChbMHhiMCwgMHgwNSwgMHgwMCwgMHg5ZCwgMHgwMSwgMHgyYSwgMHhhMCwgMHgwMCwgMHg1YSwgMHgwMCwKICAgICAgICAgICAgMHgzOSwgMHgwMywgMHgwMCwgMHgwMCwgMHgxYywgMHgyMiwgMHgxNiwgMHgxNiwgMHgyMiwgMHg2NiwKICAgICAgICAgICAgMHgxMiwgMHgyMCwgMHgwNCwgMHg5MCwgMHg0MCwgMHgwMCwgMHhjNSwgMHgwMSwgMHhlMCwgMHg3YywKICAgICAgICAgICAgMHg0ZCwgMHgyZiwgMHhmYSwgMHhkZCwgMHg0ZCwgMHhhNSwgMHg3ZiwgMHg4OSwgMHhhNSwgMHhmZiwKICAgICAgICAgICAgMHg1YiwgMHhhOSwgMHhiNCwgMHhhZiwgMHhmMSwgMHgzNCwgMHhiZiwgMHhlYiwgMHg3NSwgMHgzNiwKICAgICAgICAgICAgMHg5NSwgMHhmZSwgMHgyNiwgMHg5NiwgMHg2MCwgMHhmZSwgMHhmZiwgMHhiYSwgMHhmZiwgMHg0MCwKICAgICAgICBdKTsKICAgICAgICBlbmNvZGVkRnJhbWUuZGF0YSA9IG5ld0RhdGE7CiAgICB9CiAgICByZXR1cm4gZW5jb2RlZEZyYW1lOwp9CmZ1bmN0aW9uIHNldFdyaXRlSVYoY29ubmVjdGlvbklkLCBrZXlJZCwgd3JpdGVJVikgewogICAgY29uc3Qga2V5ID0gW2Nvbm5lY3Rpb25JZCwga2V5SWQudG9TdHJpbmcoKV0uam9pbigiOiIpOwogICAgd3JpdGVJVk1hcC5zZXQoa2V5LCB3cml0ZUlWKTsKfQpmdW5jdGlvbiBnZXRXcml0ZUlWKGNvbm5lY3Rpb25JZCwga2V5SWQpIHsKICAgIGNvbnN0IGtleSA9IFtjb25uZWN0aW9uSWQsIGtleUlkLnRvU3RyaW5nKCldLmpvaW4oIjoiKTsKICAgIHJldHVybiB3cml0ZUlWTWFwLmdldChrZXkpOwp9CmZ1bmN0aW9uIGdlbmVyYXRlSVYoY291bnQsIGNvbm5lY3Rpb25JZCwga2V5SWQpIHsKICAgIC8vIFRPRE86IGtleUlkIOOBjCBOdW1iZXIuTUFYX1NBRkVfSU5URUdFUiwgNyBieXRlIOOCkui2heOBiOOBpuOBhOOBn+WgtOWQiOOBr+OCqOODqeODvOOBi+S+i+WklgogICAgLy8gVE9ETzogY291bnQg44GMIE51bWJlci5NQVhfU0FGRV9JTlRFR0VSLCA3IGJ5dGUg44KS6LaF44GI44Gm44GE44Gf5aC05ZCI44Gv44Ko44Op44O844GL5L6L5aSWCiAgICAvLyAzMiBiaXQg44G+44GnCiAgICBpZiAobWF4S2V5SWQgPCBrZXlJZCB8fCBtYXhDb3VudCA8IGNvdW50KSB7CiAgICAgICAgdGhyb3cgbmV3IEVycm9yKCJFWENFRURFRC1NQVhJTVVNLUJST0FEQ0FTVElORy1USU1FIik7CiAgICB9CiAgICBjb25zdCB3cml0ZUlWID0gZ2V0V3JpdGVJVihjb25uZWN0aW9uSWQsIGtleUlkKTsKICAgIGlmICghd3JpdGVJVikgewogICAgICAgIHRocm93IG5ldyBFcnJvcigiV1JJVEVJVi1OT1QtRk9VTkQiKTsKICAgIH0KICAgIGNvbnN0IHBhZGRpbmdMZW5ndGggPSBObiAtIFVpbnQzMkFycmF5LkJZVEVTX1BFUl9FTEVNRU5UOwogICAgY29uc3QgY291bnRXaXRoUGFkZGluZ0J1ZmZlciA9IG5ldyBBcnJheUJ1ZmZlcihObik7CiAgICBjb25zdCBjb3VudFdpdGhQYWRkaW5nRGF0YVZpZXcgPSBuZXcgRGF0YVZpZXcoY291bnRXaXRoUGFkZGluZ0J1ZmZlcik7CiAgICBjb3VudFdpdGhQYWRkaW5nRGF0YVZpZXcuc2V0VWludDMyKHBhZGRpbmdMZW5ndGgsIGNvdW50LCBiaWdFbmRpYW4pOwogICAgY29uc3QgaXYgPSBuZXcgVWludDhBcnJheShObik7CiAgICBjb25zdCBjb3VudFdpdGhQYWRkaW5nID0gbmV3IFVpbnQ4QXJyYXkoY291bnRXaXRoUGFkZGluZ0J1ZmZlcik7CiAgICBmb3IgKGxldCBpID0gMDsgaSA8IE5uOyBpKyspIHsKICAgICAgICBpdltpXSA9IHdyaXRlSVZbaV0gXiBjb3VudFdpdGhQYWRkaW5nW2ldOwogICAgfQogICAgcmV0dXJuIGl2Owp9CmZ1bmN0aW9uIHBhcnNlUGF5bG9hZChwYXlsb2FkVHlwZSwgcGF5bG9hZCkgewogICAgcmV0dXJuIFsKICAgICAgICBuZXcgVWludDhBcnJheShwYXlsb2FkLCAwLCB1bmVuY3J5cHRlZEJ5dGVzW3BheWxvYWRUeXBlXSksCiAgICAgICAgbmV3IFVpbnQ4QXJyYXkocGF5bG9hZCwgdW5lbmNyeXB0ZWRCeXRlc1twYXlsb2FkVHlwZV0pLAogICAgXTsKfQpmdW5jdGlvbiBlbmNvZGVGcmFtZUFkZChoZWFkZXIsIHNmcmFtZUhlYWRlciwgY29ubmVjdGlvbklkKSB7CiAgICBjb25zdCBjb25uZWN0aW9uSWREYXRhID0gdGV4dEVuY29kZXIuZW5jb2RlKGNvbm5lY3Rpb25JZCk7CiAgICBjb25zdCBmcmFtZUFkZCA9IG5ldyBVaW50OEFycmF5KGhlYWRlci5ieXRlTGVuZ3RoICsgc2ZyYW1lSGVhZGVyLmJ5dGVMZW5ndGggKyBjb25uZWN0aW9uSWREYXRhLmJ5dGVMZW5ndGgpOwogICAgZnJhbWVBZGQuc2V0KGhlYWRlciwgMCk7CiAgICBmcmFtZUFkZC5zZXQoc2ZyYW1lSGVhZGVyLCBoZWFkZXIuYnl0ZUxlbmd0aCk7CiAgICBmcmFtZUFkZC5zZXQoY29ubmVjdGlvbklkRGF0YSwgaGVhZGVyLmJ5dGVMZW5ndGggKyBzZnJhbWVIZWFkZXIuYnl0ZUxlbmd0aCk7CiAgICByZXR1cm4gZnJhbWVBZGQ7Cn0KYXN5bmMgZnVuY3Rpb24gZW5jcnlwdEZ1bmN0aW9uKGVuY29kZWRGcmFtZSwgY29udHJvbGxlcikgewogICAgY29uc3QgeyBjb25uZWN0aW9uSWQsIGtleUlkLCBkZXJpdmVLZXkgfSA9IGdldExhdGVzdFNlbGZEZXJpdmVLZXkoKTsKICAgIGlmICghZGVyaXZlS2V5KSB7CiAgICAgICAgcmV0dXJuOwogICAgfQogICAgY29uc3QgY3VycmVudENvdW50ID0gZ2V0Q291bnQoY29ubmVjdGlvbklkKTsKICAgIC8vIGNvdW50IOOBjCAzMiBiaXQg5Lul5LiK44Gu5aC05ZCI44Gv5YGc5q2i44GZ44KLCiAgICBpZiAoY3VycmVudENvdW50ID4gbWF4Q291bnQpIHsKICAgICAgICBwb3N0TWVzc2FnZSh7IHR5cGU6ICJkaXNjb25uZWN0IiB9KTsKICAgIH0KICAgIGNvbnN0IGl2ID0gZ2VuZXJhdGVJVihjdXJyZW50Q291bnQsIGNvbm5lY3Rpb25JZCwga2V5SWQpOwogICAgaWYgKCFpdikgewogICAgICAgIHJldHVybjsKICAgIH0KICAgIGNvbnN0IFtoZWFkZXIsIHBheWxvYWRdID0gcGFyc2VQYXlsb2FkKGVuY29kZWRGcmFtZS50eXBlLCBlbmNvZGVkRnJhbWUuZGF0YSk7CiAgICBjb25zdCBzZnJhbWVIZWFkZXIgPSBlbmNvZGVTRnJhbWVIZWFkZXIoMCwgY3VycmVudENvdW50LCBrZXlJZCk7CiAgICBjb25zdCBmcmFtZUFkZCA9IGVuY29kZUZyYW1lQWRkKGhlYWRlciwgc2ZyYW1lSGVhZGVyLCBjb25uZWN0aW9uSWQpOwogICAgY3J5cHRvLnN1YnRsZQogICAgICAgIC5lbmNyeXB0KHsKICAgICAgICBuYW1lOiAiQUVTLUdDTSIsCiAgICAgICAgaXY6IGl2LAogICAgICAgIC8vIOaal+WPt+WMluOBleOCjOOBpuOBhOOBquOBhOmDqOWIhgogICAgICAgIGFkZGl0aW9uYWxEYXRhOiBmcmFtZUFkZCwKICAgIH0sIGRlcml2ZUtleSwgcGF5bG9hZCkKICAgICAgICAudGhlbigoY2lwaGVyVGV4dCkgPT4gewogICAgICAgIGNvbnN0IG5ld0RhdGEgPSBuZXcgQXJyYXlCdWZmZXIoZnJhbWVBZGQuYnl0ZUxlbmd0aCArIGNpcGhlclRleHQuYnl0ZUxlbmd0aCk7CiAgICAgICAgY29uc3QgbmV3RGF0YVVpbnQ4ID0gbmV3IFVpbnQ4QXJyYXkobmV3RGF0YSk7CiAgICAgICAgbmV3RGF0YVVpbnQ4LnNldChmcmFtZUFkZCwgMCk7CiAgICAgICAgbmV3RGF0YVVpbnQ4LnNldChuZXcgVWludDhBcnJheShjaXBoZXJUZXh0KSwgZnJhbWVBZGQuYnl0ZUxlbmd0aCk7CiAgICAgICAgZW5jb2RlZEZyYW1lLmRhdGEgPSBuZXdEYXRhOwogICAgICAgIGNvbnRyb2xsZXIuZW5xdWV1ZShlbmNvZGVkRnJhbWUpOwogICAgfSk7CiAgICBzZXRDb3VudChjb25uZWN0aW9uSWQsIGN1cnJlbnRDb3VudCArIDEpOwp9CmFzeW5jIGZ1bmN0aW9uIGRlY3J5cHRGdW5jdGlvbihlbmNvZGVkRnJhbWUsIGNvbnRyb2xsZXIpIHsKICAgIC8vIOepuuODleODrOODvOODoOWvvuW/nAogICAgaWYgKGVuY29kZWRGcmFtZS5kYXRhLmJ5dGVMZW5ndGggPCAxKSB7CiAgICAgICAgcmV0dXJuOwogICAgfQogICAgdHJ5IHsKICAgICAgICBjb25zdCBmcmFtZU1ldGFkYXRhQnVmZmVyID0gZW5jb2RlZEZyYW1lLmRhdGEuc2xpY2UoMCwgdW5lbmNyeXB0ZWRCeXRlc1tlbmNvZGVkRnJhbWUudHlwZV0pOwogICAgICAgIGNvbnN0IGZyYW1lTWV0YWRhdGEgPSBuZXcgVWludDhBcnJheShmcmFtZU1ldGFkYXRhQnVmZmVyKTsKICAgICAgICBjb25zdCBbc2ZyYW1lSGVhZGVyQnVmZmVyLCBjb25uZWN0aW9uSWRCdWZmZXIsIGVuY3J5cHRlZEZyYW1lQnVmZmVyXSA9IHNwbGl0SGVhZGVyKGVuY29kZWRGcmFtZS5kYXRhLnNsaWNlKHVuZW5jcnlwdGVkQnl0ZXNbZW5jb2RlZEZyYW1lLnR5cGVdKSk7CiAgICAgICAgY29uc3Qgc2ZyYW1lSGVhZGVyID0gbmV3IFVpbnQ4QXJyYXkoc2ZyYW1lSGVhZGVyQnVmZmVyKTsKICAgICAgICBjb25zdCBjb25uZWN0aW9uSWQgPSB0ZXh0RGVjb2Rlci5kZWNvZGUoY29ubmVjdGlvbklkQnVmZmVyKTsKICAgICAgICBjb25zdCBbcywgY291bnQsIGtleUlkXSA9IHBhcnNlU0ZyYW1lSGVhZGVyKHNmcmFtZUhlYWRlckJ1ZmZlcik7CiAgICAgICAgLy8g5LuK5Zue44GvIHMgZmxhZyDjga8gMCDjga7jgb8KICAgICAgICBpZiAocyAhPT0gMCkgewogICAgICAgICAgICB0aHJvdyBuZXcgRXJyb3IoIlVORVhQRUNURUQtUy1GTEFHIik7CiAgICAgICAgfQogICAgICAgIGNvbnN0IGRlcml2ZUtleSA9IGdldFJlbW90ZURlcml2ZUtleShjb25uZWN0aW9uSWQsIGtleUlkKTsKICAgICAgICBpZiAoIWRlcml2ZUtleSkgewogICAgICAgICAgICByZXR1cm47CiAgICAgICAgfQogICAgICAgIGNvbnN0IGl2ID0gZ2VuZXJhdGVJVihjb3VudCwgY29ubmVjdGlvbklkLCBrZXlJZCk7CiAgICAgICAgaWYgKCFpdikgewogICAgICAgICAgICByZXR1cm47CiAgICAgICAgfQogICAgICAgIGNvbnN0IGZyYW1lQWRkID0gZW5jb2RlRnJhbWVBZGQoZnJhbWVNZXRhZGF0YSwgc2ZyYW1lSGVhZGVyLCBjb25uZWN0aW9uSWQpOwogICAgICAgIGNyeXB0by5zdWJ0bGUKICAgICAgICAgICAgLmRlY3J5cHQoewogICAgICAgICAgICBuYW1lOiAiQUVTLUdDTSIsCiAgICAgICAgICAgIGl2OiBpdiwKICAgICAgICAgICAgYWRkaXRpb25hbERhdGE6IGZyYW1lQWRkLAogICAgICAgIH0sIGRlcml2ZUtleSwgbmV3IFVpbnQ4QXJyYXkoZW5jcnlwdGVkRnJhbWVCdWZmZXIpKQogICAgICAgICAgICAudGhlbigocGxhaW5UZXh0KSA9PiB7CiAgICAgICAgICAgIGNvbnN0IG5ld0RhdGEgPSBuZXcgQXJyYXlCdWZmZXIoZnJhbWVNZXRhZGF0YUJ1ZmZlci5ieXRlTGVuZ3RoICsgcGxhaW5UZXh0LmJ5dGVMZW5ndGgpOwogICAgICAgICAgICBjb25zdCBuZXdVaW50OCA9IG5ldyBVaW50OEFycmF5KG5ld0RhdGEpOwogICAgICAgICAgICBuZXdVaW50OC5zZXQobmV3IFVpbnQ4QXJyYXkoZnJhbWVNZXRhZGF0YUJ1ZmZlciwgMCwgdW5lbmNyeXB0ZWRCeXRlc1tlbmNvZGVkRnJhbWUudHlwZV0pKTsKICAgICAgICAgICAgbmV3VWludDguc2V0KG5ldyBVaW50OEFycmF5KHBsYWluVGV4dCksIHVuZW5jcnlwdGVkQnl0ZXNbZW5jb2RlZEZyYW1lLnR5cGVdKTsKICAgICAgICAgICAgZW5jb2RlZEZyYW1lLmRhdGEgPSBuZXdEYXRhOwogICAgICAgICAgICBjb250cm9sbGVyLmVucXVldWUoZW5jb2RlZEZyYW1lKTsKICAgICAgICB9KTsKICAgIH0KICAgIGNhdGNoIChlKSB7CiAgICAgICAgLy8g5oOz5a6a5aSW44Gu44OR44Kx44OD44OI44OV44Kp44O844Oe44OD44OI44KS5Y+X5L+h44GX44Gf5aC05ZCICiAgICAgICAgY29udHJvbGxlci5lbnF1ZXVlKHNpbGVuY2VGcmFtZShlbmNvZGVkRnJhbWUpKTsKICAgIH0KfQovKiBlc2xpbnQtZGlzYWJsZSBAdHlwZXNjcmlwdC1lc2xpbnQvdHJpcGxlLXNsYXNoLXJlZmVyZW5jZSAqLwovLy8gPHJlZmVyZW5jZSBwYXRoPSIuL2UyZWUudHMiLz4KLy8gbm9uY2Ug44K144Kk44K6CmNvbnN0IE5uID0gMTI7Ci8vIGtleSDjgrXjgqTjgroKY29uc3QgTmsgPSAxNjsKLy8ga2V5IOOCteOCpOOCuu+8iGJpdO+8iQpjb25zdCBrZXlMZW5ndGggPSBOayAqIDg7CmFzeW5jIGZ1bmN0aW9uIGdlbmVyYXRlRGVyaXZlS2V5KG1hdGVyaWFsKSB7CiAgICBjb25zdCBzYWx0ID0gdGV4dEVuY29kZXIuZW5jb2RlKCJTRnJhbWUxMCIpOwogICAgY29uc3QgaW5mbyA9IHRleHRFbmNvZGVyLmVuY29kZSgia2V5Iik7CiAgICBjb25zdCBkZXJpdmVLZXkgPSBhd2FpdCBjcnlwdG8uc3VidGxlLmRlcml2ZUtleSh7CiAgICAgICAgbmFtZTogIkhLREYiLAogICAgICAgIHNhbHQ6IHNhbHQsCiAgICAgICAgaGFzaDogIlNIQS0yNTYiLAogICAgICAgIGluZm86IGluZm8sCiAgICB9LCBtYXRlcmlhbCwgewogICAgICAgIG5hbWU6ICJBRVMtR0NNIiwKICAgICAgICBsZW5ndGg6IGtleUxlbmd0aCwKICAgIH0sIGZhbHNlLCBbImVuY3J5cHQiLCAiZGVjcnlwdCJdKTsKICAgIHJldHVybiBkZXJpdmVLZXk7Cn0KYXN5bmMgZnVuY3Rpb24gZ2VuZXJhdGVXcml0ZUlWKG1hdGVyaWFsKSB7CiAgICBjb25zdCBzYWx0ID0gdGV4dEVuY29kZXIuZW5jb2RlKCJTRnJhbWUxMCIpOwogICAgY29uc3QgaW5mbyA9IHRleHRFbmNvZGVyLmVuY29kZSgic2FsdCIpOwogICAgY29uc3Qgd3JpdGVJVkJ1ZmZlciA9IGF3YWl0IGNyeXB0by5zdWJ0bGUuZGVyaXZlQml0cyh7CiAgICAgICAgbmFtZTogIkhLREYiLAogICAgICAgIHNhbHQ6IHNhbHQsCiAgICAgICAgaGFzaDogIlNIQS0zODQiLAogICAgICAgIGluZm86IGluZm8sCiAgICB9LCBtYXRlcmlhbCwgCiAgICAvLyBJViDjga8gOTYg44OT44OD44OI44Gq44Gu44GnCiAgICBObiAqIDgpOwogICAgY29uc3Qgd3JpdGVJViA9IG5ldyBVaW50OEFycmF5KHdyaXRlSVZCdWZmZXIpOwogICAgcmV0dXJuIHdyaXRlSVY7Cn0KbGV0IHJlbW92YWxUaW1lb3V0SWQgPSAwOwpvbm1lc3NhZ2UgPSAoZXZlbnQpID0+IHsKICAgIGNvbnN0IHsgdHlwZSB9ID0gZXZlbnQuZGF0YTsKICAgIGlmICh0eXBlID09PSAic2VsZlNlY3JldEtleU1hdGVyaWFsIikgewogICAgICAgIGNvbnN0IHsgc2VsZlNlY3JldEtleU1hdGVyaWFsLCBzZWxmQ29ubmVjdGlvbklkLCBzZWxmS2V5SWQsIHdhaXRpbmdUaW1lIH0gPSBldmVudC5kYXRhOwogICAgICAgIGNvbnN0IHRpbWVvdXRJZCA9IHNldFRpbWVvdXQoKCkgPT4gewogICAgICAgICAgICBjcnlwdG8uc3VidGxlCiAgICAgICAgICAgICAgICAuaW1wb3J0S2V5KCJyYXciLCBzZWxmU2VjcmV0S2V5TWF0ZXJpYWwuYnVmZmVyLCAiSEtERiIsIGZhbHNlLCBbImRlcml2ZUJpdHMiLCAiZGVyaXZlS2V5Il0pCiAgICAgICAgICAgICAgICAudGhlbigobWF0ZXJpYWwpID0+IHsKICAgICAgICAgICAgICAgIGdlbmVyYXRlRGVyaXZlS2V5KG1hdGVyaWFsKS50aGVuKChkZXJpdmVLZXkpID0+IHsKICAgICAgICAgICAgICAgICAgICBzZXRTZWxmRGVyaXZlS2V5KHNlbGZDb25uZWN0aW9uSWQsIHNlbGZLZXlJZCwgZGVyaXZlS2V5KTsKICAgICAgICAgICAgICAgIH0pOwogICAgICAgICAgICAgICAgZ2VuZXJhdGVXcml0ZUlWKG1hdGVyaWFsKS50aGVuKCh3cml0ZUlWKSA9PiB7CiAgICAgICAgICAgICAgICAgICAgc2V0V3JpdGVJVihzZWxmQ29ubmVjdGlvbklkLCBzZWxmS2V5SWQsIHdyaXRlSVYpOwogICAgICAgICAgICAgICAgfSk7CiAgICAgICAgICAgICAgICBjbGVhclRpbWVvdXQodGltZW91dElkKTsKICAgICAgICAgICAgfSk7CiAgICAgICAgfSwgd2FpdGluZ1RpbWUgfHwgMCk7CiAgICAgICAgLy8gVE9ETzogKzEwMDAg44Gn6Y2155Sf5oiQ5b6M44Gr5a6f6KGM44GV44KM44KL44KI44GG44Gr44GX44Gm44GE44KL44GM55+t44GE5aC05ZCI44Gv5Ly444Gw44GZCiAgICAgICAgY29uc3QgcmVtb3ZhbFdhaXRpbmdUaW1lID0gKHdhaXRpbmdUaW1lIHx8IDApICsgMTAwMDsKICAgICAgICBpZiAocmVtb3ZhbFRpbWVvdXRJZCkgewogICAgICAgICAgICAvLyDli5XkvZzmuIjjgb/jgr/jgqTjg57jg7zmnInjgooKICAgICAgICAgICAgaWYgKHdhaXRpbmdUaW1lKSB7CiAgICAgICAgICAgICAgICAvLyBjb25uZWN0aW9uLmRlc3Ryb3llZAogICAgICAgICAgICAgICAgY2xlYXJUaW1lb3V0KHJlbW92YWxUaW1lb3V0SWQpOwogICAgICAgICAgICAgICAgcmVtb3ZhbFRpbWVvdXRJZCA9IHNldFRpbWVvdXQoKCkgPT4gewogICAgICAgICAgICAgICAgICAgIHJlbW92ZU9sZFJlbW90ZURlcml2ZUtleXMoKTsKICAgICAgICAgICAgICAgICAgICBjbGVhclRpbWVvdXQocmVtb3ZhbFRpbWVvdXRJZCk7CiAgICAgICAgICAgICAgICAgICAgcmVtb3ZhbFRpbWVvdXRJZCA9IDA7CiAgICAgICAgICAgICAgICB9LCByZW1vdmFsV2FpdGluZ1RpbWUpOwogICAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIGVsc2UgewogICAgICAgICAgICAvLyDli5XkvZzmuIjjgb/jgr/jgqTjg57jg7zjgarjgZcKICAgICAgICAgICAgLy8gY29ubmVjdGlvbi5jcmVhdGVkIOOBruWgtOWQiOOCguWwkeOBl+Wun+ihjOOCkumBheOCieOBm+OCiwogICAgICAgICAgICByZW1vdmFsVGltZW91dElkID0gc2V0VGltZW91dCgoKSA9PiB7CiAgICAgICAgICAgICAgICByZW1vdmVPbGRSZW1vdGVEZXJpdmVLZXlzKCk7CiAgICAgICAgICAgICAgICBjbGVhclRpbWVvdXQocmVtb3ZhbFRpbWVvdXRJZCk7CiAgICAgICAgICAgICAgICByZW1vdmFsVGltZW91dElkID0gMDsKICAgICAgICAgICAgfSwgcmVtb3ZhbFdhaXRpbmdUaW1lKTsKICAgICAgICB9CiAgICB9CiAgICBlbHNlIGlmICh0eXBlID09PSAicmVtb3RlU2VjcmV0S2V5TWF0ZXJpYWxzIikgewogICAgICAgIGNvbnN0IHsgcmVtb3RlU2VjcmV0S2V5TWF0ZXJpYWxzIH0gPSBldmVudC5kYXRhOwogICAgICAgIGZvciAoY29uc3QgW2Nvbm5lY3Rpb25JZCwgcmVtb3RlU2VjcmV0S2V5TWF0ZXJpYWxdIG9mIE9iamVjdC5lbnRyaWVzKHJlbW90ZVNlY3JldEtleU1hdGVyaWFscykpIHsKICAgICAgICAgICAgY29uc3QgeyBrZXlJZCwgc2VjcmV0S2V5TWF0ZXJpYWwgfSA9IHJlbW90ZVNlY3JldEtleU1hdGVyaWFsOwogICAgICAgICAgICBjcnlwdG8uc3VidGxlCiAgICAgICAgICAgICAgICAuaW1wb3J0S2V5KCJyYXciLCBzZWNyZXRLZXlNYXRlcmlhbC5idWZmZXIsICJIS0RGIiwgZmFsc2UsIFsiZGVyaXZlQml0cyIsICJkZXJpdmVLZXkiXSkKICAgICAgICAgICAgICAgIC50aGVuKChtYXRlcmlhbCkgPT4gewogICAgICAgICAgICAgICAgZ2VuZXJhdGVEZXJpdmVLZXkobWF0ZXJpYWwpLnRoZW4oKGRlcml2ZUtleSkgPT4gewogICAgICAgICAgICAgICAgICAgIHNldFJlbW90ZURlcml2ZUtleShjb25uZWN0aW9uSWQsIGtleUlkLCBkZXJpdmVLZXkpOwogICAgICAgICAgICAgICAgfSk7CiAgICAgICAgICAgICAgICBnZW5lcmF0ZVdyaXRlSVYobWF0ZXJpYWwpLnRoZW4oKHdyaXRlSVYpID0+IHsKICAgICAgICAgICAgICAgICAgICBzZXRXcml0ZUlWKGNvbm5lY3Rpb25JZCwga2V5SWQsIHdyaXRlSVYpOwogICAgICAgICAgICAgICAgfSk7CiAgICAgICAgICAgICAgICBzZXRMYXRlc3RSZW1vdGVLZXlJZChjb25uZWN0aW9uSWQsIGtleUlkKTsKICAgICAgICAgICAgfSk7CiAgICAgICAgfQogICAgfQogICAgZWxzZSBpZiAodHlwZSA9PT0gInJlbW92ZVJlbW90ZURlcml2ZUtleSIpIHsKICAgICAgICBjb25zdCB7IGNvbm5lY3Rpb25JZCB9ID0gZXZlbnQuZGF0YTsKICAgICAgICByZW1vdmVEZXJpdmVLZXkoY29ubmVjdGlvbklkKTsKICAgIH0KICAgIGVsc2UgaWYgKHR5cGUgPT09ICJlbmNyeXB0IikgewogICAgICAgIGNvbnN0IHsgcmVhZGFibGVTdHJlYW0sIHdyaXRhYmxlU3RyZWFtIH0gPSBldmVudC5kYXRhOwogICAgICAgIGNvbnN0IHRyYW5zZm9ybVN0cmVhbSA9IG5ldyBUcmFuc2Zvcm1TdHJlYW0oewogICAgICAgICAgICB0cmFuc2Zvcm06IGVuY3J5cHRGdW5jdGlvbiwKICAgICAgICB9KTsKICAgICAgICByZWFkYWJsZVN0cmVhbS5waXBlVGhyb3VnaCh0cmFuc2Zvcm1TdHJlYW0pLnBpcGVUbyh3cml0YWJsZVN0cmVhbSk7CiAgICB9CiAgICBlbHNlIGlmICh0eXBlID09PSAiZGVjcnlwdCIpIHsKICAgICAgICBjb25zdCB7IHJlYWRhYmxlU3RyZWFtLCB3cml0YWJsZVN0cmVhbSB9ID0gZXZlbnQuZGF0YTsKICAgICAgICBjb25zdCB0cmFuc2Zvcm1TdHJlYW0gPSBuZXcgVHJhbnNmb3JtU3RyZWFtKHsKICAgICAgICAgICAgdHJhbnNmb3JtOiBkZWNyeXB0RnVuY3Rpb24sCiAgICAgICAgfSk7CiAgICAgICAgcmVhZGFibGVTdHJlYW0ucGlwZVRocm91Z2godHJhbnNmb3JtU3RyZWFtKS5waXBlVG8od3JpdGFibGVTdHJlYW0pOwogICAgfQogICAgZWxzZSBpZiAodHlwZSA9PT0gImNsZWFyIikgewogICAgICAgIGNvdW50TWFwLmNsZWFyKCk7CiAgICAgICAgd3JpdGVJVk1hcC5jbGVhcigpOwogICAgICAgIHJlbW90ZURlcml2ZUtleU1hcC5jbGVhcigpOwogICAgICAgIGxhdGVzdFJlbW90ZUtleUlkTWFwLmNsZWFyKCk7CiAgICAgICAgc2VsZkRlcml2ZUtleU1hcC5jbGVhcigpOwogICAgfQp9Owo=";
 class SoraE2EE {
@@ -1627,7 +1627,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2021.2.3",
+        sora_client: "Sora JavaScript SDK 2022.1.0",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -1635,53 +1635,52 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
         audio: true,
         video: true,
     };
+    // role: sendrecv で multistream: false の場合は例外を発生させる
+    if (role === "sendrecv" && options.multistream !== true) {
+        throw new Error("Failed to parse options. Options multistream must be true when connecting using 'sendrecv'");
+    }
+    if (redirect === true) {
+        message.redirect = true;
+    }
+    if (typeof options.multistream === "boolean") {
+        message.multistream = options.multistream;
+    }
+    if (typeof options.simulcast === "boolean") {
+        message.simulcast = options.simulcast;
+    }
+    const simalcastRids = ["r0", "r1", "r2"];
+    if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
+        message.simulcast_rid = options.simulcastRid;
+    }
+    if (typeof options.spotlight === "boolean") {
+        message.spotlight = options.spotlight;
+    }
+    if ("spotlightNumber" in options) {
+        message.spotlight_number = options.spotlightNumber;
+    }
+    const spotlightFocusRids = ["none", "r0", "r1", "r2"];
+    if (options.spotlightFocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightFocusRid)) {
+        message.spotlight_focus_rid = options.spotlightFocusRid;
+    }
+    if (options.spotlightUnfocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightUnfocusRid)) {
+        message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
+    }
     if (metadata !== undefined) {
         message.metadata = metadata;
     }
-    if (redirect) {
-        message.redirect = true;
-    }
-    if ("signalingNotifyMetadata" in options) {
+    if (options.signalingNotifyMetadata !== undefined) {
         message.signaling_notify_metadata = options.signalingNotifyMetadata;
     }
-    if ("multistream" in options && options.multistream === true) {
-        // multistream
-        message.multistream = true;
-        // spotlight
-        if ("spotlight" in options) {
-            message.spotlight = options.spotlight;
-            if ("spotlightNumber" in options) {
-                message.spotlight_number = options.spotlightNumber;
-            }
-        }
-        if (message.spotlight === true) {
-            const spotlightFocusRids = ["none", "r0", "r1", "r2"];
-            if (options.spotlightFocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightFocusRid)) {
-                message.spotlight_focus_rid = options.spotlightFocusRid;
-            }
-            if (options.spotlightUnfocusRid !== undefined && 0 <= spotlightFocusRids.indexOf(options.spotlightUnfocusRid)) {
-                message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
-            }
-        }
-    }
-    if ("simulcast" in options || "simulcastRid" in options) {
-        // simulcast
-        if ("simulcast" in options && options.simulcast === true) {
-            message.simulcast = true;
-        }
-        const simalcastRids = ["r0", "r1", "r2"];
-        if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
-            message.simulcast_rid = options.simulcastRid;
-        }
-    }
-    // client_id
-    if ("clientId" in options && options.clientId !== undefined) {
+    if (options.clientId !== undefined) {
         message.client_id = options.clientId;
     }
-    if ("dataChannelSignaling" in options && typeof options.dataChannelSignaling === "boolean") {
+    if (options.bundleId !== undefined) {
+        message.bundle_id = options.bundleId;
+    }
+    if (typeof options.dataChannelSignaling === "boolean") {
         message.data_channel_signaling = options.dataChannelSignaling;
     }
-    if ("ignoreDisconnectWebSocket" in options && typeof options.ignoreDisconnectWebSocket === "boolean") {
+    if (typeof options.ignoreDisconnectWebSocket === "boolean") {
         message.ignore_disconnect_websocket = options.ignoreDisconnectWebSocket;
     }
     // parse options
@@ -1786,6 +1785,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     if (message.simulcast && !enabledSimulcast() && role !== "recvonly") {
         throw new Error("Simulcast can not be used with this browser");
     }
+    if (typeof options.e2ee === "boolean") {
+        message.e2ee = options.e2ee;
+    }
     if (options.e2ee === true) {
         if (message.signaling_notify_metadata === undefined) {
             message.signaling_notify_metadata = {};
@@ -1799,7 +1801,6 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
         if (message.video) {
             message.video["codec_type"] = "VP8";
         }
-        message.e2ee = true;
     }
     if (Array.isArray(options.dataChannels) && 0 < options.dataChannels.length) {
         message.data_channels = parseDataChannelConfigurations(options.dataChannels);
@@ -1835,6 +1836,7 @@ function trace(clientId, title, value) {
         if (record && typeof record === "object") {
             let keys = null;
             try {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 keys = Object.keys(JSON.parse(JSON.stringify(record)));
             }
             catch (_) {
@@ -1927,6 +1929,13 @@ function createDataChannelEvent(channel) {
     event.datachannel = channel;
     return event;
 }
+function parseDataChannelEventData(eventData, compress) {
+    if (compress) {
+        const unzlibMessage = unzlibSync(new Uint8Array(eventData));
+        return new TextDecoder().decode(unzlibMessage);
+    }
+    return eventData;
+}
 
 /**
  * Sora との WebRTC 接続を扱う基底クラス
@@ -2000,6 +2009,8 @@ class ConnectionBase {
         };
         this.signalingSwitched = false;
         this.signalingOfferMessageDataChannels = {};
+        this.connectedSignalingUrl = "";
+        this.contactSignalingUrl = "";
     }
     /**
      * SendRecv Object で発火するイベントのコールバックを設定するメソッド
@@ -2179,28 +2190,9 @@ class ConnectionBase {
         await transceiver.sender.replaceTrack(videoTrack);
     }
     /**
-     * stream を停止するメソッド
-     */
-    stopStream() {
-        return new Promise((resolve, _) => {
-            if (this.debug) {
-                console.warn("@deprecated closing MediaStream in disconnect will be removed in a future version. Close every track in the MediaStream by yourself.");
-            }
-            if (!this.stream) {
-                return resolve();
-            }
-            this.stream.getTracks().forEach((t) => {
-                t.stop();
-            });
-            this.stream = null;
-            return resolve();
-        });
-    }
-    /**
      * connect 処理中に例外が発生した場合の切断処理をするメソッド
      */
-    async signalingTerminate() {
-        await this.stopStream();
+    signalingTerminate() {
         for (const key of Object.keys(this.soraDataChannels)) {
             const dataChannel = this.soraDataChannels[key];
             if (dataChannel) {
@@ -2225,9 +2217,8 @@ class ConnectionBase {
      *
      * @param title - disconnect callback に渡すイベントのタイトル
      */
-    async abendPeerConnectionState(title) {
+    abendPeerConnectionState(title) {
         this.clearMonitorIceConnectionStateChange();
-        await this.stopStream();
         // callback を止める
         if (this.pc) {
             this.pc.ondatachannel = null;
@@ -2290,7 +2281,6 @@ class ConnectionBase {
      */
     async abend(title, params) {
         this.clearMonitorIceConnectionStateChange();
-        await this.stopStream();
         // callback を止める
         if (this.pc) {
             this.pc.ondatachannel = null;
@@ -2396,6 +2386,8 @@ class ConnectionBase {
         };
         this.signalingSwitched = false;
         this.signalingOfferMessageDataChannels = {};
+        this.contactSignalingUrl = "";
+        this.connectedSignalingUrl = "";
         this.clearConnectionTimeout();
     }
     /**
@@ -2584,7 +2576,6 @@ class ConnectionBase {
      */
     async disconnect() {
         this.clearMonitorIceConnectionStateChange();
-        await this.stopStream();
         // callback を止める
         if (this.pc) {
             this.pc.ondatachannel = null;
@@ -2715,7 +2706,7 @@ class ConnectionBase {
                     const ws = new WebSocket(signalingUrl);
                     // 一定時間経過しても反応がなかった場合は処理を中断する
                     const timerId = setTimeout(() => {
-                        this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                        this.writeWebSocketSignalingLog("signaling-url-candidate", {
                             type: "timeout",
                             url: ws.url,
                         });
@@ -2728,7 +2719,7 @@ class ConnectionBase {
                         }
                     }, this.signalingCandidateTimeout);
                     ws.onclose = (event) => {
-                        this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                        this.writeWebSocketSignalingLog("signaling-url-candidate", {
                             type: "close",
                             url: ws.url,
                             message: `WebSocket closed`,
@@ -2742,7 +2733,7 @@ class ConnectionBase {
                         reject();
                     };
                     ws.onerror = (_) => {
-                        this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                        this.writeWebSocketSignalingLog("signaling-url-candidate", {
                             type: "error",
                             url: ws.url,
                             message: `Failed to connect WebSocket`,
@@ -2758,7 +2749,7 @@ class ConnectionBase {
                         if (ws) {
                             clearInterval(timerId);
                             if (resolved) {
-                                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                                this.writeWebSocketSignalingLog("signaling-url-candidate", {
                                     type: "open",
                                     url: ws.url,
                                     selected: false,
@@ -2770,7 +2761,7 @@ class ConnectionBase {
                                 reject();
                             }
                             else {
-                                this.writeWebSocketSignalingLog("signaling-url-canidate", {
+                                this.writeWebSocketSignalingLog("signaling-url-candidate", {
                                     type: "open",
                                     url: ws.url,
                                     selected: true,
@@ -2815,12 +2806,12 @@ class ConnectionBase {
             this.writeWebSocketSignalingLog("new-websocket", ws.url);
             // websocket の各 callback を設定する
             ws.binaryType = "arraybuffer";
-            ws.onclose = async (event) => {
+            ws.onclose = (event) => {
                 const error = new ConnectError(`Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`);
                 error.code = event.code;
                 error.reason = event.reason;
                 this.writeWebSocketTimelineLog("onclose", error);
-                await this.signalingTerminate();
+                this.signalingTerminate();
                 reject(error);
             };
             ws.onmessage = async (event) => {
@@ -2830,10 +2821,14 @@ class ConnectionBase {
                     this.signalingOnMessageE2EE(event.data);
                     return;
                 }
+                if (typeof event.data !== "string") {
+                    throw new Error("Received invalid signaling data");
+                }
                 const message = JSON.parse(event.data);
                 if (message.type == "offer") {
                     this.writeWebSocketSignalingLog("onmessage-offer", message);
                     this.signalingOnMessageTypeOffer(message);
+                    this.connectedSignalingUrl = ws.url;
                     resolve(message);
                 }
                 else if (message.type == "update") {
@@ -2894,6 +2889,11 @@ class ConnectionBase {
                     ws.send(JSON.stringify(signalingMessage));
                     this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage);
                     this.ws = ws;
+                    // 初回に接続した URL を状態管理する
+                    if (!redirect) {
+                        this.contactSignalingUrl = ws.url;
+                        this.writeWebSocketSignalingLog("contact-signaling-url", this.contactSignalingUrl);
+                    }
                 }
             })();
         });
@@ -3110,18 +3110,18 @@ class ConnectionBase {
                     return;
                 }
                 this.clearMonitorSignalingWebSocketEvent();
-                this.ws.onclose = async (event) => {
+                this.ws.onclose = (event) => {
                     const error = new ConnectError(`Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`);
                     error.code = event.code;
                     error.reason = event.reason;
                     this.writeWebSocketTimelineLog("onclose", error);
-                    await this.signalingTerminate();
+                    this.signalingTerminate();
                     reject(error);
                 };
-                this.ws.onerror = async (_) => {
+                this.ws.onerror = (_) => {
                     const error = new ConnectError(`Signaling failed. WebSocket onerror was called`);
                     this.writeWebSocketSignalingLog("onerror", error);
-                    await this.signalingTerminate();
+                    this.signalingTerminate();
                     reject(error);
                 };
             }, 100);
@@ -3156,7 +3156,7 @@ class ConnectionBase {
         if (!this.pc) {
             return;
         }
-        this.pc.oniceconnectionstatechange = async (_) => {
+        this.pc.oniceconnectionstatechange = (_) => {
             // connectionState が undefined の場合は iceConnectionState を見て判定する
             if (this.pc && this.pc.connectionState === undefined) {
                 this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
@@ -3168,19 +3168,19 @@ class ConnectionBase {
                 clearTimeout(this.monitorIceConnectionStateChangeTimerId);
                 // iceConnectionState "failed" で切断する
                 if (this.pc.iceConnectionState === "failed") {
-                    await this.abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED");
+                    this.abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED");
                 }
                 // iceConnectionState "disconnected" になってから 10000ms の間変化がない場合切断する
                 else if (this.pc.iceConnectionState === "disconnected") {
-                    this.monitorIceConnectionStateChangeTimerId = setTimeout(async () => {
+                    this.monitorIceConnectionStateChangeTimerId = setTimeout(() => {
                         if (this.pc && this.pc.iceConnectionState === "disconnected") {
-                            await this.abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT");
+                            this.abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT");
                         }
                     }, 10000);
                 }
             }
         };
-        this.pc.onconnectionstatechange = async (_) => {
+        this.pc.onconnectionstatechange = (_) => {
             if (this.pc) {
                 this.writePeerConnectionTimelineLog("onconnectionstatechange", {
                     connectionState: this.pc.connectionState,
@@ -3188,7 +3188,7 @@ class ConnectionBase {
                     iceGatheringState: this.pc.iceGatheringState,
                 });
                 if (this.pc.connectionState === "failed") {
-                    await this.abendPeerConnectionState("CONNECTION-STATE-FAILED");
+                    this.abendPeerConnectionState("CONNECTION-STATE-FAILED");
                 }
             }
         };
@@ -3199,7 +3199,7 @@ class ConnectionBase {
     setConnectionTimeout() {
         return new Promise((_, reject) => {
             if (0 < this.connectionTimeout) {
-                this.connectionTimeoutTimerId = setTimeout(async () => {
+                this.connectionTimeoutTimerId = setTimeout(() => {
                     if (!this.pc ||
                         (this.pc && this.pc.connectionState !== undefined && this.pc.connectionState !== "connected")) {
                         const error = new Error();
@@ -3209,7 +3209,7 @@ class ConnectionBase {
                         this.writePeerConnectionTimelineLog("signaling-connection-timeout", {
                             connectionTimeout: this.connectionTimeout,
                         });
-                        await this.signalingTerminate();
+                        this.signalingTerminate();
                         reject(error);
                     }
                 }, this.connectionTimeout);
@@ -3309,9 +3309,6 @@ class ConnectionBase {
     }
     /**
      * createOffer 処理をするメソッド
-     *
-     * @param eventType - イベントタイプ
-     * @param data - イベントデータ
      *
      * @returns
      * 生成した RTCSessionDescription を返します
@@ -3552,6 +3549,9 @@ class ConnectionBase {
      */
     onDataChannel(dataChannelEvent) {
         const dataChannel = dataChannelEvent.channel;
+        dataChannel.bufferedAmountLowThreshold = 65536;
+        dataChannel.binaryType = "arraybuffer";
+        this.soraDataChannels[dataChannel.label] = dataChannel;
         this.writeDataChannelTimelineLog("ondatachannel", dataChannel, createDataChannelData(dataChannel));
         // onbufferedamountlow
         dataChannelEvent.channel.onbufferedamountlow = (event) => {
@@ -3561,9 +3561,6 @@ class ConnectionBase {
         // onopen
         dataChannelEvent.channel.onopen = (event) => {
             const channel = event.currentTarget;
-            channel.bufferedAmountLowThreshold = 65536;
-            channel.binaryType = "arraybuffer";
-            this.soraDataChannels[channel.label] = channel;
             this.trace("OPEN DATA CHANNEL", channel.label);
             if (channel.label === "signaling" && this.ws) {
                 this.writeDataChannelSignalingLog("onopen", channel);
@@ -3590,12 +3587,13 @@ class ConnectionBase {
         if (dataChannelEvent.channel.label === "signaling") {
             dataChannelEvent.channel.onmessage = async (event) => {
                 const channel = event.currentTarget;
-                let data = event.data;
-                if (this.signalingOfferMessageDataChannels.signaling &&
-                    this.signalingOfferMessageDataChannels.signaling.compress === true) {
-                    const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-                    data = new TextDecoder().decode(unzlibMessage);
+                const label = channel.label;
+                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+                if (!dataChannelSettings) {
+                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
+                    return;
                 }
+                const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
                 const message = JSON.parse(data);
                 this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message);
                 if (message.type === "re-offer") {
@@ -3606,12 +3604,13 @@ class ConnectionBase {
         else if (dataChannelEvent.channel.label === "notify") {
             dataChannelEvent.channel.onmessage = (event) => {
                 const channel = event.currentTarget;
-                let data = event.data;
-                if (this.signalingOfferMessageDataChannels.notify &&
-                    this.signalingOfferMessageDataChannels.notify.compress === true) {
-                    const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-                    data = new TextDecoder().decode(unzlibMessage);
+                const label = channel.label;
+                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+                if (!dataChannelSettings) {
+                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
+                    return;
                 }
+                const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
                 const message = JSON.parse(data);
                 if (message.event_type === "connection.created") {
                     this.writeDataChannelTimelineLog("notify-connection.created", channel, message);
@@ -3624,12 +3623,14 @@ class ConnectionBase {
         }
         else if (dataChannelEvent.channel.label === "push") {
             dataChannelEvent.channel.onmessage = (event) => {
-                let data = event.data;
-                if (this.signalingOfferMessageDataChannels.push &&
-                    this.signalingOfferMessageDataChannels.push.compress === true) {
-                    const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-                    data = new TextDecoder().decode(unzlibMessage);
+                const channel = event.currentTarget;
+                const label = channel.label;
+                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+                if (!dataChannelSettings) {
+                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
+                    return;
                 }
+                const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
                 const message = JSON.parse(data);
                 this.callbacks.push(message, "datachannel");
             };
@@ -3644,12 +3645,14 @@ class ConnectionBase {
         }
         else if (dataChannelEvent.channel.label === "stats") {
             dataChannelEvent.channel.onmessage = async (event) => {
-                let data = event.data;
-                if (this.signalingOfferMessageDataChannels.stats &&
-                    this.signalingOfferMessageDataChannels.stats.compress === true) {
-                    const unzlibMessage = unzlibSync(new Uint8Array(event.data));
-                    data = new TextDecoder().decode(unzlibMessage);
+                const channel = event.currentTarget;
+                const label = channel.label;
+                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+                if (!dataChannelSettings) {
+                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
+                    return;
                 }
+                const data = parseDataChannelEventData(event.data, dataChannelSettings.compress);
                 const message = JSON.parse(data);
                 if (message.type === "req-stats") {
                     const stats = await this.getStats();
@@ -3659,7 +3662,14 @@ class ConnectionBase {
         }
         else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
             dataChannelEvent.channel.onmessage = (event) => {
-                if (event.target === null) {
+                if (event.currentTarget === null) {
+                    return;
+                }
+                const channel = event.currentTarget;
+                const label = channel.label;
+                const dataChannelSettings = this.signalingOfferMessageDataChannels[label];
+                if (!dataChannelSettings) {
+                    console.warn(`Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`);
                     return;
                 }
                 const dataChannel = event.target;
@@ -3674,8 +3684,7 @@ class ConnectionBase {
                     console.warn("Received onmessage event data is not of type String or ArrayBuffer.");
                 }
                 if (data !== undefined) {
-                    const settings = this.signalingOfferMessageDataChannels[dataChannel.label];
-                    if (settings !== undefined && settings.compress === true) {
+                    if (dataChannelSettings.compress === true) {
                         data = unzlibSync(new Uint8Array(data)).buffer;
                     }
                     this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data));
@@ -3809,6 +3818,9 @@ class ConnectionBase {
         if (dataChannel === undefined) {
             throw new Error("Could not find DataChannel");
         }
+        if (dataChannel.readyState !== "open") {
+            throw new Error("Messaging DataChannel is not open");
+        }
         const settings = this.signalingOfferMessageDataChannels[label];
         if (settings !== undefined && settings.compress === true) {
             const zlibMessage = zlibSync(message, {});
@@ -3855,15 +3867,6 @@ class ConnectionBase {
      */
     get signalingUrl() {
         return this.signalingUrlCandidates;
-    }
-    /**
-     * 接続中のシグナリング URL
-     */
-    get connectedSignalingUrl() {
-        if (!this.ws) {
-            return "";
-        }
-        return this.ws.url;
     }
     /**
      * DataChannel メッセージング用の DataChannel 情報のリスト
@@ -3998,6 +4001,7 @@ class ConnectionPublisher extends ConnectionBase {
                     return;
                 }
                 const data = {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     "stream.id": stream.id,
                     id: event.track.id,
                     label: event.track.label,
@@ -4074,8 +4078,6 @@ class ConnectionSubscriber extends ConnectionBase {
      * await recvonly.connect();
      * ```
      *
-     * @param stream - メディアストリーム
-     *
      * @public
      */
     async connect() {
@@ -4108,8 +4110,6 @@ class ConnectionSubscriber extends ConnectionBase {
     }
     /**
      * シングルストリームで Sora へ接続するメソッド
-     *
-     * @param stream - メディアストリーム
      */
     async singleStream() {
         await this.disconnect();
@@ -4126,6 +4126,7 @@ class ConnectionSubscriber extends ConnectionBase {
                     return;
                 }
                 const data = {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     "stream.id": streamId,
                     id: event.track.id,
                     label: event.track.label,
@@ -4143,7 +4144,8 @@ class ConnectionSubscriber extends ConnectionBase {
                     this.callbacks.removetrack(event);
                     if (event.target) {
                         // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-                        const index = this.remoteConnectionIds.indexOf(event.target.id);
+                        const targetId = event.target.id;
+                        const index = this.remoteConnectionIds.indexOf(targetId);
                         if (-1 < index) {
                             delete this.remoteConnectionIds[index];
                             // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
@@ -4170,8 +4172,6 @@ class ConnectionSubscriber extends ConnectionBase {
     }
     /**
      * マルチストリームで Sora へ接続するメソッド
-     *
-     * @param stream - メディアストリーム
      */
     async multiStream() {
         await this.disconnect();
@@ -4190,6 +4190,7 @@ class ConnectionSubscriber extends ConnectionBase {
                     return;
                 }
                 const data = {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     "stream.id": stream.id,
                     id: event.track.id,
                     label: event.track.label,
@@ -4207,7 +4208,8 @@ class ConnectionSubscriber extends ConnectionBase {
                     this.callbacks.removetrack(event);
                     if (event.target) {
                         // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-                        const index = this.remoteConnectionIds.indexOf(event.target.id);
+                        const targetId = event.target.id;
+                        const index = this.remoteConnectionIds.indexOf(targetId);
                         if (-1 < index) {
                             delete this.remoteConnectionIds[index];
                             // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
@@ -4286,7 +4288,9 @@ class SoraConnection {
      * @public
      */
     sendrecv(channelId, metadata = null, options = { audio: true, video: true }) {
-        return new ConnectionPublisher(this.signalingUrlCandidates, "sendrecv", channelId, metadata, options, this.debug);
+        // sendrecv の場合、multistream に初期値を指定する
+        const sendrecvOptions = Object.assign({ multistream: true }, options);
+        return new ConnectionPublisher(this.signalingUrlCandidates, "sendrecv", channelId, metadata, sendrecvOptions, this.debug);
     }
     /**
      * role sendonly で接続するための Connecion インスタンスを生成するメソッド
@@ -4381,7 +4385,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2021.2.3";
+        return "2022.1.0";
     },
     /**
      * WebRTC のユーティリティ関数群

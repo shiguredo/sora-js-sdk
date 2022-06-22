@@ -52,6 +52,7 @@ export type SignalingConnectMessage = {
   role: Role;
   channel_id: string;
   client_id?: string;
+  bundle_id?: string;
   metadata?: JSONType;
   signaling_notify_metadata?: JSONType;
   multistream?: boolean;
@@ -95,6 +96,7 @@ export type SignalingOfferMessage = {
   sdp: string;
   client_id: string;
   connection_id: string;
+  bundle_id?: string;
   metadata?: JSONType;
   config?: RTCConfiguration;
   encodings?: RTCRtpEncodingParameters[];
@@ -296,6 +298,7 @@ export type ConnectionOptions = {
   disconnectWaitTimeout?: number;
   signalingCandidateTimeout?: number;
   dataChannels?: DataChannelConfiguration[];
+  bundleId?: string;
 };
 
 export type Callbacks = {

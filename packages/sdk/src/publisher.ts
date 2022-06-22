@@ -95,6 +95,7 @@ export default class ConnectionPublisher extends ConnectionBase {
           return;
         }
         const data = {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           "stream.id": stream.id,
           id: event.track.id,
           label: event.track.label,
@@ -118,7 +119,7 @@ export default class ConnectionPublisher extends ConnectionBase {
           this.callbacks.removetrack(event);
           if (event.target) {
             // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-            const index = this.remoteConnectionIds.indexOf(event.target.id);
+            const index = this.remoteConnectionIds.indexOf(event.target.id as string);
             if (-1 < index) {
               delete this.remoteConnectionIds[index];
               // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す

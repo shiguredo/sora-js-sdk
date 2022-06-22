@@ -12,21 +12,15 @@ export default class ConnectionSubscriber extends ConnectionBase {
      * await recvonly.connect();
      * ```
      *
-     * @param stream - メディアストリーム
-     *
      * @public
      */
     connect(): Promise<MediaStream | void>;
     /**
      * シングルストリームで Sora へ接続するメソッド
-     *
-     * @param stream - メディアストリーム
      */
     private singleStream;
     /**
      * マルチストリームで Sora へ接続するメソッド
-     *
-     * @param stream - メディアストリーム
      */
     private multiStream;
 }

@@ -75,7 +75,8 @@ const WORKER_SCRIPT = "__WORKER_SCRIPT__";
 
 class SoraE2EE {
   worker: Worker | null;
-  onWorkerDisconnect: (() => void) | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onWorkerDisconnect: (() => any) | null;
 
   constructor() {
     // 対応しているかどうかの判断

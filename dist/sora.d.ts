@@ -84,6 +84,9 @@ declare class SoraConnection {
      */
     get signalingUrl(): string | string[];
 }
+/**
+ * Sora JS SDK package
+ */
 declare const _default: {
     /**
      * E2EE で使用する WASM の読み込みを行うメソッド
@@ -127,8 +130,5 @@ declare const _default: {
         applyMediaStreamConstraints: typeof applyMediaStreamConstraints;
     };
 };
-/**
- * Sora JS SDK package
- */
 export default _default;
 export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, DataChannelConfiguration, DataChannelDirection, DataChannelEvent, DataChannelMessageEvent, JSONType, Role, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, SignalingNotifyConnectionUpdated, SignalingNotifyMessage, SignalingNotifyMetadata, SignalingNotifyNetworkStatus, SignalingNotifySpotlightChanged, SignalingNotifySpotlightFocused, SignalingNotifySpotlightUnfocused, SignalingPushMessage, Simulcast, SimulcastRid, SoraAbendTitle, SoraCloseEvent, SoraCloseEventInitDict, SoraCloseEventType, SoraConnection, SpotlightFocusRid, TimelineEvent, TimelineEventLogType, TransportType, VideoCodecType, };

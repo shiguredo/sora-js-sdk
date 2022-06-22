@@ -15,3 +15,4 @@ export declare function createDataChannelData(channel: RTCDataChannel): Record<s
 export declare function createTimelineEvent(eventType: string, data: unknown, logType: TimelineEventLogType, dataChannelId?: number | null, dataChannelLabel?: string): TimelineEvent;
 export declare function createDataChannelMessageEvent(label: string, data: ArrayBuffer): DataChannelMessageEvent;
 export declare function createDataChannelEvent(channel: DataChannelConfiguration): DataChannelEvent;
+export declare function parseDataChannelEventData(eventData: unknown, compress: boolean): string;
