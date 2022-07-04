@@ -30,7 +30,7 @@
   "devDependencies": {
     "npm-check-updates": "^14.0.1",
     "serve": "^13.0.2",
-    "typedoc": "^0.22.17"
+    "typedoc": "^0.23.5"
   },
   "resolutions": {
     "get-pkg-repo": "4.1.2"
