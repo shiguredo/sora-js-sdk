@@ -22,8 +22,8 @@ Please read https://github.com/shiguredo/oss before use.
 
 - sora.js
     - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
-- sora.min.js
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.min.js
+- sora.mjs
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.mjs
 
 ## システム条件
 
