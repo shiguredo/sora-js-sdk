@@ -32,14 +32,12 @@ Please read https://github.com/shiguredo/oss before use.
 
 ## サンプル
 
-- Sendonly/Recvonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendonly_recvonly.html
 - Multistream Sendrecv
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/multistream_sendrecv.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendrecv.html
 - Multistream Sendonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/multistream_sendonly.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendonly.html
 - Multistream Recvonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/multistream_recvonly.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/recvonly.html
 - Spotlight Sendrecv
     - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_sendrecv.html
 - Spotlight Recvonly
