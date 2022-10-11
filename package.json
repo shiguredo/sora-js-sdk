@@ -32,7 +32,7 @@
     "typedoc": "0.23.16"
   },
   "resolutions": {
-    "get-pkg-repo": "4.1.2"
+    "get-pkg-repo": "4.2.1"
   },
   "workspaces": [
     "packages/go-wasm",
