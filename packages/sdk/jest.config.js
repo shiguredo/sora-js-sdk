@@ -165,7 +165,12 @@ module.exports = {
 
   // A map from regular expressions to paths to transformers
   transform: {
-    "^.+\\.ts$": "<rootDir>/node_modules/ts-jest"
+    // "^.+\\.ts$": "<rootDir>/node_modules/ts-jest"
+    // ts-jest を 29.0.2 から 29.0.3 にあげたときにエラーになるようになった
+    // ts-jest の差分と jest のドキュメントを見ると文法が変わったっぽい
+    // https://kulshekhar.github.io/ts-jest/docs/getting-started/options
+    // 以下のような書き方でテストが通るようになった
+    "^.+\\.ts$": ["ts-jest", {}]
   },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
