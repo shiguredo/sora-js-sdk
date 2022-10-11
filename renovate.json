@@ -7,11 +7,13 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "platformAutomerge": true,
       "automerge": true
     },
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchPackagePatterns": ["eslint"],
+      "platformAutomerge": true,
       "groupName": "eslint",
       "automerge": true
     },
@@ -19,6 +21,7 @@
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchPackagePatterns": ["rollup"],
       "groupName": "rollup",
+      "platformAutomerge": true,
       "automerge": true
     }
   ]
