@@ -13,8 +13,8 @@
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchPackagePatterns": ["eslint"],
-      "platformAutomerge": true,
       "groupName": "eslint",
+      "platformAutomerge": true,
       "automerge": true
     },
     {
