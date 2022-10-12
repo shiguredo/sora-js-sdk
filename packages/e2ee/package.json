@@ -9,7 +9,7 @@
   "types": "dist/sora_e2ee.d.ts",
   "scripts": {
     "build": "npm run build:worker && npm run build:development",
-    "build:development": "NODE_ENV=development rollup -c rollup.config.js",
+    "build:development": "NODE_ENV=development rollup -c rollup.config.mjs --bundleConfigAsCjs",
     "build:worker": "npx tsc --project tsconfig.worker.json",
     "fmt": "prettier --write src",
     "lint": "eslint --ext .ts ./src",
@@ -25,7 +25,7 @@
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-prettier": "4.2.1",
     "prettier": "2.7.1",
-    "rollup": "2.79.1",
+    "rollup": "3.0.0",
     "typescript": "4.8.4"
   },
   "dependencies": {
