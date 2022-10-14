@@ -9,7 +9,13 @@
 - FIX
     - バグ修正
 
+## develop
+
+- [CHANGE] ts-jest を @swc/jest に変更する
+    - @voluntas
+
 ## 2022.1.0
+
 - [CHANGE] 切断処理時に MediaStream の停止処理をしないように変更する
     - @yuitowest
 - [CHANGE] ConnectionOptions からシグナリング type: connect メッセージを生成する仕組みを変更する

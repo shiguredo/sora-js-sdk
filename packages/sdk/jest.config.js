@@ -170,7 +170,7 @@ module.exports = {
     // ts-jest の差分と jest のドキュメントを見ると文法が変わったっぽい
     // https://kulshekhar.github.io/ts-jest/docs/getting-started/options
     // 以下のような書き方でテストが通るようになった
-    "^.+\\.ts$": ["ts-jest", {}]
+    "^.+\\.ts$": ["@swc/jest"]
   },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
