@@ -12,7 +12,7 @@
     "@rollup/plugin-node-resolve": "15.0.0",
     "@rollup/plugin-replace": "5.0.0",
     "@rollup/plugin-typescript": "9.0.1",
-    "@swc/core": "1.3.8",
+    "@swc/core": "1.3.9",
     "@swc/jest": "0.2.23",
     "@types/jest": "29.1.2",
     "@typescript-eslint/eslint-plugin": "5.40.0",
