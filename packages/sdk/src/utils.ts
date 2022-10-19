@@ -181,7 +181,6 @@ export function createSignalingMessage(
   const audioPropertyKeys = ["audioCodecType", "audioBitRate"];
   const audioOpusParamsPropertyKeys = [
     "audioOpusParamsChannels",
-    "audioOpusParamsClockRate",
     "audioOpusParamsMaxplaybackrate",
     "audioOpusParamsStereo",
     "audioOpusParamsSpropStereo",
@@ -236,9 +235,6 @@ export function createSignalingMessage(
     message.audio.opus_params = {};
     if ("audioOpusParamsChannels" in copyOptions) {
       message.audio.opus_params.channels = copyOptions.audioOpusParamsChannels;
-    }
-    if ("audioOpusParamsClockRate" in copyOptions) {
-      message.audio.opus_params.clock_rate = copyOptions.audioOpusParamsClockRate;
     }
     if ("audioOpusParamsMaxplaybackrate" in copyOptions) {
       message.audio.opus_params.maxplaybackrate = copyOptions.audioOpusParamsMaxplaybackrate;

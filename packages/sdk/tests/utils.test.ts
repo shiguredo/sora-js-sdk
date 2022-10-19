@@ -167,18 +167,6 @@ test("createSignalingMessage audioOpusParamsChannels", () => {
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(expectedMessage);
 });
 
-test("createSignalingMessage audioOpusParamsClockRate", () => {
-  const options = {
-    audioOpusParamsClockRate: 48000,
-  };
-  const expectedMessage = Object.assign({}, baseExpectedMessage, { audio: {
-    opus_params: {
-      clock_rate: options.audioOpusParamsClockRate,
-    },
-  }});
-  expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(expectedMessage);
-});
-
 test("createSignalingMessage audioOpusParamsMaxplaybackrate", () => {
   const options = {
     audioOpusParamsMaxplaybackrate: 48000,

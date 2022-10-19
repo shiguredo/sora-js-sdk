@@ -12,7 +12,6 @@ export declare type SignalingAudio = boolean | {
     bit_rate?: number;
     opus_params?: {
         channels?: number;
-        clock_rate?: number;
         maxplaybackrate?: number;
         minptime?: number;
         ptime?: number;
@@ -222,7 +221,6 @@ export declare type ConnectionOptions = {
     audioCodecType?: AudioCodecType;
     audioBitRate?: number;
     audioOpusParamsChannels?: number;
-    audioOpusParamsClockRate?: number;
     audioOpusParamsMaxplaybackrate?: number;
     audioOpusParamsStereo?: boolean;
     audioOpusParamsSpropStereo?: boolean;
