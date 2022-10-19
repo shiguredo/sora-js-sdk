@@ -13,6 +13,8 @@
 
 - [CHANGE] ts-jest を @swc/jest に変更する
     - @voluntas
+- [FIX] 廃止になった opus_params の clock_rate を削除する
+    - @voluntas
 
 ## 2022.1.0
 
