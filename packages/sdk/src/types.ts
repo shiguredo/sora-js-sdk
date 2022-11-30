@@ -6,7 +6,7 @@ export type SpotlightFocusRid = "none" | SimulcastRid;
 
 export type Simulcast = boolean | { rid: SimulcastRid };
 
-export type AudioCodecType = "OPUS";
+export type AudioCodecType = "OPUS" | "LYRA";
 
 export type SignalingAudio =
   | boolean
@@ -23,6 +23,9 @@ export type SignalingAudio =
         useinbandfec?: boolean;
         usedtx?: boolean;
       };
+
+      // TODO:
+      lyra_params?: {};
     };
 
 export type VideoCodecType = "VP9" | "VP8" | "AV1" | "H264" | "H265";

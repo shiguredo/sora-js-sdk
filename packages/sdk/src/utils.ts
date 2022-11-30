@@ -228,6 +228,13 @@ export function createSignalingMessage(
   const hasAudioOpusParamsProperty = Object.keys(copyOptions).some((key) => {
     return 0 <= audioOpusParamsPropertyKeys.indexOf(key);
   });
+  // TODO
+  if (message.audio) {
+    if (typeof message.audio != "object") {
+      message.audio = {};
+    }
+    message.audio.lyra_params = { version: "1.3.0" };
+  }
   if (message.audio && hasAudioOpusParamsProperty) {
     if (typeof message.audio != "object") {
       message.audio = {};

@@ -30,7 +30,10 @@ const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
 const options = {
-  multistream: true
+    multistream: true,
+    audio: true,
+    video: true,
+    audioCodecType: "LYRA",
 }
 const sendrecv1 = sora.sendrecv(channelId, null, options);
 sendrecv1.on('track', (event) => {
