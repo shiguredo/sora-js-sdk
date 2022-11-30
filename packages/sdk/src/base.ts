@@ -1228,6 +1228,12 @@ export default class ConnectionBase {
     if (!this.pc) {
       return;
     }
+    console.log(message.sdp);
+    message.sdp = message.sdp
+      .replace(/lyra[/]/g, "L16/")
+      .replace(/a=fmtp:109 version/g, "a=fmtp:109 ptime=20\r\na=fmtp:109 version");
+    console.log("------------------------------");
+    console.log(message.sdp);
     const sessionDescription = new RTCSessionDescription({ type: "offer", sdp: message.sdp });
     await this.pc.setRemoteDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
