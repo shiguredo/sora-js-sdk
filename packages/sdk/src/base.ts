@@ -1240,11 +1240,11 @@ export default class ConnectionBase {
     //      .replace(/a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g, "a=fmtp:109 ptime=20");
 
     message.sdp = message.sdp
-      .replace(/SAVPF 109/g, "SAVPF 111 109")
-      .replace(/lyra[/]16000[/]1/g, "opus/48000/2")
+      .replace(/SAVPF 109/g, "SAVPF 109 111")
+      .replace(/109 lyra[/]16000[/]1/g, "111 opus/48000/2")
       .replace(
         /a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g,
-        "a=fmtp:109 minptime=10;useinbandfec=1\r\na=rtpmap:111 L16/16000/1\r\na=fmtp:111 ptime=20"
+        "a=fmtp:111 minptime=10;useinbandfec=1\r\na=rtpmap:109 L16/16000/1\r\na=fmtp:109 ptime=20"
       );
 
     console.log("set remote description");
@@ -1299,10 +1299,10 @@ export default class ConnectionBase {
 
       // TODO: この replace は不要？
       sessionDescription.sdp = sessionDescription.sdp
-        .replace("SAVPF 109", "SAVPF 111")
-        .replace("a=rtpmap:109 opus/48000/2", "a=rtpmap:111 L16/16000/1")
-        .replace("a=fmtp:109 minptime=10;useinbandfec=1", "a=fmtp:111 ptime=20")
-        .replace(/a=rtpmap:111 L16[/]16000\r\n/m, "")
+        //.replace("SAVPF 109", "SAVPF 111")
+        .replace("a=rtpmap:109 opus/48000/2", "a=rtpmap:109 L16/16000/1")
+        .replace("a=fmtp:109 minptime=10;useinbandfec=1", "a=fmtp:109 ptime=20")
+        .replace(/a=rtpmap:109 L16[/]16000\r\n/m, "")
         .replace(/a=ptime:20\r\n/m, "");
     }
     console.log(sessionDescription.sdp);
@@ -1319,8 +1319,8 @@ export default class ConnectionBase {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
       const sdp = this.pc.localDescription.sdp
-        .replace("a=rtpmap:111 L16/16000", "a=rtpmap:111 lyra/16000/1")
-        .replace("a=ptime:20", "a=fmtp:111 version=1.3.0;bitrate=3200;usedtx=0");
+        .replace("a=rtpmap:109 L16/16000", "a=rtpmap:109 lyra/16000/1")
+        .replace("a=ptime:20", "a=fmtp:109 version=1.3.0;bitrate=3200;usedtx=0");
       console.log("answer sdp");
       console.log(sdp);
       const message = { type: "answer", sdp };
