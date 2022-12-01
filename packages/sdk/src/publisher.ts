@@ -1,4 +1,5 @@
 import ConnectionBase from "./base";
+import { LyraModule, LyraEncoder } from "@shiguredo/lyra-wasm";
 
 let NOW = undefined;
 let TOTAL_BYTES = 0;
@@ -152,6 +153,8 @@ export default class ConnectionPublisher extends ConnectionBase {
     });
     if (this.pc) {
       // lyra
+      const lyraModule = await LyraModule.load("./", "./");
+      const lyraEncoder = lyraModule.createEncoder({ sampleRate: 16000, bitrate: 3200 });
       this.pc.getSenders().forEach((sender) => {
         if (sender == undefined || sender.track == undefined) {
           console.log("skip");
@@ -166,7 +169,7 @@ export default class ConnectionPublisher extends ConnectionBase {
           // @ts-ignore
           const senderStreams = sender.createEncodedStreams();
           const transformStream = new TransformStream({
-            transform: encodeFunction,
+            transform: (encodedFrame, controller) => encodeFunction(lyraEncoder, encodedFrame, controller),
           });
           senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);
         }
@@ -190,28 +193,25 @@ export default class ConnectionPublisher extends ConnectionBase {
   }
 }
 
-function encodeFunction(encodedFrame, controller) {
+function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioFrame, controller) {
   if (NOW === undefined) {
     NOW = performance.now();
   }
-  // const inputDataArray = new Uint8Array(encodedFrame.data);
+  const rawDataI16 = new Int16Array(encodedFrame.data);
+  const rawDataF32 = new Float32Array(rawDataI16.length);
+  for (const [i, v] of rawDataI16.entries()) {
+    rawDataF32[i] = v / 0x7fff;
+  }
+  const encoded = lyraEncoder.encode(rawDataF32);
+  if (encoded === undefined) {
+    // dtx
+    throw Error("TODO");
+  }
+  encodedFrame.data = encoded.buffer;
 
-  // const inputBufferPtr = codecModule._malloc(encodedFrame.data.byteLength);
-  // const encodedBufferPtr = codecModule._malloc(1024);
+  // TODO: Handle DTX
+  // TODO: Reduce extra conversion between i16 and f32 (by updating lyra-wasm interface)
 
-  // codecModule.HEAPU8.set(inputDataArray, inputBufferPtr);
-  // const length = codecModule.encode(inputBufferPtr, inputDataArray.length, 16000, encodedBufferPtr);
-
-  // const newData = new ArrayBuffer(length);
-  // if (length > 0) {
-  //   const newDataArray = new Uint8Array(newData);
-  //   newDataArray.set(codecModule.HEAPU8.subarray(encodedBufferPtr, encodedBufferPtr + length));
-  // }
-
-  // codecModule._free(inputBufferPtr);
-  // codecModule._free(encodedBufferPtr);
-
-  // encodedFrame.data = newData;
   if (performance.now() - NOW > 1000) {
     console.log(`bps: ${(TOTAL_BYTES * 8 * 1000) / (performance.now() - NOW)}`);
     NOW = performance.now();
