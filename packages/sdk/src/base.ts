@@ -1171,7 +1171,8 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
-    if (this.e2ee) {
+    if (true) {
+      // TODO: this.e2ee) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
@@ -1181,6 +1182,8 @@ export default class ConnectionBase {
     }
     this.trace("PEER CONNECTION CONFIG", config);
     this.writePeerConnectionTimelineLog("new-peerconnection", config);
+    console.log(config);
+
     // @ts-ignore Chrome の場合は第2引数に goog オプションを渡すことができる
     this.pc = new window.RTCPeerConnection(config, this.constraints);
     this.pc.oniceconnectionstatechange = (_): void => {
@@ -1228,15 +1231,40 @@ export default class ConnectionBase {
     if (!this.pc) {
       return;
     }
-    console.log(message.sdp);
+    // message.sdp = message.sdp
+    //   .replace(/lyra[/]/g, "L16/")
+    //   .replace(/a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g, "a=fmtp:109 ptime=20");
+    // message.sdp = message.sdp
+    //   .replace(/lyra[/]/g, "L16/")
+    //   .replace(/a=fmtp:109 /g, "a=fmtp:109 ptime=20;");
+    //      .replace(/a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g, "a=fmtp:109 ptime=20");
+
     message.sdp = message.sdp
-      .replace(/lyra[/]/g, "L16/")
-      .replace(/a=fmtp:109 version/g, "a=fmtp:109 ptime=20\r\na=fmtp:109 version");
-    console.log("------------------------------");
+      .replace(/SAVPF 109/g, "SAVPF 111 109")
+      .replace(/lyra[/]16000[/]1/g, "opus/48000/2")
+      .replace(
+        /a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g,
+        "a=fmtp:109 minptime=10;useinbandfec=1\r\na=rtpmap:111 L16/16000/1\r\na=fmtp:111 ptime=20"
+      );
+
+    console.log("set remote description");
     console.log(message.sdp);
+    console.log("------------------------------");
+
     const sessionDescription = new RTCSessionDescription({ type: "offer", sdp: message.sdp });
     await this.pc.setRemoteDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
+
+    // @ts-ignore
+    // const sender = this.pc.getSenders()[0];
+    // const senderStreams = sender.createEncodedStreams();
+    // const transformStream = new TransformStream({
+    //   transform: encodeFunction,
+    // });
+    // senderStreams.readable
+    //     .pipeThrough(transformStream)
+    //   .pipeTo(senderStreams.writable);
+
     return;
   }
 
@@ -1261,39 +1289,22 @@ export default class ConnectionBase {
         transceiver.direction = "sendrecv";
       }
     }
-    // simulcast の場合
-    if (this.options.simulcast && (this.role === "sendrecv" || this.role === "sendonly")) {
-      const transceiver = this.pc.getTransceivers().find((t) => {
-        if (t.mid === null) {
-          return;
-        }
-        if (t.sender.track === null) {
-          return;
-        }
-        if (t.currentDirection !== null && t.currentDirection !== "sendonly") {
-          return;
-        }
-        if (this.mids.video !== "" && this.mids.video === t.mid) {
-          return t;
-        }
-        if (0 <= t.mid.indexOf("video")) {
-          return t;
-        }
-      });
-      if (transceiver) {
-        await this.setSenderParameters(transceiver, this.encodings);
-        await this.setRemoteDescription(message);
-        this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
-        // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
-        await this.setSenderParameters(transceiver, this.encodings);
-        const sessionDescription = await this.pc.createAnswer();
-        await this.pc.setLocalDescription(sessionDescription);
-        this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
-        return;
-      }
-    }
     const sessionDescription = await this.pc.createAnswer();
     this.writePeerConnectionTimelineLog("create-answer", sessionDescription);
+    console.log("set local description");
+    if (sessionDescription.sdp !== undefined) {
+      // sessionDescription.sdp = sessionDescription.sdp
+      //   .replace("a=rtpmap:109 opus/48000/2", "a=rtpmap:109 L16/16000/1")
+      //   .replace("a=fmtp:109 minptime=10;useinbandfec=1", "a=fmtp:109 ptime=20");
+
+      // TODO: この replace は不要？
+      sessionDescription.sdp = sessionDescription.sdp
+        .replace("SAVPF 109", "SAVPF 111")
+        .replace("a=rtpmap:109 opus/48000/2", "a=rtpmap:111 L16/16000/1")
+        .replace("a=fmtp:109 minptime=10;useinbandfec=1", "a=fmtp:111 ptime=20");
+    }
+    console.log(sessionDescription.sdp);
+    console.log("#########################");
     await this.pc.setLocalDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-local-description", sessionDescription);
     return;
@@ -1612,7 +1623,7 @@ export default class ConnectionBase {
    * 生成した RTCSessionDescription を返します
    */
   private async createOffer(): Promise<RTCSessionDescriptionInit> {
-    const config = { iceServers: [] };
+    const config = { iceServers: [], encodedInsertableStreams: true };
     const pc = new window.RTCPeerConnection(config);
     if (isSafari()) {
       pc.addTransceiver("video", { direction: "recvonly" });
@@ -1623,6 +1634,9 @@ export default class ConnectionBase {
       return offer;
     }
     const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+    console.log("offer sdp");
+    console.log(offer.sdp);
+    console.log("+++++++++++++++++++++++++++++++++++++++++++");
     pc.close();
     this.writePeerConnectionTimelineLog("create-offer", offer);
     return offer;
@@ -1701,6 +1715,7 @@ export default class ConnectionBase {
   private async signalingOnMessageTypeUpdate(message: SignalingUpdateMessage): Promise<void> {
     this.trace("SIGNALING UPDATE MESSGE", message);
     this.trace("UPDATE SDP", message.sdp);
+    console.log("@ update sdp");
     await this.setRemoteDescription(message);
     await this.createAnswer(message);
     this.sendUpdateAnswer();
@@ -1714,6 +1729,7 @@ export default class ConnectionBase {
   private async signalingOnMessageTypeReOffer(message: SignalingReOfferMessage): Promise<void> {
     this.trace("SIGNALING RE OFFER MESSGE", message);
     this.trace("RE OFFER SDP", message.sdp);
+    console.log("@ re offer");
     await this.setRemoteDescription(message);
     await this.createAnswer(message);
     this.sendReAnswer();

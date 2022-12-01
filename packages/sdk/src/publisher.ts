@@ -1,5 +1,8 @@
 import ConnectionBase from "./base";
 
+let NOW = undefined;
+let TOTAL_BYTES = 0;
+
 /**
  * Role が "sendonly" または "sendrecv" の場合に Sora との WebRTC 接続を扱うクラス
  */
@@ -55,6 +58,7 @@ export default class ConnectionPublisher extends ConnectionBase {
     const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
+    console.log("set4");
     await this.setRemoteDescription(signalingMessage);
     stream.getTracks().forEach((track) => {
       if (this.pc) {
@@ -64,6 +68,7 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
+    console.log("getSenders(1)");
     if (this.pc && this.e2ee) {
       this.pc.getSenders().forEach((sender) => {
         if (this.e2ee) {
@@ -137,15 +142,41 @@ export default class ConnectionPublisher extends ConnectionBase {
         this.callbacks.addstream(event);
       };
     }
+    console.log("set3");
     await this.setRemoteDescription(signalingMessage);
     stream.getTracks().forEach((track) => {
       if (this.pc) {
+        console.log("add track: " + track.kind);
         this.pc.addTrack(track, stream);
       }
     });
+    if (this.pc) {
+      // lyra
+      this.pc.getSenders().forEach((sender) => {
+        if (sender == undefined || sender.track == undefined) {
+          console.log("skip");
+          return;
+        }
+
+        if (sender.track.kind === "audio") {
+          console.log("set transform stream for audio");
+          NOW = undefined;
+          TOTAL_BYTES = 0;
+
+          // @ts-ignore
+          const senderStreams = sender.createEncodedStreams();
+          const transformStream = new TransformStream({
+            transform: encodeFunction,
+          });
+          senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);
+        }
+      });
+    }
+
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
+    console.log("getSenders(0)");
     if (this.pc && this.e2ee) {
       this.pc.getSenders().forEach((sender) => {
         if (this.e2ee) {
@@ -157,4 +188,37 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this.waitChangeConnectionStateConnected();
     return stream;
   }
+}
+
+function encodeFunction(encodedFrame, controller) {
+  if (NOW === undefined) {
+    NOW = performance.now();
+  }
+  // const inputDataArray = new Uint8Array(encodedFrame.data);
+
+  // const inputBufferPtr = codecModule._malloc(encodedFrame.data.byteLength);
+  // const encodedBufferPtr = codecModule._malloc(1024);
+
+  // codecModule.HEAPU8.set(inputDataArray, inputBufferPtr);
+  // const length = codecModule.encode(inputBufferPtr, inputDataArray.length, 16000, encodedBufferPtr);
+
+  // const newData = new ArrayBuffer(length);
+  // if (length > 0) {
+  //   const newDataArray = new Uint8Array(newData);
+  //   newDataArray.set(codecModule.HEAPU8.subarray(encodedBufferPtr, encodedBufferPtr + length));
+  // }
+
+  // codecModule._free(inputBufferPtr);
+  // codecModule._free(encodedBufferPtr);
+
+  // encodedFrame.data = newData;
+  if (performance.now() - NOW > 1000) {
+    console.log(`bps: ${(TOTAL_BYTES * 8 * 1000) / (performance.now() - NOW)}`);
+    NOW = performance.now();
+    TOTAL_BYTES = 0;
+  }
+  TOTAL_BYTES += encodedFrame.data.byteLength;
+
+  //console.log(encodedFrame.data.byteLength);
+  controller.enqueue(encodedFrame);
 }
