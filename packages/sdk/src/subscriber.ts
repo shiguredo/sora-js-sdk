@@ -118,6 +118,15 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
+        if (event.track.kind == "audio") {
+          console.log("on track: audio");
+          const receiverStreams = event.receiver.createEncodedStreams();
+          const transformStream = new TransformStream({
+            transform: decodeFunction,
+          });
+          receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
+        }
+
         const stream = event.streams[0];
         if (stream.id === "default") {
           return;
@@ -170,4 +179,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.waitChangeConnectionStateConnected();
     return;
   }
+}
+
+function decodeFunction(encodedFrame, controller) {
+  console.log("here");
+  controller.enqueue(encodedFrame);
 }
