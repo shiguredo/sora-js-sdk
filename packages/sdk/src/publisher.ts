@@ -95,7 +95,17 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
+      console.log("set ontrack");
       this.pc.ontrack = (event): void => {
+        if (event.track.kind == "audio") {
+          console.log("ontrack: audio (pub)");
+          const receiverStreams = event.receiver.createEncodedStreams();
+          const transformStream = new TransformStream({
+            transform: decodeFunction,
+          });
+          receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
+        }
+
         const stream = event.streams[0];
         if (!stream) {
           return;
@@ -220,5 +230,10 @@ function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioF
   TOTAL_BYTES += encodedFrame.data.byteLength;
 
   //console.log(encodedFrame.data.byteLength);
+  controller.enqueue(encodedFrame);
+}
+
+function decodeFunction(encodedFrame, controller) {
+  console.log("here");
   controller.enqueue(encodedFrame);
 }
