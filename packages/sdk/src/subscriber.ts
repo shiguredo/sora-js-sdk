@@ -184,6 +184,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
 }
 
 function decodeFunction(encodedFrame, controller) {
-  console.log("here");
+  console.log("here2");
   controller.enqueue(encodedFrame);
 }

@@ -1,8 +1,13 @@
 import ConnectionBase from "./base";
-import { LyraModule, LyraEncoder } from "@shiguredo/lyra-wasm";
+import { LyraModule, LyraEncoder, LyraDecoder } from "@shiguredo/lyra-wasm";
 
 let NOW = undefined;
 let TOTAL_BYTES = 0;
+let TOTAL_ORIGINAL_BYTES = 0;
+
+let DECODE_NOW = undefined;
+let DECODE_TOTAL_BYTES = 0;
+let DECODE_TOTAL_ORIGINAL_BYTES = 0;
 
 /**
  * Role が "sendonly" または "sendrecv" の場合に Sora との WebRTC 接続を扱うクラス
@@ -96,12 +101,14 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       console.log("set ontrack");
+      const lyraModule = await LyraModule.load("./", "./");
+      const lyraDecoder = lyraModule.createDecoder({ sampleRate: 16000 });
       this.pc.ontrack = (event): void => {
         if (event.track.kind == "audio") {
           console.log("ontrack: audio (pub)");
           const receiverStreams = event.receiver.createEncodedStreams();
           const transformStream = new TransformStream({
-            transform: decodeFunction,
+            transform: (data, controller) => decodeFunction(lyraDecoder, data, controller),
           });
           receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
         }
@@ -217,23 +224,49 @@ function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioF
     // dtx
     throw Error("TODO");
   }
+  const originalBytes = encodedFrame.data.byteLength;
   encodedFrame.data = encoded.buffer;
 
   // TODO: Handle DTX
   // TODO: Reduce extra conversion between i16 and f32 (by updating lyra-wasm interface)
 
   if (performance.now() - NOW > 1000) {
-    console.log(`bps: ${(TOTAL_BYTES * 8 * 1000) / (performance.now() - NOW)}`);
+    const elapsed = (performance.now() - NOW) / 1000;
+    console.log(`[encode] bps: ${(TOTAL_BYTES * 8) / elapsed} (${(TOTAL_ORIGINAL_BYTES * 8) / elapsed})`);
     NOW = performance.now();
     TOTAL_BYTES = 0;
+    TOTAL_ORIGINAL_BYTES = 0;
   }
   TOTAL_BYTES += encodedFrame.data.byteLength;
+  TOTAL_ORIGINAL_BYTES += originalBytes;
 
   //console.log(encodedFrame.data.byteLength);
   controller.enqueue(encodedFrame);
 }
 
-function decodeFunction(encodedFrame, controller) {
-  console.log("here");
+function decodeFunction(lyraDecoder: LyraDecoder, encodedFrame, controller) {
+  if (DECODE_NOW === undefined) {
+    DECODE_NOW = performance.now();
+  }
+
+  // TODO: handle DTX(?)
+  const decodedF32 = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
+  const decodedI16 = new Int16Array(decodedF32.length);
+  for (const [i, v] of decodedF32.entries()) {
+    decodedI16[i] = v * 0x7fff;
+  }
+  const originalBytes = encodedFrame.data.byteLength;
+  encodedFrame.data = decodedI16.buffer;
+
+  if (performance.now() - DECODE_NOW > 1000) {
+    const elapsed = (performance.now() - DECODE_NOW) / 1000;
+    console.log(`[decode] bps: ${(DECODE_TOTAL_BYTES * 8) / elapsed} (${(DECODE_TOTAL_ORIGINAL_BYTES * 8) / elapsed})`);
+    DECODE_NOW = performance.now();
+    DECODE_TOTAL_BYTES = 0;
+    DECODE_TOTAL_ORIGINAL_BYTES = 0;
+  }
+  DECODE_TOTAL_BYTES += encodedFrame.data.byteLength;
+  DECODE_TOTAL_ORIGINAL_BYTES += originalBytes;
+
   controller.enqueue(encodedFrame);
 }
