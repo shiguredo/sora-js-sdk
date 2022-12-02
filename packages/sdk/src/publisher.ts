@@ -104,13 +104,15 @@ export default class ConnectionPublisher extends ConnectionBase {
       const lyraModule = await LyraModule.load("./", "./");
       const lyraDecoder = lyraModule.createDecoder({ sampleRate: 16000 });
       this.pc.ontrack = (event): void => {
+        console.log("ontrack: audio (pub)");
+        const receiverStreams = event.receiver.createEncodedStreams();
         if (event.track.kind == "audio") {
-          console.log("ontrack: audio (pub)");
-          const receiverStreams = event.receiver.createEncodedStreams();
           const transformStream = new TransformStream({
             transform: (data, controller) => decodeFunction(lyraDecoder, data, controller),
           });
           receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
+        } else {
+          receiverStreams.readable.pipeTo(receiverStreams.writable);
         }
 
         const stream = event.streams[0];
@@ -178,17 +180,19 @@ export default class ConnectionPublisher extends ConnectionBase {
           return;
         }
 
-        if (sender.track.kind === "audio") {
-          console.log("set transform stream for audio");
-          NOW = undefined;
-          TOTAL_BYTES = 0;
+        console.log("set transform stream for audio");
+        NOW = undefined;
+        TOTAL_BYTES = 0;
 
-          // @ts-ignore
-          const senderStreams = sender.createEncodedStreams();
+        // @ts-ignore
+        const senderStreams = sender.createEncodedStreams();
+        if (sender.track.kind === "audio") {
           const transformStream = new TransformStream({
             transform: (encodedFrame, controller) => encodeFunction(lyraEncoder, encodedFrame, controller),
           });
           senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);
+        } else {
+          senderStreams.readable.pipeTo(senderStreams.writable);
         }
       });
     }
