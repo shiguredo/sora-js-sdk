@@ -221,7 +221,8 @@ function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioF
   const rawDataI16 = new Int16Array(encodedFrame.data);
   const rawDataF32 = new Float32Array(rawDataI16.length);
   for (const [i, v] of rawDataI16.entries()) {
-    rawDataF32[i] = v / 0x7fff;
+    const v2 = (v >> 8) | ((v << 8) & 0xff);
+    rawDataF32[i] = v2 / 0x7fff;
   }
   const encoded = lyraEncoder.encode(rawDataF32);
   if (encoded === undefined) {
@@ -257,7 +258,8 @@ function decodeFunction(lyraDecoder: LyraDecoder, encodedFrame, controller) {
   const decodedF32 = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
   const decodedI16 = new Int16Array(decodedF32.length);
   for (const [i, v] of decodedF32.entries()) {
-    decodedI16[i] = v * 0x7fff;
+    const v2 = (v >> 8) | ((v << 8) & 0xff);
+    decodedI16[i] = v2 * 0x7fff;
   }
   const originalBytes = encodedFrame.data.byteLength;
   encodedFrame.data = decodedI16.buffer;
