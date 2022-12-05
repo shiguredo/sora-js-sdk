@@ -228,8 +228,9 @@ export function createSignalingMessage(
   const hasAudioOpusParamsProperty = Object.keys(copyOptions).some((key) => {
     return 0 <= audioOpusParamsPropertyKeys.indexOf(key);
   });
-  // TODO
-  if (message.audio) {
+
+  if (message.audio && options.audioCodecType === "LYRA") {
+    // FIXME
     if (typeof message.audio != "object") {
       message.audio = {};
     }

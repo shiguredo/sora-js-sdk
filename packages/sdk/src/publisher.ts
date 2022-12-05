@@ -2,14 +2,6 @@ import ConnectionBase from "./base";
 import { LYRA_MODULE } from "./base";
 import { LyraEncoder, LyraDecoder } from "@shiguredo/lyra-wasm";
 
-let NOW = undefined;
-let TOTAL_BYTES = 0;
-let TOTAL_ORIGINAL_BYTES = 0;
-
-let DECODE_NOW = undefined;
-let DECODE_TOTAL_BYTES = 0;
-let DECODE_TOTAL_ORIGINAL_BYTES = 0;
-
 /**
  * Role が "sendonly" または "sendrecv" の場合に Sora との WebRTC 接続を扱うクラス
  */
@@ -65,7 +57,6 @@ export default class ConnectionPublisher extends ConnectionBase {
     const signalingMessage = await this.signaling(ws);
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
-    console.log("set4");
     await this.setRemoteDescription(signalingMessage);
     stream.getTracks().forEach((track) => {
       if (this.pc) {
@@ -75,7 +66,6 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
-    console.log("getSenders(1)");
     if (this.pc && this.e2ee) {
       this.pc.getSenders().forEach((sender) => {
         if (this.e2ee) {
@@ -101,18 +91,18 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      console.log("set ontrack");
-      const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
       this.pc.ontrack = (event): void => {
-        console.log("ontrack: audio (pub)");
-        const receiverStreams = event.receiver.createEncodedStreams();
-        if (event.track.kind == "audio") {
-          const transformStream = new TransformStream({
-            transform: (data, controller) => decodeFunction(lyraDecoder, data, controller),
-          });
-          receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
-        } else {
-          receiverStreams.readable.pipeTo(receiverStreams.writable);
+        if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
+          const receiverStreams = event.receiver.createEncodedStreams();
+          if (event.track.kind == "audio") {
+            const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
+            const transformStream = new TransformStream({
+              transform: (data, controller) => decodeFunction(lyraDecoder, data, controller),
+            });
+            receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
+          } else {
+            receiverStreams.readable.pipeTo(receiverStreams.writable);
+          }
         }
 
         const stream = event.streams[0];
@@ -162,44 +152,36 @@ export default class ConnectionPublisher extends ConnectionBase {
         this.callbacks.addstream(event);
       };
     }
-    console.log("set3");
     await this.setRemoteDescription(signalingMessage);
     stream.getTracks().forEach((track) => {
       if (this.pc) {
-        console.log("add track: " + track.kind);
         this.pc.addTrack(track, stream);
       }
     });
     if (this.pc) {
-      // lyra
-      const lyraEncoder = LYRA_MODULE.createEncoder({ sampleRate: 16000, bitrate: 3200 });
-      this.pc.getSenders().forEach((sender) => {
-        if (sender == undefined || sender.track == undefined) {
-          console.log("skip");
-          return;
-        }
+      if (LYRA_MODULE && this.options.audioCodecType === "LYRA") {
+        const lyraEncoder = LYRA_MODULE.createEncoder({ sampleRate: 16000, bitrate: 3200 });
+        this.pc.getSenders().forEach((sender) => {
+          if (sender == undefined || sender.track == undefined) {
+            return;
+          }
 
-        console.log("set transform stream for audio");
-        NOW = undefined;
-        TOTAL_BYTES = 0;
-
-        // @ts-ignore
-        const senderStreams = sender.createEncodedStreams();
-        if (sender.track.kind === "audio") {
-          const transformStream = new TransformStream({
-            transform: (encodedFrame, controller) => encodeFunction(lyraEncoder, encodedFrame, controller),
-          });
-          senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);
-        } else {
-          senderStreams.readable.pipeTo(senderStreams.writable);
-        }
-      });
+          const senderStreams = sender.createEncodedStreams();
+          if (sender.track.kind === "audio") {
+            const transformStream = new TransformStream({
+              transform: (encodedFrame, controller) => encodeFunction(lyraEncoder, encodedFrame, controller),
+            });
+            senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);
+          } else {
+            senderStreams.readable.pipeTo(senderStreams.writable);
+          }
+        });
+      }
     }
 
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
-    console.log("getSenders(0)");
     if (this.pc && this.e2ee) {
       this.pc.getSenders().forEach((sender) => {
         if (this.e2ee) {
@@ -214,9 +196,6 @@ export default class ConnectionPublisher extends ConnectionBase {
 }
 
 function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioFrame, controller) {
-  if (NOW === undefined) {
-    NOW = performance.now();
-  }
   const rawDataI16 = new Int16Array(encodedFrame.data);
   const rawDataF32 = new Float32Array(rawDataI16.length);
   for (const [i, v] of rawDataI16.entries()) {
@@ -228,31 +207,15 @@ function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioF
     // dtx
     throw Error("TODO");
   }
-  const originalBytes = encodedFrame.data.byteLength;
   encodedFrame.data = encoded.buffer;
 
   // TODO: Handle DTX
   // TODO: Reduce extra conversion between i16 and f32 (by updating lyra-wasm interface)
 
-  if (performance.now() - NOW > 1000) {
-    const elapsed = (performance.now() - NOW) / 1000;
-    console.log(`[encode] bps: ${(TOTAL_BYTES * 8) / elapsed} (${(TOTAL_ORIGINAL_BYTES * 8) / elapsed})`);
-    NOW = performance.now();
-    TOTAL_BYTES = 0;
-    TOTAL_ORIGINAL_BYTES = 0;
-  }
-  TOTAL_BYTES += encodedFrame.data.byteLength;
-  TOTAL_ORIGINAL_BYTES += originalBytes;
-
-  //console.log(encodedFrame.data.byteLength);
   controller.enqueue(encodedFrame);
 }
 
 function decodeFunction(lyraDecoder: LyraDecoder, encodedFrame, controller) {
-  if (DECODE_NOW === undefined) {
-    DECODE_NOW = performance.now();
-  }
-
   // TODO: handle DTX(?)
   const decodedF32 = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
   const decodedI16 = new Int16Array(decodedF32.length);
@@ -260,18 +223,6 @@ function decodeFunction(lyraDecoder: LyraDecoder, encodedFrame, controller) {
     const v2 = (v >> 8) | ((v << 8) & 0xff);
     decodedI16[i] = v2 * 0x7fff;
   }
-  const originalBytes = encodedFrame.data.byteLength;
   encodedFrame.data = decodedI16.buffer;
-
-  if (performance.now() - DECODE_NOW > 1000) {
-    const elapsed = (performance.now() - DECODE_NOW) / 1000;
-    console.log(`[decode] bps: ${(DECODE_TOTAL_BYTES * 8) / elapsed} (${(DECODE_TOTAL_ORIGINAL_BYTES * 8) / elapsed})`);
-    DECODE_NOW = performance.now();
-    DECODE_TOTAL_BYTES = 0;
-    DECODE_TOTAL_ORIGINAL_BYTES = 0;
-  }
-  DECODE_TOTAL_BYTES += encodedFrame.data.byteLength;
-  DECODE_TOTAL_ORIGINAL_BYTES += originalBytes;
-
   controller.enqueue(encodedFrame);
 }

@@ -1180,7 +1180,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
-    if (this.e2ee || LYRA_MODULE) {
+    if (this.e2ee || (LYRA_MODULE && this.options.audioCodecType === "LYRA")) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
@@ -1190,7 +1190,6 @@ export default class ConnectionBase {
     }
     this.trace("PEER CONNECTION CONFIG", config);
     this.writePeerConnectionTimelineLog("new-peerconnection", config);
-
     // @ts-ignore Chrome の場合は第2引数に goog オプションを渡すことができる
     this.pc = new window.RTCPeerConnection(config, this.constraints);
     this.pc.oniceconnectionstatechange = (_): void => {
