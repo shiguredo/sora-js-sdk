@@ -1180,8 +1180,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
-    if (true) {
-      // TODO: this.e2ee) {
+    if (this.e2ee || LYRA_MODULE) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
@@ -1191,7 +1190,6 @@ export default class ConnectionBase {
     }
     this.trace("PEER CONNECTION CONFIG", config);
     this.writePeerConnectionTimelineLog("new-peerconnection", config);
-    console.log(config);
 
     // @ts-ignore Chrome の場合は第2引数に goog オプションを渡すことができる
     this.pc = new window.RTCPeerConnection(config, this.constraints);
@@ -1240,20 +1238,15 @@ export default class ConnectionBase {
     if (!this.pc) {
       return;
     }
-    // message.sdp = message.sdp
-    //   .replace(/lyra[/]/g, "L16/")
-    //   .replace(/a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g, "a=fmtp:109 ptime=20");
-    // message.sdp = message.sdp
-    //   .replace(/lyra[/]/g, "L16/")
-    //   .replace(/a=fmtp:109 /g, "a=fmtp:109 ptime=20;");
-    //      .replace(/a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g, "a=fmtp:109 ptime=20");
 
+    // FIXME
     message.sdp = message.sdp
-      .replace(/SAVPF 109/g, "SAVPF 109 111")
-      .replace(/109 lyra[/]16000[/]1/g, "111 opus/48000/2")
+      .replace(/SAVPF 109/g, "SAVPF 109 110")
+      .replace(/SAVPF 111 109/g, "SAVPF 109 110 111")
+      .replace(/109 lyra[/]16000[/]1/g, "110 opus/48000/2")
       .replace(
         /a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g,
-        "a=fmtp:111 minptime=10;useinbandfec=1\r\na=rtpmap:109 L16/16000/1\r\na=fmtp:109 ptime=20"
+        "a=fmtp:110 minptime=10;useinbandfec=1\r\na=rtpmap:109 L16/16000/1\r\na=fmtp:109 ptime=20"
       );
 
     console.log("set remote description");
@@ -1308,9 +1301,9 @@ export default class ConnectionBase {
 
       // TODO: この replace は不要？
       sessionDescription.sdp = sessionDescription.sdp
-        .replace(/SAVPF 111/g, "SAVPF 109")
-        .replace(/a=rtpmap:111 opus[/]48000[/]2/g, "a=rtpmap:109 L16/16000/1")
-        .replace(/a=fmtp:111 minptime=10;useinbandfec=1/g, "a=fmtp:109 ptime=20");
+        .replace(/SAVPF 110/g, "SAVPF 109")
+        .replace(/a=rtpmap:110 opus[/]48000[/]2/g, "a=rtpmap:109 L16/16000/1")
+        .replace(/a=fmtp:110 minptime=10;useinbandfec=1/g, "a=fmtp:109 ptime=20");
       // .replace(/a=rtpmap:109 L16[/]16000\r\n/m, "")
       // .replace(/a=ptime:20\r\n/m, "");
     }
