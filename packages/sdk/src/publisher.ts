@@ -93,14 +93,18 @@ export default class ConnectionPublisher extends ConnectionBase {
     if (this.pc) {
       this.pc.ontrack = (event): void => {
         if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
+          // @ts-ignore
+          // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
           if (event.track.kind == "audio") {
             const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
             const transformStream = new TransformStream({
               transform: (data, controller) => decodeFunction(lyraDecoder, data, controller),
             });
+            // eslint-disable-next-line
             receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
           } else {
+            // eslint-disable-next-line
             receiverStreams.readable.pipeTo(receiverStreams.writable);
           }
         }
@@ -166,13 +170,17 @@ export default class ConnectionPublisher extends ConnectionBase {
             return;
           }
 
+          // @ts-ignore
+          // eslint-disable-next-line
           const senderStreams = sender.createEncodedStreams();
           if (sender.track.kind === "audio") {
             const transformStream = new TransformStream({
               transform: (encodedFrame, controller) => encodeFunction(lyraEncoder, encodedFrame, controller),
             });
+            // eslint-disable-next-line
             senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);
           } else {
+            // eslint-disable-next-line
             senderStreams.readable.pipeTo(senderStreams.writable);
           }
         });
@@ -195,7 +203,9 @@ export default class ConnectionPublisher extends ConnectionBase {
   }
 }
 
-function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioFrame, controller) {
+// @ts-ignore
+function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame /*: RTCEncodedAudioFrame*/, controller) {
+  // eslint-disable-next-line
   const rawDataI16 = new Int16Array(encodedFrame.data);
   const rawDataF32 = new Float32Array(rawDataI16.length);
   for (const [i, v] of rawDataI16.entries()) {
@@ -207,22 +217,28 @@ function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioF
     // dtx
     throw Error("TODO");
   }
+  // eslint-disable-next-line
   encodedFrame.data = encoded.buffer;
 
   // TODO: Handle DTX
   // TODO: Reduce extra conversion between i16 and f32 (by updating lyra-wasm interface)
 
+  // eslint-disable-next-line
   controller.enqueue(encodedFrame);
 }
 
+// @ts-ignore
 function decodeFunction(lyraDecoder: LyraDecoder, encodedFrame, controller) {
   // TODO: handle DTX(?)
+  // eslint-disable-next-line
   const decodedF32 = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
   const decodedI16 = new Int16Array(decodedF32.length);
   for (const [i, v] of decodedF32.entries()) {
     const v2 = (v >> 8) | ((v << 8) & 0xff);
     decodedI16[i] = v2 * 0x7fff;
   }
+  // eslint-disable-next-line
   encodedFrame.data = decodedI16.buffer;
+  // eslint-disable-next-line
   controller.enqueue(encodedFrame);
 }

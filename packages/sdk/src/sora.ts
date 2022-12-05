@@ -1,4 +1,3 @@
-import { LyraModule } from "@shiguredo/lyra-wasm";
 import SoraE2EE from "@sora/e2ee";
 
 import ConnectionBase from "./base";

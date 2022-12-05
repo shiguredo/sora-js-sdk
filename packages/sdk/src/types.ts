@@ -23,9 +23,13 @@ export type SignalingAudio =
         useinbandfec?: boolean;
         usedtx?: boolean;
       };
-
-      // TODO:
-      lyra_params?: {};
+      // FIXME
+      lyra_params?: {
+        version?: string;
+        sample_rate?: number;
+        bitrate?: number;
+        usedtx?: boolean;
+      };
     };
 
 export type VideoCodecType = "VP9" | "VP8" | "AV1" | "H264" | "H265";
