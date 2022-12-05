@@ -39,11 +39,20 @@ import {
   TransportType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
+import { LyraModule } from "@shiguredo/lyra-wasm";
 
 declare global {
   interface Algorithm {
     namedCurve: string;
   }
+}
+
+// TODO: Add doc
+export let LYRA_MODULE: LyraModule | undefined;
+
+// TODO: Add doc
+export async function initLyraModule(wasmPath: string, modelPath: string): Promise<void> {
+  LYRA_MODULE = await LyraModule.load(wasmPath, modelPath);
 }
 
 /**

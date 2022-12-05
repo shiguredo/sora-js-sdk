@@ -1,6 +1,8 @@
+import { LyraModule } from "@shiguredo/lyra-wasm";
 import SoraE2EE from "@sora/e2ee";
 
 import ConnectionBase from "./base";
+import { initLyraModule } from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
@@ -171,6 +173,12 @@ export default {
   initE2EE: async function (wasmUrl: string): Promise<void> {
     await SoraE2EE.loadWasm(wasmUrl);
   },
+
+  /**
+   * TODO
+   */
+  initLyraModule,
+
   /**
    * SoraConnection インスタンスを生成するメソッド
    *

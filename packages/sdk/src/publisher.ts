@@ -1,5 +1,6 @@
 import ConnectionBase from "./base";
-import { LyraModule, LyraEncoder, LyraDecoder } from "@shiguredo/lyra-wasm";
+import { LYRA_MODULE } from "./base";
+import { LyraEncoder, LyraDecoder } from "@shiguredo/lyra-wasm";
 
 let NOW = undefined;
 let TOTAL_BYTES = 0;
@@ -101,8 +102,7 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       console.log("set ontrack");
-      const lyraModule = await LyraModule.load("./", "./");
-      const lyraDecoder = lyraModule.createDecoder({ sampleRate: 16000 });
+      const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
       this.pc.ontrack = (event): void => {
         console.log("ontrack: audio (pub)");
         const receiverStreams = event.receiver.createEncodedStreams();
@@ -172,8 +172,7 @@ export default class ConnectionPublisher extends ConnectionBase {
     });
     if (this.pc) {
       // lyra
-      const lyraModule = await LyraModule.load("./", "./");
-      const lyraEncoder = lyraModule.createEncoder({ sampleRate: 16000, bitrate: 3200 });
+      const lyraEncoder = LYRA_MODULE.createEncoder({ sampleRate: 16000, bitrate: 3200 });
       this.pc.getSenders().forEach((sender) => {
         if (sender == undefined || sender.track == undefined) {
           console.log("skip");

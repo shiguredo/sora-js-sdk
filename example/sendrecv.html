@@ -29,6 +29,8 @@
 
         <script src="./sora.js"></script>
         <script type="text/javascript">
+          Sora.initLyraModule("https://lyra-wasm.shiguredo.app/2022.1.0/", "https://lyra-wasm.shiguredo.app/2022.1.0/").then(() => console.log("loaded LyraModul"));
+
 const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
