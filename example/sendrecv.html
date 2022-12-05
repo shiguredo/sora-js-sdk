@@ -1,9 +1,6 @@
 <html lang="ja">
     <head>
         <meta charset="utf-8">
-
-        <meta http-equiv="origin-trial" content="AgzZrbX4jBphRIVHd0mDLyV2c3zKrVzGq/wTUydsSAQqv2njX1U5BCFPiKHSvZsS0LXfsGFrZOqil6A9pu+4pQ0AAABgeyJvcmlnaW4iOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJmZWF0dXJlIjoiVW5yZXN0cmljdGVkU2hhcmVkQXJyYXlCdWZmZXIiLCJleHBpcnkiOjE2NzUyOTU5OTl9">
-
         <title>Sendrecv test</title>
     </head>
     <body>
@@ -29,16 +26,11 @@
 
         <script src="./sora.js"></script>
         <script type="text/javascript">
-          Sora.initLyraModule("https://lyra-wasm.shiguredo.app/2022.1.0/", "https://lyra-wasm.shiguredo.app/2022.1.0/").then(() => console.log("loaded LyraModul"));
-
 const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
 const options = {
-    multistream: true,
-    audio: true,
-    video: true,
-    audioCodecType: "LYRA",
+  multistream: true
 }
 const sendrecv1 = sora.sendrecv(channelId, null, options);
 sendrecv1.on('track', (event) => {
