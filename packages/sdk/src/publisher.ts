@@ -206,13 +206,13 @@ export default class ConnectionPublisher extends ConnectionBase {
 // @ts-ignore
 function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame /*: RTCEncodedAudioFrame*/, controller) {
   // eslint-disable-next-line
-  const rawDataI16 = new Int16Array(encodedFrame.data);
-  const rawDataF32 = new Float32Array(rawDataI16.length);
-  for (const [i, v] of rawDataI16.entries()) {
-    const v2 = (v >> 8) | ((v << 8) & 0xff);
-    rawDataF32[i] = v2 / 0x7fff;
+  const view = new DataView(encodedFrame.data);
+  const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
+  for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
+    const v2 = view.getInt16(i, false);
+    rawData[i / 2] = v2 / 0x7fff;
   }
-  const encoded = lyraEncoder.encode(rawDataF32);
+  const encoded = lyraEncoder.encode(rawData);
   if (encoded === undefined) {
     // dtx
     throw Error("TODO");
@@ -231,14 +231,14 @@ function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame /*: RTCEncodedAud
 function decodeFunction(lyraDecoder: LyraDecoder, encodedFrame, controller) {
   // TODO: handle DTX(?)
   // eslint-disable-next-line
-  const decodedF32 = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
-  const decodedI16 = new Int16Array(decodedF32.length);
-  for (const [i, v] of decodedF32.entries()) {
-    const v2 = (v >> 8) | ((v << 8) & 0xff);
-    decodedI16[i] = v2 * 0x7fff;
+  const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
+  const buffer = new ArrayBuffer(decoded.length * 2);
+  const view = new DataView(buffer);
+  for (const [i, v] of decoded.entries()) {
+    view.setInt16(i * 2, v * 0x7fff, false);
   }
   // eslint-disable-next-line
-  encodedFrame.data = decodedI16.buffer;
+  encodedFrame.data = buffer;
   // eslint-disable-next-line
   controller.enqueue(encodedFrame);
 }
