@@ -380,3 +380,21 @@ export type SoraAbendTitle =
   | "INTERNAL-ERROR"
   | "WEBSOCKET-ONCLOSE"
   | "WEBSOCKET-ONERROR";
+
+// 以降は Lyra 対応に必要な insertable streams 用の型定義
+//
+// TODO(sile): insertable streams に対応した @types パッケージがリリースされたらそれを使うようにする
+
+// https://www.w3.org/TR/webrtc-encoded-transform/#RTCEncodedAudioFrame-interface
+export interface RTCEncodedAudioFrame {
+  readonly timestamp: number;
+  data: ArrayBuffer;
+  getMetadata(): RTCEncodedAudioFrameMetadata;
+}
+
+// https://www.w3.org/TR/webrtc-encoded-transform/#dictdef-rtcencodedaudioframemetadata
+export interface RTCEncodedAudioFrameMetadata {
+  synchronizationSource: number;
+  payloadType: number;
+  contributingSources: [number];
+}
