@@ -20,6 +20,7 @@ import {
   ConnectionOptions,
   JSONType,
   DataChannelConfiguration,
+  RTCEncodedAudioFrame,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
@@ -39,7 +40,7 @@ import {
   TransportType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
-import { LyraModule } from "@shiguredo/lyra-wasm";
+import { LyraEncoder, LyraDecoder, LyraModule } from "@shiguredo/lyra-wasm";
 
 declare global {
   interface Algorithm {
@@ -1635,6 +1636,51 @@ export default class ConnectionBase {
   protected writeSoraTimelineLog(eventType: string, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "sora");
     this.callbacks.timeline(event);
+  }
+
+  /**
+   * TODO: doc
+   */
+  // TODO: lyraEncoder はフィールドに持たせる
+  // TODO: lyraEncoder の破壊
+  protected lyraEncode(
+    lyraEncoder: LyraEncoder,
+    encodedFrame: RTCEncodedAudioFrame,
+    controller: TransformStreamDefaultController
+  ): void {
+    const view = new DataView(encodedFrame.data);
+    const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
+    for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
+      const v2 = view.getInt16(i, false);
+      rawData[i / 2] = v2 / 0x7fff;
+    }
+    const encoded = lyraEncoder.encode(rawData);
+    if (encoded === undefined) {
+      // dtx
+      return;
+    }
+    encodedFrame.data = encoded.buffer;
+
+    // TODO: Reduce extra conversion between i16 and f32 (by updating lyra-wasm interface)
+    controller.enqueue(encodedFrame);
+  }
+
+  /**
+   * TODO: doc
+   */
+  protected lyraDecode(
+    lyraDecoder: LyraDecoder,
+    encodedFrame: RTCEncodedAudioFrame,
+    controller: TransformStreamDefaultController
+  ): void {
+    const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
+    const buffer = new ArrayBuffer(decoded.length * 2);
+    const view = new DataView(buffer);
+    for (const [i, v] of decoded.entries()) {
+      view.setInt16(i * 2, v * 0x7fff, false);
+    }
+    encodedFrame.data = buffer;
+    controller.enqueue(encodedFrame);
   }
 
   /**
