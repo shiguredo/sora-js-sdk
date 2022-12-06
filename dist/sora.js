@@ -4464,7 +4464,6 @@
 	    const encoded = lyraEncoder.encode(rawData);
 	    if (encoded === undefined) {
 	        // dtx
-	        console.log("dtx");
 	        return;
 	    }
 	    // eslint-disable-next-line
