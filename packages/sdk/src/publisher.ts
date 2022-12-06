@@ -207,7 +207,9 @@ export default class ConnectionPublisher extends ConnectionBase {
 function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame /*: RTCEncodedAudioFrame*/, controller) {
   // eslint-disable-next-line
   const view = new DataView(encodedFrame.data);
+  // eslint-disable-next-line
   const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
+  // eslint-disable-next-line
   for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
     const v2 = view.getInt16(i, false);
     rawData[i / 2] = v2 / 0x7fff;
