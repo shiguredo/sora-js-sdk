@@ -56,7 +56,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      console.log("set ontrack");
       this.pc.ontrack = (event): void => {
         this.stream = event.streams[0];
         const streamId = this.stream.id;
@@ -120,7 +119,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      console.log("set ontrack");
       this.pc.ontrack = (event): void => {
         if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
           // @ts-ignore
