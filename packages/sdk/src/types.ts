@@ -6,7 +6,7 @@ export type SpotlightFocusRid = "none" | SimulcastRid;
 
 export type Simulcast = boolean | { rid: SimulcastRid };
 
-export type AudioCodecType = "OPUS";
+export type AudioCodecType = "OPUS" | "LYRA";
 
 export type SignalingAudio =
   | boolean
@@ -21,6 +21,13 @@ export type SignalingAudio =
         stereo?: boolean;
         sprop_stereo?: boolean;
         useinbandfec?: boolean;
+        usedtx?: boolean;
+      };
+      // FIXME
+      lyra_params?: {
+        version?: string;
+        sample_rate?: number;
+        bitrate?: number;
         usedtx?: boolean;
       };
     };

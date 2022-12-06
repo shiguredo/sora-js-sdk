@@ -39,11 +39,20 @@ import {
   TransportType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
+import { LyraModule } from "@shiguredo/lyra-wasm";
 
 declare global {
   interface Algorithm {
     namedCurve: string;
   }
+}
+
+// TODO: Add doc
+export let LYRA_MODULE: LyraModule | undefined;
+
+// TODO: Add doc
+export async function initLyraModule(wasmPath: string, modelPath: string): Promise<void> {
+  LYRA_MODULE = await LyraModule.load(wasmPath, modelPath);
 }
 
 /**
@@ -1171,7 +1180,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
-    if (this.e2ee) {
+    if (this.e2ee || (LYRA_MODULE && this.options.audioCodecType === "LYRA")) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
@@ -1228,6 +1237,19 @@ export default class ConnectionBase {
     if (!this.pc) {
       return;
     }
+
+    if (message.sdp.includes("109 lyra/")) {
+      // FIXME
+      message.sdp = message.sdp
+        .replace(/SAVPF 109/g, "SAVPF 109 110")
+        .replace(/SAVPF 111 109/g, "SAVPF 109 110 111")
+        .replace(/109 lyra[/]16000[/]1/g, "110 opus/48000/2")
+        .replace(
+          /a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g,
+          "a=fmtp:110 minptime=10;useinbandfec=1\r\na=rtpmap:109 L16/16000/1\r\na=fmtp:109 ptime=20"
+        );
+    }
+
     const sessionDescription = new RTCSessionDescription({ type: "offer", sdp: message.sdp });
     await this.pc.setRemoteDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
@@ -1288,6 +1310,16 @@ export default class ConnectionBase {
     }
     const sessionDescription = await this.pc.createAnswer();
     this.writePeerConnectionTimelineLog("create-answer", sessionDescription);
+    if (sessionDescription.sdp !== undefined) {
+      // FIXME
+      if (sessionDescription.sdp.includes("SAVPF 110")) {
+        // TODO: この replace は不要？
+        sessionDescription.sdp = sessionDescription.sdp
+          .replace(/SAVPF 110/g, "SAVPF 109")
+          .replace(/a=rtpmap:110 opus[/]48000[/]2/g, "a=rtpmap:109 L16/16000/1")
+          .replace(/a=fmtp:110 minptime=10;useinbandfec=1/g, "a=fmtp:109 ptime=20");
+      }
+    }
     await this.pc.setLocalDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-local-description", sessionDescription);
     return;
@@ -1299,7 +1331,13 @@ export default class ConnectionBase {
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      const message = { type: "answer", sdp: this.pc.localDescription.sdp };
+      let sdp = this.pc.localDescription.sdp;
+      if (sdp.includes("109 L16/")) {
+        sdp = sdp
+          .replace(/a=rtpmap:109 L16[/]16000/g, "a=rtpmap:109 lyra/16000/1")
+          .replace(/a=ptime:20/g, "a=fmtp:109 version=1.3.0;bitrate=3200;usedtx=0");
+      }
+      const message = { type: "answer", sdp };
       this.ws.send(JSON.stringify(message));
       this.writeWebSocketSignalingLog("send-answer", message);
     }
