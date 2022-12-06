@@ -1,4 +1,5 @@
 import ConnectionBase from "./base";
+import { initLyraModule } from "./base";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
@@ -100,6 +101,10 @@ declare const _default: {
      * @public
      */
     initE2EE: (wasmUrl: string) => Promise<void>;
+    /**
+     * TODO
+     */
+    initLyraModule: typeof initLyraModule;
     /**
      * SoraConnection インスタンスを生成するメソッド
      *
