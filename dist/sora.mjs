@@ -4407,7 +4407,7 @@ class ConnectionPublisher extends ConnectionBase {
         });
         if (this.pc) {
             if (LYRA_MODULE && this.options.audioCodecType === "LYRA") {
-                const lyraEncoder = LYRA_MODULE.createEncoder({ sampleRate: 16000, bitrate: 3200 });
+                const lyraEncoder = LYRA_MODULE.createEncoder({ sampleRate: 16000, bitrate: 6000, enableDtx: true });
                 this.pc.getSenders().forEach((sender) => {
                     if (sender == undefined || sender.track == undefined) {
                         return;
@@ -4448,7 +4448,9 @@ class ConnectionPublisher extends ConnectionBase {
 function encodeFunction(lyraEncoder, encodedFrame /*: RTCEncodedAudioFrame*/, controller) {
     // eslint-disable-next-line
     const view = new DataView(encodedFrame.data);
+    // eslint-disable-next-line
     const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
+    // eslint-disable-next-line
     for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
         const v2 = view.getInt16(i, false);
         rawData[i / 2] = v2 / 0x7fff;
@@ -4456,7 +4458,8 @@ function encodeFunction(lyraEncoder, encodedFrame /*: RTCEncodedAudioFrame*/, co
     const encoded = lyraEncoder.encode(rawData);
     if (encoded === undefined) {
         // dtx
-        throw Error("TODO");
+        console.log("dtx");
+        return;
     }
     // eslint-disable-next-line
     encodedFrame.data = encoded.buffer;
