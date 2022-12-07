@@ -49,17 +49,55 @@ declare global {
   }
 }
 
-// TODO: Add doc
-export let LYRA_MODULE: LyraModule | undefined;
+export class LyraModuleLoader {
+  readonly wasmPath: string;
+  readonly modelPath: string;
+  private lyraModule?: LyraModule;
 
-// TODO: Add doc
-// TODO: rename
-export async function initLyraModule(wasmPath: string, modelPath: string): Promise<void> {
-  // TODO: この段階ではロードしたくないので、実際に必要になったタイミングまで遅延させる
-  LYRA_MODULE = await LyraModule.load(wasmPath, modelPath);
+  constructor(wasmPath: string, modelPath: string) {
+    this.wasmPath = wasmPath;
+    this.modelPath = modelPath;
+  }
+
+  async load(): Promise<LyraModule> {
+    if (this.lyraModule === undefined) {
+      this.lyraModule = await LyraModule.load(this.wasmPath, this.modelPath);
+    }
+
+    return this.lyraModule;
+  }
 }
 
-// TODO: move
+// TODO: Add doc
+let LYRA_MODULE_LOADER: LyraModuleLoader | undefined;
+
+// TODO: Add doc, enableXXX の方がいいかも
+export async function initLyra(wasmPath: string, modelPath: string, prefetch = false): Promise<void> {
+  if (
+    LYRA_MODULE_LOADER === undefined ||
+    LYRA_MODULE_LOADER.wasmPath !== wasmPath ||
+    LYRA_MODULE_LOADER.modelPath !== modelPath
+  ) {
+    LYRA_MODULE_LOADER = new LyraModuleLoader(wasmPath, modelPath);
+  }
+  if (prefetch) {
+    await LYRA_MODULE_LOADER.load();
+  }
+}
+
+// TODO: doc
+export async function getLyraModule(): Promise<LyraModule> {
+  if (LYRA_MODULE_LOADER === undefined) {
+    throw Error("Lyra codec hasn't been initialized. Please call `Sora.initLyra()` method to use the codec.");
+  }
+  return LYRA_MODULE_LOADER.load();
+}
+
+export function isCustomCodecEnabled(): boolean {
+  return LYRA_MODULE_LOADER !== undefined;
+}
+
+// TODO: move: lyra.ts とかを用意してそこに集約した方が良さそう
 interface LyraEncodeOptions {
   bitrate?: number;
   enableDtx?: boolean;
@@ -1196,7 +1234,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
-    if (this.e2ee || LYRA_MODULE) {
+    if (this.e2ee || isCustomCodecEnabled()) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }

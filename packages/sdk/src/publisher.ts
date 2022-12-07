@@ -1,5 +1,5 @@
 import ConnectionBase from "./base";
-import { LYRA_MODULE } from "./base";
+import { getLyraModule, isCustomCodecEnabled } from "./base";
 import { RTCEncodedAudioFrame } from "./types";
 
 /**
@@ -91,23 +91,21 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      this.pc.ontrack = (event): void => {
-        if (LYRA_MODULE) {
+      this.pc.ontrack = async (event): Promise<void> => {
+        if (isCustomCodecEnabled()) {
           // @ts-ignore
           // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
-          if (event.track.kind == "audio" && this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA") {
-            console.log("DECODE CODDEC: LYRA");
-            const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
+          const isLyraCodec = this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA";
+          if (isLyraCodec) {
+            const lyraDecoder = (await getLyraModule()).createDecoder({ sampleRate: 16000 });
+            // eslint-disable-next-line
             const transformStream = new TransformStream({
               transform: (data: RTCEncodedAudioFrame, controller) => this.lyraDecode(lyraDecoder, data, controller),
             });
             // eslint-disable-next-line
             receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
           } else {
-            if (event.track.kind == "audio") {
-              console.log("DECODE CODDEC: OPUS");
-            }
             // eslint-disable-next-line
             receiverStreams.readable.pipeTo(receiverStreams.writable);
           }
@@ -167,22 +165,22 @@ export default class ConnectionPublisher extends ConnectionBase {
       }
     });
     if (this.pc) {
-      if (LYRA_MODULE) {
-        const lyraEncoder = LYRA_MODULE.createEncoder({
-          sampleRate: 16000,
-          bitrate: this.lyraEncodeOptions.bitrate,
-          enableDtx: this.lyraEncodeOptions.enableDtx,
-        });
-        this.pc.getSenders().forEach((sender) => {
+      if (isCustomCodecEnabled()) {
+        for (const sender of this.pc.getSenders()) {
           if (sender == undefined || sender.track == undefined) {
-            return;
+            continue;
           }
 
           // @ts-ignore
           // eslint-disable-next-line
           const senderStreams = sender.createEncodedStreams();
-          if (sender.track.kind === "audio" && this.options.audioCodecType === "LYRA") {
-            console.log("ENCODE CODDEC: LYRA");
+          const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
+          if (isLyraCodec) {
+            const lyraEncoder = (await getLyraModule()).createEncoder({
+              sampleRate: 16000,
+              bitrate: this.lyraEncodeOptions.bitrate,
+              enableDtx: this.lyraEncodeOptions.enableDtx,
+            });
             const transformStream = new TransformStream({
               transform: (data: RTCEncodedAudioFrame, controller) => this.lyraEncode(lyraEncoder, data, controller),
             });
@@ -192,7 +190,7 @@ export default class ConnectionPublisher extends ConnectionBase {
             // eslint-disable-next-line
             senderStreams.readable.pipeTo(senderStreams.writable);
           }
-        });
+        }
       }
     }
 
