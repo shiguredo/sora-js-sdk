@@ -98,7 +98,8 @@ export function isCustomCodecEnabled(): boolean {
 }
 
 // TODO: move: lyra.ts とかを用意してそこに集約した方が良さそう
-interface LyraEncodeOptions {
+interface LyraParams {
+  version?: string;
   bitrate?: number;
   enableDtx?: boolean;
 }
@@ -239,11 +240,12 @@ export default class ConnectionBase {
    */
   protected e2ee: SoraE2EE | null;
 
-  // TODO
-  protected lyraEncodeOptions: LyraEncodeOptions = {};
+  // TODO: rename
+  protected lyraEncodeOptions: LyraParams = {};
 
   // TODO
   protected audioMidToCodec: Map<string, AudioCodecType> = new Map();
+  protected audioMidToLyraParams: Map<string, LyraParams> = new Map();
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -1311,33 +1313,36 @@ export default class ConnectionBase {
     const splited = sdp.split(/^m=/m);
     let replacedSdp = splited[0];
     for (let media of splited.splice(1)) {
-      if (media.startsWith("audio") && media.includes("109 lyra/")) {
-        if (media.includes("a=recvonly")) {
-          const result = /a=fmtp:109 version=([0-9.]+);bitrate=([0-9]+);usedtx=([01])/.exec(media);
-          if (result) {
-            const version = result[1];
-            console.log("lyra version: " + version); // TODO
-            // TODO: check version
+      const mid = /a=mid:(.*)/.exec(media);
+      if (media.startsWith("audio")) {
+        if (mid) {
+          // TODO: 判定方法は変更する ("lyra"という文字列みる)
+          const codec = media.includes("a=rtpmap:110 ") ? "LYRA" : "OPUS";
+          this.audioMidToCodec.set(mid[1], codec); // TODO: 古いエントリの削除
+        }
+      }
 
-            const bitrate = Number(result[2]);
-            const enableDtx = result[3] === "1";
-            this.lyraEncodeOptions.bitrate = bitrate;
-            this.lyraEncodeOptions.enableDtx = enableDtx;
+      if (media.startsWith("audio") && media.includes("109 lyra/")) {
+        const result = /a=fmtp:109 version=([0-9.]+);bitrate=([0-9]+);usedtx=([01])/.exec(media);
+        if (result) {
+          const version = result[1];
+          console.log("lyra version: " + version); // TODO
+          // TODO: check version
+
+          const bitrate = Number(result[2]);
+          const enableDtx = result[3] === "1";
+          const lyraParams = { version, bitrate, enableDtx };
+          if (media.includes("a=recvonly")) {
+            this.lyraEncodeOptions = lyraParams;
+          }
+          if (mid) {
+            this.audioMidToLyraParams.set(mid[1], lyraParams);
           }
         }
         media = media
           .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
           .replace(/109 lyra[/]16000[/]1/, "110 opus/48000/2")
           .replace(/a=fmtp:109 .*/, "a=rtpmap:109 L16/16000\r\na=ptime:20");
-      }
-      if (media.startsWith("audio")) {
-        const mid = /a=mid:(.*)/.exec(media);
-        if (mid) {
-          // TODO: 判定方法は変更する ("lyra"という文字列みる)
-          const codec = media.includes("a=rtpmap:110 ") ? "LYRA" : "OPUS";
-          this.audioMidToCodec.set(mid[1], codec); // TODO: 古いエントリの削除
-          // console.log(this.audioMidToCodec);
-        }
       }
       replacedSdp += "m=" + media;
     }
@@ -1446,12 +1451,16 @@ export default class ConnectionBase {
     const splited = sdp.split(/^m=/m);
     let replacedSdp = splited[0];
     for (let media of splited.splice(1)) {
-      if (media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
+      const mid = /a=mid:(.*)/.exec(media);
+      if (mid && media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
         // Sora 用に L16 を Lyra に置換する
-        // TODO: エンコードパラメータは offer sdp で使われたものを覚えておく必要がある
+        const params = this.audioMidToLyraParams.get(mid[1]) || {}; // TODO
         media = media
           .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
-          .replace(/a=ptime:20/, "a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1");
+          .replace(
+            /a=ptime:20/,
+            `a=fmtp:109 version=${params.version};bitrate=${params.bitrate};usedtx=${params.enableDtx ? 1 : 0}`
+          );
       }
       replacedSdp += "m=" + media;
     }
