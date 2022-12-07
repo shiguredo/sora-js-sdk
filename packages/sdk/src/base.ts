@@ -1239,22 +1239,34 @@ export default class ConnectionBase {
       return;
     }
 
-    if (message.sdp.includes("109 lyra/")) {
-      // FIXME
-      message.sdp = message.sdp
-        .replace(/SAVPF 109/g, "SAVPF 109 110")
-        .replace(/SAVPF 111 109/g, "SAVPF 109 110 111")
-        .replace(/109 lyra[/]16000[/]1/g, "110 opus/48000/2")
-        .replace(
-          /a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g,
-          "a=fmtp:110 minptime=10;useinbandfec=1\r\na=rtpmap:109 L16/16000/1\r\na=fmtp:109 ptime=20"
-        );
-    }
-
-    const sessionDescription = new RTCSessionDescription({ type: "offer", sdp: message.sdp });
+    const sdp = this.replaceOfferSdpForLyra(message.sdp);
+    const sessionDescription = new RTCSessionDescription({ type: "offer", sdp });
     await this.pc.setRemoteDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
     return;
+  }
+
+  // TOOD: doc
+  // - 新しい payload type を追加している理由
+  //   - L16 だけだと音声なしになる
+  //   - sora では 109 を使いたいので 110 を用意して退避する
+  private replaceOfferSdpForLyra(sdp: string): string {
+    if (!sdp.includes("109 lyra/")) {
+      return sdp;
+    }
+
+    let splited = sdp.split(/^m=/m);
+    let replacedSdp = splited[0];
+    for (let media of splited.splice(1)) {
+      if (media.startsWith("audio") && media.includes("109 lyra/")) {
+        media = media
+          .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
+          .replace(/109 lyra[/]16000[/]1/, "110 opus/48000/2")
+          .replace(/a=fmtp:109 .*/, "a=rtpmap:109 L16/16000\r\na=ptime:20");
+      }
+      replacedSdp += "m=" + media;
+    }
+    return replacedSdp;
   }
 
   /**
@@ -1315,11 +1327,12 @@ export default class ConnectionBase {
       // FIXME
       if (sessionDescription.sdp.includes("SAVPF 110")) {
         // TODO: この replace は不要？
-        sessionDescription.sdp = sessionDescription.sdp
-          .replace(/SAVPF 110/g, "SAVPF 109")
-          .replace(/a=rtpmap:110 opus[/]48000[/]2/g, "a=rtpmap:109 L16/16000/1")
-          .replace(/a=fmtp:110 minptime=10;useinbandfec=1/g, "a=fmtp:109 ptime=20");
+        // sessionDescription.sdp = sessionDescription.sdp
+        //   .replace(/SAVPF 110/g, "SAVPF 109")
+        //   .replace(/a=rtpmap:110 opus[/]48000[/]2/g, "a=rtpmap:109 L16/16000")
+        //   .replace(/a=fmtp:110 minptime=10;useinbandfec=1/g, "a=fmtp:109 ptime=20");
       }
+      console.log(sessionDescription.sdp);
     }
     await this.pc.setLocalDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-local-description", sessionDescription);
@@ -1334,9 +1347,12 @@ export default class ConnectionBase {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
       let sdp = this.pc.localDescription.sdp;
       if (sdp.includes("109 L16/")) {
-        sdp = sdp
-          .replace(/a=rtpmap:109 L16[/]16000/g, "a=rtpmap:109 lyra/16000/1")
-          .replace(/a=ptime:20/g, "a=fmtp:109 version=1.3.0;bitrate=3200;usedtx=0");
+        // TODO: remove
+        console.log("##############################################");
+        console.log(sdp);
+        // sdp = sdp
+        //   .replace(/a=rtpmap:109 L16[/]16000/g, "a=rtpmap:109 lyra/16000")
+        //   .replace(/a=ptime:20/g, "a=fmtp:109 version=1.3.0;bitrate=3200;usedtx=0");
       }
       const message = { type: "answer", sdp };
       this.ws.send(JSON.stringify(message));
@@ -1648,6 +1664,13 @@ export default class ConnectionBase {
     encodedFrame: RTCEncodedAudioFrame,
     controller: TransformStreamDefaultController
   ): void {
+    console.log(
+      encodedFrame.getMetadata().synchronizationSource +
+        ": " +
+        encodedFrame.data.byteLength +
+        ": " +
+        encodedFrame.getMetadata().payloadType
+    );
     const view = new DataView(encodedFrame.data);
     const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
     for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
