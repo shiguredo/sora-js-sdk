@@ -1196,7 +1196,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
-    if (this.e2ee || (LYRA_MODULE && this.options.audioCodecType === "LYRA")) {
+    if (this.e2ee || LYRA_MODULE) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
@@ -1297,8 +1297,8 @@ export default class ConnectionBase {
         if (mid) {
           // TODO: 判定方法は変更する ("lyra"という文字列みる)
           const codec = media.includes("a=rtpmap:110 ") ? "LYRA" : "OPUS";
-          this.audioMidToCodec.set(mid[1], codec);
-          console.log(this.audioMidToCodec);
+          this.audioMidToCodec.set(mid[1], codec); // TODO: 古いエントリの削除
+          // console.log(this.audioMidToCodec);
         }
       }
       replacedSdp += "m=" + media;

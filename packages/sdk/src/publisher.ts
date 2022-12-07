@@ -92,11 +92,12 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
-        if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
+        if (LYRA_MODULE) {
           // @ts-ignore
           // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
           if (event.track.kind == "audio" && this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA") {
+            console.log("DECODE CODDEC: LYRA");
             const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
             const transformStream = new TransformStream({
               transform: (data: RTCEncodedAudioFrame, controller) => this.lyraDecode(lyraDecoder, data, controller),
@@ -104,6 +105,9 @@ export default class ConnectionPublisher extends ConnectionBase {
             // eslint-disable-next-line
             receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
           } else {
+            if (event.track.kind == "audio") {
+              console.log("DECODE CODDEC: OPUS");
+            }
             // eslint-disable-next-line
             receiverStreams.readable.pipeTo(receiverStreams.writable);
           }
@@ -163,7 +167,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       }
     });
     if (this.pc) {
-      if (LYRA_MODULE && this.options.audioCodecType === "LYRA") {
+      if (LYRA_MODULE) {
         const lyraEncoder = LYRA_MODULE.createEncoder({
           sampleRate: 16000,
           bitrate: this.lyraEncodeOptions.bitrate,
@@ -177,7 +181,8 @@ export default class ConnectionPublisher extends ConnectionBase {
           // @ts-ignore
           // eslint-disable-next-line
           const senderStreams = sender.createEncodedStreams();
-          if (sender.track.kind === "audio") {
+          if (sender.track.kind === "audio" && this.options.audioCodecType === "LYRA") {
+            console.log("ENCODE CODDEC: LYRA");
             const transformStream = new TransformStream({
               transform: (data: RTCEncodedAudioFrame, controller) => this.lyraEncode(lyraEncoder, data, controller),
             });

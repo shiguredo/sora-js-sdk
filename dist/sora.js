@@ -3232,7 +3232,7 @@
 	     */
 	    async connectPeerConnection(message) {
 	        let config = Object.assign({}, message.config);
-	        if (this.e2ee || (LYRA_MODULE && this.options.audioCodecType === "LYRA")) {
+	        if (this.e2ee || LYRA_MODULE) {
 	            // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
 	            config = Object.assign({ encodedInsertableStreams: true }, config);
 	        }
@@ -3326,8 +3326,8 @@
 	                if (mid) {
 	                    // TODO: 判定方法は変更する ("lyra"という文字列みる)
 	                    const codec = media.includes("a=rtpmap:110 ") ? "LYRA" : "OPUS";
-	                    this.audioMidToCodec.set(mid[1], codec);
-	                    console.log(this.audioMidToCodec);
+	                    this.audioMidToCodec.set(mid[1], codec); // TODO: 古いエントリの削除
+	                    // console.log(this.audioMidToCodec);
 	                }
 	            }
 	            replacedSdp += "m=" + media;
@@ -3436,8 +3436,6 @@
 	                media = media
 	                    .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
 	                    .replace(/a=ptime:20/, "a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1");
-	                console.log(media);
-	                console.log("----------------");
 	            }
 	            replacedSdp += "m=" + media;
 	        }
@@ -4469,11 +4467,12 @@
 	        await this.connectPeerConnection(signalingMessage);
 	        if (this.pc) {
 	            this.pc.ontrack = (event) => {
-	                if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
+	                if (LYRA_MODULE) {
 	                    // @ts-ignore
 	                    // eslint-disable-next-line
 	                    const receiverStreams = event.receiver.createEncodedStreams();
 	                    if (event.track.kind == "audio" && this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA") {
+	                        console.log("DECODE CODDEC: LYRA");
 	                        const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
 	                        const transformStream = new TransformStream({
 	                            transform: (data, controller) => this.lyraDecode(lyraDecoder, data, controller),
@@ -4482,6 +4481,9 @@
 	                        receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
 	                    }
 	                    else {
+	                        if (event.track.kind == "audio") {
+	                            console.log("DECODE CODDEC: OPUS");
+	                        }
 	                        // eslint-disable-next-line
 	                        receiverStreams.readable.pipeTo(receiverStreams.writable);
 	                    }
@@ -4540,7 +4542,7 @@
 	            }
 	        });
 	        if (this.pc) {
-	            if (LYRA_MODULE && this.options.audioCodecType === "LYRA") {
+	            if (LYRA_MODULE) {
 	                const lyraEncoder = LYRA_MODULE.createEncoder({
 	                    sampleRate: 16000,
 	                    bitrate: this.lyraEncodeOptions.bitrate,
@@ -4553,7 +4555,8 @@
 	                    // @ts-ignore
 	                    // eslint-disable-next-line
 	                    const senderStreams = sender.createEncodedStreams();
-	                    if (sender.track.kind === "audio") {
+	                    if (sender.track.kind === "audio" && this.options.audioCodecType === "LYRA") {
+	                        console.log("ENCODE CODDEC: LYRA");
 	                        const transformStream = new TransformStream({
 	                            transform: (data, controller) => this.lyraEncode(lyraEncoder, data, controller),
 	                        });
@@ -4702,11 +4705,12 @@
 	            this.pc.ontrack = (event) => {
 	                // console.log("mid: " + event.transceiver.mid);
 	                // console.log("codec: " + this.audioMidToCodec.get(event.transceiver.mid || ""));
-	                if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
+	                if (LYRA_MODULE) {
 	                    // @ts-ignore
 	                    // eslint-disable-next-line
 	                    const receiverStreams = event.receiver.createEncodedStreams();
 	                    if (event.track.kind == "audio" && this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA") {
+	                        console.log("DECODE CODDEC: LYRA");
 	                        const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
 	                        const transformStream = new TransformStream({
 	                            transform: (data, controller) => this.lyraDecode(lyraDecoder, data, controller),
@@ -4715,6 +4719,9 @@
 	                        receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
 	                    }
 	                    else {
+	                        if (event.track.kind == "audio") {
+	                            console.log("DECODE CODDEC: OPUS");
+	                        }
 	                        // eslint-disable-next-line
 	                        receiverStreams.readable.pipeTo(receiverStreams.writable);
 	                    }

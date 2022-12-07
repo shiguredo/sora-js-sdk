@@ -122,11 +122,12 @@ export default class ConnectionSubscriber extends ConnectionBase {
       this.pc.ontrack = (event): void => {
         // console.log("mid: " + event.transceiver.mid);
         // console.log("codec: " + this.audioMidToCodec.get(event.transceiver.mid || ""));
-        if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
+        if (LYRA_MODULE) {
           // @ts-ignore
           // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
           if (event.track.kind == "audio" && this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA") {
+            console.log("DECODE CODDEC: LYRA");
             const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
             const transformStream = new TransformStream({
               transform: (data: RTCEncodedAudioFrame, controller) => this.lyraDecode(lyraDecoder, data, controller),
@@ -134,6 +135,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
             // eslint-disable-next-line
             receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
           } else {
+            if (event.track.kind == "audio") {
+              console.log("DECODE CODDEC: OPUS");
+            }
             // eslint-disable-next-line
             receiverStreams.readable.pipeTo(receiverStreams.writable);
           }
