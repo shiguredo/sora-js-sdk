@@ -53,7 +53,9 @@ declare global {
 export let LYRA_MODULE: LyraModule | undefined;
 
 // TODO: Add doc
+// TODO: rename
 export async function initLyraModule(wasmPath: string, modelPath: string): Promise<void> {
+  // TODO: この段階ではロードしたくないので、実際に必要になったタイミングまで遅延させる
   LYRA_MODULE = await LyraModule.load(wasmPath, modelPath);
 }
 
@@ -1252,10 +1254,7 @@ export default class ConnectionBase {
       return;
     }
 
-    const sdp = this.replaceOfferSdpForLyra(message.sdp);
-    console.log("### setRemoteSDP");
-    console.log(sdp);
-    console.log("-----------------");
+    const sdp = this.processOfferSdp(message.sdp);
     const sessionDescription = new RTCSessionDescription({ type: "offer", sdp });
     await this.pc.setRemoteDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
@@ -1266,7 +1265,7 @@ export default class ConnectionBase {
   // - 新しい payload type を追加している理由
   //   - L16 だけだと音声なしになる
   //   - sora では 109 を使いたいので 110 を用意して退避する
-  private replaceOfferSdpForLyra(sdp: string): string {
+  private processOfferSdp(sdp: string): string {
     if (!sdp.includes("109 lyra/")) {
       return sdp;
     }
@@ -1296,7 +1295,7 @@ export default class ConnectionBase {
       if (media.startsWith("audio")) {
         const mid = /a=mid:(.*)/.exec(media);
         if (mid) {
-          // TODO: 判定方法は変更する
+          // TODO: 判定方法は変更する ("lyra"という文字列みる)
           const codec = media.includes("a=rtpmap:110 ") ? "LYRA" : "OPUS";
           this.audioMidToCodec.set(mid[1], codec);
           console.log(this.audioMidToCodec);
@@ -1356,7 +1355,7 @@ export default class ConnectionBase {
         const sessionDescription = await this.pc.createAnswer();
         // TODO(sile): 動作確認
         if (sessionDescription.sdp !== undefined) {
-          sessionDescription.sdp = this.replaceLocalAnswerSdpForLyra(sessionDescription.sdp);
+          sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp);
         }
         await this.pc.setLocalDescription(sessionDescription);
         this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
@@ -1365,7 +1364,7 @@ export default class ConnectionBase {
     }
     const sessionDescription = await this.pc.createAnswer();
     if (sessionDescription.sdp !== undefined) {
-      sessionDescription.sdp = this.replaceLocalAnswerSdpForLyra(sessionDescription.sdp);
+      sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp);
     }
     this.writePeerConnectionTimelineLog("create-answer", sessionDescription);
     await this.pc.setLocalDescription(sessionDescription);
@@ -1377,22 +1376,16 @@ export default class ConnectionBase {
   //
   // - SDP からエンコード・デコード時に必要な情報を収集する
   // - SDP を書き換える（動作上は実は必須ではないけど、わかりやすさのため）
-  private replaceLocalAnswerSdpForLyra(sdp: string): string {
+  private processAnswerSdpForLocal(sdp: string): string {
     if (!sdp.includes("a=rtpmap:110 ")) {
       // Lyra は使われていないので書き換えは不要
       return sdp;
     }
 
-    // console.log("# original sdp");
-    // console.log(sdp);
-    // console.log("--------------------");
-    console.log("# replace start");
     const splited = sdp.split(/^m=/m);
     let replacedSdp = splited[0];
     for (let media of splited.splice(1)) {
       if (media.startsWith("audio") && media.includes("a=rtpmap:110 ")) {
-        console.log(media);
-        console.log("------------------------");
         // libwebrtc 的にはこの置換を行わなくても動作はするけど、
         // 後段の処理を簡潔にするためにここで処理しておく
         media = media
@@ -1402,7 +1395,29 @@ export default class ConnectionBase {
       }
       replacedSdp += "m=" + media;
     }
-    console.log("# replace end");
+    return replacedSdp;
+  }
+
+  // TODO: doc
+  private processAnswerSdpForRemote(sdp: string): string {
+    if (!sdp.includes("a=rtpmap:109 L16/16000")) {
+      // Lyra は使われていないので書き換えは不要
+      return sdp;
+    }
+
+    const splited = sdp.split(/^m=/m);
+    let replacedSdp = splited[0];
+    for (let media of splited.splice(1)) {
+      if (media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
+        // Sora 用に L16 を Lyra に置換する
+        // TODO: エンコードパラメータは offer sdp で使われたものを覚えておく必要がある
+        media = media
+          .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
+          .replace(/a=ptime:20/, "a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1");
+      }
+      replacedSdp += "m=" + media;
+    }
+
     return replacedSdp;
   }
 
@@ -1412,16 +1427,7 @@ export default class ConnectionBase {
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      const sdp = this.pc.localDescription.sdp;
-      if (sdp.includes("109 L16/")) {
-        // TODO: remove
-        // sdp = sdp
-        //   .replace(/a=rtpmap:109 L16[/]16000/g, "a=rtpmap:109 lyra/16000")
-        //   .replace(/a=ptime:20/g, "a=fmtp:109 version=1.3.0;bitrate=3200;usedtx=0");
-      }
-      // console.log("# answer sdp");
-      // console.log(sdp);
-      // console.log("------------------------");
+      const sdp = this.processAnswerSdpForRemote(this.pc.localDescription.sdp);
       const message = { type: "answer", sdp };
       this.ws.send(JSON.stringify(message));
       this.writeWebSocketSignalingLog("send-answer", message);
