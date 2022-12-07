@@ -1454,12 +1454,14 @@ export default class ConnectionBase {
       const mid = /a=mid:(.*)/.exec(media);
       if (mid && media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
         // Sora 用に L16 を Lyra に置換する
-        const params = this.audioMidToLyraParams.get(mid[1]) || {}; // TODO
+        const params = this.audioMidToLyraParams.get(mid[1]) || {}; // TODO: error check
         media = media
           .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
           .replace(
             /a=ptime:20/,
-            `a=fmtp:109 version=${params.version};bitrate=${params.bitrate};usedtx=${params.enableDtx ? 1 : 0}`
+            `a=fmtp:109 version=${params.version || "1.3.0"};bitrate=${params.bitrate || 6000};usedtx=${
+              params.enableDtx ? 1 : 0
+            }`
           );
       }
       replacedSdp += "m=" + media;
