@@ -309,3 +309,13 @@ export type SoraCloseEventInitDict = {
     params?: Record<string, unknown>;
 };
 export type SoraAbendTitle = "CONNECTION-STATE-FAILED" | "DATA-CHANNEL-ONERROR" | "ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT" | "ICE-CONNECTION-STATE-FAILED" | "INTERNAL-ERROR" | "WEBSOCKET-ONCLOSE" | "WEBSOCKET-ONERROR";
+export interface RTCEncodedAudioFrame {
+    readonly timestamp: number;
+    data: ArrayBuffer;
+    getMetadata(): RTCEncodedAudioFrameMetadata;
+}
+export interface RTCEncodedAudioFrameMetadata {
+    synchronizationSource: number;
+    payloadType: number;
+    contributingSources: [number];
+}

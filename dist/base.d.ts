@@ -1,6 +1,6 @@
-import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage } from "./types";
+import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, RTCEncodedAudioFrame, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage, AudioCodecType } from "./types";
 import SoraE2EE from "@sora/e2ee";
-import { LyraModule } from "@shiguredo/lyra-wasm";
+import { LyraEncoder, LyraDecoder, LyraModule } from "@shiguredo/lyra-wasm";
 declare global {
     interface Algorithm {
         namedCurve: string;
@@ -8,6 +8,10 @@ declare global {
 }
 export declare let LYRA_MODULE: LyraModule | undefined;
 export declare function initLyraModule(wasmPath: string, modelPath: string): Promise<void>;
+interface LyraEncodeOptions {
+    bitrate?: number;
+    enableDtx?: boolean;
+}
 /**
  * Sora との WebRTC 接続を扱う基底クラス
  *
@@ -135,6 +139,8 @@ export default class ConnectionBase {
      * E2EE インスタンス
      */
     protected e2ee: SoraE2EE | null;
+    protected lyraEncodeOptions: LyraEncodeOptions;
+    protected audioMidToCodec: Map<string, AudioCodecType>;
     constructor(signalingUrlCandidates: string | string[], role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     /**
      * SendRecv Object で発火するイベントのコールバックを設定するメソッド
@@ -346,6 +352,7 @@ export default class ConnectionBase {
      * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
      */
     protected setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
+    private processOfferSdp;
     /**
      * createAnswer 処理を行うメソッド
      *
@@ -355,6 +362,8 @@ export default class ConnectionBase {
      * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
      */
     protected createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
+    private processAnswerSdpForLocal;
+    private processAnswerSdpForRemote;
     /**
      * シグナリングサーバーに type answer を投げるメソッド
      */
@@ -457,6 +466,14 @@ export default class ConnectionBase {
      */
     protected writeSoraTimelineLog(eventType: string, data?: unknown): void;
     /**
+     * TODO: doc
+     */
+    protected lyraEncode(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): void;
+    /**
+     * TODO: doc
+     */
+    protected lyraDecode(lyraDecoder: LyraDecoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): void;
+    /**
      * createOffer 処理をするメソッド
      *
      * @returns
@@ -529,7 +546,7 @@ export default class ConnectionBase {
     /**
      * PeerConnection から RTCStatsReport を取得するためのメソッド
      */
-    private getStats;
+    protected getStats(): Promise<RTCStatsReport[]>;
     /**
      * PeerConnection の ondatachannel callback メソッド
      *
@@ -604,3 +621,4 @@ export default class ConnectionBase {
      */
     get datachannels(): DataChannelConfiguration[];
 }
+export {};

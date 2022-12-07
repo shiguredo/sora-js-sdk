@@ -2255,7 +2255,9 @@
 	// TODO: Add doc
 	let LYRA_MODULE;
 	// TODO: Add doc
+	// TODO: rename
 	async function initLyraModule(wasmPath, modelPath) {
+	    // TODO: この段階ではロードしたくないので、実際に必要になったタイミングまで遅延させる
 	    LYRA_MODULE = await LyraModule.load(wasmPath, modelPath);
 	}
 	/**
@@ -2270,6 +2272,10 @@
 	 */
 	class ConnectionBase {
 	    constructor(signalingUrlCandidates, role, channelId, metadata, options, debug) {
+	        // TODO
+	        this.lyraEncodeOptions = {};
+	        // TODO
+	        this.audioMidToCodec = new Map();
 	        this.role = role;
 	        this.channelId = channelId;
 	        this.metadata = metadata;
@@ -3280,18 +3286,53 @@
 	        if (!this.pc) {
 	            return;
 	        }
-	        if (message.sdp.includes("109 lyra/")) {
-	            // FIXME
-	            message.sdp = message.sdp
-	                .replace(/SAVPF 109/g, "SAVPF 109 110")
-	                .replace(/SAVPF 111 109/g, "SAVPF 109 110 111")
-	                .replace(/109 lyra[/]16000[/]1/g, "110 opus/48000/2")
-	                .replace(/a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1/g, "a=fmtp:110 minptime=10;useinbandfec=1\r\na=rtpmap:109 L16/16000/1\r\na=fmtp:109 ptime=20");
-	        }
-	        const sessionDescription = new RTCSessionDescription({ type: "offer", sdp: message.sdp });
+	        const sdp = this.processOfferSdp(message.sdp);
+	        const sessionDescription = new RTCSessionDescription({ type: "offer", sdp });
 	        await this.pc.setRemoteDescription(sessionDescription);
 	        this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
 	        return;
+	    }
+	    // TOOD: doc
+	    // - 新しい payload type を追加している理由
+	    //   - L16 だけだと音声なしになる
+	    //   - sora では 109 を使いたいので 110 を用意して退避する
+	    processOfferSdp(sdp) {
+	        if (!sdp.includes("109 lyra/")) {
+	            return sdp;
+	        }
+	        const splited = sdp.split(/^m=/m);
+	        let replacedSdp = splited[0];
+	        for (let media of splited.splice(1)) {
+	            if (media.startsWith("audio") && media.includes("109 lyra/")) {
+	                if (media.includes("a=recvonly")) {
+	                    const result = /a=fmtp:109 version=([0-9.]+);bitrate=([0-9]+);usedtx=([01])/.exec(media);
+	                    if (result) {
+	                        const version = result[1];
+	                        console.log("lyra version: " + version); // TODO
+	                        // TODO: check version
+	                        const bitrate = Number(result[2]);
+	                        const enableDtx = result[3] === "1";
+	                        this.lyraEncodeOptions.bitrate = bitrate;
+	                        this.lyraEncodeOptions.enableDtx = enableDtx;
+	                    }
+	                }
+	                media = media
+	                    .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
+	                    .replace(/109 lyra[/]16000[/]1/, "110 opus/48000/2")
+	                    .replace(/a=fmtp:109 .*/, "a=rtpmap:109 L16/16000\r\na=ptime:20");
+	            }
+	            if (media.startsWith("audio")) {
+	                const mid = /a=mid:(.*)/.exec(media);
+	                if (mid) {
+	                    // TODO: 判定方法は変更する ("lyra"という文字列みる)
+	                    const codec = media.includes("a=rtpmap:110 ") ? "LYRA" : "OPUS";
+	                    this.audioMidToCodec.set(mid[1], codec);
+	                    console.log(this.audioMidToCodec);
+	                }
+	            }
+	            replacedSdp += "m=" + media;
+	        }
+	        return replacedSdp;
 	    }
 	    /**
 	     * createAnswer 処理を行うメソッド
@@ -3338,26 +3379,69 @@
 	                // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
 	                await this.setSenderParameters(transceiver, this.encodings);
 	                const sessionDescription = await this.pc.createAnswer();
+	                // TODO(sile): 動作確認
+	                if (sessionDescription.sdp !== undefined) {
+	                    sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp);
+	                }
 	                await this.pc.setLocalDescription(sessionDescription);
 	                this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
 	                return;
 	            }
 	        }
 	        const sessionDescription = await this.pc.createAnswer();
-	        this.writePeerConnectionTimelineLog("create-answer", sessionDescription);
 	        if (sessionDescription.sdp !== undefined) {
-	            // FIXME
-	            if (sessionDescription.sdp.includes("SAVPF 110")) {
-	                // TODO: この replace は不要？
-	                sessionDescription.sdp = sessionDescription.sdp
-	                    .replace(/SAVPF 110/g, "SAVPF 109")
-	                    .replace(/a=rtpmap:110 opus[/]48000[/]2/g, "a=rtpmap:109 L16/16000/1")
-	                    .replace(/a=fmtp:110 minptime=10;useinbandfec=1/g, "a=fmtp:109 ptime=20");
-	            }
+	            sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp);
 	        }
+	        this.writePeerConnectionTimelineLog("create-answer", sessionDescription);
 	        await this.pc.setLocalDescription(sessionDescription);
 	        this.writePeerConnectionTimelineLog("set-local-description", sessionDescription);
 	        return;
+	    }
+	    // TODO: doc and rename
+	    //
+	    // - SDP からエンコード・デコード時に必要な情報を収集する
+	    // - SDP を書き換える（動作上は実は必須ではないけど、わかりやすさのため）
+	    processAnswerSdpForLocal(sdp) {
+	        if (!sdp.includes("a=rtpmap:110 ")) {
+	            // Lyra は使われていないので書き換えは不要
+	            return sdp;
+	        }
+	        const splited = sdp.split(/^m=/m);
+	        let replacedSdp = splited[0];
+	        for (let media of splited.splice(1)) {
+	            if (media.startsWith("audio") && media.includes("a=rtpmap:110 ")) {
+	                // libwebrtc 的にはこの置換を行わなくても動作はするけど、
+	                // 後段の処理を簡潔にするためにここで処理しておく
+	                media = media
+	                    .replace(/SAVPF([0-9 ]*) 110/, "SAVPF$1 109")
+	                    .replace(/a=rtpmap:110 opus[/]48000[/]2/, "a=rtpmap:109 L16/16000")
+	                    .replace(/a=fmtp:110 .*/, "a=ptime:20");
+	            }
+	            replacedSdp += "m=" + media;
+	        }
+	        return replacedSdp;
+	    }
+	    // TODO: doc
+	    processAnswerSdpForRemote(sdp) {
+	        if (!sdp.includes("a=rtpmap:109 L16/16000")) {
+	            // Lyra は使われていないので書き換えは不要
+	            return sdp;
+	        }
+	        const splited = sdp.split(/^m=/m);
+	        let replacedSdp = splited[0];
+	        for (let media of splited.splice(1)) {
+	            if (media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
+	                // Sora 用に L16 を Lyra に置換する
+	                // TODO: エンコードパラメータは offer sdp で使われたものを覚えておく必要がある
+	                media = media
+	                    .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
+	                    .replace(/a=ptime:20/, "a=fmtp:109 version=1.3.0;bitrate=6000;usedtx=1");
+	                console.log(media);
+	                console.log("----------------");
+	            }
+	            replacedSdp += "m=" + media;
+	        }
+	        return replacedSdp;
 	    }
 	    /**
 	     * シグナリングサーバーに type answer を投げるメソッド
@@ -3365,12 +3449,7 @@
 	    sendAnswer() {
 	        if (this.pc && this.ws && this.pc.localDescription) {
 	            this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-	            let sdp = this.pc.localDescription.sdp;
-	            if (sdp.includes("109 L16/")) {
-	                sdp = sdp
-	                    .replace(/a=rtpmap:109 L16[/]16000/g, "a=rtpmap:109 lyra/16000/1")
-	                    .replace(/a=ptime:20/g, "a=fmtp:109 version=1.3.0;bitrate=3200;usedtx=0");
-	            }
+	            const sdp = this.processAnswerSdpForRemote(this.pc.localDescription.sdp);
 	            const message = { type: "answer", sdp };
 	            this.ws.send(JSON.stringify(message));
 	            this.writeWebSocketSignalingLog("send-answer", message);
@@ -3651,6 +3730,55 @@
 	    writeSoraTimelineLog(eventType, data) {
 	        const event = createTimelineEvent(eventType, data, "sora");
 	        this.callbacks.timeline(event);
+	    }
+	    /**
+	     * TODO: doc
+	     */
+	    // TODO: lyraEncoder はフィールドに持たせる
+	    // TODO: lyraEncoder の破壊
+	    lyraEncode(lyraEncoder, encodedFrame, controller) {
+	        // TODO
+	        // console.log(
+	        //   encodedFrame.getMetadata().synchronizationSource +
+	        //     ": " +
+	        //     encodedFrame.data.byteLength +
+	        //     ": " +
+	        //     encodedFrame.getMetadata().payloadType
+	        // );
+	        const view = new DataView(encodedFrame.data);
+	        const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
+	        for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
+	            const v2 = view.getInt16(i, false);
+	            rawData[i / 2] = v2 / 0x7fff;
+	        }
+	        const encoded = lyraEncoder.encode(rawData);
+	        if (encoded === undefined) {
+	            // dtx
+	            return;
+	        }
+	        encodedFrame.data = encoded.buffer;
+	        // TODO: Reduce extra conversion between i16 and f32 (by updating lyra-wasm interface)
+	        controller.enqueue(encodedFrame);
+	    }
+	    /**
+	     * TODO: doc
+	     */
+	    lyraDecode(lyraDecoder, encodedFrame, controller) {
+	        // console.log(
+	        //   encodedFrame.getMetadata().synchronizationSource +
+	        //     ": " +
+	        //     encodedFrame.data.byteLength +
+	        //     ": " +
+	        //     encodedFrame.getMetadata().payloadType
+	        // );
+	        const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
+	        const buffer = new ArrayBuffer(decoded.length * 2);
+	        const view = new DataView(buffer);
+	        for (const [i, v] of decoded.entries()) {
+	            view.setInt16(i * 2, v * 0x7fff, false);
+	        }
+	        encodedFrame.data = buffer;
+	        controller.enqueue(encodedFrame);
 	    }
 	    /**
 	     * createOffer 処理をするメソッド
@@ -4345,10 +4473,10 @@
 	                    // @ts-ignore
 	                    // eslint-disable-next-line
 	                    const receiverStreams = event.receiver.createEncodedStreams();
-	                    if (event.track.kind == "audio") {
+	                    if (event.track.kind == "audio" && this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA") {
 	                        const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
 	                        const transformStream = new TransformStream({
-	                            transform: (data, controller) => decodeFunction$1(lyraDecoder, data, controller),
+	                            transform: (data, controller) => this.lyraDecode(lyraDecoder, data, controller),
 	                        });
 	                        // eslint-disable-next-line
 	                        receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
@@ -4413,7 +4541,11 @@
 	        });
 	        if (this.pc) {
 	            if (LYRA_MODULE && this.options.audioCodecType === "LYRA") {
-	                const lyraEncoder = LYRA_MODULE.createEncoder({ sampleRate: 16000, bitrate: 6000, enableDtx: true });
+	                const lyraEncoder = LYRA_MODULE.createEncoder({
+	                    sampleRate: 16000,
+	                    bitrate: this.lyraEncodeOptions.bitrate,
+	                    enableDtx: this.lyraEncodeOptions.enableDtx,
+	                });
 	                this.pc.getSenders().forEach((sender) => {
 	                    if (sender == undefined || sender.track == undefined) {
 	                        return;
@@ -4423,7 +4555,7 @@
 	                    const senderStreams = sender.createEncodedStreams();
 	                    if (sender.track.kind === "audio") {
 	                        const transformStream = new TransformStream({
-	                            transform: (encodedFrame, controller) => encodeFunction(lyraEncoder, encodedFrame, controller),
+	                            transform: (data, controller) => this.lyraEncode(lyraEncoder, data, controller),
 	                        });
 	                        // eslint-disable-next-line
 	                        senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);
@@ -4449,44 +4581,6 @@
 	        await this.waitChangeConnectionStateConnected();
 	        return stream;
 	    }
-	}
-	// @ts-ignore
-	function encodeFunction(lyraEncoder, encodedFrame /*: RTCEncodedAudioFrame*/, controller) {
-	    // eslint-disable-next-line
-	    const view = new DataView(encodedFrame.data);
-	    // eslint-disable-next-line
-	    const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
-	    // eslint-disable-next-line
-	    for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
-	        const v2 = view.getInt16(i, false);
-	        rawData[i / 2] = v2 / 0x7fff;
-	    }
-	    const encoded = lyraEncoder.encode(rawData);
-	    if (encoded === undefined) {
-	        // dtx
-	        return;
-	    }
-	    // eslint-disable-next-line
-	    encodedFrame.data = encoded.buffer;
-	    // TODO: Handle DTX
-	    // TODO: Reduce extra conversion between i16 and f32 (by updating lyra-wasm interface)
-	    // eslint-disable-next-line
-	    controller.enqueue(encodedFrame);
-	}
-	// @ts-ignore
-	function decodeFunction$1(lyraDecoder, encodedFrame, controller) {
-	    // TODO: handle DTX(?)
-	    // eslint-disable-next-line
-	    const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
-	    const buffer = new ArrayBuffer(decoded.length * 2);
-	    const view = new DataView(buffer);
-	    for (const [i, v] of decoded.entries()) {
-	        view.setInt16(i * 2, v * 0x7fff, false);
-	    }
-	    // eslint-disable-next-line
-	    encodedFrame.data = buffer;
-	    // eslint-disable-next-line
-	    controller.enqueue(encodedFrame);
 	}
 
 	/**
@@ -4606,14 +4700,16 @@
 	        await this.connectPeerConnection(signalingMessage);
 	        if (this.pc) {
 	            this.pc.ontrack = (event) => {
+	                // console.log("mid: " + event.transceiver.mid);
+	                // console.log("codec: " + this.audioMidToCodec.get(event.transceiver.mid || ""));
 	                if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
 	                    // @ts-ignore
 	                    // eslint-disable-next-line
 	                    const receiverStreams = event.receiver.createEncodedStreams();
-	                    if (event.track.kind == "audio") {
+	                    if (event.track.kind == "audio" && this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA") {
 	                        const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
 	                        const transformStream = new TransformStream({
-	                            transform: (data, controller) => decodeFunction(lyraDecoder, data, controller),
+	                            transform: (data, controller) => this.lyraDecode(lyraDecoder, data, controller),
 	                        });
 	                        // eslint-disable-next-line
 	                        receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
@@ -4675,21 +4771,6 @@
 	        await this.waitChangeConnectionStateConnected();
 	        return;
 	    }
-	}
-	// @ts-ignore
-	function decodeFunction(lyraDecoder, encodedFrame, controller) {
-	    // TODO: handle DTX(?)
-	    // eslint-disable-next-line
-	    const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
-	    const buffer = new ArrayBuffer(decoded.length * 2);
-	    const view = new DataView(buffer);
-	    for (const [i, v] of decoded.entries()) {
-	        view.setInt16(i * 2, v * 0x7fff, false);
-	    }
-	    // eslint-disable-next-line
-	    encodedFrame.data = buffer;
-	    // eslint-disable-next-line
-	    controller.enqueue(encodedFrame);
 	}
 
 	/**
