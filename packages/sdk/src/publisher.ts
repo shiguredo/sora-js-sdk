@@ -164,7 +164,11 @@ export default class ConnectionPublisher extends ConnectionBase {
     });
     if (this.pc) {
       if (LYRA_MODULE && this.options.audioCodecType === "LYRA") {
-        const lyraEncoder = LYRA_MODULE.createEncoder({ sampleRate: 16000, bitrate: 6000, enableDtx: true });
+        const lyraEncoder = LYRA_MODULE.createEncoder({
+          sampleRate: 16000,
+          bitrate: this.lyraEncodeOptions.bitrate,
+          enableDtx: this.lyraEncodeOptions.enableDtx,
+        });
         this.pc.getSenders().forEach((sender) => {
           if (sender == undefined || sender.track == undefined) {
             return;

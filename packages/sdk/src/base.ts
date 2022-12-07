@@ -56,6 +56,12 @@ export async function initLyraModule(wasmPath: string, modelPath: string): Promi
   LYRA_MODULE = await LyraModule.load(wasmPath, modelPath);
 }
 
+// TODO: move
+interface LyraEncodeOptions {
+  bitrate?: number;
+  enableDtx?: boolean;
+}
+
 /**
  * Sora との WebRTC 接続を扱う基底クラス
  *
@@ -191,6 +197,10 @@ export default class ConnectionBase {
    * E2EE インスタンス
    */
   protected e2ee: SoraE2EE | null;
+
+  // TODO
+  protected lyraEncodeOptions: LyraEncodeOptions = {};
+  private lyraSsrcSet: Set<number> = new Set();
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -1255,10 +1265,23 @@ export default class ConnectionBase {
       return sdp;
     }
 
-    let splited = sdp.split(/^m=/m);
+    const splited = sdp.split(/^m=/m);
     let replacedSdp = splited[0];
     for (let media of splited.splice(1)) {
       if (media.startsWith("audio") && media.includes("109 lyra/")) {
+        if (media.includes("a=recvonly")) {
+          const result = /a=fmtp:109 version=([0-9.]+);bitrate=([0-9]+);usedtx=([01])/.exec(media);
+          if (result) {
+            const version = result[1];
+            console.log("lyra version: " + version); // TODO
+            // TODO: check version
+
+            const bitrate = Number(result[2]);
+            const enableDtx = result[3] === "1";
+            this.lyraEncodeOptions.bitrate = bitrate;
+            this.lyraEncodeOptions.enableDtx = enableDtx;
+          }
+        }
         media = media
           .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
           .replace(/109 lyra[/]16000[/]1/, "110 opus/48000/2")
@@ -1316,27 +1339,52 @@ export default class ConnectionBase {
         // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
         await this.setSenderParameters(transceiver, this.encodings);
         const sessionDescription = await this.pc.createAnswer();
+        // TODO(sile): 動作確認
+        if (sessionDescription.sdp !== undefined) {
+          sessionDescription.sdp = this.replaceLocalAnswerSdpForLyra(sessionDescription.sdp);
+        }
         await this.pc.setLocalDescription(sessionDescription);
         this.trace("TRANSCEIVER SENDER GET_PARAMETERS", transceiver.sender.getParameters());
         return;
       }
     }
     const sessionDescription = await this.pc.createAnswer();
-    this.writePeerConnectionTimelineLog("create-answer", sessionDescription);
     if (sessionDescription.sdp !== undefined) {
-      // FIXME
-      if (sessionDescription.sdp.includes("SAVPF 110")) {
-        // TODO: この replace は不要？
-        // sessionDescription.sdp = sessionDescription.sdp
-        //   .replace(/SAVPF 110/g, "SAVPF 109")
-        //   .replace(/a=rtpmap:110 opus[/]48000[/]2/g, "a=rtpmap:109 L16/16000")
-        //   .replace(/a=fmtp:110 minptime=10;useinbandfec=1/g, "a=fmtp:109 ptime=20");
-      }
-      console.log(sessionDescription.sdp);
+      sessionDescription.sdp = this.replaceLocalAnswerSdpForLyra(sessionDescription.sdp);
     }
+    this.writePeerConnectionTimelineLog("create-answer", sessionDescription);
     await this.pc.setLocalDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-local-description", sessionDescription);
     return;
+  }
+
+  // TODO: doc and rename
+  //
+  // - SDP からエンコード・デコード時に必要な情報を収集する
+  // - SDP を書き換える（動作上は実は必須ではないけど、わかりやすさのため）
+  private replaceLocalAnswerSdpForLyra(sdp: string): string {
+    if (!sdp.includes("a=rtpmap:110 ")) {
+      // Lyra は使われていないので書き換えは不要
+      return sdp;
+    }
+
+    const splited = sdp.split(/^m=/m);
+    let replacedSdp = splited[0];
+    for (let media of splited.splice(1)) {
+      if (media.startsWith("audio") && media.includes("a=rtpmap:110 ")) {
+        // TODO: ssrc を覚えておく
+
+        // libwebrtc 的にはこの置換を行わなくても動作はするけど、
+        // 後段の処理を簡潔にするためにここで処理しておく
+        media = media
+          .replace(/SAVPF([0-9 ]*) 110/, "SAVPF$1 109")
+          .replace(/a=rtpmap:110 opus[/]48000[/]2/, "a=rtpmap:109 L16/16000")
+          .replace(/a=fmtp:110 .*/, "a=ptime:20");
+      }
+      replacedSdp += "m=" + media;
+    }
+    console.log(replacedSdp);
+    return replacedSdp;
   }
 
   /**
@@ -1345,7 +1393,7 @@ export default class ConnectionBase {
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      let sdp = this.pc.localDescription.sdp;
+      const sdp = this.pc.localDescription.sdp;
       if (sdp.includes("109 L16/")) {
         // TODO: remove
         console.log("##############################################");
@@ -1664,13 +1712,14 @@ export default class ConnectionBase {
     encodedFrame: RTCEncodedAudioFrame,
     controller: TransformStreamDefaultController
   ): void {
-    console.log(
-      encodedFrame.getMetadata().synchronizationSource +
-        ": " +
-        encodedFrame.data.byteLength +
-        ": " +
-        encodedFrame.getMetadata().payloadType
-    );
+    // TODO
+    // console.log(
+    //   encodedFrame.getMetadata().synchronizationSource +
+    //     ": " +
+    //     encodedFrame.data.byteLength +
+    //     ": " +
+    //     encodedFrame.getMetadata().payloadType
+    // );
     const view = new DataView(encodedFrame.data);
     const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
     for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
