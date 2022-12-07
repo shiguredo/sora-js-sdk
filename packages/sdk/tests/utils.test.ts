@@ -653,3 +653,18 @@ test("createSignalingMessage spotlightNumber: undefined", () => {
   };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(baseExpectedMessage);
 });
+
+test("createSignalingMessage audioStreamingLanguageCode: undefined", () => {
+  const options = {
+    audioStreamingLanguageCode: undefined,
+  };
+  expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(baseExpectedMessage);
+});
+
+test("createSignalingMessage audioStreamingLanguageCode: ja-JP", () => {
+  const options = {
+    audioStreamingLanguageCode: "ja-JP",
+  };
+  const expectedMessage = Object.assign({}, baseExpectedMessage, { audio_streaming_language_code: options.audioStreamingLanguageCode });
+  expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(expectedMessage);
+});
