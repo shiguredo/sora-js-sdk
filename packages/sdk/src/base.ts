@@ -200,7 +200,6 @@ export default class ConnectionBase {
 
   // TODO
   protected lyraEncodeOptions: LyraEncodeOptions = {};
-  private lyraSsrcSet: Set<number> = new Set();
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -1368,12 +1367,17 @@ export default class ConnectionBase {
       return sdp;
     }
 
+    // console.log("# original sdp");
+    // console.log(sdp);
+    // console.log("--------------------");
+    console.log("# replace start");
     const splited = sdp.split(/^m=/m);
     let replacedSdp = splited[0];
     for (let media of splited.splice(1)) {
       if (media.startsWith("audio") && media.includes("a=rtpmap:110 ")) {
         // TODO: ssrc を覚えておく
-
+        console.log(media);
+        console.log("------------------------");
         // libwebrtc 的にはこの置換を行わなくても動作はするけど、
         // 後段の処理を簡潔にするためにここで処理しておく
         media = media
@@ -1383,7 +1387,7 @@ export default class ConnectionBase {
       }
       replacedSdp += "m=" + media;
     }
-    console.log(replacedSdp);
+    console.log("# replace end");
     return replacedSdp;
   }
 
@@ -1396,12 +1400,13 @@ export default class ConnectionBase {
       const sdp = this.pc.localDescription.sdp;
       if (sdp.includes("109 L16/")) {
         // TODO: remove
-        console.log("##############################################");
-        console.log(sdp);
         // sdp = sdp
         //   .replace(/a=rtpmap:109 L16[/]16000/g, "a=rtpmap:109 lyra/16000")
         //   .replace(/a=ptime:20/g, "a=fmtp:109 version=1.3.0;bitrate=3200;usedtx=0");
       }
+      console.log("# answer sdp");
+      console.log(sdp);
+      console.log("------------------------");
       const message = { type: "answer", sdp };
       this.ws.send(JSON.stringify(message));
       this.writeWebSocketSignalingLog("send-answer", message);
@@ -1745,6 +1750,13 @@ export default class ConnectionBase {
     encodedFrame: RTCEncodedAudioFrame,
     controller: TransformStreamDefaultController
   ): void {
+    console.log(
+      encodedFrame.getMetadata().synchronizationSource +
+        ": " +
+        encodedFrame.data.byteLength +
+        ": " +
+        encodedFrame.getMetadata().payloadType
+    );
     const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
     const buffer = new ArrayBuffer(decoded.length * 2);
     const view = new DataView(buffer);
