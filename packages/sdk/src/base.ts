@@ -38,6 +38,7 @@ import {
   SoraCloseEventInitDict,
   SoraCloseEventType,
   TransportType,
+  AudioCodecType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
 import { LyraEncoder, LyraDecoder, LyraModule } from "@shiguredo/lyra-wasm";
@@ -200,6 +201,9 @@ export default class ConnectionBase {
 
   // TODO
   protected lyraEncodeOptions: LyraEncodeOptions = {};
+
+  // TODO
+  protected audioMidToCodec: Map<string, AudioCodecType> = new Map();
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -1249,6 +1253,9 @@ export default class ConnectionBase {
     }
 
     const sdp = this.replaceOfferSdpForLyra(message.sdp);
+    console.log("### setRemoteSDP");
+    console.log(sdp);
+    console.log("-----------------");
     const sessionDescription = new RTCSessionDescription({ type: "offer", sdp });
     await this.pc.setRemoteDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
@@ -1285,6 +1292,15 @@ export default class ConnectionBase {
           .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
           .replace(/109 lyra[/]16000[/]1/, "110 opus/48000/2")
           .replace(/a=fmtp:109 .*/, "a=rtpmap:109 L16/16000\r\na=ptime:20");
+      }
+      if (media.startsWith("audio")) {
+        const mid = /a=mid:(.*)/.exec(media);
+        if (mid) {
+          // TODO: 判定方法は変更する
+          const codec = media.includes("a=rtpmap:110 ") ? "LYRA" : "OPUS";
+          this.audioMidToCodec.set(mid[1], codec);
+          console.log(this.audioMidToCodec);
+        }
       }
       replacedSdp += "m=" + media;
     }
@@ -1375,7 +1391,6 @@ export default class ConnectionBase {
     let replacedSdp = splited[0];
     for (let media of splited.splice(1)) {
       if (media.startsWith("audio") && media.includes("a=rtpmap:110 ")) {
-        // TODO: ssrc を覚えておく
         console.log(media);
         console.log("------------------------");
         // libwebrtc 的にはこの置換を行わなくても動作はするけど、
@@ -1404,9 +1419,9 @@ export default class ConnectionBase {
         //   .replace(/a=rtpmap:109 L16[/]16000/g, "a=rtpmap:109 lyra/16000")
         //   .replace(/a=ptime:20/g, "a=fmtp:109 version=1.3.0;bitrate=3200;usedtx=0");
       }
-      console.log("# answer sdp");
-      console.log(sdp);
-      console.log("------------------------");
+      // console.log("# answer sdp");
+      // console.log(sdp);
+      // console.log("------------------------");
       const message = { type: "answer", sdp };
       this.ws.send(JSON.stringify(message));
       this.writeWebSocketSignalingLog("send-answer", message);
@@ -1750,13 +1765,13 @@ export default class ConnectionBase {
     encodedFrame: RTCEncodedAudioFrame,
     controller: TransformStreamDefaultController
   ): void {
-    console.log(
-      encodedFrame.getMetadata().synchronizationSource +
-        ": " +
-        encodedFrame.data.byteLength +
-        ": " +
-        encodedFrame.getMetadata().payloadType
-    );
+    // console.log(
+    //   encodedFrame.getMetadata().synchronizationSource +
+    //     ": " +
+    //     encodedFrame.data.byteLength +
+    //     ": " +
+    //     encodedFrame.getMetadata().payloadType
+    // );
     const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
     const buffer = new ArrayBuffer(decoded.length * 2);
     const view = new DataView(buffer);
@@ -2010,7 +2025,7 @@ export default class ConnectionBase {
   /**
    * PeerConnection から RTCStatsReport を取得するためのメソッド
    */
-  private async getStats(): Promise<RTCStatsReport[]> {
+  protected async getStats(): Promise<RTCStatsReport[]> {
     const stats: RTCStatsReport[] = [];
     if (!this.pc) {
       return stats;

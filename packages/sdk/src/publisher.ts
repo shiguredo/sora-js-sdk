@@ -96,7 +96,7 @@ export default class ConnectionPublisher extends ConnectionBase {
           // @ts-ignore
           // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
-          if (event.track.kind == "audio") {
+          if (event.track.kind == "audio" && this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA") {
             const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
             const transformStream = new TransformStream({
               transform: (data: RTCEncodedAudioFrame, controller) => this.lyraDecode(lyraDecoder, data, controller),

@@ -120,11 +120,13 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = (event): void => {
+        // console.log("mid: " + event.transceiver.mid);
+        // console.log("codec: " + this.audioMidToCodec.get(event.transceiver.mid || ""));
         if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
           // @ts-ignore
           // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
-          if (event.track.kind == "audio") {
+          if (event.track.kind == "audio" && this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA") {
             const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
             const transformStream = new TransformStream({
               transform: (data: RTCEncodedAudioFrame, controller) => this.lyraDecode(lyraDecoder, data, controller),
