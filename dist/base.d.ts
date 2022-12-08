@@ -6,10 +6,19 @@ declare global {
         namedCurve: string;
     }
 }
-export declare let LYRA_MODULE: LyraModule | undefined;
-export declare function initLyraModule(wasmPath: string, modelPath: string): Promise<void>;
-interface LyraEncodeOptions {
-    bitrate?: number;
+export declare class LyraModuleLoader {
+    readonly wasmPath: string;
+    readonly modelPath: string;
+    private lyraModule?;
+    constructor(wasmPath: string, modelPath: string);
+    load(): Promise<LyraModule>;
+}
+export declare function initLyra(wasmPath: string, modelPath: string, prefetch?: boolean): Promise<void>;
+export declare function getLyraModule(): Promise<LyraModule>;
+export declare function isCustomCodecEnabled(): boolean;
+interface LyraParams {
+    version?: string;
+    bitrate?: 3200 | 6000 | 9200;
     enableDtx?: boolean;
 }
 /**
@@ -139,8 +148,9 @@ export default class ConnectionBase {
      * E2EE インスタンス
      */
     protected e2ee: SoraE2EE | null;
-    protected lyraEncodeOptions: LyraEncodeOptions;
+    protected lyraEncodeOptions: LyraParams;
     protected audioMidToCodec: Map<string, AudioCodecType>;
+    protected audioMidToLyraParams: Map<string, LyraParams>;
     constructor(signalingUrlCandidates: string | string[], role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     /**
      * SendRecv Object で発火するイベントのコールバックを設定するメソッド

@@ -22,8 +22,7 @@ export type SignalingAudio = boolean | {
     };
     lyra_params?: {
         version?: string;
-        sample_rate?: number;
-        bitrate?: number;
+        bitrate?: 3200 | 6000 | 9200;
         usedtx?: boolean;
     };
 };
@@ -234,6 +233,8 @@ export type ConnectionOptions = {
     audioOpusParamsPtime?: number;
     audioOpusParamsUseinbandfec?: boolean;
     audioOpusParamsUsedtx?: boolean;
+    audioLyraParamsBitrate?: 3200 | 6000 | 9200;
+    audioLyraParamsUsedtx?: boolean;
     video?: boolean;
     videoCodecType?: VideoCodecType;
     videoBitRate?: number;
