@@ -282,6 +282,7 @@ export type ConnectionOptions = {
   audioOpusParamsUseinbandfec?: boolean;
   audioOpusParamsUsedtx?: boolean;
   audioLyraParamsBitrate?: 3200 | 6000 | 9200;
+  audioLyraParamsUsedtx?: boolean;
   video?: boolean;
   videoCodecType?: VideoCodecType;
   videoBitRate?: number;

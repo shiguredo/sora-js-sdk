@@ -189,7 +189,7 @@ export function createSignalingMessage(
     "audioOpusParamsUseinbandfec",
     "audioOpusParamsUsedtx",
   ];
-  const audioLyraParamsPropertyKeys = ["audioLyraParamsBitrate"];
+  const audioLyraParamsPropertyKeys = ["audioLyraParamsBitrate", "audioLyraParamsUsedtx"];
   const videoPropertyKeys = ["videoCodecType", "videoBitRate"];
   const copyOptions = Object.assign({}, options);
   (Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
@@ -272,6 +272,9 @@ export function createSignalingMessage(
     message.audio.lyra_params = { version: "1.3.0" };
     if ("audioLyraParamsBitrate" in copyOptions) {
       message.audio.lyra_params.bitrate = copyOptions.audioLyraParamsBitrate;
+    }
+    if ("audioLyraParamsUsedtx" in copyOptions) {
+      message.audio.lyra_params.usedtx = copyOptions.audioLyraParamsUsedtx;
     }
   }
 
