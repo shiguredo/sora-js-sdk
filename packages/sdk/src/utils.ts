@@ -319,6 +319,10 @@ export function createSignalingMessage(
     message.data_channels = parseDataChannelConfigurations(options.dataChannels);
   }
 
+  if (options.audioStreamingLanguageCode !== undefined) {
+    message.audio_streaming_language_code = options.audioStreamingLanguageCode;
+  }
+
   return message;
 }
 
