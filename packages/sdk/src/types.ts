@@ -23,11 +23,9 @@ export type SignalingAudio =
         useinbandfec?: boolean;
         usedtx?: boolean;
       };
-      // FIXME
       lyra_params?: {
         version?: string;
-        sample_rate?: number;
-        bitrate?: number;
+        bitrate?: 3200 | 6000 | 9200;
         usedtx?: boolean;
       };
     };
@@ -283,6 +281,7 @@ export type ConnectionOptions = {
   audioOpusParamsPtime?: number;
   audioOpusParamsUseinbandfec?: boolean;
   audioOpusParamsUsedtx?: boolean;
+  audioLyraParamsBitrate?: 3200 | 6000 | 9200;
   video?: boolean;
   videoCodecType?: VideoCodecType;
   videoBitRate?: number;

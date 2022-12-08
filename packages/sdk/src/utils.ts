@@ -189,6 +189,7 @@ export function createSignalingMessage(
     "audioOpusParamsUseinbandfec",
     "audioOpusParamsUsedtx",
   ];
+  const audioLyraParamsPropertyKeys = ["audioLyraParamsBitrate"];
   const videoPropertyKeys = ["videoCodecType", "videoBitRate"];
   const copyOptions = Object.assign({}, options);
   (Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
@@ -202,6 +203,9 @@ export function createSignalingMessage(
       return;
     }
     if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
+      return;
+    }
+    if (0 <= audioLyraParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
       return;
     }
     if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
@@ -228,14 +232,6 @@ export function createSignalingMessage(
   const hasAudioOpusParamsProperty = Object.keys(copyOptions).some((key) => {
     return 0 <= audioOpusParamsPropertyKeys.indexOf(key);
   });
-
-  if (message.audio && options.audioCodecType === "LYRA") {
-    // FIXME
-    if (typeof message.audio != "object") {
-      message.audio = {};
-    }
-    message.audio.lyra_params = { version: "1.3.0" };
-  }
   if (message.audio && hasAudioOpusParamsProperty) {
     if (typeof message.audio != "object") {
       message.audio = {};
@@ -264,6 +260,18 @@ export function createSignalingMessage(
     }
     if ("audioOpusParamsUsedtx" in copyOptions) {
       message.audio.opus_params.usedtx = copyOptions.audioOpusParamsUsedtx;
+    }
+  }
+
+  if (message.audio && options.audioCodecType == "LYRA") {
+    if (typeof message.audio != "object") {
+      message.audio = {};
+    }
+
+    // TODO(sile): バージョンは lyra-wasm からとってくる
+    message.audio.lyra_params = { version: "1.3.0" };
+    if ("audioLyraParamsBitrate" in copyOptions) {
+      message.audio.lyra_params.bitrate = copyOptions.audioLyraParamsBitrate;
     }
   }
 
