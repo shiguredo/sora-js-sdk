@@ -20,7 +20,6 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm --version
-      - run: cat package.json
       - run: npm install
       - run: npm run build -w packages/e2ee
       - run: npm run build -w packages/sdk
