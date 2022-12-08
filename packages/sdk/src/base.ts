@@ -1819,6 +1819,12 @@ export default class ConnectionBase {
     encodedFrame: RTCEncodedAudioFrame,
     controller: TransformStreamDefaultController
   ): void {
+    if (encodedFrame.data.byteLength === 0) {
+      // FIXME(sile): sora-cpp-sdk の実装だと DTX の場合にペイロードサイズが 0 のパケットが飛んでくる可能性がある
+      //              一応保険としてこのチェックを入れているけれど、もし不要だと分かったら削除してしまう
+      return;
+    }
+
     // console.log(
     //   encodedFrame.getMetadata().synchronizationSource +
     //     ": " +
