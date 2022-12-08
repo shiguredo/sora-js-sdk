@@ -41,7 +41,7 @@ import {
   AudioCodecType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
-import { LyraEncoder, LyraDecoder, LyraModule } from "@shiguredo/lyra-wasm";
+import { LYRA_VERSION, LyraEncoder, LyraDecoder, LyraModule } from "@shiguredo/lyra-wasm";
 
 declare global {
   interface Algorithm {
@@ -1325,8 +1325,9 @@ export default class ConnectionBase {
         const result = /a=fmtp:109 version=([0-9.]+);bitrate=([0-9]+);usedtx=([01])/.exec(media);
         if (result) {
           const version = result[1];
-          console.log("lyra version: " + version); // TODO
-          // TODO: check version
+          if (version !== LYRA_VERSION) {
+            throw new Error(`Unsupported lyra version: ${version} (supported version is ${LYRA_VERSION})`);
+          }
 
           const bitrate = Number(result[2]);
           const enableDtx = result[3] === "1";

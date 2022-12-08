@@ -18,6 +18,7 @@ import {
   TimelineEventLogType,
   TransportType,
 } from "./types";
+import { LYRA_VERSION } from "@shiguredo/lyra-wasm";
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
@@ -268,8 +269,7 @@ export function createSignalingMessage(
       message.audio = {};
     }
 
-    // TODO(sile): バージョンは lyra-wasm からとってくる
-    message.audio.lyra_params = { version: "1.3.0" };
+    message.audio.lyra_params = { version: LYRA_VERSION };
     if ("audioLyraParamsBitrate" in copyOptions) {
       message.audio.lyra_params.bitrate = copyOptions.audioLyraParamsBitrate;
     }
