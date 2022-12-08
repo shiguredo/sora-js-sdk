@@ -20,6 +20,9 @@ export interface LyraConfig {
 export function initLyra(config: LyraConfig): void {
   LYRA_CONFIG = config;
   LYRA_MODULE = undefined;
+
+  // TODO: SharedArrayBuffer や insertable streams が使えるかどうかをチェックして使えないなら警告を出す
+  // Lyra はオプショナルな機能なので使えなくてもエラーにはしない
 }
 
 export function isLyraInitialized(): boolean {
@@ -105,17 +108,17 @@ export class LyraParams {
   }
 
   static parseMediaDescription(media: string): LyraParams {
-    const version = /a=fmtp:109.*[ ;]version=([0-9.]+)([;]|$)/.exec(media);
+    const version = /^a=fmtp:109.*[ ;]version=([0-9.]+)([;]|$)/m.exec(media);
     if (!version) {
       throw new Error(`Lyra parameter 'version' is not found in media description: ${media}`);
     }
 
-    const bitrate = /a=fmtp:109.*[ ;]bitrate=([0-9]+)([;]|$)/.exec(media);
+    const bitrate = /^a=fmtp:109.*[ ;]bitrate=([0-9]+)([;]|$)/m.exec(media);
     if (!bitrate) {
       throw new Error(`Lyra parameter 'bitrate' is not found in media description: ${media}`);
     }
 
-    const usedtx = /a=fmtp:109.*[ ;]usedtx=([01])([;]|$)/.exec(media);
+    const usedtx = /^a=fmtp:109.*[ ;]usedtx=([01])([;]|$)/m.exec(media);
     if (!usedtx) {
       throw new Error(`Lyra parameter 'usedtx' is not found in media description: ${media}`);
     }

@@ -1086,6 +1086,8 @@ let LYRA_MODULE;
 function initLyra(config) {
     LYRA_CONFIG = config;
     LYRA_MODULE = undefined;
+    // TODO: SharedArrayBuffer や insertable streams が使えるかどうかをチェックして使えないなら警告を出す
+    // Lyra はオプショナルな機能なので使えなくてもエラーにはしない
 }
 function isLyraInitialized() {
     return LYRA_CONFIG !== undefined;
@@ -1147,15 +1149,15 @@ class LyraParams {
         this.enableDtx = enableDtx;
     }
     static parseMediaDescription(media) {
-        const version = /a=fmtp:109.*[ ;]version=([0-9.]+)([;]|$)/.exec(media);
+        const version = /^a=fmtp:109.*[ ;]version=([0-9.]+)([;]|$)/m.exec(media);
         if (!version) {
             throw new Error(`Lyra parameter 'version' is not found in media description: ${media}`);
         }
-        const bitrate = /a=fmtp:109.*[ ;]bitrate=([0-9]+)([;]|$)/.exec(media);
+        const bitrate = /^a=fmtp:109.*[ ;]bitrate=([0-9]+)([;]|$)/m.exec(media);
         if (!bitrate) {
             throw new Error(`Lyra parameter 'bitrate' is not found in media description: ${media}`);
         }
-        const usedtx = /a=fmtp:109.*[ ;]usedtx=([01])([;]|$)/.exec(media);
+        const usedtx = /^a=fmtp:109.*[ ;]usedtx=([01])([;]|$)/m.exec(media);
         if (!usedtx) {
             throw new Error(`Lyra parameter 'usedtx' is not found in media description: ${media}`);
         }
