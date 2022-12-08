@@ -1316,8 +1316,7 @@ export default class ConnectionBase {
       const mid = /a=mid:(.*)/.exec(media);
       if (media.startsWith("audio")) {
         if (mid) {
-          // TODO: 判定方法は変更する ("lyra"という文字列みる)
-          const codec = media.includes("a=rtpmap:110 ") ? "LYRA" : "OPUS";
+          const codec = media.includes("109 lyra/") ? "LYRA" : "OPUS";
           this.audioMidToCodec.set(mid[1], codec); // TODO: 古いエントリの削除
         }
       }
