@@ -72,6 +72,7 @@ export class LyraModuleLoader {
 let LYRA_MODULE_LOADER: LyraModuleLoader | undefined;
 
 // TODO: Add doc, enableXXX の方がいいかも
+// TODO: key-value 形式にする
 export async function initLyra(wasmPath: string, modelPath: string, prefetch = false): Promise<void> {
   if (
     LYRA_MODULE_LOADER === undefined ||
@@ -100,7 +101,7 @@ export function isCustomCodecEnabled(): boolean {
 // TODO: move: lyra.ts とかを用意してそこに集約した方が良さそう
 interface LyraParams {
   version?: string;
-  bitrate?: number;
+  bitrate?: 3200 | 6000 | 9200;
   enableDtx?: boolean;
 }
 
@@ -1326,12 +1327,16 @@ export default class ConnectionBase {
         if (result) {
           const version = result[1];
           if (version !== LYRA_VERSION) {
-            throw new Error(`Unsupported lyra version: ${version} (supported version is ${LYRA_VERSION})`);
+            throw new Error(`UnsupportedLlyra version: ${version} (supported version is ${LYRA_VERSION})`);
           }
 
           const bitrate = Number(result[2]);
+          if (bitrate !== 3200 && bitrate !== 6000 && bitrate !== 9200) {
+            throw new Error(`Unsupported Lyra bitrate: ${bitrate} (must be one of 3200, 6000, or 9200)`);
+          }
+
           const enableDtx = result[3] === "1";
-          const lyraParams = { version, bitrate, enableDtx };
+          const lyraParams = { version, bitrate, enableDtx } as LyraParams;
           if (media.includes("a=recvonly")) {
             this.lyraEncodeOptions = lyraParams;
           }
@@ -1787,23 +1792,14 @@ export default class ConnectionBase {
     encodedFrame: RTCEncodedAudioFrame,
     controller: TransformStreamDefaultController
   ): void {
-    // TODO
-    // console.log(
-    //   encodedFrame.getMetadata().synchronizationSource +
-    //     ": " +
-    //     encodedFrame.data.byteLength +
-    //     ": " +
-    //     encodedFrame.getMetadata().payloadType
-    // );
     const view = new DataView(encodedFrame.data);
-    const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
+    const rawData = new Int16Array(encodedFrame.data.byteLength / 2);
     for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
-      const v2 = view.getInt16(i, false);
-      rawData[i / 2] = v2 / 0x7fff;
+      rawData[i / 2] = view.getInt16(i, false);
     }
     const encoded = lyraEncoder.encode(rawData);
     if (encoded === undefined) {
-      // dtx
+      // DTX
       return;
     }
     encodedFrame.data = encoded.buffer;
@@ -1826,18 +1822,11 @@ export default class ConnectionBase {
       return;
     }
 
-    // console.log(
-    //   encodedFrame.getMetadata().synchronizationSource +
-    //     ": " +
-    //     encodedFrame.data.byteLength +
-    //     ": " +
-    //     encodedFrame.getMetadata().payloadType
-    // );
     const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
     const buffer = new ArrayBuffer(decoded.length * 2);
     const view = new DataView(buffer);
     for (const [i, v] of decoded.entries()) {
-      view.setInt16(i * 2, v * 0x7fff, false);
+      view.setInt16(i * 2, v, false);
     }
     encodedFrame.data = buffer;
     controller.enqueue(encodedFrame);
