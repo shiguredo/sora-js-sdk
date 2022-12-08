@@ -1,25 +1,10 @@
-import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, RTCEncodedAudioFrame, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage, AudioCodecType } from "./types";
+import { LyraParams } from "./lyra";
+import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage, AudioCodecType } from "./types";
 import SoraE2EE from "@sora/e2ee";
-import { LyraEncoder, LyraDecoder, LyraModule } from "@shiguredo/lyra-wasm";
 declare global {
     interface Algorithm {
         namedCurve: string;
     }
-}
-export declare class LyraModuleLoader {
-    readonly wasmPath: string;
-    readonly modelPath: string;
-    private lyraModule?;
-    constructor(wasmPath: string, modelPath: string);
-    load(): Promise<LyraModule>;
-}
-export declare function initLyra(wasmPath: string, modelPath: string, prefetch?: boolean): Promise<void>;
-export declare function getLyraModule(): Promise<LyraModule>;
-export declare function isCustomCodecEnabled(): boolean;
-interface LyraParams {
-    version?: string;
-    bitrate?: 3200 | 6000 | 9200;
-    enableDtx?: boolean;
 }
 /**
  * Sora との WebRTC 接続を扱う基底クラス
@@ -148,7 +133,7 @@ export default class ConnectionBase {
      * E2EE インスタンス
      */
     protected e2ee: SoraE2EE | null;
-    protected lyraEncodeOptions: LyraParams;
+    protected lyraEncodeOptions?: LyraParams;
     protected audioMidToCodec: Map<string, AudioCodecType>;
     protected audioMidToLyraParams: Map<string, LyraParams>;
     constructor(signalingUrlCandidates: string | string[], role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
@@ -476,14 +461,6 @@ export default class ConnectionBase {
      */
     protected writeSoraTimelineLog(eventType: string, data?: unknown): void;
     /**
-     * TODO: doc
-     */
-    protected lyraEncode(lyraEncoder: LyraEncoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): void;
-    /**
-     * TODO: doc
-     */
-    protected lyraDecode(lyraDecoder: LyraDecoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): void;
-    /**
      * createOffer 処理をするメソッド
      *
      * @returns
@@ -631,4 +608,3 @@ export default class ConnectionBase {
      */
     get datachannels(): DataChannelConfiguration[];
 }
-export {};

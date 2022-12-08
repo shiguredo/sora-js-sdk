@@ -1,5 +1,11 @@
 import ConnectionBase from "./base";
-import { getLyraModule, isCustomCodecEnabled } from "./base";
+import {
+  createLyraDecoder,
+  createLyraEncoder,
+  isLyraInitialized,
+  transformLyraToPcm,
+  transformPcmToLyra,
+} from "./lyra";
 import { RTCEncodedAudioFrame } from "./types";
 
 /**
@@ -92,16 +98,17 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        if (isCustomCodecEnabled()) {
+        if (isLyraInitialized()) {
           // @ts-ignore
           // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
           const isLyraCodec = this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA";
           if (isLyraCodec) {
-            const lyraDecoder = (await getLyraModule()).createDecoder({ sampleRate: 16000 });
+            // TODO: 不要になったら destroy を呼びたい
+            const lyraDecoder = await createLyraDecoder({ sampleRate: 16000 });
             // eslint-disable-next-line
             const transformStream = new TransformStream({
-              transform: (data: RTCEncodedAudioFrame, controller) => this.lyraDecode(lyraDecoder, data, controller),
+              transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
             });
             // eslint-disable-next-line
             receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
@@ -165,7 +172,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       }
     });
     if (this.pc) {
-      if (isCustomCodecEnabled()) {
+      if (isLyraInitialized()) {
         for (const sender of this.pc.getSenders()) {
           if (sender == undefined || sender.track == undefined) {
             continue;
@@ -176,13 +183,16 @@ export default class ConnectionPublisher extends ConnectionBase {
           const senderStreams = sender.createEncodedStreams();
           const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
           if (isLyraCodec) {
-            const lyraEncoder = (await getLyraModule()).createEncoder({
+            if (this.lyraEncodeOptions === undefined) {
+              throw new Error("TODO");
+            }
+            const lyraEncoder = await createLyraEncoder({
               sampleRate: 16000,
               bitrate: this.lyraEncodeOptions.bitrate,
               enableDtx: this.lyraEncodeOptions.enableDtx,
             });
             const transformStream = new TransformStream({
-              transform: (data: RTCEncodedAudioFrame, controller) => this.lyraEncode(lyraEncoder, data, controller),
+              transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
             });
             // eslint-disable-next-line
             senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);

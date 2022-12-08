@@ -1,5 +1,6 @@
 import { unzlibSync, zlibSync } from "fflate";
 
+import { isLyraInitialized, LyraParams } from "./lyra";
 import {
   ConnectError,
   createDataChannelData,
@@ -20,7 +21,6 @@ import {
   ConnectionOptions,
   JSONType,
   DataChannelConfiguration,
-  RTCEncodedAudioFrame,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
@@ -41,68 +41,11 @@ import {
   AudioCodecType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
-import { LYRA_VERSION, LyraEncoder, LyraDecoder, LyraModule } from "@shiguredo/lyra-wasm";
 
 declare global {
   interface Algorithm {
     namedCurve: string;
   }
-}
-
-export class LyraModuleLoader {
-  readonly wasmPath: string;
-  readonly modelPath: string;
-  private lyraModule?: LyraModule;
-
-  constructor(wasmPath: string, modelPath: string) {
-    this.wasmPath = wasmPath;
-    this.modelPath = modelPath;
-  }
-
-  async load(): Promise<LyraModule> {
-    if (this.lyraModule === undefined) {
-      this.lyraModule = await LyraModule.load(this.wasmPath, this.modelPath);
-    }
-
-    return this.lyraModule;
-  }
-}
-
-// TODO: Add doc
-let LYRA_MODULE_LOADER: LyraModuleLoader | undefined;
-
-// TODO: Add doc, enableXXX の方がいいかも
-// TODO: key-value 形式にする
-export async function initLyra(wasmPath: string, modelPath: string, prefetch = false): Promise<void> {
-  if (
-    LYRA_MODULE_LOADER === undefined ||
-    LYRA_MODULE_LOADER.wasmPath !== wasmPath ||
-    LYRA_MODULE_LOADER.modelPath !== modelPath
-  ) {
-    LYRA_MODULE_LOADER = new LyraModuleLoader(wasmPath, modelPath);
-  }
-  if (prefetch) {
-    await LYRA_MODULE_LOADER.load();
-  }
-}
-
-// TODO: doc
-export async function getLyraModule(): Promise<LyraModule> {
-  if (LYRA_MODULE_LOADER === undefined) {
-    throw Error("Lyra codec hasn't been initialized. Please call `Sora.initLyra()` method to use the codec.");
-  }
-  return LYRA_MODULE_LOADER.load();
-}
-
-export function isCustomCodecEnabled(): boolean {
-  return LYRA_MODULE_LOADER !== undefined;
-}
-
-// TODO: move: lyra.ts とかを用意してそこに集約した方が良さそう
-interface LyraParams {
-  version?: string;
-  bitrate?: 3200 | 6000 | 9200;
-  enableDtx?: boolean;
 }
 
 /**
@@ -242,7 +185,7 @@ export default class ConnectionBase {
   protected e2ee: SoraE2EE | null;
 
   // TODO: rename
-  protected lyraEncodeOptions: LyraParams = {};
+  protected lyraEncodeOptions?: LyraParams;
 
   // TODO
   protected audioMidToCodec: Map<string, AudioCodecType> = new Map();
@@ -1237,7 +1180,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
-    if (this.e2ee || isCustomCodecEnabled()) {
+    if (this.e2ee || isLyraInitialized()) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
@@ -1323,26 +1266,12 @@ export default class ConnectionBase {
       }
 
       if (media.startsWith("audio") && media.includes("109 lyra/")) {
-        const result = /a=fmtp:109 version=([0-9.]+);bitrate=([0-9]+);usedtx=([01])/.exec(media);
-        if (result) {
-          const version = result[1];
-          if (version !== LYRA_VERSION) {
-            throw new Error(`UnsupportedLlyra version: ${version} (supported version is ${LYRA_VERSION})`);
-          }
-
-          const bitrate = Number(result[2]);
-          if (bitrate !== 3200 && bitrate !== 6000 && bitrate !== 9200) {
-            throw new Error(`Unsupported Lyra bitrate: ${bitrate} (must be one of 3200, 6000, or 9200)`);
-          }
-
-          const enableDtx = result[3] === "1";
-          const lyraParams = { version, bitrate, enableDtx } as LyraParams;
-          if (media.includes("a=recvonly")) {
-            this.lyraEncodeOptions = lyraParams;
-          }
-          if (mid) {
-            this.audioMidToLyraParams.set(mid[1], lyraParams);
-          }
+        const params = LyraParams.parseMediaDescription(media);
+        if (media.includes("a=recvonly")) {
+          this.lyraEncodeOptions = params;
+        }
+        if (mid) {
+          this.audioMidToLyraParams.set(mid[1], params);
         }
         media = media
           .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
@@ -1459,15 +1388,13 @@ export default class ConnectionBase {
       const mid = /a=mid:(.*)/.exec(media);
       if (mid && media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
         // Sora 用に L16 を Lyra に置換する
-        const params = this.audioMidToLyraParams.get(mid[1]) || {}; // TODO: error check
+        const params = this.audioMidToLyraParams.get(mid[1]);
+        if (params === undefined) {
+          throw new Error("TODO");
+        }
         media = media
           .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
-          .replace(
-            /a=ptime:20/,
-            `a=fmtp:109 version=${params.version || "1.3.0"};bitrate=${params.bitrate || 6000};usedtx=${
-              params.enableDtx ? 1 : 0
-            }`
-          );
+          .replace(/a=ptime:20/, params.toFmtpString());
       }
       replacedSdp += "m=" + media;
     }
@@ -1780,56 +1707,6 @@ export default class ConnectionBase {
   protected writeSoraTimelineLog(eventType: string, data?: unknown): void {
     const event = createTimelineEvent(eventType, data, "sora");
     this.callbacks.timeline(event);
-  }
-
-  /**
-   * TODO: doc
-   */
-  // TODO: lyraEncoder はフィールドに持たせる
-  // TODO: lyraEncoder の破壊
-  protected lyraEncode(
-    lyraEncoder: LyraEncoder,
-    encodedFrame: RTCEncodedAudioFrame,
-    controller: TransformStreamDefaultController
-  ): void {
-    const view = new DataView(encodedFrame.data);
-    const rawData = new Int16Array(encodedFrame.data.byteLength / 2);
-    for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
-      rawData[i / 2] = view.getInt16(i, false);
-    }
-    const encoded = lyraEncoder.encode(rawData);
-    if (encoded === undefined) {
-      // DTX
-      return;
-    }
-    encodedFrame.data = encoded.buffer;
-
-    // TODO: Reduce extra conversion between i16 and f32 (by updating lyra-wasm interface)
-    controller.enqueue(encodedFrame);
-  }
-
-  /**
-   * TODO: doc
-   */
-  protected lyraDecode(
-    lyraDecoder: LyraDecoder,
-    encodedFrame: RTCEncodedAudioFrame,
-    controller: TransformStreamDefaultController
-  ): void {
-    if (encodedFrame.data.byteLength === 0) {
-      // FIXME(sile): sora-cpp-sdk の実装だと DTX の場合にペイロードサイズが 0 のパケットが飛んでくる可能性がある
-      //              一応保険としてこのチェックを入れているけれど、もし不要だと分かったら削除してしまう
-      return;
-    }
-
-    const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
-    const buffer = new ArrayBuffer(decoded.length * 2);
-    const view = new DataView(buffer);
-    for (const [i, v] of decoded.entries()) {
-      view.setInt16(i * 2, v, false);
-    }
-    encodedFrame.data = buffer;
-    controller.enqueue(encodedFrame);
   }
 
   /**

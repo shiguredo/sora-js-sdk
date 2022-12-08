@@ -1,5 +1,5 @@
 import ConnectionBase from "./base";
-import { getLyraModule, isCustomCodecEnabled } from "./base";
+import { createLyraDecoder, isLyraInitialized, transformLyraToPcm } from "./lyra";
 import { RTCEncodedAudioFrame } from "./types";
 
 /**
@@ -120,15 +120,15 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        if (isCustomCodecEnabled()) {
+        if (isLyraInitialized()) {
           // @ts-ignore
           // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
           const isLyraCodec = this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA";
           if (isLyraCodec) {
-            const lyraDecoder = (await getLyraModule()).createDecoder({ sampleRate: 16000 });
+            const lyraDecoder = await createLyraDecoder({ sampleRate: 16000 });
             const transformStream = new TransformStream({
-              transform: (data: RTCEncodedAudioFrame, controller) => this.lyraDecode(lyraDecoder, data, controller),
+              transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
             });
             // eslint-disable-next-line
             receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);

@@ -1,7 +1,7 @@
 import SoraE2EE from "@sora/e2ee";
 
 import ConnectionBase from "./base";
-import { initLyra } from "./base";
+import { initLyra } from "./lyra";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
