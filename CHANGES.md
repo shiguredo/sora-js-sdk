@@ -11,6 +11,16 @@
 
 ## develop
 
+- [ADD] ConnectOptions に audioLyraParamsUsedtx を追加
+    - @sile
+- [ADD] ConnectOptions に audioLyraParamsBitrate を追加
+    - @sile
+- [ADD] Sora.initLyra() 関数を追加
+    - Lyra でエンコードされた音声を送信ないし受信する場合には、事前にこの関数を呼び出しておく必要がある
+    - wasm やモデルファイルのダウンロードは実際に必要になったタイミングで遅延して行われる
+    - @sile
+- [ADD] audioCodecType に "LYRA" を追加
+    - @sile
 - [ADD] audio_streaming_language_code を追加
     - @melpon
 - [CHANGE] ts-jest を @swc/jest に変更する
@@ -645,4 +655,3 @@
 ## 0.1.0
 
 **公開**
-
