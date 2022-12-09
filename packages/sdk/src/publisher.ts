@@ -1,6 +1,12 @@
 import ConnectionBase from "./base";
-import { LYRA_MODULE } from "./base";
-import { LyraEncoder, LyraDecoder } from "@shiguredo/lyra-wasm";
+import {
+  createLyraDecoder,
+  createLyraEncoder,
+  isLyraInitialized,
+  transformLyraToPcm,
+  transformPcmToLyra,
+} from "./lyra";
+import { RTCEncodedAudioFrame } from "./types";
 
 /**
  * Role が "sendonly" または "sendrecv" の場合に Sora との WebRTC 接続を扱うクラス
@@ -91,15 +97,18 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      this.pc.ontrack = (event): void => {
-        if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
+      this.pc.ontrack = async (event): Promise<void> => {
+        if (isLyraInitialized()) {
           // @ts-ignore
           // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
-          if (event.track.kind == "audio") {
-            const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
+          const isLyraCodec = this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA";
+          if (isLyraCodec) {
+            // TODO: 不要になったら destroy を呼びたい
+            const lyraDecoder = await createLyraDecoder({ sampleRate: 16000 });
+            // eslint-disable-next-line
             const transformStream = new TransformStream({
-              transform: (data, controller) => decodeFunction(lyraDecoder, data, controller),
+              transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
             });
             // eslint-disable-next-line
             receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
@@ -163,19 +172,27 @@ export default class ConnectionPublisher extends ConnectionBase {
       }
     });
     if (this.pc) {
-      if (LYRA_MODULE && this.options.audioCodecType === "LYRA") {
-        const lyraEncoder = LYRA_MODULE.createEncoder({ sampleRate: 16000, bitrate: 6000, enableDtx: true });
-        this.pc.getSenders().forEach((sender) => {
+      if (isLyraInitialized()) {
+        for (const sender of this.pc.getSenders()) {
           if (sender == undefined || sender.track == undefined) {
-            return;
+            continue;
           }
 
           // @ts-ignore
           // eslint-disable-next-line
           const senderStreams = sender.createEncodedStreams();
-          if (sender.track.kind === "audio") {
+          const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
+          if (isLyraCodec) {
+            if (this.lyraEncodeOptions === undefined) {
+              throw new Error("TODO");
+            }
+            const lyraEncoder = await createLyraEncoder({
+              sampleRate: 16000,
+              bitrate: this.lyraEncodeOptions.bitrate,
+              enableDtx: this.lyraEncodeOptions.enableDtx,
+            });
             const transformStream = new TransformStream({
-              transform: (encodedFrame, controller) => encodeFunction(lyraEncoder, encodedFrame, controller),
+              transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
             });
             // eslint-disable-next-line
             senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);
@@ -183,7 +200,7 @@ export default class ConnectionPublisher extends ConnectionBase {
             // eslint-disable-next-line
             senderStreams.readable.pipeTo(senderStreams.writable);
           }
-        });
+        }
       }
     }
 
@@ -201,46 +218,4 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this.waitChangeConnectionStateConnected();
     return stream;
   }
-}
-
-// @ts-ignore
-function encodeFunction(lyraEncoder: LyraEncoder, encodedFrame /*: RTCEncodedAudioFrame*/, controller) {
-  // eslint-disable-next-line
-  const view = new DataView(encodedFrame.data);
-  // eslint-disable-next-line
-  const rawData = new Float32Array(encodedFrame.data.byteLength / 2);
-  // eslint-disable-next-line
-  for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
-    const v2 = view.getInt16(i, false);
-    rawData[i / 2] = v2 / 0x7fff;
-  }
-  const encoded = lyraEncoder.encode(rawData);
-  if (encoded === undefined) {
-    // dtx
-    return;
-  }
-  // eslint-disable-next-line
-  encodedFrame.data = encoded.buffer;
-
-  // TODO: Handle DTX
-  // TODO: Reduce extra conversion between i16 and f32 (by updating lyra-wasm interface)
-
-  // eslint-disable-next-line
-  controller.enqueue(encodedFrame);
-}
-
-// @ts-ignore
-function decodeFunction(lyraDecoder: LyraDecoder, encodedFrame, controller) {
-  // TODO: handle DTX(?)
-  // eslint-disable-next-line
-  const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
-  const buffer = new ArrayBuffer(decoded.length * 2);
-  const view = new DataView(buffer);
-  for (const [i, v] of decoded.entries()) {
-    view.setInt16(i * 2, v * 0x7fff, false);
-  }
-  // eslint-disable-next-line
-  encodedFrame.data = buffer;
-  // eslint-disable-next-line
-  controller.enqueue(encodedFrame);
 }

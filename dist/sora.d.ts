@@ -1,5 +1,5 @@
 import ConnectionBase from "./base";
-import { initLyraModule } from "./base";
+import { initLyra } from "./lyra";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
@@ -104,7 +104,7 @@ declare const _default: {
     /**
      * TODO
      */
-    initLyraModule: typeof initLyraModule;
+    initLyra: typeof initLyra;
     /**
      * SoraConnection インスタンスを生成するメソッド
      *

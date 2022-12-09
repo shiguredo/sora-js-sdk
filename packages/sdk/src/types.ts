@@ -23,11 +23,9 @@ export type SignalingAudio =
         useinbandfec?: boolean;
         usedtx?: boolean;
       };
-      // FIXME
       lyra_params?: {
         version?: string;
-        sample_rate?: number;
-        bitrate?: number;
+        bitrate?: 3200 | 6000 | 9200;
         usedtx?: boolean;
       };
     };
@@ -284,6 +282,8 @@ export type ConnectionOptions = {
   audioOpusParamsPtime?: number;
   audioOpusParamsUseinbandfec?: boolean;
   audioOpusParamsUsedtx?: boolean;
+  audioLyraParamsBitrate?: 3200 | 6000 | 9200;
+  audioLyraParamsUsedtx?: boolean;
   video?: boolean;
   videoCodecType?: VideoCodecType;
   videoBitRate?: number;
@@ -382,3 +382,21 @@ export type SoraAbendTitle =
   | "INTERNAL-ERROR"
   | "WEBSOCKET-ONCLOSE"
   | "WEBSOCKET-ONERROR";
+
+// 以降は Lyra 対応に必要な insertable streams 用の型定義
+//
+// TODO(sile): insertable streams に対応した @types パッケージがリリースされたらそれを使うようにする
+
+// https://www.w3.org/TR/webrtc-encoded-transform/#RTCEncodedAudioFrame-interface
+export interface RTCEncodedAudioFrame {
+  readonly timestamp: number;
+  data: ArrayBuffer;
+  getMetadata(): RTCEncodedAudioFrameMetadata;
+}
+
+// https://www.w3.org/TR/webrtc-encoded-transform/#dictdef-rtcencodedaudioframemetadata
+export interface RTCEncodedAudioFrameMetadata {
+  synchronizationSource: number;
+  payloadType: number;
+  contributingSources: [number];
+}

@@ -19,6 +19,11 @@ import {
   TransportType,
 } from "./types";
 
+// jest のテスト実行時にエラーが出るので以下の import はコメントアウトし自前で定数を定義している
+// TODO(sile): 回避方法が分かったら import 方式に戻したい
+// import { LYRA_VERSION } from "@shiguredo/lyra-wasm";
+const LYRA_VERSION = "1.3.0";
+
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
   if (ua.indexOf("edge") !== -1) {
@@ -189,6 +194,7 @@ export function createSignalingMessage(
     "audioOpusParamsUseinbandfec",
     "audioOpusParamsUsedtx",
   ];
+  const audioLyraParamsPropertyKeys = ["audioLyraParamsBitrate", "audioLyraParamsUsedtx"];
   const videoPropertyKeys = ["videoCodecType", "videoBitRate"];
   const copyOptions = Object.assign({}, options);
   (Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
@@ -202,6 +208,9 @@ export function createSignalingMessage(
       return;
     }
     if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
+      return;
+    }
+    if (0 <= audioLyraParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
       return;
     }
     if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
@@ -228,14 +237,6 @@ export function createSignalingMessage(
   const hasAudioOpusParamsProperty = Object.keys(copyOptions).some((key) => {
     return 0 <= audioOpusParamsPropertyKeys.indexOf(key);
   });
-
-  if (message.audio && options.audioCodecType === "LYRA") {
-    // FIXME
-    if (typeof message.audio != "object") {
-      message.audio = {};
-    }
-    message.audio.lyra_params = { version: "1.3.0" };
-  }
   if (message.audio && hasAudioOpusParamsProperty) {
     if (typeof message.audio != "object") {
       message.audio = {};
@@ -264,6 +265,20 @@ export function createSignalingMessage(
     }
     if ("audioOpusParamsUsedtx" in copyOptions) {
       message.audio.opus_params.usedtx = copyOptions.audioOpusParamsUsedtx;
+    }
+  }
+
+  if (message.audio && options.audioCodecType == "LYRA") {
+    if (typeof message.audio != "object") {
+      message.audio = {};
+    }
+
+    message.audio.lyra_params = { version: LYRA_VERSION };
+    if ("audioLyraParamsBitrate" in copyOptions) {
+      message.audio.lyra_params.bitrate = copyOptions.audioLyraParamsBitrate;
+    }
+    if ("audioLyraParamsUsedtx" in copyOptions) {
+      message.audio.lyra_params.usedtx = copyOptions.audioLyraParamsUsedtx;
     }
   }
 

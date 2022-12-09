@@ -1,13 +1,11 @@
-import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage } from "./types";
+import { LyraParams } from "./lyra";
+import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage, AudioCodecType } from "./types";
 import SoraE2EE from "@sora/e2ee";
-import { LyraModule } from "@shiguredo/lyra-wasm";
 declare global {
     interface Algorithm {
         namedCurve: string;
     }
 }
-export declare let LYRA_MODULE: LyraModule | undefined;
-export declare function initLyraModule(wasmPath: string, modelPath: string): Promise<void>;
 /**
  * Sora との WebRTC 接続を扱う基底クラス
  *
@@ -135,6 +133,9 @@ export default class ConnectionBase {
      * E2EE インスタンス
      */
     protected e2ee: SoraE2EE | null;
+    protected lyraEncodeOptions?: LyraParams;
+    protected audioMidToCodec: Map<string, AudioCodecType>;
+    protected audioMidToLyraParams: Map<string, LyraParams>;
     constructor(signalingUrlCandidates: string | string[], role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     /**
      * SendRecv Object で発火するイベントのコールバックを設定するメソッド
@@ -346,6 +347,7 @@ export default class ConnectionBase {
      * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
      */
     protected setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
+    private processOfferSdp;
     /**
      * createAnswer 処理を行うメソッド
      *
@@ -355,6 +357,8 @@ export default class ConnectionBase {
      * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
      */
     protected createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
+    private processAnswerSdpForLocal;
+    private processAnswerSdpForRemote;
     /**
      * シグナリングサーバーに type answer を投げるメソッド
      */

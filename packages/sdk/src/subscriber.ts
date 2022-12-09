@@ -1,6 +1,6 @@
 import ConnectionBase from "./base";
-import { LYRA_MODULE } from "./base";
-import { LyraDecoder } from "@shiguredo/lyra-wasm";
+import { createLyraDecoder, isLyraInitialized, transformLyraToPcm } from "./lyra";
+import { RTCEncodedAudioFrame } from "./types";
 
 /**
  * Role が "recvonly" の場合に Sora との WebRTC 接続を扱うクラス
@@ -119,15 +119,16 @@ export default class ConnectionSubscriber extends ConnectionBase {
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      this.pc.ontrack = (event): void => {
-        if (LYRA_MODULE && this.options.audioCodecType == "LYRA") {
+      this.pc.ontrack = async (event): Promise<void> => {
+        if (isLyraInitialized()) {
           // @ts-ignore
           // eslint-disable-next-line
           const receiverStreams = event.receiver.createEncodedStreams();
-          if (event.track.kind == "audio") {
-            const lyraDecoder = LYRA_MODULE.createDecoder({ sampleRate: 16000 });
+          const isLyraCodec = this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA";
+          if (isLyraCodec) {
+            const lyraDecoder = await createLyraDecoder({ sampleRate: 16000 });
             const transformStream = new TransformStream({
-              transform: (data, controller) => decodeFunction(lyraDecoder, data, controller),
+              transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
             });
             // eslint-disable-next-line
             receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
@@ -189,20 +190,4 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.waitChangeConnectionStateConnected();
     return;
   }
-}
-
-// @ts-ignore
-function decodeFunction(lyraDecoder: LyraDecoder, encodedFrame, controller) {
-  // TODO: handle DTX(?)
-  // eslint-disable-next-line
-  const decoded = lyraDecoder.decode(new Uint8Array(encodedFrame.data));
-  const buffer = new ArrayBuffer(decoded.length * 2);
-  const view = new DataView(buffer);
-  for (const [i, v] of decoded.entries()) {
-    view.setInt16(i * 2, v * 0x7fff, false);
-  }
-  // eslint-disable-next-line
-  encodedFrame.data = buffer;
-  // eslint-disable-next-line
-  controller.enqueue(encodedFrame);
 }
