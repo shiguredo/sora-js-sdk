@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.2.0-canary.0
+ * @version: 2022.2.0-canary.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -2032,7 +2032,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2022.2.0-canary.0",
+	        sora_client: "Sora JavaScript SDK 2022.2.0-canary.1",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -3407,7 +3407,6 @@
 	                }
 	            }
 	            if (media.startsWith("audio") && media.includes("109 lyra/")) {
-	                console.log(this.audioMidToLyraParams);
 	                let params = mid ? this.audioMidToLyraParams.get(mid[1]) : undefined;
 	                if (params === undefined) {
 	                    params = LyraParams.parseMediaDescription(media);
@@ -4978,7 +4977,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2022.2.0-canary.0";
+	        return "2022.2.0-canary.1";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群
