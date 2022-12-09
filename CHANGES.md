@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] audio_streaming_language_code を追加
+    - @melpon
 - [CHANGE] ts-jest を @swc/jest に変更する
     - @voluntas
 - [FIX] 廃止になった opus_params の clock_rate を削除する
