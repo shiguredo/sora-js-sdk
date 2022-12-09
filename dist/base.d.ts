@@ -533,7 +533,7 @@ export default class ConnectionBase {
     /**
      * PeerConnection から RTCStatsReport を取得するためのメソッド
      */
-    protected getStats(): Promise<RTCStatsReport[]>;
+    private getStats;
     /**
      * PeerConnection の ondatachannel callback メソッド
      *

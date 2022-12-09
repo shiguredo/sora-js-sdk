@@ -1952,7 +1952,7 @@ export default class ConnectionBase {
   /**
    * PeerConnection から RTCStatsReport を取得するためのメソッド
    */
-  protected async getStats(): Promise<RTCStatsReport[]> {
+  private async getStats(): Promise<RTCStatsReport[]> {
     const stats: RTCStatsReport[] = [];
     if (!this.pc) {
       return stats;
