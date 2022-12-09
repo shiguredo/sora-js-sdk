@@ -3401,7 +3401,10 @@ class ConnectionBase {
                 }
             }
             if (media.startsWith("audio") && media.includes("109 lyra/")) {
-                const params = LyraParams.parseMediaDescription(media);
+                let params = mid ? this.audioMidToLyraParams.get(mid[1]) : undefined;
+                if (params === undefined) {
+                    params = LyraParams.parseMediaDescription(media);
+                }
                 if (media.includes("a=recvonly")) {
                     this.lyraEncodeOptions = params;
                 }
