@@ -14,7 +14,7 @@
     "@rollup/plugin-typescript": "10.0.1",
     "@shiguredo/lyra-wasm": "2022.2.0",
     "@swc/core": "1.3.22",
-    "@swc/jest": "0.2.23",
+    "@swc/jest": "0.2.24",
     "@types/jest": "29.2.4",
     "@typescript-eslint/eslint-plugin": "5.46.0",
     "@typescript-eslint/parser": "5.46.0",
