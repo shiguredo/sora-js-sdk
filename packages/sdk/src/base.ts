@@ -1,6 +1,6 @@
 import { unzlibSync, zlibSync } from "fflate";
 
-import { isLyraInitialized, LyraParams } from "./lyra";
+import { createLyraDecoder, isLyraInitialized, LyraParams, transformLyraToPcm } from "./lyra";
 import {
   ConnectError,
   createDataChannelData,
@@ -17,10 +17,12 @@ import {
   trace,
 } from "./utils";
 import {
+  AudioCodecType,
   Callbacks,
   ConnectionOptions,
   JSONType,
   DataChannelConfiguration,
+  RTCEncodedAudioFrame,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
@@ -38,7 +40,6 @@ import {
   SoraCloseEventInitDict,
   SoraCloseEventType,
   TransportType,
-  AudioCodecType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
 
@@ -190,6 +191,9 @@ export default class ConnectionBase {
   // TODO
   protected audioMidToCodec: Map<string, AudioCodecType> = new Map();
   protected audioMidToLyraParams: Map<string, LyraParams> = new Map();
+
+  // TODO
+  protected abortController?: AbortController;
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -909,6 +913,52 @@ export default class ConnectionBase {
         this.writeSoraTimelineLog("disconnect-normal", event);
       }
       this.callbacks.disconnect(event);
+    }
+
+    // TODO
+    if (this.abortController !== undefined) {
+      this.abortController.abort();
+      this.abortController = undefined;
+    }
+  }
+
+  // TODO: move
+  protected async setupReceiverTransformForCustomCodec(mid: string | null, receiver: RTCRtpReceiver): Promise<void> {
+    // TODO(sile): E2EE との併用を考慮する
+
+    if (!isLyraInitialized()) {
+      return;
+    }
+
+    if (this.abortController === undefined) {
+      this.abortController = new AbortController();
+    }
+    const signal = this.abortController.signal;
+
+    // @ts-ignore
+    // eslint-disable-next-line
+    const receiverStreams = receiver.createEncodedStreams() as TransformStream;
+    const codecType = this.audioMidToCodec.get(mid || "");
+    if (codecType == "LYRA") {
+      const lyraDecoder = await createLyraDecoder({ sampleRate: 16000 });
+      const transformStream = new TransformStream({
+        transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
+      });
+      receiverStreams.readable
+        .pipeThrough(transformStream, { signal })
+        .pipeTo(receiverStreams.writable)
+        .catch((e) => {
+          lyraDecoder.destroy();
+          if (!signal.aborted) {
+            console.warn(e);
+          }
+        });
+    } else {
+      receiverStreams.readable.pipeTo(receiverStreams.writable, { signal }).catch((e) => {
+        if (!signal.aborted) {
+          console.warn(e);
+        }
+      });
     }
   }
 

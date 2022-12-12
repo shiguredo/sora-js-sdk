@@ -1,6 +1,4 @@
 import ConnectionBase from "./base";
-import { createLyraDecoder, isLyraInitialized, transformLyraToPcm } from "./lyra";
-import { RTCEncodedAudioFrame } from "./types";
 
 /**
  * Role が "recvonly" の場合に Sora との WebRTC 接続を扱うクラス
@@ -120,23 +118,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        if (isLyraInitialized()) {
-          // @ts-ignore
-          // eslint-disable-next-line
-          const receiverStreams = event.receiver.createEncodedStreams();
-          const isLyraCodec = this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA";
-          if (isLyraCodec) {
-            const lyraDecoder = await createLyraDecoder({ sampleRate: 16000 });
-            const transformStream = new TransformStream({
-              transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
-            });
-            // eslint-disable-next-line
-            receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
-          } else {
-            // eslint-disable-next-line
-            receiverStreams.readable.pipeTo(receiverStreams.writable);
-          }
-        }
+        await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
 
         const stream = event.streams[0];
         if (stream.id === "default") {
