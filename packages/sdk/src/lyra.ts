@@ -231,3 +231,142 @@ export class LyraParams {
     return `a=fmtp:109 version=${this.version};bitrate=${this.bitrate};usedtx=${this.enableDtx ? 1 : 0}`;
   }
 }
+
+/**
+ * 接続単位の Lyra 関連の状態を保持するためのクラス
+ */
+export class LyraState {
+  private encoderOptions: LyraEncoderOptions = {};
+  private midToLyraParams: Map<string, LyraParams> = new Map();
+
+  /**
+   * offer SDP を受け取り Lyra 対応のために必要な置換や情報の収集を行う
+   *
+   * @param sdp offer SDP
+   * @returns 処理後の SDP
+   */
+  processOfferSdp(sdp: string): string {
+    if (!sdp.includes("109 lyra/")) {
+      // 対象外なので処理する必要はない
+      return sdp;
+    }
+
+    this.midToLyraParams.clear();
+    const splited = sdp.split(/^m=/m);
+    let replacedSdp = splited[0];
+    for (let media of splited.slice(1)) {
+      const midResult = /a=mid:(.*)/.exec(media);
+      if (midResult === null) {
+        continue;
+      }
+      const mid = midResult[1];
+
+      if (media.startsWith("audio") && media.includes("109 lyra/")) {
+        let params = this.midToLyraParams.get(mid);
+        if (params === undefined) {
+          params = LyraParams.parseMediaDescription(media);
+        }
+        if (media.includes("a=recvonly")) {
+          this.encoderOptions.bitrate = params.bitrate;
+          this.encoderOptions.enableDtx = params.enableDtx;
+        }
+        this.midToLyraParams.set(mid, params);
+
+        // SDP を置換する:
+        // - libwebrtc は lyra を認識しないので L16 に置き換える
+        // - ただし SDP に L16 しか含まれていないと音声なし扱いになってしまうので、それを防ぐために 110 で opus を追加する
+        media = media
+          .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
+          .replace(/109 lyra[/]16000[/]1/, "110 opus/48000/2")
+          .replace(/a=fmtp:109 .*/, "a=rtpmap:109 L16/16000\r\na=ptime:20");
+      }
+      replacedSdp += "m=" + media;
+    }
+    return replacedSdp;
+  }
+
+  /**
+   * setLocalDescription() に渡される answer SDP を受け取り、Lyra 対応のために必要な処理を行う
+   *
+   * @param answer SDP
+   * @returns 処理後の SDP
+   */
+  processAnswerSdpForLocal(sdp: string): string {
+    if (!sdp.includes("a=rtpmap:110 ")) {
+      // Lyra は使われていないので書き換えは不要
+      return sdp;
+    }
+
+    const splited = sdp.split(/^m=/m);
+    let replacedSdp = splited[0];
+    for (let media of splited.slice(1)) {
+      if (media.startsWith("audio") && media.includes("a=rtpmap:110 ")) {
+        // opus(110) ではなく L16(109) を使うように SDP を書き換える
+        //
+        // なお libwebrtc 的にはこの置換を行わなくても内部的には L16 が採用されるが、
+        // SDP と実際の動作を一致させるためにここで SDP を置換しておく
+        media = media
+          .replace(/SAVPF([0-9 ]*) 110/, "SAVPF$1 109")
+          .replace(/a=rtpmap:110 opus[/]48000[/]2/, "a=rtpmap:109 L16/16000")
+          .replace(/a=fmtp:110 .*/, "a=ptime:20");
+      }
+      replacedSdp += "m=" + media;
+    }
+    return replacedSdp;
+  }
+
+  /**
+   * Sora に渡される answer SDP を受け取り、Lyra 対応のために必要な処理を行う
+   *
+   * @param answer SDP
+   * @returns 処理後の SDP
+   */
+  processAnswerSdpForSora(sdp: string): string {
+    if (!sdp.includes("a=rtpmap:109 L16/16000")) {
+      // Lyra は使われていないので書き換えは不要
+      return sdp;
+    }
+
+    const splited = sdp.split(/^m=/m);
+    let replacedSdp = splited[0];
+    for (let media of splited.splice(1)) {
+      const midResult = /a=mid:(.*)/.exec(media);
+      if (midResult === null) {
+        continue;
+      }
+
+      const mid = midResult[0];
+      if (mid && media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
+        // Sora 用に L16 を Lyra に置換する
+        const params = this.midToLyraParams.get(mid);
+        if (params === undefined) {
+          throw new Error(`Unknown audio mid ${mid}`);
+        }
+        media = media
+          .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
+          .replace(/a=ptime:20/, params.toFmtpString());
+      }
+      replacedSdp += "m=" + media;
+    }
+
+    return replacedSdp;
+  }
+
+  /**
+   * Lyra のエンコーダを生成する
+   *
+   * @returns 生成されたエンコーダ
+   */
+  async createEncoder(): Promise<LyraEncoder> {
+    return await createLyraEncoder(this.encoderOptions);
+  }
+
+  /**
+   * Lyra のデコーダを生成する
+   *
+   * @returns 生成されたデコーダ
+   */
+  async createDecoder(): Promise<LyraDecoder> {
+    return await createLyraDecoder({});
+  }
+}
