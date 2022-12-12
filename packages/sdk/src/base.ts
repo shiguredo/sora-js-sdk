@@ -1,6 +1,13 @@
 import { unzlibSync, zlibSync } from "fflate";
 
-import { createLyraDecoder, isLyraInitialized, LyraParams, transformLyraToPcm } from "./lyra";
+import {
+  createLyraDecoder,
+  createLyraEncoder,
+  isLyraInitialized,
+  LyraParams,
+  transformPcmToLyra,
+  transformLyraToPcm,
+} from "./lyra";
 import {
   ConnectError,
   createDataChannelData,
@@ -955,6 +962,53 @@ export default class ConnectionBase {
         });
     } else {
       receiverStreams.readable.pipeTo(receiverStreams.writable, { signal }).catch((e) => {
+        if (!signal.aborted) {
+          console.warn(e);
+        }
+      });
+    }
+  }
+
+  // TODO: move
+  protected async setupSenderTransformForCustomCodec(sender: RTCRtpSender): Promise<void> {
+    // TODO(sile): E2EE との併用を考慮する
+    if (!isLyraInitialized() || sender.track === null) {
+      return;
+    }
+
+    if (this.abortController === undefined) {
+      this.abortController = new AbortController();
+    }
+    const signal = this.abortController.signal;
+
+    // @ts-ignore
+    // eslint-disable-next-line
+    const senderStreams = sender.createEncodedStreams() as TransformStream;
+    const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
+    if (isLyraCodec) {
+      if (this.lyraEncodeOptions === undefined) {
+        throw new Error("TODO");
+      }
+
+      const lyraEncoder = await createLyraEncoder({
+        sampleRate: 16000,
+        bitrate: this.lyraEncodeOptions.bitrate,
+        enableDtx: this.lyraEncodeOptions.enableDtx,
+      });
+      const transformStream = new TransformStream({
+        transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
+      });
+      senderStreams.readable
+        .pipeThrough(transformStream, { signal })
+        .pipeTo(senderStreams.writable)
+        .catch((e) => {
+          lyraEncoder.destroy();
+          if (!signal.aborted) {
+            console.warn(e);
+          }
+        });
+    } else {
+      senderStreams.readable.pipeTo(senderStreams.writable, { signal }).catch((e) => {
         if (!signal.aborted) {
           console.warn(e);
         }
