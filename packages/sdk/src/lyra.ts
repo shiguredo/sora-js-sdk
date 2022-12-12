@@ -251,7 +251,9 @@ export class LyraState {
       return sdp;
     }
 
-    this.midToLyraParams.clear();
+    const oldMidToLyraParams = this.midToLyraParams;
+    this.midToLyraParams = new Map();
+
     const splited = sdp.split(/^m=/m);
     let replacedSdp = splited[0];
     for (let media of splited.slice(1)) {
@@ -262,7 +264,7 @@ export class LyraState {
       const mid = midResult[1];
 
       if (media.startsWith("audio") && media.includes("109 lyra/")) {
-        let params = this.midToLyraParams.get(mid);
+        let params = oldMidToLyraParams.get(mid);
         if (params === undefined) {
           params = LyraParams.parseMediaDescription(media);
         }
@@ -335,7 +337,7 @@ export class LyraState {
         continue;
       }
 
-      const mid = midResult[0];
+      const mid = midResult[1];
       if (mid && media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
         // Sora 用に L16 を Lyra に置換する
         const params = this.midToLyraParams.get(mid);
