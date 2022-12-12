@@ -1,7 +1,7 @@
 import SoraE2EE from "@sora/e2ee";
 
 import ConnectionBase from "./base";
-import { initLyra } from "./lyra";
+import { initLyra, LyraConfig } from "./lyra";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
@@ -174,7 +174,7 @@ export default {
   },
 
   /**
-   * TODO
+   * TODO:
    */
   initLyra,
 
@@ -225,6 +225,7 @@ export type {
   DataChannelEvent,
   DataChannelMessageEvent,
   JSONType,
+  LyraConfig,
   Role,
   SignalingEvent,
   SignalingNotifyConnectionCreated,

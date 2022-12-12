@@ -9,34 +9,109 @@ import {
   LyraDecoderOptions,
 } from "@shiguredo/lyra-wasm";
 
+/**
+ * Lyra を使用するために必要な設定を保持するためのグローバル変数
+ *
+ * undefined の場合には Lyra が無効になっていると判断され、
+ * その状態で Lyra で音声をエンコード・デコード使用とすると実行時エラーとなる
+ */
 let LYRA_CONFIG: LyraConfig | undefined;
+
+/**
+ * Lyra のエンコード・デコードに必要な WebAssembly インスタンスを保持するためのグローバル変数
+ */
 let LYRA_MODULE: LyraModule | undefined;
 
+/**
+ * Lyra の設定情報
+ */
 export interface LyraConfig {
+  /**
+   * Lyra の WebAssembly ビルドファイルが配置されているディレクトリのパス（URL）
+   */
   wasmPath: string;
+
+  /**
+   * Lyra のモデルファイルが配置されているディレクトリのパス（URL）
+   */
   modelPath: string;
 }
 
-export function initLyra(config: LyraConfig): void {
+/**
+ * TODO: sora.ts の方にドキュメントを集約する
+ *
+ * Lyra の初期化を行うメソッド
+ *
+ * このメソッドの呼び出し時には設定情報の保存のみを行い、
+ * Lyra での音声エンコード・デコードに必要な WebAssembly ファイルおよびモデルファイルは、
+ * 実際に必要になったタイミングで初めてロードされます
+ *
+ * Lyra を使うためには以下の機能がブラウザで利用可能である必要があります:
+ * - クロスオリジン分離（内部で SharedArrayBuffer クラスを使用しているため）
+ * - WebRTC Encoded Transform
+ *
+ * これらの機能が利用不可の場合には、このメソッドは警告メッセージを出力した上で、
+ * 返り値として false を返します
+ *
+ * @param config Lyra の設定情報
+ * @returns Lyra の初期化に成功したかどうか
+ */
+export function initLyra(config: LyraConfig): boolean {
+  if (typeof "createEncodedStreams" in RTCRtpSender.prototype) {
+    console.warn("This browser doesn't support WebRTC Encoded Transform feature that Lyra requires.");
+    return false;
+  }
+
+  if (typeof SharedArrayBuffer === "undefined") {
+    console.warn("Lyra requires cross-origin isolation to use SharedArrayBuffer.");
+    return false;
+  }
+
   LYRA_CONFIG = config;
   LYRA_MODULE = undefined;
 
-  // TODO: SharedArrayBuffer や insertable streams が使えるかどうかをチェックして使えないなら警告を出す
-  // Lyra はオプショナルな機能なので使えなくてもエラーにはしない
+  return true;
 }
 
+/***
+ * Lyra が初期化済みかどうか
+ *
+ * @returns Lyra が初期化済みかどうか
+ */
 export function isLyraInitialized(): boolean {
   return LYRA_CONFIG !== undefined;
 }
 
+/**
+ * Lyra のエンコーダを生成して返す
+ *
+ * @param options エンコーダに指定するオプション
+ * @returns Lyra エンコーダのプロミス
+ * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ */
 export async function createLyraEncoder(options: LyraEncoderOptions = {}): Promise<LyraEncoder> {
   return (await loadLyraModule()).createEncoder(options);
 }
 
+/**
+ * Lyra のデコーダを生成して返す
+ *
+ * @param options デコーダに指定するオプション
+ * @returns Lyra デコーダのプロミス
+ * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ */
 export async function createLyraDecoder(options: LyraDecoderOptions = {}): Promise<LyraDecoder> {
   return (await loadLyraModule()).createDecoder(options);
 }
 
+/**
+ * Lyra 用の WebAssembly インスタンスをロードする
+ *
+ * 既にロード済みの場合には、そのインスタンスを返す
+ *
+ * @returns LyraModule インスタンスのプロミス
+ * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ */
 async function loadLyraModule(): Promise<LyraModule> {
   if (LYRA_CONFIG === undefined) {
     throw new Error("Lyra has not been initialized. Please call `Sora.initLyra()` beforehand.");
@@ -49,6 +124,13 @@ async function loadLyraModule(): Promise<LyraModule> {
   return LYRA_MODULE;
 }
 
+/**
+ * PCM（L16）の音声データを Lyra でエンコードする
+ *
+ * @param encoder Lyra エンコーダ
+ * @param encodedFrame PCM 音声データ
+ * @param controller 音声データの出力キュー
+ */
 export function transformPcmToLyra(
   encoder: LyraEncoder,
   encodedFrame: RTCEncodedAudioFrame,
@@ -61,13 +143,20 @@ export function transformPcmToLyra(
   }
   const encoded = encoder.encode(rawData);
   if (encoded === undefined) {
-    // DTX
+    // DTX が有効、かつ、 encodedFrame が無音（ないしノイズのみを含んでいる）場合にはここに来る
     return;
   }
   encodedFrame.data = encoded.buffer;
   controller.enqueue(encodedFrame);
 }
 
+/**
+ * Lyra でエンコードされた音声データをデコードして PCM（L16）に変換する
+ *
+ * @param decoder Lyra デコーダ
+ * @param encodedFrame Lyra でエンコードされた音声データ
+ * @param controller 音声データの出力キュー
+ */
 export function transformLyraToPcm(
   decoder: LyraDecoder,
   encodedFrame: RTCEncodedAudioFrame,
@@ -89,12 +178,26 @@ export function transformLyraToPcm(
   controller.enqueue(encodedFrame);
 }
 
+/**
+ * SDP に記載される Lyra のエンコードパラメータ
+ */
 export class LyraParams {
+  /**
+   * Lyra のエンコードフォーマットのバージョン
+   */
   readonly version: string;
+
+  /**
+   * エンコードビットレート
+   */
   readonly bitrate: 3200 | 6000 | 9200;
+
+  /**
+   * DTX を有効にするかどうか
+   */
   readonly enableDtx: boolean;
 
-  constructor(version: string, bitrate: number, enableDtx: boolean) {
+  private constructor(version: string, bitrate: number, enableDtx: boolean) {
     if (version !== LYRA_VERSION) {
       throw new Error(`UnsupportedLlyra version: ${version} (supported version is ${LYRA_VERSION})`);
     }
@@ -107,6 +210,13 @@ export class LyraParams {
     this.enableDtx = enableDtx;
   }
 
+  /**
+   * SDP の media description 部分をパースして Lyra のエンコードパラメータを取得する
+   *
+   * @param media SDP の media description 部分
+   * @returns パース結果
+   * @throws SDP の内容が期待通りではなくパースに失敗した場合
+   */
   static parseMediaDescription(media: string): LyraParams {
     const version = /^a=fmtp:109.*[ ;]version=([0-9.]+)([;]|$)/m.exec(media);
     if (!version) {
@@ -126,6 +236,11 @@ export class LyraParams {
     return new LyraParams(version[1], Number(bitrate[1]), usedtx[1] == "1");
   }
 
+  /**
+   * このエンコードパラメータに対応する SDP の fmtp 行を生成する
+   *
+   * @returns SDP の fmtp 行
+   */
   toFmtpString(): string {
     return `a=fmtp:109 version=${this.version};bitrate=${this.bitrate};usedtx=${this.enableDtx ? 1 : 0}`;
   }
