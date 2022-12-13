@@ -36,6 +36,9 @@ const options = {
     multistream: true,
     audioCodecType: "LYRA",
 }
+const options2 = {
+    multistream: true,
+}
 const sendrecv1 = sora.sendrecv(channelId, null, options);
 sendrecv1.on('track', (event) => {
   const stream = event.streams[0];
@@ -62,7 +65,7 @@ sendrecv1.on('removetrack', (event) => {
   }
 });
 
-const sendrecv2 = sora.sendrecv(channelId, null, options);
+const sendrecv2 = sora.sendrecv(channelId, null, options2);
 sendrecv2.on('track', (event) => {
   const stream = event.streams[0];
   if (!stream) return;

@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.2.0-canary.1
+ * @version: 2022.2.0-canary.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -2232,7 +2232,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2022.2.0-canary.1",
+        sora_client: "Sora JavaScript SDK 2022.2.0-canary.2",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -5205,7 +5205,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2022.2.0-canary.1";
+        return "2022.2.0-canary.2";
     },
     /**
      * WebRTC のユーティリティ関数群
