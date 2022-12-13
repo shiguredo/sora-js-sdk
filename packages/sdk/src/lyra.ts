@@ -43,7 +43,7 @@ export interface LyraConfig {
  * 詳細は sora.ts の initLyra() メソッドのドキュメントを参照
  */
 export function initLyra(config: LyraConfig): boolean {
-  if (typeof "createEncodedStreams" in RTCRtpSender.prototype) {
+  if (!("createEncodedStreams" in RTCRtpSender.prototype)) {
     console.warn("This browser doesn't support WebRTC Encoded Transform feature that Lyra requires.");
     return false;
   }
