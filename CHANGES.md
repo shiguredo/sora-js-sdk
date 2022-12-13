@@ -11,16 +11,18 @@
 
 ## develop
 
-- [ADD] ConnectOptions に audioLyraParamsUsedtx を追加
-    - @sile
-- [ADD] ConnectOptions に audioLyraParamsBitrate を追加
+## 2022.2.0
+
+- [ADD] audioCodecType に "LYRA" を追加
+    - 注意: 現時点では Lyra コーデックと E2EE の併用はできず、両方が指定された場合には E2EE が優先される
     - @sile
 - [ADD] Sora.initLyra() 関数を追加
     - Lyra でエンコードされた音声を送信ないし受信する場合には、事前にこの関数を呼び出しておく必要がある
     - wasm やモデルファイルのダウンロードは実際に必要になったタイミングで遅延して行われる
     - @sile
-- [ADD] audioCodecType に "LYRA" を追加
-    - 注意: 現時点では Lyra コーデックと E2EE の併用はできず、両方が指定された場合には E2EE が優先される
+- [ADD] ConnectOptions に audioLyraParamsUsedtx を追加
+    - @sile
+- [ADD] ConnectOptions に audioLyraParamsBitrate を追加
     - @sile
 - [ADD] audio_streaming_language_code を追加
     - @melpon
