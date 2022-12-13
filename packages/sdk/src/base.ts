@@ -274,7 +274,11 @@ export default class ConnectionBase {
     this.connectedSignalingUrl = "";
     this.contactSignalingUrl = "";
     if (isLyraInitialized()) {
-      this.lyra = new LyraState();
+      if (options.e2ee === true) {
+        console.warn("Currently, it is not possible to use E2EE and Lyra at the same time (Lyra is disabled).");
+      } else {
+        this.lyra = new LyraState();
+      }
     }
   }
 
