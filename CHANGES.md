@@ -20,6 +20,7 @@
     - wasm やモデルファイルのダウンロードは実際に必要になったタイミングで遅延して行われる
     - @sile
 - [ADD] audioCodecType に "LYRA" を追加
+    - 注意: 現時点では Lyra コーデックと E2EE の併用はできず、両方が指定された場合には E2EE が優先される
     - @sile
 - [ADD] audio_streaming_language_code を追加
     - @melpon
