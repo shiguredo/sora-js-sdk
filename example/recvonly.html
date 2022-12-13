@@ -1,6 +1,6 @@
 <html lang="ja">
     <head>
-        <meta charset="utf-8">
+      <meta charset="utf-8">
         <title>Recvonly test</title>
     </head>
     <body>
@@ -19,7 +19,7 @@ const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
 const options = {
-  multistream: true
+    multistream: true,
 }
 const recvonly = sora.recvonly(channelId, null, options);
 

@@ -1,4 +1,5 @@
 import ConnectionBase from "./base";
+import { initLyra, LyraConfig } from "./lyra";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
@@ -101,6 +102,12 @@ declare const _default: {
      */
     initE2EE: (wasmUrl: string) => Promise<void>;
     /**
+     * Lyra の初期化を行うメソッド
+     *
+     * 詳細は lyra.ts の initLyra() メソッドのドキュメントを参照
+     */
+    initLyra: typeof initLyra;
+    /**
      * SoraConnection インスタンスを生成するメソッド
      *
      * @example
@@ -131,4 +138,4 @@ declare const _default: {
     };
 };
 export default _default;
-export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, DataChannelConfiguration, DataChannelDirection, DataChannelEvent, DataChannelMessageEvent, JSONType, Role, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, SignalingNotifyConnectionUpdated, SignalingNotifyMessage, SignalingNotifyMetadata, SignalingNotifyNetworkStatus, SignalingNotifySpotlightChanged, SignalingNotifySpotlightFocused, SignalingNotifySpotlightUnfocused, SignalingPushMessage, Simulcast, SimulcastRid, SoraAbendTitle, SoraCloseEvent, SoraCloseEventInitDict, SoraCloseEventType, SoraConnection, SpotlightFocusRid, TimelineEvent, TimelineEventLogType, TransportType, VideoCodecType, };
+export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, DataChannelConfiguration, DataChannelDirection, DataChannelEvent, DataChannelMessageEvent, JSONType, LyraConfig, Role, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, SignalingNotifyConnectionUpdated, SignalingNotifyMessage, SignalingNotifyMetadata, SignalingNotifyNetworkStatus, SignalingNotifySpotlightChanged, SignalingNotifySpotlightFocused, SignalingNotifySpotlightUnfocused, SignalingPushMessage, Simulcast, SimulcastRid, SoraAbendTitle, SoraCloseEvent, SoraCloseEventInitDict, SoraCloseEventType, SoraConnection, SpotlightFocusRid, TimelineEvent, TimelineEventLogType, TransportType, VideoCodecType, };

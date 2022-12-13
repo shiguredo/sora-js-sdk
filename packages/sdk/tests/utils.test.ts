@@ -167,18 +167,6 @@ test("createSignalingMessage audioOpusParamsChannels", () => {
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(expectedMessage);
 });
 
-test("createSignalingMessage audioOpusParamsClockRate", () => {
-  const options = {
-    audioOpusParamsClockRate: 48000,
-  };
-  const expectedMessage = Object.assign({}, baseExpectedMessage, { audio: {
-    opus_params: {
-      clock_rate: options.audioOpusParamsClockRate,
-    },
-  }});
-  expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(expectedMessage);
-});
-
 test("createSignalingMessage audioOpusParamsMaxplaybackrate", () => {
   const options = {
     audioOpusParamsMaxplaybackrate: 48000,
@@ -664,4 +652,19 @@ test("createSignalingMessage spotlightNumber: undefined", () => {
     spotlightNumber: undefined,
   };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(baseExpectedMessage);
+});
+
+test("createSignalingMessage audioStreamingLanguageCode: undefined", () => {
+  const options = {
+    audioStreamingLanguageCode: undefined,
+  };
+  expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(baseExpectedMessage);
+});
+
+test("createSignalingMessage audioStreamingLanguageCode: ja-JP", () => {
+  const options = {
+    audioStreamingLanguageCode: "ja-JP",
+  };
+  const expectedMessage = Object.assign({}, baseExpectedMessage, { audio_streaming_language_code: options.audioStreamingLanguageCode });
+  expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(expectedMessage);
 });

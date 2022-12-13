@@ -1,6 +1,7 @@
 import SoraE2EE from "@sora/e2ee";
 
 import ConnectionBase from "./base";
+import { initLyra, LyraConfig } from "./lyra";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
@@ -172,6 +173,12 @@ export default {
     await SoraE2EE.loadWasm(wasmUrl);
   },
   /**
+   * Lyra の初期化を行うメソッド
+   *
+   * 詳細は lyra.ts の initLyra() メソッドのドキュメントを参照
+   */
+  initLyra,
+  /**
    * SoraConnection インスタンスを生成するメソッド
    *
    * @example
@@ -218,6 +225,7 @@ export type {
   DataChannelEvent,
   DataChannelMessageEvent,
   JSONType,
+  LyraConfig,
   Role,
   SignalingEvent,
   SignalingNotifyConnectionCreated,

@@ -9,7 +9,32 @@
 - FIX
     - バグ修正
 
+## develop
+
+## 2022.2.0
+
+- [ADD] audioCodecType に "LYRA" を追加
+    - 注意: 現時点では Lyra コーデックと E2EE の併用はできず、両方が指定された場合には E2EE が優先される
+    - @sile
+- [ADD] Sora.initLyra() 関数を追加
+    - Lyra でエンコードされた音声を送信ないし受信する場合には、事前にこの関数を呼び出しておく必要がある
+    - wasm やモデルファイルのダウンロードは実際に必要になったタイミングで遅延して行われる
+    - @sile
+- [ADD] ConnectOptions に audioLyraParamsUsedtx を追加
+    - @sile
+- [ADD] ConnectOptions に audioLyraParamsBitrate を追加
+    - @sile
+- [ADD] audio_streaming_language_code を追加
+    - @melpon
+- [CHANGE] ts-jest を @swc/jest に変更する
+    - @voluntas
+- [CHANGE] サンプルの sora-e2ee-wasm のダウンロード先を変更する
+    - @voluntas
+- [FIX] 廃止になった opus_params の clock_rate を削除する
+    - @voluntas
+
 ## 2022.1.0
+
 - [CHANGE] 切断処理時に MediaStream の停止処理をしないように変更する
     - @yuitowest
 - [CHANGE] ConnectionOptions からシグナリング type: connect メッセージを生成する仕組みを変更する
@@ -635,4 +660,3 @@
 ## 0.1.0
 
 **公開**
-

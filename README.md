@@ -22,8 +22,8 @@ Please read https://github.com/shiguredo/oss before use.
 
 - sora.js
     - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
-- sora.min.js
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.min.js
+- sora.mjs
+    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.mjs
 
 ## システム条件
 
@@ -32,14 +32,12 @@ Please read https://github.com/shiguredo/oss before use.
 
 ## サンプル
 
-- Sendonly/Recvonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendonly_recvonly.html
 - Multistream Sendrecv
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/multistream_sendrecv.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendrecv.html
 - Multistream Sendonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/multistream_sendonly.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendonly.html
 - Multistream Recvonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/multistream_recvonly.html
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/recvonly.html
 - Spotlight Sendrecv
     - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_sendrecv.html
 - Spotlight Recvonly
@@ -68,8 +66,8 @@ Please read https://github.com/shiguredo/oss before use.
 Apache License 2.0
 
 ```
-Copyright 2017-2021, Yuki Ito (Original Author)
-Copyright 2017-2021, Shiguredo Inc.
+Copyright 2017-2022, Yuki Ito (Original Author)
+Copyright 2017-2022, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

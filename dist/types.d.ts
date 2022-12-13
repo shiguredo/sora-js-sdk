@@ -1,18 +1,17 @@
-export declare type JSONType = null | boolean | number | string | JSONType[] | {
+export type JSONType = null | boolean | number | string | JSONType[] | {
     [prop: string]: JSONType | undefined;
 };
-export declare type SimulcastRid = "r0" | "r1" | "r2";
-export declare type SpotlightFocusRid = "none" | SimulcastRid;
-export declare type Simulcast = boolean | {
+export type SimulcastRid = "r0" | "r1" | "r2";
+export type SpotlightFocusRid = "none" | SimulcastRid;
+export type Simulcast = boolean | {
     rid: SimulcastRid;
 };
-export declare type AudioCodecType = "OPUS";
-export declare type SignalingAudio = boolean | {
+export type AudioCodecType = "OPUS" | "LYRA";
+export type SignalingAudio = boolean | {
     codec_type?: AudioCodecType;
     bit_rate?: number;
     opus_params?: {
         channels?: number;
-        clock_rate?: number;
         maxplaybackrate?: number;
         minptime?: number;
         ptime?: number;
@@ -21,14 +20,19 @@ export declare type SignalingAudio = boolean | {
         useinbandfec?: boolean;
         usedtx?: boolean;
     };
+    lyra_params?: {
+        version?: string;
+        bitrate?: 3200 | 6000 | 9200;
+        usedtx?: boolean;
+    };
 };
-export declare type VideoCodecType = "VP9" | "VP8" | "AV1" | "H264" | "H265";
-export declare type SignalingVideo = boolean | {
+export type VideoCodecType = "VP9" | "VP8" | "AV1" | "H264" | "H265";
+export type SignalingVideo = boolean | {
     codec_type?: VideoCodecType;
     bit_rate?: number;
 };
-export declare type Role = "sendrecv" | "sendonly" | "recvonly";
-export declare type SignalingConnectDataChannel = {
+export type Role = "sendrecv" | "sendonly" | "recvonly";
+export type SignalingConnectDataChannel = {
     label?: string;
     direction?: DataChannelDirection;
     compress?: boolean;
@@ -37,7 +41,7 @@ export declare type SignalingConnectDataChannel = {
     protocol?: string;
     ordered?: boolean;
 };
-export declare type SignalingConnectMessage = {
+export type SignalingConnectMessage = {
     type: "connect";
     role: Role;
     channel_id: string;
@@ -62,14 +66,15 @@ export declare type SignalingConnectMessage = {
     ignore_disconnect_websocket?: boolean;
     redirect?: true;
     data_channels?: SignalingConnectDataChannel[];
+    audio_streaming_language_code?: string;
 };
-export declare type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage | SignalingRedirectMessage;
-export declare type SignalingOfferMessageDataChannel = {
+export type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage | SignalingRedirectMessage;
+export type SignalingOfferMessageDataChannel = {
     label: string;
     direction: DataChannelDirection;
     compress: boolean;
 };
-export declare type SignalingOfferMessage = {
+export type SignalingOfferMessage = {
     type: "offer";
     sdp: string;
     client_id: string;
@@ -86,42 +91,42 @@ export declare type SignalingOfferMessage = {
         video?: string;
     };
 };
-export declare type SignalingUpdateMessage = {
+export type SignalingUpdateMessage = {
     type: "update";
     sdp: string;
 };
-export declare type SignalingReOfferMessage = {
+export type SignalingReOfferMessage = {
     type: "re-offer";
     sdp: string;
 };
-export declare type SignalingPingMessage = {
+export type SignalingPingMessage = {
     type: "ping";
     stats: boolean;
 };
-export declare type SignalingPushMessage = {
+export type SignalingPushMessage = {
     type: "push";
     data: Record<string, unknown>;
 };
-export declare type SignalingReqStatsMessage = {
+export type SignalingReqStatsMessage = {
     type: "req-stats";
 };
-export declare type SignalingSwitchedMessage = {
+export type SignalingSwitchedMessage = {
     type: "switched";
     ignore_disconnect_websocket: boolean;
 };
-export declare type SignalingRedirectMessage = {
+export type SignalingRedirectMessage = {
     type: "redirect";
     location: string;
 };
-export declare type SignalingNotifyMessage = SignalingNotifyConnectionCreated | SignalingNotifyConnectionUpdated | SignalingNotifyConnectionDestroyed | SignalingNotifySpotlightChanged | SignalingNotifySpotlightFocused | SignalingNotifySpotlightUnfocused | SignalingNotifyNetworkStatus;
-export declare type SignalingNotifyMetadata = {
+export type SignalingNotifyMessage = SignalingNotifyConnectionCreated | SignalingNotifyConnectionUpdated | SignalingNotifyConnectionDestroyed | SignalingNotifySpotlightChanged | SignalingNotifySpotlightFocused | SignalingNotifySpotlightUnfocused | SignalingNotifyNetworkStatus;
+export type SignalingNotifyMetadata = {
     client_id?: string;
     connection_id?: string;
     authn_metadata?: JSONType;
     authz_metadata?: JSONType;
     metadata?: JSONType;
 };
-export declare type SignalingNotifyConnectionCreated = {
+export type SignalingNotifyConnectionCreated = {
     type: "notify";
     event_type: "connection.created";
     role: Role;
@@ -141,7 +146,7 @@ export declare type SignalingNotifyConnectionCreated = {
     channel_recvonly_connections: number;
     turn_transport_type: "udp" | "tcp";
 };
-export declare type SignalingNotifyConnectionUpdated = {
+export type SignalingNotifyConnectionUpdated = {
     type: "notify";
     event_type: "connection.updated";
     role: Role;
@@ -156,7 +161,7 @@ export declare type SignalingNotifyConnectionUpdated = {
     channel_recvonly_connections: number;
     turn_transport_type: "udp" | "tcp";
 };
-export declare type SignalingNotifyConnectionDestroyed = {
+export type SignalingNotifyConnectionDestroyed = {
     type: "notify";
     event_type: "connection.destroyed";
     role: Role;
@@ -174,7 +179,7 @@ export declare type SignalingNotifyConnectionDestroyed = {
     channel_recvonly_connections: number;
     turn_transport_type: "udp" | "tcp";
 };
-export declare type SignalingNotifySpotlightChanged = {
+export type SignalingNotifySpotlightChanged = {
     type: "notify";
     event_type: "spotlight.changed";
     client_id: string | null;
@@ -184,7 +189,7 @@ export declare type SignalingNotifySpotlightChanged = {
     audio: boolean;
     video: boolean;
 };
-export declare type SignalingNotifySpotlightFocused = {
+export type SignalingNotifySpotlightFocused = {
     type: "notify";
     event_type: "spotlight.focused";
     client_id: string | null;
@@ -193,7 +198,7 @@ export declare type SignalingNotifySpotlightFocused = {
     video: boolean;
     fixed: boolean;
 };
-export declare type SignalingNotifySpotlightUnfocused = {
+export type SignalingNotifySpotlightUnfocused = {
     type: "notify";
     event_type: "spotlight.unfocused";
     client_id: string | null;
@@ -202,13 +207,13 @@ export declare type SignalingNotifySpotlightUnfocused = {
     video: boolean;
     fixed: boolean;
 };
-export declare type SignalingNotifyNetworkStatus = {
+export type SignalingNotifyNetworkStatus = {
     type: "notify";
     event_type: "network.status";
     unstable_level: 0 | 1 | 2 | 3;
 };
-export declare type DataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
-export declare type DataChannelConfiguration = {
+export type DataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
+export type DataChannelConfiguration = {
     label: string;
     direction: DataChannelDirection;
     compress?: boolean;
@@ -217,12 +222,11 @@ export declare type DataChannelConfiguration = {
     protocol?: string;
     ordered?: boolean;
 };
-export declare type ConnectionOptions = {
+export type ConnectionOptions = {
     audio?: boolean;
     audioCodecType?: AudioCodecType;
     audioBitRate?: number;
     audioOpusParamsChannels?: number;
-    audioOpusParamsClockRate?: number;
     audioOpusParamsMaxplaybackrate?: number;
     audioOpusParamsStereo?: boolean;
     audioOpusParamsSpropStereo?: boolean;
@@ -230,6 +234,8 @@ export declare type ConnectionOptions = {
     audioOpusParamsPtime?: number;
     audioOpusParamsUseinbandfec?: boolean;
     audioOpusParamsUsedtx?: boolean;
+    audioLyraParamsBitrate?: 3200 | 6000 | 9200;
+    audioLyraParamsUsedtx?: boolean;
     video?: boolean;
     videoCodecType?: VideoCodecType;
     videoBitRate?: number;
@@ -251,8 +257,9 @@ export declare type ConnectionOptions = {
     signalingCandidateTimeout?: number;
     dataChannels?: DataChannelConfiguration[];
     bundleId?: string;
+    audioStreamingLanguageCode?: string;
 };
-export declare type Callbacks = {
+export type Callbacks = {
     disconnect: (event: SoraCloseEvent) => void;
     push: (event: SignalingPushMessage, transportType: TransportType) => void;
     addstream: (event: RTCTrackEvent) => void;
@@ -267,14 +274,14 @@ export declare type Callbacks = {
     message: (event: DataChannelMessageEvent) => void;
     datachannel: (event: DataChannelEvent) => void;
 };
-export declare type PreKeyBundle = {
+export type PreKeyBundle = {
     identityKey: string;
     signedPreKey: string;
     preKeySignature: string;
 };
-export declare type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
-export declare type TransportType = "websocket" | "datachannel" | "peerconnection";
-export declare type TimelineEventLogType = "websocket" | "datachannel" | "peerconnection" | "sora";
+export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
+export type TransportType = "websocket" | "datachannel" | "peerconnection";
+export type TimelineEventLogType = "websocket" | "datachannel" | "peerconnection" | "sora";
 export interface SignalingEvent extends Event {
     transportType: TransportType;
     data?: any;
@@ -298,10 +305,20 @@ export interface SoraCloseEvent extends Event {
     reason?: string;
     params?: Record<string, unknown>;
 }
-export declare type SoraCloseEventType = "normal" | "abend";
-export declare type SoraCloseEventInitDict = {
+export type SoraCloseEventType = "normal" | "abend";
+export type SoraCloseEventInitDict = {
     code?: number;
     reason?: string;
     params?: Record<string, unknown>;
 };
-export declare type SoraAbendTitle = "CONNECTION-STATE-FAILED" | "DATA-CHANNEL-ONERROR" | "ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT" | "ICE-CONNECTION-STATE-FAILED" | "INTERNAL-ERROR" | "WEBSOCKET-ONCLOSE" | "WEBSOCKET-ONERROR";
+export type SoraAbendTitle = "CONNECTION-STATE-FAILED" | "DATA-CHANNEL-ONERROR" | "ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT" | "ICE-CONNECTION-STATE-FAILED" | "INTERNAL-ERROR" | "WEBSOCKET-ONCLOSE" | "WEBSOCKET-ONERROR";
+export interface RTCEncodedAudioFrame {
+    readonly timestamp: number;
+    data: ArrayBuffer;
+    getMetadata(): RTCEncodedAudioFrameMetadata;
+}
+export interface RTCEncodedAudioFrameMetadata {
+    synchronizationSource: number;
+    payloadType: number;
+    contributingSources: [number];
+}

@@ -1,8 +1,8 @@
 {
   "name": "sora-js-sdk",
-  "version": "2022.1.0",
+  "version": "2022.2.0",
   "description": "WebRTC SFU Sora JavaScript SDK",
-  "main": "dist/sora.min.js",
+  "main": "dist/sora.js",
   "module": "dist/sora.mjs",
   "types": "dist/sora.d.ts",
   "scripts": {
@@ -28,12 +28,11 @@
     "dist"
   ],
   "devDependencies": {
-    "npm-check-updates": "^14.0.1",
-    "serve": "^13.0.2",
-    "typedoc": "^0.22.17"
+    "serve": "14.1.2",
+    "typedoc": "0.23.22"
   },
   "resolutions": {
-    "get-pkg-repo": "4.1.2"
+    "get-pkg-repo": "5.0.0"
   },
   "workspaces": [
     "packages/go-wasm",

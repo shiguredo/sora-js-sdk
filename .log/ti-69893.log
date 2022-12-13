@@ -1,0 +1,19 @@
+[16:35:03.829] Global cache location '/Users/tohta/Library/Caches/typescript/4.5', safe file path '/users/tohta/.emacs.d/.cache/lsp/npm/typescript/lib/node_modules/typescript/lib/typingsafelist.json', types map path /users/tohta/.emacs.d/.cache/lsp/npm/typescript/lib/node_modules/typescript/lib/typesmap.json
+[16:35:03.830] Processing cache location '/Users/tohta/Library/Caches/typescript/4.5'
+[16:35:03.830] Trying to find '/Users/tohta/Library/Caches/typescript/4.5/package.json'...
+[16:35:03.831] Loaded content of '/Users/tohta/Library/Caches/typescript/4.5/package.json': {"private":true,"dependencies":{"types-registry":"^0.1.621"}}
+[16:35:03.831] Loaded content of '/Users/tohta/Library/Caches/typescript/4.5/package-lock.json'
+[16:35:03.831] Finished processing cache location '/Users/tohta/Library/Caches/typescript/4.5'
+[16:35:03.831] Process id: 69894
+[16:35:03.831] NPM location: /usr/local/bin/npm (explicit '--npmLocation' not  provided)
+[16:35:03.832] validateDefaultNpmLocation: false
+[16:35:03.832] Npm config file: /Users/tohta/Library/Caches/typescript/4.5/package.json
+[16:35:03.832] Updating types-registry npm package...
+[16:35:03.832] Exec: /usr/local/bin/npm install --ignore-scripts types-registry@latest
+[16:35:04.423]     Succeeded. stdout:
+    
+    up to date, audited 2 packages in 497ms
+
+found 0 vulnerabilities
+
+[16:35:04.423] Updated types-registry npm package

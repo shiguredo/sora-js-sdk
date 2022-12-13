@@ -6,7 +6,7 @@ export type SpotlightFocusRid = "none" | SimulcastRid;
 
 export type Simulcast = boolean | { rid: SimulcastRid };
 
-export type AudioCodecType = "OPUS";
+export type AudioCodecType = "OPUS" | "LYRA";
 
 export type SignalingAudio =
   | boolean
@@ -15,13 +15,17 @@ export type SignalingAudio =
       bit_rate?: number;
       opus_params?: {
         channels?: number;
-        clock_rate?: number;
         maxplaybackrate?: number;
         minptime?: number;
         ptime?: number;
         stereo?: boolean;
         sprop_stereo?: boolean;
         useinbandfec?: boolean;
+        usedtx?: boolean;
+      };
+      lyra_params?: {
+        version?: string;
+        bitrate?: 3200 | 6000 | 9200;
         usedtx?: boolean;
       };
     };
@@ -72,6 +76,7 @@ export type SignalingConnectMessage = {
   ignore_disconnect_websocket?: boolean;
   redirect?: true;
   data_channels?: SignalingConnectDataChannel[];
+  audio_streaming_language_code?: string;
 };
 
 export type SignalingMessage =
@@ -270,7 +275,6 @@ export type ConnectionOptions = {
   audioCodecType?: AudioCodecType;
   audioBitRate?: number;
   audioOpusParamsChannels?: number;
-  audioOpusParamsClockRate?: number;
   audioOpusParamsMaxplaybackrate?: number;
   audioOpusParamsStereo?: boolean;
   audioOpusParamsSpropStereo?: boolean;
@@ -278,6 +282,8 @@ export type ConnectionOptions = {
   audioOpusParamsPtime?: number;
   audioOpusParamsUseinbandfec?: boolean;
   audioOpusParamsUsedtx?: boolean;
+  audioLyraParamsBitrate?: 3200 | 6000 | 9200;
+  audioLyraParamsUsedtx?: boolean;
   video?: boolean;
   videoCodecType?: VideoCodecType;
   videoBitRate?: number;
@@ -299,6 +305,7 @@ export type ConnectionOptions = {
   signalingCandidateTimeout?: number;
   dataChannels?: DataChannelConfiguration[];
   bundleId?: string;
+  audioStreamingLanguageCode?: string;
 };
 
 export type Callbacks = {
@@ -375,3 +382,21 @@ export type SoraAbendTitle =
   | "INTERNAL-ERROR"
   | "WEBSOCKET-ONCLOSE"
   | "WEBSOCKET-ONERROR";
+
+// 以降は Lyra 対応に必要な insertable streams 用の型定義
+//
+// TODO(sile): insertable streams に対応した @types パッケージがリリースされたらそれを使うようにする
+
+// https://www.w3.org/TR/webrtc-encoded-transform/#RTCEncodedAudioFrame-interface
+export interface RTCEncodedAudioFrame {
+  readonly timestamp: number;
+  data: ArrayBuffer;
+  getMetadata(): RTCEncodedAudioFrameMetadata;
+}
+
+// https://www.w3.org/TR/webrtc-encoded-transform/#dictdef-rtcencodedaudioframemetadata
+export interface RTCEncodedAudioFrameMetadata {
+  synchronizationSource: number;
+  payloadType: number;
+  contributingSources: [number];
+}

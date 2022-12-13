@@ -61,6 +61,11 @@ export default class ConnectionPublisher extends ConnectionBase {
         this.pc.addTrack(track, stream);
       }
     });
+    if (this.pc) {
+      for (const sender of this.pc.getSenders()) {
+        await this.setupSenderTransformForCustomCodec(sender);
+      }
+    }
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
@@ -89,7 +94,9 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      this.pc.ontrack = (event): void => {
+      this.pc.ontrack = async (event): Promise<void> => {
+        await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
+
         const stream = event.streams[0];
         if (!stream) {
           return;
@@ -143,6 +150,12 @@ export default class ConnectionPublisher extends ConnectionBase {
         this.pc.addTrack(track, stream);
       }
     });
+    if (this.pc) {
+      for (const sender of this.pc.getSenders()) {
+        await this.setupSenderTransformForCustomCodec(sender);
+      }
+    }
+
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
