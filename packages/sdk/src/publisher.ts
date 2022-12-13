@@ -61,6 +61,11 @@ export default class ConnectionPublisher extends ConnectionBase {
         this.pc.addTrack(track, stream);
       }
     });
+    if (this.pc) {
+      for (const sender of this.pc.getSenders()) {
+        await this.setupSenderTransformForCustomCodec(sender);
+      }
+    }
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();

@@ -54,7 +54,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
     this.startE2EE();
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      this.pc.ontrack = (event): void => {
+      this.pc.ontrack = async (event): Promise<void> => {
+        await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
+
         this.stream = event.streams[0];
         const streamId = this.stream.id;
         if (streamId === "default") {

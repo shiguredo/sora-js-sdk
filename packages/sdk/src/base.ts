@@ -1200,7 +1200,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
-    if (this.e2ee || isLyraInitialized()) {
+    if (this.e2ee || this.lyra) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
