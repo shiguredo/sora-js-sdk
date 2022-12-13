@@ -26,6 +26,8 @@
     - @melpon
 - [CHANGE] ts-jest を @swc/jest に変更する
     - @voluntas
+- [CHANGE] サンプルの sora-e2ee-wasm のダウンロード先を変更する
+    - @voluntas
 - [FIX] 廃止になった opus_params の clock_rate を削除する
     - @voluntas
 
