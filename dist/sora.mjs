@@ -1081,23 +1081,71 @@ function checkBitrate(n) {
     throw new Error(`unsupported bitrate: expected one of 3200, 6000 or 9200, but got ${n}`);
 }
 
+/**
+ * Lyra を使用するために必要な設定を保持するためのグローバル変数
+ *
+ * undefined の場合には Lyra が無効になっていると判断され、
+ * その状態で Lyra で音声をエンコード・デコード使用とすると実行時エラーとなる
+ */
 let LYRA_CONFIG;
+/**
+ * Lyra のエンコード・デコードに必要な WebAssembly インスタンスを保持するためのグローバル変数
+ */
 let LYRA_MODULE;
+/**
+ * Lyra の初期化を行うメソッド
+ *
+ * 詳細は sora.ts の initLyra() メソッドのドキュメントを参照
+ */
 function initLyra(config) {
+    if (typeof "createEncodedStreams" in RTCRtpSender.prototype) {
+        console.warn("This browser doesn't support WebRTC Encoded Transform feature that Lyra requires.");
+        return false;
+    }
+    if (typeof SharedArrayBuffer === "undefined") {
+        console.warn("Lyra requires cross-origin isolation to use SharedArrayBuffer.");
+        return false;
+    }
     LYRA_CONFIG = config;
     LYRA_MODULE = undefined;
-    // TODO: SharedArrayBuffer や insertable streams が使えるかどうかをチェックして使えないなら警告を出す
-    // Lyra はオプショナルな機能なので使えなくてもエラーにはしない
+    return true;
 }
+/***
+ * Lyra が初期化済みかどうか
+ *
+ * @returns Lyra が初期化済みかどうか
+ */
 function isLyraInitialized() {
     return LYRA_CONFIG !== undefined;
 }
+/**
+ * Lyra のエンコーダを生成して返す
+ *
+ * @param options エンコーダに指定するオプション
+ * @returns Lyra エンコーダのプロミス
+ * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ */
 async function createLyraEncoder(options = {}) {
     return (await loadLyraModule()).createEncoder(options);
 }
+/**
+ * Lyra のデコーダを生成して返す
+ *
+ * @param options デコーダに指定するオプション
+ * @returns Lyra デコーダのプロミス
+ * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ */
 async function createLyraDecoder(options = {}) {
     return (await loadLyraModule()).createDecoder(options);
 }
+/**
+ * Lyra 用の WebAssembly インスタンスをロードする
+ *
+ * 既にロード済みの場合には、そのインスタンスを返す
+ *
+ * @returns LyraModule インスタンスのプロミス
+ * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ */
 async function loadLyraModule() {
     if (LYRA_CONFIG === undefined) {
         throw new Error("Lyra has not been initialized. Please call `Sora.initLyra()` beforehand.");
@@ -1107,6 +1155,13 @@ async function loadLyraModule() {
     }
     return LYRA_MODULE;
 }
+/**
+ * PCM（L16）の音声データを Lyra でエンコードする
+ *
+ * @param encoder Lyra エンコーダ
+ * @param encodedFrame PCM 音声データ
+ * @param controller 音声データの出力キュー
+ */
 function transformPcmToLyra(encoder, encodedFrame, controller) {
     const view = new DataView(encodedFrame.data);
     const rawData = new Int16Array(encodedFrame.data.byteLength / 2);
@@ -1115,12 +1170,19 @@ function transformPcmToLyra(encoder, encodedFrame, controller) {
     }
     const encoded = encoder.encode(rawData);
     if (encoded === undefined) {
-        // DTX
+        // DTX が有効、かつ、 encodedFrame が無音（ないしノイズのみを含んでいる）場合にはここに来る
         return;
     }
     encodedFrame.data = encoded.buffer;
     controller.enqueue(encodedFrame);
 }
+/**
+ * Lyra でエンコードされた音声データをデコードして PCM（L16）に変換する
+ *
+ * @param decoder Lyra デコーダ
+ * @param encodedFrame Lyra でエンコードされた音声データ
+ * @param controller 音声データの出力キュー
+ */
 function transformLyraToPcm(decoder, encodedFrame, controller) {
     if (encodedFrame.data.byteLength === 0) {
         // FIXME(sile): sora-cpp-sdk の実装だと DTX の場合にペイロードサイズが 0 のパケットが飛んでくる可能性がある
@@ -1136,6 +1198,9 @@ function transformLyraToPcm(decoder, encodedFrame, controller) {
     encodedFrame.data = buffer;
     controller.enqueue(encodedFrame);
 }
+/**
+ * SDP に記載される Lyra のエンコードパラメータ
+ */
 class LyraParams {
     constructor(version, bitrate, enableDtx) {
         if (version !== LYRA_VERSION$1) {
@@ -1148,6 +1213,13 @@ class LyraParams {
         this.bitrate = bitrate;
         this.enableDtx = enableDtx;
     }
+    /**
+     * SDP の media description 部分をパースして Lyra のエンコードパラメータを取得する
+     *
+     * @param media SDP の media description 部分
+     * @returns パース結果
+     * @throws SDP の内容が期待通りではなくパースに失敗した場合
+     */
     static parseMediaDescription(media) {
         const version = /^a=fmtp:109.*[ ;]version=([0-9.]+)([;]|$)/m.exec(media);
         if (!version) {
@@ -1163,8 +1235,142 @@ class LyraParams {
         }
         return new LyraParams(version[1], Number(bitrate[1]), usedtx[1] == "1");
     }
+    /**
+     * このエンコードパラメータに対応する SDP の fmtp 行を生成する
+     *
+     * @returns SDP の fmtp 行
+     */
     toFmtpString() {
         return `a=fmtp:109 version=${this.version};bitrate=${this.bitrate};usedtx=${this.enableDtx ? 1 : 0}`;
+    }
+}
+/**
+ * 接続単位の Lyra 関連の状態を保持するためのクラス
+ */
+class LyraState {
+    constructor() {
+        this.encoderOptions = {};
+        this.midToLyraParams = new Map();
+    }
+    /**
+     * offer SDP を受け取り Lyra 対応のために必要な置換や情報の収集を行う
+     *
+     * @param sdp offer SDP
+     * @returns 処理後の SDP
+     */
+    processOfferSdp(sdp) {
+        if (!sdp.includes("109 lyra/")) {
+            // 対象外なので処理する必要はない
+            return sdp;
+        }
+        const oldMidToLyraParams = this.midToLyraParams;
+        this.midToLyraParams = new Map();
+        const splited = sdp.split(/^m=/m);
+        let replacedSdp = splited[0];
+        for (let media of splited.slice(1)) {
+            const midResult = /a=mid:(.*)/.exec(media);
+            if (midResult === null) {
+                continue;
+            }
+            const mid = midResult[1];
+            if (media.startsWith("audio") && media.includes("109 lyra/")) {
+                let params = oldMidToLyraParams.get(mid);
+                if (params === undefined) {
+                    params = LyraParams.parseMediaDescription(media);
+                }
+                if (media.includes("a=recvonly")) {
+                    this.encoderOptions.bitrate = params.bitrate;
+                    this.encoderOptions.enableDtx = params.enableDtx;
+                }
+                this.midToLyraParams.set(mid, params);
+                // SDP を置換する:
+                // - libwebrtc は lyra を認識しないので L16 に置き換える
+                // - ただし SDP に L16 しか含まれていないと音声なし扱いになってしまうので、それを防ぐために 110 で opus を追加する
+                media = media
+                    .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
+                    .replace(/109 lyra[/]16000[/]1/, "110 opus/48000/2")
+                    .replace(/a=fmtp:109 .*/, "a=rtpmap:109 L16/16000\r\na=ptime:20");
+            }
+            replacedSdp += "m=" + media;
+        }
+        return replacedSdp;
+    }
+    /**
+     * setLocalDescription() に渡される answer SDP を受け取り、Lyra 対応のために必要な処理を行う
+     *
+     * @param answer SDP
+     * @returns 処理後の SDP
+     */
+    processAnswerSdpForLocal(sdp) {
+        if (!sdp.includes("a=rtpmap:110 ")) {
+            // Lyra は使われていないので書き換えは不要
+            return sdp;
+        }
+        const splited = sdp.split(/^m=/m);
+        let replacedSdp = splited[0];
+        for (let media of splited.slice(1)) {
+            if (media.startsWith("audio") && media.includes("a=rtpmap:110 ")) {
+                // opus(110) ではなく L16(109) を使うように SDP を書き換える
+                //
+                // なお libwebrtc 的にはこの置換を行わなくても内部的には L16 が採用されるが、
+                // SDP と実際の動作を一致させるためにここで SDP を置換しておく
+                media = media
+                    .replace(/SAVPF([0-9 ]*) 110/, "SAVPF$1 109")
+                    .replace(/a=rtpmap:110 opus[/]48000[/]2/, "a=rtpmap:109 L16/16000")
+                    .replace(/a=fmtp:110 .*/, "a=ptime:20");
+            }
+            replacedSdp += "m=" + media;
+        }
+        return replacedSdp;
+    }
+    /**
+     * Sora に渡される answer SDP を受け取り、Lyra 対応のために必要な処理を行う
+     *
+     * @param answer SDP
+     * @returns 処理後の SDP
+     */
+    processAnswerSdpForSora(sdp) {
+        if (!sdp.includes("a=rtpmap:109 L16/16000")) {
+            // Lyra は使われていないので書き換えは不要
+            return sdp;
+        }
+        const splited = sdp.split(/^m=/m);
+        let replacedSdp = splited[0];
+        for (let media of splited.splice(1)) {
+            const midResult = /a=mid:(.*)/.exec(media);
+            if (midResult === null) {
+                continue;
+            }
+            const mid = midResult[1];
+            if (mid && media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
+                // Sora 用に L16 を Lyra に置換する
+                const params = this.midToLyraParams.get(mid);
+                if (params === undefined) {
+                    throw new Error(`Unknown audio mid ${mid}`);
+                }
+                media = media
+                    .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
+                    .replace(/a=ptime:20/, params.toFmtpString());
+            }
+            replacedSdp += "m=" + media;
+        }
+        return replacedSdp;
+    }
+    /**
+     * Lyra のエンコーダを生成する
+     *
+     * @returns 生成されたエンコーダ
+     */
+    async createEncoder() {
+        return await createLyraEncoder(this.encoderOptions);
+    }
+    /**
+     * Lyra のデコーダを生成する
+     *
+     * @returns 生成されたデコーダ
+     */
+    async createDecoder() {
+        return await createLyraDecoder({});
     }
 }
 
@@ -2363,9 +2569,15 @@ function parseDataChannelEventData(eventData, compress) {
  */
 class ConnectionBase {
     constructor(signalingUrlCandidates, role, channelId, metadata, options, debug) {
-        // TODO
-        this.audioMidToCodec = new Map();
-        this.audioMidToLyraParams = new Map();
+        /**
+         * mid と AudioCodecType の対応づけを保持するマップ
+         *
+         * Lyra などのカスタム音声コーデック使用時に RTCRtpReceiver をどのコーデックでデコードすべきかを
+         * 判別するために使われる
+         *
+         * カスタム音声コーデックが有効になっていない場合には空のままとなる
+         */
+        this.midToAudioCodecType = new Map();
         this.role = role;
         this.channelId = channelId;
         this.metadata = metadata;
@@ -2428,6 +2640,14 @@ class ConnectionBase {
         this.signalingOfferMessageDataChannels = {};
         this.connectedSignalingUrl = "";
         this.contactSignalingUrl = "";
+        if (isLyraInitialized()) {
+            if (options.e2ee === true) {
+                console.warn("Currently, it is not possible to use E2EE and Lyra at the same time (Lyra is disabled).");
+            }
+            else {
+                this.lyra = new LyraState();
+            }
+        }
     }
     /**
      * SendRecv Object で発火するイベントのコールバックを設定するメソッド
@@ -3055,6 +3275,10 @@ class ConnectionBase {
             }
             this.callbacks.disconnect(event);
         }
+        if (this.encodedTransformAbortController !== undefined) {
+            this.encodedTransformAbortController.abort();
+            this.encodedTransformAbortController = undefined;
+        }
     }
     /**
      * E2EE の初期設定をするメソッド
@@ -3322,7 +3546,7 @@ class ConnectionBase {
      */
     async connectPeerConnection(message) {
         let config = Object.assign({}, message.config);
-        if (this.e2ee || isLyraInitialized()) {
+        if (this.e2ee || this.lyra) {
             // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
             config = Object.assign({ encodedInsertableStreams: true }, config);
         }
@@ -3381,44 +3605,6 @@ class ConnectionBase {
         await this.pc.setRemoteDescription(sessionDescription);
         this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
         return;
-    }
-    // TOOD: doc
-    // - 新しい payload type を追加している理由
-    //   - L16 だけだと音声なしになる
-    //   - sora では 109 を使いたいので 110 を用意して退避する
-    processOfferSdp(sdp) {
-        if (!sdp.includes("109 lyra/")) {
-            return sdp;
-        }
-        const splited = sdp.split(/^m=/m);
-        let replacedSdp = splited[0];
-        for (let media of splited.splice(1)) {
-            const mid = /a=mid:(.*)/.exec(media);
-            if (media.startsWith("audio")) {
-                if (mid) {
-                    const codec = media.includes("109 lyra/") ? "LYRA" : "OPUS";
-                    this.audioMidToCodec.set(mid[1], codec); // TODO: 古いエントリの削除
-                }
-            }
-            if (media.startsWith("audio") && media.includes("109 lyra/")) {
-                let params = mid ? this.audioMidToLyraParams.get(mid[1]) : undefined;
-                if (params === undefined) {
-                    params = LyraParams.parseMediaDescription(media);
-                }
-                if (media.includes("a=recvonly")) {
-                    this.lyraEncodeOptions = params;
-                }
-                if (mid) {
-                    this.audioMidToLyraParams.set(mid[1], params);
-                }
-                media = media
-                    .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
-                    .replace(/109 lyra[/]16000[/]1/, "110 opus/48000/2")
-                    .replace(/a=fmtp:109 .*/, "a=rtpmap:109 L16/16000\r\na=ptime:20");
-            }
-            replacedSdp += "m=" + media;
-        }
-        return replacedSdp;
     }
     /**
      * createAnswer 処理を行うメソッド
@@ -3483,53 +3669,142 @@ class ConnectionBase {
         this.writePeerConnectionTimelineLog("set-local-description", sessionDescription);
         return;
     }
-    // TODO: doc and rename
-    //
-    // - SDP からエンコード・デコード時に必要な情報を収集する
-    // - SDP を書き換える（動作上は実は必須ではないけど、わかりやすさのため）
-    processAnswerSdpForLocal(sdp) {
-        if (!sdp.includes("a=rtpmap:110 ")) {
-            // Lyra は使われていないので書き換えは不要
+    /**
+     * カスタムコーデック対応用に offer SDP を処理するメソッド
+     *
+     * @param sdp offer SDP
+     * @returns 処理後の SDP
+     */
+    processOfferSdp(sdp) {
+        if (this.lyra === undefined || !sdp.includes("109 lyra/")) {
             return sdp;
         }
-        const splited = sdp.split(/^m=/m);
-        let replacedSdp = splited[0];
-        for (let media of splited.splice(1)) {
-            if (media.startsWith("audio") && media.includes("a=rtpmap:110 ")) {
-                // libwebrtc 的にはこの置換を行わなくても動作はするけど、
-                // 後段の処理を簡潔にするためにここで処理しておく
-                media = media
-                    .replace(/SAVPF([0-9 ]*) 110/, "SAVPF$1 109")
-                    .replace(/a=rtpmap:110 opus[/]48000[/]2/, "a=rtpmap:109 L16/16000")
-                    .replace(/a=fmtp:110 .*/, "a=ptime:20");
+        // mid と音声コーデックの対応を保存する
+        this.midToAudioCodecType.clear();
+        for (const media of sdp.split(/^m=/m).slice(1)) {
+            if (!media.startsWith("audio")) {
+                continue;
             }
-            replacedSdp += "m=" + media;
-        }
-        return replacedSdp;
-    }
-    // TODO: doc
-    processAnswerSdpForRemote(sdp) {
-        if (!sdp.includes("a=rtpmap:109 L16/16000")) {
-            // Lyra は使われていないので書き換えは不要
-            return sdp;
-        }
-        const splited = sdp.split(/^m=/m);
-        let replacedSdp = splited[0];
-        for (let media of splited.splice(1)) {
             const mid = /a=mid:(.*)/.exec(media);
-            if (mid && media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
-                // Sora 用に L16 を Lyra に置換する
-                const params = this.audioMidToLyraParams.get(mid[1]);
-                if (params === undefined) {
-                    throw new Error("TODO");
-                }
-                media = media
-                    .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
-                    .replace(/a=ptime:20/, params.toFmtpString());
+            if (mid) {
+                const codecType = media.includes("109 lyra/") ? "LYRA" : "OPUS";
+                this.midToAudioCodecType.set(mid[1], codecType);
             }
-            replacedSdp += "m=" + media;
         }
-        return replacedSdp;
+        return this.lyra.processOfferSdp(sdp);
+    }
+    /**
+     * カスタムコーデック用に answer SDP を処理するメソッド
+     *
+     * 処理後の SDP は setLocalDescription() メソッドに渡される
+     *
+     * @param answer SDP
+     * @returns 処理後の SDP
+     */
+    processAnswerSdpForLocal(sdp) {
+        if (this.lyra === undefined) {
+            return sdp;
+        }
+        return this.lyra.processAnswerSdpForLocal(sdp);
+    }
+    /**
+     * カスタムコーデック用に answer SDP を処理するメソッド
+     *
+     * 処理後の SDP は Sora に送信される
+     *
+     * @param answer SDP
+     * @returns 処理後の SDP
+     */
+    processAnswerSdpForSora(sdp) {
+        if (this.lyra === undefined) {
+            return sdp;
+        }
+        return this.lyra.processAnswerSdpForSora(sdp);
+    }
+    /**
+     * 必要なら sender をカスタムコーデックを使ってエンコードする
+     *
+     * @param sender 対象となる RTCRtpSender インスタンス
+     */
+    async setupSenderTransformForCustomCodec(sender) {
+        // TODO(sile): E2EE との併用を考慮する
+        if (this.lyra === undefined || sender.track === null) {
+            return;
+        }
+        if (this.encodedTransformAbortController === undefined) {
+            this.encodedTransformAbortController = new AbortController();
+        }
+        const signal = this.encodedTransformAbortController.signal;
+        // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
+        // @ts-ignore
+        // eslint-disable-next-line
+        const senderStreams = sender.createEncodedStreams();
+        const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
+        if (isLyraCodec) {
+            const lyraEncoder = await this.lyra.createEncoder();
+            const transformStream = new TransformStream({
+                transform: (data, controller) => transformPcmToLyra(lyraEncoder, data, controller),
+            });
+            senderStreams.readable
+                .pipeThrough(transformStream, { signal })
+                .pipeTo(senderStreams.writable)
+                .catch((e) => {
+                lyraEncoder.destroy();
+                if (!signal.aborted) {
+                    console.warn(e);
+                }
+            });
+        }
+        else {
+            senderStreams.readable.pipeTo(senderStreams.writable, { signal }).catch((e) => {
+                if (!signal.aborted) {
+                    console.warn(e);
+                }
+            });
+        }
+    }
+    /**
+     * 必要なら receiver をカスタムコーデックを使ってデコードする
+     *
+     * @param mid コーデックの判別に使う mid
+     * @param receiver 対象となる RTCRtpReceiver インスタンス
+     */
+    async setupReceiverTransformForCustomCodec(mid, receiver) {
+        // TODO(sile): E2EE との併用を考慮する
+        if (this.lyra === undefined) {
+            return;
+        }
+        if (this.encodedTransformAbortController === undefined) {
+            this.encodedTransformAbortController = new AbortController();
+        }
+        const signal = this.encodedTransformAbortController.signal;
+        // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
+        // @ts-ignore
+        // eslint-disable-next-line
+        const receiverStreams = receiver.createEncodedStreams();
+        const codecType = this.midToAudioCodecType.get(mid || "");
+        if (codecType == "LYRA") {
+            const lyraDecoder = await this.lyra.createDecoder();
+            const transformStream = new TransformStream({
+                transform: (data, controller) => transformLyraToPcm(lyraDecoder, data, controller),
+            });
+            receiverStreams.readable
+                .pipeThrough(transformStream, { signal })
+                .pipeTo(receiverStreams.writable)
+                .catch((e) => {
+                lyraDecoder.destroy();
+                if (!signal.aborted) {
+                    console.warn(e);
+                }
+            });
+        }
+        else {
+            receiverStreams.readable.pipeTo(receiverStreams.writable, { signal }).catch((e) => {
+                if (!signal.aborted) {
+                    console.warn(e);
+                }
+            });
+        }
     }
     /**
      * シグナリングサーバーに type answer を投げるメソッド
@@ -3537,7 +3812,7 @@ class ConnectionBase {
     sendAnswer() {
         if (this.pc && this.ws && this.pc.localDescription) {
             this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-            const sdp = this.processAnswerSdpForRemote(this.pc.localDescription.sdp);
+            const sdp = this.processAnswerSdpForSora(this.pc.localDescription.sdp);
             const message = { type: "answer", sdp };
             this.ws.send(JSON.stringify(message));
             this.writeWebSocketSignalingLog("send-answer", message);
@@ -4480,6 +4755,11 @@ class ConnectionPublisher extends ConnectionBase {
                 this.pc.addTrack(track, stream);
             }
         });
+        if (this.pc) {
+            for (const sender of this.pc.getSenders()) {
+                await this.setupSenderTransformForCustomCodec(sender);
+            }
+        }
         this.stream = stream;
         await this.createAnswer(signalingMessage);
         this.sendAnswer();
@@ -4508,26 +4788,7 @@ class ConnectionPublisher extends ConnectionBase {
         await this.connectPeerConnection(signalingMessage);
         if (this.pc) {
             this.pc.ontrack = async (event) => {
-                if (isLyraInitialized()) {
-                    // @ts-ignore
-                    // eslint-disable-next-line
-                    const receiverStreams = event.receiver.createEncodedStreams();
-                    const isLyraCodec = this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA";
-                    if (isLyraCodec) {
-                        // TODO: 不要になったら destroy を呼びたい
-                        const lyraDecoder = await createLyraDecoder({ sampleRate: 16000 });
-                        // eslint-disable-next-line
-                        const transformStream = new TransformStream({
-                            transform: (data, controller) => transformLyraToPcm(lyraDecoder, data, controller),
-                        });
-                        // eslint-disable-next-line
-                        receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
-                    }
-                    else {
-                        // eslint-disable-next-line
-                        receiverStreams.readable.pipeTo(receiverStreams.writable);
-                    }
-                }
+                await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
                 const stream = event.streams[0];
                 if (!stream) {
                     return;
@@ -4582,35 +4843,8 @@ class ConnectionPublisher extends ConnectionBase {
             }
         });
         if (this.pc) {
-            if (isLyraInitialized()) {
-                for (const sender of this.pc.getSenders()) {
-                    if (sender == undefined || sender.track == undefined) {
-                        continue;
-                    }
-                    // @ts-ignore
-                    // eslint-disable-next-line
-                    const senderStreams = sender.createEncodedStreams();
-                    const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
-                    if (isLyraCodec) {
-                        if (this.lyraEncodeOptions === undefined) {
-                            throw new Error("TODO");
-                        }
-                        const lyraEncoder = await createLyraEncoder({
-                            sampleRate: 16000,
-                            bitrate: this.lyraEncodeOptions.bitrate,
-                            enableDtx: this.lyraEncodeOptions.enableDtx,
-                        });
-                        const transformStream = new TransformStream({
-                            transform: (data, controller) => transformPcmToLyra(lyraEncoder, data, controller),
-                        });
-                        // eslint-disable-next-line
-                        senderStreams.readable.pipeThrough(transformStream).pipeTo(senderStreams.writable);
-                    }
-                    else {
-                        // eslint-disable-next-line
-                        senderStreams.readable.pipeTo(senderStreams.writable);
-                    }
-                }
+            for (const sender of this.pc.getSenders()) {
+                await this.setupSenderTransformForCustomCodec(sender);
             }
         }
         this.stream = stream;
@@ -4683,7 +4917,8 @@ class ConnectionSubscriber extends ConnectionBase {
         this.startE2EE();
         await this.connectPeerConnection(signalingMessage);
         if (this.pc) {
-            this.pc.ontrack = (event) => {
+            this.pc.ontrack = async (event) => {
+                await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
                 this.stream = event.streams[0];
                 const streamId = this.stream.id;
                 if (streamId === "default") {
@@ -4746,24 +4981,7 @@ class ConnectionSubscriber extends ConnectionBase {
         await this.connectPeerConnection(signalingMessage);
         if (this.pc) {
             this.pc.ontrack = async (event) => {
-                if (isLyraInitialized()) {
-                    // @ts-ignore
-                    // eslint-disable-next-line
-                    const receiverStreams = event.receiver.createEncodedStreams();
-                    const isLyraCodec = this.audioMidToCodec.get(event.transceiver.mid || "") === "LYRA";
-                    if (isLyraCodec) {
-                        const lyraDecoder = await createLyraDecoder({ sampleRate: 16000 });
-                        const transformStream = new TransformStream({
-                            transform: (data, controller) => transformLyraToPcm(lyraDecoder, data, controller),
-                        });
-                        // eslint-disable-next-line
-                        receiverStreams.readable.pipeThrough(transformStream).pipeTo(receiverStreams.writable);
-                    }
-                    else {
-                        // eslint-disable-next-line
-                        receiverStreams.readable.pipeTo(receiverStreams.writable);
-                    }
-                }
+                await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
                 const stream = event.streams[0];
                 if (stream.id === "default") {
                     return;
@@ -4945,7 +5163,23 @@ var sora = {
         await SoraE2EE.loadWasm(wasmUrl);
     },
     /**
-     * TODO
+     * Lyra の初期化を行うメソッド
+     *
+     * このメソッドの呼び出し時には設定情報の保存のみを行い、
+     * Lyra での音声エンコード・デコードに必要な WebAssembly ファイルおよびモデルファイルは、
+     * 実際に必要になったタイミングで初めてロードされます
+     *
+     * Lyra を使うためには以下の機能がブラウザで利用可能である必要があります:
+     * - クロスオリジン分離（内部で SharedArrayBuffer クラスを使用しているため）
+     * - WebRTC Encoded Transform
+     *
+     * これらの機能が利用不可の場合には、このメソッドは警告メッセージを出力した上で、
+     * 返り値として false を返します
+     *
+     * @param config Lyra の設定情報
+     * @returns Lyra の初期化に成功したかどうか
+     *
+     * @public
      */
     initLyra,
     /**

@@ -1,5 +1,5 @@
 import ConnectionBase from "./base";
-import { initLyra } from "./lyra";
+import { initLyra, LyraConfig } from "./lyra";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
 import { applyMediaStreamConstraints } from "./helpers";
@@ -102,7 +102,23 @@ declare const _default: {
      */
     initE2EE: (wasmUrl: string) => Promise<void>;
     /**
-     * TODO
+     * Lyra の初期化を行うメソッド
+     *
+     * このメソッドの呼び出し時には設定情報の保存のみを行い、
+     * Lyra での音声エンコード・デコードに必要な WebAssembly ファイルおよびモデルファイルは、
+     * 実際に必要になったタイミングで初めてロードされます
+     *
+     * Lyra を使うためには以下の機能がブラウザで利用可能である必要があります:
+     * - クロスオリジン分離（内部で SharedArrayBuffer クラスを使用しているため）
+     * - WebRTC Encoded Transform
+     *
+     * これらの機能が利用不可の場合には、このメソッドは警告メッセージを出力した上で、
+     * 返り値として false を返します
+     *
+     * @param config Lyra の設定情報
+     * @returns Lyra の初期化に成功したかどうか
+     *
+     * @public
      */
     initLyra: typeof initLyra;
     /**
@@ -136,4 +152,4 @@ declare const _default: {
     };
 };
 export default _default;
-export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, DataChannelConfiguration, DataChannelDirection, DataChannelEvent, DataChannelMessageEvent, JSONType, Role, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, SignalingNotifyConnectionUpdated, SignalingNotifyMessage, SignalingNotifyMetadata, SignalingNotifyNetworkStatus, SignalingNotifySpotlightChanged, SignalingNotifySpotlightFocused, SignalingNotifySpotlightUnfocused, SignalingPushMessage, Simulcast, SimulcastRid, SoraAbendTitle, SoraCloseEvent, SoraCloseEventInitDict, SoraCloseEventType, SoraConnection, SpotlightFocusRid, TimelineEvent, TimelineEventLogType, TransportType, VideoCodecType, };
+export type { AudioCodecType, Callbacks, ConnectionBase, ConnectionOptions, ConnectionPublisher, ConnectionSubscriber, DataChannelConfiguration, DataChannelDirection, DataChannelEvent, DataChannelMessageEvent, JSONType, LyraConfig, Role, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, SignalingNotifyConnectionUpdated, SignalingNotifyMessage, SignalingNotifyMetadata, SignalingNotifyNetworkStatus, SignalingNotifySpotlightChanged, SignalingNotifySpotlightFocused, SignalingNotifySpotlightUnfocused, SignalingPushMessage, Simulcast, SimulcastRid, SoraAbendTitle, SoraCloseEvent, SoraCloseEventInitDict, SoraCloseEventType, SoraConnection, SpotlightFocusRid, TimelineEvent, TimelineEventLogType, TransportType, VideoCodecType, };
