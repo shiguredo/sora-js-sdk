@@ -1,6 +1,6 @@
 import { unzlibSync, zlibSync } from "fflate";
 
-import { isLyraInitialized, LyraParams } from "./lyra";
+import { isLyraInitialized, LyraState, transformPcmToLyra, transformLyraToPcm } from "./lyra";
 import {
   ConnectError,
   createDataChannelData,
@@ -17,10 +17,12 @@ import {
   trace,
 } from "./utils";
 import {
+  AudioCodecType,
   Callbacks,
   ConnectionOptions,
   JSONType,
   DataChannelConfiguration,
+  RTCEncodedAudioFrame,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
@@ -38,7 +40,6 @@ import {
   SoraCloseEventInitDict,
   SoraCloseEventType,
   TransportType,
-  AudioCodecType,
 } from "./types";
 import SoraE2EE from "@sora/e2ee";
 
@@ -183,13 +184,24 @@ export default class ConnectionBase {
    * E2EE インスタンス
    */
   protected e2ee: SoraE2EE | null;
-
-  // TODO: rename
-  protected lyraEncodeOptions?: LyraParams;
-
-  // TODO
-  protected audioMidToCodec: Map<string, AudioCodecType> = new Map();
-  protected audioMidToLyraParams: Map<string, LyraParams> = new Map();
+  /**
+   * mid と AudioCodecType の対応づけを保持するマップ
+   *
+   * Lyra などのカスタム音声コーデック使用時に RTCRtpReceiver をどのコーデックでデコードすべきかを
+   * 判別するために使われる
+   *
+   * カスタム音声コーデックが有効になっていない場合には空のままとなる
+   */
+  private midToAudioCodecType: Map<string, AudioCodecType> = new Map();
+  /**
+   * Lyra などのカスタムコーデックでの変換用に生成した TransformStream を
+   * WebRTC 切断時に綺麗に終了させるための AbortController
+   */
+  private encodedTransformAbortController?: AbortController;
+  /**
+   * Lyra インスタンス
+   */
+  private lyra?: LyraState;
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -261,6 +273,13 @@ export default class ConnectionBase {
     this.signalingOfferMessageDataChannels = {};
     this.connectedSignalingUrl = "";
     this.contactSignalingUrl = "";
+    if (isLyraInitialized()) {
+      if (options.e2ee === true) {
+        console.warn("Currently, it is not possible to use E2EE and Lyra at the same time (Lyra is disabled).");
+      } else {
+        this.lyra = new LyraState();
+      }
+    }
   }
 
   /**
@@ -910,6 +929,11 @@ export default class ConnectionBase {
       }
       this.callbacks.disconnect(event);
     }
+
+    if (this.encodedTransformAbortController !== undefined) {
+      this.encodedTransformAbortController.abort();
+      this.encodedTransformAbortController = undefined;
+    }
   }
 
   /**
@@ -1180,7 +1204,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config);
-    if (this.e2ee || isLyraInitialized()) {
+    if (this.e2ee || this.lyra) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config);
     }
@@ -1243,47 +1267,6 @@ export default class ConnectionBase {
     await this.pc.setRemoteDescription(sessionDescription);
     this.writePeerConnectionTimelineLog("set-remote-description", sessionDescription);
     return;
-  }
-
-  // TOOD: doc
-  // - 新しい payload type を追加している理由
-  //   - L16 だけだと音声なしになる
-  //   - sora では 109 を使いたいので 110 を用意して退避する
-  private processOfferSdp(sdp: string): string {
-    if (!sdp.includes("109 lyra/")) {
-      return sdp;
-    }
-
-    const splited = sdp.split(/^m=/m);
-    let replacedSdp = splited[0];
-    for (let media of splited.splice(1)) {
-      const mid = /a=mid:(.*)/.exec(media);
-      if (media.startsWith("audio")) {
-        if (mid) {
-          const codec = media.includes("109 lyra/") ? "LYRA" : "OPUS";
-          this.audioMidToCodec.set(mid[1], codec); // TODO: 古いエントリの削除
-        }
-      }
-
-      if (media.startsWith("audio") && media.includes("109 lyra/")) {
-        let params = mid ? this.audioMidToLyraParams.get(mid[1]) : undefined;
-        if (params === undefined) {
-          params = LyraParams.parseMediaDescription(media);
-        }
-        if (media.includes("a=recvonly")) {
-          this.lyraEncodeOptions = params;
-        }
-        if (mid) {
-          this.audioMidToLyraParams.set(mid[1], params);
-        }
-        media = media
-          .replace(/SAVPF([0-9 ]*) 109/, "SAVPF$1 109 110")
-          .replace(/109 lyra[/]16000[/]1/, "110 opus/48000/2")
-          .replace(/a=fmtp:109 .*/, "a=rtpmap:109 L16/16000\r\na=ptime:20");
-      }
-      replacedSdp += "m=" + media;
-    }
-    return replacedSdp;
   }
 
   /**
@@ -1352,57 +1335,153 @@ export default class ConnectionBase {
     return;
   }
 
-  // TODO: doc and rename
-  //
-  // - SDP からエンコード・デコード時に必要な情報を収集する
-  // - SDP を書き換える（動作上は実は必須ではないけど、わかりやすさのため）
-  private processAnswerSdpForLocal(sdp: string): string {
-    if (!sdp.includes("a=rtpmap:110 ")) {
-      // Lyra は使われていないので書き換えは不要
+  /**
+   * カスタムコーデック対応用に offer SDP を処理するメソッド
+   *
+   * @param sdp offer SDP
+   * @returns 処理後の SDP
+   */
+  private processOfferSdp(sdp: string): string {
+    if (this.lyra === undefined || !sdp.includes("109 lyra/")) {
       return sdp;
     }
 
-    const splited = sdp.split(/^m=/m);
-    let replacedSdp = splited[0];
-    for (let media of splited.splice(1)) {
-      if (media.startsWith("audio") && media.includes("a=rtpmap:110 ")) {
-        // libwebrtc 的にはこの置換を行わなくても動作はするけど、
-        // 後段の処理を簡潔にするためにここで処理しておく
-        media = media
-          .replace(/SAVPF([0-9 ]*) 110/, "SAVPF$1 109")
-          .replace(/a=rtpmap:110 opus[/]48000[/]2/, "a=rtpmap:109 L16/16000")
-          .replace(/a=fmtp:110 .*/, "a=ptime:20");
+    // mid と音声コーデックの対応を保存する
+    this.midToAudioCodecType.clear();
+    for (const media of sdp.split(/^m=/m).slice(1)) {
+      if (!media.startsWith("audio")) {
+        continue;
       }
-      replacedSdp += "m=" + media;
+
+      const mid = /a=mid:(.*)/.exec(media);
+      if (mid) {
+        const codecType = media.includes("109 lyra/") ? "LYRA" : "OPUS";
+        this.midToAudioCodecType.set(mid[1], codecType);
+      }
     }
-    return replacedSdp;
+
+    return this.lyra.processOfferSdp(sdp);
   }
 
-  // TODO: doc
-  private processAnswerSdpForRemote(sdp: string): string {
-    if (!sdp.includes("a=rtpmap:109 L16/16000")) {
-      // Lyra は使われていないので書き換えは不要
+  /**
+   * カスタムコーデック用に answer SDP を処理するメソッド
+   *
+   * 処理後の SDP は setLocalDescription() メソッドに渡される
+   *
+   * @param answer SDP
+   * @returns 処理後の SDP
+   */
+  private processAnswerSdpForLocal(sdp: string): string {
+    if (this.lyra === undefined) {
       return sdp;
     }
 
-    const splited = sdp.split(/^m=/m);
-    let replacedSdp = splited[0];
-    for (let media of splited.splice(1)) {
-      const mid = /a=mid:(.*)/.exec(media);
-      if (mid && media.startsWith("audio") && media.includes("a=rtpmap:109 L16/16000")) {
-        // Sora 用に L16 を Lyra に置換する
-        const params = this.audioMidToLyraParams.get(mid[1]);
-        if (params === undefined) {
-          throw new Error("TODO");
-        }
-        media = media
-          .replace(/a=rtpmap:109 L16[/]16000/, "a=rtpmap:109 lyra/16000/1")
-          .replace(/a=ptime:20/, params.toFmtpString());
-      }
-      replacedSdp += "m=" + media;
+    return this.lyra.processAnswerSdpForLocal(sdp);
+  }
+
+  /**
+   * カスタムコーデック用に answer SDP を処理するメソッド
+   *
+   * 処理後の SDP は Sora に送信される
+   *
+   * @param answer SDP
+   * @returns 処理後の SDP
+   */
+  private processAnswerSdpForSora(sdp: string): string {
+    if (this.lyra === undefined) {
+      return sdp;
     }
 
-    return replacedSdp;
+    return this.lyra.processAnswerSdpForSora(sdp);
+  }
+
+  /**
+   * 必要なら sender をカスタムコーデックを使ってエンコードする
+   *
+   * @param sender 対象となる RTCRtpSender インスタンス
+   */
+  protected async setupSenderTransformForCustomCodec(sender: RTCRtpSender): Promise<void> {
+    // TODO(sile): E2EE との併用を考慮する
+    if (this.lyra === undefined || sender.track === null) {
+      return;
+    }
+
+    if (this.encodedTransformAbortController === undefined) {
+      this.encodedTransformAbortController = new AbortController();
+    }
+    const signal = this.encodedTransformAbortController.signal;
+
+    // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
+    // @ts-ignore
+    // eslint-disable-next-line
+    const senderStreams = sender.createEncodedStreams() as TransformStream;
+    const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
+    if (isLyraCodec) {
+      const lyraEncoder = await this.lyra.createEncoder();
+      const transformStream = new TransformStream({
+        transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
+      });
+      senderStreams.readable
+        .pipeThrough(transformStream, { signal })
+        .pipeTo(senderStreams.writable)
+        .catch((e) => {
+          lyraEncoder.destroy();
+          if (!signal.aborted) {
+            console.warn(e);
+          }
+        });
+    } else {
+      senderStreams.readable.pipeTo(senderStreams.writable, { signal }).catch((e) => {
+        if (!signal.aborted) {
+          console.warn(e);
+        }
+      });
+    }
+  }
+
+  /**
+   * 必要なら receiver をカスタムコーデックを使ってデコードする
+   *
+   * @param mid コーデックの判別に使う mid
+   * @param receiver 対象となる RTCRtpReceiver インスタンス
+   */
+  protected async setupReceiverTransformForCustomCodec(mid: string | null, receiver: RTCRtpReceiver): Promise<void> {
+    // TODO(sile): E2EE との併用を考慮する
+    if (this.lyra === undefined) {
+      return;
+    }
+
+    if (this.encodedTransformAbortController === undefined) {
+      this.encodedTransformAbortController = new AbortController();
+    }
+    const signal = this.encodedTransformAbortController.signal;
+
+    // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
+    // @ts-ignore
+    // eslint-disable-next-line
+    const receiverStreams = receiver.createEncodedStreams() as TransformStream;
+    const codecType = this.midToAudioCodecType.get(mid || "");
+    if (codecType == "LYRA") {
+      const lyraDecoder = await this.lyra.createDecoder();
+      const transformStream = new TransformStream({
+        transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
+      });
+      receiverStreams.readable
+        .pipeThrough(transformStream, { signal })
+        .pipeTo(receiverStreams.writable)
+        .catch((e) => {
+          lyraDecoder.destroy();
+          if (!signal.aborted) {
+            console.warn(e);
+          }
+        });
+    } else {
+      receiverStreams.readable.pipeTo(receiverStreams.writable, { signal }).catch((e) => {
+        if (!signal.aborted) {
+          console.warn(e);
+        }
+      });
+    }
   }
 
   /**
@@ -1411,7 +1490,7 @@ export default class ConnectionBase {
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-      const sdp = this.processAnswerSdpForRemote(this.pc.localDescription.sdp);
+      const sdp = this.processAnswerSdpForSora(this.pc.localDescription.sdp);
       const message = { type: "answer", sdp };
       this.ws.send(JSON.stringify(message));
       this.writeWebSocketSignalingLog("send-answer", message);

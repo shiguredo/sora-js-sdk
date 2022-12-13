@@ -1,5 +1,4 @@
-import { LyraParams } from "./lyra";
-import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage, AudioCodecType } from "./types";
+import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage } from "./types";
 import SoraE2EE from "@sora/e2ee";
 declare global {
     interface Algorithm {
@@ -133,9 +132,24 @@ export default class ConnectionBase {
      * E2EE インスタンス
      */
     protected e2ee: SoraE2EE | null;
-    protected lyraEncodeOptions?: LyraParams;
-    protected audioMidToCodec: Map<string, AudioCodecType>;
-    protected audioMidToLyraParams: Map<string, LyraParams>;
+    /**
+     * mid と AudioCodecType の対応づけを保持するマップ
+     *
+     * Lyra などのカスタム音声コーデック使用時に RTCRtpReceiver をどのコーデックでデコードすべきかを
+     * 判別するために使われる
+     *
+     * カスタム音声コーデックが有効になっていない場合には空のままとなる
+     */
+    private midToAudioCodecType;
+    /**
+     * Lyra などのカスタムコーデックでの変換用に生成した TransformStream を
+     * WebRTC 切断時に綺麗に終了させるための AbortController
+     */
+    private encodedTransformAbortController?;
+    /**
+     * Lyra インスタンス
+     */
+    private lyra?;
     constructor(signalingUrlCandidates: string | string[], role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     /**
      * SendRecv Object で発火するイベントのコールバックを設定するメソッド
@@ -347,7 +361,6 @@ export default class ConnectionBase {
      * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
      */
     protected setRemoteDescription(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
-    private processOfferSdp;
     /**
      * createAnswer 処理を行うメソッド
      *
@@ -357,8 +370,44 @@ export default class ConnectionBase {
      * @param message - シグナリング処理で受け取った type offer | type update | type re-offer メッセージ
      */
     protected createAnswer(message: SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage): Promise<void>;
+    /**
+     * カスタムコーデック対応用に offer SDP を処理するメソッド
+     *
+     * @param sdp offer SDP
+     * @returns 処理後の SDP
+     */
+    private processOfferSdp;
+    /**
+     * カスタムコーデック用に answer SDP を処理するメソッド
+     *
+     * 処理後の SDP は setLocalDescription() メソッドに渡される
+     *
+     * @param answer SDP
+     * @returns 処理後の SDP
+     */
     private processAnswerSdpForLocal;
-    private processAnswerSdpForRemote;
+    /**
+     * カスタムコーデック用に answer SDP を処理するメソッド
+     *
+     * 処理後の SDP は Sora に送信される
+     *
+     * @param answer SDP
+     * @returns 処理後の SDP
+     */
+    private processAnswerSdpForSora;
+    /**
+     * 必要なら sender をカスタムコーデックを使ってエンコードする
+     *
+     * @param sender 対象となる RTCRtpSender インスタンス
+     */
+    protected setupSenderTransformForCustomCodec(sender: RTCRtpSender): Promise<void>;
+    /**
+     * 必要なら receiver をカスタムコーデックを使ってデコードする
+     *
+     * @param mid コーデックの判別に使う mid
+     * @param receiver 対象となる RTCRtpReceiver インスタンス
+     */
+    protected setupReceiverTransformForCustomCodec(mid: string | null, receiver: RTCRtpReceiver): Promise<void>;
     /**
      * シグナリングサーバーに type answer を投げるメソッド
      */
