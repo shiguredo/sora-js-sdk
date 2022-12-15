@@ -30,6 +30,8 @@
     - @voluntas
 - [CHANGE] サンプルの sora-e2ee-wasm のダウンロード先を変更する
     - @voluntas
+- [CHANGE] sora.min.js を削除する
+    - @yuitowest
 - [FIX] 廃止になった opus_params の clock_rate を削除する
     - @voluntas
 
