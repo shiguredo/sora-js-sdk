@@ -55,7 +55,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
+        await this.setupReceiverTransform(event.transceiver.mid, event.receiver);
 
         this.stream = event.streams[0];
         const streamId = this.stream.id;
@@ -73,9 +73,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
           readyState: event.track.readyState,
         };
         this.writePeerConnectionTimelineLog("ontrack", data);
-        // if (this.e2ee) {
-        //   this.e2ee.setupReceiverTransform(event.receiver);
-        // }
         this.callbacks.track(event);
         this.stream.onremovetrack = (event): void => {
           this.callbacks.removetrack(event);
@@ -120,7 +117,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
+        await this.setupReceiverTransform(event.transceiver.mid, event.receiver);
 
         const stream = event.streams[0];
         if (stream.id === "default") {
@@ -140,9 +137,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
           readyState: event.track.readyState,
         };
         this.writePeerConnectionTimelineLog("ontrack", data);
-        // if (this.e2ee) {
-        //   this.e2ee.setupReceiverTransform(event.receiver);
-        // }
         this.callbacks.track(event);
         stream.onremovetrack = (event): void => {
           this.callbacks.removetrack(event);

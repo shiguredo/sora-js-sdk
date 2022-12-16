@@ -194,11 +194,6 @@ export default class ConnectionBase {
    */
   private midToAudioCodecType: Map<string, AudioCodecType> = new Map();
   /**
-   * Lyra などのカスタムコーデックでの変換用に生成した TransformStream を
-   * WebRTC 切断時に綺麗に終了させるための AbortController
-   */
-  private encodedTransformAbortController?: AbortController;
-  /**
    * Lyra インスタンス
    */
   private lyra?: LyraState;
@@ -274,11 +269,7 @@ export default class ConnectionBase {
     this.connectedSignalingUrl = "";
     this.contactSignalingUrl = "";
     if (isLyraInitialized()) {
-      // if (options.e2ee === true) {
-      //   console.warn("Currently, it is not possible to use E2EE and Lyra at the same time (Lyra is disabled).");
-      // } else {
       this.lyra = new LyraState();
-      //}
     }
   }
 
@@ -929,11 +920,6 @@ export default class ConnectionBase {
       }
       this.callbacks.disconnect(event);
     }
-
-    if (this.encodedTransformAbortController !== undefined) {
-      this.encodedTransformAbortController.abort();
-      this.encodedTransformAbortController = undefined;
-    }
   }
 
   /**
@@ -1396,87 +1382,64 @@ export default class ConnectionBase {
   }
 
   /**
-   * 必要なら sender をカスタムコーデックを使ってエンコードする
+   * E2EE あるいはカスタムコーデックが有効になっている場合に、送信側の WebRTC Encoded Transform をセットアップする
    *
    * @param sender 対象となる RTCRtpSender インスタンス
    */
-  protected async setupSenderTransformForCustomCodec(sender: RTCRtpSender): Promise<void> {
-    // TODO(sile): E2EE との併用を考慮する
-    if (this.lyra === undefined || sender.track === null) {
+  protected async setupSenderTransform(sender: RTCRtpSender): Promise<void> {
+    if ((this.e2ee === undefined && this.lyra === undefined) || sender.track === null) {
       return;
     }
-
-    if (this.encodedTransformAbortController === undefined) {
-      this.encodedTransformAbortController = new AbortController();
-    }
-    const signal = this.encodedTransformAbortController.signal;
 
     // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
     // @ts-ignore
     // eslint-disable-next-line
     const senderStreams = sender.createEncodedStreams() as TransformStream;
     const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
-    let readerStream = senderStreams.readable;
-    if (isLyraCodec) {
+    let readable = senderStreams.readable;
+    if (isLyraCodec && this.lyra !== undefined) {
       const lyraEncoder = await this.lyra.createEncoder();
       const transformStream = new TransformStream({
         transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
       });
-      readerStream = senderStreams.readable.pipeThrough(transformStream, { signal });
+      readable = senderStreams.readable.pipeThrough(transformStream);
     }
     if (this.e2ee) {
-      this.e2ee.setupSenderTransform2(readerStream, senderStreams.writable);
+      this.e2ee.setupSenderTransform(readable, senderStreams.writable);
     } else {
-      readerStream.pipeTo(senderStreams.writable, { signal }).catch((e) => {
-        // TODO: destroy
-        if (!signal.aborted) {
-          console.warn(e);
-        }
-      });
+      readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
     }
   }
 
   /**
-   * 必要なら receiver をカスタムコーデックを使ってデコードする
+   * E2EE あるいはカスタムコーデックが有効になっている場合に、受信側の WebRTC Encoded Transform をセットアップする
    *
    * @param mid コーデックの判別に使う mid
    * @param receiver 対象となる RTCRtpReceiver インスタンス
    */
-  protected async setupReceiverTransformForCustomCodec(mid: string | null, receiver: RTCRtpReceiver): Promise<void> {
-    // TODO(sile): E2EE との併用を考慮する
-    if (this.lyra === undefined) {
+  protected async setupReceiverTransform(mid: string | null, receiver: RTCRtpReceiver): Promise<void> {
+    if (this.e2ee === undefined && this.lyra === undefined) {
       return;
     }
-
-    if (this.encodedTransformAbortController === undefined) {
-      this.encodedTransformAbortController = new AbortController();
-    }
-    const signal = this.encodedTransformAbortController.signal;
 
     // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
     // @ts-ignore
     // eslint-disable-next-line
     const receiverStreams = receiver.createEncodedStreams() as TransformStream;
     const codecType = this.midToAudioCodecType.get(mid || "");
-    let writerStream = receiverStreams.writable;
-    if (codecType == "LYRA") {
+    let writable = receiverStreams.writable;
+    if (codecType == "LYRA" && this.lyra !== undefined) {
       const lyraDecoder = await this.lyra.createDecoder();
       const transformStream = new TransformStream({
         transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
       });
-      transformStream.readable.pipeTo(receiverStreams.writable, { signal });
-      writerStream = transformStream.writable;
+      transformStream.readable.pipeTo(receiverStreams.writable).catch((e) => console.warn(e));
+      writable = transformStream.writable;
     }
     if (this.e2ee) {
-      this.e2ee.setupReceiverTransform2(receiverStreams.readable, writerStream);
+      this.e2ee.setupReceiverTransform(receiverStreams.readable, writable);
     } else {
-      throw new Error("TODO");
-      // readerStream.pipeTo(receiverStreams.writable, { signal }).catch((e) => {
-      //   // TODO: destroy
-      //   if (!signal.aborted) {
-      //     console.warn(e);
-      //   }
-      // });
+      receiverStreams.readable.pipeTo(writable).catch((e) => console.warn(e));
     }
   }
 
