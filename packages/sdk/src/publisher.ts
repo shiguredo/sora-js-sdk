@@ -69,13 +69,13 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
-    if (this.pc && this.e2ee) {
-      this.pc.getSenders().forEach((sender) => {
-        if (this.e2ee) {
-          this.e2ee.setupSenderTransform(sender);
-        }
-      });
-    }
+    // if (this.pc && this.e2ee) {
+    //   this.pc.getSenders().forEach((sender) => {
+    //     if (this.e2ee) {
+    //       this.e2ee.setupSenderTransform(sender);
+    //     }
+    //   });
+    // }
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
     return stream;
@@ -118,9 +118,9 @@ export default class ConnectionPublisher extends ConnectionBase {
         if (stream.id === this.connectionId) {
           return;
         }
-        if (this.e2ee) {
-          this.e2ee.setupReceiverTransform(event.receiver);
-        }
+        // if (this.e2ee) {
+        //   this.e2ee.setupReceiverTransform(event.receiver);
+        // }
         this.callbacks.track(event);
         stream.onremovetrack = (event): void => {
           this.callbacks.removetrack(event);
@@ -161,9 +161,9 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.sendAnswer();
     if (this.pc && this.e2ee) {
       this.pc.getSenders().forEach((sender) => {
-        if (this.e2ee) {
-          this.e2ee.setupSenderTransform(sender);
-        }
+        // if (this.e2ee) {
+        //   this.e2ee.setupSenderTransform(sender);
+        // }
       });
     }
     await this.onIceCandidate();

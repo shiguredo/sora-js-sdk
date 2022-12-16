@@ -155,6 +155,32 @@ class SoraE2EE {
     this.worker.postMessage(message, [readableStream, writableStream]);
   }
 
+  setupSenderTransform2(readableStream: ReadableStream, writableStream: WritableStream): void {
+    console.log("setupSenderTransform2");
+    if (!this.worker) {
+      throw new Error("Worker is null. Call startWorker in advance.");
+    }
+    const message = {
+      type: "encrypt",
+      readableStream: readableStream,
+      writableStream: writableStream,
+    };
+    this.worker.postMessage(message, [readableStream, writableStream]);
+  }
+
+  setupReceiverTransform2(readableStream: ReadableStream, writableStream: WritableStream): void {
+    console.log("setupReceiverTransform2");
+    if (!this.worker) {
+      throw new Error("Worker is null. Call startWorker in advance.");
+    }
+    const message = {
+      type: "decrypt",
+      readableStream: readableStream,
+      writableStream: writableStream,
+    };
+    this.worker.postMessage(message, [readableStream, writableStream]);
+  }
+
   postRemoteSecretKeyMaterials(result: ReceiveMessageResult): void {
     if (!this.worker) {
       throw new Error("Worker is null. Call startWorker in advance.");

@@ -73,9 +73,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
           readyState: event.track.readyState,
         };
         this.writePeerConnectionTimelineLog("ontrack", data);
-        if (this.e2ee) {
-          this.e2ee.setupReceiverTransform(event.receiver);
-        }
+        // if (this.e2ee) {
+        //   this.e2ee.setupReceiverTransform(event.receiver);
+        // }
         this.callbacks.track(event);
         this.stream.onremovetrack = (event): void => {
           this.callbacks.removetrack(event);
@@ -140,9 +140,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
           readyState: event.track.readyState,
         };
         this.writePeerConnectionTimelineLog("ontrack", data);
-        if (this.e2ee) {
-          this.e2ee.setupReceiverTransform(event.receiver);
-        }
+        // if (this.e2ee) {
+        //   this.e2ee.setupReceiverTransform(event.receiver);
+        // }
         this.callbacks.track(event);
         stream.onremovetrack = (event): void => {
           this.callbacks.removetrack(event);

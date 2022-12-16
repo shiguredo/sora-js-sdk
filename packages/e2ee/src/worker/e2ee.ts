@@ -242,6 +242,7 @@ async function encryptFunction(encodedFrame: Chunk, controller: TransformStreamD
       newDataUint8.set(new Uint8Array(cipherText), frameAdd.byteLength);
       encodedFrame.data = newData;
 
+      console.log("enqueue");
       controller.enqueue(encodedFrame);
     });
 

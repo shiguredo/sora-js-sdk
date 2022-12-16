@@ -274,11 +274,11 @@ export default class ConnectionBase {
     this.connectedSignalingUrl = "";
     this.contactSignalingUrl = "";
     if (isLyraInitialized()) {
-      if (options.e2ee === true) {
-        console.warn("Currently, it is not possible to use E2EE and Lyra at the same time (Lyra is disabled).");
-      } else {
-        this.lyra = new LyraState();
-      }
+      // if (options.e2ee === true) {
+      //   console.warn("Currently, it is not possible to use E2EE and Lyra at the same time (Lyra is disabled).");
+      // } else {
+      this.lyra = new LyraState();
+      //}
     }
   }
 
@@ -1416,22 +1416,19 @@ export default class ConnectionBase {
     // eslint-disable-next-line
     const senderStreams = sender.createEncodedStreams() as TransformStream;
     const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
+    let readerStream = senderStreams.readable;
     if (isLyraCodec) {
       const lyraEncoder = await this.lyra.createEncoder();
       const transformStream = new TransformStream({
         transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
       });
-      senderStreams.readable
-        .pipeThrough(transformStream, { signal })
-        .pipeTo(senderStreams.writable)
-        .catch((e) => {
-          lyraEncoder.destroy();
-          if (!signal.aborted) {
-            console.warn(e);
-          }
-        });
+      readerStream = senderStreams.readable.pipeThrough(transformStream, { signal });
+    }
+    if (this.e2ee) {
+      this.e2ee.setupSenderTransform2(readerStream, senderStreams.writable);
     } else {
-      senderStreams.readable.pipeTo(senderStreams.writable, { signal }).catch((e) => {
+      readerStream.pipeTo(senderStreams.writable, { signal }).catch((e) => {
+        // TODO: destroy
         if (!signal.aborted) {
           console.warn(e);
         }
@@ -1461,26 +1458,25 @@ export default class ConnectionBase {
     // eslint-disable-next-line
     const receiverStreams = receiver.createEncodedStreams() as TransformStream;
     const codecType = this.midToAudioCodecType.get(mid || "");
+    let writerStream = receiverStreams.writable;
     if (codecType == "LYRA") {
       const lyraDecoder = await this.lyra.createDecoder();
       const transformStream = new TransformStream({
         transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
       });
-      receiverStreams.readable
-        .pipeThrough(transformStream, { signal })
-        .pipeTo(receiverStreams.writable)
-        .catch((e) => {
-          lyraDecoder.destroy();
-          if (!signal.aborted) {
-            console.warn(e);
-          }
-        });
+      transformStream.readable.pipeTo(receiverStreams.writable, { signal });
+      writerStream = transformStream.writable;
+    }
+    if (this.e2ee) {
+      this.e2ee.setupReceiverTransform2(receiverStreams.readable, writerStream);
     } else {
-      receiverStreams.readable.pipeTo(receiverStreams.writable, { signal }).catch((e) => {
-        if (!signal.aborted) {
-          console.warn(e);
-        }
-      });
+      throw new Error("TODO");
+      // readerStream.pipeTo(receiverStreams.writable, { signal }).catch((e) => {
+      //   // TODO: destroy
+      //   if (!signal.aborted) {
+      //     console.warn(e);
+      //   }
+      // });
     }
   }
 
