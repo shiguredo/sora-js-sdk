@@ -241,6 +241,7 @@ async function encryptFunction(encodedFrame: Chunk, controller: TransformStreamD
       newDataUint8.set(frameAdd, 0);
       newDataUint8.set(new Uint8Array(cipherText), frameAdd.byteLength);
       encodedFrame.data = newData;
+
       controller.enqueue(encodedFrame);
     });
 
