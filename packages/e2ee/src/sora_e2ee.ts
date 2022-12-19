@@ -120,14 +120,7 @@ class SoraE2EE {
     return preKeyBundle;
   }
 
-  setupSenderTransform(sender: RTCRtpSender): void {
-    if (!sender.track) {
-      return;
-    }
-    // @ts-ignore トライアル段階の API なので無視する
-    const senderStreams = sender.createEncodedStreams();
-    const readableStream = senderStreams.readableStream || senderStreams.readable;
-    const writableStream = senderStreams.writableStream || senderStreams.writable;
+  setupSenderTransform(readableStream: ReadableStream, writableStream: WritableStream): void {
     if (!this.worker) {
       throw new Error("Worker is null. Call startWorker in advance.");
     }
@@ -139,11 +132,7 @@ class SoraE2EE {
     this.worker.postMessage(message, [readableStream, writableStream]);
   }
 
-  setupReceiverTransform(receiver: RTCRtpReceiver): void {
-    // @ts-ignore トライアル段階の API なので無視する
-    const receiverStreams = receiver.createEncodedStreams();
-    const readableStream = receiverStreams.readableStream || receiverStreams.readable;
-    const writableStream = receiverStreams.writableStream || receiverStreams.writable;
+  setupReceiverTransform(readableStream: ReadableStream, writableStream: WritableStream): void {
     if (!this.worker) {
       throw new Error("Worker is null. Call startWorker in advance.");
     }
