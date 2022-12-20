@@ -1192,6 +1192,17 @@ function transformLyraToPcm(decoder, encodedFrame, controller) {
         //              一応保険としてこのチェックを入れているけれど、もし不要だと分かったら削除してしまう
         return;
     }
+    if (encodedFrame.data.byteLength === 3) {
+        // e2ee を有効にした場合には、e2ee モジュールが不明なパケットを受信した場合に
+        // opus の無音パケットを生成するのでそれを無視する。
+        // なお、sendrecv or sendonly で接続直後に生成されたパケットを受信すると常にここにくる模様。
+        //
+        // Lyra では圧縮後の音声データサイズが固定調で、3 バイトとなることはないので、
+        // この条件で正常な Lyra パケットが捨てられることはない。
+        //
+        // FIXME(size): e2ee 側から opus を仮定した無音生成コードがなくなったらこのワークアラウンドも除去する
+        return;
+    }
     const decoded = decoder.decode(new Uint8Array(encodedFrame.data));
     const buffer = new ArrayBuffer(decoded.length * 2);
     const view = new DataView(buffer);
