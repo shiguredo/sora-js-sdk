@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.2.0
+ * @version: 2022.3.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -652,14 +652,7 @@
 	        const { preKeyBundle } = await window.e2ee.init();
 	        return preKeyBundle;
 	    }
-	    setupSenderTransform(sender) {
-	        if (!sender.track) {
-	            return;
-	        }
-	        // @ts-ignore トライアル段階の API なので無視する
-	        const senderStreams = sender.createEncodedStreams();
-	        const readableStream = senderStreams.readableStream || senderStreams.readable;
-	        const writableStream = senderStreams.writableStream || senderStreams.writable;
+	    setupSenderTransform(readableStream, writableStream) {
 	        if (!this.worker) {
 	            throw new Error("Worker is null. Call startWorker in advance.");
 	        }
@@ -670,11 +663,7 @@
 	        };
 	        this.worker.postMessage(message, [readableStream, writableStream]);
 	    }
-	    setupReceiverTransform(receiver) {
-	        // @ts-ignore トライアル段階の API なので無視する
-	        const receiverStreams = receiver.createEncodedStreams();
-	        const readableStream = receiverStreams.readableStream || receiverStreams.readable;
-	        const writableStream = receiverStreams.writableStream || receiverStreams.writable;
+	    setupReceiverTransform(readableStream, writableStream) {
 	        if (!this.worker) {
 	            throw new Error("Worker is null. Call startWorker in advance.");
 	        }
@@ -1207,6 +1196,17 @@
 	    if (encodedFrame.data.byteLength === 0) {
 	        // FIXME(sile): sora-cpp-sdk の実装だと DTX の場合にペイロードサイズが 0 のパケットが飛んでくる可能性がある
 	        //              一応保険としてこのチェックを入れているけれど、もし不要だと分かったら削除してしまう
+	        return;
+	    }
+	    if (encodedFrame.data.byteLength === 3) {
+	        // e2ee を有効にした場合には、e2ee モジュールが不明なパケットを受信した場合に
+	        // opus の無音パケットを生成するのでそれを無視する。
+	        // なお、sendrecv or sendonly で接続直後に生成されたパケットを受信すると常にここにくる模様。
+	        //
+	        // Lyra では圧縮後の音声データサイズが固定調で、3 バイトとなることはないので、
+	        // この条件で正常な Lyra パケットが捨てられることはない。
+	        //
+	        // FIXME(size): e2ee 側から opus を仮定した無音生成コードがなくなったらこのワークアラウンドも除去する
 	        return;
 	    }
 	    const decoded = decoder.decode(new Uint8Array(encodedFrame.data));
@@ -2252,7 +2252,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2022.2.0",
+	        sora_client: "Sora JavaScript SDK 2022.3.0",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -2661,12 +2661,7 @@
 	        this.connectedSignalingUrl = "";
 	        this.contactSignalingUrl = "";
 	        if (isLyraInitialized()) {
-	            if (options.e2ee === true) {
-	                console.warn("Currently, it is not possible to use E2EE and Lyra at the same time (Lyra is disabled).");
-	            }
-	            else {
-	                this.lyra = new LyraState();
-	            }
+	            this.lyra = new LyraState();
 	        }
 	    }
 	    /**
@@ -3295,10 +3290,6 @@
 	            }
 	            this.callbacks.disconnect(event);
 	        }
-	        if (this.encodedTransformAbortController !== undefined) {
-	            this.encodedTransformAbortController.abort();
-	            this.encodedTransformAbortController = undefined;
-	        }
 	    }
 	    /**
 	     * E2EE の初期設定をするメソッド
@@ -3742,88 +3733,63 @@
 	        return this.lyra.processAnswerSdpForSora(sdp);
 	    }
 	    /**
-	     * 必要なら sender をカスタムコーデックを使ってエンコードする
+	     * E2EE あるいはカスタムコーデックが有効になっている場合に、送信側の WebRTC Encoded Transform をセットアップする
 	     *
 	     * @param sender 対象となる RTCRtpSender インスタンス
 	     */
-	    async setupSenderTransformForCustomCodec(sender) {
-	        // TODO(sile): E2EE との併用を考慮する
-	        if (this.lyra === undefined || sender.track === null) {
+	    async setupSenderTransform(sender) {
+	        if ((this.e2ee === undefined && this.lyra === undefined) || sender.track === null) {
 	            return;
 	        }
-	        if (this.encodedTransformAbortController === undefined) {
-	            this.encodedTransformAbortController = new AbortController();
-	        }
-	        const signal = this.encodedTransformAbortController.signal;
 	        // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
 	        // @ts-ignore
 	        // eslint-disable-next-line
 	        const senderStreams = sender.createEncodedStreams();
 	        const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
-	        if (isLyraCodec) {
+	        let readable = senderStreams.readable;
+	        if (isLyraCodec && this.lyra !== undefined) {
 	            const lyraEncoder = await this.lyra.createEncoder();
 	            const transformStream = new TransformStream({
 	                transform: (data, controller) => transformPcmToLyra(lyraEncoder, data, controller),
 	            });
-	            senderStreams.readable
-	                .pipeThrough(transformStream, { signal })
-	                .pipeTo(senderStreams.writable)
-	                .catch((e) => {
-	                lyraEncoder.destroy();
-	                if (!signal.aborted) {
-	                    console.warn(e);
-	                }
-	            });
+	            readable = senderStreams.readable.pipeThrough(transformStream);
+	        }
+	        if (this.e2ee) {
+	            this.e2ee.setupSenderTransform(readable, senderStreams.writable);
 	        }
 	        else {
-	            senderStreams.readable.pipeTo(senderStreams.writable, { signal }).catch((e) => {
-	                if (!signal.aborted) {
-	                    console.warn(e);
-	                }
-	            });
+	            readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
 	        }
 	    }
 	    /**
-	     * 必要なら receiver をカスタムコーデックを使ってデコードする
+	     * E2EE あるいはカスタムコーデックが有効になっている場合に、受信側の WebRTC Encoded Transform をセットアップする
 	     *
 	     * @param mid コーデックの判別に使う mid
 	     * @param receiver 対象となる RTCRtpReceiver インスタンス
 	     */
-	    async setupReceiverTransformForCustomCodec(mid, receiver) {
-	        // TODO(sile): E2EE との併用を考慮する
-	        if (this.lyra === undefined) {
+	    async setupReceiverTransform(mid, receiver) {
+	        if (this.e2ee === undefined && this.lyra === undefined) {
 	            return;
 	        }
-	        if (this.encodedTransformAbortController === undefined) {
-	            this.encodedTransformAbortController = new AbortController();
-	        }
-	        const signal = this.encodedTransformAbortController.signal;
 	        // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
 	        // @ts-ignore
 	        // eslint-disable-next-line
 	        const receiverStreams = receiver.createEncodedStreams();
 	        const codecType = this.midToAudioCodecType.get(mid || "");
-	        if (codecType == "LYRA") {
+	        let writable = receiverStreams.writable;
+	        if (codecType == "LYRA" && this.lyra !== undefined) {
 	            const lyraDecoder = await this.lyra.createDecoder();
 	            const transformStream = new TransformStream({
 	                transform: (data, controller) => transformLyraToPcm(lyraDecoder, data, controller),
 	            });
-	            receiverStreams.readable
-	                .pipeThrough(transformStream, { signal })
-	                .pipeTo(receiverStreams.writable)
-	                .catch((e) => {
-	                lyraDecoder.destroy();
-	                if (!signal.aborted) {
-	                    console.warn(e);
-	                }
-	            });
+	            transformStream.readable.pipeTo(receiverStreams.writable).catch((e) => console.warn(e));
+	            writable = transformStream.writable;
+	        }
+	        if (this.e2ee) {
+	            this.e2ee.setupReceiverTransform(receiverStreams.readable, writable);
 	        }
 	        else {
-	            receiverStreams.readable.pipeTo(receiverStreams.writable, { signal }).catch((e) => {
-	                if (!signal.aborted) {
-	                    console.warn(e);
-	                }
-	            });
+	            receiverStreams.readable.pipeTo(writable).catch((e) => console.warn(e));
 	        }
 	    }
 	    /**
@@ -4777,19 +4743,12 @@
 	        });
 	        if (this.pc) {
 	            for (const sender of this.pc.getSenders()) {
-	                await this.setupSenderTransformForCustomCodec(sender);
+	                await this.setupSenderTransform(sender);
 	            }
 	        }
 	        this.stream = stream;
 	        await this.createAnswer(signalingMessage);
 	        this.sendAnswer();
-	        if (this.pc && this.e2ee) {
-	            this.pc.getSenders().forEach((sender) => {
-	                if (this.e2ee) {
-	                    this.e2ee.setupSenderTransform(sender);
-	                }
-	            });
-	        }
 	        await this.onIceCandidate();
 	        await this.waitChangeConnectionStateConnected();
 	        return stream;
@@ -4808,7 +4767,7 @@
 	        await this.connectPeerConnection(signalingMessage);
 	        if (this.pc) {
 	            this.pc.ontrack = async (event) => {
-	                await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
+	                await this.setupReceiverTransform(event.transceiver.mid, event.receiver);
 	                const stream = event.streams[0];
 	                if (!stream) {
 	                    return;
@@ -4829,9 +4788,6 @@
 	                }
 	                if (stream.id === this.connectionId) {
 	                    return;
-	                }
-	                if (this.e2ee) {
-	                    this.e2ee.setupReceiverTransform(event.receiver);
 	                }
 	                this.callbacks.track(event);
 	                stream.onremovetrack = (event) => {
@@ -4864,19 +4820,12 @@
 	        });
 	        if (this.pc) {
 	            for (const sender of this.pc.getSenders()) {
-	                await this.setupSenderTransformForCustomCodec(sender);
+	                await this.setupSenderTransform(sender);
 	            }
 	        }
 	        this.stream = stream;
 	        await this.createAnswer(signalingMessage);
 	        this.sendAnswer();
-	        if (this.pc && this.e2ee) {
-	            this.pc.getSenders().forEach((sender) => {
-	                if (this.e2ee) {
-	                    this.e2ee.setupSenderTransform(sender);
-	                }
-	            });
-	        }
 	        await this.onIceCandidate();
 	        await this.waitChangeConnectionStateConnected();
 	        return stream;
@@ -4938,7 +4887,7 @@
 	        await this.connectPeerConnection(signalingMessage);
 	        if (this.pc) {
 	            this.pc.ontrack = async (event) => {
-	                await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
+	                await this.setupReceiverTransform(event.transceiver.mid, event.receiver);
 	                this.stream = event.streams[0];
 	                const streamId = this.stream.id;
 	                if (streamId === "default") {
@@ -4955,9 +4904,6 @@
 	                    readyState: event.track.readyState,
 	                };
 	                this.writePeerConnectionTimelineLog("ontrack", data);
-	                if (this.e2ee) {
-	                    this.e2ee.setupReceiverTransform(event.receiver);
-	                }
 	                this.callbacks.track(event);
 	                this.stream.onremovetrack = (event) => {
 	                    this.callbacks.removetrack(event);
@@ -5001,7 +4947,7 @@
 	        await this.connectPeerConnection(signalingMessage);
 	        if (this.pc) {
 	            this.pc.ontrack = async (event) => {
-	                await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
+	                await this.setupReceiverTransform(event.transceiver.mid, event.receiver);
 	                const stream = event.streams[0];
 	                if (stream.id === "default") {
 	                    return;
@@ -5020,9 +4966,6 @@
 	                    readyState: event.track.readyState,
 	                };
 	                this.writePeerConnectionTimelineLog("ontrack", data);
-	                if (this.e2ee) {
-	                    this.e2ee.setupReceiverTransform(event.receiver);
-	                }
 	                this.callbacks.track(event);
 	                stream.onremovetrack = (event) => {
 	                    this.callbacks.removetrack(event);
@@ -5211,7 +5154,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2022.2.0";
+	        return "2022.3.0";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群

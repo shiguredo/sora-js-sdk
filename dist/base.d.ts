@@ -142,11 +142,6 @@ export default class ConnectionBase {
      */
     private midToAudioCodecType;
     /**
-     * Lyra などのカスタムコーデックでの変換用に生成した TransformStream を
-     * WebRTC 切断時に綺麗に終了させるための AbortController
-     */
-    private encodedTransformAbortController?;
-    /**
      * Lyra インスタンス
      */
     private lyra?;
@@ -396,18 +391,18 @@ export default class ConnectionBase {
      */
     private processAnswerSdpForSora;
     /**
-     * 必要なら sender をカスタムコーデックを使ってエンコードする
+     * E2EE あるいはカスタムコーデックが有効になっている場合に、送信側の WebRTC Encoded Transform をセットアップする
      *
      * @param sender 対象となる RTCRtpSender インスタンス
      */
-    protected setupSenderTransformForCustomCodec(sender: RTCRtpSender): Promise<void>;
+    protected setupSenderTransform(sender: RTCRtpSender): Promise<void>;
     /**
-     * 必要なら receiver をカスタムコーデックを使ってデコードする
+     * E2EE あるいはカスタムコーデックが有効になっている場合に、受信側の WebRTC Encoded Transform をセットアップする
      *
      * @param mid コーデックの判別に使う mid
      * @param receiver 対象となる RTCRtpReceiver インスタンス
      */
-    protected setupReceiverTransformForCustomCodec(mid: string | null, receiver: RTCRtpReceiver): Promise<void>;
+    protected setupReceiverTransform(mid: string | null, receiver: RTCRtpReceiver): Promise<void>;
     /**
      * シグナリングサーバーに type answer を投げるメソッド
      */

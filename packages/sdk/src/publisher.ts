@@ -63,19 +63,12 @@ export default class ConnectionPublisher extends ConnectionBase {
     });
     if (this.pc) {
       for (const sender of this.pc.getSenders()) {
-        await this.setupSenderTransformForCustomCodec(sender);
+        await this.setupSenderTransform(sender);
       }
     }
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
-    if (this.pc && this.e2ee) {
-      this.pc.getSenders().forEach((sender) => {
-        if (this.e2ee) {
-          this.e2ee.setupSenderTransform(sender);
-        }
-      });
-    }
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
     return stream;
@@ -95,7 +88,7 @@ export default class ConnectionPublisher extends ConnectionBase {
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        await this.setupReceiverTransformForCustomCodec(event.transceiver.mid, event.receiver);
+        await this.setupReceiverTransform(event.transceiver.mid, event.receiver);
 
         const stream = event.streams[0];
         if (!stream) {
@@ -117,9 +110,6 @@ export default class ConnectionPublisher extends ConnectionBase {
         }
         if (stream.id === this.connectionId) {
           return;
-        }
-        if (this.e2ee) {
-          this.e2ee.setupReceiverTransform(event.receiver);
         }
         this.callbacks.track(event);
         stream.onremovetrack = (event): void => {
@@ -152,20 +142,13 @@ export default class ConnectionPublisher extends ConnectionBase {
     });
     if (this.pc) {
       for (const sender of this.pc.getSenders()) {
-        await this.setupSenderTransformForCustomCodec(sender);
+        await this.setupSenderTransform(sender);
       }
     }
 
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();
-    if (this.pc && this.e2ee) {
-      this.pc.getSenders().forEach((sender) => {
-        if (this.e2ee) {
-          this.e2ee.setupSenderTransform(sender);
-        }
-      });
-    }
     await this.onIceCandidate();
     await this.waitChangeConnectionStateConnected();
     return stream;
