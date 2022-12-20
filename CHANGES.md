@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] E2EE 有効時に Lyra コーデックを使用可能にする
+    - @sile
+
 ## 2022.2.0
 
 - [ADD] audioCodecType に "LYRA" を追加
