@@ -11,6 +11,8 @@
 
 ## develop
 
+## 2022.3.0
+
 - [UPDATE] E2EE 有効時に Lyra コーデックを使用可能にする
     - @sile
 
