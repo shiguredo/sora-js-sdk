@@ -1387,7 +1387,7 @@ export default class ConnectionBase {
    * @param sender 対象となる RTCRtpSender インスタンス
    */
   protected async setupSenderTransform(sender: RTCRtpSender): Promise<void> {
-    if ((this.e2ee === undefined && this.lyra === undefined) || sender.track === null) {
+    if ((this.e2ee === null && this.lyra === undefined) || sender.track === null) {
       return;
     }
 
@@ -1418,7 +1418,7 @@ export default class ConnectionBase {
    * @param receiver 対象となる RTCRtpReceiver インスタンス
    */
   protected async setupReceiverTransform(mid: string | null, receiver: RTCRtpReceiver): Promise<void> {
-    if (this.e2ee === undefined && this.lyra === undefined) {
+    if (this.e2ee === null && this.lyra === undefined) {
       return;
     }
 

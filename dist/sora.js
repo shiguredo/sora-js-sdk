@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.3.0
+ * @version: 2022.3.1
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -2252,7 +2252,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2022.3.0",
+	        sora_client: "Sora JavaScript SDK 2022.3.1",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -3738,7 +3738,7 @@
 	     * @param sender 対象となる RTCRtpSender インスタンス
 	     */
 	    async setupSenderTransform(sender) {
-	        if ((this.e2ee === undefined && this.lyra === undefined) || sender.track === null) {
+	        if ((this.e2ee === null && this.lyra === undefined) || sender.track === null) {
 	            return;
 	        }
 	        // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
@@ -3768,7 +3768,7 @@
 	     * @param receiver 対象となる RTCRtpReceiver インスタンス
 	     */
 	    async setupReceiverTransform(mid, receiver) {
-	        if (this.e2ee === undefined && this.lyra === undefined) {
+	        if (this.e2ee === null && this.lyra === undefined) {
 	            return;
 	        }
 	        // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
@@ -5154,7 +5154,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2022.3.0";
+	        return "2022.3.1";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群
