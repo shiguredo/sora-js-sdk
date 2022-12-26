@@ -131,17 +131,17 @@ async function loadLyraModule(): Promise<LyraModule> {
  * @param encodedFrame PCM 音声データ
  * @param controller 音声データの出力キュー
  */
-export function transformPcmToLyra(
+export async function transformPcmToLyra(
   encoder: LyraEncoder,
   encodedFrame: RTCEncodedAudioFrame,
   controller: TransformStreamDefaultController
-): void {
+): Promise<void> {
   const view = new DataView(encodedFrame.data);
   const rawData = new Int16Array(encodedFrame.data.byteLength / 2);
   for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
     rawData[i / 2] = view.getInt16(i, false);
   }
-  const encoded = encoder.encode(rawData);
+  const encoded = await encoder.encode(rawData);
   if (encoded === undefined) {
     // DTX が有効、かつ、 encodedFrame が無音（ないしノイズのみを含んでいる）場合にはここに来る
     return;
@@ -157,11 +157,11 @@ export function transformPcmToLyra(
  * @param encodedFrame Lyra でエンコードされた音声データ
  * @param controller 音声データの出力キュー
  */
-export function transformLyraToPcm(
+export async function transformLyraToPcm(
   decoder: LyraDecoder,
   encodedFrame: RTCEncodedAudioFrame,
   controller: TransformStreamDefaultController
-): void {
+): Promise<void> {
   if (encodedFrame.data.byteLength === 0) {
     // FIXME(sile): sora-cpp-sdk の実装だと DTX の場合にペイロードサイズが 0 のパケットが飛んでくる可能性がある
     //              一応保険としてこのチェックを入れているけれど、もし不要だと分かったら削除してしまう
@@ -179,7 +179,7 @@ export function transformLyraToPcm(
     return;
   }
 
-  const decoded = decoder.decode(new Uint8Array(encodedFrame.data));
+  const decoded = await decoder.decode(new Uint8Array(encodedFrame.data));
   const buffer = new ArrayBuffer(decoded.length * 2);
   const view = new DataView(buffer);
   for (const [i, v] of decoded.entries()) {
