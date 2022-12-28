@@ -1,4 +1,4 @@
-import { transformPcmToLyra, transformLyraToPcm } from "./lyra_transform";
+import { transformPcmToLyra, transformLyraToPcm } from "./lyra";
 import { RTCEncodedAudioFrame } from "./types";
 
 import { LyraEncoder, LyraEncoderState, LyraDecoder, LyraDecoderState } from "@shiguredo/lyra-wasm";

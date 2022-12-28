@@ -1,7 +1,6 @@
 import { unzlibSync, zlibSync } from "fflate";
 
-import { isLyraInitialized, LyraState } from "./lyra";
-import { transformPcmToLyra, transformLyraToPcm } from "./lyra_transform";
+import { isLyraInitialized, LyraState, transformPcmToLyra, transformLyraToPcm } from "./lyra";
 import {
   ConnectError,
   createDataChannelData,
