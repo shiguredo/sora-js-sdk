@@ -13,15 +13,29 @@ const banner = `/**
  * @license: ${pkg.license}
  **/
 `;
-const lyraWorkerScript = fs.readFileSync("./_worker/lyra_worker.js", "base64");
 
 export default [
+  {
+    input: 'src/lyra_worker.ts',
+    plugins: [
+      resolve(),
+      typescript({
+        tsconfig: './tsconfig.json'
+      }),
+      commonjs(),
+    ],
+    output: {
+      sourcemap: false,
+      file: '../../dist/lyra_worker.js',
+      format: 'umd',
+    }
+  },
   {
     input: 'src/sora.ts',
     plugins: [
       replace({
         __SORA_JS_SDK_VERSION__: pkg.version,
-        __LYRA_WORKER_SCRIPT__: lyraWorkerScript,
+        __LYRA_WORKER_SCRIPT__: () => fs.readFileSync("../../dist/lyra_worker.js", "base64"),
         preventAssignment: true
       }),
       resolve(),
@@ -43,7 +57,7 @@ export default [
     plugins: [
       replace({
         __SORA_JS_SDK_VERSION__: pkg.version,
-        __LYRA_WORKER_SCRIPT__: lyraWorkerScript,
+        __LYRA_WORKER_SCRIPT__: () => fs.readFileSync("../../dist/lyra_worker.js", "base64"),
         preventAssignment: true
       }),
       resolve(),
