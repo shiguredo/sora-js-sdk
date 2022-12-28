@@ -1,6 +1,7 @@
 import { unzlibSync, zlibSync } from "fflate";
 
-import { isLyraInitialized, LyraState, transformPcmToLyra, transformLyraToPcm } from "./lyra";
+import { isLyraInitialized, LyraState } from "./lyra";
+import { transformPcmToLyra, transformLyraToPcm } from "./lyra_transform";
 import {
   ConnectError,
   createDataChannelData,
@@ -1394,50 +1395,48 @@ export default class ConnectionBase {
     }
 
     const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
-    if (!isLyraCodec) {
-      console.log("not lyra");
-      return;
+
+    if ("transform" in RTCRtpSender.prototype) {
+      // WebRTC Encoded Transform に対応しているブラウザ
+
+      if (!isLyraCodec || this.lyra === undefined) {
+        return;
+      }
+
+      const lyraWorkerScript = atob(LYRA_WORKER_SCRIPT);
+      const lyraWorker = new Worker(
+        URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" }))
+      );
+      const lyraEncoder = await this.lyra.createEncoder();
+      // @ts-ignore
+      sender.transform = new RTCRtpScriptTransform(
+        lyraWorker,
+        {
+          name: "senderTransform",
+          lyraEncoder,
+        },
+        [lyraEncoder.port]
+      );
+    } else {
+      // 古い API (i.e., createEncodedStreams) を使っているブラウザ
+
+      // @ts-ignore
+      // eslint-disable-next-line
+      const senderStreams = sender.createEncodedStreams() as TransformStream;
+      let readable = senderStreams.readable;
+      if (isLyraCodec && this.lyra !== undefined) {
+        const lyraEncoder = await this.lyra.createEncoder();
+        const transformStream = new TransformStream({
+          transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
+        });
+        readable = senderStreams.readable.pipeThrough(transformStream);
+      }
+      if (this.e2ee) {
+        this.e2ee.setupSenderTransform(readable, senderStreams.writable);
+      } else {
+        readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
+      }
     }
-    console.log("lyra");
-
-    const lyraWorkerScript = atob(LYRA_WORKER_SCRIPT);
-    const lyraWorker = new Worker(
-      URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" }))
-    );
-    // @ts-ignore
-    const lyraEncoder = await this.lyra.createEncoder();
-    // @ts-ignore
-    const encoded = await lyraEncoder.encode(new Int16Array(lyraEncoder.frameSize));
-    // @ts-ignore
-    console.log("encoded: " + encoded.length);
-
-    // @ts-ignore
-    sender.transform = new RTCRtpScriptTransform(
-      lyraWorker,
-      {
-        name: "senderTransform",
-        lyraEncoder: lyraEncoder,
-      },
-      [lyraEncoder.port]
-    );
-    // // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
-    // // @ts-ignore
-    // // eslint-disable-next-line
-    // const senderStreams = sender.createEncodedStreams() as TransformStream;
-    // const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
-    // let readable = senderStreams.readable;
-    // if (isLyraCodec && this.lyra !== undefined) {
-    //   const lyraEncoder = await this.lyra.createEncoder();
-    //   const transformStream = new TransformStream({
-    //     transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
-    //   });
-    //   readable = senderStreams.readable.pipeThrough(transformStream);
-    // }
-    // if (this.e2ee) {
-    //   this.e2ee.setupSenderTransform(readable, senderStreams.writable);
-    // } else {
-    //   readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
-    // }
   }
 
   /**
@@ -1451,24 +1450,49 @@ export default class ConnectionBase {
       return;
     }
 
-    // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
-    // @ts-ignore
-    // eslint-disable-next-line
-    const receiverStreams = receiver.createEncodedStreams() as TransformStream;
     const codecType = this.midToAudioCodecType.get(mid || "");
-    let writable = receiverStreams.writable;
-    if (codecType == "LYRA" && this.lyra !== undefined) {
+
+    if ("transform" in RTCRtpSender.prototype) {
+      // WebRTC Encoded Transform に対応しているブラウザ
+
+      if (codecType !== "LYRA" || this.lyra === undefined) {
+        return;
+      }
+
+      const lyraWorkerScript = atob(LYRA_WORKER_SCRIPT);
+      const lyraWorker = new Worker(
+        URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" }))
+      );
       const lyraDecoder = await this.lyra.createDecoder();
-      const transformStream = new TransformStream({
-        transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
-      });
-      transformStream.readable.pipeTo(receiverStreams.writable).catch((e) => console.warn(e));
-      writable = transformStream.writable;
-    }
-    if (this.e2ee) {
-      this.e2ee.setupReceiverTransform(receiverStreams.readable, writable);
+      // @ts-ignore
+      receiver.transform = new RTCRtpScriptTransform(
+        lyraWorker,
+        {
+          name: "receiverTransform",
+          lyraDecoder,
+        },
+        [lyraDecoder.port]
+      );
     } else {
-      receiverStreams.readable.pipeTo(writable).catch((e) => console.warn(e));
+      // 古い API (i.e., createEncodedStreams) を使っているブラウザ
+
+      // @ts-ignore
+      // eslint-disable-next-line
+      const receiverStreams = receiver.createEncodedStreams() as TransformStream;
+      let writable = receiverStreams.writable;
+      if (codecType === "LYRA" && this.lyra !== undefined) {
+        const lyraDecoder = await this.lyra.createDecoder();
+        const transformStream = new TransformStream({
+          transform: (data: RTCEncodedAudioFrame, controller) => transformLyraToPcm(lyraDecoder, data, controller),
+        });
+        transformStream.readable.pipeTo(receiverStreams.writable).catch((e) => console.warn(e));
+        writable = transformStream.writable;
+      }
+      if (this.e2ee) {
+        this.e2ee.setupReceiverTransform(receiverStreams.readable, writable);
+      } else {
+        receiverStreams.readable.pipeTo(writable).catch((e) => console.warn(e));
+      }
     }
   }
 
