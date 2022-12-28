@@ -1,3 +1,4 @@
+import fs from "fs";
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
@@ -12,6 +13,7 @@ const banner = `/**
  * @license: ${pkg.license}
  **/
 `;
+const lyraWorkerScript = fs.readFileSync("./_worker/lyra_worker.js", "base64");
 
 export default [
   {
@@ -19,6 +21,7 @@ export default [
     plugins: [
       replace({
         __SORA_JS_SDK_VERSION__: pkg.version,
+        __LYRA_WORKER_SCRIPT__: lyraWorkerScript,
         preventAssignment: true
       }),
       resolve(),
@@ -40,6 +43,7 @@ export default [
     plugins: [
       replace({
         __SORA_JS_SDK_VERSION__: pkg.version,
+        __LYRA_WORKER_SCRIPT__: lyraWorkerScript,
         preventAssignment: true
       }),
       resolve(),

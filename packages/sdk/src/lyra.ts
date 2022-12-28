@@ -57,7 +57,7 @@ export interface LyraConfig {
  * @public
  */
 export function initLyra(config: LyraConfig): boolean {
-  if (!("createEncodedStreams" in RTCRtpSender.prototype)) {
+  if (!("createEncodedStreams" in RTCRtpSender.prototype || "transform" in RTCRtpSender.prototype)) {
     console.warn("This browser doesn't support WebRTC Encoded Transform feature that Lyra requires.");
     return false;
   }

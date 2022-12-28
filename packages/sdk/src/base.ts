@@ -49,6 +49,8 @@ declare global {
   }
 }
 
+const LYRA_WORKER_SCRIPT = "__LYRA_WORKER_SCRIPT__";
+
 /**
  * Sora との WebRTC 接続を扱う基底クラス
  *
@@ -1391,24 +1393,51 @@ export default class ConnectionBase {
       return;
     }
 
-    // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
-    // @ts-ignore
-    // eslint-disable-next-line
-    const senderStreams = sender.createEncodedStreams() as TransformStream;
     const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
-    let readable = senderStreams.readable;
-    if (isLyraCodec && this.lyra !== undefined) {
-      const lyraEncoder = await this.lyra.createEncoder();
-      const transformStream = new TransformStream({
-        transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
-      });
-      readable = senderStreams.readable.pipeThrough(transformStream);
+    if (!isLyraCodec) {
+      console.log("not lyra");
+      return;
     }
-    if (this.e2ee) {
-      this.e2ee.setupSenderTransform(readable, senderStreams.writable);
-    } else {
-      readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
-    }
+    console.log("lyra");
+
+    const lyraWorkerScript = atob(LYRA_WORKER_SCRIPT);
+    const lyraWorker = new Worker(
+      URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" }))
+    );
+    // @ts-ignore
+    const lyraEncoder = await this.lyra.createEncoder();
+    // @ts-ignore
+    const encoded = await lyraEncoder.encode(new Int16Array(lyraEncoder.frameSize));
+    // @ts-ignore
+    console.log("encoded: " + encoded.length);
+
+    // @ts-ignore
+    sender.transform = new RTCRtpScriptTransform(
+      lyraWorker,
+      {
+        name: "senderTransform",
+        lyraEncoder: lyraEncoder,
+      },
+      [lyraEncoder.port]
+    );
+    // // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
+    // // @ts-ignore
+    // // eslint-disable-next-line
+    // const senderStreams = sender.createEncodedStreams() as TransformStream;
+    // const isLyraCodec = sender.track.kind === "audio" && this.options.audioCodecType === "LYRA";
+    // let readable = senderStreams.readable;
+    // if (isLyraCodec && this.lyra !== undefined) {
+    //   const lyraEncoder = await this.lyra.createEncoder();
+    //   const transformStream = new TransformStream({
+    //     transform: (data: RTCEncodedAudioFrame, controller) => transformPcmToLyra(lyraEncoder, data, controller),
+    //   });
+    //   readable = senderStreams.readable.pipeThrough(transformStream);
+    // }
+    // if (this.e2ee) {
+    //   this.e2ee.setupSenderTransform(readable, senderStreams.writable);
+    // } else {
+    //   readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
+    // }
   }
 
   /**

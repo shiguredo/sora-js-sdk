@@ -26,13 +26,32 @@
 
         <script src="./sora.js"></script>
         <script type="text/javascript">
+      if('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./service-worker.js').then((registration) => {
+          registration.addEventListener('updatefound', () => {
+            const newServiceWorker = registration.installing;
+            newServiceWorker.addEventListener('statechange', () => {
+              if (newServiceWorker.state == 'activated') {
+                location.reload();
+              }
+            });
+          });
+        });
+      }
+
+          const modelPath = "https://lyra-wasm.shiguredo.app/2022.2.0/";
+          const wasmPath = "./dist/";
+          Sora.initLyra({modelPath, wasmPath});
 const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
 const options = {
     multistream: true,
+    audioCodecType: "LYRA",
 }
+          console.log("before: sendrecv");
 const sendrecv1 = sora.sendrecv(channelId, null, options);
+          console.log("after: sendrecv");
 sendrecv1.on('track', (event) => {
   const stream = event.streams[0];
   if (!stream) return;

@@ -15,6 +15,10 @@
 
         <script src="./sora.js"></script>
         <script type="text/javascript">
+          const modelPath = "https://lyra-wasm.shiguredo.app/2022.2.0/";
+          const wasmPath = "./dist/";
+          Sora.initLyra({modelPath, wasmPath});
+
 const channelId = 'Sora';
 const debug = false;
 const sora = Sora.connection('ws://127.0.0.1:5000/signaling', debug);
