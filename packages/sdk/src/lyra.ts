@@ -162,11 +162,6 @@ export async function transformLyraToPcm(
   encodedFrame: RTCEncodedAudioFrame,
   controller: TransformStreamDefaultController
 ): Promise<void> {
-  if (encodedFrame.data.byteLength === 0) {
-    // FIXME(sile): sora-cpp-sdk の実装だと DTX の場合にペイロードサイズが 0 のパケットが飛んでくる可能性がある
-    //              一応保険としてこのチェックを入れているけれど、もし不要だと分かったら削除してしまう
-    return;
-  }
   if (encodedFrame.data.byteLength === 3) {
     // e2ee を有効にした場合には、e2ee モジュールが不明なパケットを受信した場合に
     // opus の無音パケットを生成するのでそれを無視する。
