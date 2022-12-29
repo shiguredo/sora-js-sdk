@@ -3,6 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import replace from '@rollup/plugin-replace';
+import del from "rollup-plugin-delete";
 import pkg from '../../package.json';
 
 const banner = `/**
@@ -26,7 +27,7 @@ export default [
     ],
     output: {
       sourcemap: false,
-      file: '../../dist/lyra_worker.js',
+      file: './tmp/lyra_worker.js',
       format: 'umd',
     }
   },
@@ -35,7 +36,7 @@ export default [
     plugins: [
       replace({
         __SORA_JS_SDK_VERSION__: pkg.version,
-        __LYRA_WORKER_SCRIPT__: () => fs.readFileSync("../../dist/lyra_worker.js", "base64"),
+        __LYRA_WORKER_SCRIPT__: () => fs.readFileSync("./tmp/lyra_worker.js", "base64"),
         preventAssignment: true
       }),
       resolve(),
@@ -57,7 +58,7 @@ export default [
     plugins: [
       replace({
         __SORA_JS_SDK_VERSION__: pkg.version,
-        __LYRA_WORKER_SCRIPT__: () => fs.readFileSync("../../dist/lyra_worker.js", "base64"),
+        __LYRA_WORKER_SCRIPT__: () => fs.readFileSync("./tmp/lyra_worker.js", "base64"),
         preventAssignment: true
       }),
       resolve(),
@@ -65,6 +66,10 @@ export default [
         tsconfig: './tsconfig.json'
       }),
       commonjs(),
+      del({
+        targets: './tmp/',
+        hook: 'buildEnd'
+      }),
     ],
     output: {
       sourcemap: false,
