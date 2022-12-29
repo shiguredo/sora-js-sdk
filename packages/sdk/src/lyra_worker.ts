@@ -27,14 +27,33 @@ function createReceiverTransform(decoderState: LyraDecoderState) {
   });
 }
 
-// @ts-ignore
-onrtctransform = (msg) => {
+type OnTransformMessage = {
+  transformer: {
+    readable: ReadableStream;
+    writable: WritableStream;
+    options:
+      | { name: "senderTransform"; lyraEncoder: LyraEncoderState }
+      | { name: "receiverTransform"; lyraDecoder: LyraDecoderState };
+  };
+};
+
+declare global {
+  let onrtctransform: (msg: OnTransformMessage) => void;
+}
+
+onrtctransform = (msg: OnTransformMessage) => {
   if (msg.transformer.options.name == "senderTransform") {
     const transform = createSenderTransform(msg.transformer.options.lyraEncoder);
-    msg.transformer.readable.pipeThrough(transform).pipeTo(msg.transformer.writable);
+    msg.transformer.readable
+      .pipeThrough(transform)
+      .pipeTo(msg.transformer.writable)
+      .catch((e) => console.warn(e));
   } else if (msg.transformer.options.name == "receiverTransform") {
     const transform = createReceiverTransform(msg.transformer.options.lyraDecoder);
-    msg.transformer.readable.pipeThrough(transform).pipeTo(msg.transformer.writable);
+    msg.transformer.readable
+      .pipeThrough(transform)
+      .pipeTo(msg.transformer.writable)
+      .catch((e) => console.warn(e));
   } else {
     console.warn("unknown message");
     console.warn(msg);
