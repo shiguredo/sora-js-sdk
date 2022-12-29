@@ -1407,6 +1407,7 @@ export default class ConnectionBase {
         URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" }))
       );
       const lyraEncoder = await this.lyra.createEncoder();
+
       // @ts-ignore
       sender.transform = new RTCRtpScriptTransform(
         lyraWorker,
@@ -1463,6 +1464,7 @@ export default class ConnectionBase {
         URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" }))
       );
       const lyraDecoder = await this.lyra.createDecoder();
+
       // @ts-ignore
       receiver.transform = new RTCRtpScriptTransform(
         lyraWorker,
