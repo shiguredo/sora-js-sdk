@@ -10,6 +10,11 @@ import {
 } from "@shiguredo/lyra-wasm";
 
 /**
+ * ビルド時に lyra_worker.ts のビルド結果（の base64 ）で置換される文字列
+ */
+const LYRA_WORKER_SCRIPT = "__LYRA_WORKER_SCRIPT__";
+
+/**
  * Lyra を使用するために必要な設定を保持するためのグローバル変数
  *
  * undefined の場合には Lyra が無効になっていると判断され、
@@ -122,6 +127,17 @@ async function loadLyraModule(): Promise<LyraModule> {
   }
 
   return LYRA_MODULE;
+}
+
+/**
+ * WebRTC Encoded Transform に渡される Lyra 用の web worker を生成する
+ *
+ * @returns Lyra でエンコードおよびデコードを行う web worker インスタンス
+ */
+export function createLyraWorker() {
+  const lyraWorkerScript = atob(LYRA_WORKER_SCRIPT);
+  const lyraWorker = new Worker(URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" })));
+  return lyraWorker;
 }
 
 /**

@@ -1,6 +1,6 @@
 import { unzlibSync, zlibSync } from "fflate";
 
-import { isLyraInitialized, LyraState, transformPcmToLyra, transformLyraToPcm } from "./lyra";
+import { createLyraWorker, isLyraInitialized, LyraState, transformPcmToLyra, transformLyraToPcm } from "./lyra";
 import {
   ConnectError,
   createDataChannelData,
@@ -48,8 +48,6 @@ declare global {
     namedCurve: string;
   }
 }
-
-const LYRA_WORKER_SCRIPT = "__LYRA_WORKER_SCRIPT__";
 
 /**
  * Sora との WebRTC 接続を扱う基底クラス
@@ -1402,10 +1400,7 @@ export default class ConnectionBase {
         return;
       }
 
-      const lyraWorkerScript = atob(LYRA_WORKER_SCRIPT);
-      const lyraWorker = new Worker(
-        URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" }))
-      );
+      const lyraWorker = createLyraWorker();
       const lyraEncoder = await this.lyra.createEncoder();
 
       // @ts-ignore
@@ -1459,10 +1454,7 @@ export default class ConnectionBase {
         return;
       }
 
-      const lyraWorkerScript = atob(LYRA_WORKER_SCRIPT);
-      const lyraWorker = new Worker(
-        URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" }))
-      );
+      const lyraWorker = createLyraWorker();
       const lyraDecoder = await this.lyra.createDecoder();
 
       // @ts-ignore
