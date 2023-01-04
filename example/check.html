@@ -7,8 +7,18 @@
     <div class="container">
       <h1>リリース前の動作確認用サンプル</h1>
 
+      <p>
+        リリース前の動作確認に使用するためのサンプル。<br /><br />
+
+        以降では、動作確認対象となるパラメータの組み合わせ毎にチャネル ID が用意されている。<br />
+        それぞれに記載の「要確認ブラウザ」で「接続」ボタンを押下し、
+        映像および音声が問題なく流れていることを確認する。
+      </p>
+      <hr />
+
       <!-- TODO: qs でも指定可能にする -->
       シグナリング URL: <input type="text"><br />
+      <small>※ クエリストリングの signalingUrl パラメータでも指定可能</small>
 
       <h2><u>チャネル ID: sora-js-sdk:check:multistream:e2ee:lyra</u></h2>
 
@@ -86,6 +96,18 @@
 
     <script src="./sora.js"></script>
     <script type="text/javascript">
+      if('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js').then((registration) => {
+              registration.addEventListener('updatefound', () => {
+                  const newServiceWorker = registration.installing;
+                  newServiceWorker.addEventListener('statechange', () => {
+                      if (newServiceWorker.state == 'activated') {
+                          location.reload();
+                      }
+                  });
+              });
+          });
+      }
     </script>
   </body>
 </html>
