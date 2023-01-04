@@ -56,13 +56,19 @@ export declare function createLyraEncoder(options?: LyraEncoderOptions): Promise
  */
 export declare function createLyraDecoder(options?: LyraDecoderOptions): Promise<LyraDecoder>;
 /**
+ * WebRTC Encoded Transform に渡される Lyra 用の web worker を生成する
+ *
+ * @returns Lyra でエンコードおよびデコードを行う web worker インスタンス
+ */
+export declare function createLyraWorker(): Worker;
+/**
  * PCM（L16）の音声データを Lyra でエンコードする
  *
  * @param encoder Lyra エンコーダ
  * @param encodedFrame PCM 音声データ
  * @param controller 音声データの出力キュー
  */
-export declare function transformPcmToLyra(encoder: LyraEncoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): void;
+export declare function transformPcmToLyra(encoder: LyraEncoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): Promise<void>;
 /**
  * Lyra でエンコードされた音声データをデコードして PCM（L16）に変換する
  *
@@ -70,7 +76,7 @@ export declare function transformPcmToLyra(encoder: LyraEncoder, encodedFrame: R
  * @param encodedFrame Lyra でエンコードされた音声データ
  * @param controller 音声データの出力キュー
  */
-export declare function transformLyraToPcm(decoder: LyraDecoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): void;
+export declare function transformLyraToPcm(decoder: LyraDecoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): Promise<void>;
 /**
  * SDP に記載される Lyra のエンコードパラメータ
  */

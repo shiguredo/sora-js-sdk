@@ -322,3 +322,8 @@ export interface RTCEncodedAudioFrameMetadata {
     payloadType: number;
     contributingSources: [number];
 }
+declare global {
+    class RTCRtpScriptTransform {
+        constructor(worker: Worker, options?: object, transfer?: object[]);
+    }
+}
