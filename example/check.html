@@ -1,0 +1,91 @@
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>リリース前の動作確認用サンプル</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>リリース前の動作確認用サンプル</h1>
+
+      <!-- TODO: qs でも指定可能にする -->
+      シグナリング URL: <input type="text"><br />
+
+      <h2><u>チャネル ID: sora-js-sdk:check:multistream:e2ee:lyra</u></h2>
+
+      要確認ブラウザ:
+      <ul>
+        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
+      </ul>
+
+      <button>接続</button>
+      <button>切断</button>
+
+      <h4>multistream, E2EE, sendrecv, Opus</h4>
+      <h4>multistream, E2EE, sendrecv, Lyra</h4>
+      <h4>multistream, E2EE, recvonly</h4>
+
+      <h2><u>チャネル ID: sora-js-sdk:check:multistream:lyra</u></h2>
+
+      要確認ブラウザ:
+      <ul>
+        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
+        <li>Safari: macOS and iOS</li>
+      </ul>
+
+      <button>接続</button>
+      <button>切断</button>
+
+      <h4>multistream, sendrecv, Opus</h4>
+      <h4>multistream, sendrecv, Lyra</h4>
+      <h4>multistream, recvonly</h4>
+
+      <h2><u>チャネル ID: sora-js-sdk:check:e2ee:lyra</u></h2>
+
+      要確認ブラウザ:
+      <ul>
+        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
+      </ul>
+
+      <button>接続</button>
+      <button>切断</button>
+
+      <h4>E2EE, sendonly, Opus</h4>
+      <h4>E3EE, sendonly, Lyra</h4>
+      <h4>E2EE, recvonly</h4>
+
+      <h2><u>チャネル ID: sora-js-sdk:check:lyra</u></h2>
+
+      要確認ブラウザ:
+      <ul>
+        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
+        <li>Safari: macOS and iOS</li>
+      </ul>
+
+      <button>接続</button>
+      <button>切断</button>
+
+      <h4>sendonly, Opus</h4>
+      <h4>sendonly, Lyra</h4>
+      <h4>recvonly</h4>
+
+      <h2><u>チャネル ID: sora-js-sdk:check:multistream</u></h2>
+
+      要確認ブラウザ:
+      <ul>
+        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
+        <li>Safari: macOS and iOS</li>
+        <li>Firefox: Linux or macOS or Windows</li>
+      </ul>
+
+      <button>接続</button>
+      <button>切断</button>
+
+      <h4>sendrecv, Opus</h4>
+      <h4>recvonly</h4>
+    </div>
+
+    <script src="./sora.js"></script>
+    <script type="text/javascript">
+    </script>
+  </body>
+</html>
