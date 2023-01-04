@@ -10,6 +10,11 @@ import {
 } from "@shiguredo/lyra-wasm";
 
 /**
+ * ビルド時に lyra_worker.ts のビルド結果（の base64 ）で置換される文字列
+ */
+const LYRA_WORKER_SCRIPT = "__LYRA_WORKER_SCRIPT__";
+
+/**
  * Lyra を使用するために必要な設定を保持するためのグローバル変数
  *
  * undefined の場合には Lyra が無効になっていると判断され、
@@ -57,7 +62,7 @@ export interface LyraConfig {
  * @public
  */
 export function initLyra(config: LyraConfig): boolean {
-  if (!("createEncodedStreams" in RTCRtpSender.prototype)) {
+  if (!("createEncodedStreams" in RTCRtpSender.prototype || "transform" in RTCRtpSender.prototype)) {
     console.warn("This browser doesn't support WebRTC Encoded Transform feature that Lyra requires.");
     return false;
   }
@@ -125,23 +130,34 @@ async function loadLyraModule(): Promise<LyraModule> {
 }
 
 /**
+ * WebRTC Encoded Transform に渡される Lyra 用の web worker を生成する
+ *
+ * @returns Lyra でエンコードおよびデコードを行う web worker インスタンス
+ */
+export function createLyraWorker() {
+  const lyraWorkerScript = atob(LYRA_WORKER_SCRIPT);
+  const lyraWorker = new Worker(URL.createObjectURL(new Blob([lyraWorkerScript], { type: "application/javascript" })));
+  return lyraWorker;
+}
+
+/**
  * PCM（L16）の音声データを Lyra でエンコードする
  *
  * @param encoder Lyra エンコーダ
  * @param encodedFrame PCM 音声データ
  * @param controller 音声データの出力キュー
  */
-export function transformPcmToLyra(
+export async function transformPcmToLyra(
   encoder: LyraEncoder,
   encodedFrame: RTCEncodedAudioFrame,
   controller: TransformStreamDefaultController
-): void {
+): Promise<void> {
   const view = new DataView(encodedFrame.data);
   const rawData = new Int16Array(encodedFrame.data.byteLength / 2);
   for (let i = 0; i < encodedFrame.data.byteLength; i += 2) {
     rawData[i / 2] = view.getInt16(i, false);
   }
-  const encoded = encoder.encode(rawData);
+  const encoded = await encoder.encode(rawData);
   if (encoded === undefined) {
     // DTX が有効、かつ、 encodedFrame が無音（ないしノイズのみを含んでいる）場合にはここに来る
     return;
@@ -157,11 +173,11 @@ export function transformPcmToLyra(
  * @param encodedFrame Lyra でエンコードされた音声データ
  * @param controller 音声データの出力キュー
  */
-export function transformLyraToPcm(
+export async function transformLyraToPcm(
   decoder: LyraDecoder,
   encodedFrame: RTCEncodedAudioFrame,
   controller: TransformStreamDefaultController
-): void {
+): Promise<void> {
   if (encodedFrame.data.byteLength === 3) {
     // e2ee を有効にした場合には、e2ee モジュールが不明なパケットを受信した場合に
     // opus の無音パケットを生成するのでそれを無視する。
@@ -174,7 +190,7 @@ export function transformLyraToPcm(
     return;
   }
 
-  const decoded = decoder.decode(new Uint8Array(encodedFrame.data));
+  const decoded = await decoder.decode(new Uint8Array(encodedFrame.data));
   const buffer = new ArrayBuffer(decoded.length * 2);
   const view = new DataView(buffer);
   for (const [i, v] of decoded.entries()) {

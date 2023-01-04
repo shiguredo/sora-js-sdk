@@ -11,6 +11,13 @@
 
 ## develop
 
+- [UPDATE] Safari / Mobile Safari で Lyra コーデックを使用可能にする
+  - これらのブラウザでは WebRTC Encoded Transform を使うようにする
+  - @sile
+- [UPDATE] @shiguredo/lyra-wasm を 2023.1.0 に更新する
+  - Web Worker 対応と Mobile Safari 対応の取り込み
+  - @sile
+
 ## 2022.3.1
 
 - [FIX] e2ee が有効で無い場合の判定は null かどうかに修正する

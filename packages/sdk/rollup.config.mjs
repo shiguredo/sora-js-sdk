@@ -1,7 +1,9 @@
+import fs from "fs";
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import replace from '@rollup/plugin-replace';
+import del from "rollup-plugin-delete";
 import pkg from '../../package.json';
 
 const banner = `/**
@@ -15,15 +17,32 @@ const banner = `/**
 
 export default [
   {
+    input: 'src/lyra_worker.ts',
+    plugins: [
+      resolve(),
+      typescript({
+        tsconfig: './tsconfig.json'
+      }),
+      commonjs(),
+    ],
+    output: {
+      sourcemap: false,
+      file: './tmp/lyra_worker.js',
+      format: 'umd',
+    }
+  },
+  {
     input: 'src/sora.ts',
     plugins: [
       replace({
         __SORA_JS_SDK_VERSION__: pkg.version,
+        __LYRA_WORKER_SCRIPT__: () => fs.readFileSync("./tmp/lyra_worker.js", "base64"),
         preventAssignment: true
       }),
       resolve(),
       typescript({
-        tsconfig: './tsconfig.json'
+        tsconfig: './tsconfig.json',
+        exclude: 'src/lyra_worker.ts',
       }),
       commonjs(),
     ],
@@ -40,13 +59,19 @@ export default [
     plugins: [
       replace({
         __SORA_JS_SDK_VERSION__: pkg.version,
+        __LYRA_WORKER_SCRIPT__: () => fs.readFileSync("./tmp/lyra_worker.js", "base64"),
         preventAssignment: true
       }),
       resolve(),
       typescript({
-        tsconfig: './tsconfig.json'
+        tsconfig: './tsconfig.json',
+        exclude: 'src/lyra_worker.ts',
       }),
       commonjs(),
+      del({
+        targets: './tmp/',
+        hook: 'buildEnd'
+      }),
     ],
     output: {
       sourcemap: false,
