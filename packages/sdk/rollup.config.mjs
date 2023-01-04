@@ -41,7 +41,8 @@ export default [
       }),
       resolve(),
       typescript({
-        tsconfig: './tsconfig.json'
+        tsconfig: './tsconfig.json',
+        exclude: 'src/lyra_worker.ts',
       }),
       commonjs(),
     ],
@@ -63,7 +64,8 @@ export default [
       }),
       resolve(),
       typescript({
-        tsconfig: './tsconfig.json'
+        tsconfig: './tsconfig.json',
+        exclude: 'src/lyra_worker.ts',
       }),
       commonjs(),
       del({
