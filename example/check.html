@@ -12,12 +12,13 @@
 
         以降では、動作確認対象となるパラメータの組み合わせ毎にチャネル ID が用意されている。<br />
         それぞれに記載の「要確認ブラウザ」で「接続」ボタンを押下し、
-        映像および音声が問題なく流れていることを確認する。
+        映像および音声が問題なく流れていることを確認する。<br />
+        なお「接続」を押した後に表示されるのは受信側のストリームのみとなる。
       </p>
       <hr />
 
       <!-- TODO: qs でも指定可能にする -->
-      シグナリング URL: <input type="text"><br />
+      シグナリング URL: <input type="text" id="signalingUrl"><br />
       <small>※ クエリストリングの signalingUrl パラメータでも指定可能</small>
 
       <h2><u>チャネル ID: sora-js-sdk:check:multistream:e2ee:lyra</u></h2>
@@ -77,7 +78,6 @@
       <h4>sendonly, Opus</h4>
       <h4>sendonly, Lyra</h4>
       <h4>recvonly</h4>
-
       <h2><u>チャネル ID: sora-js-sdk:check:multistream</u></h2>
 
       要確認ブラウザ:
@@ -87,11 +87,14 @@
         <li>Firefox: Linux or macOS or Windows</li>
       </ul>
 
-      <button>接続</button>
-      <button>切断</button>
+      <button onclick="startMultistreamCheck()">接続</button>
+      <button onclick="stopMultistreamCheck()">切断</button>
 
       <h4>sendrecv, Opus</h4>
+      <div id="multistream-sendrecv-videos" class="multistream" style="display: flex;"></div>
+
       <h4>recvonly</h4>
+      <div id="multistream-recvonly-videos" class="multistream" style="display: flex;"></div>
     </div>
 
     <script src="./sora.js"></script>
@@ -107,6 +110,60 @@
                   });
               });
           });
+      }
+
+      let multistreamCheckConnections = [];
+      async function startMultistreamCheck() {
+          stopMultistreamCheck();
+
+          const channelId = 'sora-js-sdk:check:multistream';
+          multistreamCheckConnections = [
+              await connect(channelId, 'multistream-sendrecv-videos', 'sendrecv', {multistream: true}),
+              await connect(channelId, 'multistream-recvonly-videos', 'recvonly', {multistream: true}),
+          ];
+      }
+
+      function stopMultistreamCheck() {
+          multistreamCheckConnections.forEach(x => x.disconnect());
+          multistreamCheckConnections = [];
+          document.querySelectorAll('.multistream').forEach(x => x.innerHTML = null);
+      }
+
+      async function connect(channelId, videoId, role, options) {
+          const debug = false;
+          const signalingUrl = document.querySelector('#signalingUrl').value;
+          const sora = Sora.connection(signalingUrl, debug);
+          let connection;
+          if (role === 'sendrecv') {
+              connection = sora.sendrecv(channelId, null, options);
+          } else if (role === 'recvonly') {
+              connection = sora.recvonly(channelId, null, options);
+          } else {
+              connection = sora.sendonly(channelId, null, options);
+          }
+          connection.on('track', (event) => {
+              const stream = event.streams[0];
+              if (!stream) return;
+              const remoteVideoId = 'remotevideo-' + stream.id;
+              const remoteVideos = document.querySelector('#' + videoId);
+              if (!remoteVideos.querySelector('#' + remoteVideoId)) {
+                  const remoteVideo = document.createElement('video');
+                  remoteVideo.id = remoteVideoId;
+                  remoteVideo.style.border = '1px solid red';
+                  remoteVideo.autoplay = true;
+                  remoteVideo.playsinline = true;
+                  remoteVideo.controls = true;
+                  remoteVideo.width = '160';
+                  remoteVideo.height = '120';
+                  remoteVideo.srcObject = stream;
+                  remoteVideos.appendChild(remoteVideo);
+              }
+          });
+
+          const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+          await connection.connect(mediaStream);
+
+          return connection;
       }
     </script>
   </body>
