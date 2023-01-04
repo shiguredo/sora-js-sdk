@@ -123,16 +123,27 @@
           stopMultistreamCheck();
 
           const channelId = 'sora-js-sdk:check:multistream';
-          multistreamCheckConnections = [
-              await connect(channelId, 'multistream-sendrecv-videos', 'sendrecv', {multistream: true}),
-              await connect(channelId, 'multistream-recvonly-videos', 'recvonly', {multistream: true}),
-          ];
+          multistreamCheckConnections.push(
+              await connect(channelId, 'multistream-sendrecv-videos', 'sendrecv', {multistream: true}));
+
+          // Lyra が使えない環境で Lyra 用の初期化処理が悪影響を与えないことを確認するために
+          // ここで initLyra() を呼び出しておく。
+          initLyra();
+
+          multistreamCheckConnections.push(
+              await connect(channelId, 'multistream-recvonly-videos', 'recvonly', {multistream: true}));
       }
 
       function stopMultistreamCheck() {
           multistreamCheckConnections.forEach(x => x.disconnect());
           multistreamCheckConnections = [];
           document.querySelectorAll('.multistream').forEach(x => x.innerHTML = null);
+      }
+
+      function initLyra() {
+          const modelPath = "https://lyra-wasm.shiguredo.app/2023.1.0/";
+          const wasmPath = modelPath;
+          Sora.initLyra({wasmPath, modelPath});
       }
 
       async function connect(channelId, videoId, role, options) {
