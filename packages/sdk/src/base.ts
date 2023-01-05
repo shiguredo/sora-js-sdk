@@ -1400,7 +1400,6 @@ export default class ConnectionBase {
         return;
       }
 
-      console.log("hello");
       const lyraWorker = createLyraWorker();
       const lyraEncoder = await this.lyra.createEncoder();
 
