@@ -25,7 +25,7 @@
   - git flow release start `<tag>` で開始する
   - CHANGES.md にタグを打つバージョンで書き込む
   - package.json のバージョン番号を更新する
-  - 年度が変わっている場合にはコピーライトの年度も更新する（README.md, TYPEODC.md）
+  - 年度が変わっている場合にはコピーライトの年度も更新する（README.md, TYPEDOC.md）
   - git flow release finish `<tag>` で終了する
   - git push -u origin develop master
   - git push origin `<tag>`
