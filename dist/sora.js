@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.3.1
+ * @version: 2023.1.0-canary.0
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -2253,7 +2253,7 @@
 	    }
 	    const message = {
 	        type: "connect",
-	        sora_client: "Sora JavaScript SDK 2022.3.1",
+	        sora_client: "Sora JavaScript SDK 2023.1.0-canary.0",
 	        environment: window.navigator.userAgent,
 	        role: role,
 	        channel_id: channelId,
@@ -5185,7 +5185,7 @@
 	     * @public
 	     */
 	    version: function () {
-	        return "2022.3.1";
+	        return "2023.1.0-canary.0";
 	    },
 	    /**
 	     * WebRTC のユーティリティ関数群
