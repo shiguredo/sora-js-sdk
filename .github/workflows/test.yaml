@@ -26,6 +26,7 @@ jobs:
       - run: npm run lint -w packages/e2ee
       - run: npm run lint -w packages/sdk
       - run: npm run test -w packages/sdk
+      - run: git diff --stat --exit-code
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
