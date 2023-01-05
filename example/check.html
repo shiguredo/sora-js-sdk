@@ -50,37 +50,6 @@
       <h4>multistream, sendrecv, Lyra</h4>
       <h4>multistream, recvonly</h4>
 
-      <h2><u>チャネル ID: sora-js-sdk:check:e2ee:lyra</u></h2>
-
-      要確認ブラウザ:
-      <ul>
-        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
-      </ul>
-
-      <button>接続</button>
-      <button>切断</button>
-
-      <h4>E2EE, sendonly, Opus</h4>
-      <h4>E3EE, sendonly, Lyra</h4>
-      <h4>E2EE, recvonly</h4>
-
-      <h2><u>チャネル ID: sora-js-sdk:check:lyra</u></h2>
-
-      要確認ブラウザ:
-      <ul>
-        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
-        <li>Safari: macOS and iOS</li>
-      </ul>
-
-      <button onclick="startLyraCheck()">接続</button>
-      <button onclick="stopLyraCheck()">切断</button>
-
-      <h4>sendonly, Lyra</h4>
-      <div id="lyra-sendonly-videos" class="lyra"></div>
-
-      <h4>recvonly</h4>
-      <div id="lyra-recvonly-videos" class="lyra"></div>
-
       <h2><u>チャネル ID: sora-js-sdk:check:multistream</u></h2>
 
       要確認ブラウザ:
@@ -98,6 +67,24 @@
 
       <h4>recvonly</h4>
       <div id="multistream-recvonly-videos" class="multistream"></div>
+
+      <h2><u>チャネル ID: sora-js-sdk:check:singlestream</u></h2>
+
+      要確認ブラウザ:
+      <ul>
+        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
+        <li>Safari: macOS and iOS</li>
+        <li>Firefox: Linux or macOS or Windows</li>
+      </ul>
+
+      <button onclick="startSinglestreamCheck()">接続</button>
+      <button onclick="stopSinglestreamCheck()">切断</button>
+
+      <h4>sendonly, Lyra</h4>
+      <div id="singlestream-sendonly-videos" class="singlestream"></div>
+
+      <h4>recvonly</h4>
+      <div id="singlestream-recvonly-videos" class="singlestream"></div>
     </div>
 
     <script src="./sora.js"></script>
@@ -120,26 +107,6 @@
           document.getElementById('signalingUrl').value = searchParams.get('signalingUrl');
       }
 
-      let lyraCheckConnections = [];
-      async function startLyraCheck() {
-          stopLyraCheck();
-          initLyra();
-
-          const channelId = 'sora-js-sdk:check:lyra';
-          lyraCheckConnections = [
-              await connect(channelId, 'lyra-sendonly-videos', 'sendonly',
-                            {multistream: false, audioCodecType: 'LYRA'}),
-              await connect(channelId, 'lyra-recvonly-videos', 'recvonly',
-                            {multistream: false}),
-          ];
-      }
-
-      async function stopLyraCheck() {
-          lyraCheckConnections.forEach(x => x.disconnect());
-          lyraCheckConnections = [];
-          document.querySelectorAll('.lyra').forEach(x => x.innerHTML = null);
-      }
-
       let multistreamCheckConnections = [];
       async function startMultistreamCheck() {
           stopMultistreamCheck();
@@ -160,6 +127,26 @@
           multistreamCheckConnections.forEach(x => x.disconnect());
           multistreamCheckConnections = [];
           document.querySelectorAll('.multistream').forEach(x => x.innerHTML = null);
+      }
+
+      let singlestreamCheckConnections = [];
+      async function startSinglestreamCheck() {
+          stopSinglestreamCheck();
+          initLyra();
+
+          const channelId = 'sora-js-sdk:check:singlestream';
+          singlestreamCheckConnections = [
+              await connect(channelId, 'singlestream-sendonly-videos', 'sendonly',
+                            {multistream: false}),
+              await connect(channelId, 'singlestream-recvonly-videos', 'recvonly',
+                            {multistream: false}),
+          ];
+      }
+
+      async function stopSinglestreamCheck() {
+          singlestreamCheckConnections.forEach(x => x.disconnect());
+          singlestreamCheckConnections = [];
+          document.querySelectorAll('.singlestream').forEach(x => x.innerHTML = null);
       }
 
       function initLyra() {
