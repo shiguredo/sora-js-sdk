@@ -238,6 +238,13 @@
                   remoteVideos.appendChild(remoteVideo);
               }
           });
+          connection.on('removetrack', (event) => {
+              const remoteVideos = document.querySelector('#' + videoId);
+              const remoteVideo = remoteVideos.querySelector('#remotevideo-' + event.target.id);
+              if (remoteVideo) {
+                  remoteVideos.removeChild(remoteVideo);
+              }
+          });
 
           const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
           await connection.connect(mediaStream);
