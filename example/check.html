@@ -84,16 +84,20 @@
         <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
       </ul>
 
-      <button onclick="startMultistreamE2eeLyraCheck()">接続</button>
-      <button onclick="stopMultistreamE2eeLyraCheck()">切断</button>
-
+      現在は E2EE は１ページ１コネクションまでなので、以下のパターンを別々のページで実行すること。
       <h4>multistream, E2EE, sendrecv, Opus</h4>
+      <button onclick="startMultistreamE2eeLyraCheck('multistream-e2ee-lyra-sendrecv-opus-videos', 'sendrecv', 'OPUS')">接続</button>
+      <button onclick="stopMultistreamE2eeLyraCheck()">切断</button><br />
       <div id="multistream-e2ee-lyra-sendrecv-opus-videos" class="multistream-e2ee-lyra"></div>
 
       <h4>multistream, E2EE, sendrecv, Lyra</h4>
+      <button onclick="startMultistreamE2eeLyraCheck('multistream-e2ee-lyra-sendrecv-lyra-videos', 'sendrecv', 'OPUS')">接続</button>
+      <button onclick="stopMultistreamE2eeLyraCheck()">切断</button><br />
       <div id="multistream-e2ee-lyra-sendrecv-lyra-videos" class="multistream-e2ee-lyra"></div>
 
       <h4>multistream, E2EE, recvonly</h4>
+      <button onclick="startMultistreamE2eeLyraCheck('multistream-e2ee-lyra-recvonly-videos', 'recvonly')">接続</button>
+      <button onclick="stopMultistreamE2eeLyraCheck()">切断</button><br />
       <div id="multistream-e2ee-lyra-recvonly-videos" class="multistream-e2ee-lyra"></div>
     </div>
 
@@ -118,19 +122,14 @@
       }
 
       let multistreamE2eeLyraCheckConnections = [];
-      async function startMultistreamE2eeLyraCheck() {
+      async function startMultistreamE2eeLyraCheck(videoId, role, audioCodecType) {
           stopMultistreamE2eeLyraCheck();
           await Sora.initE2EE("https://sora-e2ee-wasm.shiguredo.app/2020.2/wasm.wasm");
           initLyra();
 
           const channelId = 'sora-js-sdk:check:multistream:e2ee:lyra';
           multistreamE2eeLyraCheckConnections = [
-              await connect(channelId, 'multistream-e2ee-lyra-sendrecv-opus-videos', 'sendrecv',
-                            {multistream: true, e2ee: true, audioCodecType: "OPUS"}),
-              await connect(channelId, 'multistream-e2ee-lyra-sendrecv-lyra-videos', 'sendrecv',
-                            {multistream: true, e2ee: true, audioCodecType: "LYRA"}),
-              await connect(channelId, 'multistream-e2ee-lyra-recvonly-videos', 'recvonly',
-                            {multistream: true, e2ee: true}),
+              await connect(channelId, videoId, role, {multistream: true, e2ee: true, audioCodecType})
           ];
       }
 
