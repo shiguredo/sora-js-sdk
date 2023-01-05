@@ -31,7 +31,7 @@
   - git push origin `<tag>`
 - リリース:
   - GitHub Releases にリリースを作成する
-  - npm publish を実行する
+  - npm publish を実行する （事前に `npm publish --dry-run` を実行して変なところがないかを軽く確認する）
   - sora-js-sdk のドキュメントリポジトリ（private）のリリースノートを更新する
 
 ## canary リリース手順
