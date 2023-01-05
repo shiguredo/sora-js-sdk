@@ -72,12 +72,15 @@
         <li>Safari: macOS and iOS</li>
       </ul>
 
-      <button>接続</button>
-      <button>切断</button>
+      <button onclick="startLyraCheck()">接続</button>
+      <button onclick="stopLyraCheck()">切断</button>
 
-      <h4>sendonly, Opus</h4>
       <h4>sendonly, Lyra</h4>
+      <div id="lyra-sendonly-videos" class="lyra"></div>
+
       <h4>recvonly</h4>
+      <div id="lyra-recvonly-videos" class="lyra"></div>
+
       <h2><u>チャネル ID: sora-js-sdk:check:multistream</u></h2>
 
       要確認ブラウザ:
@@ -117,6 +120,25 @@
           document.getElementById('signalingUrl').value = searchParams.get('signalingUrl');
       }
 
+      let lyraCheckConnections = [];
+      async function startLyraCheck() {
+          stopLyraCheck();
+          initLyra();
+
+          const channelId = 'sora-js-sdk:check:lyra';
+          lyraCheckConnections = [
+              await connect(channelId, 'lyra-sendonly-videos', 'sendonly',
+                            {multistream: false, audioCodecType: 'LYRA'}),
+              await connect(channelId, 'lyra-recvonly-videos', 'recvonly',
+                            {multistream: false}),
+          ];
+      }
+
+      async function stopLyraCheck() {
+          lyraCheckConnections.forEach(x => x.disconnect());
+          lyraCheckConnections = [];
+          document.querySelectorAll('.lyra').forEach(x => x.innerHTML = null);
+      }
 
       let multistreamCheckConnections = [];
       async function startMultistreamCheck() {
