@@ -1,12 +1,12 @@
 export type JSONType = null | boolean | number | string | JSONType[] | {
     [prop: string]: JSONType | undefined;
 };
-export type SimulcastRid = "r0" | "r1" | "r2";
-export type SpotlightFocusRid = "none" | SimulcastRid;
+export type SimulcastRid = 'r0' | 'r1' | 'r2';
+export type SpotlightFocusRid = 'none' | SimulcastRid;
 export type Simulcast = boolean | {
     rid: SimulcastRid;
 };
-export type AudioCodecType = "OPUS" | "LYRA";
+export type AudioCodecType = 'OPUS' | 'LYRA';
 export type SignalingAudio = boolean | {
     codec_type?: AudioCodecType;
     bit_rate?: number;
@@ -26,12 +26,12 @@ export type SignalingAudio = boolean | {
         usedtx?: boolean;
     };
 };
-export type VideoCodecType = "VP9" | "VP8" | "AV1" | "H264" | "H265";
+export type VideoCodecType = 'VP9' | 'VP8' | 'AV1' | 'H264' | 'H265';
 export type SignalingVideo = boolean | {
     codec_type?: VideoCodecType;
     bit_rate?: number;
 };
-export type Role = "sendrecv" | "sendonly" | "recvonly";
+export type Role = 'sendrecv' | 'sendonly' | 'recvonly';
 export type SignalingConnectDataChannel = {
     label?: string;
     direction?: DataChannelDirection;
@@ -42,7 +42,7 @@ export type SignalingConnectDataChannel = {
     ordered?: boolean;
 };
 export type SignalingConnectMessage = {
-    type: "connect";
+    type: 'connect';
     role: Role;
     channel_id: string;
     client_id?: string;
@@ -75,7 +75,7 @@ export type SignalingOfferMessageDataChannel = {
     compress: boolean;
 };
 export type SignalingOfferMessage = {
-    type: "offer";
+    type: 'offer';
     sdp: string;
     client_id: string;
     connection_id: string;
@@ -92,30 +92,30 @@ export type SignalingOfferMessage = {
     };
 };
 export type SignalingUpdateMessage = {
-    type: "update";
+    type: 'update';
     sdp: string;
 };
 export type SignalingReOfferMessage = {
-    type: "re-offer";
+    type: 're-offer';
     sdp: string;
 };
 export type SignalingPingMessage = {
-    type: "ping";
+    type: 'ping';
     stats: boolean;
 };
 export type SignalingPushMessage = {
-    type: "push";
+    type: 'push';
     data: Record<string, unknown>;
 };
 export type SignalingReqStatsMessage = {
-    type: "req-stats";
+    type: 'req-stats';
 };
 export type SignalingSwitchedMessage = {
-    type: "switched";
+    type: 'switched';
     ignore_disconnect_websocket: boolean;
 };
 export type SignalingRedirectMessage = {
-    type: "redirect";
+    type: 'redirect';
     location: string;
 };
 export type SignalingNotifyMessage = SignalingNotifyConnectionCreated | SignalingNotifyConnectionUpdated | SignalingNotifyConnectionDestroyed | SignalingNotifySpotlightChanged | SignalingNotifySpotlightFocused | SignalingNotifySpotlightUnfocused | SignalingNotifyNetworkStatus;
@@ -127,8 +127,8 @@ export type SignalingNotifyMetadata = {
     metadata?: JSONType;
 };
 export type SignalingNotifyConnectionCreated = {
-    type: "notify";
-    event_type: "connection.created";
+    type: 'notify';
+    event_type: 'connection.created';
     role: Role;
     client_id?: string;
     connection_id?: string;
@@ -144,11 +144,11 @@ export type SignalingNotifyConnectionCreated = {
     channel_sendrecv_connections: number;
     channel_sendonly_connections: number;
     channel_recvonly_connections: number;
-    turn_transport_type: "udp" | "tcp";
+    turn_transport_type: 'udp' | 'tcp';
 };
 export type SignalingNotifyConnectionUpdated = {
-    type: "notify";
-    event_type: "connection.updated";
+    type: 'notify';
+    event_type: 'connection.updated';
     role: Role;
     client_id?: string;
     connection_id?: string;
@@ -159,11 +159,11 @@ export type SignalingNotifyConnectionUpdated = {
     channel_sendrecv_connections: number;
     channel_sendonly_connections: number;
     channel_recvonly_connections: number;
-    turn_transport_type: "udp" | "tcp";
+    turn_transport_type: 'udp' | 'tcp';
 };
 export type SignalingNotifyConnectionDestroyed = {
-    type: "notify";
-    event_type: "connection.destroyed";
+    type: 'notify';
+    event_type: 'connection.destroyed';
     role: Role;
     client_id?: string;
     connection_id?: string;
@@ -177,11 +177,11 @@ export type SignalingNotifyConnectionDestroyed = {
     channel_sendrecv_connections: number;
     channel_sendonly_connections: number;
     channel_recvonly_connections: number;
-    turn_transport_type: "udp" | "tcp";
+    turn_transport_type: 'udp' | 'tcp';
 };
 export type SignalingNotifySpotlightChanged = {
-    type: "notify";
-    event_type: "spotlight.changed";
+    type: 'notify';
+    event_type: 'spotlight.changed';
     client_id: string | null;
     connection_id: string | null;
     spotlight_id: string;
@@ -190,8 +190,8 @@ export type SignalingNotifySpotlightChanged = {
     video: boolean;
 };
 export type SignalingNotifySpotlightFocused = {
-    type: "notify";
-    event_type: "spotlight.focused";
+    type: 'notify';
+    event_type: 'spotlight.focused';
     client_id: string | null;
     connection_id: string;
     audio: boolean;
@@ -199,8 +199,8 @@ export type SignalingNotifySpotlightFocused = {
     fixed: boolean;
 };
 export type SignalingNotifySpotlightUnfocused = {
-    type: "notify";
-    event_type: "spotlight.unfocused";
+    type: 'notify';
+    event_type: 'spotlight.unfocused';
     client_id: string | null;
     connection_id: string;
     audio: boolean;
@@ -208,11 +208,11 @@ export type SignalingNotifySpotlightUnfocused = {
     fixed: boolean;
 };
 export type SignalingNotifyNetworkStatus = {
-    type: "notify";
-    event_type: "network.status";
+    type: 'notify';
+    event_type: 'network.status';
     unstable_level: 0 | 1 | 2 | 3;
 };
-export type DataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
+export type DataChannelDirection = 'sendonly' | 'sendrecv' | 'recvonly';
 export type DataChannelConfiguration = {
     label: string;
     direction: DataChannelDirection;
@@ -279,9 +279,9 @@ export type PreKeyBundle = {
     signedPreKey: string;
     preKeySignature: string;
 };
-export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
-export type TransportType = "websocket" | "datachannel" | "peerconnection";
-export type TimelineEventLogType = "websocket" | "datachannel" | "peerconnection" | "sora";
+export type Browser = 'edge' | 'chrome' | 'safari' | 'opera' | 'firefox' | null;
+export type TransportType = 'websocket' | 'datachannel' | 'peerconnection';
+export type TimelineEventLogType = 'websocket' | 'datachannel' | 'peerconnection' | 'sora';
 export interface SignalingEvent extends Event {
     transportType: TransportType;
     data?: any;
@@ -305,13 +305,13 @@ export interface SoraCloseEvent extends Event {
     reason?: string;
     params?: Record<string, unknown>;
 }
-export type SoraCloseEventType = "normal" | "abend";
+export type SoraCloseEventType = 'normal' | 'abend';
 export type SoraCloseEventInitDict = {
     code?: number;
     reason?: string;
     params?: Record<string, unknown>;
 };
-export type SoraAbendTitle = "CONNECTION-STATE-FAILED" | "DATA-CHANNEL-ONERROR" | "ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT" | "ICE-CONNECTION-STATE-FAILED" | "INTERNAL-ERROR" | "WEBSOCKET-ONCLOSE" | "WEBSOCKET-ONERROR";
+export type SoraAbendTitle = 'CONNECTION-STATE-FAILED' | 'DATA-CHANNEL-ONERROR' | 'ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT' | 'ICE-CONNECTION-STATE-FAILED' | 'INTERNAL-ERROR' | 'WEBSOCKET-ONCLOSE' | 'WEBSOCKET-ONERROR';
 export interface RTCEncodedAudioFrame {
     readonly timestamp: number;
     data: ArrayBuffer;

@@ -1,5 +1,5 @@
-import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage } from "./types";
-import SoraE2EE from "@sora/e2ee";
+import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage } from './types';
+import SoraE2EE from '@sora/e2ee';
 declare global {
     interface Algorithm {
         namedCurve: string;

@@ -1,4 +1,4 @@
-import { ConnectionOptions, JSONType, DataChannelConfiguration, DataChannelEvent, DataChannelMessageEvent, PreKeyBundle, SignalingConnectMessage, SignalingEvent, SignalingNotifyMetadata, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, TimelineEvent, TimelineEventLogType, TransportType } from "./types";
+import { ConnectionOptions, JSONType, DataChannelConfiguration, DataChannelEvent, DataChannelMessageEvent, PreKeyBundle, SignalingConnectMessage, SignalingEvent, SignalingNotifyMetadata, SignalingNotifyConnectionCreated, SignalingNotifyConnectionDestroyed, TimelineEvent, TimelineEventLogType, TransportType } from './types';
 export declare function isSafari(): boolean;
 export declare function isChrome(): boolean;
 export declare function createSignalingMessage(offerSDP: string, role: string, channelId: string | null | undefined, metadata: JSONType | undefined, options: ConnectionOptions, redirect: boolean): SignalingConnectMessage;

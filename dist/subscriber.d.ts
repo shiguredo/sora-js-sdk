@@ -1,4 +1,4 @@
-import ConnectionBase from "./base";
+import ConnectionBase from './base';
 /**
  * Role が "recvonly" の場合に Sora との WebRTC 接続を扱うクラス
  */

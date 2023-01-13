@@ -1,5 +1,5 @@
-import { RTCEncodedAudioFrame } from "./types";
-import { LyraEncoder, LyraDecoder, LyraEncoderOptions, LyraDecoderOptions } from "@shiguredo/lyra-wasm";
+import { RTCEncodedAudioFrame } from './types';
+import { LyraEncoder, LyraDecoder, LyraEncoderOptions, LyraDecoderOptions } from '@shiguredo/lyra-wasm';
 /**
  * Lyra の設定情報
  */
