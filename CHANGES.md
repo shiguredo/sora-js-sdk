@@ -11,12 +11,16 @@
 
 ## develop
 
+- [UPDATE] .github 以下に renovate.json を移動する
+    - @voluntas
 - [UPDATE] Safari / Mobile Safari で Lyra コーデックを使用可能にする
-  - これらのブラウザでは WebRTC Encoded Transform を使うようにする
-  - @sile
+    - これらのブラウザでは WebRTC Encoded Transform を使うようにする
+    - @sile
 - [UPDATE] @shiguredo/lyra-wasm を 2023.1.0 に更新する
-  - Web Worker 対応と Mobile Safari 対応の取り込み
-  - @sile
+    - Web Worker 対応と Mobile Safari 対応の取り込み
+    - @sile
+- [CHANGE] .prettierrc を統一する
+    - @voluntas
 
 ## 2022.3.1
 
