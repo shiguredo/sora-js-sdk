@@ -27,7 +27,7 @@
 
         <script src="./sora.js"></script>
         <script type="text/javascript">
-const channelId = 'Sora';
+const channelId = 'sora';
 const debug = false;
 const sora = Sora.connection('ws://localhost:5000/signaling', debug);
 const sendonly = sora.sendonly(channelId, null, { videoCodecType: 'VP8', videoBitRate: 3000, simulcast: true, multistream: true });
