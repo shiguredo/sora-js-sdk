@@ -44,6 +44,10 @@ Please read https://github.com/shiguredo/oss before use.
     - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_recvonly.html
 - Simulcast
     - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/simulcast.html
+- DataChannelMessaging
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/data_channel_messaging.html
+- E2EE
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/e2ee.html
 
 ## E2EE について
 
