@@ -21,6 +21,8 @@
     - @sile
 - [CHANGE] .prettierrc を統一する
     - @voluntas
+- [CHANGE] サンプルのチャネル ID を sora に変更する
+    - @voluntas
 
 ## 2022.3.1
 
