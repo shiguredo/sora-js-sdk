@@ -116,6 +116,10 @@ export function isChrome(): boolean {
   return browser() === 'chrome'
 }
 
+export function isFirefox(): boolean {
+  return browser() === 'firefox'
+}
+
 export function createSignalingMessage(
   offerSDP: string,
   role: string,
