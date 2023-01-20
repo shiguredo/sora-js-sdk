@@ -1376,7 +1376,7 @@ export default class ConnectionBase {
       // ただし Firefox (バージョン 109.0 で確認) はこれを正常に処理できず、
       // port で 0 が指定された場合には onremovetrack イベントが発行されないので、
       // ワークアラウンドとしてここで SDP の置換を行っている。
-      sdp = sdp.replace(/^m=(audio|video) 0 /gm, (_match, kind) => `m=${kind} 9 `)
+      sdp = sdp.replace(/^m=(audio|video) 0 /gm, (_match, kind: string) => `m=${kind} 9 `)
     }
     if (this.lyra === undefined || !sdp.includes('109 lyra/')) {
       return sdp
