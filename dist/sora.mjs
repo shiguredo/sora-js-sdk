@@ -1288,9 +1288,11 @@ class LyraState {
                 continue;
             }
             const mid = midResult[1];
+            // TODO: active かどうかの判定を入れる (active ではないなら古いエントリを削除)
             if (media.startsWith('audio') && media.includes('109 lyra/')) {
                 let params = oldMidToLyraParams.get(mid);
                 if (params === undefined) {
+                    // TODO: このチェックは外す
                     params = LyraParams.parseMediaDescription(media);
                 }
                 if (media.includes('a=recvonly')) {
@@ -2237,6 +2239,9 @@ function parseDataChannelConfigurations(dataChannelConfigurations) {
 }
 function isSafari() {
     return browser() === 'safari';
+}
+function isFirefox() {
+    return browser() === 'firefox';
 }
 function createSignalingMessage(offerSDP, role, channelId, metadata, options, redirect) {
     if (role !== 'sendrecv' && role !== 'sendonly' && role !== 'recvonly') {
@@ -3687,6 +3692,10 @@ class ConnectionBase {
      * @returns 処理後の SDP
      */
     processOfferSdp(sdp) {
+        if (isFirefox()) {
+            sdp = sdp.replace(/^m=(audio|video) 0 /gm, (_match, kind) => `m=${kind} 9 `);
+            console.log(sdp);
+        }
         if (this.lyra === undefined || !sdp.includes('109 lyra/')) {
             return sdp;
         }
