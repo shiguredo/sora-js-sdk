@@ -98,7 +98,7 @@ export function isLyraInitialized(): boolean {
  * @returns Lyra エンコーダのプロミス
  * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
  */
-export async function createLyraEncoder(options: LyraEncoderOptions = {}): Promise<LyraEncoder> {
+async function createLyraEncoder(options: LyraEncoderOptions = {}): Promise<LyraEncoder> {
   return (await loadLyraModule()).createEncoder(options)
 }
 
@@ -109,7 +109,7 @@ export async function createLyraEncoder(options: LyraEncoderOptions = {}): Promi
  * @returns Lyra デコーダのプロミス
  * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
  */
-export async function createLyraDecoder(options: LyraDecoderOptions = {}): Promise<LyraDecoder> {
+async function createLyraDecoder(options: LyraDecoderOptions = {}): Promise<LyraDecoder> {
   return (await loadLyraModule()).createDecoder(options)
 }
 
