@@ -11,7 +11,11 @@
 
 ## develop
 
+- [UPDATE] SDP の再利用に対応する
+    - 主に Lyra 周りで同じ mid の使い回しを考慮していないところがあったのを修正
+    - @sile
 - [UPDATE] オファー SDP のメディアポートに 0 を指定することで古いトランシーバーを解放できるようにする
+    - Firefox は 0 ポートを指定するとエラーになるので SDK 側で従来の 9 に置換している
     - @sile
 - [UPDATE] .github 以下に renovate.json を移動する
     - @voluntas
