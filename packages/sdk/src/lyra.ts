@@ -295,7 +295,6 @@ export class LyraState {
       return sdp
     }
 
-    const oldMidToLyraParams = this.midToLyraParams
     this.midToLyraParams = new Map()
 
     const splited = sdp.split(/^m=/m)
@@ -308,15 +307,16 @@ export class LyraState {
       const mid = midResult[1]
 
       if (media.startsWith('audio') && media.includes('109 lyra/')) {
-        let params = oldMidToLyraParams.get(mid)
-        if (params === undefined) {
-          params = LyraParams.parseMediaDescription(media)
+        if (media.includes('a=fmtp:109 ')) {
+          const params = LyraParams.parseMediaDescription(media)
+          if (media.includes('a=recvonly')) {
+            // sora からの offer SDP で recvonly ということは client から見れば送信側なので
+            // このパラメータをエンコード用に保存しておく
+            this.encoderOptions.bitrate = params.bitrate
+            this.encoderOptions.enableDtx = params.enableDtx
+          }
+          this.midToLyraParams.set(mid, params)
         }
-        if (media.includes('a=recvonly')) {
-          this.encoderOptions.bitrate = params.bitrate
-          this.encoderOptions.enableDtx = params.enableDtx
-        }
-        this.midToLyraParams.set(mid, params)
 
         // SDP を置換する:
         // - libwebrtc は lyra を認識しないので L16 に置き換える
