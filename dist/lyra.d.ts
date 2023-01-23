@@ -1,5 +1,5 @@
 import { RTCEncodedAudioFrame } from './types';
-import { LyraEncoder, LyraDecoder, LyraEncoderOptions, LyraDecoderOptions } from '@shiguredo/lyra-wasm';
+import { LyraEncoder, LyraDecoder } from '@shiguredo/lyra-wasm';
 /**
  * Lyra の設定情報
  */
@@ -39,22 +39,6 @@ export declare function initLyra(config: LyraConfig): boolean;
  * @returns Lyra が初期化済みかどうか
  */
 export declare function isLyraInitialized(): boolean;
-/**
- * Lyra のエンコーダを生成して返す
- *
- * @param options エンコーダに指定するオプション
- * @returns Lyra エンコーダのプロミス
- * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
- */
-export declare function createLyraEncoder(options?: LyraEncoderOptions): Promise<LyraEncoder>;
-/**
- * Lyra のデコーダを生成して返す
- *
- * @param options デコーダに指定するオプション
- * @returns Lyra デコーダのプロミス
- * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
- */
-export declare function createLyraDecoder(options?: LyraDecoderOptions): Promise<LyraDecoder>;
 /**
  * WebRTC Encoded Transform に渡される Lyra 用の web worker を生成する
  *

@@ -18,6 +18,7 @@ import {
   getPreKeyBundle,
   getSignalingNotifyAuthnMetadata,
   getSignalingNotifyData,
+  isFirefox,
   isSafari,
   parseDataChannelEventData,
   trace,
@@ -1369,12 +1370,21 @@ export default class ConnectionBase {
    * @returns 処理後の SDP
    */
   private processOfferSdp(sdp: string): string {
+    if (isFirefox()) {
+      // 同じ mid が採用される際にはもう使用されない transceiver を解放するために
+      // port に 0 が指定された SDP が送られてくる。
+      // ただし Firefox (バージョン 109.0 で確認) はこれを正常に処理できず、
+      // port で 0 が指定された場合には onremovetrack イベントが発行されないので、
+      // ワークアラウンドとしてここで SDP の置換を行っている。
+      sdp = sdp.replace(/^m=(audio|video) 0 /gm, (_match, kind: string) => `m=${kind} 9 `)
+    }
+
+    this.midToAudioCodecType.clear()
     if (this.lyra === undefined || !sdp.includes('109 lyra/')) {
       return sdp
     }
 
     // mid と音声コーデックの対応を保存する
-    this.midToAudioCodecType.clear()
     for (const media of sdp.split(/^m=/m).slice(1)) {
       if (!media.startsWith('audio')) {
         continue

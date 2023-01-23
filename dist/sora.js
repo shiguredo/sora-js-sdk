@@ -1284,7 +1284,6 @@
 	            // 対象外なので処理する必要はない
 	            return sdp;
 	        }
-	        const oldMidToLyraParams = this.midToLyraParams;
 	        this.midToLyraParams = new Map();
 	        const splited = sdp.split(/^m=/m);
 	        let replacedSdp = splited[0];
@@ -1295,15 +1294,16 @@
 	            }
 	            const mid = midResult[1];
 	            if (media.startsWith('audio') && media.includes('109 lyra/')) {
-	                let params = oldMidToLyraParams.get(mid);
-	                if (params === undefined) {
-	                    params = LyraParams.parseMediaDescription(media);
+	                if (media.includes('a=fmtp:109 ')) {
+	                    const params = LyraParams.parseMediaDescription(media);
+	                    if (media.includes('a=recvonly')) {
+	                        // sora からの offer SDP で recvonly ということは client から見れば送信側なので
+	                        // このパラメータをエンコード用に保存しておく
+	                        this.encoderOptions.bitrate = params.bitrate;
+	                        this.encoderOptions.enableDtx = params.enableDtx;
+	                    }
+	                    this.midToLyraParams.set(mid, params);
 	                }
-	                if (media.includes('a=recvonly')) {
-	                    this.encoderOptions.bitrate = params.bitrate;
-	                    this.encoderOptions.enableDtx = params.enableDtx;
-	                }
-	                this.midToLyraParams.set(mid, params);
 	                // SDP を置換する:
 	                // - libwebrtc は lyra を認識しないので L16 に置き換える
 	                // - ただし SDP に L16 しか含まれていないと音声なし扱いになってしまうので、それを防ぐために 110 で opus を追加する
@@ -2243,6 +2243,9 @@
 	}
 	function isSafari() {
 	    return browser() === 'safari';
+	}
+	function isFirefox() {
+	    return browser() === 'firefox';
 	}
 	function createSignalingMessage(offerSDP, role, channelId, metadata, options, redirect) {
 	    if (role !== 'sendrecv' && role !== 'sendonly' && role !== 'recvonly') {
@@ -3693,11 +3696,19 @@
 	     * @returns 処理後の SDP
 	     */
 	    processOfferSdp(sdp) {
+	        if (isFirefox()) {
+	            // 同じ mid が採用される際にはもう使用されない transceiver を解放するために
+	            // port に 0 が指定された SDP が送られてくる。
+	            // ただし Firefox (バージョン 109.0 で確認) はこれを正常に処理できず、
+	            // port で 0 が指定された場合には onremovetrack イベントが発行されないので、
+	            // ワークアラウンドとしてここで SDP の置換を行っている。
+	            sdp = sdp.replace(/^m=(audio|video) 0 /gm, (_match, kind) => `m=${kind} 9 `);
+	        }
+	        this.midToAudioCodecType.clear();
 	        if (this.lyra === undefined || !sdp.includes('109 lyra/')) {
 	            return sdp;
 	        }
 	        // mid と音声コーデックの対応を保存する
-	        this.midToAudioCodecType.clear();
 	        for (const media of sdp.split(/^m=/m).slice(1)) {
 	            if (!media.startsWith('audio')) {
 	                continue;

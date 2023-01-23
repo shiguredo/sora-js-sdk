@@ -98,7 +98,7 @@ export function isLyraInitialized(): boolean {
  * @returns Lyra エンコーダのプロミス
  * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
  */
-export async function createLyraEncoder(options: LyraEncoderOptions = {}): Promise<LyraEncoder> {
+async function createLyraEncoder(options: LyraEncoderOptions = {}): Promise<LyraEncoder> {
   return (await loadLyraModule()).createEncoder(options)
 }
 
@@ -109,7 +109,7 @@ export async function createLyraEncoder(options: LyraEncoderOptions = {}): Promi
  * @returns Lyra デコーダのプロミス
  * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
  */
-export async function createLyraDecoder(options: LyraDecoderOptions = {}): Promise<LyraDecoder> {
+async function createLyraDecoder(options: LyraDecoderOptions = {}): Promise<LyraDecoder> {
   return (await loadLyraModule()).createDecoder(options)
 }
 
@@ -295,7 +295,6 @@ export class LyraState {
       return sdp
     }
 
-    const oldMidToLyraParams = this.midToLyraParams
     this.midToLyraParams = new Map()
 
     const splited = sdp.split(/^m=/m)
@@ -308,15 +307,16 @@ export class LyraState {
       const mid = midResult[1]
 
       if (media.startsWith('audio') && media.includes('109 lyra/')) {
-        let params = oldMidToLyraParams.get(mid)
-        if (params === undefined) {
-          params = LyraParams.parseMediaDescription(media)
+        if (media.includes('a=fmtp:109 ')) {
+          const params = LyraParams.parseMediaDescription(media)
+          if (media.includes('a=recvonly')) {
+            // sora からの offer SDP で recvonly ということは client から見れば送信側なので
+            // このパラメータをエンコード用に保存しておく
+            this.encoderOptions.bitrate = params.bitrate
+            this.encoderOptions.enableDtx = params.enableDtx
+          }
+          this.midToLyraParams.set(mid, params)
         }
-        if (media.includes('a=recvonly')) {
-          this.encoderOptions.bitrate = params.bitrate
-          this.encoderOptions.enableDtx = params.enableDtx
-        }
-        this.midToLyraParams.set(mid, params)
 
         // SDP を置換する:
         // - libwebrtc は lyra を認識しないので L16 に置き換える
