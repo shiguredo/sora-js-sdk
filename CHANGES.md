@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] オファー SDP のメディアポートに 0 を指定することで古いトランシーバーを解放できるようにする
+    - @sile
 - [UPDATE] .github 以下に renovate.json を移動する
     - @voluntas
 - [UPDATE] Safari / Mobile Safari で Lyra コーデックを使用可能にする
