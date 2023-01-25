@@ -28,7 +28,7 @@
     "dist"
   ],
   "devDependencies": {
-    "serve": "14.1.2",
+    "serve": "14.2.0",
     "typedoc": "0.23.24"
   },
   "resolutions": {
