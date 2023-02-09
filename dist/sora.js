@@ -2605,6 +2605,10 @@
 	         * カスタム音声コーデックが有効になっていない場合には空のままとなる
 	         */
 	        this.midToAudioCodecType = new Map();
+	        /**
+	         * キーとなる sender が setupSenderTransform で初期化済みかどうか
+	         */
+	        this.senderStreamInitialized = new WeakMap();
 	        this.role = role;
 	        this.channelId = channelId;
 	        this.metadata = metadata;
@@ -2817,6 +2821,7 @@
 	        }
 	        stream.addTrack(audioTrack);
 	        await transceiver.sender.replaceTrack(audioTrack);
+	        await this.setupSenderTransform(transceiver.sender);
 	    }
 	    /**
 	     * video track を入れ替えするメソッド
@@ -2847,6 +2852,7 @@
 	        }
 	        stream.addTrack(videoTrack);
 	        await transceiver.sender.replaceTrack(videoTrack);
+	        await this.setupSenderTransform(transceiver.sender);
 	    }
 	    /**
 	     * connect 処理中に例外が発生した場合の切断処理をするメソッド
@@ -3758,6 +3764,10 @@
 	        if ((this.e2ee === null && this.lyra === undefined) || sender.track === null) {
 	            return;
 	        }
+	        // 既に初期化済み
+	        if (this.senderStreamInitialized.get(sender) === true) {
+	            return;
+	        }
 	        const isLyraCodec = sender.track.kind === 'audio' && this.options.audioCodecType === 'LYRA';
 	        if ('transform' in RTCRtpSender.prototype) {
 	            // WebRTC Encoded Transform に対応しているブラウザ
@@ -3792,6 +3802,7 @@
 	                readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
 	            }
 	        }
+	        this.senderStreamInitialized.set(sender, true);
 	    }
 	    /**
 	     * E2EE あるいはカスタムコーデックが有効になっている場合に、受信側の WebRTC Encoded Transform をセットアップする
