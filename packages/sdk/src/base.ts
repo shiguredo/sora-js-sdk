@@ -196,7 +196,11 @@ export default class ConnectionBase {
   /**
    * Lyra インスタンス
    */
-  private lyra?: LyraState;
+  private lyra?: LyraState
+  /**
+   * キーとなる sender が setupSenderTransform で初期化済みかどうか
+   */
+  private senderStreamInitialized: Map<RTCRtpSender, boolean> = new Map()
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -419,8 +423,9 @@ export default class ConnectionBase {
     if (transceiver === null) {
       throw new Error("Unable to set an audio track. Audio track sender is undefined");
     }
-    stream.addTrack(audioTrack);
-    await transceiver.sender.replaceTrack(audioTrack);
+    stream.addTrack(audioTrack)
+    await transceiver.sender.replaceTrack(audioTrack)
+    await this.setupSenderTransform(transceiver.sender)
   }
 
   /**
@@ -450,8 +455,9 @@ export default class ConnectionBase {
     if (transceiver === null) {
       throw new Error("Unable to set video track. Video track sender is undefined");
     }
-    stream.addTrack(videoTrack);
-    await transceiver.sender.replaceTrack(videoTrack);
+    stream.addTrack(videoTrack)
+    await transceiver.sender.replaceTrack(videoTrack)
+    await this.setupSenderTransform(transceiver.sender)
   }
 
   /**
@@ -1390,6 +1396,10 @@ export default class ConnectionBase {
     if ((this.e2ee === null && this.lyra === undefined) || sender.track === null) {
       return;
     }
+    // 既に初期化済み
+    if (this.senderStreamInitialized.get(sender) === true) {
+      return;
+    }
 
     // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
     // @ts-ignore
@@ -1409,6 +1419,7 @@ export default class ConnectionBase {
     } else {
       readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
     }
+    this.senderStreamInitialized.set(sender, true);
   }
 
   /**
