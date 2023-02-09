@@ -196,11 +196,11 @@ export default class ConnectionBase {
   /**
    * Lyra インスタンス
    */
-  private lyra?: LyraState
+  private lyra?: LyraState;
   /**
    * キーとなる sender が setupSenderTransform で初期化済みかどうか
    */
-  private senderStreamInitialized: Map<RTCRtpSender, boolean> = new Map()
+  private senderStreamInitialized: Map<RTCRtpSender, boolean> = new Map();
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -423,9 +423,9 @@ export default class ConnectionBase {
     if (transceiver === null) {
       throw new Error("Unable to set an audio track. Audio track sender is undefined");
     }
-    stream.addTrack(audioTrack)
-    await transceiver.sender.replaceTrack(audioTrack)
-    await this.setupSenderTransform(transceiver.sender)
+    stream.addTrack(audioTrack);
+    await transceiver.sender.replaceTrack(audioTrack);
+    await this.setupSenderTransform(transceiver.sender);
   }
 
   /**
@@ -455,9 +455,9 @@ export default class ConnectionBase {
     if (transceiver === null) {
       throw new Error("Unable to set video track. Video track sender is undefined");
     }
-    stream.addTrack(videoTrack)
-    await transceiver.sender.replaceTrack(videoTrack)
-    await this.setupSenderTransform(transceiver.sender)
+    stream.addTrack(videoTrack);
+    await transceiver.sender.replaceTrack(videoTrack);
+    await this.setupSenderTransform(transceiver.sender);
   }
 
   /**
