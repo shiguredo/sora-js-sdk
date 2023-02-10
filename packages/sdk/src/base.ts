@@ -207,7 +207,7 @@ export default class ConnectionBase {
   /**
    * キーとなる sender が setupSenderTransform で初期化済みかどうか
    */
-  private senderStreamInitialized: WeakMap<RTCRtpSender, boolean> = new WeakMap()
+  private senderStreamInitialized: WeakSet<RTCRtpSender> = new WeakSet()
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -1448,7 +1448,7 @@ export default class ConnectionBase {
       return
     }
     // 既に初期化済み
-    if (this.senderStreamInitialized.get(sender) === true) {
+    if (this.senderStreamInitialized.has(sender)) {
       return
     }
 
@@ -1494,7 +1494,7 @@ export default class ConnectionBase {
         readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e))
       }
     }
-    this.senderStreamInitialized.set(sender, true)
+    this.senderStreamInitialized.add(sender)
   }
 
   /**

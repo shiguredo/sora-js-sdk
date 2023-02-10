@@ -2602,7 +2602,7 @@ class ConnectionBase {
         /**
          * キーとなる sender が setupSenderTransform で初期化済みかどうか
          */
-        this.senderStreamInitialized = new WeakMap();
+        this.senderStreamInitialized = new WeakSet();
         this.role = role;
         this.channelId = channelId;
         this.metadata = metadata;
@@ -3759,7 +3759,7 @@ class ConnectionBase {
             return;
         }
         // 既に初期化済み
-        if (this.senderStreamInitialized.get(sender) === true) {
+        if (this.senderStreamInitialized.has(sender)) {
             return;
         }
         const isLyraCodec = sender.track.kind === 'audio' && this.options.audioCodecType === 'LYRA';
@@ -3796,7 +3796,7 @@ class ConnectionBase {
                 readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
             }
         }
-        this.senderStreamInitialized.set(sender, true);
+        this.senderStreamInitialized.add(sender);
     }
     /**
      * E2EE あるいはカスタムコーデックが有効になっている場合に、受信側の WebRTC Encoded Transform をセットアップする
