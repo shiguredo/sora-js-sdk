@@ -145,6 +145,10 @@ export default class ConnectionBase {
      * Lyra インスタンス
      */
     private lyra?;
+    /**
+     * キーとなる sender が setupSenderTransform で初期化済みかどうか
+     */
+    private senderStreamInitialized;
     constructor(signalingUrlCandidates: string | string[], role: string, channelId: string, metadata: JSONType, options: ConnectionOptions, debug: boolean);
     /**
      * SendRecv Object で発火するイベントのコールバックを設定するメソッド
