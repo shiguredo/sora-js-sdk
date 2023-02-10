@@ -197,6 +197,10 @@ export default class ConnectionBase {
    * Lyra インスタンス
    */
   private lyra?: LyraState;
+  /**
+   * キーとなる sender が setupSenderTransform で初期化済みかどうか
+   */
+  private senderStreamInitialized: WeakSet<RTCRtpSender> = new WeakSet();
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -421,6 +425,7 @@ export default class ConnectionBase {
     }
     stream.addTrack(audioTrack);
     await transceiver.sender.replaceTrack(audioTrack);
+    await this.setupSenderTransform(transceiver.sender);
   }
 
   /**
@@ -452,6 +457,7 @@ export default class ConnectionBase {
     }
     stream.addTrack(videoTrack);
     await transceiver.sender.replaceTrack(videoTrack);
+    await this.setupSenderTransform(transceiver.sender);
   }
 
   /**
@@ -1390,6 +1396,10 @@ export default class ConnectionBase {
     if ((this.e2ee === null && this.lyra === undefined) || sender.track === null) {
       return;
     }
+    // 既に初期化済み
+    if (this.senderStreamInitialized.has(sender)) {
+      return;
+    }
 
     // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
     // @ts-ignore
@@ -1409,6 +1419,7 @@ export default class ConnectionBase {
     } else {
       readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
     }
+    this.senderStreamInitialized.add(sender);
   }
 
   /**

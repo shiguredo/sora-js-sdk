@@ -1,6 +1,6 @@
 {
   "name": "sora-js-sdk",
-  "version": "2022.3.1",
+  "version": "2022.3.2",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.js",
   "module": "dist/sora.mjs",
