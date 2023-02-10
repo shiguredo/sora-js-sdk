@@ -1,7 +1,7 @@
 /**
  * sora-js-sdk
  * WebRTC SFU Sora JavaScript SDK
- * @version: 2022.3.1
+ * @version: 2022.3.2
  * @author: Shiguredo Inc.
  * @license: Apache-2.0
  **/
@@ -2246,7 +2246,7 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     }
     const message = {
         type: "connect",
-        sora_client: "Sora JavaScript SDK 2022.3.1",
+        sora_client: "Sora JavaScript SDK 2022.3.2",
         environment: window.navigator.userAgent,
         role: role,
         channel_id: channelId,
@@ -2592,6 +2592,10 @@ class ConnectionBase {
          * カスタム音声コーデックが有効になっていない場合には空のままとなる
          */
         this.midToAudioCodecType = new Map();
+        /**
+         * キーとなる sender が setupSenderTransform で初期化済みかどうか
+         */
+        this.senderStreamInitialized = new WeakSet();
         this.role = role;
         this.channelId = channelId;
         this.metadata = metadata;
@@ -2804,6 +2808,7 @@ class ConnectionBase {
         }
         stream.addTrack(audioTrack);
         await transceiver.sender.replaceTrack(audioTrack);
+        await this.setupSenderTransform(transceiver.sender);
     }
     /**
      * video track を入れ替えするメソッド
@@ -2834,6 +2839,7 @@ class ConnectionBase {
         }
         stream.addTrack(videoTrack);
         await transceiver.sender.replaceTrack(videoTrack);
+        await this.setupSenderTransform(transceiver.sender);
     }
     /**
      * connect 処理中に例外が発生した場合の切断処理をするメソッド
@@ -3735,6 +3741,10 @@ class ConnectionBase {
         if ((this.e2ee === null && this.lyra === undefined) || sender.track === null) {
             return;
         }
+        // 既に初期化済み
+        if (this.senderStreamInitialized.has(sender)) {
+            return;
+        }
         // TODO(sile): WebRTC Encoded Transform の型が提供されるようになったら ignore を外す
         // @ts-ignore
         // eslint-disable-next-line
@@ -3754,6 +3764,7 @@ class ConnectionBase {
         else {
             readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e));
         }
+        this.senderStreamInitialized.add(sender);
     }
     /**
      * E2EE あるいはカスタムコーデックが有効になっている場合に、受信側の WebRTC Encoded Transform をセットアップする
@@ -5148,7 +5159,7 @@ var sora = {
      * @public
      */
     version: function () {
-        return "2022.3.1";
+        return "2022.3.2";
     },
     /**
      * WebRTC のユーティリティ関数群

@@ -11,6 +11,11 @@
 
 ## develop
 
+## 2022.3.2
+
+- [FIX] ミュート状態で接続すると、replace(Video|Audio)Track しても画像・音声データが送信されないのを修正
+    - @melpon
+
 ## 2022.3.1
 
 - [FIX] e2ee が有効で無い場合の判定は null かどうかに修正する
