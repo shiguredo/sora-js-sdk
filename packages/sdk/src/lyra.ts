@@ -227,7 +227,7 @@ export class LyraParams {
 
   private constructor(version: string, bitrate: number, enableDtx: boolean) {
     if (version !== LYRA_VERSION) {
-      throw new Error(`UnsupportedLlyra version: ${version} (supported version is ${LYRA_VERSION})`)
+      throw new Error(`Unsupported Lyra version: ${version} (supported version is ${LYRA_VERSION})`)
     }
     if (bitrate !== 3200 && bitrate !== 6000 && bitrate !== 9200) {
       throw new Error(`Unsupported Lyra bitrate: ${bitrate} (must be one of 3200, 6000, or 9200)`)
