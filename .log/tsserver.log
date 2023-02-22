@@ -1,0 +1,526 @@
+Info 0    [10:21:33.861] Starting TS Server
+Info 1    [10:21:33.862] Version: 4.5.2
+Info 2    [10:21:33.862] Arguments: /usr/local/bin/node /Users/tohta/.emacs.d/.cache/lsp/npm/typescript/lib/node_modules/typescript/lib/tsserver.js --logFile /Users/tohta/dev/shiguredo/sora-js-sdk/.log/tsserver.log --logVerbosity info --cancellationPipeName /private/var/folders/s8/xgrm73js3hdc5fb_b91x8nq80000gn/T/ad355d15a0a49ef6532cecd43ea3aaed/tscancellation*
+Info 3    [10:21:33.862] Platform: darwin NodeVersion: 16 CaseSensitive: false
+Info 4    [10:21:33.862] ServerMode: undefined syntaxOnly: false hasUnknownServerMode: undefined
+Info 5    [10:21:33.868] Format host information updated
+Info 6    [10:21:33.869] Search path: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src
+Info 7    [10:21:33.870] For info: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/types.ts :: Config file name: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 8    [10:21:33.870] Creating configuration project /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 9    [10:21:33.879] Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json : {
+ "rootNames": [
+  "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/base.ts",
+  "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/helpers.ts",
+  "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/lyra.ts",
+  "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/lyra_worker.ts",
+  "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/publisher.ts",
+  "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/sora.ts",
+  "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/subscriber.ts",
+  "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/types.ts",
+  "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/utils.ts"
+ ],
+ "options": {
+  "target": 7,
+  "module": 6,
+  "strict": true,
+  "declaration": true,
+  "strictNullChecks": true,
+  "importHelpers": true,
+  "moduleResolution": 2,
+  "experimentalDecorators": true,
+  "esModuleInterop": true,
+  "allowSyntheticDefaultImports": true,
+  "resolveJsonModule": true,
+  "newLine": 1,
+  "types": [
+   "jest"
+  ],
+  "lib": [
+   "lib.esnext.d.ts",
+   "lib.dom.d.ts",
+   "lib.dom.iterable.d.ts",
+   "lib.scripthost.d.ts"
+  ],
+  "declarationDir": "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk",
+  "configFilePath": "/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json"
+ }
+}
+Info 10   [10:21:33.881] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 11   [10:21:34.226] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 1 structureChanged: true structureIsReused:: Not Elapsed: 344.98183304071426ms
+Info 12   [10:21:34.226] Project '/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json' (Configured)
+Info 13   [10:21:34.226] 	Files (70)
+
+Info 14   [10:21:34.226] -----------------------------------------------
+Info 15   [10:21:49.475] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 16   [10:21:49.496] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 2 structureChanged: false structureIsReused:: Completely Elapsed: 20.408165991306305ms
+Info 17   [10:21:49.496] Different program with same set of files
+Info 18   [10:21:50.135] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 19   [10:21:50.149] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 3 structureChanged: false structureIsReused:: Completely Elapsed: 14.115875005722046ms
+Info 20   [10:21:50.149] Different program with same set of files
+Info 21   [10:21:50.152] getCompletionData: Get current token: 0.014458000659942627
+Info 22   [10:21:50.152] getCompletionData: Is inside comment: 0.03120797872543335
+Info 23   [10:21:50.152] getCompletionData: Get previous token: 0.14504200220108032
+Info 24   [10:21:50.153] getCompletionsAtPosition: isCompletionListBlocker: 0.2955840229988098
+Info 25   [10:21:50.153] getCompletionData: Semantic work: 0.8469589948654175
+Info 26   [10:21:50.155] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 0.5054999589920044
+Info 27   [10:21:50.620] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 28   [10:21:50.639] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 4 structureChanged: false structureIsReused:: Completely Elapsed: 18.052416026592255ms
+Info 29   [10:21:50.639] Different program with same set of files
+Info 30   [10:21:50.781] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 31   [10:21:50.781] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts
+Info 32   [10:21:50.781] Elapsed:: 0.5559580326080322ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 33   [10:21:50.781] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 34   [10:21:50.782] Elapsed:: 0.15129202604293823ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 35   [10:21:51.140] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 36   [10:21:51.154] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 5 structureChanged: false structureIsReused:: Completely Elapsed: 14.482542037963867ms
+Info 37   [10:21:51.154] Different program with same set of files
+Info 38   [10:21:51.155] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 39   [10:21:51.159] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 6 structureChanged: false structureIsReused:: Completely Elapsed: 4.312083005905151ms
+Info 40   [10:21:51.159] Different program with same set of files
+Info 41   [10:21:52.022] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 42   [10:21:52.033] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 7 structureChanged: false structureIsReused:: Completely Elapsed: 10.157916963100433ms
+Info 43   [10:21:52.033] Different program with same set of files
+Info 44   [10:21:52.656] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 45   [10:21:52.664] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 8 structureChanged: false structureIsReused:: Completely Elapsed: 7.425584018230438ms
+Info 46   [10:21:52.664] Different program with same set of files
+Info 47   [10:21:53.180] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 48   [10:21:53.197] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 9 structureChanged: false structureIsReused:: Completely Elapsed: 15.948749959468842ms
+Info 49   [10:21:53.197] Different program with same set of files
+Info 50   [10:21:53.582] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 51   [10:21:53.598] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 10 structureChanged: false structureIsReused:: Completely Elapsed: 16.23079204559326ms
+Info 52   [10:21:53.598] Different program with same set of files
+Info 53   [10:21:53.612] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 54   [10:21:53.617] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 11 structureChanged: false structureIsReused:: Completely Elapsed: 4.5021249651908875ms
+Info 55   [10:21:53.617] Different program with same set of files
+Info 56   [10:21:54.030] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 57   [10:21:54.040] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 12 structureChanged: false structureIsReused:: Completely Elapsed: 9.888125002384186ms
+Info 58   [10:21:54.040] Different program with same set of files
+Info 59   [10:21:54.041] getCompletionData: Get current token: 0.012666046619415283
+Info 60   [10:21:54.041] getCompletionData: Is inside comment: 0.024542033672332764
+Info 61   [10:21:54.041] getCompletionData: Get previous token: 0.044165968894958496
+Info 62   [10:21:54.041] getCompletionsAtPosition: isCompletionListBlocker: 0.00700002908706665
+Info 63   [10:21:54.051] getExportInfoMap: cache miss or empty; calculating new results
+Info 64   [10:21:54.062] getExportInfoMap: done in 13.448959052562714 ms
+Info 65   [10:21:54.072] collectAutoImports: resolved 11 module specifiers, plus 0 ambient and -127 from cache
+Info 66   [10:21:54.072] collectAutoImports: response is complete
+Info 67   [10:21:54.072] collectAutoImports: 8.7481250166893
+Info 68   [10:21:54.072] getCompletionData: Semantic work: 30.366541981697083
+Info 69   [10:21:54.084] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 12.376666963100433
+Info 70   [10:21:54.103] getCompletionData: Get current token: 0.005917012691497803
+Info 71   [10:21:54.103] getCompletionData: Is inside comment: 0.010708034038543701
+Info 72   [10:21:54.103] getCompletionData: Get previous token: 0.018541991710662842
+Info 73   [10:21:54.103] getCompletionsAtPosition: isCompletionListBlocker: 0.0019159913063049316
+Info 74   [10:21:54.105] getExportInfoMap: cache hit
+Info 75   [10:21:54.108] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 149 from cache
+Info 76   [10:21:54.108] collectAutoImports: response is complete
+Info 77   [10:21:54.108] collectAutoImports: 1.613374948501587
+Info 78   [10:21:54.108] getCompletionData: Semantic work: 4.715833008289337
+Info 79   [10:21:54.115] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 7.549749970436096
+Info 80   [10:21:54.119] getCompletionData: Get current token: 0.005791008472442627
+Info 81   [10:21:54.119] getCompletionData: Is inside comment: 0.009333014488220215
+Info 82   [10:21:54.119] getCompletionData: Get previous token: 0.01587498188018799
+Info 83   [10:21:54.119] getCompletionsAtPosition: isCompletionListBlocker: 0.0018749833106994629
+Info 84   [10:21:54.122] getExportInfoMap: cache hit
+Info 85   [10:21:54.124] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 149 from cache
+Info 86   [10:21:54.124] collectAutoImports: response is complete
+Info 87   [10:21:54.124] collectAutoImports: 1.5042920112609863
+Info 88   [10:21:54.124] getCompletionData: Semantic work: 4.419082999229431
+Info 89   [10:21:54.129] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 4.752166986465454
+Info 90   [10:21:54.132] getCompletionData: Get current token: 0.006332993507385254
+Info 91   [10:21:54.132] getCompletionData: Is inside comment: 0.011083006858825684
+Info 92   [10:21:54.133] getCompletionData: Get previous token: 0.059500038623809814
+Info 93   [10:21:54.133] getCompletionsAtPosition: isCompletionListBlocker: 0.0031249523162841797
+Info 94   [10:21:54.135] getExportInfoMap: cache hit
+Info 95   [10:21:54.138] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 149 from cache
+Info 96   [10:21:54.138] collectAutoImports: response is complete
+Info 97   [10:21:54.138] collectAutoImports: 1.758791983127594
+Info 98   [10:21:54.138] getCompletionData: Semantic work: 5.465332984924316
+Info 99   [10:21:54.142] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 3.987874984741211
+Info 100  [10:21:54.599] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 101  [10:21:54.600] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts
+Info 102  [10:21:54.600] Elapsed:: 0.14191597700119019ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 103  [10:21:54.600] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 104  [10:21:54.600] Elapsed:: 0.029208004474639893ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 105  [10:21:54.760] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 106  [10:21:54.768] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 13 structureChanged: false structureIsReused:: Completely Elapsed: 8.152415990829468ms
+Info 107  [10:21:54.768] Different program with same set of files
+Info 108  [10:22:16.454] Search path: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src
+Info 109  [10:22:16.454] For info: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/base.ts :: Config file name: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 110  [10:22:29.295] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 111  [10:22:29.343] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 14 structureChanged: false structureIsReused:: Completely Elapsed: 48.572709023952484ms
+Info 112  [10:22:29.343] Different program with same set of files
+Info 113  [10:22:29.486] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 114  [10:22:29.486] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts
+Info 115  [10:22:29.486] Elapsed:: 0.16804099082946777ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 116  [10:22:29.486] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 117  [10:22:29.486] Elapsed:: 0.028833985328674316ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 118  [10:22:38.859] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 119  [10:22:38.868] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 15 structureChanged: false structureIsReused:: Completely Elapsed: 8.858667016029358ms
+Info 120  [10:22:38.868] Different program with same set of files
+Info 121  [10:22:38.871] getCompletionData: Get current token: 0.010334014892578125
+Info 122  [10:22:38.871] getCompletionData: Is inside comment: 0.018000006675720215
+Info 123  [10:22:38.871] getCompletionData: Get previous token: 0.026624977588653564
+Info 124  [10:22:38.871] getCompletionsAtPosition: isCompletionListBlocker: 0.2609589695930481
+Info 125  [10:22:38.874] getCompletionData: Semantic work: 3.035915970802307
+Info 126  [10:22:38.876] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 0.10850000381469727
+Info 127  [10:22:38.984] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 128  [10:22:38.987] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 16 structureChanged: false structureIsReused:: Completely Elapsed: 2.8520830273628235ms
+Info 129  [10:22:38.987] Different program with same set of files
+Info 130  [10:22:39.282] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 131  [10:22:39.291] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 17 structureChanged: false structureIsReused:: Completely Elapsed: 8.42504197359085ms
+Info 132  [10:22:39.291] Different program with same set of files
+Info 133  [10:22:39.384] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 134  [10:22:39.387] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 18 structureChanged: false structureIsReused:: Completely Elapsed: 2.6510000228881836ms
+Info 135  [10:22:39.387] Different program with same set of files
+Info 136  [10:22:39.765] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 137  [10:22:39.770] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 19 structureChanged: false structureIsReused:: Completely Elapsed: 5.494499981403351ms
+Info 138  [10:22:39.770] Different program with same set of files
+Info 139  [10:22:40.996] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 140  [10:22:41.010] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 20 structureChanged: false structureIsReused:: Completely Elapsed: 13.199042022228241ms
+Info 141  [10:22:41.010] Different program with same set of files
+Info 142  [10:22:41.753] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 143  [10:22:41.764] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 21 structureChanged: false structureIsReused:: Completely Elapsed: 10.19412499666214ms
+Info 144  [10:22:41.764] Different program with same set of files
+Info 145  [10:22:41.845] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 146  [10:22:41.848] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 22 structureChanged: false structureIsReused:: Completely Elapsed: 2.481625020503998ms
+Info 147  [10:22:41.848] Different program with same set of files
+Info 148  [10:22:42.944] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 149  [10:22:42.959] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 23 structureChanged: false structureIsReused:: Completely Elapsed: 15.066208004951477ms
+Info 150  [10:22:42.959] Different program with same set of files
+Info 151  [10:22:42.959] getCompletionData: Get current token: 0.007207989692687988
+Info 152  [10:22:42.959] getCompletionData: Is inside comment: 0.012542009353637695
+Info 153  [10:22:42.959] getCompletionData: Get previous token: 0.01983398199081421
+Info 154  [10:22:42.960] getCompletionsAtPosition: isCompletionListBlocker: 0.0027499794960021973
+Info 155  [10:22:42.968] getExportInfoMap: cache hit
+Info 156  [10:22:42.974] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 166 from cache
+Info 157  [10:22:42.974] collectAutoImports: response is complete
+Info 158  [10:22:42.974] collectAutoImports: 5.096583008766174
+Info 159  [10:22:42.974] getCompletionData: Semantic work: 14.397208988666534
+Info 160  [10:22:42.984] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 8.362583994865417
+Info 161  [10:22:43.054] getCompletionData: Get current token: 0.003542006015777588
+Info 162  [10:22:43.054] getCompletionData: Is inside comment: 0.005291998386383057
+Info 163  [10:22:43.054] getCompletionData: Get previous token: 0.006875038146972656
+Info 164  [10:22:43.054] getCompletionsAtPosition: isCompletionListBlocker: 0.0017500519752502441
+Info 165  [10:22:43.056] getExportInfoMap: cache hit
+Info 166  [10:22:43.058] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 166 from cache
+Info 167  [10:22:43.058] collectAutoImports: response is complete
+Info 168  [10:22:43.058] collectAutoImports: 1.711165964603424
+Info 169  [10:22:43.059] getCompletionData: Semantic work: 4.823000013828278
+Info 170  [10:22:43.065] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 4.627209007740021
+Info 171  [10:22:43.069] getCompletionData: Get current token: 0.0034999847412109375
+Info 172  [10:22:43.069] getCompletionData: Is inside comment: 0.005459010601043701
+Info 173  [10:22:43.069] getCompletionData: Get previous token: 0.006916999816894531
+Info 174  [10:22:43.069] getCompletionsAtPosition: isCompletionListBlocker: 0.0014580488204956055
+Info 175  [10:22:43.072] getExportInfoMap: cache hit
+Info 176  [10:22:43.076] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 166 from cache
+Info 177  [10:22:43.076] collectAutoImports: response is complete
+Info 178  [10:22:43.076] collectAutoImports: 2.317207992076874
+Info 179  [10:22:43.076] getCompletionData: Semantic work: 6.959541976451874
+Info 180  [10:22:43.080] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 3.7832080125808716
+Info 181  [10:22:43.083] getCompletionData: Get current token: 0.0034999847412109375
+Info 182  [10:22:43.083] getCompletionData: Is inside comment: 0.00475001335144043
+Info 183  [10:22:43.083] getCompletionData: Get previous token: 0.005875051021575928
+Info 184  [10:22:43.083] getCompletionsAtPosition: isCompletionListBlocker: 0.0015420317649841309
+Info 185  [10:22:43.085] getExportInfoMap: cache hit
+Info 186  [10:22:43.088] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 166 from cache
+Info 187  [10:22:43.088] collectAutoImports: response is complete
+Info 188  [10:22:43.088] collectAutoImports: 1.922457993030548
+Info 189  [10:22:43.088] getCompletionData: Semantic work: 4.654334008693695
+Info 190  [10:22:43.092] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 3.4485830068588257
+Info 191  [10:22:43.575] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 192  [10:22:43.575] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts
+Info 193  [10:22:43.575] Elapsed:: 0.2602919936180115ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 194  [10:22:43.575] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 195  [10:22:43.575] Elapsed:: 0.07120800018310547ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 196  [10:22:43.765] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 197  [10:22:43.773] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 24 structureChanged: false structureIsReused:: Completely Elapsed: 7.428957998752594ms
+Info 198  [10:22:43.773] Different program with same set of files
+Info 199  [10:23:02.641] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 200  [10:23:02.661] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 25 structureChanged: false structureIsReused:: Completely Elapsed: 19.284958004951477ms
+Info 201  [10:23:02.661] Different program with same set of files
+Info 202  [10:23:03.449] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 203  [10:23:03.450] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts
+Info 204  [10:23:03.450] Elapsed:: 0.7736659646034241ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 205  [10:23:03.450] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 206  [10:23:03.450] Elapsed:: 0.09454101324081421ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 207  [10:23:03.477] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 208  [10:23:03.492] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 26 structureChanged: false structureIsReused:: Completely Elapsed: 14.347667038440704ms
+Info 209  [10:23:03.492] Different program with same set of files
+Info 210  [10:23:03.572] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 211  [10:23:03.577] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 27 structureChanged: false structureIsReused:: Completely Elapsed: 4.856207966804504ms
+Info 212  [10:23:03.577] Different program with same set of files
+Info 213  [10:23:03.896] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 214  [10:23:03.913] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 28 structureChanged: false structureIsReused:: Completely Elapsed: 16.06395798921585ms
+Info 215  [10:23:03.913] Different program with same set of files
+Info 216  [10:23:03.915] getCompletionData: Get current token: 0.009833037853240967
+Info 217  [10:23:03.915] getCompletionData: Is inside comment: 0.016125023365020752
+Info 218  [10:23:03.915] getCompletionData: Get previous token: 0.019500017166137695
+Info 219  [10:23:03.916] getCompletionsAtPosition: isCompletionListBlocker: 0.21754199266433716
+Info 220  [10:23:03.923] getExportInfoMap: cache hit
+Info 221  [10:23:03.925] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 2 from cache
+Info 222  [10:23:03.925] collectAutoImports: response is complete
+Info 223  [10:23:03.925] collectAutoImports: 0.8514999747276306
+Info 224  [10:23:03.926] getCompletionData: Semantic work: 9.721499979496002
+Info 225  [10:23:03.933] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 6.947166979312897
+Info 226  [10:23:04.473] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 227  [10:23:04.484] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 29 structureChanged: false structureIsReused:: Completely Elapsed: 10.667208015918732ms
+Info 228  [10:23:04.484] Different program with same set of files
+Info 229  [10:23:05.281] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 230  [10:23:05.282] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts
+Info 231  [10:23:05.282] Elapsed:: 0.1398339867591858ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 232  [10:23:05.282] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 233  [10:23:05.282] Elapsed:: 0.02945798635482788ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 234  [10:23:48.957] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 235  [10:23:48.958] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts
+Info 236  [10:23:48.958] Elapsed:: 0.796750009059906ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 237  [10:23:48.958] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 238  [10:23:48.958] Elapsed:: 0.07716602087020874ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 239  [10:23:49.049] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 240  [10:23:49.067] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 30 structureChanged: false structureIsReused:: Completely Elapsed: 17.238208055496216ms
+Info 241  [10:23:49.067] Different program with same set of files
+Info 242  [10:23:49.843] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 243  [10:23:49.853] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 31 structureChanged: false structureIsReused:: Completely Elapsed: 10.024540960788727ms
+Info 244  [10:23:49.853] Different program with same set of files
+Info 245  [10:23:49.854] getCompletionData: Get current token: 0.007082998752593994
+Info 246  [10:23:49.854] getCompletionData: Is inside comment: 0.015459001064300537
+Info 247  [10:23:49.854] getCompletionData: Get previous token: 0.022166013717651367
+Info 248  [10:23:49.854] getCompletionsAtPosition: isCompletionListBlocker: 0.004833996295928955
+Info 249  [10:23:49.864] getExportInfoMap: cache hit
+Info 250  [10:23:49.866] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 2 from cache
+Info 251  [10:23:49.866] collectAutoImports: response is complete
+Info 252  [10:23:49.866] collectAutoImports: 0.9552090167999268
+Info 253  [10:23:49.866] getCompletionData: Semantic work: 11.440958023071289
+Info 254  [10:23:49.876] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 9.154083013534546
+Info 255  [10:23:49.888] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 256  [10:23:49.891] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 32 structureChanged: false structureIsReused:: Completely Elapsed: 3.4310420155525208ms
+Info 257  [10:23:49.891] Different program with same set of files
+Info 258  [10:23:49.891] getCompletionData: Get current token: 0.003708958625793457
+Info 259  [10:23:49.892] getCompletionData: Is inside comment: 0.007791996002197266
+Info 260  [10:23:49.892] getCompletionData: Get previous token: 0.011250019073486328
+Info 261  [10:23:49.892] getCompletionsAtPosition: isCompletionListBlocker: 0.0017079710960388184
+Info 262  [10:23:49.897] getExportInfoMap: cache hit
+Info 263  [10:23:49.898] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 2 from cache
+Info 264  [10:23:49.898] collectAutoImports: response is complete
+Info 265  [10:23:49.898] collectAutoImports: 0.737375020980835
+Info 266  [10:23:49.898] getCompletionData: Semantic work: 6.4390000104904175
+Info 267  [10:23:49.904] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 6.245500028133392
+Info 268  [10:23:50.150] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 269  [10:23:50.153] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 33 structureChanged: false structureIsReused:: Completely Elapsed: 2.4326669573783875ms
+Info 270  [10:23:50.153] Different program with same set of files
+Info 271  [10:23:50.501] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 272  [10:23:50.514] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 34 structureChanged: false structureIsReused:: Completely Elapsed: 12.373292028903961ms
+Info 273  [10:23:50.514] Different program with same set of files
+Info 274  [10:23:51.055] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 275  [10:23:51.056] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts
+Info 276  [10:23:51.056] Elapsed:: 0.13520801067352295ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 277  [10:23:51.056] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 278  [10:23:51.056] Elapsed:: 0.03125ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#types.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 279  [10:24:20.417] Search path: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src
+Info 280  [10:24:20.417] For info: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/utils.ts :: Config file name: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 281  [10:24:39.154] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 282  [10:24:39.172] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 35 structureChanged: false structureIsReused:: Completely Elapsed: 17.530624985694885ms
+Info 283  [10:24:39.172] Different program with same set of files
+Info 284  [10:24:39.289] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 285  [10:24:39.296] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 36 structureChanged: false structureIsReused:: Completely Elapsed: 6.58916699886322ms
+Info 286  [10:24:39.296] Different program with same set of files
+Info 287  [10:24:39.526] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 288  [10:24:39.536] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 37 structureChanged: false structureIsReused:: Completely Elapsed: 10.158874988555908ms
+Info 289  [10:24:39.536] Different program with same set of files
+Info 290  [10:24:39.850] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 291  [10:24:39.855] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 38 structureChanged: false structureIsReused:: Completely Elapsed: 4.877665996551514ms
+Info 292  [10:24:39.855] Different program with same set of files
+Info 293  [10:24:39.962] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 294  [10:24:39.962] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts
+Info 295  [10:24:39.962] Elapsed:: 0.18229198455810547ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 296  [10:24:39.962] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 297  [10:24:39.962] Elapsed:: 0.03154098987579346ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 298  [10:24:40.073] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 299  [10:24:40.082] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 39 structureChanged: false structureIsReused:: Completely Elapsed: 8.236792027950287ms
+Info 300  [10:24:40.082] Different program with same set of files
+Info 301  [10:24:40.174] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 302  [10:24:40.178] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 40 structureChanged: false structureIsReused:: Completely Elapsed: 3.707082986831665ms
+Info 303  [10:24:40.178] Different program with same set of files
+Info 304  [10:24:40.756] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 305  [10:24:40.772] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 41 structureChanged: false structureIsReused:: Completely Elapsed: 15.891583025455475ms
+Info 306  [10:24:40.772] Different program with same set of files
+Info 307  [10:24:40.773] getCompletionData: Get current token: 0.012167036533355713
+Info 308  [10:24:40.773] getCompletionData: Is inside comment: 0.017792046070098877
+Info 309  [10:24:40.773] getCompletionData: Get previous token: 0.016457974910736084
+Info 310  [10:24:40.774] getCompletionsAtPosition: isCompletionListBlocker: 0.004999995231628418
+Info 311  [10:24:40.776] getCompletionData: Semantic work: 1.9906669855117798
+Info 312  [10:24:40.778] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 0.4407910108566284
+Info 313  [10:24:41.742] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 314  [10:24:41.754] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 42 structureChanged: false structureIsReused:: Completely Elapsed: 12.294209003448486ms
+Info 315  [10:24:41.754] Different program with same set of files
+Info 316  [10:24:42.445] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 317  [10:24:42.458] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 43 structureChanged: false structureIsReused:: Completely Elapsed: 12.61270797252655ms
+Info 318  [10:24:42.458] Different program with same set of files
+Info 319  [10:24:42.458] getCompletionData: Get current token: 0.0500829815864563
+Info 320  [10:24:42.458] getCompletionData: Is inside comment: 0.009665966033935547
+Info 321  [10:24:42.459] getCompletionData: Get previous token: 0.028499960899353027
+Info 322  [10:24:42.459] getCompletionsAtPosition: isCompletionListBlocker: 0.004999995231628418
+Info 323  [10:24:42.460] getCompletionData: Semantic work: 1.0814589858055115
+Info 324  [10:24:42.465] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 325  [10:24:42.473] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 44 structureChanged: false structureIsReused:: Completely Elapsed: 8.207000017166138ms
+Info 326  [10:24:42.473] Different program with same set of files
+Info 327  [10:24:42.473] getCompletionData: Get current token: 0.01862502098083496
+Info 328  [10:24:42.473] getCompletionData: Is inside comment: 0.004333019256591797
+Info 329  [10:24:42.473] getCompletionData: Get previous token: 0.015334010124206543
+Info 330  [10:24:42.474] getCompletionsAtPosition: isCompletionListBlocker: 0.0018339753150939941
+Info 331  [10:24:42.474] getCompletionData: Semantic work: 0.2974169850349426
+Info 332  [10:24:42.476] getCompletionData: Get current token: 0.014041006565093994
+Info 333  [10:24:42.476] getCompletionData: Is inside comment: 0.0034159421920776367
+Info 334  [10:24:42.476] getCompletionData: Get previous token: 0.01237499713897705
+Info 335  [10:24:42.476] getCompletionsAtPosition: isCompletionListBlocker: 0.001667022705078125
+Info 336  [10:24:42.476] getCompletionData: Semantic work: 0.1764589548110962
+Info 337  [10:24:43.393] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 338  [10:24:43.408] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 45 structureChanged: false structureIsReused:: Completely Elapsed: 14.180917024612427ms
+Info 339  [10:24:43.408] Different program with same set of files
+Info 340  [10:24:43.949] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 341  [10:24:43.968] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 46 structureChanged: false structureIsReused:: Completely Elapsed: 17.5740829706192ms
+Info 342  [10:24:43.968] Different program with same set of files
+Info 343  [10:24:43.969] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 344  [10:24:43.974] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 47 structureChanged: false structureIsReused:: Completely Elapsed: 5.202875018119812ms
+Info 345  [10:24:43.974] Different program with same set of files
+Info 346  [10:24:45.634] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 347  [10:24:45.649] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 48 structureChanged: false structureIsReused:: Completely Elapsed: 14.435832977294922ms
+Info 348  [10:24:45.649] Different program with same set of files
+Info 349  [10:24:45.650] getCompletionData: Get current token: 0.010625004768371582
+Info 350  [10:24:45.650] getCompletionData: Is inside comment: 0.019291996955871582
+Info 351  [10:24:45.650] getCompletionData: Get previous token: 0.01995795965194702
+Info 352  [10:24:45.650] getCompletionsAtPosition: isCompletionListBlocker: 0.24733299016952515
+Info 353  [10:24:45.660] getExportInfoMap: cache miss or empty; calculating new results
+Info 354  [10:24:45.665] getExportInfoMap: done in 7.812458038330078 ms
+Info 355  [10:24:45.666] collectAutoImports: resolved 0 module specifiers, plus 0 ambient and 0 from cache
+Info 356  [10:24:45.666] collectAutoImports: response is complete
+Info 357  [10:24:45.666] collectAutoImports: 0.40070897340774536
+Info 358  [10:24:45.666] getCompletionData: Semantic work: 15.975290954113007
+Info 359  [10:24:45.673] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 6.296124994754791
+Info 360  [10:24:45.758] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 361  [10:24:45.762] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 49 structureChanged: false structureIsReused:: Completely Elapsed: 3.891833007335663ms
+Info 362  [10:24:45.762] Different program with same set of files
+Info 363  [10:24:46.319] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 364  [10:24:46.338] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 50 structureChanged: false structureIsReused:: Completely Elapsed: 19.268541991710663ms
+Info 365  [10:24:46.338] Different program with same set of files
+Info 366  [10:24:46.648] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 367  [10:24:46.658] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 51 structureChanged: false structureIsReused:: Completely Elapsed: 10.241083979606628ms
+Info 368  [10:24:46.659] Different program with same set of files
+Info 369  [10:24:46.753] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 370  [10:24:46.757] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 52 structureChanged: false structureIsReused:: Completely Elapsed: 4.3488330245018005ms
+Info 371  [10:24:46.757] Different program with same set of files
+Info 372  [10:24:47.550] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 373  [10:24:47.564] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 53 structureChanged: false structureIsReused:: Completely Elapsed: 13.087499976158142ms
+Info 374  [10:24:47.564] Different program with same set of files
+Info 375  [10:24:48.852] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 376  [10:24:48.867] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 54 structureChanged: false structureIsReused:: Completely Elapsed: 15.414541959762573ms
+Info 377  [10:24:48.867] Different program with same set of files
+Info 378  [10:24:48.868] getCompletionData: Get current token: 0.01170802116394043
+Info 379  [10:24:48.868] getCompletionData: Is inside comment: 0.018707990646362305
+Info 380  [10:24:48.868] getCompletionData: Get previous token: 0.014584004878997803
+Info 381  [10:24:48.868] getCompletionsAtPosition: isCompletionListBlocker: 0.007084012031555176
+Info 382  [10:24:48.869] getCompletionData: Semantic work: 0.6567500233650208
+Info 383  [10:24:48.871] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 0.2634589672088623
+Info 384  [10:24:50.451] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 385  [10:24:50.466] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 55 structureChanged: false structureIsReused:: Completely Elapsed: 14.053083002567291ms
+Info 386  [10:24:50.466] Different program with same set of files
+Info 387  [10:24:51.228] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 388  [10:24:51.238] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 56 structureChanged: false structureIsReused:: Completely Elapsed: 9.655875027179718ms
+Info 389  [10:24:51.238] Different program with same set of files
+Info 390  [10:24:51.238] getCompletionData: Get current token: 0.04366600513458252
+Info 391  [10:24:51.238] getCompletionData: Is inside comment: 0.011583030223846436
+Info 392  [10:24:51.238] getCompletionData: Get previous token: 0.029291987419128418
+Info 393  [10:24:51.239] getCompletionsAtPosition: isCompletionListBlocker: 0.004540979862213135
+Info 394  [10:24:51.239] getCompletionData: Semantic work: 0.56187504529953
+Info 395  [10:24:51.245] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 396  [10:24:51.249] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 57 structureChanged: false structureIsReused:: Completely Elapsed: 4.268415987491608ms
+Info 397  [10:24:51.249] Different program with same set of files
+Info 398  [10:24:51.249] getCompletionData: Get current token: 0.023459017276763916
+Info 399  [10:24:51.249] getCompletionData: Is inside comment: 0.0051670074462890625
+Info 400  [10:24:51.249] getCompletionData: Get previous token: 0.020500004291534424
+Info 401  [10:24:51.249] getCompletionsAtPosition: isCompletionListBlocker: 0.0028330087661743164
+Info 402  [10:24:51.250] getCompletionData: Semantic work: 0.3700829744338989
+Info 403  [10:24:51.252] getCompletionData: Get current token: 0.015958011150360107
+Info 404  [10:24:51.252] getCompletionData: Is inside comment: 0.0029160380363464355
+Info 405  [10:24:51.252] getCompletionData: Get previous token: 0.014707982540130615
+Info 406  [10:24:51.252] getCompletionsAtPosition: isCompletionListBlocker: 0.004417002201080322
+Info 407  [10:24:51.253] getCompletionData: Semantic work: 0.12895900011062622
+Info 408  [10:24:52.044] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 409  [10:24:52.058] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 58 structureChanged: false structureIsReused:: Completely Elapsed: 12.931915998458862ms
+Info 410  [10:24:52.058] Different program with same set of files
+Info 411  [10:24:52.084] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 412  [10:24:52.087] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 59 structureChanged: false structureIsReused:: Completely Elapsed: 3.379333972930908ms
+Info 413  [10:24:52.087] Different program with same set of files
+Info 414  [10:24:53.337] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 415  [10:24:53.353] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 60 structureChanged: false structureIsReused:: Completely Elapsed: 15.3682079911232ms
+Info 416  [10:24:53.353] Different program with same set of files
+Info 417  [10:24:53.353] getCompletionData: Get current token: 0.012124955654144287
+Info 418  [10:24:53.354] getCompletionData: Is inside comment: 0.02079099416732788
+Info 419  [10:24:53.354] getCompletionData: Get previous token: 0.015166997909545898
+Info 420  [10:24:53.354] getCompletionsAtPosition: isCompletionListBlocker: 0.00462496280670166
+Info 421  [10:24:53.354] getCompletionData: Semantic work: 0.7814580202102661
+Info 422  [10:24:53.355] getCompletionsAtPosition: getCompletionEntriesFromSymbols: 0.9373330473899841
+Info 423  [10:24:54.044] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 424  [10:24:54.057] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 61 structureChanged: false structureIsReused:: Completely Elapsed: 12.842500030994415ms
+Info 425  [10:24:54.058] Different program with same set of files
+Info 426  [10:24:54.710] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 427  [10:24:54.720] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 62 structureChanged: false structureIsReused:: Completely Elapsed: 10.204457998275757ms
+Info 428  [10:24:54.721] Different program with same set of files
+Info 429  [10:24:54.721] getCompletionData: Get current token: 0.05799996852874756
+Info 430  [10:24:54.721] getCompletionData: Is inside comment: 0.01320803165435791
+Info 431  [10:24:54.721] getCompletionData: Get previous token: 0.0370829701423645
+Info 432  [10:24:54.721] getCompletionsAtPosition: isCompletionListBlocker: 0.00625002384185791
+Info 433  [10:24:54.722] getCompletionData: Semantic work: 0.7064999938011169
+Info 434  [10:24:54.727] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 435  [10:24:54.732] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 63 structureChanged: false structureIsReused:: Completely Elapsed: 4.665708959102631ms
+Info 436  [10:24:54.732] Different program with same set of files
+Info 437  [10:24:54.732] getCompletionData: Get current token: 0.02404201030731201
+Info 438  [10:24:54.732] getCompletionData: Is inside comment: 0.005792021751403809
+Info 439  [10:24:54.732] getCompletionData: Get previous token: 0.023082971572875977
+Info 440  [10:24:54.732] getCompletionsAtPosition: isCompletionListBlocker: 0.002541959285736084
+Info 441  [10:24:54.733] getCompletionData: Semantic work: 0.33854198455810547
+Info 442  [10:24:54.735] getCompletionData: Get current token: 0.01645803451538086
+Info 443  [10:24:54.735] getCompletionData: Is inside comment: 0.002541959285736084
+Info 444  [10:24:54.735] getCompletionData: Get previous token: 0.016583025455474854
+Info 445  [10:24:54.735] getCompletionsAtPosition: isCompletionListBlocker: 0.0020839571952819824
+Info 446  [10:24:54.735] getCompletionData: Semantic work: 0.12029200792312622
+Info 447  [10:24:56.429] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 448  [10:24:56.430] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts
+Info 449  [10:24:56.430] Elapsed:: 0.32295799255371094ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 450  [10:24:56.430] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 451  [10:24:56.430] Elapsed:: 0.078249990940094ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 452  [10:24:57.224] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 453  [10:24:57.225] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts
+Info 454  [10:24:57.225] Elapsed:: 0.2553749680519104ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 455  [10:24:57.225] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 456  [10:24:57.225] Elapsed:: 0.06233304738998413ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 457  [10:24:57.418] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 458  [10:24:57.429] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 64 structureChanged: false structureIsReused:: Completely Elapsed: 11.06454199552536ms
+Info 459  [10:24:57.429] Different program with same set of files
+Info 460  [10:24:57.639] DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 461  [10:24:57.639] Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Detected ignored path: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts
+Info 462  [10:24:57.639] Elapsed:: 0.12995898723602295ms DirectoryWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Config: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Wild card directory
+Info 463  [10:24:57.639] DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 464  [10:24:57.639] Elapsed:: 0.0205419659614563ms DirectoryWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/.#utils.ts :: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src 1 undefined Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json WatchType: Failed Lookup Locations
+Info 465  [10:24:57.831] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 466  [10:24:57.841] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 65 structureChanged: false structureIsReused:: Completely Elapsed: 9.559707999229431ms
+Info 467  [10:24:57.841] Different program with same set of files
+Info 468  [10:26:22.230] FileWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 1:: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 500 undefined WatchType: Closed Script info
+Info 469  [10:26:22.230] Elapsed:: 0.40879201889038086ms FileWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 1:: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 500 undefined WatchType: Closed Script info
+Info 470  [10:26:22.482] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 471  [10:26:22.482] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 66 structureChanged: false structureIsReused:: Completely Elapsed: 0.4632500410079956ms
+Info 472  [10:26:24.732] Before ensureProjectForOpenFiles:
+Info 473  [10:26:24.733] After ensureProjectForOpenFiles:
+Info 474  [10:26:24.735] got projects updated in background, updating diagnostics for /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/types.ts,/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/base.ts,/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/utils.ts
+Info 475  [11:28:05.241] FileWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 1:: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 500 undefined WatchType: Closed Script info
+Info 476  [11:28:05.241] Elapsed:: 0.047792017459869385ms FileWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 1:: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 500 undefined WatchType: Closed Script info
+Info 477  [11:28:05.492] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 478  [11:28:05.493] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 67 structureChanged: false structureIsReused:: Completely Elapsed: 0.33216702938079834ms
+Info 479  [11:28:07.742] Before ensureProjectForOpenFiles:
+Info 480  [11:28:07.743] After ensureProjectForOpenFiles:
+Info 481  [11:28:07.743] got projects updated in background, updating diagnostics for /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/types.ts,/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/base.ts,/Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/src/utils.ts
+Info 482  [11:28:51.282] FileWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/package.json 1:: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/package.json 250 undefined WatchType: package.json file
+Info 483  [11:28:51.285] Elapsed:: 1.944916009902954ms FileWatcher:: Triggered with /users/tohta/dev/shiguredo/sora-js-sdk/package.json 1:: WatchInfo: /users/tohta/dev/shiguredo/sora-js-sdk/package.json 250 undefined WatchType: package.json file
+Info 484  [11:28:57.289] FileWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 1:: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 500 undefined WatchType: Closed Script info
+Info 485  [11:28:57.289] Elapsed:: 0.039917051792144775ms FileWatcher:: Triggered with /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 1:: WatchInfo: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/e2ee/dist/sora_e2ee.d.ts 500 undefined WatchType: Closed Script info
+Info 486  [11:28:57.540] Starting updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json
+Info 487  [11:28:57.540] Finishing updateGraphWorker: Project: /Users/tohta/dev/shiguredo/sora-js-sdk/packages/sdk/tsconfig.json Version: 68 structureChanged: false structureIsReused:: Completely Elapsed: 0.30012500286102295ms
