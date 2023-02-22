@@ -2296,6 +2296,9 @@ function createSignalingMessage(offerSDP, role, channelId, metadata, options, re
     if (options.signalingNotifyMetadata !== undefined) {
         message.signaling_notify_metadata = options.signalingNotifyMetadata;
     }
+    if (options.forwardingFilter !== undefined) {
+        message.forwarding_filter = options.forwardingFilter;
+    }
     if (options.clientId !== undefined) {
         message.client_id = options.clientId;
     }

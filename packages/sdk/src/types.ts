@@ -83,6 +83,7 @@ export type SignalingConnectMessage = {
   redirect?: true
   data_channels?: SignalingConnectDataChannel[]
   audio_streaming_language_code?: string
+  forwarding_filter?: JSONType
 }
 
 export type SignalingMessage =
@@ -312,6 +313,7 @@ export type ConnectionOptions = {
   dataChannels?: DataChannelConfiguration[]
   bundleId?: string
   audioStreamingLanguageCode?: string
+  forwardingFilter?: JSONType
 }
 
 export type Callbacks = {

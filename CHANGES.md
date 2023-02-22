@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] 接続オプションで転送フィルターを指定できるようにする
+    - `ConnectionOptions` 型に `forwardingFilter` フィールドを追加
+    - @sile
 - [UPDATE] SDP の再利用に対応する
     - 主に Lyra 周りで同じ mid の使い回しを考慮していないところがあったのを修正
     - @sile

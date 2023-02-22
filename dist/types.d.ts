@@ -67,6 +67,7 @@ export type SignalingConnectMessage = {
     redirect?: true;
     data_channels?: SignalingConnectDataChannel[];
     audio_streaming_language_code?: string;
+    forwarding_filter?: JSONType;
 };
 export type SignalingMessage = SignalingOfferMessage | SignalingUpdateMessage | SignalingReOfferMessage | SignalingPingMessage | SignalingPushMessage | SignalingNotifyMessage | SignalingReqStatsMessage | SignalingSwitchedMessage | SignalingRedirectMessage;
 export type SignalingOfferMessageDataChannel = {
@@ -258,6 +259,7 @@ export type ConnectionOptions = {
     dataChannels?: DataChannelConfiguration[];
     bundleId?: string;
     audioStreamingLanguageCode?: string;
+    forwardingFilter?: JSONType;
 };
 export type Callbacks = {
     disconnect: (event: SoraCloseEvent) => void;
