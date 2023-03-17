@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] TypeScript を 5 系に上げる
+    - @voluntas
 - [UPDATE] 接続オプションで転送フィルターを指定できるようにする
     - `ConnectionOptions` 型に `forwardingFilter` フィールドを追加
     - @sile
