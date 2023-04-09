@@ -24,9 +24,9 @@
     "eslint": "8.36.0",
     "eslint-config-prettier": "8.7.0",
     "eslint-plugin-prettier": "4.2.1",
-    "prettier": "2.8.4",
+    "prettier": "2.8.7",
     "rollup": "3.19.1",
-    "typescript": "5.0.2"
+    "typescript": "5.0.4"
   },
   "dependencies": {
     "@sora/go-wasm": "^2021.1.0"
