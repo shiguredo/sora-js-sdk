@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] GitHub Actions に Node.js 20 を追加する
+    - @voluntas
 - [UPDATE] TypeScript を 5 系に上げる
     - @voluntas
 - [UPDATE] 接続オプションで転送フィルターを指定できるようにする
