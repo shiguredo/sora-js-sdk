@@ -29,7 +29,7 @@
   ],
   "devDependencies": {
     "serve": "14.2.0",
-    "typedoc": "0.24.6"
+    "typedoc": "0.24.7"
   },
   "resolutions": {
     "get-pkg-repo": "5.0.0"
