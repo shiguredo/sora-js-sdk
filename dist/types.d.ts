@@ -30,6 +30,9 @@ export type VideoCodecType = 'VP9' | 'VP8' | 'AV1' | 'H264' | 'H265';
 export type SignalingVideo = boolean | {
     codec_type?: VideoCodecType;
     bit_rate?: number;
+    vp9_params?: JSONType;
+    h264_params?: JSONType;
+    av1_params?: JSONType;
 };
 export type Role = 'sendrecv' | 'sendonly' | 'recvonly';
 export type SignalingConnectDataChannel = {
@@ -240,6 +243,9 @@ export type ConnectionOptions = {
     video?: boolean;
     videoCodecType?: VideoCodecType;
     videoBitRate?: number;
+    videoVP9Params?: JSONType;
+    videoH264Params?: JSONType;
+    videoAV1Params?: JSONType;
     multistream?: boolean;
     spotlight?: boolean;
     spotlightNumber?: number;
