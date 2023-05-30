@@ -11,6 +11,9 @@
 
 ## develop
 
+- [ADD] 接続オプションとしてビデオコーデック用パラメータの送信を追加
+    - `ConnectionOptions` 型に `videoVP9Params` `videoH264Params` `videoAV1Params` フィールドを追加
+    - @tnamao
 - [ADD] GitHub Actions に Node.js 20 を追加する
     - @voluntas
 - [UPDATE] TypeScript を 5 系に上げる
