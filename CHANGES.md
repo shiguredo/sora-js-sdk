@@ -11,6 +11,11 @@
 
 ## develop
 
+## 2022.3.3
+
+- [FIX] npm 最新バージョンへのリリースミスを修正
+    - @voluntas
+
 ## 2022.3.2
 
 - [FIX] ミュート状態で接続すると、replace(Video|Audio)Track しても画像・音声データが送信されないのを修正
