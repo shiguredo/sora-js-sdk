@@ -218,7 +218,13 @@ export function createSignalingMessage(
     'audioOpusParamsUsedtx',
   ]
   const audioLyraParamsPropertyKeys = ['audioLyraParamsBitrate', 'audioLyraParamsUsedtx']
-  const videoPropertyKeys = ['videoCodecType', 'videoBitRate']
+  const videoPropertyKeys = [
+    'videoCodecType',
+    'videoBitRate',
+    'videoVP9Params',
+    'videoH264Params',
+    'videoAV1Params',
+  ]
   const copyOptions = Object.assign({}, options)
   ;(Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
     if (key === 'audio' && typeof copyOptions[key] === 'boolean') {
@@ -318,6 +324,15 @@ export function createSignalingMessage(
     }
     if ('videoBitRate' in copyOptions) {
       message.video['bit_rate'] = copyOptions.videoBitRate
+    }
+    if ('videoVP9Params' in copyOptions) {
+      message.video['vp9_params'] = copyOptions.videoVP9Params
+    }
+    if ('videoH264Params' in copyOptions) {
+      message.video['h264_params'] = copyOptions.videoH264Params
+    }
+    if ('videoAV1Params' in copyOptions) {
+      message.video['av1_params'] = copyOptions.videoAV1Params
     }
   }
 
