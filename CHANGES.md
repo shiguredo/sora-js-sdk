@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2023.1.0
+
+**2023-06-20**
+
 - [ADD] 接続オプションとしてビデオコーデック用パラメータの送信を追加
     - `ConnectionOptions` 型に `videoVP9Params` `videoH264Params` `videoAV1Params` フィールドを追加
     - @tnamao
