@@ -1,10 +1,10 @@
-import SoraE2EE from "@sora/e2ee";
+import SoraE2EE from '@sora/e2ee'
 
-import ConnectionBase from "./base";
-import { initLyra, LyraConfig } from "./lyra";
-import ConnectionPublisher from "./publisher";
-import ConnectionSubscriber from "./subscriber";
-import { applyMediaStreamConstraints } from "./helpers";
+import ConnectionBase from './base'
+import { initLyra, LyraConfig } from './lyra'
+import ConnectionPublisher from './publisher'
+import ConnectionSubscriber from './subscriber'
+import { applyMediaStreamConstraints } from './helpers'
 import type {
   AudioCodecType,
   Callbacks,
@@ -37,7 +37,7 @@ import type {
   TimelineEventLogType,
   TransportType,
   VideoCodecType,
-} from "./types";
+} from './types'
 
 /**
  * Role 毎の Connection インスタンスを生成するためのクラス
@@ -49,15 +49,15 @@ class SoraConnection {
   /**
    * シグナリングに使用する URL の候補
    */
-  signalingUrlCandidates: string | string[];
+  signalingUrlCandidates: string | string[]
   /**
    * デバッグフラグ
    */
-  debug: boolean;
+  debug: boolean
 
   constructor(signalingUrlCandidates: string | string[], debug = false) {
-    this.signalingUrlCandidates = signalingUrlCandidates;
-    this.debug = debug;
+    this.signalingUrlCandidates = signalingUrlCandidates
+    this.debug = debug
   }
   /**
    * role sendrecv で接続するための Connecion インスタンスを生成するメソッド
@@ -80,18 +80,18 @@ class SoraConnection {
   sendrecv(
     channelId: string,
     metadata: JSONType = null,
-    options: ConnectionOptions = { audio: true, video: true }
+    options: ConnectionOptions = { audio: true, video: true },
   ): ConnectionPublisher {
     // sendrecv の場合、multistream に初期値を指定する
-    const sendrecvOptions: ConnectionOptions = Object.assign({ multistream: true }, options);
+    const sendrecvOptions: ConnectionOptions = Object.assign({ multistream: true }, options)
     return new ConnectionPublisher(
       this.signalingUrlCandidates,
-      "sendrecv",
+      'sendrecv',
       channelId,
       metadata,
       sendrecvOptions,
-      this.debug
-    );
+      this.debug,
+    )
   }
   /**
    * role sendonly で接続するための Connecion インスタンスを生成するメソッド
@@ -114,9 +114,16 @@ class SoraConnection {
   sendonly(
     channelId: string,
     metadata: JSONType = null,
-    options: ConnectionOptions = { audio: true, video: true }
+    options: ConnectionOptions = { audio: true, video: true },
   ): ConnectionPublisher {
-    return new ConnectionPublisher(this.signalingUrlCandidates, "sendonly", channelId, metadata, options, this.debug);
+    return new ConnectionPublisher(
+      this.signalingUrlCandidates,
+      'sendonly',
+      channelId,
+      metadata,
+      options,
+      this.debug,
+    )
   }
   /**
    * role recvonly で接続するための Connecion インスタンスを生成するメソッド
@@ -139,9 +146,16 @@ class SoraConnection {
   recvonly(
     channelId: string,
     metadata: JSONType = null,
-    options: ConnectionOptions = { audio: true, video: true }
+    options: ConnectionOptions = { audio: true, video: true },
   ): ConnectionSubscriber {
-    return new ConnectionSubscriber(this.signalingUrlCandidates, "recvonly", channelId, metadata, options, this.debug);
+    return new ConnectionSubscriber(
+      this.signalingUrlCandidates,
+      'recvonly',
+      channelId,
+      metadata,
+      options,
+      this.debug,
+    )
   }
   /**
    * シグナリングに使用する URL の候補
@@ -150,7 +164,7 @@ class SoraConnection {
    * @deprecated
    */
   get signalingUrl(): string | string[] {
-    return this.signalingUrlCandidates;
+    return this.signalingUrlCandidates
   }
 }
 
@@ -170,7 +184,7 @@ export default {
    * @public
    */
   initE2EE: async function (wasmUrl: string): Promise<void> {
-    await SoraE2EE.loadWasm(wasmUrl);
+    await SoraE2EE.loadWasm(wasmUrl)
   },
   /**
    * Lyra の初期化を行うメソッド
@@ -193,7 +207,7 @@ export default {
    *
    */
   connection: function (signalingUrlCandidates: string | string[], debug = false): SoraConnection {
-    return new SoraConnection(signalingUrlCandidates, debug);
+    return new SoraConnection(signalingUrlCandidates, debug)
   },
   /**
    * SDK のバージョンを返すメソッド
@@ -201,7 +215,7 @@ export default {
    * @public
    */
   version: function (): string {
-    return "__SORA_JS_SDK_VERSION__";
+    return '__SORA_JS_SDK_VERSION__'
   },
   /**
    * WebRTC のユーティリティ関数群
@@ -211,7 +225,7 @@ export default {
   helpers: {
     applyMediaStreamConstraints,
   },
-};
+}
 
 export type {
   AudioCodecType,
@@ -250,4 +264,4 @@ export type {
   TimelineEventLogType,
   TransportType,
   VideoCodecType,
-};
+}

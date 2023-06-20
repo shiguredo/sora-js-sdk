@@ -21,7 +21,7 @@
       "dom.iterable",
       "scripthost"
     ],
-    "declarationDir": "."
+    "declarationDir": "../../"
   },
   "include": [
     "src/**/*.ts"

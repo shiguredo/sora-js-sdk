@@ -1,5 +1,5 @@
-import { RTCEncodedAudioFrame } from "./types";
-import { LyraEncoder, LyraDecoder, LyraEncoderOptions, LyraDecoderOptions } from "@shiguredo/lyra-wasm";
+import { RTCEncodedAudioFrame } from './types';
+import { LyraEncoder, LyraDecoder } from '@shiguredo/lyra-wasm';
 /**
  * Lyra の設定情報
  */
@@ -40,21 +40,11 @@ export declare function initLyra(config: LyraConfig): boolean;
  */
 export declare function isLyraInitialized(): boolean;
 /**
- * Lyra のエンコーダを生成して返す
+ * WebRTC Encoded Transform に渡される Lyra 用の web worker を生成する
  *
- * @param options エンコーダに指定するオプション
- * @returns Lyra エンコーダのプロミス
- * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ * @returns Lyra でエンコードおよびデコードを行う web worker インスタンス
  */
-export declare function createLyraEncoder(options?: LyraEncoderOptions): Promise<LyraEncoder>;
-/**
- * Lyra のデコーダを生成して返す
- *
- * @param options デコーダに指定するオプション
- * @returns Lyra デコーダのプロミス
- * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
- */
-export declare function createLyraDecoder(options?: LyraDecoderOptions): Promise<LyraDecoder>;
+export declare function createLyraWorker(): Worker;
 /**
  * PCM（L16）の音声データを Lyra でエンコードする
  *
@@ -62,7 +52,7 @@ export declare function createLyraDecoder(options?: LyraDecoderOptions): Promise
  * @param encodedFrame PCM 音声データ
  * @param controller 音声データの出力キュー
  */
-export declare function transformPcmToLyra(encoder: LyraEncoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): void;
+export declare function transformPcmToLyra(encoder: LyraEncoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): Promise<void>;
 /**
  * Lyra でエンコードされた音声データをデコードして PCM（L16）に変換する
  *
@@ -70,7 +60,7 @@ export declare function transformPcmToLyra(encoder: LyraEncoder, encodedFrame: R
  * @param encodedFrame Lyra でエンコードされた音声データ
  * @param controller 音声データの出力キュー
  */
-export declare function transformLyraToPcm(decoder: LyraDecoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): void;
+export declare function transformLyraToPcm(decoder: LyraDecoder, encodedFrame: RTCEncodedAudioFrame, controller: TransformStreamDefaultController): Promise<void>;
 /**
  * SDP に記載される Lyra のエンコードパラメータ
  */

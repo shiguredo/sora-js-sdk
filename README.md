@@ -27,7 +27,7 @@ Please read https://github.com/shiguredo/oss before use.
 
 ## システム条件
 
-- WebRTC SFU Sora 2022.1 以降
+- WebRTC SFU Sora 2022.2.0 以降
 - TypeScript 3.8 以降
 
 ## サンプル
@@ -44,6 +44,10 @@ Please read https://github.com/shiguredo/oss before use.
     - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_recvonly.html
 - Simulcast
     - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/simulcast.html
+- DataChannelMessaging
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/data_channel_messaging.html
+- E2EE
+    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/e2ee.html
 
 ## E2EE について
 
@@ -66,8 +70,8 @@ Please read https://github.com/shiguredo/oss before use.
 Apache License 2.0
 
 ```
+Copyright 2017-2023, Shiguredo Inc.
 Copyright 2017-2022, Yuki Ito (Original Author)
-Copyright 2017-2022, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

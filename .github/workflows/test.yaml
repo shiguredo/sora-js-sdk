@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ['16', '18']
+        node: ['16', '18', '20']
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -26,6 +26,7 @@ jobs:
       - run: npm run lint -w packages/e2ee
       - run: npm run lint -w packages/sdk
       - run: npm run test -w packages/sdk
+      - run: git diff --stat --exit-code
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2

@@ -11,6 +11,39 @@
 
 ## develop
 
+## 2023.1.0
+
+**2023-06-20**
+
+- [ADD] 接続オプションとしてビデオコーデック用パラメータの送信を追加
+    - `ConnectionOptions` 型に `videoVP9Params` `videoH264Params` `videoAV1Params` フィールドを追加
+    - @tnamao
+- [ADD] GitHub Actions に Node.js 20 を追加する
+    - @voluntas
+- [UPDATE] TypeScript を 5 系に上げる
+    - @voluntas
+- [UPDATE] 接続オプションで転送フィルターを指定できるようにする
+    - `ConnectionOptions` 型に `forwardingFilter` フィールドを追加
+    - @sile
+- [UPDATE] SDP の再利用に対応する
+    - 主に Lyra 周りで同じ mid の使い回しを考慮していないところがあったのを修正
+    - @sile
+- [UPDATE] オファー SDP のメディアポートに 0 を指定することで古いトランシーバーを解放できるようにする
+    - Firefox は 0 ポートを指定するとエラーになるので SDK 側で従来の 9 に置換している
+    - @sile
+- [UPDATE] .github 以下に renovate.json を移動する
+    - @voluntas
+- [UPDATE] Safari / Mobile Safari で Lyra コーデックを使用可能にする
+    - これらのブラウザでは WebRTC Encoded Transform を使うようにする
+    - @sile
+- [UPDATE] @shiguredo/lyra-wasm を 2023.1.0 に更新する
+    - Web Worker 対応と Mobile Safari 対応の取り込み
+    - @sile
+- [CHANGE] .prettierrc を統一する
+    - @voluntas
+- [CHANGE] サンプルのチャネル ID を sora に変更する
+    - @voluntas
+
 ## 2022.3.3
 
 - [FIX] npm 最新バージョンへのリリースミスを修正
