@@ -33,10 +33,5 @@
   },
   "resolutions": {
     "get-pkg-repo": "5.0.0"
-  },
-  "workspaces": [
-    "packages/go-wasm",
-    "packages/e2ee",
-    "packages/sdk"
-  ]
+  }
 }
