@@ -10,7 +10,7 @@
   "scripts": {
     "build": "pnpm run build:worker && pnpm run build:development",
     "build:development": "NODE_ENV=development rollup -c rollup.config.mjs --bundleConfigAsCjs",
-    "build:worker": "npx tsc --project tsconfig.worker.json",
+    "build:worker": "tsc --project tsconfig.worker.json",
     "fmt": "prettier --write src",
     "lint": "eslint --ext .ts ./src",
     "test": "echo \"no test\""
