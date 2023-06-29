@@ -11,6 +11,11 @@
 
 ## develop
 
+- [CHANGE] pnpm 化
+
+  - npx 利用をやめる
+  - @voluntas
+
 ## 2023.1.0
 
 **2023-06-20**
