@@ -3,29 +3,29 @@ name: test
 on:
   push:
     paths-ignore:
-      - '**.md'
-      - 'LICENSE'
-      - 'NOTICE'
+      - "**.md"
+      - "LICENSE"
+      - "NOTICE"
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ['16', '18', '20']
+        node: ["16", "18", "20"]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      - run: npm --version
-      - run: npm install
-      - run: npm run build -w packages/e2ee
-      - run: npm run build -w packages/sdk
-      - run: npm run lint -w packages/e2ee
-      - run: npm run lint -w packages/sdk
-      - run: npm run test -w packages/sdk
+      - run: pnpm --version
+      - run: pnpm install
+      - run: pnpm -r --filter=./packages/e2ee build
+      - run: pnpm -r --filter=./packages/sdk build
+      - run: pnpm -r --filter=./packages/e2ee lint
+      - run: pnpm -r --filter=./packages/sdk lint
+      - run: pnpm -r --filter=./packages/sdk test
       - run: git diff --stat --exit-code
       - name: Slack Notification
         if: failure()
