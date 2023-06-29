@@ -23,11 +23,9 @@ jobs:
           version: 8
       - run: pnpm --version
       - run: pnpm install
-      - run: pnpm -r --filter=./packages/e2ee build
-      - run: pnpm -r --filter=./packages/sdk build
-      - run: pnpm -r --filter=./packages/e2ee lint
-      - run: pnpm -r --filter=./packages/sdk lint
-      - run: pnpm -r --filter=./packages/sdk test
+      - run: pnpm run build
+      - run: pnpm run lint
+      - run: pnpm run test
       - run: git diff --stat --exit-code
       - name: Slack Notification
         if: failure()
