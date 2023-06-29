@@ -11,7 +11,7 @@
     "fmt": "pnpm -r --filter=./packages/* fmt",
     "test": "pnpm -r --filter=./packages/* test",
     "start": "serve -S -l 8080 ./example",
-    "doc": "npx typedoc",
+    "doc": "typedoc",
     "release:canary": "./scripts/release_canary.sh"
   },
   "repository": {
