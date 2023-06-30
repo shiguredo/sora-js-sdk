@@ -8,25 +8,44 @@
     ":prConcurrentLimit10",
     "group:recommended",
     "group:allNonMajor",
-    "schedule:weekly",
+    "schedule:weekly"
   ],
   "dependencyDashboard": false,
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "platformAutomerge": true,
       "automerge": true
     },
     {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "matchPackagePatterns": ["eslint"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "matchPackagePatterns": [
+        "eslint"
+      ],
       "groupName": "eslint",
       "platformAutomerge": true,
       "automerge": true
     },
     {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "matchPackagePatterns": ["rollup"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "matchPackagePatterns": [
+        "rollup"
+      ],
       "groupName": "rollup",
       "platformAutomerge": true,
       "automerge": true
