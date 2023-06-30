@@ -1,25 +1,34 @@
 # リリース
 
-**この資料は時雨堂社内向けです**
-
 ## リリース環境
 
 - Node.js
-    - v16.13.0 以上
-- npm
-    - v8.1.0 以上
-- npm install
-    - これで事前に利用するライブラリをインストールする
+  - v16.20.0 以上
+- pnpm
+  - v8.6.5 以上
+- pnpm install
+  - これで事前に利用するライブラリをインストールする
 
+## canary リリース手順
+
+- pnpm run lint を実行する
+- pnpm run test を実行する
+- pnpm run release:canary を実行する
+  - Next version を確認する
+  - git commit をするか聞かれるので確認して yes を選択する
+  - git tag をするか聞かれるので確認して yes を選択する
+- git push -u origin develop
+- git push origin `<tag>`
+- pnpm publish --tag canary を実行する
 
 ## リリース手順
 
 - 動作確認:
   - git clean -ffdx を実行する
-  - npm install を実行する
-  - npm run build を実行する
-  - npm run lint を実行する
-  - npm run test を実行する
+  - pnpm install を実行する
+  - pnpm run build を実行する
+  - pnpm run lint を実行する
+  - pnpm run test を実行する
   - https://shiguredo.github.io/sora-js-sdk/check.html で各ブラウザ・デバイスでの挙動を確認する
 - バージョン更新:
   - git flow release start `<tag>` で開始する
@@ -31,17 +40,5 @@
   - git push origin `<tag>`
 - リリース:
   - GitHub Releases にリリースを作成する
-  - npm publish を実行する （事前に `npm publish --dry-run` を実行して変なところがないかを軽く確認する）
+  - pnpm publish を実行する （事前に `pnpm publish --dry-run` を実行して変なところがないかを軽く確認する）
   - sora-js-sdk のドキュメントリポジトリ（private）のリリースノートを更新する
-
-## canary リリース手順
-
-- npm run lint を実行する
-- npm run test を実行する
-- npm run release:canary を実行する
-    - Next version を確認する
-    - git commit をするか聞かれるので確認して yes を選択する
-    - git tag をするか聞かれるので確認して yes を選択する
-- git push -u origin develop
-- git push origin `<tag>`
-- npm publish --tag canary を実行する
