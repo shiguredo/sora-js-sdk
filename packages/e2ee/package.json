@@ -26,7 +26,7 @@
     "eslint-plugin-prettier": "4.2.1",
     "prettier": "2.8.8",
     "rollup": "3.26.0",
-    "typescript": "5.0.4"
+    "typescript": "5.1.6"
   },
   "dependencies": {
     "@sora/go-wasm": "workspace:^"
