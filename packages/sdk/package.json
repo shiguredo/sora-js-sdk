@@ -29,7 +29,7 @@
     "typescript": "5.1.6"
   },
   "dependencies": {
-    "@sora/e2ee": "^2021.1.0",
+    "@sora/e2ee": "workspace:^",
     "fflate": "0.8.0"
   }
 }
