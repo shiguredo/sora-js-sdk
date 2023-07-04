@@ -781,7 +781,7 @@
 	 *
 	 * エンコード形式に非互換な変更が入った時点での google/lyra のバージョンが格納されている。
 	 */
-	const LYRA_VERSION$1 = "1.3.0";
+	const LYRA_VERSION = "1.3.0";
 	const DEFAULT_SAMPLE_RATE = 16000;
 	const DEFAULT_BITRATE = 9200;
 	const DEFAULT_ENABLE_DTX = false;
@@ -1224,8 +1224,8 @@
 	 */
 	class LyraParams {
 	    constructor(version, bitrate, enableDtx) {
-	        if (version !== LYRA_VERSION$1) {
-	            throw new Error(`Unsupported Lyra version: ${version} (supported version is ${LYRA_VERSION$1})`);
+	        if (version !== LYRA_VERSION) {
+	            throw new Error(`Unsupported Lyra version: ${version} (supported version is ${LYRA_VERSION})`);
 	        }
 	        if (bitrate !== 3200 && bitrate !== 6000 && bitrate !== 9200) {
 	            throw new Error(`Unsupported Lyra bitrate: ${bitrate} (must be one of 3200, 6000, or 9200)`);
@@ -2204,10 +2204,6 @@
 	}
 	catch (e) { }
 
-	// jest のテスト実行時にエラーが出るので以下の import はコメントアウトし自前で定数を定義している
-	// TODO(sile): 回避方法が分かったら import 方式に戻したい
-	// import { LYRA_VERSION } from "@shiguredo/lyra-wasm";
-	const LYRA_VERSION = '1.3.0';
 	function browser() {
 	    const ua = window.navigator.userAgent.toLocaleLowerCase();
 	    if (ua.indexOf('edge') !== -1) {

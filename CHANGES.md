@@ -11,6 +11,11 @@
 
 ## develop
 
+- [CHANGE] vitest 化
+
+  - jest をやめる
+  - @voluntas
+
 - [CHANGE] pnpm 化
   - npx 利用をやめる
   - @voluntas
