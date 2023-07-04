@@ -19,10 +19,7 @@ import {
   TransportType,
 } from './types'
 
-// jest のテスト実行時にエラーが出るので以下の import はコメントアウトし自前で定数を定義している
-// TODO(sile): 回避方法が分かったら import 方式に戻したい
-// import { LYRA_VERSION } from "@shiguredo/lyra-wasm";
-const LYRA_VERSION = '1.3.0'
+import { LYRA_VERSION } from '@shiguredo/lyra-wasm'
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase()
