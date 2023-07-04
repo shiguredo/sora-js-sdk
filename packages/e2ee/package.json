@@ -29,6 +29,6 @@
     "typescript": "5.0.4"
   },
   "dependencies": {
-    "@sora/go-wasm": "^2021.1.0"
+    "@sora/go-wasm": "workspace:^"
   }
 }
