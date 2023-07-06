@@ -11,6 +11,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
+    "stripInternal": true,
     "newLine": "LF",
     "types": [],
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"],

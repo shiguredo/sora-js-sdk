@@ -189,6 +189,8 @@ export default class ConnectionBase {
   protected callbacks: Callbacks
   /**
    * E2EE インスタンス
+   *
+   * @internal
    */
   protected e2ee: SoraE2EE | null
   /**
