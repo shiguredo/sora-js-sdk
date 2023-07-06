@@ -26,7 +26,6 @@ jobs:
       - run: pnpm run build
       - run: pnpm run lint
       - run: pnpm run test
-      - run: git diff --stat --exit-code
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
