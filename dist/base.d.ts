@@ -1,5 +1,4 @@
 import { Callbacks, ConnectionOptions, JSONType, DataChannelConfiguration, SignalingOfferMessage, SignalingReOfferMessage, SignalingUpdateMessage } from './types';
-import SoraE2EE from '@sora/e2ee';
 declare global {
     interface Algorithm {
         namedCurve: string;
@@ -128,10 +127,6 @@ export default class ConnectionBase {
      * イベントコールバックのリスト
      */
     protected callbacks: Callbacks;
-    /**
-     * E2EE インスタンス
-     */
-    protected e2ee: SoraE2EE | null;
     /**
      * mid と AudioCodecType の対応づけを保持するマップ
      *
