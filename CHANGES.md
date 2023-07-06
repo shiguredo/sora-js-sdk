@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] dist/ ディレクトリはリポジトリに含めないようにする
+  - 含めてもあまりメリットがない割に手間が増えるので削除してしまう
+  - @sile
+
 - [FIX] ユーザが直接使わない型には @internal を指定して .d.ts に含まれないようにする
     - sora-js-sdk 内部で使われている E2EE と Lyra 関連の型が生成される .d.ts ファイルに含まれないようにする
     - これによって sora-js-sdk の利用者は tsconfig.json に `skipLibCheck: true` を指定せずともコンパイルができるようになる
