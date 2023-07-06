@@ -11,8 +11,12 @@
 
 ## develop
 
-- [CHANGE] vitest 化
+- [FIX] 余計な依存が増えるのを防ぐために、ユーザが直接使わない型には @internalを指定して .d.ts に含まれないようにする
+    - sora-js-sdk 内部で使われている E2EE と Lyra 関連の型が生成される .d.ts ファイルに含まれないようにする
+    - これによって sora-js-sdk の利用者は tsconfig.json に `skipLibCheck: true` を指定せずともコンパイルができるようになる
+    - @sile
 
+- [CHANGE] vitest 化
   - jest をやめる
   - @voluntas
 
