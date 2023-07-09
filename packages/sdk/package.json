@@ -23,7 +23,7 @@
     "rollup": "3.26.0",
     "rollup-plugin-delete": "2.0.0",
     "typescript": "5.1.6",
-    "vitest": "0.32.4"
+    "vitest": "0.33.0"
   },
   "dependencies": {
     "@sora/e2ee": "workspace:^",
