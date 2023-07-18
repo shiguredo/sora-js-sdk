@@ -21,33 +21,39 @@ Please read https://github.com/shiguredo/oss before use.
 使い方は [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/) を参照してください。
 
 - sora.js
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
+  - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
 - sora.mjs
-    - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.mjs
+  - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.mjs
 
 ## システム条件
 
 - WebRTC SFU Sora 2022.2.0 以降
 - TypeScript 3.8 以降
 
-## サンプル
+## 組み込みサンプル
 
 - Multistream Sendrecv
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendrecv.html
+  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendrecv.html
 - Multistream Sendonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendonly.html
+  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendonly.html
 - Multistream Recvonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/recvonly.html
+  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/recvonly.html
 - Spotlight Sendrecv
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_sendrecv.html
+  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_sendrecv.html
 - Spotlight Recvonly
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_recvonly.html
+  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_recvonly.html
 - Simulcast
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/simulcast.html
+  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/simulcast.html
 - DataChannelMessaging
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/data_channel_messaging.html
+  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/data_channel_messaging.html
 - E2EE
-    - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/e2ee.html
+  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/e2ee.html
+
+## サンプル集
+
+Vite と pnpm を利用したサンプル集はこちらです。
+
+https://github.com/shiguredo/sora-js-sdk-samples
 
 ## E2EE について
 
