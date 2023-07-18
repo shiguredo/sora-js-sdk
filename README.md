@@ -63,7 +63,8 @@ https://github.com/shiguredo/sora-js-sdk-samples
 
 ## マルチトラックについて
 
-[WebRTC SFU Sora](https://sora.shiguredo.jp) は 1 メディアストリームにつき 1 音声トラック、1 映像トラックまでしか対応していないため, Sora JavaScript SDK はマルチトラックに対応していません。
+[WebRTC SFU Sora](https://sora.shiguredo.jp) は 1 メディアストリームにつき 1 音声トラック、
+1 映像トラックまでしか対応していないため, Sora JavaScript SDK はマルチトラックに対応していません。
 
 マルチトラックへの対応は今のところ未定です。
 
