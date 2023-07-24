@@ -156,8 +156,8 @@ export function createSignalingMessage(
   if (typeof options.simulcast === 'boolean') {
     message.simulcast = options.simulcast
   }
-  const simalcastRids = ['r0', 'r1', 'r2']
-  if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
+  const simulcastRids = ['r0', 'r1', 'r2']
+  if (options.simulcastRid !== undefined && 0 <= simulcastRids.indexOf(options.simulcastRid)) {
     message.simulcast_rid = options.simulcastRid
   }
   if (typeof options.spotlight === 'boolean') {
