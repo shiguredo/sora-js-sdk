@@ -821,6 +821,8 @@ export default class ConnectionBase {
             resolve({ code: 4999, reason: '' })
           }
         })
+        // eslint 対策、エラーが発生したら reject(error) を返す
+        .catch((error) => reject(error))
         .finally(() => {
           closeDataChannels()
           clearTimeout(disconnectWaitTimeoutId)
