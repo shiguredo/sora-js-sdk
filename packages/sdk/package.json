@@ -14,7 +14,7 @@
     "@rollup/plugin-node-resolve": "15.1.0",
     "@rollup/plugin-replace": "5.0.2",
     "@rollup/plugin-typescript": "11.1.2",
-    "rollup": "3.26.3",
+    "rollup": "3.27.0",
     "rollup-plugin-delete": "2.0.0",
     "vitest": "0.33.0"
   },
