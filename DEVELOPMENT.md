@@ -13,10 +13,8 @@
 
 ## 開発準備
 
-**lerna でパッケージ管理していた時代に yarn install した状態の場合はトップディレクトリと packages 以下のすべての node_modules を削除すること**
-
-- `npm install` を実行
-- `npm run start` でローカルサーバを起動する
+- `pnpm install` を実行
+- `pnpm run start` でローカルサーバを起動する
 
 ## 開発
 
