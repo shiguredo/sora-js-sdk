@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest'
 import { createSignalingMessage } from '../src/utils'
-import { AudioCodecType, DataChannelDirection, VideoCodecType } from '../src/types'
+import { type AudioCodecType, DataChannelDirection, VideoCodecType } from '../src/types'
 
 const channelId = '7N3fsMHob'
 const metadata = 'PG9A6RXgYqiqWKOVO'
@@ -428,7 +428,7 @@ test("createSignalingMessage e2ee: true, videoCodecType: 'VP9'", () => {
   const options = {
     e2ee: true,
     e2eeWasmUrl: 'wasm',
-    VideoCodecType: 'VP9',
+    videoCodecType: 'VP9' as VideoCodecType,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     e2ee: true,
