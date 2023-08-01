@@ -352,7 +352,7 @@ export default class ConnectionBase {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
       setTimeout(() => {
         try {
-          for (const track of stream.getAudioTracks()) {
+          const promises = stream.getVideoTracks().map(async (track) => {
             track.stop()
             stream.removeTrack(track)
             if (this.pc !== null) {
@@ -360,18 +360,19 @@ export default class ConnectionBase {
                 return s.track && s.track.id === track.id
               })
               if (sender) {
-                sender.replaceTrack(null).catch(reject)
+                return sender.replaceTrack(null)
               }
             }
-          }
-          resolve()
+          })
+          Promise.all(promises)
+            .then(() => resolve())
+            .catch(reject)
         } catch (error) {
           reject(error)
         }
       }, 100)
     })
   }
-
   /**
    * video track を停止するメソッド
    *
@@ -400,7 +401,7 @@ export default class ConnectionBase {
       setTimeout(() => {
         // 何か問題が起きたら例外が上がる
         try {
-          for (const track of stream.getVideoTracks()) {
+          const promises = stream.getVideoTracks().map(async (track) => {
             track.stop()
             stream.removeTrack(track)
             if (this.pc !== null) {
@@ -409,11 +410,13 @@ export default class ConnectionBase {
               })
               if (sender) {
                 // replaceTrack は非同期操作なので catch(reject) しておく
-                sender.replaceTrack(null).catch(reject)
+                return sender.replaceTrack(null)
               }
             }
-          }
-          resolve()
+          })
+          Promise.all(promises)
+            .then(() => resolve())
+            .catch(reject)
         } catch (error) {
           reject(error)
         }
