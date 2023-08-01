@@ -1,4 +1,4 @@
-import { RTCEncodedAudioFrame } from './types'
+import { type RTCEncodedAudioFrame } from './types'
 
 import {
   LYRA_VERSION,
