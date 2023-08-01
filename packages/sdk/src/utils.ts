@@ -38,7 +38,7 @@ function browser(): Browser {
 }
 
 function enabledSimulcast(): boolean {
-  const REQUIRED_HEADER_EXTEMSIONS = [
+  const REQUIRED_HEADER_EXTENSIONS = [
     'urn:ietf:params:rtp-hdrext:sdes:mid',
     'urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id',
     'urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id',
@@ -55,7 +55,7 @@ function enabledSimulcast(): boolean {
     return false
   }
   const headerExtensions = capabilities.headerExtensions.map((h) => h.uri)
-  const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTEMSIONS.every((h) =>
+  const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTENSIONS.every((h) =>
     headerExtensions.includes(h),
   )
   return hasAllRequiredHeaderExtensions
