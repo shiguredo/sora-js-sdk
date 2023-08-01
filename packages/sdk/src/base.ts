@@ -348,22 +348,26 @@ export default class ConnectionBase {
     for (const track of stream.getAudioTracks()) {
       track.enabled = false
     }
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
-      setTimeout(async () => {
-        for (const track of stream.getAudioTracks()) {
-          track.stop()
-          stream.removeTrack(track)
-          if (this.pc !== null) {
-            const sender = this.pc.getSenders().find((s) => {
-              return s.track && s.track.id === track.id
-            })
-            if (sender) {
-              await sender.replaceTrack(null)
+      setTimeout(() => {
+        try {
+          for (const track of stream.getAudioTracks()) {
+            track.stop()
+            stream.removeTrack(track)
+            if (this.pc !== null) {
+              const sender = this.pc.getSenders().find((s) => {
+                return s.track && s.track.id === track.id
+              })
+              if (sender) {
+                sender.replaceTrack(null).catch(reject)
+              }
             }
           }
+          resolve()
+        } catch (error) {
+          reject(error)
         }
-        resolve()
       }, 100)
     })
   }
