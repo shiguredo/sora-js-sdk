@@ -351,25 +351,21 @@ export default class ConnectionBase {
     return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
       setTimeout(() => {
-        try {
-          const promises = stream.getVideoTracks().map(async (track) => {
-            track.stop()
-            stream.removeTrack(track)
-            if (this.pc !== null) {
-              const sender = this.pc.getSenders().find((s) => {
-                return s.track && s.track.id === track.id
-              })
-              if (sender) {
-                return sender.replaceTrack(null)
-              }
+        const promises = stream.getVideoTracks().map(async (track) => {
+          track.stop()
+          stream.removeTrack(track)
+          if (this.pc !== null) {
+            const sender = this.pc.getSenders().find((s) => {
+              return s.track && s.track.id === track.id
+            })
+            if (sender) {
+              return sender.replaceTrack(null)
             }
-          })
-          Promise.all(promises)
-            .then(() => resolve())
-            .catch(reject)
-        } catch (error) {
-          reject(error)
-        }
+          }
+        })
+        Promise.all(promises)
+          .then(() => resolve())
+          .catch(reject)
       }, 100)
     })
   }
@@ -399,27 +395,22 @@ export default class ConnectionBase {
     return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
       setTimeout(() => {
-        // 何か問題が起きたら例外が上がる
-        try {
-          const promises = stream.getVideoTracks().map(async (track) => {
-            track.stop()
-            stream.removeTrack(track)
-            if (this.pc !== null) {
-              const sender = this.pc.getSenders().find((s) => {
-                return s.track && s.track.id === track.id
-              })
-              if (sender) {
-                // replaceTrack は非同期操作なので catch(reject) しておく
-                return sender.replaceTrack(null)
-              }
+        const promises = stream.getVideoTracks().map(async (track) => {
+          track.stop()
+          stream.removeTrack(track)
+          if (this.pc !== null) {
+            const sender = this.pc.getSenders().find((s) => {
+              return s.track && s.track.id === track.id
+            })
+            if (sender) {
+              // replaceTrack は非同期操作なので catch(reject) しておく
+              return sender.replaceTrack(null)
             }
-          })
-          Promise.all(promises)
-            .then(() => resolve())
-            .catch(reject)
-        } catch (error) {
-          reject(error)
-        }
+          }
+        })
+        Promise.all(promises)
+          .then(() => resolve())
+          .catch(reject)
       }, 100)
     })
   }
