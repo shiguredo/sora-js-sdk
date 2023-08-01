@@ -11,6 +11,8 @@
 
 ## develop
 
+- [FIX] stopVideoTrack で例外を握りつぶしていたのを修正する
+  - @voluntas
 - [CHANGE] dist/ ディレクトリはリポジトリに含めないようにする
   - 含めてもあまりメリットがない割に手間が増えるので削除してしまう
   - @sile
