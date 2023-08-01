@@ -348,10 +348,10 @@ export default class ConnectionBase {
     for (const track of stream.getAudioTracks()) {
       track.enabled = false
     }
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
-      setTimeout(async () => {
-        for (const track of stream.getAudioTracks()) {
+      setTimeout(() => {
+        const promises = stream.getVideoTracks().map(async (track) => {
           track.stop()
           stream.removeTrack(track)
           if (this.pc !== null) {
@@ -359,15 +359,16 @@ export default class ConnectionBase {
               return s.track && s.track.id === track.id
             })
             if (sender) {
-              await sender.replaceTrack(null)
+              return sender.replaceTrack(null)
             }
           }
-        }
-        resolve()
+        })
+        Promise.all(promises)
+          .then(() => resolve())
+          .catch(reject)
       }, 100)
     })
   }
-
   /**
    * video track を停止するメソッド
    *
@@ -391,10 +392,10 @@ export default class ConnectionBase {
     for (const track of stream.getVideoTracks()) {
       track.enabled = false
     }
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
-      setTimeout(async () => {
-        for (const track of stream.getVideoTracks()) {
+      setTimeout(() => {
+        const promises = stream.getVideoTracks().map(async (track) => {
           track.stop()
           stream.removeTrack(track)
           if (this.pc !== null) {
@@ -402,11 +403,14 @@ export default class ConnectionBase {
               return s.track && s.track.id === track.id
             })
             if (sender) {
-              await sender.replaceTrack(null)
+              // replaceTrack は非同期操作なので catch(reject) しておく
+              return sender.replaceTrack(null)
             }
           }
-        }
-        resolve()
+        })
+        Promise.all(promises)
+          .then(() => resolve())
+          .catch(reject)
       }, 100)
     })
   }
