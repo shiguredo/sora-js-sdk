@@ -28,20 +28,20 @@
     "dist"
   ],
   "devDependencies": {
-    "serve": "14.2.0",
-    "typedoc": "0.24.8",
-    "@typescript-eslint/eslint-plugin": "6.2.0",
-    "@typescript-eslint/parser": "6.2.0",
+    "@typescript-eslint/eslint-plugin": "6.2.1",
+    "@typescript-eslint/parser": "6.2.1",
     "eslint": "8.46.0",
     "eslint-config-prettier": "8.9.0",
     "eslint-plugin-prettier": "5.0.0",
-    "typescript": "5.1.6",
-    "prettier": "3.0.0"
+    "prettier": "3.0.0",
+    "serve": "14.2.0",
+    "typedoc": "0.24.8",
+    "typescript": "5.1.6"
   },
   "resolutions": {
     "get-pkg-repo": "5.0.0"
   },
-  "packageManager": "pnpm@8.6.10",
+  "packageManager": "pnpm@8.6.11",
   "engines": {
     "node": ">=16.20.0"
   }
