@@ -19,7 +19,7 @@
     "@rollup/plugin-node-resolve": "15.1.0",
     "@rollup/plugin-replace": "5.0.2",
     "@rollup/plugin-typescript": "11.1.2",
-    "rollup": "3.27.0"
+    "rollup": "3.27.2"
   },
   "dependencies": {
     "@sora/go-wasm": "workspace:^"
