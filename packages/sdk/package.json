@@ -10,11 +10,11 @@
   "devDependencies": {
     "@shiguredo/lyra-wasm": "2023.1.0",
     "jsdom": "22.1.0",
-    "@rollup/plugin-commonjs": "25.0.3",
+    "@rollup/plugin-commonjs": "25.0.4",
     "@rollup/plugin-node-resolve": "15.1.0",
     "@rollup/plugin-replace": "5.0.2",
     "@rollup/plugin-typescript": "11.1.2",
-    "rollup": "3.27.2",
+    "rollup": "3.28.0",
     "rollup-plugin-delete": "2.0.0",
     "vitest": "0.34.1"
   },
