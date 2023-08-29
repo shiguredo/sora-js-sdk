@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] Node.js 16 系を落とす
+  - @voluntas
 - [FIX] stopVideoTrack で例外を握りつぶしていたのを修正する
   - @voluntas
 - [CHANGE] dist/ ディレクトリはリポジトリに含めないようにする
