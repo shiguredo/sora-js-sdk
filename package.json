@@ -28,14 +28,14 @@
     "dist"
   ],
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "6.5.0",
-    "@typescript-eslint/parser": "6.5.0",
+    "@typescript-eslint/eslint-plugin": "6.6.0",
+    "@typescript-eslint/parser": "6.6.0",
     "eslint": "8.48.0",
     "eslint-config-prettier": "9.0.0",
     "eslint-plugin-prettier": "5.0.0",
     "prettier": "3.0.3",
     "serve": "14.2.1",
-    "typedoc": "0.25.0",
+    "typedoc": "0.25.1",
     "typescript": "5.2.2"
   },
   "resolutions": {
