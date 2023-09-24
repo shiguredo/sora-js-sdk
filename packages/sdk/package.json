@@ -16,10 +16,10 @@
     "jsdom": "22.1.0",
     "rollup": "3.29.2",
     "rollup-plugin-delete": "2.0.0",
-    "vitest": "0.34.4"
+    "vitest": "0.34.5"
   },
   "dependencies": {
     "@sora/e2ee": "workspace:^",
-    "fflate": "0.8.0"
+    "fflate": "0.8.1"
   }
 }
