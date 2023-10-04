@@ -110,7 +110,7 @@ limitations under the License.
 ### クライアント SDK
 
 - [Sora JavaScript SDK](https://github.com/shiguredo/sora-javascript-sdk)
-  - [WebRTC SFU Sora JavaScript SDK サンプル集](https://github.com/shiguredo/sora-js-sdk-samples)
+  - [Sora JavaScript SDK サンプル集](https://github.com/shiguredo/sora-js-sdk-samples)
   - [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/)
 - [Sora iOS SDK](https://github.com/shiguredo/sora-ios-sdk)
   - [Sora iOS SDK クイックスタート](https://github.com/shiguredo/sora-ios-sdk-quickstart)
