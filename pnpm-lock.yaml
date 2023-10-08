@@ -46,14 +46,14 @@ importers:
         version: link:../go-wasm
     devDependencies:
       '@rollup/plugin-node-resolve':
-        specifier: 15.2.1
-        version: 15.2.1(rollup@3.29.4)
+        specifier: 15.2.3
+        version: 15.2.3(rollup@3.29.4)
       '@rollup/plugin-replace':
-        specifier: 5.0.2
-        version: 5.0.2(rollup@3.29.4)
+        specifier: 5.0.3
+        version: 5.0.3(rollup@3.29.4)
       '@rollup/plugin-typescript':
-        specifier: 11.1.4
-        version: 11.1.4(rollup@3.29.4)(typescript@5.2.2)
+        specifier: 11.1.5
+        version: 11.1.5(rollup@3.29.4)(typescript@5.2.2)
       rollup:
         specifier: 3.29.4
         version: 3.29.4
@@ -70,17 +70,17 @@ importers:
         version: 0.8.1
     devDependencies:
       '@rollup/plugin-commonjs':
-        specifier: 25.0.4
-        version: 25.0.4(rollup@3.29.4)
+        specifier: 25.0.5
+        version: 25.0.5(rollup@3.29.4)
       '@rollup/plugin-node-resolve':
-        specifier: 15.2.1
-        version: 15.2.1(rollup@3.29.4)
+        specifier: 15.2.3
+        version: 15.2.3(rollup@3.29.4)
       '@rollup/plugin-replace':
-        specifier: 5.0.2
-        version: 5.0.2(rollup@3.29.4)
+        specifier: 5.0.3
+        version: 5.0.3(rollup@3.29.4)
       '@rollup/plugin-typescript':
-        specifier: 11.1.4
-        version: 11.1.4(rollup@3.29.4)(typescript@5.2.2)
+        specifier: 11.1.5
+        version: 11.1.5(rollup@3.29.4)(typescript@5.2.2)
       '@shiguredo/lyra-wasm':
         specifier: 2023.1.0
         version: 2023.1.0
@@ -403,11 +403,11 @@ packages:
       tslib: 2.6.2
     dev: true
 
-  /@rollup/plugin-commonjs@25.0.4(rollup@3.29.4):
-    resolution: {integrity: sha512-L92Vz9WUZXDnlQQl3EwbypJR4+DM2EbsO+/KOcEkP4Mc6Ct453EeDB2uH9lgRwj4w5yflgNpq9pHOiY8aoUXBQ==}
+  /@rollup/plugin-commonjs@25.0.5(rollup@3.29.4):
+    resolution: {integrity: sha512-xY8r/A9oisSeSuLCTfhssyDjo9Vp/eDiRLXkg1MXCcEEgEjPmLU+ZyDB20OOD0NlyDa/8SGbK5uIggF5XTx77w==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
-      rollup: ^2.68.0||^3.0.0
+      rollup: ^2.68.0||^3.0.0||^4.0.0
     peerDependenciesMeta:
       rollup:
         optional: true
@@ -421,11 +421,11 @@ packages:
       rollup: 3.29.4
     dev: true
 
-  /@rollup/plugin-node-resolve@15.2.1(rollup@3.29.4):
-    resolution: {integrity: sha512-nsbUg588+GDSu8/NS8T4UAshO6xeaOfINNuXeVHcKV02LJtoRaM1SiOacClw4kws1SFiNhdLGxlbMY9ga/zs/w==}
+  /@rollup/plugin-node-resolve@15.2.3(rollup@3.29.4):
+    resolution: {integrity: sha512-j/lym8nf5E21LwBT4Df1VD6hRO2L2iwUeUmP7litikRsVp1H6NWx20NEp0Y7su+7XGc476GnXXc4kFeZNGmaSQ==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
-      rollup: ^2.78.0||^3.0.0
+      rollup: ^2.78.0||^3.0.0||^4.0.0
     peerDependenciesMeta:
       rollup:
         optional: true
@@ -439,11 +439,11 @@ packages:
       rollup: 3.29.4
     dev: true
 
-  /@rollup/plugin-replace@5.0.2(rollup@3.29.4):
-    resolution: {integrity: sha512-M9YXNekv/C/iHHK+cvORzfRYfPbq0RDD8r0G+bMiTXjNGKulPnCT9O3Ss46WfhI6ZOCgApOP7xAdmCQJ+U2LAA==}
+  /@rollup/plugin-replace@5.0.3(rollup@3.29.4):
+    resolution: {integrity: sha512-je7fu05B800IrMlWjb2wzJcdXzHYW46iTipfChnBDbIbDXhASZs27W1B58T2Yf45jZtJUONegpbce+9Ut2Ti/Q==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
-      rollup: ^1.20.0||^2.0.0||^3.0.0
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
     peerDependenciesMeta:
       rollup:
         optional: true
@@ -453,11 +453,11 @@ packages:
       rollup: 3.29.4
     dev: true
 
-  /@rollup/plugin-typescript@11.1.4(rollup@3.29.4)(typescript@5.2.2):
-    resolution: {integrity: sha512-WZRh5LBVLQXdKFICUId5J3eIpmjGURaBqntfg3GSZACgeOAFS+lOSMGTwfzDkELTaZVp/lWdMVNU3UkwCUBg/Q==}
+  /@rollup/plugin-typescript@11.1.5(rollup@3.29.4)(typescript@5.2.2):
+    resolution: {integrity: sha512-rnMHrGBB0IUEv69Q8/JGRD/n4/n6b3nfpufUu26axhUcboUzv/twfZU8fIBbTOphRAe0v8EyxzeDpKXqGHfyDA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
-      rollup: ^2.14.0||^3.0.0
+      rollup: ^2.14.0||^3.0.0||^4.0.0
       tslib: '*'
       typescript: '>=3.7.0'
     peerDependenciesMeta:
