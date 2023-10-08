@@ -35,7 +35,7 @@
     "eslint-plugin-prettier": "5.0.0",
     "prettier": "3.0.3",
     "serve": "14.2.1",
-    "typedoc": "0.25.1",
+    "typedoc": "0.25.2",
     "typescript": "5.2.2"
   },
   "resolutions": {
