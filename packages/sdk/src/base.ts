@@ -351,7 +351,7 @@ export default class ConnectionBase {
     return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
       setTimeout(() => {
-        const promises = stream.getVideoTracks().map(async (track) => {
+        const promises = stream.getAudioTracks().map(async (track) => {
           track.stop()
           stream.removeTrack(track)
           if (this.pc !== null) {
