@@ -1,0 +1,24 @@
+{
+  "[typescript]": {
+    "editor.rulers": [
+      100
+    ],
+    "editor.tabSize": 2,
+    "editor.indentSize": 2,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "[typescriptreact]": {
+    "editor.rulers": [
+      100
+    ],
+    "editor.tabSize": 2,
+    "editor.indentSize": 2,
+    "editor.detectIndentation": false,
+    "editor.insertSpaces": true,
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "deno.enable": false,
+  "deno.lint": true,
+  "deno.config": "./deno.jsonc",
+}

@@ -4,8 +4,8 @@ import {
   createLyraWorker,
   isLyraInitialized,
   LyraState,
-  transformPcmToLyra,
   transformLyraToPcm,
+  transformPcmToLyra,
 } from './lyra'
 import {
   ConnectError,
@@ -27,8 +27,8 @@ import {
   AudioCodecType,
   Callbacks,
   ConnectionOptions,
-  JSONType,
   DataChannelConfiguration,
+  JSONType,
   RTCEncodedAudioFrame,
   SignalingConnectMessage,
   SignalingMessage,
@@ -37,8 +37,8 @@ import {
   SignalingOfferMessageDataChannel,
   SignalingPingMessage,
   SignalingPushMessage,
-  SignalingReOfferMessage,
   SignalingRedirectMessage,
+  SignalingReOfferMessage,
   SignalingReqStatsMessage,
   SignalingSwitchedMessage,
   SignalingUpdateMessage,
@@ -1199,8 +1199,7 @@ export default class ConnectionBase {
             reject(error)
           }
         }
-      }
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      } // eslint-disable-next-line @typescript-eslint/no-floating-promises
       ;(async () => {
         let signalingMessage: SignalingConnectMessage
         try {
@@ -1635,7 +1634,7 @@ export default class ConnectionBase {
       const timerId = setInterval(() => {
         if (!this.pc) {
           const error = new Error()
-          error.message = "PeerConnection connectionState did not change to 'connected'"
+          error.message = 'PeerConnection connectionState did not change to \'connected\''
           clearInterval(timerId)
           reject(error)
         } else if (this.pc && this.pc.connectionState === 'connected') {
@@ -1722,8 +1721,7 @@ export default class ConnectionBase {
         // iceConnectionState "failed" で切断する
         if (this.pc.iceConnectionState === 'failed') {
           this.abendPeerConnectionState('ICE-CONNECTION-STATE-FAILED')
-        }
-        // iceConnectionState "disconnected" になってから 10000ms の間変化がない場合切断する
+        } // iceConnectionState "disconnected" になってから 10000ms の間変化がない場合切断する
         else if (this.pc.iceConnectionState === 'disconnected') {
           this.monitorIceConnectionStateChangeTimerId = setTimeout(() => {
             if (this.pc && this.pc.iceConnectionState === 'disconnected') {
@@ -2469,7 +2467,7 @@ export default class ConnectionBase {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.selfFingerprint()
     }
-    return
+    return undefined
   }
 
   /**
@@ -2479,7 +2477,7 @@ export default class ConnectionBase {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.remoteFingerprints()
     }
-    return
+    return undefined
   }
 
   /**

@@ -7,8 +7,8 @@
   "types": "dist/sora.d.ts",
   "scripts": {
     "build": "pnpm -r --filter=./packages/* build",
-    "lint": "pnpm -r --filter=./packages/* lint",
-    "fmt": "pnpm -r --filter=./packages/* fmt",
+    "lint": "deno lint",
+    "fmt": "deno fmt",
     "test": "pnpm -r --filter=./packages/* test",
     "start": "serve -S -l 8080 ./example",
     "doc": "typedoc",
@@ -28,12 +28,6 @@
     "dist"
   ],
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "6.8.0",
-    "@typescript-eslint/parser": "6.8.0",
-    "eslint": "8.51.0",
-    "eslint-config-prettier": "9.0.0",
-    "eslint-plugin-prettier": "5.0.1",
-    "prettier": "3.0.3",
     "serve": "14.2.1",
     "typedoc": "0.25.2",
     "typescript": "5.2.2"
