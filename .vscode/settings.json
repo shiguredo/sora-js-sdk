@@ -5,18 +5,17 @@
     ],
     "editor.tabSize": 2,
     "editor.indentSize": 2,
+    "editor.insertSpaces": true,
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "denoland.vscode-deno"
   },
-  "[typescriptreact]": {
-    "editor.rulers": [
-      100
-    ],
+  "[markdown]": {
     "editor.tabSize": 2,
     "editor.indentSize": 2,
-    "editor.detectIndentation": false,
     "editor.insertSpaces": true,
-    "editor.defaultFormatter": "denoland.vscode-deno"
+    "editor.formatOnSave": true,
+    "editor.detectIndentation": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "deno.enable": false,
   "deno.lint": true,

@@ -35,6 +35,8 @@
     ],
     "exclude": [
       "packages/go-wasm/src/wasm_exec.js",
+      // markdown は prettier でフォーマットする
+      "*.md",
       "node_modules"
     ],
     "useTabs": false,
