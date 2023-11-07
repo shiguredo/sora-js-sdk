@@ -16,23 +16,27 @@
   "parserOptions": {
     "sourceType": "module"
   },
-  "plugins": [
-    "@typescript-eslint",
-    "prettier"
-  ],
+  "plugins": ["@typescript-eslint", "prettier"],
   "globals": {
     "SORA_JS_SDK_VERSION": true
   },
   "rules": {
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-empty-function": "off",
-    "@typescript-eslint/no-unused-vars": ["error", {
-      "vars": "all",
-      "args": "all",
-      "argsIgnorePattern": "^_"
-    }],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "vars": "all",
+        "args": "all",
+        "argsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/naming-convention": [
       "error",
+      {
+        "selector": "import",
+        "format": ["camelCase", "UPPER_CASE", "PascalCase"]
+      },
       {
         "selector": "default",
         "format": ["camelCase"]
