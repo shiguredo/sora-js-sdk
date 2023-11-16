@@ -36,7 +36,8 @@
     "prettier": "3.1.0",
     "serve": "14.2.1",
     "typedoc": "0.25.3",
-    "typescript": "5.2.2"
+    "typescript": "5.2.2",
+    "vitest": "0.34.6"
   },
   "resolutions": {
     "get-pkg-repo": "5.0.0"

@@ -15,8 +15,7 @@
     "@shiguredo/lyra-wasm": "2023.1.0",
     "jsdom": "22.1.0",
     "rollup": "4.4.1",
-    "rollup-plugin-delete": "2.0.0",
-    "vitest": "0.34.6"
+    "rollup-plugin-delete": "2.0.0"
   },
   "dependencies": {
     "@sora/e2ee": "workspace:^",

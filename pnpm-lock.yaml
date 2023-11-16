@@ -38,6 +38,9 @@ importers:
       typescript:
         specifier: 5.2.2
         version: 5.2.2
+      vitest:
+        specifier: 0.34.6
+        version: 0.34.6
 
   packages/e2ee:
     dependencies:
@@ -93,9 +96,6 @@ importers:
       rollup-plugin-delete:
         specifier: 2.0.0
         version: 2.0.0
-      vitest:
-        specifier: 0.34.6
-        version: 0.34.6(jsdom@22.1.0)
 
 packages:
 
@@ -2837,7 +2837,7 @@ packages:
       fsevents: 2.3.3
     dev: true
 
-  /vitest@0.34.6(jsdom@22.1.0):
+  /vitest@0.34.6:
     resolution: {integrity: sha512-+5CALsOvbNKnS+ZHMXtuUC7nL8/7F1F2DnHGjSsszX8zCjWSSviphCb/NuS9Nzf4Q03KyyDRBAXhF/8lffME4Q==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
@@ -2881,7 +2881,6 @@ packages:
       cac: 6.7.14
       chai: 4.3.10
       debug: 4.3.4
-      jsdom: 22.1.0
       local-pkg: 0.4.3
       magic-string: 0.30.5
       pathe: 1.1.1
