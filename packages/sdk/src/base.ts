@@ -181,6 +181,7 @@ export default class ConnectionBase {
    * シグナリング type offer に含まれる DataChannel レコード
    */
   private signalingOfferMessageDataChannels: {
+    // biome-ignore lint/suspicious/noRedeclare: 後で対応する
     [key in string]?: SignalingOfferMessageDataChannel
   }
   /**
@@ -1383,7 +1384,9 @@ export default class ConnectionBase {
    * @param sdp offer SDP
    * @returns 処理後の SDP
    */
-  private processOfferSdp(sdp: string): string {
+  private processOfferSdp(offerSdp: string): string {
+    // lint 対応で引数を変更したりしないようにしてる
+    let sdp = offerSdp
     if (isFirefox()) {
       // 同じ mid が採用される際にはもう使用されない transceiver を解放するために
       // port に 0 が指定された SDP が送られてくる。

@@ -82,9 +82,11 @@ function setLatestRemoteKeyId(connectionId: string, keyId: number): void {
 }
 
 function removeOldRemoteDeriveKeys(): void {
+  // biome-ignore lint/complexity/noForEach: Array ではなく Map
   latestRemoteKeyIdMap.forEach((latestKeyId, connectionId) => {
     const deriveKeyMap = remoteDeriveKeyMap.get(connectionId)
     if (deriveKeyMap) {
+      // biome-ignore lint/complexity/noForEach: Array ではなく Map
       deriveKeyMap.forEach((_, keyId) => {
         if (latestKeyId !== keyId) {
           deriveKeyMap.delete(keyId)
@@ -114,7 +116,7 @@ function getLatestSelfDeriveKey(): {
 function setSelfDeriveKey(connectionId: string, keyId: number, deriveKey: CryptoKey): void {
   const currentSelfDeriveKey = selfDeriveKeyMap.get('latest')
   if (currentSelfDeriveKey) {
-    if (currentSelfDeriveKey['keyId'] < keyId) {
+    if (currentSelfDeriveKey.keyId < keyId) {
       const nextSelfDeriveKey = { connectionId, keyId, deriveKey }
       selfDeriveKeyMap.set('latest', nextSelfDeriveKey)
     }
