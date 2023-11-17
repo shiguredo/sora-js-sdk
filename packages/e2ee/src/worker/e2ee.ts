@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/triple-slash-reference, @typescript-eslint/no-unused-vars */
 /// <reference path="./sframe.ts"/>
 
 type UnencryptedBytes = {

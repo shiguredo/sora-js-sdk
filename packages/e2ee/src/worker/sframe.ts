@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 const connectionIdLength = 26
 
 function byteCount(n: number): number {

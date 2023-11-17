@@ -1201,7 +1201,6 @@ export default class ConnectionBase {
           }
         }
       }
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       ;(async () => {
         let signalingMessage: SignalingConnectMessage
         try {
@@ -1488,7 +1487,6 @@ export default class ConnectionBase {
       // 古い API (i.e., createEncodedStreams) を使っているブラウザ
 
       // @ts-ignore
-      // eslint-disable-next-line
       const senderStreams = sender.createEncodedStreams() as TransformStream
       let readable = senderStreams.readable
       if (isLyraCodec && this.lyra !== undefined) {
@@ -1547,7 +1545,6 @@ export default class ConnectionBase {
       // 古い API (i.e., createEncodedStreams) を使っているブラウザ
 
       // @ts-ignore
-      // eslint-disable-next-line
       const receiverStreams = receiver.createEncodedStreams() as TransformStream
       let writable = receiverStreams.writable
       if (codecType === 'LYRA' && this.lyra !== undefined) {

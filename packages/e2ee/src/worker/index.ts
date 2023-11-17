@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/triple-slash-reference */
 /// <reference path="./e2ee.ts"/>
 
 type RemoteSecretKeyMaterial = {

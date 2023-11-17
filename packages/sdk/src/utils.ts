@@ -405,7 +405,6 @@ export function trace(clientId: string | null, title: string, value: unknown): v
     if (record && typeof record === 'object') {
       let keys = null
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         keys = Object.keys(JSON.parse(JSON.stringify(record)))
       } catch (_) {
         // 何もしない
