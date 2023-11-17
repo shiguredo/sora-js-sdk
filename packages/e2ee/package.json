@@ -11,8 +11,8 @@
     "build": "pnpm run build:worker && pnpm run build:development",
     "build:development": "NODE_ENV=development rollup -c rollup.config.mjs --bundleConfigAsCjs",
     "build:worker": "tsc --project tsconfig.worker.json",
-    "fmt": "prettier --write src",
-    "lint": "eslint --ext .ts ./src",
+    "lint": "biome lint ./src",
+    "fmt": "biome format --write ./src",
     "test": "echo \"no test\""
   },
   "devDependencies": {

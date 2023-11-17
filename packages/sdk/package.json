@@ -3,8 +3,8 @@
   "scripts": {
     "build": "rollup -c rollup.config.mjs --bundleConfigAsCjs",
     "watch": "rollup -c -w",
-    "lint": "eslint --ext .ts ./src",
-    "fmt": "prettier --write src",
+    "lint": "biome lint ./src",
+    "fmt": "biome format --write ./src",
     "test": "vitest run"
   },
   "devDependencies": {
