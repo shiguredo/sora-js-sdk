@@ -2,11 +2,11 @@ import { type RTCEncodedAudioFrame } from './types'
 
 import {
   LYRA_VERSION,
-  LyraEncoder,
   LyraDecoder,
-  LyraModule,
-  LyraEncoderOptions,
   LyraDecoderOptions,
+  LyraEncoder,
+  LyraEncoderOptions,
+  LyraModule,
 } from '@shiguredo/lyra-wasm'
 
 /**
@@ -269,7 +269,7 @@ export class LyraParams {
       throw new Error(`Lyra parameter 'usedtx' is not found in media description: ${media}`)
     }
 
-    return new LyraParams(version[1], Number(bitrate[1]), usedtx[1] == '1')
+    return new LyraParams(version[1], Number(bitrate[1]), usedtx[1] === '1')
   }
 
   /**
@@ -336,7 +336,7 @@ export class LyraState {
           .replace(/109 lyra[/]16000[/]1/, '110 opus/48000/2')
           .replace(/a=fmtp:109 .*/, 'a=rtpmap:109 L16/16000\r\na=ptime:20')
       }
-      replacedSdp += 'm=' + media
+      replacedSdp += `m=${media}`
     }
     return replacedSdp
   }
@@ -366,7 +366,7 @@ export class LyraState {
           .replace(/a=rtpmap:110 opus[/]48000[/]2/, 'a=rtpmap:109 L16/16000')
           .replace(/a=fmtp:110 .*/, 'a=ptime:20')
       }
-      replacedSdp += 'm=' + media
+      replacedSdp += `m=${media}`
     }
     return replacedSdp
   }
@@ -402,7 +402,7 @@ export class LyraState {
           .replace(/a=rtpmap:109 L16[/]16000/, 'a=rtpmap:109 lyra/16000/1')
           .replace(/a=ptime:20/, params.toFmtpString())
       }
-      replacedSdp += 'm=' + media
+      replacedSdp += `m=${media}`
     }
 
     return replacedSdp

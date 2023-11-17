@@ -11,15 +11,16 @@
     "build": "pnpm run build:worker && pnpm run build:development",
     "build:development": "NODE_ENV=development rollup -c rollup.config.mjs --bundleConfigAsCjs",
     "build:worker": "tsc --project tsconfig.worker.json",
-    "fmt": "prettier --write src",
-    "lint": "eslint --ext .ts ./src",
+    "lint": "biome lint ./src",
+    "fmt": "biome format --write ./src",
     "test": "echo \"no test\""
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-replace": "5.0.5",
     "@rollup/plugin-typescript": "11.1.5",
-    "rollup": "4.4.1"
+    "rollup": "4.4.1",
+    "tslib": "2.6.2"
   },
   "dependencies": {
     "@sora/go-wasm": "workspace:^"
