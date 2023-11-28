@@ -58,21 +58,27 @@ onmessage = (event): void => {
   const { type } = event.data
   if (type === 'selfSecretKeyMaterial') {
     const { selfSecretKeyMaterial, selfConnectionId, selfKeyId, waitingTime } = event.data
-    const timeoutId = setTimeout(() => {
-      crypto.subtle
-        .importKey('raw', selfSecretKeyMaterial.buffer, 'HKDF', false, ['deriveBits', 'deriveKey'])
-        .then((material) => {
-          generateDeriveKey(material).then((deriveKey) => {
-            setSelfDeriveKey(selfConnectionId, selfKeyId, deriveKey)
-          })
+    const timeoutId = setTimeout(
+      () => {
+        crypto.subtle
+          .importKey('raw', selfSecretKeyMaterial.buffer, 'HKDF', false, [
+            'deriveBits',
+            'deriveKey',
+          ])
+          .then((material) => {
+            generateDeriveKey(material).then((deriveKey) => {
+              setSelfDeriveKey(selfConnectionId, selfKeyId, deriveKey)
+            })
 
-          generateWriteIV(material).then((writeIV) => {
-            setWriteIV(selfConnectionId, selfKeyId, writeIV)
-          })
+            generateWriteIV(material).then((writeIV) => {
+              setWriteIV(selfConnectionId, selfKeyId, writeIV)
+            })
 
-          clearTimeout(timeoutId)
-        })
-    }, waitingTime || 0)
+            clearTimeout(timeoutId)
+          })
+      },
+      waitingTime || 0,
+    )
 
     // TODO: +1000 で鍵生成後に実行されるようにしているが短い場合は伸ばす
     const removalWaitingTime = (waitingTime || 0) + 1000
