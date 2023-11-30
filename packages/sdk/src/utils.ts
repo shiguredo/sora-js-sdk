@@ -25,13 +25,17 @@ function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase()
   if (ua.indexOf('edge') !== -1) {
     return 'edge'
-  } else if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
+  }
+  if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
     return 'chrome'
-  } else if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
+  }
+  if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
     return 'safari'
-  } else if (ua.indexOf('opera') !== -1) {
+  }
+  if (ua.indexOf('opera') !== -1) {
     return 'opera'
-  } else if (ua.indexOf('firefox') !== -1) {
+  }
+  if (ua.indexOf('firefox') !== -1) {
     return 'firefox'
   }
   return null
@@ -376,7 +380,8 @@ export function getSignalingNotifyAuthnMetadata(
 ): JSONType {
   if (message.authn_metadata !== undefined) {
     return message.authn_metadata
-  } else if (message.metadata !== undefined) {
+  }
+  if (message.metadata !== undefined) {
     return message.metadata
   }
   return null
@@ -387,7 +392,8 @@ export function getSignalingNotifyData(
 ): SignalingNotifyMetadata[] {
   if (message.data && Array.isArray(message.data)) {
     return message.data
-  } else if (message.metadata_list && Array.isArray(message.metadata_list)) {
+  }
+  if (message.metadata_list && Array.isArray(message.metadata_list)) {
     return message.metadata_list
   }
   return []

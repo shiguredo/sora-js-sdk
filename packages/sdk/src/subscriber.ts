@@ -29,19 +29,18 @@ export default class ConnectionSubscriber extends ConnectionBase {
       this.monitorWebSocketEvent()
       this.monitorPeerConnectionState()
       return
-    } else {
-      const stream = await Promise.race([
-        this.singleStream().finally(() => {
-          this.clearConnectionTimeout()
-          this.clearMonitorSignalingWebSocketEvent()
-        }),
-        this.setConnectionTimeout(),
-        this.monitorSignalingWebSocketEvent(),
-      ])
-      this.monitorWebSocketEvent()
-      this.monitorPeerConnectionState()
-      return stream
     }
+    const stream = await Promise.race([
+      this.singleStream().finally(() => {
+        this.clearConnectionTimeout()
+        this.clearMonitorSignalingWebSocketEvent()
+      }),
+      this.setConnectionTimeout(),
+      this.monitorSignalingWebSocketEvent(),
+    ])
+    this.monitorWebSocketEvent()
+    this.monitorPeerConnectionState()
+    return stream
   }
 
   /**
