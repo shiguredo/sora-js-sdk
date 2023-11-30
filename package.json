@@ -1,5 +1,4 @@
 {
-  "type": "module",
   "name": "sora-js-sdk",
   "version": "2023.2.0-canary.10",
   "description": "WebRTC SFU Sora JavaScript SDK",
