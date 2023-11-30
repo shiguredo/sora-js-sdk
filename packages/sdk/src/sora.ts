@@ -206,14 +206,17 @@ export default {
    * @public
    *
    */
-  connection: (signalingUrlCandidates: string | string[], debug = false): SoraConnection =>
-    new SoraConnection(signalingUrlCandidates, debug),
+  connection: (signalingUrlCandidates: string | string[], debug = false): SoraConnection => {
+    return new SoraConnection(signalingUrlCandidates, debug)
+  },
   /**
    * SDK のバージョンを返すメソッド
    *
    * @public
    */
-  version: (): string => '__SORA_JS_SDK_VERSION__',
+  version: (): string => {
+    return '__SORA_JS_SDK_VERSION__'
+  },
   /**
    * WebRTC のユーティリティ関数群
    *
