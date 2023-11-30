@@ -1,10 +1,10 @@
 import SoraE2EE from '@sora/e2ee'
 
 import ConnectionBase from './base'
-import { initLyra, LyraConfig } from './lyra'
+import { applyMediaStreamConstraints } from './helpers'
+import { LyraConfig, initLyra } from './lyra'
 import ConnectionPublisher from './publisher'
 import ConnectionSubscriber from './subscriber'
-import { applyMediaStreamConstraints } from './helpers'
 import type {
   AudioCodecType,
   Callbacks,
@@ -183,7 +183,7 @@ export default {
    *
    * @public
    */
-  initE2EE: async function (wasmUrl: string): Promise<void> {
+  initE2EE: async (wasmUrl: string): Promise<void> => {
     await SoraE2EE.loadWasm(wasmUrl)
   },
   /**
@@ -206,7 +206,7 @@ export default {
    * @public
    *
    */
-  connection: function (signalingUrlCandidates: string | string[], debug = false): SoraConnection {
+  connection: (signalingUrlCandidates: string | string[], debug = false): SoraConnection => {
     return new SoraConnection(signalingUrlCandidates, debug)
   },
   /**
@@ -214,7 +214,7 @@ export default {
    *
    * @public
    */
-  version: function (): string {
+  version: (): string => {
     return '__SORA_JS_SDK_VERSION__'
   },
   /**

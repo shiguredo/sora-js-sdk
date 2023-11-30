@@ -6,13 +6,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-      "style": {
-        "noUselessElse": "off"
-      },
-      "complexity": {
-        "useArrowFunction": "off"
-      }
+      "recommended": true
     }
   },
   "formatter": {
