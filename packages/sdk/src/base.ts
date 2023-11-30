@@ -1035,8 +1035,7 @@ export default class ConnectionBase {
           resolve(ws)
         }
       })
-    }
-    if (Array.isArray(signalingUrlCandidates)) {
+    } else if (Array.isArray(signalingUrlCandidates)) {
       // signaling url の候補が Array の場合
       // すでに候補の WebSocket が発見されているかどうかのフラグ
       let resolved = false
