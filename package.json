@@ -40,6 +40,6 @@
   },
   "packageManager": "pnpm@8.11.0",
   "engines": {
-    "node": ">=18.17"
+    "node": ">=18"
   }
 }
