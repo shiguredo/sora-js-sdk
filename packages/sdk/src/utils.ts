@@ -224,6 +224,7 @@ export function createSignalingMessage(
     'videoBitRate',
     'videoVP9Params',
     'videoH264Params',
+    'videoH265Params',
     'videoAV1Params',
   ]
   const copyOptions = Object.assign({}, options)
@@ -331,6 +332,9 @@ export function createSignalingMessage(
     }
     if ('videoH264Params' in copyOptions) {
       message.video.h264_params = copyOptions.videoH264Params
+    }
+    if ('videoH265Params' in copyOptions) {
+      message.video.h265_params = copyOptions.videoH265Params
     }
     if ('videoAV1Params' in copyOptions) {
       message.video.av1_params = copyOptions.videoAV1Params
