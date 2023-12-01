@@ -11,6 +11,9 @@
 
 ## develop
 
+- [ADD] 接続オプションとしてビデオコーデック H265 のパラメータの送信を追加
+  - `ConnectionOptions` 型に `videoH265Params` フィールドを追加
+  - @tnamao
 - [CHANGE] fmt / lint を biome へ移行する
   - @voluntas
 - [CHANGE] Node.js 16 系を落とす
