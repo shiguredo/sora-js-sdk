@@ -181,7 +181,6 @@ export default class ConnectionBase {
    * シグナリング type offer に含まれる DataChannel レコード
    */
   private signalingOfferMessageDataChannels: {
-    // biome-ignore lint/suspicious/noRedeclare: 後で対応する
     [key in string]?: SignalingOfferMessageDataChannel
   }
   /**
