@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] type: offer で受け取ったセッション ID を保持する
+  - @tnamao
 - [ADD] 接続オプションとしてビデオコーデック H265 のパラメータの送信を追加
   - `ConnectionOptions` 型に `videoH265Params` フィールドを追加
   - @tnamao
