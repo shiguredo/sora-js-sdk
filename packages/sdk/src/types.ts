@@ -112,6 +112,7 @@ export type SignalingOfferMessage = {
   sdp: string
   client_id: string
   connection_id: string
+  session_id?: string
   bundle_id?: string
   metadata?: JSONType
   config?: RTCConfiguration

@@ -105,6 +105,10 @@ export default class ConnectionBase {
    */
   connectionId: string | null
   /**
+   * type offer に含まれるセッションID。Sora 2023.2.0 以降に接続した時に含まれる
+   */
+  sessionId: string | null
+  /**
    * リモートコネクションIDのリスト
    */
   remoteConnectionIds: string[]
@@ -249,6 +253,7 @@ export default class ConnectionBase {
     this.debug = debug
     this.clientId = null
     this.connectionId = null
+    this.sessionId = null
     this.remoteConnectionIds = []
     this.stream = null
     this.ws = null
@@ -680,6 +685,7 @@ export default class ConnectionBase {
   private initializeConnection(): void {
     this.clientId = null
     this.connectionId = null
+    this.sessionId = null
     this.remoteConnectionIds = []
     this.stream = null
     this.ws = null
@@ -1931,6 +1937,9 @@ export default class ConnectionBase {
   private signalingOnMessageTypeOffer(message: SignalingOfferMessage): void {
     this.clientId = message.client_id
     this.connectionId = message.connection_id
+    if (message.session_id !== undefined) {
+      this.sessionId = message.session_id
+    }
     if (message.metadata !== undefined) {
       this.authMetadata = message.metadata
     }
