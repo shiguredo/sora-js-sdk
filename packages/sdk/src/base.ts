@@ -105,7 +105,7 @@ export default class ConnectionBase {
    */
   connectionId: string | null
   /**
-   * セッションID
+   * type offer に含まれるセッションID。Sora 2023.2.0 以降に接続した時に含まれる
    */
   sessionId: string | null
   /**
