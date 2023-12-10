@@ -19,10 +19,10 @@ importers:
         version: 14.2.1
       typedoc:
         specifier: 0.25.4
-        version: 0.25.4(typescript@5.3.2)
+        version: 0.25.4(typescript@5.3.3)
       typescript:
-        specifier: 5.3.2
-        version: 5.3.2
+        specifier: 5.3.3
+        version: 5.3.3
       vitest:
         specifier: 0.34.6
         version: 0.34.6
@@ -41,7 +41,7 @@ importers:
         version: 5.0.5(rollup@4.6.1)
       '@rollup/plugin-typescript':
         specifier: 11.1.5
-        version: 11.1.5(rollup@4.6.1)(tslib@2.6.2)(typescript@5.3.2)
+        version: 11.1.5(rollup@4.6.1)(tslib@2.6.2)(typescript@5.3.3)
       rollup:
         specifier: 4.6.1
         version: 4.6.1
@@ -71,7 +71,7 @@ importers:
         version: 5.0.5(rollup@4.6.1)
       '@rollup/plugin-typescript':
         specifier: 11.1.5
-        version: 11.1.5(rollup@4.6.1)(tslib@2.6.2)(typescript@5.3.2)
+        version: 11.1.5(rollup@4.6.1)(tslib@2.6.2)(typescript@5.3.3)
       '@shiguredo/lyra-wasm':
         specifier: 2023.1.0
         version: 2023.1.0
@@ -435,7 +435,7 @@ packages:
       rollup: 4.6.1
     dev: true
 
-  /@rollup/plugin-typescript@11.1.5(rollup@4.6.1)(tslib@2.6.2)(typescript@5.3.2):
+  /@rollup/plugin-typescript@11.1.5(rollup@4.6.1)(tslib@2.6.2)(typescript@5.3.3):
     resolution: {integrity: sha512-rnMHrGBB0IUEv69Q8/JGRD/n4/n6b3nfpufUu26axhUcboUzv/twfZU8fIBbTOphRAe0v8EyxzeDpKXqGHfyDA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -452,7 +452,7 @@ packages:
       resolve: 1.22.8
       rollup: 4.6.1
       tslib: 2.6.2
-      typescript: 5.3.2
+      typescript: 5.3.3
     dev: true
 
   /@rollup/pluginutils@5.1.0(rollup@4.6.1):
@@ -1994,7 +1994,7 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /typedoc@0.25.4(typescript@5.3.2):
+  /typedoc@0.25.4(typescript@5.3.3):
     resolution: {integrity: sha512-Du9ImmpBCw54bX275yJrxPVnjdIyJO/84co0/L9mwe0R3G4FSR6rQ09AlXVRvZEGMUg09+z/usc8mgygQ1aidA==}
     engines: {node: '>= 16'}
     hasBin: true
@@ -2005,11 +2005,11 @@ packages:
       marked: 4.3.0
       minimatch: 9.0.3
       shiki: 0.14.5
-      typescript: 5.3.2
+      typescript: 5.3.3
     dev: true
 
-  /typescript@5.3.2:
-    resolution: {integrity: sha512-6l+RyNy7oAHDfxC4FzSJcz9vnjTKxrLpDG5M2Vu4SHRVNg6xzqZp6LYSR9zjqQTu8DU/f5xwxUdADOkbrIX2gQ==}
+  /typescript@5.3.3:
+    resolution: {integrity: sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
