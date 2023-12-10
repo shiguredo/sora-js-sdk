@@ -14,7 +14,7 @@
     "@rollup/plugin-typescript": "11.1.5",
     "@shiguredo/lyra-wasm": "2023.1.0",
     "jsdom": "23.0.1",
-    "rollup": "4.6.1",
+    "rollup": "4.7.0",
     "rollup-plugin-delete": "2.0.0"
   },
   "dependencies": {
