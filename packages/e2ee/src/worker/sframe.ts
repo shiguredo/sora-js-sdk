@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 const connectionIdLength = 26
 
 function byteCount(n: number): number {
-  if (n == 0) {
+  if (n === 0) {
     return 1
   }
   // log256(x) = log(x) / log(256)

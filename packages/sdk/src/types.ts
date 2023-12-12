@@ -45,6 +45,7 @@ export type SignalingVideo =
       bit_rate?: number
       vp9_params?: JSONType
       h264_params?: JSONType
+      h265_params?: JSONType
       av1_params?: JSONType
     }
 
@@ -111,6 +112,7 @@ export type SignalingOfferMessage = {
   sdp: string
   client_id: string
   connection_id: string
+  session_id?: string
   bundle_id?: string
   metadata?: JSONType
   config?: RTCConfiguration
@@ -299,6 +301,7 @@ export type ConnectionOptions = {
   videoBitRate?: number
   videoVP9Params?: JSONType
   videoH264Params?: JSONType
+  videoH265Params?: JSONType
   videoAV1Params?: JSONType
   multistream?: boolean
   spotlight?: boolean
@@ -352,7 +355,7 @@ export type TimelineEventLogType = 'websocket' | 'datachannel' | 'peerconnection
 
 export interface SignalingEvent extends Event {
   transportType: TransportType
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   data?: any
 }
 
@@ -367,7 +370,7 @@ export interface DataChannelEvent extends Event {
 
 export interface TimelineEvent extends Event {
   logType: TimelineEventLogType
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   data?: any
   dataChannelId?: number | null
   dataChannelLabel?: string

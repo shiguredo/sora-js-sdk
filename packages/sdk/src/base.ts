@@ -1,34 +1,19 @@
 import { unzlibSync, zlibSync } from 'fflate'
 
+import SoraE2EE from '@sora/e2ee'
 import {
+  LyraState,
   createLyraWorker,
   isLyraInitialized,
-  LyraState,
-  transformPcmToLyra,
   transformLyraToPcm,
+  transformPcmToLyra,
 } from './lyra'
-import {
-  ConnectError,
-  createDataChannelData,
-  createDataChannelEvent,
-  createDataChannelMessageEvent,
-  createSignalingEvent,
-  createSignalingMessage,
-  createTimelineEvent,
-  getPreKeyBundle,
-  getSignalingNotifyAuthnMetadata,
-  getSignalingNotifyData,
-  isFirefox,
-  isSafari,
-  parseDataChannelEventData,
-  trace,
-} from './utils'
 import {
   AudioCodecType,
   Callbacks,
   ConnectionOptions,
-  JSONType,
   DataChannelConfiguration,
+  JSONType,
   RTCEncodedAudioFrame,
   SignalingConnectMessage,
   SignalingMessage,
@@ -48,7 +33,22 @@ import {
   SoraCloseEventType,
   TransportType,
 } from './types'
-import SoraE2EE from '@sora/e2ee'
+import {
+  ConnectError,
+  createDataChannelData,
+  createDataChannelEvent,
+  createDataChannelMessageEvent,
+  createSignalingEvent,
+  createSignalingMessage,
+  createTimelineEvent,
+  getPreKeyBundle,
+  getSignalingNotifyAuthnMetadata,
+  getSignalingNotifyData,
+  isFirefox,
+  isSafari,
+  parseDataChannelEventData,
+  trace,
+} from './utils'
 
 declare global {
   interface Algorithm {
@@ -90,7 +90,7 @@ export default class ConnectionBase {
   /**
    * PeerConnection に渡す configuration
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   constraints: any
   /**
    * デバッグフラグ
@@ -104,6 +104,10 @@ export default class ConnectionBase {
    * コネクションID
    */
   connectionId: string | null
+  /**
+   * type offer に含まれるセッションID。Sora 2023.2.0 以降に接続した時に含まれる
+   */
+  sessionId: string | null
   /**
    * リモートコネクションIDのリスト
    */
@@ -189,6 +193,8 @@ export default class ConnectionBase {
   protected callbacks: Callbacks
   /**
    * E2EE インスタンス
+   *
+   * @internal
    */
   protected e2ee: SoraE2EE | null
   /**
@@ -247,6 +253,7 @@ export default class ConnectionBase {
     this.debug = debug
     this.clientId = null
     this.connectionId = null
+    this.sessionId = null
     this.remoteConnectionIds = []
     this.stream = null
     this.ws = null
@@ -346,10 +353,10 @@ export default class ConnectionBase {
     for (const track of stream.getAudioTracks()) {
       track.enabled = false
     }
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
-      setTimeout(async () => {
-        for (const track of stream.getAudioTracks()) {
+      setTimeout(() => {
+        const promises = stream.getAudioTracks().map(async (track) => {
           track.stop()
           stream.removeTrack(track)
           if (this.pc !== null) {
@@ -357,15 +364,16 @@ export default class ConnectionBase {
               return s.track && s.track.id === track.id
             })
             if (sender) {
-              await sender.replaceTrack(null)
+              return sender.replaceTrack(null)
             }
           }
-        }
-        resolve()
+        })
+        Promise.all(promises)
+          .then(() => resolve())
+          .catch(reject)
       }, 100)
     })
   }
-
   /**
    * video track を停止するメソッド
    *
@@ -389,10 +397,10 @@ export default class ConnectionBase {
     for (const track of stream.getVideoTracks()) {
       track.enabled = false
     }
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
-      setTimeout(async () => {
-        for (const track of stream.getVideoTracks()) {
+      setTimeout(() => {
+        const promises = stream.getVideoTracks().map(async (track) => {
           track.stop()
           stream.removeTrack(track)
           if (this.pc !== null) {
@@ -400,11 +408,14 @@ export default class ConnectionBase {
               return s.track && s.track.id === track.id
             })
             if (sender) {
-              await sender.replaceTrack(null)
+              // replaceTrack は非同期操作なので catch(reject) しておく
+              return sender.replaceTrack(null)
             }
           }
-        }
-        resolve()
+        })
+        Promise.all(promises)
+          .then(() => resolve())
+          .catch(reject)
       }, 100)
     })
   }
@@ -674,6 +685,7 @@ export default class ConnectionBase {
   private initializeConnection(): void {
     this.clientId = null
     this.connectionId = null
+    this.sessionId = null
     this.remoteConnectionIds = []
     this.stream = null
     this.ws = null
@@ -819,6 +831,8 @@ export default class ConnectionBase {
             resolve({ code: 4999, reason: '' })
           }
         })
+        // eslint 対策、エラーが発生したら reject(error) を返す
+        .catch((error) => reject(error))
         .finally(() => {
           closeDataChannels()
           clearTimeout(disconnectWaitTimeoutId)
@@ -979,7 +993,7 @@ export default class ConnectionBase {
     if (this.options.e2ee === true && this.e2ee) {
       if (!this.connectionId) {
         const error = new Error()
-        error.message = `E2EE failed. Self connectionId is null`
+        error.message = 'E2EE failed. Self connectionId is null'
         throw error
       }
       this.e2ee.clearWorker()
@@ -1026,7 +1040,8 @@ export default class ConnectionBase {
           resolve(ws)
         }
       })
-    } else if (Array.isArray(signalingUrlCandidates)) {
+    }
+    if (Array.isArray(signalingUrlCandidates)) {
       // signaling url の候補が Array の場合
       // すでに候補の WebSocket が発見されているかどうかのフラグ
       let resolved = false
@@ -1051,7 +1066,7 @@ export default class ConnectionBase {
             this.writeWebSocketSignalingLog('signaling-url-candidate', {
               type: 'close',
               url: ws.url,
-              message: `WebSocket closed`,
+              message: 'WebSocket closed',
               code: event.code,
               reason: event.reason,
             })
@@ -1065,7 +1080,7 @@ export default class ConnectionBase {
             this.writeWebSocketSignalingLog('signaling-url-candidate', {
               type: 'error',
               url: ws.url,
-              message: `Failed to connect WebSocket`,
+              message: 'Failed to connect WebSocket',
             })
             if (ws) {
               ws.onclose = null
@@ -1157,32 +1172,32 @@ export default class ConnectionBase {
           throw new Error('Received invalid signaling data')
         }
         const message = JSON.parse(event.data) as SignalingMessage
-        if (message.type == 'offer') {
+        if (message.type === 'offer') {
           this.writeWebSocketSignalingLog('onmessage-offer', message)
           this.signalingOnMessageTypeOffer(message)
           this.connectedSignalingUrl = ws.url
           resolve(message)
-        } else if (message.type == 'update') {
+        } else if (message.type === 'update') {
           this.writeWebSocketSignalingLog('onmessage-update', message)
           await this.signalingOnMessageTypeUpdate(message)
-        } else if (message.type == 're-offer') {
+        } else if (message.type === 're-offer') {
           this.writeWebSocketSignalingLog('onmessage-re-offer', message)
           await this.signalingOnMessageTypeReOffer(message)
-        } else if (message.type == 'ping') {
+        } else if (message.type === 'ping') {
           await this.signalingOnMessageTypePing(message)
-        } else if (message.type == 'push') {
+        } else if (message.type === 'push') {
           this.callbacks.push(message, 'websocket')
-        } else if (message.type == 'notify') {
+        } else if (message.type === 'notify') {
           if (message.event_type === 'connection.created') {
             this.writeWebSocketTimelineLog('notify-connection.created', message)
           } else if (message.event_type === 'connection.destroyed') {
             this.writeWebSocketTimelineLog('notify-connection.destroyed', message)
           }
           this.signalingOnMessageTypeNotify(message, 'websocket')
-        } else if (message.type == 'switched') {
+        } else if (message.type === 'switched') {
           this.writeWebSocketSignalingLog('onmessage-switched', message)
           this.signalingOnMessageTypeSwitched(message)
-        } else if (message.type == 'redirect') {
+        } else if (message.type === 'redirect') {
           this.writeWebSocketSignalingLog('onmessage-redirect', message)
           try {
             const redirectMessage = await this.signalingOnMessageTypeRedirect(message)
@@ -1192,7 +1207,6 @@ export default class ConnectionBase {
           }
         }
       }
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       ;(async () => {
         let signalingMessage: SignalingConnectMessage
         try {
@@ -1211,7 +1225,7 @@ export default class ConnectionBase {
         if (signalingMessage.e2ee && this.e2ee) {
           const initResult = await this.e2ee.init()
           // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
-          signalingMessage['signaling_notify_metadata']['pre_key_bundle'] = initResult
+          signalingMessage.signaling_notify_metadata.pre_key_bundle = initResult
         }
         this.trace('SIGNALING CONNECT MESSAGE', signalingMessage)
         if (ws) {
@@ -1375,7 +1389,9 @@ export default class ConnectionBase {
    * @param sdp offer SDP
    * @returns 処理後の SDP
    */
-  private processOfferSdp(sdp: string): string {
+  private processOfferSdp(offerSdp: string): string {
+    // lint 対応で引数を変更したりしないようにしてる
+    let sdp = offerSdp
     if (isFirefox()) {
       // 同じ mid が採用される際にはもう使用されない transceiver を解放するために
       // port に 0 が指定された SDP が送られてくる。
@@ -1477,7 +1493,6 @@ export default class ConnectionBase {
       // 古い API (i.e., createEncodedStreams) を使っているブラウザ
 
       // @ts-ignore
-      // eslint-disable-next-line
       const senderStreams = sender.createEncodedStreams() as TransformStream
       let readable = senderStreams.readable
       if (isLyraCodec && this.lyra !== undefined) {
@@ -1536,7 +1551,6 @@ export default class ConnectionBase {
       // 古い API (i.e., createEncodedStreams) を使っているブラウザ
 
       // @ts-ignore
-      // eslint-disable-next-line
       const receiverStreams = receiver.createEncodedStreams() as TransformStream
       let writable = receiverStreams.writable
       if (codecType === 'LYRA' && this.lyra !== undefined) {
@@ -1662,7 +1676,7 @@ export default class ConnectionBase {
           reject(error)
         }
         this.ws.onerror = (_) => {
-          const error = new ConnectError(`Signaling failed. WebSocket onerror was called`)
+          const error = new ConnectError('Signaling failed. WebSocket onerror was called')
           this.writeWebSocketSignalingLog('onerror', error)
           this.signalingTerminate()
           reject(error)
@@ -1909,7 +1923,7 @@ export default class ConnectionBase {
       const message = new Uint8Array(data)
       const result = this.e2ee.receiveMessage(message)
       this.e2ee.postRemoteSecretKeyMaterials(result)
-      result.messages.forEach((message) => {
+      result.messages.filter((message) => {
         this.sendE2EEMessage(message.buffer)
       })
     }
@@ -1923,6 +1937,9 @@ export default class ConnectionBase {
   private signalingOnMessageTypeOffer(message: SignalingOfferMessage): void {
     this.clientId = message.client_id
     this.connectionId = message.connection_id
+    if (message.session_id !== undefined) {
+      this.sessionId = message.session_id
+    }
     if (message.metadata !== undefined) {
       this.authMetadata = message.metadata
     }
@@ -1958,7 +1975,7 @@ export default class ConnectionBase {
    * シグナリングサーバーに type re-answer を投げるメソッド
    */
   private sendReAnswer(): void {
-    if (this.pc && this.pc.localDescription) {
+    if (this.pc?.localDescription) {
       this.trace('RE ANSWER SDP', this.pc.localDescription.sdp)
       this.sendSignalingMessage({ type: 're-answer', sdp: this.pc.localDescription.sdp })
     }
@@ -2023,7 +2040,7 @@ export default class ConnectionBase {
         if (preKeyBundle && this.e2ee && connectionId) {
           const result = this.e2ee.startSession(connectionId, preKeyBundle)
           this.e2ee.postRemoteSecretKeyMaterials(result)
-          result.messages.forEach((message) => {
+          result.messages.filter((message) => {
             this.sendE2EEMessage(message.buffer)
           })
           // messages を送信し終えてから、selfSecretKeyMaterial を更新する
@@ -2035,7 +2052,7 @@ export default class ConnectionBase {
         }
       }
       const data = getSignalingNotifyData(message)
-      data.forEach((metadata) => {
+      data.filter((metadata) => {
         const authnMetadata = getSignalingNotifyAuthnMetadata(metadata)
         const preKeyBundle = getPreKeyBundle(authnMetadata)
         const connectionId = metadata.connection_id
@@ -2055,7 +2072,7 @@ export default class ConnectionBase {
           result.selfSecretKeyMaterial,
           5000,
         )
-        result.messages.forEach((message) => {
+        result.messages.filter((message) => {
           this.sendE2EEMessage(message.buffer)
         })
         this.e2ee.postRemoveRemoteDeriveKey(connectionId)
@@ -2074,7 +2091,7 @@ export default class ConnectionBase {
     if (!this.ws) {
       return
     }
-    if (message['ignore_disconnect_websocket']) {
+    if (message.ignore_disconnect_websocket) {
       if (this.ws) {
         this.ws.onclose = null
         this.ws.close()
@@ -2134,6 +2151,7 @@ export default class ConnectionBase {
       return stats
     }
     const reports = await this.pc.getStats()
+    // biome-ignore lint/complexity/noForEach: RTCStatsReport であって Array ではない
     reports.forEach((s) => {
       stats.push(s as RTCStatsReport)
     })
@@ -2461,7 +2479,7 @@ export default class ConnectionBase {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.selfFingerprint()
     }
-    return
+    return undefined
   }
 
   /**
@@ -2471,7 +2489,7 @@ export default class ConnectionBase {
     if (this.options.e2ee && this.e2ee) {
       return this.e2ee.remoteFingerprints()
     }
-    return
+    return undefined
   }
 
   /**

@@ -1,7 +1,7 @@
-import { transformPcmToLyra, transformLyraToPcm } from './lyra'
-import { RTCEncodedAudioFrame } from './types'
+import { transformLyraToPcm, transformPcmToLyra } from './lyra'
+import { type RTCEncodedAudioFrame } from './types'
 
-import { LyraEncoder, LyraEncoderState, LyraDecoder, LyraDecoderState } from '@shiguredo/lyra-wasm'
+import { LyraDecoder, LyraDecoderState, LyraEncoder, LyraEncoderState } from '@shiguredo/lyra-wasm'
 
 function createSenderTransform(encoderState: LyraEncoderState) {
   const encoder = LyraEncoder.fromState(encoderState)
@@ -44,17 +44,18 @@ type OnTransformMessage = {
 }
 
 declare global {
+  // biome-ignore lint/style/useConst: 判断が現時点で難しいため
   let onrtctransform: (msg: OnTransformMessage) => void
 }
 
 onrtctransform = (msg: OnTransformMessage) => {
-  if (msg.transformer.options.name == 'senderTransform') {
+  if (msg.transformer.options.name === 'senderTransform') {
     const transform = createSenderTransform(msg.transformer.options.lyraEncoder)
     msg.transformer.readable
       .pipeThrough(transform)
       .pipeTo(msg.transformer.writable)
       .catch((e) => console.warn(e))
-  } else if (msg.transformer.options.name == 'receiverTransform') {
+  } else if (msg.transformer.options.name === 'receiverTransform') {
     const transform = createReceiverTransform(msg.transformer.options.lyraDecoder)
     msg.transformer.readable
       .pipeThrough(transform)

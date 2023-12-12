@@ -56,7 +56,7 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.startE2EE()
     await this.connectPeerConnection(signalingMessage)
     await this.setRemoteDescription(signalingMessage)
-    stream.getTracks().forEach((track) => {
+    stream.getTracks().filter((track) => {
       if (this.pc) {
         this.pc.addTrack(track, stream)
       }
@@ -95,7 +95,6 @@ export default class ConnectionPublisher extends ConnectionBase {
           return
         }
         const data = {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           'stream.id': stream.id,
           id: event.track.id,
           label: event.track.label,
@@ -135,7 +134,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       }
     }
     await this.setRemoteDescription(signalingMessage)
-    stream.getTracks().forEach((track) => {
+    stream.getTracks().filter((track) => {
       if (this.pc) {
         this.pc.addTrack(track, stream)
       }

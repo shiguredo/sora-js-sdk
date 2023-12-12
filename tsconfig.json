@@ -14,9 +14,7 @@
     "stripInternal": true,
     "newLine": "LF",
     "types": [],
-    "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
-    "declarationDir": "../../"
+    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
-  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "tests"]
 }

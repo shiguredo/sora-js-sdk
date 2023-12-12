@@ -8,27 +8,21 @@
   "module": "dist/sora_e2ee.mjs",
   "types": "dist/sora_e2ee.d.ts",
   "scripts": {
-    "build": "npm run build:worker && npm run build:development",
+    "build": "pnpm run build:worker && pnpm run build:development",
     "build:development": "NODE_ENV=development rollup -c rollup.config.mjs --bundleConfigAsCjs",
-    "build:worker": "npx tsc --project tsconfig.worker.json",
-    "fmt": "prettier --write src",
-    "lint": "eslint --ext .ts ./src",
+    "build:worker": "tsc --project tsconfig.worker.json",
+    "lint": "biome lint ./src",
+    "fmt": "biome format --write ./src",
     "test": "echo \"no test\""
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "15.0.2",
-    "@rollup/plugin-replace": "5.0.2",
-    "@rollup/plugin-typescript": "11.1.1",
-    "@typescript-eslint/eslint-plugin": "5.59.6",
-    "@typescript-eslint/parser": "5.59.6",
-    "eslint": "8.41.0",
-    "eslint-config-prettier": "8.8.0",
-    "eslint-plugin-prettier": "4.2.1",
-    "prettier": "2.8.8",
-    "rollup": "3.22.1",
-    "typescript": "5.0.4"
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-replace": "5.0.5",
+    "@rollup/plugin-typescript": "11.1.5",
+    "rollup": "4.8.0",
+    "tslib": "2.6.2"
   },
   "dependencies": {
-    "@sora/go-wasm": "^2021.1.0"
+    "@sora/go-wasm": "workspace:^"
   }
 }

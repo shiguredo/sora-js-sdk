@@ -15,6 +15,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
    *
    * @public
    */
+  // biome-ignore lint/suspicious/noConfusingVoidType: stream が <MediaStream | void> なのでどうしようもない
   async connect(): Promise<MediaStream | void> {
     if (this.options.multistream) {
       await Promise.race([
@@ -28,19 +29,18 @@ export default class ConnectionSubscriber extends ConnectionBase {
       this.monitorWebSocketEvent()
       this.monitorPeerConnectionState()
       return
-    } else {
-      const stream = await Promise.race([
-        this.singleStream().finally(() => {
-          this.clearConnectionTimeout()
-          this.clearMonitorSignalingWebSocketEvent()
-        }),
-        this.setConnectionTimeout(),
-        this.monitorSignalingWebSocketEvent(),
-      ])
-      this.monitorWebSocketEvent()
-      this.monitorPeerConnectionState()
-      return stream
     }
+    const stream = await Promise.race([
+      this.singleStream().finally(() => {
+        this.clearConnectionTimeout()
+        this.clearMonitorSignalingWebSocketEvent()
+      }),
+      this.setConnectionTimeout(),
+      this.monitorSignalingWebSocketEvent(),
+    ])
+    this.monitorWebSocketEvent()
+    this.monitorPeerConnectionState()
+    return stream
   }
 
   /**
@@ -63,7 +63,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
           return
         }
         const data = {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           'stream.id': streamId,
           id: event.track.id,
           label: event.track.label,
@@ -127,7 +126,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
           return
         }
         const data = {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
           'stream.id': stream.id,
           id: event.track.id,
           label: event.track.label,

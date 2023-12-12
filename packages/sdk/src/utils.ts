@@ -1,47 +1,48 @@
 import { unzlibSync } from 'fflate'
 
 import {
-  ConnectionOptions,
   Browser,
-  JSONType,
+  ConnectionOptions,
   DataChannelConfiguration,
   DataChannelEvent,
   DataChannelMessageEvent,
+  JSONType,
   PreKeyBundle,
-  SignalingConnectMessage,
   SignalingConnectDataChannel,
+  SignalingConnectMessage,
   SignalingEvent,
-  SignalingNotifyMetadata,
   SignalingNotifyConnectionCreated,
   SignalingNotifyConnectionDestroyed,
+  SignalingNotifyMetadata,
   TimelineEvent,
   TimelineEventLogType,
   TransportType,
 } from './types'
 
-// jest のテスト実行時にエラーが出るので以下の import はコメントアウトし自前で定数を定義している
-// TODO(sile): 回避方法が分かったら import 方式に戻したい
-// import { LYRA_VERSION } from "@shiguredo/lyra-wasm";
-const LYRA_VERSION = '1.3.0'
+import { LYRA_VERSION } from '@shiguredo/lyra-wasm'
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase()
   if (ua.indexOf('edge') !== -1) {
     return 'edge'
-  } else if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
+  }
+  if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
     return 'chrome'
-  } else if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
+  }
+  if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
     return 'safari'
-  } else if (ua.indexOf('opera') !== -1) {
+  }
+  if (ua.indexOf('opera') !== -1) {
     return 'opera'
-  } else if (ua.indexOf('firefox') !== -1) {
+  }
+  if (ua.indexOf('firefox') !== -1) {
     return 'firefox'
   }
   return null
 }
 
 function enabledSimulcast(): boolean {
-  const REQUIRED_HEADER_EXTEMSIONS = [
+  const REQUIRED_HEADER_EXTENSIONS = [
     'urn:ietf:params:rtp-hdrext:sdes:mid',
     'urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id',
     'urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id',
@@ -58,7 +59,7 @@ function enabledSimulcast(): boolean {
     return false
   }
   const headerExtensions = capabilities.headerExtensions.map((h) => h.uri)
-  const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTEMSIONS.every((h) =>
+  const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTENSIONS.every((h) =>
     headerExtensions.includes(h),
   )
   return hasAllRequiredHeaderExtensions
@@ -159,8 +160,8 @@ export function createSignalingMessage(
   if (typeof options.simulcast === 'boolean') {
     message.simulcast = options.simulcast
   }
-  const simalcastRids = ['r0', 'r1', 'r2']
-  if (options.simulcastRid !== undefined && 0 <= simalcastRids.indexOf(options.simulcastRid)) {
+  const simulcastRids = ['r0', 'r1', 'r2']
+  if (options.simulcastRid !== undefined && 0 <= simulcastRids.indexOf(options.simulcastRid)) {
     message.simulcast_rid = options.simulcastRid
   }
   if (typeof options.spotlight === 'boolean') {
@@ -223,10 +224,11 @@ export function createSignalingMessage(
     'videoBitRate',
     'videoVP9Params',
     'videoH264Params',
+    'videoH265Params',
     'videoAV1Params',
   ]
   const copyOptions = Object.assign({}, options)
-  ;(Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
+  ;(Object.keys(copyOptions) as (keyof ConnectionOptions)[]).filter((key) => {
     if (key === 'audio' && typeof copyOptions[key] === 'boolean') {
       return
     }
@@ -257,17 +259,17 @@ export function createSignalingMessage(
   if (message.audio && hasAudioProperty) {
     message.audio = {}
     if ('audioCodecType' in copyOptions) {
-      message.audio['codec_type'] = copyOptions.audioCodecType
+      message.audio.codec_type = copyOptions.audioCodecType
     }
     if ('audioBitRate' in copyOptions) {
-      message.audio['bit_rate'] = copyOptions.audioBitRate
+      message.audio.bit_rate = copyOptions.audioBitRate
     }
   }
   const hasAudioOpusParamsProperty = Object.keys(copyOptions).some((key) => {
     return 0 <= audioOpusParamsPropertyKeys.indexOf(key)
   })
   if (message.audio && hasAudioOpusParamsProperty) {
-    if (typeof message.audio != 'object') {
+    if (typeof message.audio !== 'object') {
       message.audio = {}
     }
     message.audio.opus_params = {}
@@ -297,8 +299,8 @@ export function createSignalingMessage(
     }
   }
 
-  if (message.audio && options.audioCodecType == 'LYRA') {
-    if (typeof message.audio != 'object') {
+  if (message.audio && options.audioCodecType === 'LYRA') {
+    if (typeof message.audio !== 'object') {
       message.audio = {}
     }
 
@@ -320,19 +322,22 @@ export function createSignalingMessage(
   if (message.video && hasVideoProperty) {
     message.video = {}
     if ('videoCodecType' in copyOptions) {
-      message.video['codec_type'] = copyOptions.videoCodecType
+      message.video.codec_type = copyOptions.videoCodecType
     }
     if ('videoBitRate' in copyOptions) {
-      message.video['bit_rate'] = copyOptions.videoBitRate
+      message.video.bit_rate = copyOptions.videoBitRate
     }
     if ('videoVP9Params' in copyOptions) {
-      message.video['vp9_params'] = copyOptions.videoVP9Params
+      message.video.vp9_params = copyOptions.videoVP9Params
     }
     if ('videoH264Params' in copyOptions) {
-      message.video['h264_params'] = copyOptions.videoH264Params
+      message.video.h264_params = copyOptions.videoH264Params
+    }
+    if ('videoH265Params' in copyOptions) {
+      message.video.h265_params = copyOptions.videoH265Params
     }
     if ('videoAV1Params' in copyOptions) {
-      message.video['av1_params'] = copyOptions.videoAV1Params
+      message.video.av1_params = copyOptions.videoAV1Params
     }
   }
 
@@ -356,7 +361,7 @@ export function createSignalingMessage(
       message.video = {}
     }
     if (message.video) {
-      message.video['codec_type'] = 'VP8'
+      message.video.codec_type = 'VP8'
     }
   }
 
@@ -379,7 +384,8 @@ export function getSignalingNotifyAuthnMetadata(
 ): JSONType {
   if (message.authn_metadata !== undefined) {
     return message.authn_metadata
-  } else if (message.metadata !== undefined) {
+  }
+  if (message.metadata !== undefined) {
     return message.metadata
   }
   return null
@@ -390,7 +396,8 @@ export function getSignalingNotifyData(
 ): SignalingNotifyMetadata[] {
   if (message.data && Array.isArray(message.data)) {
     return message.data
-  } else if (message.metadata_list && Array.isArray(message.metadata_list)) {
+  }
+  if (message.metadata_list && Array.isArray(message.metadata_list)) {
     return message.metadata_list
   }
   return []
@@ -408,13 +415,12 @@ export function trace(clientId: string | null, title: string, value: unknown): v
     if (record && typeof record === 'object') {
       let keys = null
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         keys = Object.keys(JSON.parse(JSON.stringify(record)))
       } catch (_) {
         // 何もしない
       }
       if (keys && Array.isArray(keys)) {
-        keys.forEach((key) => {
+        keys.filter((key) => {
           console.group(key)
           dump((record as Record<string, unknown>)[key])
           console.groupEnd()
@@ -428,18 +434,18 @@ export function trace(clientId: string | null, title: string, value: unknown): v
   }
   let prefix = ''
   if (window.performance) {
-    prefix = '[' + (window.performance.now() / 1000).toFixed(3) + ']'
+    prefix = `[${(window.performance.now() / 1000).toFixed(3)}]`
   }
   if (clientId) {
-    prefix = prefix + '[' + clientId + ']'
+    prefix = `${prefix}[${clientId}]`
   }
 
   if (console.info !== undefined && console.group !== undefined) {
-    console.group(prefix + ' ' + title)
+    console.group(`${prefix} ${title}`)
     dump(value)
     console.groupEnd()
   } else {
-    console.log(prefix + ' ' + title + '\n', value)
+    console.log(`${prefix} ${title}\n`, value)
   }
 }
 

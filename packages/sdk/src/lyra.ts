@@ -1,12 +1,12 @@
-import { RTCEncodedAudioFrame } from './types'
+import { type RTCEncodedAudioFrame } from './types'
 
 import {
   LYRA_VERSION,
-  LyraEncoder,
   LyraDecoder,
-  LyraModule,
-  LyraEncoderOptions,
   LyraDecoderOptions,
+  LyraEncoder,
+  LyraEncoderOptions,
+  LyraModule,
 } from '@shiguredo/lyra-wasm'
 
 /**
@@ -86,6 +86,7 @@ export function initLyra(config: LyraConfig): boolean {
  * Lyra が初期化済みかどうか
  *
  * @returns Lyra が初期化済みかどうか
+ * @internal
  */
 export function isLyraInitialized(): boolean {
   return LYRA_CONFIG !== undefined
@@ -97,6 +98,7 @@ export function isLyraInitialized(): boolean {
  * @param options エンコーダに指定するオプション
  * @returns Lyra エンコーダのプロミス
  * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ * @internal
  */
 async function createLyraEncoder(options: LyraEncoderOptions = {}): Promise<LyraEncoder> {
   return (await loadLyraModule()).createEncoder(options)
@@ -108,6 +110,7 @@ async function createLyraEncoder(options: LyraEncoderOptions = {}): Promise<Lyra
  * @param options デコーダに指定するオプション
  * @returns Lyra デコーダのプロミス
  * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ * @internal
  */
 async function createLyraDecoder(options: LyraDecoderOptions = {}): Promise<LyraDecoder> {
   return (await loadLyraModule()).createDecoder(options)
@@ -120,6 +123,7 @@ async function createLyraDecoder(options: LyraDecoderOptions = {}): Promise<Lyra
  *
  * @returns LyraModule インスタンスのプロミス
  * @throws Lyra が未初期化の場合 or LyraConfig で指定したファイルの取得に失敗した場合
+ * @internal
  */
 async function loadLyraModule(): Promise<LyraModule> {
   if (LYRA_CONFIG === undefined) {
@@ -137,6 +141,7 @@ async function loadLyraModule(): Promise<LyraModule> {
  * WebRTC Encoded Transform に渡される Lyra 用の web worker を生成する
  *
  * @returns Lyra でエンコードおよびデコードを行う web worker インスタンス
+ * @internal
  */
 export function createLyraWorker() {
   const lyraWorkerScript = atob(LYRA_WORKER_SCRIPT)
@@ -152,6 +157,7 @@ export function createLyraWorker() {
  * @param encoder Lyra エンコーダ
  * @param encodedFrame PCM 音声データ
  * @param controller 音声データの出力キュー
+ * @internal
  */
 export async function transformPcmToLyra(
   encoder: LyraEncoder,
@@ -178,6 +184,7 @@ export async function transformPcmToLyra(
  * @param decoder Lyra デコーダ
  * @param encodedFrame Lyra でエンコードされた音声データ
  * @param controller 音声データの出力キュー
+ * @internal
  */
 export async function transformLyraToPcm(
   decoder: LyraDecoder,
@@ -208,6 +215,7 @@ export async function transformLyraToPcm(
 
 /**
  * SDP に記載される Lyra のエンコードパラメータ
+ * @internal
  */
 export class LyraParams {
   /**
@@ -261,7 +269,7 @@ export class LyraParams {
       throw new Error(`Lyra parameter 'usedtx' is not found in media description: ${media}`)
     }
 
-    return new LyraParams(version[1], Number(bitrate[1]), usedtx[1] == '1')
+    return new LyraParams(version[1], Number(bitrate[1]), usedtx[1] === '1')
   }
 
   /**
@@ -278,6 +286,8 @@ export class LyraParams {
 
 /**
  * 接続単位の Lyra 関連の状態を保持するためのクラス
+ *
+ * @internal
  */
 export class LyraState {
   private encoderOptions: LyraEncoderOptions = {}
@@ -326,7 +336,7 @@ export class LyraState {
           .replace(/109 lyra[/]16000[/]1/, '110 opus/48000/2')
           .replace(/a=fmtp:109 .*/, 'a=rtpmap:109 L16/16000\r\na=ptime:20')
       }
-      replacedSdp += 'm=' + media
+      replacedSdp += `m=${media}`
     }
     return replacedSdp
   }
@@ -356,7 +366,7 @@ export class LyraState {
           .replace(/a=rtpmap:110 opus[/]48000[/]2/, 'a=rtpmap:109 L16/16000')
           .replace(/a=fmtp:110 .*/, 'a=ptime:20')
       }
-      replacedSdp += 'm=' + media
+      replacedSdp += `m=${media}`
     }
     return replacedSdp
   }
@@ -392,7 +402,7 @@ export class LyraState {
           .replace(/a=rtpmap:109 L16[/]16000/, 'a=rtpmap:109 lyra/16000/1')
           .replace(/a=ptime:20/, params.toFmtpString())
       }
-      replacedSdp += 'm=' + media
+      replacedSdp += `m=${media}`
     }
 
     return replacedSdp
