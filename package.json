@@ -37,7 +37,7 @@
   "resolutions": {
     "get-pkg-repo": "5.0.0"
   },
-  "packageManager": "pnpm@8.12.0",
+  "packageManager": "pnpm@8.12.1",
   "engines": {
     "node": ">=18"
   }
