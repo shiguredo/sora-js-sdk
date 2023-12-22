@@ -20,11 +20,6 @@ Please read https://github.com/shiguredo/oss before use.
 
 使い方は [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/) を参照してください。
 
-- sora.js
-  - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
-- sora.mjs
-  - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.mjs
-
 ## システム条件
 
 - WebRTC SFU Sora 2023.1.0 以降
