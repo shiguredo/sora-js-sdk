@@ -81,11 +81,9 @@ function setLatestRemoteKeyId(connectionId: string, keyId: number): void {
 }
 
 function removeOldRemoteDeriveKeys(): void {
-  // biome-ignore lint/complexity/noForEach: Array ではなく Map
   latestRemoteKeyIdMap.forEach((latestKeyId, connectionId) => {
     const deriveKeyMap = remoteDeriveKeyMap.get(connectionId)
     if (deriveKeyMap) {
-      // biome-ignore lint/complexity/noForEach: Array ではなく Map
       deriveKeyMap.forEach((_, keyId) => {
         if (latestKeyId !== keyId) {
           deriveKeyMap.delete(keyId)
