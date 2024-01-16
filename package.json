@@ -28,7 +28,7 @@
     "dist"
   ],
   "devDependencies": {
-    "@biomejs/biome": "1.5.1",
+    "@biomejs/biome": "1.5.2",
     "serve": "14.2.1",
     "typedoc": "0.25.7",
     "typescript": "5.3.3",
