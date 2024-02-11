@@ -18,8 +18,8 @@ importers:
         specifier: 14.2.1
         version: 14.2.1
       typedoc:
-        specifier: 0.25.7
-        version: 0.25.7(typescript@5.3.3)
+        specifier: 0.25.8
+        version: 0.25.8(typescript@5.3.3)
       typescript:
         specifier: 5.3.3
         version: 5.3.3
@@ -57,8 +57,8 @@ importers:
         specifier: workspace:^
         version: link:../e2ee
       fflate:
-        specifier: 0.8.1
-        version: 0.8.1
+        specifier: 0.8.2
+        version: 0.8.2
     devDependencies:
       '@rollup/plugin-commonjs':
         specifier: 25.0.7
@@ -1165,8 +1165,8 @@ packages:
       reusify: 1.0.4
     dev: true
 
-  /fflate@0.8.1:
-    resolution: {integrity: sha512-/exOvEuc+/iaUm105QIiOt4LpBdMTWsXxqR0HDF35vx3fmaKzw7354gTilCh5rkzEt8WYyG//ku3h3nRmd7CHQ==}
+  /fflate@0.8.2:
+    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
     dev: false
 
   /fill-range@7.0.1:
@@ -2099,8 +2099,8 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /typedoc@0.25.7(typescript@5.3.3):
-    resolution: {integrity: sha512-m6A6JjQRg39p2ZVRIN3NKXgrN8vzlHhOS+r9ymUYtcUP/TIQPvWSq7YgE5ZjASfv5Vd5BW5xrir6Gm2XNNcOow==}
+  /typedoc@0.25.8(typescript@5.3.3):
+    resolution: {integrity: sha512-mh8oLW66nwmeB9uTa0Bdcjfis+48bAjSH3uqdzSuSawfduROQLlXw//WSNZLYDdhmMVB7YcYZicq6e8T0d271A==}
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
