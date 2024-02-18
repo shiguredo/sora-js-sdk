@@ -53,7 +53,7 @@ https://github.com/shiguredo/sora-js-sdk-samples
 Apache License 2.0
 
 ```
-Copyright 2017-2023, Shiguredo Inc.
+Copyright 2017-2024, Shiguredo Inc.
 Copyright 2017-2022, Yuki Ito (Original Author)
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,6 +104,7 @@ limitations under the License.
 - [Sora Python SDK](https://github.com/shiguredo/sora-python-sdk)
   - [Sora Python SDK サンプル集](https://github.com/shiguredo/sora-python-sdk-samples)
   - [Sora Python SDK ドキュメント](https://sora-python-sdk.shiguredo.jp/)
+- [Sora C SDK](https://github.com/shiguredo/sora-c-sdk)
 
 ### クライアントツール
 
