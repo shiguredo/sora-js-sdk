@@ -25,25 +25,6 @@ Please read https://github.com/shiguredo/oss before use.
 - WebRTC SFU Sora 2023.2.0 以降
 - TypeScript 5.3 以降
 
-## 組み込みサンプル
-
-- Multistream Sendrecv
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendrecv.html
-- Multistream Sendonly
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendonly.html
-- Multistream Recvonly
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/recvonly.html
-- Spotlight Sendrecv
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_sendrecv.html
-- Spotlight Recvonly
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_recvonly.html
-- Simulcast
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/simulcast.html
-- DataChannelMessaging
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/data_channel_messaging.html
-- E2EE
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/e2ee.html
-
 ## サンプル集
 
 Vite と pnpm を利用したサンプル集はこちらです。
