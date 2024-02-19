@@ -11,9 +11,6 @@
 
 ## develop
 
-- [CHANGE] examples を test に変更する
-  - @voluntas
-
 ## 2023.2.0
 
 **2023-12-08**
