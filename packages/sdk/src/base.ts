@@ -345,7 +345,7 @@ export default class ConnectionBase {
    * @remarks
    * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します
    *
-   * @param stream - audio track を削除する MediaStream
+   * @param stream - audio track を停止する MediaStream
    *
    * @public
    */
@@ -389,7 +389,7 @@ export default class ConnectionBase {
    * @remarks
    * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します
    *
-   * @param stream - video track を削除する MediaStream
+   * @param stream - video track を停止する MediaStream
    *
    * @public
    */
