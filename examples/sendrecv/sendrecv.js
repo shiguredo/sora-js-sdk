@@ -1,13 +1,13 @@
-import Sora from '../../dist/sora.js'
+import Sora from '../../dist/sora.mjs'
 
 const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
-const SORA_CHANNEL_ID = import.meta.env.VITE_SORA_CHANNEL_ID
-const SORA_ACCESS_TOKEN = import.meta.env.VITE_SORA_ACCESS_TOKEN
+const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX
+const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN
 
-const channelId = SORA_CHANNEL_ID
+const channelId = `${SORA_CHANNEL_ID_PREFIX}${__filename}`
 const debug = false
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
-const metadata = { access_token: SORA_ACCESS_TOKEN }
+const metadata = { access_token: ACCESS_TOKEN }
 const options = {}
 
 const sendrecv1 = sora.sendrecv(channelId, metadata, options)

@@ -1,0 +1,35 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>Messaging</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>DataChannel messaging test</h1>
+    <p>複数のブラウザで開いて sendMessage することで動作確認できます</p>
+    <div style="display: flex;">
+      <div>
+        <div style="display: flex;">
+          <input type="text" name="message" />
+          <button id="send-message" disabled>sendMessage</button><br />
+        </div>
+        <button id="start-sendrecv">start</button>
+        <button id="stop-sendrecv">stop</button><br />
+        <video id="sendrecv-local-video" autoplay="" playsinline="" controls=""
+          style="width: 320px; height: 240px; border: 1px solid black;"></video>
+        <div id="sendrecv-remote-videos"></div>
+        <div>
+          <h3>messages</h3>
+          <ul id="received-messages">
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./messaging.js"></script>
+</body>
+
+</html>

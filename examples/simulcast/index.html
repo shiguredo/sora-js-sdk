@@ -1,0 +1,34 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>Simulcast test</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Simulcast test</h1>
+    <button id="start">start</button>
+    <div>
+      <h2>sendonly<span id="local-video-client-id"></span></h2>
+      <video id="local-video" autoplay="" playsinline="" controls=""
+        style="width: 320px; height: 180px; border: 1px solid blue;"></video>
+    </div>
+    <div>
+      <h2>recvonly r0<span id="remote-video-client-id-r0"></span></h2>
+      <video id="remote-video-r0" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
+    </div>
+    <div>
+      <h2>recvonly r1<span id="remote-video-client-id-r1"></span></h2>
+      <video id="remote-video-r1" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
+    </div>
+    <div>
+      <h2>recvonly r2<span id="remote-video-client-id-r2"></span></h2>
+      <video id="remote-video-r2" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
+    </div>
+  </div>
+
+  <script type="module" src="./simulcast.js"></script>
+</body>
+
+</html>
