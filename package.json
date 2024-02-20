@@ -6,11 +6,11 @@
   "module": "dist/sora.mjs",
   "types": "dist/sora.d.ts",
   "scripts": {
+    "dev": "vite",
     "build": "pnpm -r --filter=./packages/* build",
     "lint": "pnpm -r --filter=./packages/* lint",
     "fmt": "pnpm -r --filter=./packages/* fmt",
     "test": "pnpm -r --filter=./packages/* test",
-    "dev": "vite",
     "doc": "typedoc",
     "release:canary": "./scripts/release_canary.sh"
   },
