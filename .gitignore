@@ -6,3 +6,4 @@ packages/e2ee/_worker
 apidoc/
 .log/
 dist/
+.env*

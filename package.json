@@ -10,7 +10,7 @@
     "lint": "pnpm -r --filter=./packages/* lint",
     "fmt": "pnpm -r --filter=./packages/* fmt",
     "test": "pnpm -r --filter=./packages/* test",
-    "start": "serve -S -l 8080 ./example",
+    "dev": "vite",
     "doc": "typedoc",
     "release:canary": "./scripts/release_canary.sh"
   },
@@ -29,9 +29,9 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "1.5.3",
-    "serve": "14.2.1",
     "typedoc": "0.25.8",
     "typescript": "5.3.3",
+    "vite": "5.1.3",
     "vitest": "1.3.0"
   },
   "resolutions": {
