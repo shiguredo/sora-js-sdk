@@ -2,7 +2,9 @@ name: e2e-test
 
 on:
   push:
-  pull_request:
+    branches:
+      - develop
+      - feature/*
 
 jobs:
   e2e-tset:
@@ -31,7 +33,7 @@ jobs:
       - run: pnpm exec playwright install --with-deps
       - run: pnpm run build
       - run: pnpm exec playwright test --project=${{ matrix.browser }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
