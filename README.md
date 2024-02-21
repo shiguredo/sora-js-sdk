@@ -27,7 +27,7 @@ Please read https://github.com/shiguredo/oss before use.
 
 ## サンプル集
 
-Vite と pnpm を利用したサンプル集はこちらです。
+Vite を利用したサンプル集はこちらです。
 
 https://github.com/shiguredo/sora-js-sdk-samples
 
