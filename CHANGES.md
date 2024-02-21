@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] deploy-pages.yml を削除する
+  - E2E テストで実行できるようになったので
+  - @voluntas
 - [CHANGE] examples を Vite を利用して動かすように変更する
   - serve を削除
   - Vite を追加
