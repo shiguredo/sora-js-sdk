@@ -60,8 +60,6 @@ sendrecv.on('notify', (event) => {
       `connectionId: ${sendrecv.connectionId}`
     document.querySelector('#local-fingerprint').textContent =
       `fingerprint: ${sendrecv.e2eeSelfFingerprint}`
-
-    return
   }
 
   if (event.event_type === 'connection.created') {
@@ -79,7 +77,7 @@ sendrecv.on('notify', (event) => {
 })
 
 document.querySelector('#start-sendrecv').addEventListener('click', async () => {
-  const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+  const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true })
   await sendrecv.connect(mediaStream)
   document.querySelector('#sendrecv-local-video').srcObject = mediaStream
 })

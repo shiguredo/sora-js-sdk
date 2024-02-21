@@ -1,6 +1,6 @@
 import { test } from '@playwright/test'
 
-test.skip('e2ee sendrecv x2', async ({ browser }) => {
+test('e2ee sendrecv x2', async ({ browser }) => {
   // 新しいページを2つ作成
   const page1 = await browser.newPage()
   const page2 = await browser.newPage()
@@ -14,11 +14,9 @@ test.skip('e2ee sendrecv x2', async ({ browser }) => {
 
   // #local-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await page1.waitForSelector('#local-connection-id:not(:empty)')
-
   // #local-connection-id 要素の内容を取得
   const page1ConnectionId = await page1.$eval('#local-connection-id', (el) => el.textContent)
   console.log(`e2ee-page1: connectionId=${page1ConnectionId}`)
-
   // #local-fingerprint 要素が存在し、その内容が空でないことを確認するまで待つ
   await page1.waitForSelector('#local-fingerprint:not(:empty)')
   const page1Fingerprint = await page1.$eval('#local-fingerprint', (el) => el.textContent)
@@ -26,11 +24,9 @@ test.skip('e2ee sendrecv x2', async ({ browser }) => {
 
   // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await page2.waitForSelector('#local-connection-id:not(:empty)')
-
   // #sendrecv1-connection-id 要素の内容を取得
   const page2ConnectionId = await page2.$eval('#local-connection-id', (el) => el.textContent)
   console.log(`e2ee-page2: connectionId=${page2ConnectionId}`)
-
   // #local-fingerprint 要素が存在し、その内容が空でないことを確認するまで待つ
   await page2.waitForSelector('#local-fingerprint:not(:empty)')
   const page2Fingerprint = await page2.$eval('#local-fingerprint', (el) => el.textContent)
