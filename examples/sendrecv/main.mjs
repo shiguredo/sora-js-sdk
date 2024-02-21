@@ -4,13 +4,20 @@ const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
 const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX
 const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN
 
-const channelId = `${SORA_CHANNEL_ID_PREFIX}${__filename}`
+const channelId = `${SORA_CHANNEL_ID_PREFIX}sendrecv`
 const debug = false
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
 const metadata = { access_token: ACCESS_TOKEN }
 const options = {}
 
 const sendrecv1 = sora.sendrecv(channelId, metadata, options)
+
+sendrecv1.on('notify', (event) => {
+  if (event.event_type === 'connection.created' && sendrecv1.connectionId === event.connection_id) {
+    const connectionIdElement = document.querySelector('#sendrecv1-connection-id')
+    connectionIdElement.textContent = event.connection_id
+  }
+})
 
 sendrecv1.on('track', (event) => {
   const stream = event.streams[0]
@@ -38,7 +45,15 @@ sendrecv1.on('removetrack', (event) => {
   }
 })
 
-const sendrecv2 = sora.sendrecv(channelId, null, options)
+const sendrecv2 = sora.sendrecv(channelId, metadata, options)
+
+sendrecv2.on('notify', (event) => {
+  if (event.event_type === 'connection.created' && sendrecv2.connectionId === event.connection_id) {
+    const connectionIdElement = document.querySelector('#sendrecv2-connection-id')
+    connectionIdElement.textContent = event.connection_id
+  }
+})
+
 sendrecv2.on('track', (event) => {
   const stream = event.streams[0]
   if (!stream) return

@@ -7,7 +7,7 @@ const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN
 const debug = false
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
 
-const channelId = `${SORA_CHANNEL_ID_PREFIX}${__filename}`
+const channelId = `${SORA_CHANNEL_ID_PREFIX}simulcast`
 const metadata = { access_token: ACCESS_TOKEN }
 
 const sendonly = sora.sendonly(channelId, metadata, {

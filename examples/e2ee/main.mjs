@@ -12,7 +12,7 @@ Sora.initE2EE('https://sora-e2ee-wasm.shiguredo.app/2020.2/wasm.wasm').catch((e)
 
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
 
-const channelId = `${SORA_CHANNEL_ID_PREFIX}${__filename}`
+const channelId = `${SORA_CHANNEL_ID_PREFIX}e2ee`
 const metadata = { access_token: ACCESS_TOKEN }
 const options = {
   e2ee: true,
