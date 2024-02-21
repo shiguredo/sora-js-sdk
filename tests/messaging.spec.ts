@@ -1,5 +1,6 @@
 import { test } from '@playwright/test'
 
+// FIXME: ローカルだと通る
 test.skip('messaging pages', async ({ browser }) => {
   // 新しいページを2つ作成
   const page1 = await browser.newPage()
@@ -32,19 +33,17 @@ test.skip('messaging pages', async ({ browser }) => {
   console.log(`Received message on page2: ${receivedMessage1}`)
   test.expect(receivedMessage1).toBe('Hello from page1')
 
-  // FIX: ここを有効にすると E2E テストが GitHub Actions で失敗する
-  // ローカルだと上手くいくのでレースコンディションかもしれない
-  // // page2からpage1へメッセージを送信
-  // await page2.fill('input[name="message"]', 'Hello from page2')
-  // await page2.click('#send-message')
+  // page2からpage1へメッセージを送信
+  await page2.fill('input[name="message"]', 'Hello from page2')
+  await page2.click('#send-message')
 
-  // // page1でメッセージが受信されたことを確認
-  // await page1.waitForSelector('li', { state: 'attached' })
-  // const receivedMessage2 = await page1.$eval('#received-messages li', (el) => el.textContent)
+  // page1でメッセージが受信されたことを確認
+  await page1.waitForSelector('li', { state: 'attached' })
+  const receivedMessage2 = await page1.$eval('#received-messages li', (el) => el.textContent)
 
-  // // 受信したメッセージが期待したものであるか検証
-  // console.log(`Received message on page1: ${receivedMessage2}`)
-  // test.expect(receivedMessage2).toBe('Hello from page2')
+  // 受信したメッセージが期待したものであるか検証
+  console.log(`Received message on page1: ${receivedMessage2}`)
+  test.expect(receivedMessage2).toBe('Hello from page2')
 
   await page1.click('#stop')
   await page2.click('#stop')

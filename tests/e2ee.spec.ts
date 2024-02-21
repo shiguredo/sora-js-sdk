@@ -1,5 +1,6 @@
 import { test } from '@playwright/test'
 
+// FIXME: ローカルでも通らない
 test.skip('e2ee sendrecv x2', async ({ browser }) => {
   // 新しいページを2つ作成
   const page1 = await browser.newPage()
@@ -7,16 +8,10 @@ test.skip('e2ee sendrecv x2', async ({ browser }) => {
 
   // それぞれのページに対して操作を行う
   await page1.goto('http://localhost:9000/e2ee/')
-
   await page2.goto('http://localhost:9000/e2ee/')
 
   await page1.click('#start-sendrecv')
-  // wasm ダウンロードに向けて余裕を持って 3 秒待つ
-  await page1.waitForTimeout(5000)
-
   await page2.click('#start-sendrecv')
-  // wasm ダウンロードに向けて余裕を持って 3 秒待つ
-  await page2.waitForTimeout(5000)
 
   // #local-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await page1.waitForSelector('#local-connection-id:not(:empty)')
