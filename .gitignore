@@ -6,3 +6,8 @@ packages/e2ee/_worker
 apidoc/
 .log/
 dist/
+.env*
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

@@ -1,0 +1,33 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>Messaging</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>DataChannel messaging test</h1>
+    <p>複数のブラウザで開いて sendMessage することで動作確認できます</p>
+    <div style="display: flex;">
+      <div>
+        <div id="local-connection-id"></div>
+        <div style="display: flex;">
+          <input type="text" name="message" />
+          <button id="send-message" disabled>sendMessage</button><br />
+        </div>
+        <button id="start">start</button>
+        <button id="stop">stop</button><br />
+        <div>
+          <h3>messages</h3>
+          <ul id="received-messages">
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.mjs"></script>
+</body>
+
+</html>
