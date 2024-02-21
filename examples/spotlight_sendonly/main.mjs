@@ -20,30 +20,8 @@ sendonly.on('notify', (event) => {
     const connectionIdElement = document.querySelector('#sendonly-connection-id')
     connectionIdElement.textContent = event.connection_id
   }
-})
 
-sendonly.on('track', (event) => {
-  const stream = event.streams[0]
-  if (!stream) return
-  const remoteVideoId = `remotevideo-${stream.id}`
-  const remoteVideos = document.querySelector('#remote-videos')
-  if (!remoteVideos.querySelector(`#${remoteVideoId}`)) {
-    const remoteVideo = document.createElement('video')
-    remoteVideo.id = remoteVideoId
-    remoteVideo.style.border = '1px solid red'
-    remoteVideo.autoplay = true
-    remoteVideo.playsinline = true
-    remoteVideo.controls = true
-    remoteVideo.srcObject = stream
-    remoteVideos.appendChild(remoteVideo)
-  }
-})
-
-sendonly.on('removetrack', (event) => {
-  const remoteVideo = document.querySelector(`#remotevideo-${event.target.id}`)
-  if (remoteVideo) {
-    document.querySelector('#remote-videos').removeChild(remoteVideo)
-  }
+  
 })
 
 document.querySelector('#start-sendonly').addEventListener('click', async () => {

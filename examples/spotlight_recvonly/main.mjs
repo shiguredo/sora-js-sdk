@@ -9,6 +9,7 @@ const debug = false
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
 const metadata = { access_token: ACCESS_TOKEN }
 const options = {
+  multistream: true,
   simulcast: true,
   spotlight: true,
 }
