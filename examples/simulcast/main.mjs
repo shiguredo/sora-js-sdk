@@ -17,6 +17,11 @@ const sendonly = sora.sendonly(channelId, metadata, {
   videoBitRate: 3000,
   simulcast: true,
 })
+sendonly.on('notify', (event) => {
+  if (event.event_type === 'connection.created' && event.connection_id === sendonly.connectionId) {
+    document.querySelector('#local-video-connection-id').textContent = `${event.connection_id}`
+  }
+})
 
 const recvonlyR0 = sora.recvonly(channelId, metadata, {
   simulcast: true,
@@ -75,9 +80,8 @@ document.querySelector('#start').addEventListener('click', async () => {
     audio: false,
     video: { width: { exact: 1280 }, height: { exact: 720 } },
   })
-  await sendonly.connect(mediaStream)
-  document.querySelector('#local-video-connection-id').textContent = `(${sendonly.connectionId})`
   document.querySelector('#local-video').srcObject = mediaStream
+  await sendonly.connect(mediaStream)
 
   // recvonly r0
   await recvonlyR0.connect()
