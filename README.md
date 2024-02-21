@@ -31,6 +31,20 @@ Vite を利用したサンプル集はこちらです。
 
 https://github.com/shiguredo/sora-js-sdk-samples
 
+## E2E テスト
+
+Vite と Playwright を利用しています。
+
+### 実行方法
+
+```
+# .env.local を作成して適切な値を設定してください
+$ cp sample.env .env.local
+$ pnpm install
+$ pnpm exec playwright install --with-deps
+$ pnpm run e2e-test
+```
+
 ## E2EE について
 
 詳細については以下をご確認ください。

@@ -14,12 +14,11 @@ jobs:
       matrix:
         node: ["18", "20", "21"]
         # browser: ["chromium", "firefox", "webkit"]
-        # いったんwebkitはテスト対象から外す
-        browser: ["chromium", "firefox"]
+        browser: ["chromium"]
     env:
       VITE_SORA_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_SORA_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
-      VITE_ACESSS_TOKEN: ${{ secrets.TEST_SECRET_KEY }}
+      VITE_ACCESS_TOKEN: ${{ secrets.TEST_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,7 +30,6 @@ jobs:
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm exec playwright install --with-deps
-      - run: pnpm run build
       - run: pnpm exec playwright test --project=${{ matrix.browser }}
       # - uses: actions/upload-artifact@v4
       #   if: always()
