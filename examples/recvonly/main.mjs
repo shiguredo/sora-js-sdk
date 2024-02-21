@@ -7,11 +7,18 @@ const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN
 const debug = false
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
 
-const channelId = `${SORA_CHANNEL_ID_PREFIX}recvonly`
+const channelId = `${SORA_CHANNEL_ID_PREFIX}sendonly_recvonly`
 const metadata = { access_token: ACCESS_TOKEN }
 const options = {}
 
 const recvonly = sora.recvonly(channelId, metadata, options)
+
+recvonly.on('notify', (event) => {
+  if (event.event_type === 'connection.created' && recvonly.connectionId === event.connection_id) {
+    const connectionIdElement = document.querySelector('#recvonly-connection-id')
+    connectionIdElement.textContent = event.connection_id
+  }
+})
 
 recvonly.on('track', (event) => {
   const stream = event.streams[0]

@@ -4,7 +4,7 @@ const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
 const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX
 const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN
 
-const channelId = `${SORA_CHANNEL_ID_PREFIX}spotlight_recvonly`
+const channelId = `${SORA_CHANNEL_ID_PREFIX}spotlight`
 const debug = false
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
 const metadata = { access_token: ACCESS_TOKEN }
