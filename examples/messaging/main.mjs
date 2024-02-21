@@ -8,7 +8,6 @@ const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN
 const debug = true
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
 
-console.log(SORA_CHANNEL_ID_SUFFIX)
 const channelId = `${SORA_CHANNEL_ID_PREFIX}messaging${SORA_CHANNEL_ID_SUFFIX}`
 const metadata = { access_token: ACCESS_TOKEN }
 const options = {
