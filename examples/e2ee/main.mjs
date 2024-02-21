@@ -55,6 +55,15 @@ sendrecv.on('removetrack', (event) => {
   }
 })
 sendrecv.on('notify', (event) => {
+  if (event.event_type === 'connection.created' && event.connection_id === sendrecv.connectionId) {
+    document.querySelector('#local-connection-id').textContent =
+      `connectionId: ${sendrecv.connectionId}`
+    document.querySelector('#local-fingerprint').textContent =
+      `fingerprint: ${sendrecv.e2eeSelfFingerprint}`
+
+    return
+  }
+
   if (event.event_type === 'connection.created') {
     const remoteFingerprints = sendrecv.e2eeRemoteFingerprints
     // biome-ignore lint/complexity/noForEach: <explanation>
@@ -72,10 +81,6 @@ sendrecv.on('notify', (event) => {
 document.querySelector('#start-sendrecv').addEventListener('click', async () => {
   const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
   await sendrecv.connect(mediaStream)
-  document.querySelector('#local-connection-id').textContent =
-    `connectionId: ${sendrecv.connectionId}`
-  document.querySelector('#local-fingerprint').textContent =
-    `fingerprint: ${sendrecv.e2eeSelfFingerprint}`
   document.querySelector('#sendrecv-local-video').srcObject = mediaStream
 })
 
