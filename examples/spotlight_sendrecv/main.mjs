@@ -69,8 +69,6 @@ sendrecv2.on('track', (event) => {
     remoteVideo.autoplay = true
     remoteVideo.playsinline = true
     remoteVideo.controls = true
-    // remoteVideo.width = '160'
-    // remoteVideo.height = '120'
     remoteVideo.srcObject = stream
     remoteVideos.appendChild(remoteVideo)
   }
@@ -84,22 +82,14 @@ sendrecv2.on('removetrack', (event) => {
 
 document.querySelector('#start-sendrecv1').addEventListener('click', async () => {
   // sendrecv1
-  const mediaStream = await navigator.mediaDevices
-    .getUserMedia({ audio: true, video: true })
-    .catch((e) => {
-      console.error(e)
-    })
+  const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
 
   document.querySelector('#sendrecv1-local-video').srcObject = mediaStream
   await sendrecv1.connect(mediaStream)
 })
 document.querySelector('#start-sendrecv2').addEventListener('click', async () => {
   // sendrecv2
-  const mediaStream = await navigator.mediaDevices
-    .getUserMedia({ audio: true, video: true })
-    .catch((e) => {
-      console.error(e)
-    })
+  const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
   document.querySelector('#sendrecv2-local-video').srcObject = mediaStream
   await sendrecv2.connect(mediaStream)
 })

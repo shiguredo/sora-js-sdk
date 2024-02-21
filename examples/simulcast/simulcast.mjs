@@ -1,3 +1,4 @@
+import { e } from 'vitest/dist/reporters-QGe8gs4b'
 import Sora from '../../dist/sora.mjs'
 
 const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
@@ -56,8 +57,10 @@ document.querySelector('#start').addEventListener('click', async () => {
   document.querySelector('#local-video-client-id').textContent = `(${sendonly.clientId})`
   document.querySelector('#local-video').srcObject = mediaStream
 
-  // recvonly
+  // recvonly r0
   await recvonlyR0.connect()
+  // recvonly r1
   await recvonlyR1.connect()
+  // recvonly r2
   await recvonlyR2.connect()
 })

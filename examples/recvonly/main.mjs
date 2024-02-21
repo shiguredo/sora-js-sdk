@@ -32,8 +32,6 @@ recvonly.on('track', (event) => {
     remoteVideo.autoplay = true
     remoteVideo.playsinline = true
     remoteVideo.controls = true
-    remoteVideo.width = '320'
-    remoteVideo.height = '240'
     remoteVideo.srcObject = stream
     remoteVideos.appendChild(remoteVideo)
   }

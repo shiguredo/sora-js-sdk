@@ -22,7 +22,9 @@ const sendrecv = sora.sendrecv(channelId, metadata, options)
 
 sendrecv.on('track', (event) => {
   const stream = event.streams[0]
-  if (!stream) return
+  if (!stream) {
+    return
+  }
   const remoteVideoBoxId = `remote-video-box-${stream.id}`
   const remoteVideos = document.querySelector('#sendrecv-remote-videos')
   if (!remoteVideos.querySelector(`#${remoteVideoBoxId}`)) {
@@ -78,9 +80,8 @@ document.querySelector('#start-sendrecv').addEventListener('click', async () => 
   document.querySelector('#sendrecv-local-video').srcObject = mediaStream
 })
 
-document.querySelector('#stop-sendrecv').addEventListener('click', () => {
-  sendrecv.disconnect().then(() => {
-    document.querySelector('#sendrecv-local-video').srcObject = null
-    document.querySelector('#sendrecv-remote-videos').innerHTML = null
-  })
+document.querySelector('#stop-sendrecv').addEventListener('click', async () => {
+  await sendrecv.disconnect()
+  document.querySelector('#sendrecv-local-video').srcObject = null
+  document.querySelector('#sendrecv-remote-videos').innerHTML = null
 })
