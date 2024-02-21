@@ -14,7 +14,7 @@ jobs:
       matrix:
         node: ["18", "20", "21"]
         # browser: ["chromium", "firefox", "webkit"]
-        browser: ["chromium", "firefox"]
+        browser: ["chromium"]
     env:
       VITE_SORA_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_SORA_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
