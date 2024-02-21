@@ -32,6 +32,8 @@ test('messaging pages', async ({ browser }) => {
   console.log(`Received message on page2: ${receivedMessage1}`)
   test.expect(receivedMessage1).toBe('Hello from page1')
 
+  // FIX: ここを有効にすると E2E テストが GitHub Actions で失敗する
+  // ローカルだと上手くいくのでレースコンディションかもしれない
   // // page2からpage1へメッセージを送信
   // await page2.fill('input[name="message"]', 'Hello from page2')
   // await page2.click('#send-message')
