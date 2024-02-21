@@ -9,12 +9,13 @@ const debug = false
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
 const metadata = { access_token: ACCESS_TOKEN }
 const options = {
+  multistream: true,
   simulcast: true,
   spotlight: true,
 }
 const sendonly = sora.sendonly(channelId, metadata, options)
 
-document.querySelector('#start-recvonly').addEventListener('click', () => {
+document.querySelector('#start-sendonly').addEventListener('click', () => {
   sendonly.connect().catch((e) => {
     console.error(e)
   })
