@@ -19,63 +19,33 @@ const options = {
     },
   ],
 }
-const sendrecv = sora.sendrecv(channelId, metadata, options)
+const recvonly = sora.recvonly(channelId, metadata, options)
 
-document.querySelector('#start-sendrecv').addEventListener('click', async () => {
-  const mediaStream = await navigator.mediaDevices
-    .getUserMedia({ audio: true, video: true })
-    .catch((e) => {
-      console.error(e)
-    })
-
-  await sendrecv.connect(mediaStream)
-  document.querySelector('#sendrecv-local-video').srcObject = stream
-  document.querySelector('#send-message').disabled = false
-
-  sendrecv.on('track', (event) => {
-    const stream = event.streams[0]
-    if (!stream) {
-      return
-    }
-    const remoteVideoId = `sendrecv-remotevideo-${stream.id}`
-    const remoteVideos = document.querySelector('#sendrecv-remote-videos')
-    if (!remoteVideos.querySelector(`#${remoteVideoId}`)) {
-      const remoteVideo = document.createElement('video')
-      remoteVideo.id = remoteVideoId
-      remoteVideo.style.border = '1px solid red'
-      remoteVideo.autoplay = true
-      remoteVideo.playsinline = true
-      remoteVideo.controls = true
-      remoteVideo.width = '160'
-      remoteVideo.height = '120'
-      remoteVideo.srcObject = stream
-      remoteVideos.appendChild(remoteVideo)
-    }
-  })
-  sendrecv.on('removetrack', (event) => {
-    const remoteVideo = document.querySelector(`#sendrecv-remotevideo-${event.target.id}`)
-    if (remoteVideo) {
-      document.querySelector('#sendrecv-remote-videos').removeChild(remoteVideo)
-    }
-  })
-  sendrecv.on('message', (event) => {
-    const message = document.createElement('li')
-    message.textContent = new TextDecoder().decode(event.data)
-    document.querySelector('#received-messages').appendChild(message)
-  })
-  sendrecv.on('disconnect', (event) => {
-    document.querySelector('#send-message').disabled = true
-  })
+recvonly.on('notify', (event) => {
+  if (event.event_type === 'connection.created' && event.connection_id === recvonly.connectionId) {
+    document.querySelector('#local-connection-id').textContent = `${event.connection_id}`
+  }
 })
-document.querySelector('#stop-sendrecv').addEventListener('click', () => {
-  sendrecv.disconnect().then(() => {
-    document.querySelector('#sendrecv-local-video').srcObject = null
-    document.querySelector('#sendrecv-remote-videos').innerHTML = null
-  })
+
+recvonly.on('message', (event) => {
+  const message = document.createElement('li')
+  message.textContent = new TextDecoder().decode(event.data)
+  document.querySelector('#received-messages').appendChild(message)
+})
+recvonly.on('disconnect', (event) => {
+  document.querySelector('#send-message').disabled = true
+})
+
+document.querySelector('#start').addEventListener('click', async () => {
+  await recvonly.connect()
+  document.querySelector('#send-message').disabled = false
+})
+document.querySelector('#stop').addEventListener('click', async () => {
+  await recvonly.disconnect()
 })
 document.querySelector('#send-message').addEventListener('click', async () => {
   const value = document.querySelector('input[name=message]').value
   if (value !== '') {
-    sendrecv.sendMessage('#example', new TextEncoder().encode(value))
+    recvonly.sendMessage('#example', new TextEncoder().encode(value))
   }
 })

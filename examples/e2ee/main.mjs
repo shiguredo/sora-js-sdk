@@ -42,8 +42,6 @@ sendrecv.on('track', (event) => {
     remoteVideo.autoplay = true
     remoteVideo.playsinline = true
     remoteVideo.controls = true
-    remoteVideo.width = '160'
-    remoteVideo.height = '120'
     remoteVideo.srcObject = stream
     remoteVideoBox.appendChild(remoteVideo)
     remoteVideos.appendChild(remoteVideoBox)
