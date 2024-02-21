@@ -11,6 +11,18 @@
 
 ## develop
 
+- [CHANGE] examples を Vite を利用して動かすように変更する
+  - serve を削除
+  - Vite を追加
+    - vite.config.mts を追加
+  - @voluntas
+- [ADD] tests に Playwright を利用した E2E テストを追加する
+  - @voluntas
+- [ADD] .github/workflows/e2e-test.yml を追加する
+  - Node.js 18,20,21 で E2E テストを実行する
+  - Chromium と Firefox で E2E テストを実行する
+  - @voluntas
+
 ## 2023.2.0
 
 **2023-12-08**
