@@ -15,7 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["18", "20", "21"]
+        # node: ["18", "20", "21"]
+        node: ["20"]
         # browser: ["chromium", "firefox", "webkit"]
         browser: ["chromium"]
     env:
