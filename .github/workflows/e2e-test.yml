@@ -5,10 +5,13 @@ on:
     branches:
       - develop
       - feature/*
+  schedule:
+    # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
+    - cron: "0 2 * * 1-5"
 
 jobs:
   e2e-tset:
-    timeout-minutes: 60
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
       matrix:
