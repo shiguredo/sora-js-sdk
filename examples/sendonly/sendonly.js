@@ -1,4 +1,4 @@
-import Sora from '../../dist/sora.js'
+import Sora from '../../dist/sora.mjs'
 
 const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
 const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX
