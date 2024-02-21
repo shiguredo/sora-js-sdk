@@ -2,9 +2,10 @@ import Sora from '../../dist/sora.mjs'
 
 const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
 const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX
+const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX
 const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN
 
-const channelId = `${SORA_CHANNEL_ID_PREFIX}sendonly_recvonly`
+const channelId = `${SORA_CHANNEL_ID_PREFIX}sendonly_recvonly${SORA_CHANNEL_ID_SUFFIX}`
 const debug = false
 const sora = Sora.connection(SORA_SIGNALING_URL, debug)
 const metadata = { access_token: ACCESS_TOKEN }
