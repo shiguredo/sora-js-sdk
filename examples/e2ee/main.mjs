@@ -31,11 +31,11 @@ sendrecv.on('track', (event) => {
   if (!remoteVideos.querySelector(`#${remoteVideoBoxId}`)) {
     const remoteVideoBox = document.createElement('div')
     remoteVideoBox.id = remoteVideoBoxId
-    const connectionIdElement = document.createElement('p')
+    const connectionIdElement = document.createElement('div')
     connectionIdElement.id = `${remoteVideoBoxId}-connection-id`
     connectionIdElement.textContent = `connectionId: ${stream.id}`
     remoteVideoBox.appendChild(connectionIdElement)
-    const fingerprintElement = document.createElement('p')
+    const fingerprintElement = document.createElement('div')
     fingerprintElement.id = `${remoteVideoBoxId}-fingerprint`
     remoteVideoBox.appendChild(fingerprintElement)
     const remoteVideo = document.createElement('video')
@@ -55,11 +55,10 @@ sendrecv.on('removetrack', (event) => {
   }
 })
 sendrecv.on('notify', (event) => {
+  console.log(event)
   if (event.event_type === 'connection.created' && event.connection_id === sendrecv.connectionId) {
-    document.querySelector('#local-connection-id').textContent =
-      `connectionId: ${sendrecv.connectionId}`
-    document.querySelector('#local-fingerprint').textContent =
-      `fingerprint: ${sendrecv.e2eeSelfFingerprint}`
+    document.querySelector('#local-connection-id').textContent = `${sendrecv.connectionId}`
+    document.querySelector('#local-fingerprint').textContent = `${sendrecv.e2eeSelfFingerprint}`
   }
 
   if (event.event_type === 'connection.created') {
