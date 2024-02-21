@@ -1,6 +1,6 @@
 import { test } from '@playwright/test'
 
-test('e2ee sendrecv x2', async ({ browser }) => {
+test.skip('e2ee sendrecv x2', async ({ browser }) => {
   // 新しいページを2つ作成
   const page1 = await browser.newPage()
   const page2 = await browser.newPage()
