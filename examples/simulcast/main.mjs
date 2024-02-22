@@ -13,8 +13,8 @@ const metadata = { access_token: ACCESS_TOKEN }
 
 const sendonly = sora.sendonly(channelId, metadata, {
   audio: false,
-  videoCodecType: 'AV1',
-  videoBitRate: 3000,
+  videoCodecType: 'VP8',
+  videoBitRate: 2500,
   simulcast: true,
 })
 sendonly.on('notify', (event) => {
