@@ -1,6 +1,6 @@
 import { test } from '@playwright/test'
 
-test.only('simulcast sendonly/recvonly pages', async ({ page }) => {
+test('simulcast sendonly/recvonly pages', async ({ page }) => {
   await page.goto('http://localhost:9000/simulcast/')
 
   await page.click('#start')

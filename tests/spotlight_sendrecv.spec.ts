@@ -1,6 +1,6 @@
 import { test } from '@playwright/test'
 
-test.only('spotlight sendrecv x2', async ({ page }) => {
+test('spotlight sendrecv x2', async ({ page }) => {
   await page.goto('http://localhost:9000/spotlight_sendrecv/')
 
   await page.click('#start-sendrecv1')

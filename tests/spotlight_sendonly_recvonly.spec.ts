@@ -1,6 +1,6 @@
 import { test } from '@playwright/test'
 
-test.only('spotlight sendonly/recvonly pages', async ({ browser }) => {
+test('spotlight sendonly/recvonly pages', async ({ browser }) => {
   // 新しいページを2つ作成
   const page1 = await browser.newPage()
   const page2 = await browser.newPage()

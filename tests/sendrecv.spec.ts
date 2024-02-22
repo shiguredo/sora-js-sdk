@@ -1,6 +1,6 @@
 import { test } from '@playwright/test'
 
-test.only('sendrecv x2', async ({ page }) => {
+test('sendrecv x2', async ({ page }) => {
   await page.goto('http://localhost:9000/sendrecv/')
 
   await page.click('#start-sendrecv1')
