@@ -5,6 +5,9 @@ test('simulcast sendonly/recvonly pages', async ({ page }) => {
 
   await page.click('#start')
 
+  // 安全によせて 5 秒待つ
+  await page.waitForTimeout(5000)
+
   await page.waitForSelector('#local-video-connection-id:not(:empty)')
   const localConnectionId = await page.$eval('#local-video-connection-id', (el) => el.textContent)
   console.log(`local connectionId=${localConnectionId}`)
