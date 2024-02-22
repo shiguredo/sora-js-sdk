@@ -94,11 +94,17 @@ document.querySelector('#start').addEventListener('click', async () => {
 
 document.querySelector('#stop').addEventListener('click', async () => {
   await sendonly.disconnect()
+  document.querySelector('#local-video').srcObject = null
 
   // recvonly r0
   await recvonlyR0.disconnect()
+  document.querySelector('#remote-video-r0').srcObject = null
+
   // recvonly r1
   await recvonlyR1.disconnect()
+  document.querySelector('#remote-video-r1').srcObject = null
+
   // recvonly r2
   await recvonlyR2.disconnect()
+  document.querySelector('#remote-video-r2').srcObject = null
 })

@@ -30,6 +30,6 @@ document.querySelector('#start-sendonly').addEventListener('click', async () => 
 })
 
 document.querySelector('#stop-sendonly').addEventListener('click', async () => {
-  document.querySelector('#sendonly-local-video').srcObject = null
   await sendonly.disconnect()
+  document.querySelector('#sendonly-local-video').srcObject = null
 })

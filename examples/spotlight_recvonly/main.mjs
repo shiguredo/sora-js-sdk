@@ -51,3 +51,8 @@ recvonly.on('removetrack', (event) => {
 document.querySelector('#start-recvonly').addEventListener('click', async () => {
   await recvonly.connect()
 })
+
+document.querySelector('#stop-recvonly').addEventListener('click', async () => {
+  await recvonly.disconnect()
+  document.querySelector('#remote-videos').innerHTML = null
+})
