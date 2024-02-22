@@ -35,10 +35,7 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       - run: pnpm exec playwright install ${{ matrix.browser }} --with-deps
-      # - run: pnpm exec playwright test --project=${{ matrix.browser }}
-      #   env:
-      #     VITE_SORA_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
-      - run: pnpm exec playwright test simulcast --project=${{ matrix.browser }}
+      - run: pnpm exec playwright test --workers=1 --project=${{ matrix.browser }}
         env:
           VITE_SORA_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
