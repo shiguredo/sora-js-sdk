@@ -18,6 +18,7 @@ const sendonly = sora.sendonly(channelId, metadata, {
   simulcast: true,
 })
 sendonly.on('notify', (event) => {
+  console.log(event)
   if (event.event_type === 'connection.created' && event.connection_id === sendonly.connectionId) {
     document.querySelector('#local-video-connection-id').textContent = `${event.connection_id}`
   }
