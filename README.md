@@ -30,9 +30,12 @@ Please read https://github.com/shiguredo/oss before use.
 
 ## サンプル集
 
-Vite を利用したサンプル集はこちらです。
-
-https://github.com/shiguredo/sora-js-sdk-samples
+```
+# .env.local を作成して適切な値を設定してください
+$ cp .env.template .env.local
+$ pnpm install
+$ pnpm run dev
+```
 
 ## E2E (End to End) テスト
 
@@ -46,16 +49,6 @@ $ pnpm exec playwright install chromium --with-deps
 $ pnpm run e2e-test
 ```
 
-### ブラウザでの動作確認
-
-E2E テスト用の MPA (Multi-Page Application) を利用してブラウザで動作確認を行うことができます。
-
-```
-# .env.local を作成して適切な値を設定してください
-$ cp .env.template .env.local
-$ pnpm install
-$ pnpm run dev
-```
 
 ## E2EE について
 
