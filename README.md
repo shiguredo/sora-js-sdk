@@ -34,6 +34,7 @@ Please read https://github.com/shiguredo/oss before use.
 # .env.local を作成して適切な値を設定してください
 $ cp .env.template .env.local
 $ pnpm install
+$ pnpm run build
 $ pnpm run dev
 ```
 
@@ -45,6 +46,7 @@ Playwright を利用した E2E テストを実行できます。
 # .env.local を作成して適切な値を設定してください
 $ cp .env.template .env.local
 $ pnpm install
+$ pnpm run build
 $ pnpm exec playwright install chromium --with-deps
 $ pnpm run e2e-test
 ```
