@@ -35,4 +35,9 @@ test.skip('e2ee sendrecv x2', async ({ browser }) => {
 
   await page1.click('#stop-sendrecv')
   await page2.click('#stop-sendrecv')
+
+  await page1.close()
+  await page2.close()
+
+  await browser.close()
 })

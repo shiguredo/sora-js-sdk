@@ -22,4 +22,6 @@ test('spotlight sendrecv x2', async ({ page }) => {
 
   await page.click('#stop-sendrecv1')
   await page.click('#stop-sendrecv2')
+
+  await page.close()
 })

@@ -47,4 +47,9 @@ test.skip('messaging pages', async ({ browser }) => {
 
   await page1.click('#stop')
   await page2.click('#stop')
+
+  await page1.close()
+  await page2.close()
+
+  await browser.close()
 })

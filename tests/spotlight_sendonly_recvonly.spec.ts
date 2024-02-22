@@ -28,4 +28,9 @@ test.only('spotlight sendonly/recvonly pages', async ({ browser }) => {
 
   await page1.click('#stop-sendonly')
   await page2.click('#stop-recvonly')
+
+  await page1.close()
+  await page2.close()
+
+  await browser.close()
 })
