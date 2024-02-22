@@ -51,7 +51,6 @@ $ pnpm exec playwright install chromium --with-deps
 $ pnpm run e2e-test
 ```
 
-
 ## E2EE について
 
 詳細については以下をご確認ください。
@@ -107,7 +106,6 @@ limitations under the License.
 ### クライアント SDK
 
 - [Sora JavaScript SDK](https://github.com/shiguredo/sora-javascript-sdk)
-  - [Sora JavaScript SDK サンプル集](https://github.com/shiguredo/sora-js-sdk-samples)
   - [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/)
 - [Sora iOS SDK](https://github.com/shiguredo/sora-ios-sdk)
   - [Sora iOS SDK クイックスタート](https://github.com/shiguredo/sora-ios-sdk-quickstart)
