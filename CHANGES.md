@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] stopAudioTrack と stopVideoTrack を非推奨にする
+  - 代わりに名前を変えただけの removeAudioTrack と removeVideoTrack を用意する
+  - @voluntas
 - [CHANGE] examples を Vite を利用して動かすように変更する
   - serve を削除
   - Vite を追加
