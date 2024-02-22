@@ -28,3 +28,8 @@ document.querySelector('#start-sendonly').addEventListener('click', async () => 
   document.querySelector('#sendonly-local-video').srcObject = mediaStream
   await sendonly.connect(mediaStream)
 })
+
+document.querySelector('#stop-sendonly').addEventListener('click', async () => {
+  await sendonly.disconnect()
+  document.querySelector('#sendonly-local-video').srcObject = null
+})
