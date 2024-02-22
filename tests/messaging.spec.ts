@@ -50,6 +50,4 @@ test.skip('messaging pages', async ({ browser }) => {
 
   await page1.close()
   await page2.close()
-
-  await browser.close()
 })

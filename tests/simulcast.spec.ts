@@ -34,6 +34,4 @@ test.only('simulcast sendonly/recvonly pages', async ({ page }) => {
   console.log(`remote | rid=r2, connectionId=${remoteR2ConnectionId}`)
 
   await page.click('#stop')
-
-  await page.close()
 })

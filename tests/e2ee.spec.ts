@@ -38,6 +38,4 @@ test.skip('e2ee sendrecv x2', async ({ browser }) => {
 
   await page1.close()
   await page2.close()
-
-  await browser.close()
 })

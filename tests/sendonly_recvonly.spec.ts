@@ -31,6 +31,4 @@ test.only('sendonly/recvonly pages', async ({ browser }) => {
 
   await page1.close()
   await page2.close()
-
-  await browser.close()
 })
