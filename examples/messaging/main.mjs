@@ -43,6 +43,7 @@ document.querySelector('#start').addEventListener('click', async () => {
 })
 document.querySelector('#stop').addEventListener('click', async () => {
   await recvonly.disconnect()
+  document.querySelector('#received-messages').innerHTML = null
 })
 document.querySelector('#send-message').addEventListener('click', async () => {
   const value = document.querySelector('input[name=message]').value
