@@ -1,6 +1,5 @@
 import { test } from '@playwright/test'
 
-// FIXME: ローカルだと通る
 test.skip('messaging pages', async ({ browser }) => {
   // 新しいページを2つ作成
   const page1 = await browser.newPage()
@@ -47,4 +46,7 @@ test.skip('messaging pages', async ({ browser }) => {
 
   await page1.click('#stop')
   await page2.click('#stop')
+
+  await page1.close()
+  await page2.close()
 })

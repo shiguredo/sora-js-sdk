@@ -45,6 +45,14 @@ jobs:
       #     path: playwright-report/
       #     retention-days: 30
       - name: Slack Notification
+        if: success()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-js-sdk
+          SLACK_COLOR: good
+          SLACK_TITLE: Success test
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
         env:
