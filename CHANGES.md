@@ -26,6 +26,9 @@
   - Node.js 18,20,21 で E2E テストを実行する
   - Chromium と E2E テストを実行する
   - @voluntas
+- [FIX] examples 実行時に環境変数が設定されていない場合は空文字にする
+  - 対象項目は SORA_CHANNEL_ID_PREFIX, VITE_SORA_CHANNEL_ID_PREFIX, VITE_ACCESS_TOKEN
+  - @miosakuma
 
 ## 2023.2.0
 
