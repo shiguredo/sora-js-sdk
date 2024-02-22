@@ -51,7 +51,7 @@ $ pnpm exec playwright install chromium --with-deps
 $ pnpm run e2e-test
 ```
 
-## E2EE について
+## E2EE (End to End Encryption) について
 
 詳細については以下をご確認ください。
 
