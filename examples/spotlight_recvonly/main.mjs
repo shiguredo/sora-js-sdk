@@ -43,6 +43,7 @@ recvonly.on('track', (event) => {
 recvonly.on('removetrack', (event) => {
   const remoteVideo = document.querySelector(`#remotevideo-${event.target.id}`)
   if (remoteVideo) {
+    remoteVideo.srcObject = null
     document.querySelector('#remote-videos').removeChild(remoteVideo)
   }
 })

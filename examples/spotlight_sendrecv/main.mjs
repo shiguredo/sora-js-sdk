@@ -77,6 +77,7 @@ sendrecv2.on('track', (event) => {
 sendrecv2.on('removetrack', (event) => {
   const remoteVideo = document.querySelector(`#sendrecv2-remotevideo-${event.target.id}`)
   if (remoteVideo) {
+    remoteVideo.srcObject = null
     document.querySelector('#sendrecv2-remote-videos').removeChild(remoteVideo)
   }
 })
@@ -94,15 +95,13 @@ document.querySelector('#start-sendrecv2').addEventListener('click', async () =>
   document.querySelector('#sendrecv2-local-video').srcObject = mediaStream
   await sendrecv2.connect(mediaStream)
 })
-document.querySelector('#stop-sendrecv1').addEventListener('click', () => {
-  sendrecv1.disconnect().then(() => {
-    document.querySelector('#sendrecv1-local-video').srcObject = null
-    document.querySelector('#sendrecv1-remote-videos').innerHTML = null
-  })
+document.querySelector('#stop-sendrecv1').addEventListener('click', async () => {
+  await sendrecv1.disconnect()
+  document.querySelector('#sendrecv1-local-video').srcObject = null
+  document.querySelector('#sendrecv1-remote-videos').innerHTML = null
 })
-document.querySelector('#stop-sendrecv2').addEventListener('click', () => {
-  sendrecv2.disconnect().then(() => {
-    document.querySelector('#sendrecv2-local-video').srcObject = null
-    document.querySelector('#sendrecv2-remote-videos').innerHTML = null
-  })
+document.querySelector('#stop-sendrecv2').addEventListener('click', async () => {
+  sendrecv2.disconnect()
+  document.querySelector('#sendrecv2-local-video').srcObject = null
+  document.querySelector('#sendrecv2-remote-videos').innerHTML = null
 })
