@@ -14,6 +14,11 @@
 - [CHANGE] stopAudioTrack と stopVideoTrack を非推奨にする
   - 代わりに名前を変えただけの removeAudioTrack と removeVideoTrack を用意する
   - @voluntas
+
+## 2023.2.1
+
+**テストとサンプルのみの変更であり、SDK の変更はありません**
+
 - [CHANGE] examples を Vite を利用して動かすように変更する
   - serve を削除
   - Vite を追加
@@ -29,6 +34,9 @@
   - Node.js 18,20,21 で E2E テストを実行する
   - Chromium と E2E テストを実行する
   - @voluntas
+- [FIX] examples 実行時に環境変数が設定されていない場合は空文字にする
+  - 対象項目は SORA_CHANNEL_ID_PREFIX, VITE_SORA_CHANNEL_ID_PREFIX, VITE_ACCESS_TOKEN
+  - @miosakuma
 
 ## 2023.2.0
 

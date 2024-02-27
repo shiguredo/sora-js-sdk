@@ -6,8 +6,12 @@ packages/e2ee/_worker
 apidoc/
 .log/
 dist/
+
+# .env
 .env*
 !.env.template
+
+# playwright
 /test-results/
 /playwright-report/
 /blob-report/

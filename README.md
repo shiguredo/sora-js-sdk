@@ -30,30 +30,28 @@ Please read https://github.com/shiguredo/oss before use.
 
 ## サンプル集
 
-Vite を利用したサンプル集はこちらです。
-
-https://github.com/shiguredo/sora-js-sdk-samples
-
-## サンプル
-
 ```
 # .env.local を作成して適切な値を設定してください
 $ cp .env.template .env.local
 $ pnpm install
+$ pnpm run build
 $ pnpm run dev
 ```
 
-## E2E テスト
+## E2E (End to End) テスト
+
+Playwright を利用した E2E テストを実行できます。
 
 ```
 # .env.local を作成して適切な値を設定してください
 $ cp .env.template .env.local
 $ pnpm install
-$ pnpm exec playwright install --with-deps
+$ pnpm run build
+$ pnpm exec playwright install chromium --with-deps
 $ pnpm run e2e-test
 ```
 
-## E2EE について
+## E2EE (End to End Encryption) について
 
 詳細については以下をご確認ください。
 
@@ -108,7 +106,6 @@ limitations under the License.
 ### クライアント SDK
 
 - [Sora JavaScript SDK](https://github.com/shiguredo/sora-javascript-sdk)
-  - [Sora JavaScript SDK サンプル集](https://github.com/shiguredo/sora-js-sdk-samples)
   - [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/)
 - [Sora iOS SDK](https://github.com/shiguredo/sora-ios-sdk)
   - [Sora iOS SDK クイックスタート](https://github.com/shiguredo/sora-ios-sdk-quickstart)
