@@ -426,6 +426,10 @@ export default class ConnectionBase {
    * @public
    */
   stopVideoTrack(stream: MediaStream): Promise<void> {
+    console.warn(
+      // @deprecated message
+      '@deprecated stopVideoTrack will be removed in a future version. Use removeVideoTrack instead.',
+    )
     return this.removeVideoTrack(stream)
   }
 
