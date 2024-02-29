@@ -331,7 +331,9 @@ export default class ConnectionBase {
   }
 
   /**
-   * audio track を停止するメソッド
+   * audio track を削除するメソッド
+   *
+   * @deprecated この関数は非推奨です。代わりに removeAudioTrack を使用してください
    *
    * @example
    * ```
@@ -345,11 +347,38 @@ export default class ConnectionBase {
    * @remarks
    * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します
    *
-   * @param stream - audio track を停止する MediaStream
+   * @param stream - audio track を削除する MediaStream
    *
    * @public
    */
   stopAudioTrack(stream: MediaStream): Promise<void> {
+    console.warn(
+      // @deprecated message
+      '@deprecated stopAudioTrack will be removed in a future version. Use removeAudioTrack instead.',
+    )
+    return this.removeAudioTrack(stream)
+  }
+
+  /**
+   * audio track を削除するメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * sendrecv.removeAudioTrack(mediaStream);
+   * ```
+   *
+   * @remarks
+   * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します
+   *
+   * @param stream - audio track を削除する MediaStream
+   *
+   * @public
+   */
+  removeAudioTrack(stream: MediaStream): Promise<void> {
     for (const track of stream.getAudioTracks()) {
       track.enabled = false
     }
@@ -374,8 +403,11 @@ export default class ConnectionBase {
       }, 100)
     })
   }
+
   /**
-   * video track を停止するメソッド
+   * video track を削除するメソッド
+   *
+   * @deprecated この関数は非推奨です。代わりに removeVideoTrack を使用してください
    *
    * @example
    * ```
@@ -394,6 +426,33 @@ export default class ConnectionBase {
    * @public
    */
   stopVideoTrack(stream: MediaStream): Promise<void> {
+    console.warn(
+      // @deprecated message
+      '@deprecated stopVideoTrack will be removed in a future version. Use removeVideoTrack instead.',
+    )
+    return this.removeVideoTrack(stream)
+  }
+
+  /**
+   * video track を削除するメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * sendrecv.removeVideoTrack(mediaStream);
+   * ```
+   *
+   * @remarks
+   * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します
+   *
+   * @param stream - video track を削除する MediaStream
+   *
+   * @public
+   */
+  removeVideoTrack(stream: MediaStream): Promise<void> {
     for (const track of stream.getVideoTracks()) {
       track.enabled = false
     }
@@ -442,7 +501,7 @@ export default class ConnectionBase {
    * @public
    */
   async replaceAudioTrack(stream: MediaStream, audioTrack: MediaStreamTrack): Promise<void> {
-    await this.stopAudioTrack(stream)
+    await this.removeAudioTrack(stream)
     const transceiver = this.getAudioTransceiver()
     if (transceiver === null) {
       throw new Error('Unable to set an audio track. Audio track sender is undefined')
@@ -474,7 +533,7 @@ export default class ConnectionBase {
    * @public
    */
   async replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void> {
-    await this.stopVideoTrack(stream)
+    await this.removeVideoTrack(stream)
     const transceiver = this.getVideoTransceiver()
     if (transceiver === null) {
       throw new Error('Unable to set video track. Video track sender is undefined')
