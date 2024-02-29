@@ -68,7 +68,7 @@ class SoraClient {
     this.label = label
 
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}sendrecv${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}spotlight_sendrecv${channelIdSuffix}`
     this.metadata = { access_token: accessToken }
     this.options = {
       audio: true,
