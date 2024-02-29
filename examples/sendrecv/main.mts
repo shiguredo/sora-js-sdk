@@ -116,7 +116,7 @@ class SoraClient {
 
   private ontrack(event: RTCTrackEvent): void {
     const stream = event.streams[0]
-    const remoteVideoId = `${this.label}-remotevideo-${stream.id}`
+    const remoteVideoId = `${this.label}-remote-video-${stream.id}`
     const remoteVideos = document.querySelector(`#${this.label}-remote-videos`)
     if (remoteVideos && !remoteVideos.querySelector(`#${remoteVideoId}`)) {
       const remoteVideo = document.createElement('video')
@@ -134,7 +134,7 @@ class SoraClient {
 
   private onremovetrack(event: MediaStreamTrackEvent): void {
     const target = event.target as MediaStream
-    const remoteVideo = document.querySelector(`#${this.label}-remotevideo-${target.id}`)
+    const remoteVideo = document.querySelector(`#${this.label}-remote-video-${target.id}`)
     if (remoteVideo) {
       document.querySelector(`#${this.label}-remote-videos`)?.removeChild(remoteVideo)
     }
