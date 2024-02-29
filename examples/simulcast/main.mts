@@ -64,10 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // recvonly r0
     await recvonlyR0.disconnect()
-
     // recvonly r1
     await recvonlyR1.disconnect()
-
     // recvonly r2
     await recvonlyR2.disconnect()
   })
