@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "es2020",
+    "target": "ES2020",
+    "module": "ES2020",
     "strict": true,
     "declaration": true,
     "strictNullChecks": true,
