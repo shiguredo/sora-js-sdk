@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] stopAudioTrack と stopVideoTrack を非推奨にする
+  - 代わりに名前を変えただけの removeAudioTrack と removeVideoTrack を用意する
+  - @voluntas
+
 ## 2023.2.1
 
 **テストとサンプルのみの変更であり、SDK の変更はありません**
