@@ -14,11 +14,6 @@
 - [CHANGE] stopAudioTrack と stopVideoTrack を非推奨にする
   - 代わりに名前を変えただけの removeAudioTrack と removeVideoTrack を用意する
   - @voluntas
-
-## 2023.2.1
-
-**テストとサンプルのみの変更であり、SDK の変更はありません**
-
 - [CHANGE] examples を Vite を利用して動かすように変更する
   - serve を削除
   - Vite を追加
@@ -26,6 +21,10 @@
   - @voluntas
 - [CHANGE] deploy-pages.yml を削除する
   - E2E テストで実行できるようになったので
+  - @voluntas
+- [CHANGE] サンプルを class ベースに変更する
+  - @voluntas
+- [ADD] サンプル用の .env.template を用意する
   - @voluntas
 - [ADD] tests に Playwright を利用した E2E テストを追加する
   - e2ee と messaging は一旦 skip で追加
