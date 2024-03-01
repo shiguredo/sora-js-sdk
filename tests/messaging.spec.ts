@@ -24,9 +24,9 @@ test('messaging pages', async ({ browser }) => {
   await page1.fill('input[name="message"]', 'Hello from page1')
   await page1.click('#send-message')
 
-  // // page2でメッセージが受信されたことを確認
-  // await page2.waitForSelector('#received-messages li', { state: 'attached' })
-  // const receivedMessage1 = await page2.$eval('#received-messages li', (el) => el.textContent)
+  // page2でメッセージが受信されたことを確認
+  await page2.waitForSelector('#received-messages li', { state: 'attached' })
+  const receivedMessage1 = await page2.$eval('#received-messages li', (el) => el.textContent)
 
   // // 受信したメッセージが期待したものであるか検証
   // console.log(`Received message on page2: ${receivedMessage1}`)
