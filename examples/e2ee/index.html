@@ -12,20 +12,20 @@
     <div style="display: flex;">
       <div>
         <h2>local</h2>
-        <button id="start-sendrecv">start</button>
-        <button id="stop-sendrecv">stop</button><br />
+        <button id="start">start</button>
+        <button id="stop">stop</button><br />
         <div id="local-connection-id"></div>
         <div id="local-fingerprint"></div>
-        <video id="sendrecv-local-video" autoplay="" playsinline="" controls=""
+        <video id="local-video" autoplay="" playsinline="" controls=""
           style="width: 320px; height: 240px; border: 1px solid black;"></video>
 
         <h2>remote</h2>
-        <div id="sendrecv-remote-videos"></div>
+        <div id="remote-videos"></div>
       </div>
     </div>
   </div>
 
-  <script type="module" src="./main.mjs"></script>
+  <script type="module" src="./main.mts"></script>
 </body>
 
 </html>
