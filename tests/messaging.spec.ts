@@ -1,6 +1,6 @@
 import { test } from '@playwright/test'
 
-test.skip('messaging pages', async ({ browser }) => {
+test('messaging pages', async ({ browser }) => {
   // 新しいページを2つ作成
   const page1 = await browser.newPage()
   const page2 = await browser.newPage()
@@ -12,12 +12,12 @@ test.skip('messaging pages', async ({ browser }) => {
   await page1.click('#start')
   await page2.click('#start')
 
-  await page1.waitForSelector('#local-connection-id:not(:empty)')
-  const page1ConnectionId = await page1.$eval('#local-connection-id', (el) => el.textContent)
+  await page1.waitForSelector('#connection-id:not(:empty)')
+  const page1ConnectionId = await page1.$eval('#connection-id', (el) => el.textContent)
   console.log(`page1 connectionId=${page1ConnectionId}`)
 
-  await page2.waitForSelector('#local-connection-id:not(:empty)')
-  const page2ConnectionId = await page2.$eval('#local-connection-id', (el) => el.textContent)
+  await page2.waitForSelector('#connection-id:not(:empty)')
+  const page2ConnectionId = await page2.$eval('#connection-id', (el) => el.textContent)
   console.log(`page2 connectionId=${page2ConnectionId}`)
 
   // page1からpage2へメッセージを送信
