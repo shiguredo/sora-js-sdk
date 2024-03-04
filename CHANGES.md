@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] シグナリングオプションの `multistream` は false の時のみシングルストリームを使用する
+  - シングルストリームを使用したい場合は `multistream: false` の指定が必須となる
+  - @tnamao
 - [CHANGE] stopAudioTrack と stopVideoTrack を非推奨にする
   - 代わりに名前を変えただけの removeAudioTrack と removeVideoTrack を用意する
   - @voluntas
