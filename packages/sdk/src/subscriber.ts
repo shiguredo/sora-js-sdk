@@ -17,9 +17,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
    */
   // biome-ignore lint/suspicious/noConfusingVoidType: stream が <MediaStream | void> なのでどうしようもない
   async connect(): Promise<MediaStream | void> {
-    if (this.options.multistream) {
-      await Promise.race([
-        this.multiStream().finally(() => {
+    // options.multistream が明示的に false を指定した時だけシングルストリームにする
+    if (this.options.multistream === false) {
+      const stream = await Promise.race([
+        this.singleStream().finally(() => {
           this.clearConnectionTimeout()
           this.clearMonitorSignalingWebSocketEvent()
         }),
@@ -28,10 +29,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
       ])
       this.monitorWebSocketEvent()
       this.monitorPeerConnectionState()
-      return
+      return stream
     }
-    const stream = await Promise.race([
-      this.singleStream().finally(() => {
+    await Promise.race([
+      this.multiStream().finally(() => {
         this.clearConnectionTimeout()
         this.clearMonitorSignalingWebSocketEvent()
       }),
@@ -40,7 +41,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
     ])
     this.monitorWebSocketEvent()
     this.monitorPeerConnectionState()
-    return stream
   }
 
   /**

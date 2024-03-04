@@ -19,9 +19,10 @@ export default class ConnectionPublisher extends ConnectionBase {
    * @public
    */
   async connect(stream: MediaStream): Promise<MediaStream> {
-    if (this.options.multistream) {
+    // options.multistream が明示的に false を指定した時だけシングルストリームにする
+    if (this.options.multistream === false) {
       await Promise.race([
-        this.multiStream(stream).finally(() => {
+        this.singleStream(stream).finally(() => {
           this.clearConnectionTimeout()
           this.clearMonitorSignalingWebSocketEvent()
         }),
@@ -30,7 +31,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       ])
     } else {
       await Promise.race([
-        this.singleStream(stream).finally(() => {
+        this.multiStream(stream).finally(() => {
           this.clearConnectionTimeout()
           this.clearMonitorSignalingWebSocketEvent()
         }),
