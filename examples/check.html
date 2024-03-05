@@ -21,7 +21,7 @@
       <small>※ クエリストリングの signalingUrl パラメータでも指定可能</small>
       <hr />
 
-      <h2><u>チャネル ID: sora-js-sdk:check:singlestream</u></h2>
+      <h2><u>チャネル ID: sora-js-sdk:check:legacystream</u></h2>
 
       要確認ブラウザ:
       <ul>
@@ -30,14 +30,14 @@
         <li>Firefox: Linux or macOS or Windows</li>
       </ul>
 
-      <button onclick="startSinglestreamCheck()">接続</button>
-      <button onclick="stopSinglestreamCheck()">切断</button>
+      <button onclick="startLegacystreamCheck()">接続</button>
+      <button onclick="stopLegacystreamCheck()">切断</button>
 
       <h4>sendonly, Opus</h4>
-      <div id="singlestream-sendonly-videos" class="singlestream"></div>
+      <div id="legacystream-sendonly-videos" class="legacystream"></div>
 
       <h4>recvonly</h4>
-      <div id="singlestream-recvonly-videos" class="singlestream"></div>
+      <div id="legacystream-recvonly-videos" class="legacystream"></div>
 
       <h2><u>チャネル ID: sora-js-sdk:check:multistream</u></h2>
 
@@ -183,23 +183,23 @@
           document.querySelectorAll('.multistream').forEach(x => x.innerHTML = null);
       }
 
-      let singlestreamCheckConnections = [];
-      async function startSinglestreamCheck() {
-          stopSinglestreamCheck();
+      let legacystreamCheckConnections = [];
+      async function startLegacystreamCheck() {
+          stopLegacystreamCheck();
 
-          const channelId = 'sora-js-sdk:check:singlestream';
-          singlestreamCheckConnections = [
-              await connect(channelId, 'singlestream-sendonly-videos', 'sendonly',
+          const channelId = 'sora-js-sdk:check:legacystream';
+          legacystreamCheckConnections = [
+              await connect(channelId, 'legacystream-sendonly-videos', 'sendonly',
                             {multistream: false}),
-              await connect(channelId, 'singlestream-recvonly-videos', 'recvonly',
+              await connect(channelId, 'legacystream-recvonly-videos', 'recvonly',
                             {multistream: false}),
           ];
       }
 
-      async function stopSinglestreamCheck() {
-          singlestreamCheckConnections.forEach(x => x.disconnect());
-          singlestreamCheckConnections = [];
-          document.querySelectorAll('.singlestream').forEach(x => x.innerHTML = null);
+      async function stopLegacystreamCheck() {
+          legacystreamCheckConnections.forEach(x => x.disconnect());
+          legacystreamCheckConnections = [];
+          document.querySelectorAll('.legacystream').forEach(x => x.innerHTML = null);
       }
 
       function initLyra() {
