@@ -19,10 +19,10 @@ export default class ConnectionPublisher extends ConnectionBase {
    * @public
    */
   async connect(stream: MediaStream): Promise<MediaStream> {
-    // options.multistream が明示的に false を指定した時だけシングルストリームにする
+    // options.multistream が明示的に false を指定した時だけレガシーストリームにする
     if (this.options.multistream === false) {
       await Promise.race([
-        this.singleStream(stream).finally(() => {
+        this.legacyStream(stream).finally(() => {
           this.clearConnectionTimeout()
           this.clearMonitorSignalingWebSocketEvent()
         }),
@@ -45,11 +45,11 @@ export default class ConnectionPublisher extends ConnectionBase {
   }
 
   /**
-   * シングルストリームで Sora へ接続するメソッド
+   * レガシーストリームで Sora へ接続するメソッド
    *
    * @param stream - メディアストリーム
    */
-  private async singleStream(stream: MediaStream): Promise<MediaStream> {
+  private async legacyStream(stream: MediaStream): Promise<MediaStream> {
     await this.disconnect()
     this.setupE2EE()
     const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)

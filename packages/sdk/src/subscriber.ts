@@ -17,10 +17,10 @@ export default class ConnectionSubscriber extends ConnectionBase {
    */
   // biome-ignore lint/suspicious/noConfusingVoidType: stream が <MediaStream | void> なのでどうしようもない
   async connect(): Promise<MediaStream | void> {
-    // options.multistream が明示的に false を指定した時だけシングルストリームにする
+    // options.multistream が明示的に false を指定した時だけレガシーストリームにする
     if (this.options.multistream === false) {
       const stream = await Promise.race([
-        this.singleStream().finally(() => {
+        this.legacyStream().finally(() => {
           this.clearConnectionTimeout()
           this.clearMonitorSignalingWebSocketEvent()
         }),
@@ -44,9 +44,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
   }
 
   /**
-   * シングルストリームで Sora へ接続するメソッド
+   * レガシーストリームで Sora へ接続するメソッド
    */
-  private async singleStream(): Promise<MediaStream> {
+  private async legacyStream(): Promise<MediaStream> {
     await this.disconnect()
     this.setupE2EE()
     const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)
