@@ -19,8 +19,6 @@ import {
   TransportType,
 } from './types'
 
-import { LYRA_VERSION } from '@shiguredo/lyra-wasm'
-
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase()
   if (ua.indexOf('edge') !== -1) {
@@ -219,7 +217,6 @@ export function createSignalingMessage(
     'audioOpusParamsUseinbandfec',
     'audioOpusParamsUsedtx',
   ]
-  const audioLyraParamsPropertyKeys = ['audioLyraParamsBitrate', 'audioLyraParamsUsedtx']
   const videoPropertyKeys = [
     'videoCodecType',
     'videoBitRate',
@@ -240,9 +237,6 @@ export function createSignalingMessage(
       return
     }
     if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
-      return
-    }
-    if (0 <= audioLyraParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
       return
     }
     if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
@@ -297,20 +291,6 @@ export function createSignalingMessage(
     }
     if ('audioOpusParamsUsedtx' in copyOptions) {
       message.audio.opus_params.usedtx = copyOptions.audioOpusParamsUsedtx
-    }
-  }
-
-  if (message.audio && options.audioCodecType === 'LYRA') {
-    if (typeof message.audio !== 'object') {
-      message.audio = {}
-    }
-
-    message.audio.lyra_params = { version: LYRA_VERSION }
-    if ('audioLyraParamsBitrate' in copyOptions) {
-      message.audio.lyra_params.bitrate = copyOptions.audioLyraParamsBitrate
-    }
-    if ('audioLyraParamsUsedtx' in copyOptions) {
-      message.audio.lyra_params.usedtx = copyOptions.audioLyraParamsUsedtx
     }
   }
 

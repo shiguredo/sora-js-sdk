@@ -2,19 +2,10 @@ import { unzlibSync, zlibSync } from 'fflate'
 
 import SoraE2EE from '@sora/e2ee'
 import {
-  LyraState,
-  createLyraWorker,
-  isLyraInitialized,
-  transformLyraToPcm,
-  transformPcmToLyra,
-} from './lyra'
-import {
-  AudioCodecType,
   Callbacks,
   ConnectionOptions,
   DataChannelConfiguration,
   JSONType,
-  RTCEncodedAudioFrame,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
@@ -198,19 +189,6 @@ export default class ConnectionBase {
    */
   protected e2ee: SoraE2EE | null
   /**
-   * mid と AudioCodecType の対応づけを保持するマップ
-   *
-   * Lyra などのカスタム音声コーデック使用時に RTCRtpReceiver をどのコーデックでデコードすべきかを
-   * 判別するために使われる
-   *
-   * カスタム音声コーデックが有効になっていない場合には空のままとなる
-   */
-  private midToAudioCodecType: Map<string, AudioCodecType> = new Map()
-  /**
-   * Lyra インスタンス
-   */
-  private lyra?: LyraState
-  /**
    * キーとなる sender が setupSenderTransform で初期化済みかどうか
    */
   private senderStreamInitialized: WeakSet<RTCRtpSender> = new WeakSet()
@@ -288,9 +266,6 @@ export default class ConnectionBase {
     this.signalingOfferMessageDataChannels = {}
     this.connectedSignalingUrl = ''
     this.contactSignalingUrl = ''
-    if (isLyraInitialized()) {
-      this.lyra = new LyraState()
-    }
   }
 
   /**
@@ -1308,7 +1283,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config)
-    if (this.e2ee || this.lyra) {
+    if (this.e2ee) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config)
     }
@@ -1460,25 +1435,7 @@ export default class ConnectionBase {
       sdp = sdp.replace(/^m=(audio|video) 0 /gm, (_match, kind: string) => `m=${kind} 9 `)
     }
 
-    this.midToAudioCodecType.clear()
-    if (this.lyra === undefined || !sdp.includes('109 lyra/')) {
-      return sdp
-    }
-
-    // mid と音声コーデックの対応を保存する
-    for (const media of sdp.split(/^m=/m).slice(1)) {
-      if (!media.startsWith('audio')) {
-        continue
-      }
-
-      const mid = /a=mid:(.*)/.exec(media)
-      if (mid) {
-        const codecType = media.includes('109 lyra/') ? 'LYRA' : 'OPUS'
-        this.midToAudioCodecType.set(mid[1], codecType)
-      }
-    }
-
-    return this.lyra.processOfferSdp(sdp)
+    return sdp
   }
 
   /**
@@ -1490,11 +1447,8 @@ export default class ConnectionBase {
    * @returns 処理後の SDP
    */
   private processAnswerSdpForLocal(sdp: string): string {
-    if (this.lyra === undefined) {
-      return sdp
-    }
-
-    return this.lyra.processAnswerSdpForLocal(sdp)
+    // TODO(tnamao): 削除しても良さそうな関数
+    return sdp
   }
 
   /**
@@ -1506,11 +1460,8 @@ export default class ConnectionBase {
    * @returns 処理後の SDP
    */
   private processAnswerSdpForSora(sdp: string): string {
-    if (this.lyra === undefined) {
-      return sdp
-    }
-
-    return this.lyra.processAnswerSdpForSora(sdp)
+    // TODO(tnamao): 削除しても良さそうな関数
+    return sdp
   }
 
   /**
@@ -1519,7 +1470,7 @@ export default class ConnectionBase {
    * @param sender 対象となる RTCRtpSender インスタンス
    */
   protected async setupSenderTransform(sender: RTCRtpSender): Promise<void> {
-    if ((this.e2ee === null && this.lyra === undefined) || sender.track === null) {
+    if (this.e2ee === null || sender.track === null) {
       return
     }
     // 既に初期化済み
@@ -1527,46 +1478,20 @@ export default class ConnectionBase {
       return
     }
 
-    const isLyraCodec = sender.track.kind === 'audio' && this.options.audioCodecType === 'LYRA'
-
     if ('transform' in RTCRtpSender.prototype) {
       // WebRTC Encoded Transform に対応しているブラウザ
+      return
+    }
 
-      if (!isLyraCodec || this.lyra === undefined) {
-        return
-      }
+    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
 
-      const lyraWorker = createLyraWorker()
-      const lyraEncoder = await this.lyra.createEncoder()
-
-      // @ts-ignore
-      sender.transform = new RTCRtpScriptTransform(
-        lyraWorker,
-        {
-          name: 'senderTransform',
-          lyraEncoder,
-        },
-        [lyraEncoder.port],
-      )
+    // @ts-ignore
+    const senderStreams = sender.createEncodedStreams() as TransformStream
+    const readable = senderStreams.readable
+    if (this.e2ee) {
+      this.e2ee.setupSenderTransform(readable, senderStreams.writable)
     } else {
-      // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-      // @ts-ignore
-      const senderStreams = sender.createEncodedStreams() as TransformStream
-      let readable = senderStreams.readable
-      if (isLyraCodec && this.lyra !== undefined) {
-        const lyraEncoder = await this.lyra.createEncoder()
-        const transformStream = new TransformStream({
-          transform: (data: RTCEncodedAudioFrame, controller) =>
-            transformPcmToLyra(lyraEncoder, data, controller),
-        })
-        readable = senderStreams.readable.pipeThrough(transformStream)
-      }
-      if (this.e2ee) {
-        this.e2ee.setupSenderTransform(readable, senderStreams.writable)
-      } else {
-        readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e))
-      }
+      readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e))
     }
     this.senderStreamInitialized.add(sender)
   }
@@ -1581,51 +1506,24 @@ export default class ConnectionBase {
     mid: string | null,
     receiver: RTCRtpReceiver,
   ): Promise<void> {
-    if (this.e2ee === null && this.lyra === undefined) {
+    if (this.e2ee === null) {
       return
     }
 
-    const codecType = this.midToAudioCodecType.get(mid || '')
-
     if ('transform' in RTCRtpSender.prototype) {
       // WebRTC Encoded Transform に対応しているブラウザ
+      return
+    }
 
-      if (codecType !== 'LYRA' || this.lyra === undefined) {
-        return
-      }
+    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
 
-      const lyraWorker = createLyraWorker()
-      const lyraDecoder = await this.lyra.createDecoder()
-
-      // @ts-ignore
-      receiver.transform = new RTCRtpScriptTransform(
-        lyraWorker,
-        {
-          name: 'receiverTransform',
-          lyraDecoder,
-        },
-        [lyraDecoder.port],
-      )
+    // @ts-ignore
+    const receiverStreams = receiver.createEncodedStreams() as TransformStream
+    const writable = receiverStreams.writable
+    if (this.e2ee) {
+      this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
     } else {
-      // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-      // @ts-ignore
-      const receiverStreams = receiver.createEncodedStreams() as TransformStream
-      let writable = receiverStreams.writable
-      if (codecType === 'LYRA' && this.lyra !== undefined) {
-        const lyraDecoder = await this.lyra.createDecoder()
-        const transformStream = new TransformStream({
-          transform: (data: RTCEncodedAudioFrame, controller) =>
-            transformLyraToPcm(lyraDecoder, data, controller),
-        })
-        transformStream.readable.pipeTo(receiverStreams.writable).catch((e) => console.warn(e))
-        writable = transformStream.writable
-      }
-      if (this.e2ee) {
-        this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
-      } else {
-        receiverStreams.readable.pipeTo(writable).catch((e) => console.warn(e))
-      }
+      receiverStreams.readable.pipeTo(writable).catch((e) => console.warn(e))
     }
   }
 
