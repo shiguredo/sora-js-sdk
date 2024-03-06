@@ -57,27 +57,7 @@
       <h4>recvonly</h4>
       <div id="multistream-recvonly-videos" class="multistream"></div>
 
-      <h2><u>チャネル ID: sora-js-sdk:check:multistream:lyra</u></h2>
-
-      要確認ブラウザ:
-      <ul>
-        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
-        <li>Safari: macOS and iOS</li>
-      </ul>
-
-      <button onclick="startMultistreamLyraCheck()">接続</button>
-      <button onclick="stopMultistreamLyraCheck()">切断</button>
-
-      <h4>multistream, sendrecv, Opus</h4>
-      <div id="multistream-lyra-sendrecv-opus-videos" class="multistream-lyra"></div>
-
-      <h4>multistream, sendrecv, Lyra</h4>
-      <div id="multistream-lyra-sendrecv-lyra-videos" class="multistream-lyra"></div>
-
-      <h4>multistream, recvonly</h4>
-      <div id="multistream-lyra-recvonly-videos" class="multistream-lyra"></div>
-
-      <h2><u>チャネル ID: sora-js-sdk:check:multistream:e2ee:lyra</u></h2>
+      <h2><u>チャネル ID: sora-js-sdk:check:multistream:e2ee:opus</u></h2>
 
       要確認ブラウザ:
       <ul>
@@ -86,19 +66,19 @@
 
       現在は E2EE は１ページ１コネクションまでなので、以下のパターンを別々のページで実行すること。
       <h4>multistream, E2EE, sendrecv, Opus</h4>
-      <button onclick="startMultistreamE2eeLyraCheck('multistream-e2ee-lyra-sendrecv-opus-videos', 'sendrecv', 'OPUS')">接続</button>
-      <button onclick="stopMultistreamE2eeLyraCheck()">切断</button><br />
-      <div id="multistream-e2ee-lyra-sendrecv-opus-videos" class="multistream-e2ee-lyra"></div>
+      <button onclick="startMultistreamE2eeOpusCheck('multistream-e2ee-opus-sendrecv-opus-videos', 'sendrecv', 'OPUS')">接続</button>
+      <button onclick="stopMultistreamE2eeOpusCheck()">切断</button><br />
+      <div id="multistream-e2ee-opus-sendrecv-opus-videos" class="multistream-e2ee-opus"></div>
 
-      <h4>multistream, E2EE, sendrecv, Lyra</h4>
-      <button onclick="startMultistreamE2eeLyraCheck('multistream-e2ee-lyra-sendrecv-lyra-videos', 'sendrecv', 'OPUS')">接続</button>
-      <button onclick="stopMultistreamE2eeLyraCheck()">切断</button><br />
-      <div id="multistream-e2ee-lyra-sendrecv-lyra-videos" class="multistream-e2ee-lyra"></div>
+      <h4>multistream, E2EE, sendrecv, Opus</h4>
+      <button onclick="startMultistreamE2eeOpusCheck('multistream-e2ee-opus-sendrecv-opus-videos', 'sendrecv', 'OPUS')">接続</button>
+      <button onclick="stopMultistreamE2eeOpusCheck()">切断</button><br />
+      <div id="multistream-e2ee-opus-sendrecv-opus-videos" class="multistream-e2ee-opus"></div>
 
       <h4>multistream, E2EE, recvonly</h4>
-      <button onclick="startMultistreamE2eeLyraCheck('multistream-e2ee-lyra-recvonly-videos', 'recvonly')">接続</button>
-      <button onclick="stopMultistreamE2eeLyraCheck()">切断</button><br />
-      <div id="multistream-e2ee-lyra-recvonly-videos" class="multistream-e2ee-lyra"></div>
+      <button onclick="startMultistreamE2eeOpusCheck('multistream-e2ee-opus-recvonly-videos', 'recvonly')">接続</button>
+      <button onclick="stopMultistreamE2eeOpusCheck()">切断</button><br />
+      <div id="multistream-e2ee-opus-recvonly-videos" class="multistream-e2ee-opus"></div>
     </div>
 
     <script src="./sora.js"></script>
@@ -121,44 +101,40 @@
           document.getElementById('signalingUrl').value = searchParams.get('signalingUrl');
       }
 
-      let multistreamE2eeLyraCheckConnections = [];
-      async function startMultistreamE2eeLyraCheck(videoId, role, audioCodecType) {
-          stopMultistreamE2eeLyraCheck();
+      let multistreamE2eeOpusCheckConnections = [];
+      async function startMultistreamE2eeOpusCheck(videoId, role, audioCodecType) {
+          stopMultistreamE2eeOpusCheck();
           await Sora.initE2EE("https://sora-e2ee-wasm.shiguredo.app/2020.2/wasm.wasm");
-          initLyra();
 
-          const channelId = 'sora-js-sdk:check:multistream:e2ee:lyra';
-          multistreamE2eeLyraCheckConnections = [
+          const channelId = 'sora-js-sdk:check:multistream:e2ee:opus';
+          multistreamE2eeOpusCheckConnections = [
               await connect(channelId, videoId, role, {multistream: true, e2ee: true, audioCodecType})
           ];
       }
 
-      function stopMultistreamE2eeLyraCheck() {
-          multistreamE2eeLyraCheckConnections.forEach(x => x.disconnect());
-          multistreamE2eeLyraCheckConnections = [];
-          document.querySelectorAll('.multistream-e2ee-lyra').forEach(x => x.innerHTML = null);
+      function stopMultistreamE2eeOpusCheck() {
+          multistreamE2eeOpusCheckConnections.forEach(x => x.disconnect());
+          multistreamE2eeOpusCheckConnections = [];
+          document.querySelectorAll('.multistream-e2ee-opus').forEach(x => x.innerHTML = null);
       }
 
-      let multistreamLyraCheckConnections = [];
-      async function startMultistreamLyraCheck() {
-          stopMultistreamLyraCheck();
-          initLyra();
+      let multistreamOpusCheckConnections = [];
+      async function startMultistreamOpusCheck() {
+          stopMultistreamOpusCheck();
 
-          const channelId = 'sora-js-sdk:check:multistream:lyra';
-          multistreamLyraCheckConnections = [
-              await connect(channelId, 'multistream-lyra-sendrecv-opus-videos', 'sendrecv',
+          const channelId = 'sora-js-sdk:check:multistream:opus';
+          multistreamOpusCheckConnections = [
+              await connect(channelId, 'multistream-opus-sendrecv-opus-videos', 'sendrecv',
                             {multistream: true, audioCodecType: "OPUS"}),
-              await connect(channelId, 'multistream-lyra-sendrecv-lyra-videos', 'sendrecv',
-                            {multistream: true, audioCodecType: "LYRA"}),
-              await connect(channelId, 'multistream-lyra-recvonly-videos', 'recvonly',
+              await connect(channelId, 'multistream-opus-recvonly-videos', 'recvonly',
                             {multistream: true}),
           ];
       }
 
-      function stopMultistreamLyraCheck() {
-          multistreamLyraCheckConnections.forEach(x => x.disconnect());
-          multistreamLyraCheckConnections = [];
-          document.querySelectorAll('.multistream-lyra').forEach(x => x.innerHTML = null);
+      function stopMultistreamOpusCheck() {
+          multistreamOpusCheckConnections.forEach(x => x.disconnect());
+          multistreamOpusCheckConnections = [];
+          document.querySelectorAll('.multistream-opus').forEach(x => x.innerHTML = null);
       }
 
       let multistreamCheckConnections = [];
@@ -168,10 +144,6 @@
           const channelId = 'sora-js-sdk:check:multistream';
           multistreamCheckConnections.push(
               await connect(channelId, 'multistream-sendrecv-videos', 'sendrecv', {multistream: true}));
-
-          // Lyra が使えない環境で Lyra 用の初期化処理が悪影響を与えないことを確認するために
-          // ここで initLyra() を呼び出しておく。
-          initLyra();
 
           multistreamCheckConnections.push(
               await connect(channelId, 'multistream-recvonly-videos', 'recvonly', {multistream: true}));
@@ -200,12 +172,6 @@
           legacystreamCheckConnections.forEach(x => x.disconnect());
           legacystreamCheckConnections = [];
           document.querySelectorAll('.legacystream').forEach(x => x.innerHTML = null);
-      }
-
-      function initLyra() {
-          const modelPath = "https://lyra-wasm.shiguredo.app/2023.1.0/";
-          const wasmPath = modelPath;
-          Sora.initLyra({wasmPath, modelPath});
       }
 
       async function connect(channelId, videoId, role, options) {
