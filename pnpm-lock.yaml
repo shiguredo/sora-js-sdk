@@ -74,10 +74,7 @@ importers:
         version: 5.0.5(rollup@4.12.0)
       '@rollup/plugin-typescript':
         specifier: 11.1.6
-        version: 11.1.6(rollup@4.12.0)(tslib@2.6.2)(typescript@5.3.3)
-      '@shiguredo/lyra-wasm':
-        specifier: 2023.1.0
-        version: 2023.1.0
+        version: 11.1.6(rollup@4.12.0)(typescript@5.3.3)
       jsdom:
         specifier: 24.0.0
         version: 24.0.0
@@ -495,6 +492,25 @@ packages:
       typescript: 5.3.3
     dev: true
 
+  /@rollup/plugin-typescript@11.1.6(rollup@4.12.0)(typescript@5.3.3):
+    resolution: {integrity: sha512-R92yOmIACgYdJ7dJ97p4K69I8gg6IEHt8M7dUBxN3W6nrO8uUxX5ixl0yU/N3aZTi8WhPuICvOHXQvF6FaykAA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^2.14.0||^3.0.0||^4.0.0
+      tslib: '*'
+      typescript: '>=3.7.0'
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+      tslib:
+        optional: true
+    dependencies:
+      '@rollup/pluginutils': 5.1.0(rollup@4.12.0)
+      resolve: 1.22.8
+      rollup: 4.12.0
+      typescript: 5.3.3
+    dev: true
+
   /@rollup/pluginutils@5.1.0(rollup@4.12.0):
     resolution: {integrity: sha512-XTIWOPPcpvyKI6L1NHo0lFlCyznUEyPmPY1mc3KpPVDYulHSTvyeLNVW00QTLIAFNhR3kYnJTQHeGqU4M3n09g==}
     engines: {node: '>=14.0.0'}
@@ -613,10 +629,6 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
-
-  /@shiguredo/lyra-wasm@2023.1.0:
-    resolution: {integrity: sha512-RVOyPYrZMCHYb5QM6S8BTAOnGHiqYpoBOG8+9uct4gg1ut9IK8LsVgwv5Q+/t+hWZeRhuyYNXt1PhBUm1cJZzg==}
-    dev: true
 
   /@sinclair/typebox@0.27.8:
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
