@@ -146,7 +146,8 @@ export function createSignalingMessage(
     video: true,
   }
   // role: sendrecv で multistream: false の場合は例外を発生させる
-  if (role === 'sendrecv' && options.multistream !== true) {
+  // options.multistream === undefined は multistream として扱う
+  if (role === 'sendrecv' && options.multistream === false) {
     throw new Error(
       "Failed to parse options. Options multistream must be true when connecting using 'sendrecv'",
     )

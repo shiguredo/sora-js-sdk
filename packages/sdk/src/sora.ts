@@ -82,14 +82,12 @@ class SoraConnection {
     metadata: JSONType = null,
     options: ConnectionOptions = { audio: true, video: true },
   ): ConnectionPublisher {
-    // sendrecv の場合、multistream に初期値を指定する
-    const sendrecvOptions: ConnectionOptions = Object.assign({ multistream: true }, options)
     return new ConnectionPublisher(
       this.signalingUrlCandidates,
       'sendrecv',
       channelId,
       metadata,
-      sendrecvOptions,
+      options,
       this.debug,
     )
   }
