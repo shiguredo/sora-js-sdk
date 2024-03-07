@@ -1455,11 +1455,7 @@ export default class ConnectionBase {
     // @ts-ignore
     const senderStreams = sender.createEncodedStreams() as TransformStream
     const readable = senderStreams.readable
-    if (this.e2ee) {
-      this.e2ee.setupSenderTransform(readable, senderStreams.writable)
-    } else {
-      readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e))
-    }
+    this.e2ee.setupSenderTransform(readable, senderStreams.writable)
     this.senderStreamInitialized.add(sender)
   }
 
@@ -1487,11 +1483,7 @@ export default class ConnectionBase {
     // @ts-ignore
     const receiverStreams = receiver.createEncodedStreams() as TransformStream
     const writable = receiverStreams.writable
-    if (this.e2ee) {
-      this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
-    } else {
-      receiverStreams.readable.pipeTo(writable).catch((e) => console.warn(e))
-    }
+    this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
   }
 
   /**
