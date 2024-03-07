@@ -1398,19 +1398,12 @@ export default class ConnectionBase {
         // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
         await this.setSenderParameters(transceiver, this.encodings)
         const sessionDescription = await this.pc.createAnswer()
-        // TODO(sile): 動作確認
-        if (sessionDescription.sdp !== undefined) {
-          sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp)
-        }
         await this.pc.setLocalDescription(sessionDescription)
         this.trace('TRANSCEIVER SENDER GET_PARAMETERS', transceiver.sender.getParameters())
         return
       }
     }
     const sessionDescription = await this.pc.createAnswer()
-    if (sessionDescription.sdp !== undefined) {
-      sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp)
-    }
     this.writePeerConnectionTimelineLog('create-answer', sessionDescription)
     await this.pc.setLocalDescription(sessionDescription)
     this.writePeerConnectionTimelineLog('set-local-description', sessionDescription)
@@ -1435,32 +1428,6 @@ export default class ConnectionBase {
       sdp = sdp.replace(/^m=(audio|video) 0 /gm, (_match, kind: string) => `m=${kind} 9 `)
     }
 
-    return sdp
-  }
-
-  /**
-   * カスタムコーデック用に answer SDP を処理するメソッド
-   *
-   * 処理後の SDP は setLocalDescription() メソッドに渡される
-   *
-   * @param answer SDP
-   * @returns 処理後の SDP
-   */
-  private processAnswerSdpForLocal(sdp: string): string {
-    // TODO(tnamao): 削除しても良さそうな関数
-    return sdp
-  }
-
-  /**
-   * カスタムコーデック用に answer SDP を処理するメソッド
-   *
-   * 処理後の SDP は Sora に送信される
-   *
-   * @param answer SDP
-   * @returns 処理後の SDP
-   */
-  private processAnswerSdpForSora(sdp: string): string {
-    // TODO(tnamao): 削除しても良さそうな関数
     return sdp
   }
 
@@ -1533,7 +1500,7 @@ export default class ConnectionBase {
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
-      const sdp = this.processAnswerSdpForSora(this.pc.localDescription.sdp)
+      const sdp = this.pc.localDescription.sdp
       const message = { type: 'answer', sdp }
       this.ws.send(JSON.stringify(message))
       this.writeWebSocketSignalingLog('send-answer', message)
