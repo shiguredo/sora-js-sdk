@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] オーディオコーデック `LYRA` のサポートを削除する
+  - @tnamao
 - [CHANGE] シグナリングオプションの `multistream` は false の時のみレガシーストリームを使用する
   - レガシーストリームを使用したい場合は `multistream: false` の指定が必須となる
   - @tnamao

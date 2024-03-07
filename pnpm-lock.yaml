@@ -75,9 +75,6 @@ importers:
       '@rollup/plugin-typescript':
         specifier: 11.1.6
         version: 11.1.6(rollup@4.12.0)(tslib@2.6.2)(typescript@5.3.3)
-      '@shiguredo/lyra-wasm':
-        specifier: 2023.1.0
-        version: 2023.1.0
       jsdom:
         specifier: 24.0.0
         version: 24.0.0
@@ -717,10 +714,6 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
-
-  /@shiguredo/lyra-wasm@2023.1.0:
-    resolution: {integrity: sha512-RVOyPYrZMCHYb5QM6S8BTAOnGHiqYpoBOG8+9uct4gg1ut9IK8LsVgwv5Q+/t+hWZeRhuyYNXt1PhBUm1cJZzg==}
-    dev: true
 
   /@sinclair/typebox@0.27.8:
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}

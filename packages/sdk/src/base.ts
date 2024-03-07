@@ -2,19 +2,10 @@ import { unzlibSync, zlibSync } from 'fflate'
 
 import SoraE2EE from '@sora/e2ee'
 import {
-  LyraState,
-  createLyraWorker,
-  isLyraInitialized,
-  transformLyraToPcm,
-  transformPcmToLyra,
-} from './lyra'
-import {
-  AudioCodecType,
   Callbacks,
   ConnectionOptions,
   DataChannelConfiguration,
   JSONType,
-  RTCEncodedAudioFrame,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
@@ -198,19 +189,6 @@ export default class ConnectionBase {
    */
   protected e2ee: SoraE2EE | null
   /**
-   * mid と AudioCodecType の対応づけを保持するマップ
-   *
-   * Lyra などのカスタム音声コーデック使用時に RTCRtpReceiver をどのコーデックでデコードすべきかを
-   * 判別するために使われる
-   *
-   * カスタム音声コーデックが有効になっていない場合には空のままとなる
-   */
-  private midToAudioCodecType: Map<string, AudioCodecType> = new Map()
-  /**
-   * Lyra インスタンス
-   */
-  private lyra?: LyraState
-  /**
    * キーとなる sender が setupSenderTransform で初期化済みかどうか
    */
   private senderStreamInitialized: WeakSet<RTCRtpSender> = new WeakSet()
@@ -288,9 +266,6 @@ export default class ConnectionBase {
     this.signalingOfferMessageDataChannels = {}
     this.connectedSignalingUrl = ''
     this.contactSignalingUrl = ''
-    if (isLyraInitialized()) {
-      this.lyra = new LyraState()
-    }
   }
 
   /**
@@ -1308,7 +1283,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config)
-    if (this.e2ee || this.lyra) {
+    if (this.e2ee) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config)
     }
@@ -1423,19 +1398,12 @@ export default class ConnectionBase {
         // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
         await this.setSenderParameters(transceiver, this.encodings)
         const sessionDescription = await this.pc.createAnswer()
-        // TODO(sile): 動作確認
-        if (sessionDescription.sdp !== undefined) {
-          sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp)
-        }
         await this.pc.setLocalDescription(sessionDescription)
         this.trace('TRANSCEIVER SENDER GET_PARAMETERS', transceiver.sender.getParameters())
         return
       }
     }
     const sessionDescription = await this.pc.createAnswer()
-    if (sessionDescription.sdp !== undefined) {
-      sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp)
-    }
     this.writePeerConnectionTimelineLog('create-answer', sessionDescription)
     await this.pc.setLocalDescription(sessionDescription)
     this.writePeerConnectionTimelineLog('set-local-description', sessionDescription)
@@ -1460,57 +1428,7 @@ export default class ConnectionBase {
       sdp = sdp.replace(/^m=(audio|video) 0 /gm, (_match, kind: string) => `m=${kind} 9 `)
     }
 
-    this.midToAudioCodecType.clear()
-    if (this.lyra === undefined || !sdp.includes('109 lyra/')) {
-      return sdp
-    }
-
-    // mid と音声コーデックの対応を保存する
-    for (const media of sdp.split(/^m=/m).slice(1)) {
-      if (!media.startsWith('audio')) {
-        continue
-      }
-
-      const mid = /a=mid:(.*)/.exec(media)
-      if (mid) {
-        const codecType = media.includes('109 lyra/') ? 'LYRA' : 'OPUS'
-        this.midToAudioCodecType.set(mid[1], codecType)
-      }
-    }
-
-    return this.lyra.processOfferSdp(sdp)
-  }
-
-  /**
-   * カスタムコーデック用に answer SDP を処理するメソッド
-   *
-   * 処理後の SDP は setLocalDescription() メソッドに渡される
-   *
-   * @param answer SDP
-   * @returns 処理後の SDP
-   */
-  private processAnswerSdpForLocal(sdp: string): string {
-    if (this.lyra === undefined) {
-      return sdp
-    }
-
-    return this.lyra.processAnswerSdpForLocal(sdp)
-  }
-
-  /**
-   * カスタムコーデック用に answer SDP を処理するメソッド
-   *
-   * 処理後の SDP は Sora に送信される
-   *
-   * @param answer SDP
-   * @returns 処理後の SDP
-   */
-  private processAnswerSdpForSora(sdp: string): string {
-    if (this.lyra === undefined) {
-      return sdp
-    }
-
-    return this.lyra.processAnswerSdpForSora(sdp)
+    return sdp
   }
 
   /**
@@ -1519,7 +1437,7 @@ export default class ConnectionBase {
    * @param sender 対象となる RTCRtpSender インスタンス
    */
   protected async setupSenderTransform(sender: RTCRtpSender): Promise<void> {
-    if ((this.e2ee === null && this.lyra === undefined) || sender.track === null) {
+    if (this.e2ee === null || sender.track === null) {
       return
     }
     // 既に初期化済み
@@ -1527,47 +1445,17 @@ export default class ConnectionBase {
       return
     }
 
-    const isLyraCodec = sender.track.kind === 'audio' && this.options.audioCodecType === 'LYRA'
-
     if ('transform' in RTCRtpSender.prototype) {
       // WebRTC Encoded Transform に対応しているブラウザ
-
-      if (!isLyraCodec || this.lyra === undefined) {
-        return
-      }
-
-      const lyraWorker = createLyraWorker()
-      const lyraEncoder = await this.lyra.createEncoder()
-
-      // @ts-ignore
-      sender.transform = new RTCRtpScriptTransform(
-        lyraWorker,
-        {
-          name: 'senderTransform',
-          lyraEncoder,
-        },
-        [lyraEncoder.port],
-      )
-    } else {
-      // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-      // @ts-ignore
-      const senderStreams = sender.createEncodedStreams() as TransformStream
-      let readable = senderStreams.readable
-      if (isLyraCodec && this.lyra !== undefined) {
-        const lyraEncoder = await this.lyra.createEncoder()
-        const transformStream = new TransformStream({
-          transform: (data: RTCEncodedAudioFrame, controller) =>
-            transformPcmToLyra(lyraEncoder, data, controller),
-        })
-        readable = senderStreams.readable.pipeThrough(transformStream)
-      }
-      if (this.e2ee) {
-        this.e2ee.setupSenderTransform(readable, senderStreams.writable)
-      } else {
-        readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e))
-      }
+      return
     }
+
+    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
+
+    // @ts-ignore
+    const senderStreams = sender.createEncodedStreams() as TransformStream
+    const readable = senderStreams.readable
+    this.e2ee.setupSenderTransform(readable, senderStreams.writable)
     this.senderStreamInitialized.add(sender)
   }
 
@@ -1581,52 +1469,21 @@ export default class ConnectionBase {
     mid: string | null,
     receiver: RTCRtpReceiver,
   ): Promise<void> {
-    if (this.e2ee === null && this.lyra === undefined) {
+    if (this.e2ee === null) {
       return
     }
 
-    const codecType = this.midToAudioCodecType.get(mid || '')
-
     if ('transform' in RTCRtpSender.prototype) {
       // WebRTC Encoded Transform に対応しているブラウザ
-
-      if (codecType !== 'LYRA' || this.lyra === undefined) {
-        return
-      }
-
-      const lyraWorker = createLyraWorker()
-      const lyraDecoder = await this.lyra.createDecoder()
-
-      // @ts-ignore
-      receiver.transform = new RTCRtpScriptTransform(
-        lyraWorker,
-        {
-          name: 'receiverTransform',
-          lyraDecoder,
-        },
-        [lyraDecoder.port],
-      )
-    } else {
-      // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-      // @ts-ignore
-      const receiverStreams = receiver.createEncodedStreams() as TransformStream
-      let writable = receiverStreams.writable
-      if (codecType === 'LYRA' && this.lyra !== undefined) {
-        const lyraDecoder = await this.lyra.createDecoder()
-        const transformStream = new TransformStream({
-          transform: (data: RTCEncodedAudioFrame, controller) =>
-            transformLyraToPcm(lyraDecoder, data, controller),
-        })
-        transformStream.readable.pipeTo(receiverStreams.writable).catch((e) => console.warn(e))
-        writable = transformStream.writable
-      }
-      if (this.e2ee) {
-        this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
-      } else {
-        receiverStreams.readable.pipeTo(writable).catch((e) => console.warn(e))
-      }
+      return
     }
+
+    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
+
+    // @ts-ignore
+    const receiverStreams = receiver.createEncodedStreams() as TransformStream
+    const writable = receiverStreams.writable
+    this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
   }
 
   /**
@@ -1635,7 +1492,7 @@ export default class ConnectionBase {
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
-      const sdp = this.processAnswerSdpForSora(this.pc.localDescription.sdp)
+      const sdp = this.pc.localDescription.sdp
       const message = { type: 'answer', sdp }
       this.ws.send(JSON.stringify(message))
       this.writeWebSocketSignalingLog('send-answer', message)
