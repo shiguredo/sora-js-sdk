@@ -1,7 +1,7 @@
 import { unzlibSync, zlibSync } from 'fflate'
 
 import SoraE2EE from '@sora/e2ee'
-import {
+import type {
   Callbacks,
   ConnectionOptions,
   DataChannelConfiguration,
@@ -559,7 +559,10 @@ export default class ConnectionBase {
     if (this.ws) {
       // onclose はログを吐く専用に残す
       this.ws.onclose = (event) => {
-        this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
+        this.writeWebSocketTimelineLog('onclose', {
+          code: event.code,
+          reason: event.reason,
+        })
       }
       this.ws.onmessage = null
       this.ws.onerror = null
@@ -622,7 +625,10 @@ export default class ConnectionBase {
     if (this.ws) {
       // onclose はログを吐く専用に残す
       this.ws.onclose = (event) => {
-        this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
+        this.writeWebSocketTimelineLog('onclose', {
+          code: event.code,
+          reason: event.reason,
+        })
       }
       this.ws.onmessage = null
       this.ws.onerror = null
@@ -768,7 +774,10 @@ export default class ConnectionBase {
           this.ws = null
         }
         clearTimeout(timerId)
-        this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
+        this.writeWebSocketTimelineLog('onclose', {
+          code: event.code,
+          reason: event.reason,
+        })
         return resolve({ code: event.code, reason: event.reason })
       }
       if (this.ws.readyState === 1) {
@@ -798,7 +807,10 @@ export default class ConnectionBase {
    * @remarks
    * 正常/異常どちらの切断でも使用する
    */
-  private disconnectDataChannel(): Promise<{ code: number; reason: string } | null> {
+  private disconnectDataChannel(): Promise<{
+    code: number
+    reason: string
+  } | null> {
     // DataChannel の強制終了処理
     const closeDataChannels = () => {
       for (const key of Object.keys(this.soraDataChannels)) {
@@ -956,7 +968,10 @@ export default class ConnectionBase {
     if (this.ws) {
       // onclose はログを吐く専用に残す
       this.ws.onclose = (event) => {
-        this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
+        this.writeWebSocketTimelineLog('onclose', {
+          code: event.code,
+          reason: event.reason,
+        })
       }
       this.ws.onmessage = null
       this.ws.onerror = null
@@ -1345,7 +1360,10 @@ export default class ConnectionBase {
     }
 
     const sdp = this.processOfferSdp(message.sdp)
-    const sessionDescription = new RTCSessionDescription({ type: 'offer', sdp })
+    const sessionDescription = new RTCSessionDescription({
+      type: 'offer',
+      sdp,
+    })
     await this.pc.setRemoteDescription(sessionDescription)
     this.writePeerConnectionTimelineLog('set-remote-description', sessionDescription)
     return
@@ -1612,8 +1630,14 @@ export default class ConnectionBase {
       return
     }
     this.ws.onclose = async (event) => {
-      this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
-      await this.abend('WEBSOCKET-ONCLOSE', { code: event.code, reason: event.reason })
+      this.writeWebSocketTimelineLog('onclose', {
+        code: event.code,
+        reason: event.reason,
+      })
+      await this.abend('WEBSOCKET-ONCLOSE', {
+        code: event.code,
+        reason: event.reason,
+      })
     }
     this.ws.onerror = async (_) => {
       this.writeWebSocketSignalingLog('onerror')
@@ -1823,7 +1847,10 @@ export default class ConnectionBase {
       this.writePeerConnectionTimelineLog('create-offer', offer)
       return offer
     }
-    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
+    const offer = await pc.createOffer({
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: true,
+    })
     pc.close()
     this.writePeerConnectionTimelineLog('create-offer', offer)
     return offer
@@ -1883,7 +1910,10 @@ export default class ConnectionBase {
   private sendUpdateAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({ type: 'update', sdp: this.pc.localDescription.sdp })
+      this.sendSignalingMessage({
+        type: 'update',
+        sdp: this.pc.localDescription.sdp,
+      })
     }
   }
 
@@ -1893,7 +1923,10 @@ export default class ConnectionBase {
   private sendReAnswer(): void {
     if (this.pc?.localDescription) {
       this.trace('RE ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({ type: 're-answer', sdp: this.pc.localDescription.sdp })
+      this.sendSignalingMessage({
+        type: 're-answer',
+        sdp: this.pc.localDescription.sdp,
+      })
     }
   }
 
@@ -1929,7 +1962,9 @@ export default class ConnectionBase {
    * @param message - type ping メッセージ
    */
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
-    const pongMessage: { type: 'pong'; stats?: RTCStatsReport[] } = { type: 'pong' }
+    const pongMessage: { type: 'pong'; stats?: RTCStatsReport[] } = {
+      type: 'pong',
+    }
     if (message.stats) {
       const stats = await this.getStats()
       pongMessage.stats = stats
@@ -2116,7 +2151,9 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel
       this.writeDataChannelTimelineLog('onerror', channel)
       this.trace('ERROR DATA CHANNEL', channel.label)
-      await this.abend('DATA-CHANNEL-ONERROR', { params: { label: channel.label } })
+      await this.abend('DATA-CHANNEL-ONERROR', {
+        params: { label: channel.label },
+      })
     }
     // onmessage
     if (dataChannelEvent.channel.label === 'signaling') {
@@ -2236,7 +2273,10 @@ export default class ConnectionBase {
    *
    * @param message - 送信するメッセージ
    */
-  private sendSignalingMessage(message: { type: string; [key: string]: unknown }): void {
+  private sendSignalingMessage(message: {
+    type: string
+    [key: string]: unknown
+  }): void {
     if (this.soraDataChannels.signaling) {
       if (
         this.signalingOfferMessageDataChannels.signaling &&

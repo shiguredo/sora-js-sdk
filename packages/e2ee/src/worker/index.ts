@@ -54,6 +54,7 @@ async function generateWriteIV(material: CryptoKey): Promise<Uint8Array> {
 
 let removalTimeoutId = 0
 
+// biome-ignore lint/suspicious/noGlobalAssign: 検討
 onmessage = (event): void => {
   const { type } = event.data
   if (type === 'selfSecretKeyMaterial') {

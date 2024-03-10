@@ -1,6 +1,6 @@
 import SoraE2EE from '@sora/e2ee'
 
-import ConnectionBase from './base'
+import type ConnectionBase from './base'
 import { applyMediaStreamConstraints } from './helpers'
 import ConnectionPublisher from './publisher'
 import ConnectionSubscriber from './subscriber'

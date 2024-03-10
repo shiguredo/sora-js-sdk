@@ -1,6 +1,6 @@
 import { unzlibSync } from 'fflate'
 
-import {
+import type {
   Browser,
   ConnectionOptions,
   DataChannelConfiguration,
