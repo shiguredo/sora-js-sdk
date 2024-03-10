@@ -11,6 +11,8 @@
 
 ## develop
 
+- [UPDATE] Biome 1.6.0 に上げる
+  - @voluntas
 - [CHANGE] オーディオコーデック `LYRA` のサポートを削除する
   - @tnamao
 - [CHANGE] シグナリングオプションの `multistream` は false の時のみレガシーストリームを使用する
