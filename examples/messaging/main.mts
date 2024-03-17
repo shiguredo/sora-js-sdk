@@ -2,7 +2,7 @@ import Sora, {
   type SoraConnection,
   type ConnectionSubscriber,
   type SignalingNotifyMessage,
-  DataChannelMessageEvent,
+  type DataChannelMessageEvent,
 } from '../../dist/sora'
 
 document.addEventListener('DOMContentLoaded', async () => {

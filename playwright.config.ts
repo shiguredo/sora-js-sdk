@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+// pnpm exec playwright test --ui
+
 export default defineConfig({
   testDir: 'tests',
   // fullyParallel: true,
