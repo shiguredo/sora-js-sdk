@@ -30,7 +30,7 @@
     "dist"
   ],
   "devDependencies": {
-    "@biomejs/biome": "1.6.2",
+    "@biomejs/biome": "1.6.3",
     "@playwright/test": "1.42.1",
     "typedoc": "0.25.12",
     "typescript": "5.4.3",
