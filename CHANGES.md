@@ -11,7 +11,7 @@
 
 ## develop
 
-- [UPDATE] Biome 1.6.0 に上げる
+- [UPDATE] Biome 1.6.4 に上げる
   - @voluntas
 - [CHANGE] オーディオコーデック `LYRA` のサポートを削除する
   - @tnamao
