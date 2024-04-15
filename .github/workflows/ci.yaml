@@ -25,6 +25,7 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       - run: pnpm run lint
+      - run: pnpm run check
       - run: pnpm run test
       - name: Slack Notification
         if: failure()

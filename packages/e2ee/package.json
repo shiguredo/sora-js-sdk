@@ -13,6 +13,7 @@
     "build:worker": "tsc --project tsconfig.worker.json",
     "lint": "biome lint ./src",
     "fmt": "biome format --write ./src",
+    "check": "echo \"no check\"",
     "test": "echo \"no test\""
   },
   "devDependencies": {
