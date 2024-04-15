@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] `tsc --noEmit` で型チェックを行うようにする
+  - @voluntas
 - [UPDATE] Biome 1.6.0 に上げる
   - @voluntas
 - [CHANGE] オーディオコーデック `LYRA` のサポートを削除する

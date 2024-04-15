@@ -11,6 +11,7 @@
     "build": "echo \"no build\"",
     "lint": "echo \"no lint\"",
     "fmt": "echo \"no fmt\"",
-    "test": "echo \"no test\""
+    "test": "echo \"no test\"",
+    "check": "echo \"no check\""
   }
 }

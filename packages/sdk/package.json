@@ -5,6 +5,7 @@
     "watch": "rollup -c -w",
     "lint": "biome lint ./src",
     "fmt": "biome format --write ./src",
+    "check": "tsc --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
