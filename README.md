@@ -121,7 +121,6 @@ limitations under the License.
   - [Sora Unity SDK サンプル集](https://github.com/shiguredo/sora-unity-sdk-samples)
   - [Sora Unity SDK ドキュメント](https://sora-unity-sdk.shiguredo.jp/)
 - [Sora Python SDK](https://github.com/shiguredo/sora-python-sdk)
-  - [Sora Python SDK サンプル集](https://github.com/shiguredo/sora-python-sdk-samples)
   - [Sora Python SDK ドキュメント](https://sora-python-sdk.shiguredo.jp/)
 - [Sora C SDK](https://github.com/shiguredo/sora-c-sdk)
 

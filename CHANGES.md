@@ -13,6 +13,8 @@
 
 - [UPDATE] Biome 1.6.4 に上げる
   - @voluntas
+- [ADD] `tsc --noEmit` で型チェックを行うようにする
+  - @voluntas
 - [CHANGE] オーディオコーデック `LYRA` のサポートを削除する
   - @tnamao
 - [CHANGE] シグナリングオプションの `multistream` は false の時のみレガシーストリームを使用する

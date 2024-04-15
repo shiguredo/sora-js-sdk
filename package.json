@@ -13,6 +13,7 @@
     "lint": "pnpm -r --filter=./packages/* lint",
     "fmt": "pnpm -r --filter=./packages/* fmt",
     "test": "pnpm -r --filter=./packages/* test",
+    "check": "pnpm -r --filter=./packages/* check",
     "doc": "typedoc",
     "release:canary": "./scripts/release_canary.sh"
   },
@@ -31,16 +32,16 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "1.6.4",
-    "@playwright/test": "1.42.1",
-    "typedoc": "0.25.12",
-    "typescript": "5.4.3",
+    "@playwright/test": "1.43.1",
+    "typedoc": "0.25.13",
+    "typescript": "5.4.5",
     "vite": "5.2.8",
-    "vitest": "1.4.0"
+    "vitest": "1.5.0"
   },
   "resolutions": {
     "get-pkg-repo": "5.0.0"
   },
-  "packageManager": "pnpm@8.15.5",
+  "packageManager": "pnpm@8.15.7",
   "engines": {
     "node": ">=18"
   }
