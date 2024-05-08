@@ -54,7 +54,8 @@ jobs:
         env:
           SLACK_CHANNEL: sora-js-sdk
           SLACK_COLOR: good
-          SLACK_TITLE: Success test
+          SLACK_TITLE: Succeeded
+          SLACK_ICON_EMOJI: ":star-struck:"
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       - name: Slack Notification
         if: failure()
@@ -62,5 +63,6 @@ jobs:
         env:
           SLACK_CHANNEL: sora-js-sdk
           SLACK_COLOR: danger
-          SLACK_TITLE: Failure test
+          SLACK_TITLE: Failed
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
