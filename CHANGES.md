@@ -11,9 +11,11 @@
 
 ## develop
 
+- [UPDATE] tsconfig.json を統一する
+  - @voluntas
 - [UPDATE] CI の pnpm を 9 に上げる
   - @voluntas
-- [UPDATE] Biome 1.7.1 に上げる
+- [UPDATE] Biome 1.7.3 に上げる
   - @voluntas
 - [ADD] `tsc --noEmit` で型チェックを行うようにする
   - @voluntas

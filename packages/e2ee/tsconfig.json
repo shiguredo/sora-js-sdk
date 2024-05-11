@@ -1,29 +1,8 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "es2020",
-    "strict": true,
-    "declaration": true,
-    "strictNullChecks": true,
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "newLine": "LF",
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ],
     "declarationDir": "."
   },
-  "include": [
-    "src/sora_e2ee.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src/sora_e2ee.ts"],
+  "exclude": ["node_modules"]
 }
