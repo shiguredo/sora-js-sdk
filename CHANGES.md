@@ -11,6 +11,9 @@
 
 ## develop
 
+- [FIX] WebSocket 接続直後に Sora 側から切断された際にシグナリング開始のメッセージを送ってしまう問題を修正する
+  - WebSocket の readyState の状態チェックを追加した
+  - @tnamao
 - [UPDATE] tsconfig.json を統一する
   - @voluntas
 - [UPDATE] CI の pnpm を 9 に上げる
