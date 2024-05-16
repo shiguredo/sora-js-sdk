@@ -11,6 +11,8 @@
 
 ## develop
 
+- [FIX] `type: connect` 送信時に WebSocket が切断されていた場合は処理が異常となるように reject を呼ぶようにする
+  - @tnamao
 - [FIX] WebSocket 接続直後に Sora 側から切断された際にシグナリング開始のメッセージを送ってしまう問題を修正する
   - WebSocket の readyState の状態チェックを追加した
   - @tnamao
