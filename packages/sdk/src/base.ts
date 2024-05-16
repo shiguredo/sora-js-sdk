@@ -1277,7 +1277,7 @@ export default class ConnectionBase {
           signalingMessage.signaling_notify_metadata.pre_key_bundle = initResult
         }
         this.trace('SIGNALING CONNECT MESSAGE', signalingMessage)
-        if (ws) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(signalingMessage))
           this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage)
           this.ws = ws
