@@ -1286,8 +1286,6 @@ export default class ConnectionBase {
             this.contactSignalingUrl = ws.url
             this.writeWebSocketSignalingLog('contact-signaling-url', this.contactSignalingUrl)
           }
-        } else {
-          reject()
         }
       })()
     })
