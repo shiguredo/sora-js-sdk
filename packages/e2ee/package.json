@@ -21,7 +21,7 @@
     "@rollup/plugin-replace": "5.0.5",
     "@rollup/plugin-typescript": "11.1.6",
     "rollup": "4.18.0",
-    "tslib": "2.6.2"
+    "tslib": "2.6.3"
   },
   "dependencies": {
     "@sora/go-wasm": "workspace:^"
