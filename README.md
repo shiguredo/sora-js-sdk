@@ -10,52 +10,48 @@ Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発�
 
 We will not respond to PRs or issues that have not been discussed on Discord. Also, Discord is only available in Japanese.
 
-Please read https://github.com/shiguredo/oss before use.
+Please read <https://github.com/shiguredo/oss> before use.
 
 ## 時雨堂のオープンソースソフトウェアについて
 
-利用前に https://github.com/shiguredo/oss をお読みください。
+利用前に <https://github.com/shiguredo/oss> をお読みください。
 
 ## 使い方
 
 使い方は [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/) を参照してください。
 
-- sora.js
-  - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.js
-- sora.mjs
-  - https://github.com/shiguredo/sora-js-sdk/blob/master/dist/sora.mjs
+- sora.min.js
+  - <https://www.jsdelivr.com/package/npm/sora-js-sdk>
 
 ## システム条件
 
-- WebRTC SFU Sora 2023.1.0 以降
-- TypeScript 5.2 以降
-
-## 組み込みサンプル
-
-- Multistream Sendrecv
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendrecv.html
-- Multistream Sendonly
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/sendonly.html
-- Multistream Recvonly
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/recvonly.html
-- Spotlight Sendrecv
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_sendrecv.html
-- Spotlight Recvonly
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/spotlight_recvonly.html
-- Simulcast
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/simulcast.html
-- DataChannelMessaging
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/data_channel_messaging.html
-- E2EE
-  - https://github.com/shiguredo/sora-js-sdk/blob/develop/example/e2ee.html
+- WebRTC SFU Sora 2023.2.0 以降
+- TypeScript 5.5 以降
 
 ## サンプル集
 
-Vite と pnpm を利用したサンプル集はこちらです。
+```bash
+# .env.local を作成して適切な値を設定してください
+$ cp .env.template .env.local
+$ pnpm install
+$ pnpm run build
+$ pnpm run dev
+```
 
-https://github.com/shiguredo/sora-js-sdk-samples
+## E2E (End to End) テスト
 
-## E2EE について
+Playwright を利用した E2E テストを実行できます。
+
+```bash
+# .env.local を作成して適切な値を設定してください
+$ cp .env.template .env.local
+$ pnpm install
+$ pnpm run build
+$ pnpm exec playwright install chromium --with-deps
+$ pnpm run e2e-test
+```
+
+## E2EE (End to End Encryption) について
 
 詳細については以下をご確認ください。
 
@@ -76,8 +72,8 @@ https://github.com/shiguredo/sora-js-sdk-samples
 
 Apache License 2.0
 
-```
-Copyright 2017-2023, Shiguredo Inc.
+```text
+Copyright 2017-2024, Shiguredo Inc.
 Copyright 2017-2022, Yuki Ito (Original Author)
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -110,7 +106,6 @@ limitations under the License.
 ### クライアント SDK
 
 - [Sora JavaScript SDK](https://github.com/shiguredo/sora-javascript-sdk)
-  - [Sora JavaScript SDK サンプル集](https://github.com/shiguredo/sora-js-sdk-samples)
   - [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/)
 - [Sora iOS SDK](https://github.com/shiguredo/sora-ios-sdk)
   - [Sora iOS SDK クイックスタート](https://github.com/shiguredo/sora-ios-sdk-quickstart)
@@ -120,14 +115,13 @@ limitations under the License.
   - [Sora Android SDK クイックスタート](https://github.com/shiguredo/sora-android-sdk-quickstart)
   - [Sora Android SDK サンプル集](https://github.com/shiguredo/sora-android-sdk-samples)
   - [Sora Android SDK ドキュメント](https://sora-android-sdk.shiguredo.jp/)
-- [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk)
-  - [Sora C++ SDK ドキュメント](https://sora-cpp-sdk.shiguredo.jp/)
 - [Sora Unity SDK](https://github.com/shiguredo/sora-unity-sdk)
   - [Sora Unity SDK サンプル集](https://github.com/shiguredo/sora-unity-sdk-samples)
   - [Sora Unity SDK ドキュメント](https://sora-unity-sdk.shiguredo.jp/)
 - [Sora Python SDK](https://github.com/shiguredo/sora-python-sdk)
-  - [Sora Python SDK サンプル集](https://github.com/shiguredo/sora-python-sdk-samples)
   - [Sora Python SDK ドキュメント](https://sora-python-sdk.shiguredo.jp/)
+- [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk)
+- [Sora C SDK](https://github.com/shiguredo/sora-c-sdk)
 
 ### クライアントツール
 

@@ -1,6 +1,6 @@
-import { test, expect } from 'vitest'
-import { createSignalingMessage } from '../src/utils'
+import { expect, test } from 'vitest'
 import { type AudioCodecType, DataChannelDirection, VideoCodecType } from '../src/types'
+import { createSignalingMessage } from '../src/utils'
 
 const channelId = '7N3fsMHob'
 const metadata = 'PG9A6RXgYqiqWKOVO'
@@ -47,6 +47,15 @@ test('createSignalingMessage simple sendrecv', () => {
   ).toEqual(expectedMessage)
 })
 
+test('createSignalingMessage sendrecv and undefined multistream', () => {
+  const expectedMessage = Object.assign({}, baseExpectedMessage, {
+    role: 'sendrecv',
+  })
+  expect(createSignalingMessage(sdp, 'sendrecv', channelId, undefined, {}, false)).toEqual(
+    expectedMessage,
+  )
+})
+
 test('createSignalingMessage invalid role', () => {
   expect(() => {
     createSignalingMessage(sdp, 'test', channelId, metadata, {}, false)
@@ -55,7 +64,7 @@ test('createSignalingMessage invalid role', () => {
 
 test('createSignalingMessage sendrecv and multistream: false', () => {
   expect(() => {
-    createSignalingMessage(sdp, 'sendrecv', channelId, metadata, {}, false)
+    createSignalingMessage(sdp, 'sendrecv', channelId, metadata, { multistream: false }, false)
   }).toThrow(
     Error(
       "Failed to parse options. Options multistream must be true when connecting using 'sendrecv'",
@@ -135,6 +144,14 @@ test('createSignalingMessage multistream: true', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     multistream: options.multistream,
   })
+  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
+    expectedMessage,
+  )
+})
+
+test('createSignalingMessage undefined multistream', () => {
+  const options = {}
+  const expectedMessage = Object.assign({}, baseExpectedMessage, {})
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     expectedMessage,
   )

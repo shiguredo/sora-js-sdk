@@ -1,0 +1,31 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>E2EE test</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>E2EE test</h1>
+    <p id="error-message" style="color: red;"></p>
+    <div style="display: flex;">
+      <div>
+        <h2>local</h2>
+        <button id="start">start</button>
+        <button id="stop">stop</button><br />
+        <div id="local-connection-id"></div>
+        <div id="local-fingerprint"></div>
+        <video id="local-video" autoplay="" playsinline="" controls=""
+          style="width: 320px; height: 240px; border: 1px solid black;"></video>
+
+        <h2>remote</h2>
+        <div id="remote-videos"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.mts"></script>
+</body>
+
+</html>

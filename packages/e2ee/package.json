@@ -13,14 +13,15 @@
     "build:worker": "tsc --project tsconfig.worker.json",
     "lint": "biome lint ./src",
     "fmt": "biome format --write ./src",
+    "check": "echo \"no check\"",
     "test": "echo \"no test\""
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.2.3",
-    "@rollup/plugin-replace": "5.0.5",
-    "@rollup/plugin-typescript": "11.1.5",
-    "rollup": "4.8.0",
-    "tslib": "2.6.2"
+    "@rollup/plugin-replace": "5.0.7",
+    "@rollup/plugin-typescript": "11.1.6",
+    "rollup": "4.18.0",
+    "tslib": "2.6.3"
   },
   "dependencies": {
     "@sora/go-wasm": "workspace:^"

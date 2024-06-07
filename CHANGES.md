@@ -11,6 +11,49 @@
 
 ## develop
 
+## 2024.1.0
+
+**2024-06-07**
+
+- [UPDATE] tsconfig.json を統一する
+  - @voluntas
+- [UPDATE] CI の pnpm を 9 に上げる
+  - @voluntas
+- [UPDATE] Biome 1.8.0 に上げる
+  - @voluntas
+- [ADD] `tsc --noEmit` で型チェックを行うようにする
+  - @voluntas
+- [CHANGE] オーディオコーデック `LYRA` のサポートを削除する
+  - @tnamao
+- [CHANGE] シグナリングオプションの `multistream` は false の時のみレガシーストリームを使用する
+  - レガシーストリームを使用したい場合は `multistream: false` の指定が必須となる
+  - @tnamao
+- [CHANGE] stopAudioTrack と stopVideoTrack を非推奨にする
+  - 代わりに名前を変えただけの removeAudioTrack と removeVideoTrack を用意する
+  - @voluntas
+- [CHANGE] examples を Vite を利用して動かすように変更する
+  - serve を削除
+  - Vite を追加
+    - vite.config.mts を追加
+  - @voluntas
+- [CHANGE] deploy-pages.yml を削除する
+  - E2E テストで実行できるようになったので
+  - @voluntas
+- [CHANGE] サンプルを class ベースに変更する
+  - @voluntas
+- [ADD] サンプル用の .env.template を用意する
+  - @voluntas
+- [ADD] tests に Playwright を利用した E2E テストを追加する
+  - e2ee と messaging は一旦 skip で追加
+  - @voluntas
+- [ADD] .github/workflows/e2e-test.yml を追加する
+  - Node.js {18,20,22} で E2E テストを実行する
+  - Chromium で E2E テストを実行する
+  - @voluntas
+- [FIX] examples 実行時に環境変数が設定されていない場合は空文字にする
+  - 対象項目は SORA_CHANNEL_ID_PREFIX, VITE_SORA_CHANNEL_ID_PREFIX, VITE_ACCESS_TOKEN
+  - @miosakuma
+
 ## 2023.2.0
 
 **2023-12-08**
@@ -153,8 +196,8 @@
 ## 2021.2.2
 
 - [FIX] fflate package のバージョンを 0.7.1 から 0.7.3 に更新する
-  - 0.7.3 https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#073
-  - 0.7.2 https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#072
+  - 0.7.3 <https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#073>
+  - 0.7.2 <https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#072>
   - @yuitowest
 
 ## 2021.2.1
@@ -367,7 +410,7 @@
 - [UPDATE] sora-e2ee のバージョンを 2020.3.0 に更新する
   - @yuitowest
 - [FIX] `package.json` に定義されている `module` の向き先を `dist/sora.mjs` に変更し、対象ファイルがビルドされるよう Rollup の設定を追加する
-  - https://github.com/shiguredo/sora-js-sdk/pull/44
+  - <https://github.com/shiguredo/sora-js-sdk/pull/44>
   - @rosylilly
 - [UPDATE] simulcast で active パラメーターを有効にするための実装を追加する
   - @yuitowest
@@ -441,7 +484,7 @@
   - `_callbacks` を `callbacks` に名前変更してアクセス制限を protected に変更
   - @yuitowest
 - [CHANGE] method 名の変更とアクセス制限の追加する
-  - _ がついているメソッド名から _ を削除してアクセス制限を追加する
+  - _がついているメソッド名から_ を削除してアクセス制限を追加する
   - @yuitowest
 
 ## 1.16.0

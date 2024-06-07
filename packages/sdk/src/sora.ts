@@ -1,8 +1,7 @@
 import SoraE2EE from '@sora/e2ee'
 
-import ConnectionBase from './base'
+import type ConnectionBase from './base'
 import { applyMediaStreamConstraints } from './helpers'
-import { LyraConfig, initLyra } from './lyra'
 import ConnectionPublisher from './publisher'
 import ConnectionSubscriber from './subscriber'
 import type {
@@ -82,14 +81,12 @@ class SoraConnection {
     metadata: JSONType = null,
     options: ConnectionOptions = { audio: true, video: true },
   ): ConnectionPublisher {
-    // sendrecv の場合、multistream に初期値を指定する
-    const sendrecvOptions: ConnectionOptions = Object.assign({ multistream: true }, options)
     return new ConnectionPublisher(
       this.signalingUrlCandidates,
       'sendrecv',
       channelId,
       metadata,
-      sendrecvOptions,
+      options,
       this.debug,
     )
   }
@@ -187,12 +184,6 @@ export default {
     await SoraE2EE.loadWasm(wasmUrl)
   },
   /**
-   * Lyra の初期化を行うメソッド
-   *
-   * 詳細は lyra.ts の initLyra() メソッドのドキュメントを参照
-   */
-  initLyra,
-  /**
    * SoraConnection インスタンスを生成するメソッド
    *
    * @example
@@ -239,7 +230,6 @@ export type {
   DataChannelEvent,
   DataChannelMessageEvent,
   JSONType,
-  LyraConfig,
   Role,
   SignalingEvent,
   SignalingNotifyConnectionCreated,

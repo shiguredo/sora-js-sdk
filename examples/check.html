@@ -1,0 +1,222 @@
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>リリース前の動作確認用サンプル</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>リリース前の動作確認用サンプル</h1>
+
+      <p>
+        リリース前の動作確認に使用するためのサンプル。<br /><br />
+
+        以降では、動作確認対象となるパラメータの組み合わせ毎にチャネル ID が用意されている。<br />
+        それぞれに記載の「要確認ブラウザ」で「接続」ボタンを押下し、
+        映像および音声が問題なく流れていることを確認する。<br />
+        なお「接続」を押した後に表示されるのは受信側のストリームのみとなる。
+      </p>
+      <hr />
+
+      シグナリング URL: <input type="text" id="signalingUrl"><br />
+      <small>※ クエリストリングの signalingUrl パラメータでも指定可能</small>
+      <hr />
+
+      <h2><u>チャネル ID: sora-js-sdk:check:legacystream</u></h2>
+
+      要確認ブラウザ:
+      <ul>
+        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
+        <li>Safari: macOS and iOS</li>
+        <li>Firefox: Linux or macOS or Windows</li>
+      </ul>
+
+      <button onclick="startLegacystreamCheck()">接続</button>
+      <button onclick="stopLegacystreamCheck()">切断</button>
+
+      <h4>sendonly, Opus</h4>
+      <div id="legacystream-sendonly-videos" class="legacystream"></div>
+
+      <h4>recvonly</h4>
+      <div id="legacystream-recvonly-videos" class="legacystream"></div>
+
+      <h2><u>チャネル ID: sora-js-sdk:check:multistream</u></h2>
+
+      要確認ブラウザ:
+      <ul>
+        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
+        <li>Safari: macOS and iOS</li>
+        <li>Firefox: Linux or macOS or Windows</li>
+      </ul>
+
+      <button onclick="startMultistreamCheck()">接続</button>
+      <button onclick="stopMultistreamCheck()">切断</button>
+
+      <h4>sendrecv, Opus</h4>
+      <div id="multistream-sendrecv-videos" class="multistream"></div>
+
+      <h4>recvonly</h4>
+      <div id="multistream-recvonly-videos" class="multistream"></div>
+
+      <h2><u>チャネル ID: sora-js-sdk:check:multistream:e2ee:opus</u></h2>
+
+      要確認ブラウザ:
+      <ul>
+        <li>Chrome / Edge: (Linux or macOS or Windows) and Android</li>
+      </ul>
+
+      現在は E2EE は１ページ１コネクションまでなので、以下のパターンを別々のページで実行すること。
+      <h4>multistream, E2EE, sendrecv, Opus</h4>
+      <button onclick="startMultistreamE2eeOpusCheck('multistream-e2ee-opus-sendrecv-opus-videos', 'sendrecv', 'OPUS')">接続</button>
+      <button onclick="stopMultistreamE2eeOpusCheck()">切断</button><br />
+      <div id="multistream-e2ee-opus-sendrecv-opus-videos" class="multistream-e2ee-opus"></div>
+
+      <h4>multistream, E2EE, sendrecv, Opus</h4>
+      <button onclick="startMultistreamE2eeOpusCheck('multistream-e2ee-opus-sendrecv-opus-videos', 'sendrecv', 'OPUS')">接続</button>
+      <button onclick="stopMultistreamE2eeOpusCheck()">切断</button><br />
+      <div id="multistream-e2ee-opus-sendrecv-opus-videos" class="multistream-e2ee-opus"></div>
+
+      <h4>multistream, E2EE, recvonly</h4>
+      <button onclick="startMultistreamE2eeOpusCheck('multistream-e2ee-opus-recvonly-videos', 'recvonly')">接続</button>
+      <button onclick="stopMultistreamE2eeOpusCheck()">切断</button><br />
+      <div id="multistream-e2ee-opus-recvonly-videos" class="multistream-e2ee-opus"></div>
+    </div>
+
+    <script src="./sora.js"></script>
+    <script type="text/javascript">
+      if('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js').then((registration) => {
+              registration.addEventListener('updatefound', () => {
+                  const newServiceWorker = registration.installing;
+                  newServiceWorker.addEventListener('statechange', () => {
+                      if (newServiceWorker.state == 'activated') {
+                          location.reload();
+                      }
+                  });
+              });
+          });
+      }
+
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.has('signalingUrl')) {
+          document.getElementById('signalingUrl').value = searchParams.get('signalingUrl');
+      }
+
+      let multistreamE2eeOpusCheckConnections = [];
+      async function startMultistreamE2eeOpusCheck(videoId, role, audioCodecType) {
+          stopMultistreamE2eeOpusCheck();
+          await Sora.initE2EE("https://sora-e2ee-wasm.shiguredo.app/2020.2/wasm.wasm");
+
+          const channelId = 'sora-js-sdk:check:multistream:e2ee:opus';
+          multistreamE2eeOpusCheckConnections = [
+              await connect(channelId, videoId, role, {multistream: true, e2ee: true, audioCodecType})
+          ];
+      }
+
+      function stopMultistreamE2eeOpusCheck() {
+          multistreamE2eeOpusCheckConnections.forEach(x => x.disconnect());
+          multistreamE2eeOpusCheckConnections = [];
+          document.querySelectorAll('.multistream-e2ee-opus').forEach(x => x.innerHTML = null);
+      }
+
+      let multistreamOpusCheckConnections = [];
+      async function startMultistreamOpusCheck() {
+          stopMultistreamOpusCheck();
+
+          const channelId = 'sora-js-sdk:check:multistream:opus';
+          multistreamOpusCheckConnections = [
+              await connect(channelId, 'multistream-opus-sendrecv-opus-videos', 'sendrecv',
+                            {multistream: true, audioCodecType: "OPUS"}),
+              await connect(channelId, 'multistream-opus-recvonly-videos', 'recvonly',
+                            {multistream: true}),
+          ];
+      }
+
+      function stopMultistreamOpusCheck() {
+          multistreamOpusCheckConnections.forEach(x => x.disconnect());
+          multistreamOpusCheckConnections = [];
+          document.querySelectorAll('.multistream-opus').forEach(x => x.innerHTML = null);
+      }
+
+      let multistreamCheckConnections = [];
+      async function startMultistreamCheck() {
+          stopMultistreamCheck();
+
+          const channelId = 'sora-js-sdk:check:multistream';
+          multistreamCheckConnections.push(
+              await connect(channelId, 'multistream-sendrecv-videos', 'sendrecv', {multistream: true}));
+
+          multistreamCheckConnections.push(
+              await connect(channelId, 'multistream-recvonly-videos', 'recvonly', {multistream: true}));
+      }
+
+      function stopMultistreamCheck() {
+          multistreamCheckConnections.forEach(x => x.disconnect());
+          multistreamCheckConnections = [];
+          document.querySelectorAll('.multistream').forEach(x => x.innerHTML = null);
+      }
+
+      let legacystreamCheckConnections = [];
+      async function startLegacystreamCheck() {
+          stopLegacystreamCheck();
+
+          const channelId = 'sora-js-sdk:check:legacystream';
+          legacystreamCheckConnections = [
+              await connect(channelId, 'legacystream-sendonly-videos', 'sendonly',
+                            {multistream: false}),
+              await connect(channelId, 'legacystream-recvonly-videos', 'recvonly',
+                            {multistream: false}),
+          ];
+      }
+
+      async function stopLegacystreamCheck() {
+          legacystreamCheckConnections.forEach(x => x.disconnect());
+          legacystreamCheckConnections = [];
+          document.querySelectorAll('.legacystream').forEach(x => x.innerHTML = null);
+      }
+
+      async function connect(channelId, videoId, role, options) {
+          const debug = false;
+          const signalingUrl = document.querySelector('#signalingUrl').value;
+          const sora = Sora.connection(signalingUrl, debug);
+          let connection;
+          if (role === 'sendrecv') {
+              connection = sora.sendrecv(channelId, null, options);
+          } else if (role === 'recvonly') {
+              connection = sora.recvonly(channelId, null, options);
+          } else {
+              connection = sora.sendonly(channelId, null, options);
+          }
+          connection.on('track', (event) => {
+              const stream = event.streams[0];
+              if (!stream) return;
+              const remoteVideoId = 'remotevideo-' + stream.id;
+              const remoteVideos = document.querySelector('#' + videoId);
+              if (!remoteVideos.querySelector('#' + remoteVideoId)) {
+                  const remoteVideo = document.createElement('video');
+                  remoteVideo.id = remoteVideoId;
+                  remoteVideo.style.border = '1px solid red';
+                  remoteVideo.autoplay = true;
+                  remoteVideo.playsinline = true;
+                  remoteVideo.controls = true;
+                  remoteVideo.width = '160';
+                  remoteVideo.height = '120';
+                  remoteVideo.srcObject = stream;
+                  remoteVideos.appendChild(remoteVideo);
+              }
+          });
+          connection.on('removetrack', (event) => {
+              const remoteVideos = document.querySelector('#' + videoId);
+              const remoteVideo = remoteVideos.querySelector('#remotevideo-' + event.target.id);
+              if (remoteVideo) {
+                  remoteVideos.removeChild(remoteVideo);
+              }
+          });
+
+          const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+          await connection.connect(mediaStream);
+
+          return connection;
+      }
+    </script>
+  </body>
+</html>

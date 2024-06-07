@@ -1,0 +1,39 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>Simulcast test</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Simulcast test</h1>
+    <button id="start">start</button>
+    <button id="stop">stop</button>
+    <div>
+      <h2>sendonly</h2>
+      <div id="local-video-connection-id"></div>
+      <video id="local-video" autoplay="" playsinline="" controls=""
+        style="width: 320px; height: 180px; border: 1px solid blue;"></video>
+    </div>
+    <div>
+      <h2>recvonly r0</h2>
+      <div id="remote-video-connection-id-r0"></div>
+      <video id="remote-video-r0" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
+    </div>
+    <div>
+      <h2>recvonly r1</h2>
+      <div id="remote-video-connection-id-r1"></div>
+      <video id="remote-video-r1" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
+    </div>
+    <div>
+      <h2>recvonly r2</h2>
+      <div id="remote-video-connection-id-r2"></div>
+      <video id="remote-video-r2" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
+    </div>
+  </div>
+
+  <script type="module" src="./main.mts"></script>
+</body>
+
+</html>

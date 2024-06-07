@@ -1,20 +1,11 @@
 import { unzlibSync, zlibSync } from 'fflate'
 
 import SoraE2EE from '@sora/e2ee'
-import {
-  LyraState,
-  createLyraWorker,
-  isLyraInitialized,
-  transformLyraToPcm,
-  transformPcmToLyra,
-} from './lyra'
-import {
-  AudioCodecType,
+import type {
   Callbacks,
   ConnectionOptions,
   DataChannelConfiguration,
   JSONType,
-  RTCEncodedAudioFrame,
   SignalingConnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
@@ -198,19 +189,6 @@ export default class ConnectionBase {
    */
   protected e2ee: SoraE2EE | null
   /**
-   * mid と AudioCodecType の対応づけを保持するマップ
-   *
-   * Lyra などのカスタム音声コーデック使用時に RTCRtpReceiver をどのコーデックでデコードすべきかを
-   * 判別するために使われる
-   *
-   * カスタム音声コーデックが有効になっていない場合には空のままとなる
-   */
-  private midToAudioCodecType: Map<string, AudioCodecType> = new Map()
-  /**
-   * Lyra インスタンス
-   */
-  private lyra?: LyraState
-  /**
    * キーとなる sender が setupSenderTransform で初期化済みかどうか
    */
   private senderStreamInitialized: WeakSet<RTCRtpSender> = new WeakSet()
@@ -288,9 +266,6 @@ export default class ConnectionBase {
     this.signalingOfferMessageDataChannels = {}
     this.connectedSignalingUrl = ''
     this.contactSignalingUrl = ''
-    if (isLyraInitialized()) {
-      this.lyra = new LyraState()
-    }
   }
 
   /**
@@ -331,7 +306,9 @@ export default class ConnectionBase {
   }
 
   /**
-   * audio track を停止するメソッド
+   * audio track を削除するメソッド
+   *
+   * @deprecated この関数は非推奨です。代わりに removeAudioTrack を使用してください
    *
    * @example
    * ```
@@ -350,6 +327,33 @@ export default class ConnectionBase {
    * @public
    */
   stopAudioTrack(stream: MediaStream): Promise<void> {
+    console.warn(
+      // @deprecated message
+      '@deprecated stopAudioTrack will be removed in a future version. Use removeAudioTrack instead.',
+    )
+    return this.removeAudioTrack(stream)
+  }
+
+  /**
+   * audio track を削除するメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * sendrecv.removeAudioTrack(mediaStream);
+   * ```
+   *
+   * @remarks
+   * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します
+   *
+   * @param stream - audio track を削除する MediaStream
+   *
+   * @public
+   */
+  removeAudioTrack(stream: MediaStream): Promise<void> {
     for (const track of stream.getAudioTracks()) {
       track.enabled = false
     }
@@ -374,8 +378,11 @@ export default class ConnectionBase {
       }, 100)
     })
   }
+
   /**
-   * video track を停止するメソッド
+   * video track を削除するメソッド
+   *
+   * @deprecated この関数は非推奨です。代わりに removeVideoTrack を使用してください
    *
    * @example
    * ```
@@ -389,11 +396,38 @@ export default class ConnectionBase {
    * @remarks
    * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します
    *
-   * @param stream - video track を削除する MediaStream
+   * @param stream - video track を停止する MediaStream
    *
    * @public
    */
   stopVideoTrack(stream: MediaStream): Promise<void> {
+    console.warn(
+      // @deprecated message
+      '@deprecated stopVideoTrack will be removed in a future version. Use removeVideoTrack instead.',
+    )
+    return this.removeVideoTrack(stream)
+  }
+
+  /**
+   * video track を削除するメソッド
+   *
+   * @example
+   * ```
+   * const sendrecv = connection.sendrecv("sora");
+   * const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+   * await sendrecv.connect(mediaStream);
+   *
+   * sendrecv.removeVideoTrack(mediaStream);
+   * ```
+   *
+   * @remarks
+   * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します
+   *
+   * @param stream - video track を削除する MediaStream
+   *
+   * @public
+   */
+  removeVideoTrack(stream: MediaStream): Promise<void> {
     for (const track of stream.getVideoTracks()) {
       track.enabled = false
     }
@@ -442,7 +476,7 @@ export default class ConnectionBase {
    * @public
    */
   async replaceAudioTrack(stream: MediaStream, audioTrack: MediaStreamTrack): Promise<void> {
-    await this.stopAudioTrack(stream)
+    await this.removeAudioTrack(stream)
     const transceiver = this.getAudioTransceiver()
     if (transceiver === null) {
       throw new Error('Unable to set an audio track. Audio track sender is undefined')
@@ -474,7 +508,7 @@ export default class ConnectionBase {
    * @public
    */
   async replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Promise<void> {
-    await this.stopVideoTrack(stream)
+    await this.removeVideoTrack(stream)
     const transceiver = this.getVideoTransceiver()
     if (transceiver === null) {
       throw new Error('Unable to set video track. Video track sender is undefined')
@@ -525,7 +559,10 @@ export default class ConnectionBase {
     if (this.ws) {
       // onclose はログを吐く専用に残す
       this.ws.onclose = (event) => {
-        this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
+        this.writeWebSocketTimelineLog('onclose', {
+          code: event.code,
+          reason: event.reason,
+        })
       }
       this.ws.onmessage = null
       this.ws.onerror = null
@@ -588,7 +625,10 @@ export default class ConnectionBase {
     if (this.ws) {
       // onclose はログを吐く専用に残す
       this.ws.onclose = (event) => {
-        this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
+        this.writeWebSocketTimelineLog('onclose', {
+          code: event.code,
+          reason: event.reason,
+        })
       }
       this.ws.onmessage = null
       this.ws.onerror = null
@@ -734,7 +774,10 @@ export default class ConnectionBase {
           this.ws = null
         }
         clearTimeout(timerId)
-        this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
+        this.writeWebSocketTimelineLog('onclose', {
+          code: event.code,
+          reason: event.reason,
+        })
         return resolve({ code: event.code, reason: event.reason })
       }
       if (this.ws.readyState === 1) {
@@ -764,7 +807,10 @@ export default class ConnectionBase {
    * @remarks
    * 正常/異常どちらの切断でも使用する
    */
-  private disconnectDataChannel(): Promise<{ code: number; reason: string } | null> {
+  private disconnectDataChannel(): Promise<{
+    code: number
+    reason: string
+  } | null> {
     // DataChannel の強制終了処理
     const closeDataChannels = () => {
       for (const key of Object.keys(this.soraDataChannels)) {
@@ -922,7 +968,10 @@ export default class ConnectionBase {
     if (this.ws) {
       // onclose はログを吐く専用に残す
       this.ws.onclose = (event) => {
-        this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
+        this.writeWebSocketTimelineLog('onclose', {
+          code: event.code,
+          reason: event.reason,
+        })
       }
       this.ws.onmessage = null
       this.ws.onerror = null
@@ -1249,7 +1298,7 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config)
-    if (this.e2ee || this.lyra) {
+    if (this.e2ee) {
       // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
       config = Object.assign({ encodedInsertableStreams: true }, config)
     }
@@ -1311,7 +1360,10 @@ export default class ConnectionBase {
     }
 
     const sdp = this.processOfferSdp(message.sdp)
-    const sessionDescription = new RTCSessionDescription({ type: 'offer', sdp })
+    const sessionDescription = new RTCSessionDescription({
+      type: 'offer',
+      sdp,
+    })
     await this.pc.setRemoteDescription(sessionDescription)
     this.writePeerConnectionTimelineLog('set-remote-description', sessionDescription)
     return
@@ -1364,19 +1416,12 @@ export default class ConnectionBase {
         // setRemoteDescription 後でないと active が反映されないのでもう一度呼ぶ
         await this.setSenderParameters(transceiver, this.encodings)
         const sessionDescription = await this.pc.createAnswer()
-        // TODO(sile): 動作確認
-        if (sessionDescription.sdp !== undefined) {
-          sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp)
-        }
         await this.pc.setLocalDescription(sessionDescription)
         this.trace('TRANSCEIVER SENDER GET_PARAMETERS', transceiver.sender.getParameters())
         return
       }
     }
     const sessionDescription = await this.pc.createAnswer()
-    if (sessionDescription.sdp !== undefined) {
-      sessionDescription.sdp = this.processAnswerSdpForLocal(sessionDescription.sdp)
-    }
     this.writePeerConnectionTimelineLog('create-answer', sessionDescription)
     await this.pc.setLocalDescription(sessionDescription)
     this.writePeerConnectionTimelineLog('set-local-description', sessionDescription)
@@ -1401,57 +1446,7 @@ export default class ConnectionBase {
       sdp = sdp.replace(/^m=(audio|video) 0 /gm, (_match, kind: string) => `m=${kind} 9 `)
     }
 
-    this.midToAudioCodecType.clear()
-    if (this.lyra === undefined || !sdp.includes('109 lyra/')) {
-      return sdp
-    }
-
-    // mid と音声コーデックの対応を保存する
-    for (const media of sdp.split(/^m=/m).slice(1)) {
-      if (!media.startsWith('audio')) {
-        continue
-      }
-
-      const mid = /a=mid:(.*)/.exec(media)
-      if (mid) {
-        const codecType = media.includes('109 lyra/') ? 'LYRA' : 'OPUS'
-        this.midToAudioCodecType.set(mid[1], codecType)
-      }
-    }
-
-    return this.lyra.processOfferSdp(sdp)
-  }
-
-  /**
-   * カスタムコーデック用に answer SDP を処理するメソッド
-   *
-   * 処理後の SDP は setLocalDescription() メソッドに渡される
-   *
-   * @param answer SDP
-   * @returns 処理後の SDP
-   */
-  private processAnswerSdpForLocal(sdp: string): string {
-    if (this.lyra === undefined) {
-      return sdp
-    }
-
-    return this.lyra.processAnswerSdpForLocal(sdp)
-  }
-
-  /**
-   * カスタムコーデック用に answer SDP を処理するメソッド
-   *
-   * 処理後の SDP は Sora に送信される
-   *
-   * @param answer SDP
-   * @returns 処理後の SDP
-   */
-  private processAnswerSdpForSora(sdp: string): string {
-    if (this.lyra === undefined) {
-      return sdp
-    }
-
-    return this.lyra.processAnswerSdpForSora(sdp)
+    return sdp
   }
 
   /**
@@ -1460,7 +1455,7 @@ export default class ConnectionBase {
    * @param sender 対象となる RTCRtpSender インスタンス
    */
   protected async setupSenderTransform(sender: RTCRtpSender): Promise<void> {
-    if ((this.e2ee === null && this.lyra === undefined) || sender.track === null) {
+    if (this.e2ee === null || sender.track === null) {
       return
     }
     // 既に初期化済み
@@ -1468,47 +1463,17 @@ export default class ConnectionBase {
       return
     }
 
-    const isLyraCodec = sender.track.kind === 'audio' && this.options.audioCodecType === 'LYRA'
-
     if ('transform' in RTCRtpSender.prototype) {
       // WebRTC Encoded Transform に対応しているブラウザ
-
-      if (!isLyraCodec || this.lyra === undefined) {
-        return
-      }
-
-      const lyraWorker = createLyraWorker()
-      const lyraEncoder = await this.lyra.createEncoder()
-
-      // @ts-ignore
-      sender.transform = new RTCRtpScriptTransform(
-        lyraWorker,
-        {
-          name: 'senderTransform',
-          lyraEncoder,
-        },
-        [lyraEncoder.port],
-      )
-    } else {
-      // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-      // @ts-ignore
-      const senderStreams = sender.createEncodedStreams() as TransformStream
-      let readable = senderStreams.readable
-      if (isLyraCodec && this.lyra !== undefined) {
-        const lyraEncoder = await this.lyra.createEncoder()
-        const transformStream = new TransformStream({
-          transform: (data: RTCEncodedAudioFrame, controller) =>
-            transformPcmToLyra(lyraEncoder, data, controller),
-        })
-        readable = senderStreams.readable.pipeThrough(transformStream)
-      }
-      if (this.e2ee) {
-        this.e2ee.setupSenderTransform(readable, senderStreams.writable)
-      } else {
-        readable.pipeTo(senderStreams.writable).catch((e) => console.warn(e))
-      }
+      return
     }
+
+    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
+
+    // @ts-ignore
+    const senderStreams = sender.createEncodedStreams() as TransformStream
+    const readable = senderStreams.readable
+    this.e2ee.setupSenderTransform(readable, senderStreams.writable)
     this.senderStreamInitialized.add(sender)
   }
 
@@ -1522,52 +1487,21 @@ export default class ConnectionBase {
     mid: string | null,
     receiver: RTCRtpReceiver,
   ): Promise<void> {
-    if (this.e2ee === null && this.lyra === undefined) {
+    if (this.e2ee === null) {
       return
     }
 
-    const codecType = this.midToAudioCodecType.get(mid || '')
-
     if ('transform' in RTCRtpSender.prototype) {
       // WebRTC Encoded Transform に対応しているブラウザ
-
-      if (codecType !== 'LYRA' || this.lyra === undefined) {
-        return
-      }
-
-      const lyraWorker = createLyraWorker()
-      const lyraDecoder = await this.lyra.createDecoder()
-
-      // @ts-ignore
-      receiver.transform = new RTCRtpScriptTransform(
-        lyraWorker,
-        {
-          name: 'receiverTransform',
-          lyraDecoder,
-        },
-        [lyraDecoder.port],
-      )
-    } else {
-      // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-      // @ts-ignore
-      const receiverStreams = receiver.createEncodedStreams() as TransformStream
-      let writable = receiverStreams.writable
-      if (codecType === 'LYRA' && this.lyra !== undefined) {
-        const lyraDecoder = await this.lyra.createDecoder()
-        const transformStream = new TransformStream({
-          transform: (data: RTCEncodedAudioFrame, controller) =>
-            transformLyraToPcm(lyraDecoder, data, controller),
-        })
-        transformStream.readable.pipeTo(receiverStreams.writable).catch((e) => console.warn(e))
-        writable = transformStream.writable
-      }
-      if (this.e2ee) {
-        this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
-      } else {
-        receiverStreams.readable.pipeTo(writable).catch((e) => console.warn(e))
-      }
+      return
     }
+
+    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
+
+    // @ts-ignore
+    const receiverStreams = receiver.createEncodedStreams() as TransformStream
+    const writable = receiverStreams.writable
+    this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
   }
 
   /**
@@ -1576,7 +1510,7 @@ export default class ConnectionBase {
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
-      const sdp = this.processAnswerSdpForSora(this.pc.localDescription.sdp)
+      const sdp = this.pc.localDescription.sdp
       const message = { type: 'answer', sdp }
       this.ws.send(JSON.stringify(message))
       this.writeWebSocketSignalingLog('send-answer', message)
@@ -1696,8 +1630,14 @@ export default class ConnectionBase {
       return
     }
     this.ws.onclose = async (event) => {
-      this.writeWebSocketTimelineLog('onclose', { code: event.code, reason: event.reason })
-      await this.abend('WEBSOCKET-ONCLOSE', { code: event.code, reason: event.reason })
+      this.writeWebSocketTimelineLog('onclose', {
+        code: event.code,
+        reason: event.reason,
+      })
+      await this.abend('WEBSOCKET-ONCLOSE', {
+        code: event.code,
+        reason: event.reason,
+      })
     }
     this.ws.onerror = async (_) => {
       this.writeWebSocketSignalingLog('onerror')
@@ -1907,7 +1847,10 @@ export default class ConnectionBase {
       this.writePeerConnectionTimelineLog('create-offer', offer)
       return offer
     }
-    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true })
+    const offer = await pc.createOffer({
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: true,
+    })
     pc.close()
     this.writePeerConnectionTimelineLog('create-offer', offer)
     return offer
@@ -1967,7 +1910,10 @@ export default class ConnectionBase {
   private sendUpdateAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({ type: 'update', sdp: this.pc.localDescription.sdp })
+      this.sendSignalingMessage({
+        type: 'update',
+        sdp: this.pc.localDescription.sdp,
+      })
     }
   }
 
@@ -1977,7 +1923,10 @@ export default class ConnectionBase {
   private sendReAnswer(): void {
     if (this.pc?.localDescription) {
       this.trace('RE ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({ type: 're-answer', sdp: this.pc.localDescription.sdp })
+      this.sendSignalingMessage({
+        type: 're-answer',
+        sdp: this.pc.localDescription.sdp,
+      })
     }
   }
 
@@ -2013,7 +1962,9 @@ export default class ConnectionBase {
    * @param message - type ping メッセージ
    */
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
-    const pongMessage: { type: 'pong'; stats?: RTCStatsReport[] } = { type: 'pong' }
+    const pongMessage: { type: 'pong'; stats?: RTCStatsReport[] } = {
+      type: 'pong',
+    }
     if (message.stats) {
       const stats = await this.getStats()
       pongMessage.stats = stats
@@ -2200,7 +2151,9 @@ export default class ConnectionBase {
       const channel = event.currentTarget as RTCDataChannel
       this.writeDataChannelTimelineLog('onerror', channel)
       this.trace('ERROR DATA CHANNEL', channel.label)
-      await this.abend('DATA-CHANNEL-ONERROR', { params: { label: channel.label } })
+      await this.abend('DATA-CHANNEL-ONERROR', {
+        params: { label: channel.label },
+      })
     }
     // onmessage
     if (dataChannelEvent.channel.label === 'signaling') {
@@ -2320,7 +2273,10 @@ export default class ConnectionBase {
    *
    * @param message - 送信するメッセージ
    */
-  private sendSignalingMessage(message: { type: string; [key: string]: unknown }): void {
+  private sendSignalingMessage(message: {
+    type: string
+    [key: string]: unknown
+  }): void {
     if (this.soraDataChannels.signaling) {
       if (
         this.signalingOfferMessageDataChannels.signaling &&

@@ -1,0 +1,36 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>Spotlight Sendrecv test</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Spotlight Sendrecv test</h1>
+    <div style="display: flex;">
+      <div>
+        <h2>sendrecv1</h2>
+        <button id="sendrecv1-start">start</button>
+        <button id="sendrecv1-stop">stop</button><br />
+        <video id="sendrecv1-local-video" autoplay="" playsinline="" controls=""
+          style="width: 320px; height: 240px; border: 1px solid black;"></video>
+        <div id="sendrecv1-connection-id"></div>
+        <div id="sendrecv1-remote-videos"></div>
+      </div>
+      <div>
+        <h2>sendrecv2</h2>
+        <button id="sendrecv2-start">start</button>
+        <button id="sendrecv2-stop">stop</button><br />
+        <video id="sendrecv2-local-video" autoplay="" playsinline="" controls=""
+          style="width: 320px; height: 240px; border: 1px solid black;"></video>
+        <div id="sendrecv2-connection-id"></div>
+        <div id="sendrecv2-remote-videos"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.mts"></script>
+</body>
+
+</html>
