@@ -10,27 +10,27 @@ Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発�
 
 We will not respond to PRs or issues that have not been discussed on Discord. Also, Discord is only available in Japanese.
 
-Please read https://github.com/shiguredo/oss before use.
+Please read <https://github.com/shiguredo/oss> before use.
 
 ## 時雨堂のオープンソースソフトウェアについて
 
-利用前に https://github.com/shiguredo/oss をお読みください。
+利用前に <https://github.com/shiguredo/oss> をお読みください。
 
 ## 使い方
 
 使い方は [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/) を参照してください。
 
 - sora.min.js
-  - https://www.jsdelivr.com/package/npm/sora-js-sdk
+  - <https://www.jsdelivr.com/package/npm/sora-js-sdk>
 
 ## システム条件
 
 - WebRTC SFU Sora 2023.2.0 以降
-- TypeScript 5.3 以降
+- TypeScript 5.5 以降
 
 ## サンプル集
 
-```
+```bash
 # .env.local を作成して適切な値を設定してください
 $ cp .env.template .env.local
 $ pnpm install
@@ -42,7 +42,7 @@ $ pnpm run dev
 
 Playwright を利用した E2E テストを実行できます。
 
-```
+```bash
 # .env.local を作成して適切な値を設定してください
 $ cp .env.template .env.local
 $ pnpm install
@@ -72,7 +72,7 @@ $ pnpm run e2e-test
 
 Apache License 2.0
 
-```
+```text
 Copyright 2017-2024, Shiguredo Inc.
 Copyright 2017-2022, Yuki Ito (Original Author)
 

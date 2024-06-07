@@ -11,11 +11,15 @@
 
 ## develop
 
+## 2024.1.0
+
+**2024-06-07**
+
 - [UPDATE] tsconfig.json を統一する
   - @voluntas
 - [UPDATE] CI の pnpm を 9 に上げる
   - @voluntas
-- [UPDATE] Biome 1.7.3 に上げる
+- [UPDATE] Biome 1.8.0 に上げる
   - @voluntas
 - [ADD] `tsc --noEmit` で型チェックを行うようにする
   - @voluntas
@@ -192,8 +196,8 @@
 ## 2021.2.2
 
 - [FIX] fflate package のバージョンを 0.7.1 から 0.7.3 に更新する
-  - 0.7.3 https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#073
-  - 0.7.2 https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#072
+  - 0.7.3 <https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#073>
+  - 0.7.2 <https://github.com/101arrowz/fflate/blob/master/CHANGELOG.md#072>
   - @yuitowest
 
 ## 2021.2.1
@@ -406,7 +410,7 @@
 - [UPDATE] sora-e2ee のバージョンを 2020.3.0 に更新する
   - @yuitowest
 - [FIX] `package.json` に定義されている `module` の向き先を `dist/sora.mjs` に変更し、対象ファイルがビルドされるよう Rollup の設定を追加する
-  - https://github.com/shiguredo/sora-js-sdk/pull/44
+  - <https://github.com/shiguredo/sora-js-sdk/pull/44>
   - @rosylilly
 - [UPDATE] simulcast で active パラメーターを有効にするための実装を追加する
   - @yuitowest
@@ -480,7 +484,7 @@
   - `_callbacks` を `callbacks` に名前変更してアクセス制限を protected に変更
   - @yuitowest
 - [CHANGE] method 名の変更とアクセス制限の追加する
-  - _ がついているメソッド名から _ を削除してアクセス制限を追加する
+  - _がついているメソッド名から_ を削除してアクセス制限を追加する
   - @yuitowest
 
 ## 1.16.0
