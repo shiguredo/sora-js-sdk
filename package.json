@@ -1,6 +1,6 @@
 {
   "name": "sora-js-sdk",
-  "version": "2024.1.0",
+  "version": "2024.1.1",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.js",
   "module": "dist/sora.mjs",
@@ -31,11 +31,11 @@
     "dist"
   ],
   "devDependencies": {
-    "@biomejs/biome": "1.8.0",
+    "@biomejs/biome": "1.8.1",
     "@playwright/test": "1.44.1",
     "typedoc": "0.25.13",
     "typescript": "5.4.5",
-    "vite": "5.2.12",
+    "vite": "5.2.13",
     "vitest": "1.6.0"
   },
   "resolutions": {
