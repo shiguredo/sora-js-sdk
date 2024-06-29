@@ -1237,11 +1237,8 @@ export default class ConnectionBase {
         } else if (message.type === 'push') {
           this.callbacks.push(message, 'websocket')
         } else if (message.type === 'notify') {
-          if (message.event_type === 'connection.created') {
-            this.writeWebSocketTimelineLog('notify-connection.created', message)
-          } else if (message.event_type === 'connection.destroyed') {
-            this.writeWebSocketTimelineLog('notify-connection.destroyed', message)
-          }
+          // type: notify は全てタイムラインに記録する
+          this.writeWebSocketTimelineLog(`${message.type}-${message.event_type}`, message)
           this.signalingOnMessageTypeNotify(message, 'websocket')
         } else if (message.type === 'switched') {
           this.writeWebSocketSignalingLog('onmessage-switched', message)
@@ -2187,11 +2184,12 @@ export default class ConnectionBase {
         }
         const data = parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as SignalingNotifyMessage
-        if (message.event_type === 'connection.created') {
-          this.writeDataChannelTimelineLog('notify-connection.created', channel, message)
-        } else if (message.event_type === 'connection.destroyed') {
-          this.writeDataChannelTimelineLog('notify-connection.destroyed', channel, message)
-        }
+        // type: notify は全てタイムラインに記録する
+        this.writeDataChannelTimelineLog(
+          `${dataChannelEvent.channel.label}-${message.event_type}`,
+          channel,
+          message,
+        )
         this.signalingOnMessageTypeNotify(message, 'datachannel')
       }
     } else if (dataChannelEvent.channel.label === 'push') {
