@@ -1237,7 +1237,7 @@ export default class ConnectionBase {
         } else if (message.type === 'push') {
           this.callbacks.push(message, 'websocket')
         } else if (message.type === 'notify') {
-                  // type: notify は全てタイムラインに記録する
+          // type: notify は全てタイムラインに記録する
           this.writeWebSocketTimelineLog(`${message.type}-${message.event_type}`, message)
           this.signalingOnMessageTypeNotify(message, 'websocket')
         } else if (message.type === 'switched') {
