@@ -105,10 +105,18 @@ export type SignalingOfferMessageDataChannel = {
 export type SignalingOfferMessage = {
   type: 'offer'
   sdp: string
+
+  multistream: boolean
+  simulcast: boolean
+  simulcast_multicodec: boolean
+  spotlight: boolean
+
+  channel_id: string
+  session_id: string
   client_id: string
+  bundle_id: string
   connection_id: string
-  session_id?: string
-  bundle_id?: string
+
   metadata?: JSONType
   config?: RTCConfiguration
   encodings?: RTCRtpEncodingParameters[]
