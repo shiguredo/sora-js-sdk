@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2024.1.2
+
+**2024-07-09**
+
 - [FIX] `"type": "offer"` の `simulcast` の値が反映されていない問題を修正する
   - @voluntas
 - [FIX] `"type": "offer"` の `bundle_id` と `spotlight` を保持するように修正する
