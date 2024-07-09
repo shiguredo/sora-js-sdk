@@ -63,6 +63,14 @@ export default class ConnectionBase {
    */
   role: string
   /**
+   * サイマルキャスト
+   */
+  simulcast: boolean
+  /**
+   * スポットライト
+   */
+  spotlight: boolean
+  /**
    * チャネルID
    */
   channelId: string
@@ -87,6 +95,10 @@ export default class ConnectionBase {
    * デバッグフラグ
    */
   debug: boolean
+  /**
+   * バンドルID
+   */
+  bundleId: string | null
   /**
    * クライアントID
    */
@@ -229,9 +241,12 @@ export default class ConnectionBase {
     }
     this.constraints = null
     this.debug = debug
-    this.clientId = null
-    this.connectionId = null
+    this.simulcast = false
+    this.spotlight = false
     this.sessionId = null
+    this.clientId = null
+    this.bundleId = null
+    this.connectionId = null
     this.remoteConnectionIds = []
     this.stream = null
     this.ws = null
@@ -723,9 +738,14 @@ export default class ConnectionBase {
    * 接続状態の初期化をするメソッド
    */
   private initializeConnection(): void {
-    this.clientId = null
-    this.connectionId = null
+    this.simulcast = false
+    this.spotlight = false
+
     this.sessionId = null
+    this.clientId = null
+    this.bundleId = null
+    this.connectionId = null
+
     this.remoteConnectionIds = []
     this.stream = null
     this.ws = null
@@ -1391,7 +1411,7 @@ export default class ConnectionBase {
       }
     }
     // simulcast の場合
-    if (this.options.simulcast && (this.role === 'sendrecv' || this.role === 'sendonly')) {
+    if (this.simulcast && (this.role === 'sendrecv' || this.role === 'sendonly')) {
       const transceiver = this.pc.getTransceivers().find((t) => {
         if (t.mid === null) {
           return
@@ -1878,11 +1898,17 @@ export default class ConnectionBase {
    * @param message - type offer メッセージ
    */
   private signalingOnMessageTypeOffer(message: SignalingOfferMessage): void {
-    this.clientId = message.client_id
-    this.connectionId = message.connection_id
+    this.simulcast = message.simulcast
+    this.spotlight = message.spotlight
+
+    // 互換性を考慮してオプションとする
     if (message.session_id !== undefined) {
       this.sessionId = message.session_id
     }
+    this.clientId = message.client_id
+    this.bundleId = message.bundle_id
+    this.connectionId = message.connection_id
+
     if (message.metadata !== undefined) {
       this.authMetadata = message.metadata
     }
