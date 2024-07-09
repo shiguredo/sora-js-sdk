@@ -112,7 +112,8 @@ export type SignalingOfferMessage = {
   spotlight: boolean
 
   channel_id: string
-  session_id: string
+  // 互換性を考慮してオプションとする
+  session_id?: string
   client_id: string
   bundle_id: string
   connection_id: string

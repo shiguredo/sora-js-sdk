@@ -1896,6 +1896,7 @@ export default class ConnectionBase {
     this.simulcast = message.simulcast
     this.spotlight = message.spotlight
 
+    // 互換性を考慮してオプションとする
     if (message.session_id !== undefined) {
       this.sessionId = message.session_id
     }
