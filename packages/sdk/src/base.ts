@@ -738,9 +738,14 @@ export default class ConnectionBase {
    * 接続状態の初期化をするメソッド
    */
   private initializeConnection(): void {
-    this.clientId = null
-    this.connectionId = null
+    this.simulcast = false
+    this.spotlight = false
+
     this.sessionId = null
+    this.clientId = null
+    this.bundleId = null
+    this.connectionId = null
+
     this.remoteConnectionIds = []
     this.stream = null
     this.ws = null
