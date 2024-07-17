@@ -1,7 +1,7 @@
 import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
-  ConnectionPublisher,
+  type ConnectionPublisher,
 } from '../../dist/sora'
 
 document.addEventListener('DOMContentLoaded', async () => {
