@@ -5,6 +5,7 @@
     "fmt": "biome format --write .",
     "check": "tsc --noEmit"
   },
-  "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {
+    "sora-js-sdk": "workspace:*"
+  }
 }

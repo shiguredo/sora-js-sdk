@@ -30,7 +30,11 @@ importers:
         specifier: 2.0.1
         version: 2.0.1(@types/node@20.14.10)(jsdom@24.1.0)
 
-  examples: {}
+  examples:
+    dependencies:
+      sora-js-sdk:
+        specifier: workspace:*
+        version: link:..
 
   packages/e2ee:
     dependencies:

@@ -4,7 +4,7 @@ import Sora, {
   type SignalingNotifyMessage,
   type ConnectionSubscriber,
   type SimulcastRid,
-} from '../../dist/sora'
+} from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
