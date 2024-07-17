@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] examples で sora-js-sdk を使うよう `workspace:*` に変更する
+  - @voluntas
+
 ## 2024.1.2
 
 **2024-07-09**
