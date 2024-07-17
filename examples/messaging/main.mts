@@ -3,7 +3,7 @@ import Sora, {
   type ConnectionSubscriber,
   type SignalingNotifyMessage,
   type DataChannelMessageEvent,
-} from '../../dist/sora'
+} from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL

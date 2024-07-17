@@ -30,6 +30,12 @@ importers:
         specifier: 2.0.3
         version: 2.0.3(@types/node@20.14.11)(jsdom@24.1.0)
 
+  examples:
+    dependencies:
+      sora-js-sdk:
+        specifier: workspace:*
+        version: link:..
+
   packages/e2ee:
     dependencies:
       '@sora/go-wasm':

@@ -2,7 +2,7 @@ import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
   type ConnectionSubscriber,
-} from '../../dist/sora'
+} from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
   // 環境変数の読み込み
