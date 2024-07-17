@@ -2,8 +2,8 @@ import Sora, {
   type SoraConnection,
   type ConnectionPublisher,
   type SignalingNotifyMessage,
-  ConnectionSubscriber,
-  SimulcastRid,
+  type ConnectionSubscriber,
+  type SimulcastRid,
 } from '../../dist/sora'
 
 document.addEventListener('DOMContentLoaded', () => {
