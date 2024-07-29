@@ -32,11 +32,11 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
-    "@playwright/test": "1.45.2",
-    "typedoc": "0.26.4",
-    "typescript": "5.5.3",
-    "vite": "5.3.4",
-    "vitest": "2.0.3"
+    "@playwright/test": "1.45.3",
+    "typedoc": "0.26.5",
+    "typescript": "5.5.4",
+    "vite": "5.3.5",
+    "vitest": "2.0.4"
   },
   "resolutions": {
     "get-pkg-repo": "5.0.0"
