@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite",
     "examples": "vite build",
-    "e2e-test": "playwright test --project=webkit",
+    "e2e-test": "playwright test --project=chromium",
     "build": "pnpm -r --filter=./packages/* build",
     "lint": "pnpm -r --filter=./packages/* --filter=./examples lint",
     "fmt": "pnpm -r --filter=./packages/* --filter=./examples fmt",
@@ -32,16 +32,16 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
-    "@playwright/test": "1.46.0",
+    "@playwright/test": "1.45.3",
     "typedoc": "0.26.5",
     "typescript": "5.5.4",
     "vite": "5.3.5",
-    "vitest": "2.0.5"
+    "vitest": "2.0.4"
   },
   "resolutions": {
     "get-pkg-repo": "5.0.0"
   },
-  "packageManager": "pnpm@9.6.0",
+  "packageManager": "pnpm@9.5.0",
   "engines": {
     "node": ">=18"
   }
