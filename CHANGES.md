@@ -11,10 +11,10 @@
 
 ## develop
 
+### misc
+
 - [UPDATE] examples で sora-js-sdk を使うよう `workspace:*` に変更する
   - @voluntas
-
-### misc
 
 ## 2024.1.2
 
@@ -36,14 +36,6 @@
 
 **リリース日**: 2024-06-07
 
-- [UPDATE] tsconfig.json を統一する
-  - @voluntas
-- [UPDATE] CI の pnpm を 9 に上げる
-  - @voluntas
-- [UPDATE] Biome 1.8.0 に上げる
-  - @voluntas
-- [ADD] `tsc --noEmit` で型チェックを行うようにする
-  - @voluntas
 - [CHANGE] オーディオコーデック `LYRA` のサポートを削除する
   - @tnamao
 - [CHANGE] シグナリングオプションの `multistream` は false の時のみレガシーストリームを使用する
@@ -51,6 +43,15 @@
   - @tnamao
 - [CHANGE] stopAudioTrack と stopVideoTrack を非推奨にする
   - 代わりに名前を変えただけの removeAudioTrack と removeVideoTrack を用意する
+  - @voluntas
+
+### misc
+
+- [UPDATE] CI の pnpm を 9 に上げる
+  - @voluntas
+- [UPDATE] tsconfig.json を統一する
+  - @voluntas
+- [UPDATE] Biome 1.8.0 に上げる
   - @voluntas
 - [CHANGE] examples を Vite を利用して動かすように変更する
   - serve を削除
@@ -62,14 +63,16 @@
   - @voluntas
 - [CHANGE] サンプルを class ベースに変更する
   - @voluntas
-- [ADD] サンプル用の .env.template を用意する
-  - @voluntas
-- [ADD] tests に Playwright を利用した E2E テストを追加する
-  - e2ee と messaging は一旦 skip で追加
-  - @voluntas
 - [ADD] .github/workflows/e2e-test.yml を追加する
   - Node.js {18,20,22} で E2E テストを実行する
   - Chromium で E2E テストを実行する
+  - @voluntas
+- [ADD] サンプル用の .env.template を用意する
+  - @voluntas
+- [ADD] `tsc --noEmit` で型チェックを行うようにする
+  - @voluntas
+- [ADD] tests に Playwright を利用した E2E テストを追加する
+  - e2ee と messaging は一旦 skip で追加
   - @voluntas
 - [FIX] examples 実行時に環境変数が設定されていない場合は空文字にする
   - 対象項目は SORA_CHANNEL_ID_PREFIX, VITE_SORA_CHANNEL_ID_PREFIX, VITE_ACCESS_TOKEN
