@@ -25,6 +25,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelector('#stop')?.addEventListener('click', async () => {
     await client.disconnect()
   })
+
+  document.querySelector('#get-stats')?.addEventListener('click', async () => {
+    const statsReport = await client.getStats()
+    const statsDiv = document.querySelector('#stats-report') as HTMLElement
+    const statsJsonDiv = document.querySelector('#stats-report-json')
+    if (statsDiv && statsJsonDiv) {
+      let statsHtml = ''
+      const statsJson: Record<string, unknown>[] = []
+      // biome-ignore lint/complexity/noForEach: <explanation>
+      statsReport.forEach((report) => {
+        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
+        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
+        for (const [key, value] of Object.entries(report)) {
+          if (key !== 'type' && key !== 'id') {
+            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
+            reportJson[key] = value
+          }
+        }
+        statsHtml += '</ul>'
+        statsJson.push(reportJson)
+      })
+      statsDiv.innerHTML = statsHtml
+      statsJsonDiv.textContent = JSON.stringify(statsJson, null, 2)
+      // データ属性としても保存（オプション）
+      statsDiv.dataset.statsJson = JSON.stringify(statsJson)
+    }
+  })
 })
 
 class SoraClient {
@@ -81,5 +108,12 @@ class SoraClient {
         connectionIdElement.textContent = event.connection_id
       }
     }
+  }
+
+  public getStats(): Promise<RTCStatsReport> {
+    if (this.connection.pc === null) {
+      return Promise.reject(new Error('PeerConnection is not ready'))
+    }
+    return this.connection.pc.getStats()
   }
 }
