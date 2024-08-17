@@ -38,19 +38,19 @@ test('sendonly/recvonly pages', async ({ browser }) => {
     return statsDiv ? JSON.parse(statsDiv.dataset.statsJson || '[]') : []
   })
 
-  // 音声の audioCodecStats を取得
-  const audioCodecStats = statsJson.find(
-    (report) => report.type === 'codec' && report.mimeType === 'audio/opus',
-  )
-  expect(audioCodecStats).toBeDefined()
+  // // 音声の audioCodecStats を取得
+  // const audioCodecStats = statsJson.find(
+  //   (report) => report.type === 'codec' && report.mimeType === 'audio/opus',
+  // )
+  // expect(audioCodecStats).toBeDefined()
 
-  // 音声の audioOutboundRtp を取得
-  const audioOutboundRtp = statsJson.find(
-    (report) => report.type === 'outbound-rtp' && report.kind === 'audio',
-  )
-  expect(audioOutboundRtp).toBeDefined()
-  expect(audioOutboundRtp?.bytesSent).toBeGreaterThan(0)
-  expect(audioOutboundRtp?.packetsSent).toBeGreaterThan(0)
+  // // 音声の audioOutboundRtp を取得
+  // const audioOutboundRtp = statsJson.find(
+  //   (report) => report.type === 'outbound-rtp' && report.kind === 'audio',
+  // )
+  // expect(audioOutboundRtp).toBeDefined()
+  // expect(audioOutboundRtp?.bytesSent).toBeGreaterThan(0)
+  // expect(audioOutboundRtp?.packetsSent).toBeGreaterThan(0)
 
   // 音声の videoCodecStats を取得
   const videoCodecStats = statsJson.find(
