@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 test('simulcast sendonly/recvonly pages', async ({ page }) => {
   await page.goto('http://localhost:9000/simulcast/')
@@ -32,6 +32,44 @@ test('simulcast sendonly/recvonly pages', async ({ page }) => {
     (el) => el.textContent,
   )
   console.log(`remote | rid=r2, connectionId=${remoteR2ConnectionId}`)
+
+  // 'Get Stats' ボタンをクリックして統計情報を取得
+  await page.click('#get-stats')
+
+  // 統計情報が表示されるまで待機
+  await page.waitForSelector('#stats-report')
+  // データセットから統計情報を取得
+  const sendonlyStatsReportJson: Record<string, unknown>[] = await page.evaluate(() => {
+    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
+  })
+
+  // sendonly stats report
+  const sendonlyVideoCodecStats = sendonlyStatsReportJson.find(
+    (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP8',
+  )
+  expect(sendonlyVideoCodecStats).toBeDefined()
+
+  const sendonlyVideoR0OutboundRtpStats = sendonlyStatsReportJson.find(
+    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r0',
+  )
+  expect(sendonlyVideoR0OutboundRtpStats).toBeDefined()
+  expect(sendonlyVideoR0OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(sendonlyVideoR0OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+
+  const sendonlyVideoR1OutboundRtpStats = sendonlyStatsReportJson.find(
+    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r1',
+  )
+  expect(sendonlyVideoR1OutboundRtpStats).toBeDefined()
+  expect(sendonlyVideoR1OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(sendonlyVideoR1OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+
+  const sendonlyVideoR2OutboundRtpStats = sendonlyStatsReportJson.find(
+    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r2',
+  )
+  expect(sendonlyVideoR2OutboundRtpStats).toBeDefined()
+  expect(sendonlyVideoR2OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(sendonlyVideoR2OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
 
   await page.click('#stop')
 })
