@@ -13,6 +13,12 @@
 
 ### misc
 
+- [ADD] サンプルに getStats を追加する
+  - sendrecv / sendonly / recvonly / messaging / simulcast
+  - dataset に getStats の結果を入れて E2E テストで利用しやすくする
+  - @voluntas
+- [UPDATE] E2E テストに getStats の結果を利用する用にする
+  - @voluntas
 - [UPDATE] examples で sora-js-sdk を使うよう `workspace:*` に変更する
   - @voluntas
 
