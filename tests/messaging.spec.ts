@@ -71,6 +71,7 @@ test('messaging pages', async ({ browser }) => {
   const exampleStats = page1DataChannelStats.find((stats) => {
     return stats.label === '#example' && stats.state === 'open'
   })
+  console.log(exampleStats)
   expect(exampleStats).toBeDefined()
   expect(exampleStats?.messagesSent).toBeGreaterThan(0)
   expect(exampleStats?.bytesSent).toBeGreaterThan(0)
