@@ -10,6 +10,7 @@
     <h1>Simulcast test</h1>
     <button id="start">start</button>
     <button id="stop">stop</button>
+    <button id="get-stats">getStats</button><br />
     <div>
       <h2>sendonly</h2>
       <div id="local-video-connection-id"></div>
@@ -31,6 +32,9 @@
       <div id="remote-video-connection-id-r2"></div>
       <video id="remote-video-r2" autoplay="" playsinline="" controls="" style="border: 1px solid red;"></video>
     </div>
+
+    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+    <div id="stats-report-json"></div>
   </div>
 
   <script type="module" src="./main.mts"></script>
