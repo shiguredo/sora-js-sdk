@@ -3,6 +3,7 @@ import Sora, {
   type ConnectionSubscriber,
   type SignalingNotifyMessage,
   type DataChannelMessageEvent,
+  type DataChannelEvent,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -91,6 +92,7 @@ class SoraClient {
     this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options)
 
     this.connection.on('notify', this.onnotify.bind(this))
+    this.connection.on('datachannel', this.ondatachannel.bind(this))
     this.connection.on('message', this.onmessage.bind(this))
   }
 
@@ -160,6 +162,14 @@ class SoraClient {
         sendMessageButton.disabled = false
       }
     }
+  }
+
+  private ondatachannel(event: DataChannelEvent) {
+    const openDataChannel = document.createElement('li')
+    openDataChannel.textContent = new TextDecoder().decode(
+      new TextEncoder().encode(event.datachannel.label),
+    )
+    document.querySelector('#messaging')?.appendChild(openDataChannel)
   }
 
   private onmessage(event: DataChannelMessageEvent) {

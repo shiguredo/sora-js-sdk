@@ -20,13 +20,20 @@ test('messaging pages', async ({ browser }) => {
   const page2ConnectionId = await page2.$eval('#connection-id', (el) => el.textContent)
   console.log(`page2 connectionId=${page2ConnectionId}`)
 
-  page1.waitForTimeout(3000)
-  page2.waitForTimeout(3000)
+  // page1 で #example の DataChannel が open したことを確認
+  await page1.waitForSelector('#messaging li', { state: 'attached' })
+
+  // page2 で #example の DataChannel が open したことを確認
+  await page2.waitForSelector('#messaging li', { state: 'attached' })
 
   // page1からpage2へメッセージを送信
   const page1Message = 'Hello from page1'
   await page1.fill('input[name="message"]', page1Message)
   await page1.click('#send-message')
+
+  // page2でメッセージが受信されたことを確認
+  await page2.waitForSelector('#received-messages li', { state: 'attached' })
+  const receivedMessage1 = await page2.$eval('#received-messages li', (el) => el.textContent)
 
   // 'Get Stats' ボタンをクリックして統計情報を取得
   await page1.click('#get-stats')
@@ -74,7 +81,6 @@ test('messaging pages', async ({ browser }) => {
   const exampleStats = page1DataChannelStats.find((stats) => {
     return stats.label === '#example' && stats.state === 'open'
   })
-  console.log(exampleStats)
   expect(exampleStats).toBeDefined()
   expect(exampleStats?.messagesSent).toBeGreaterThan(0)
   expect(exampleStats?.bytesSent).toBeGreaterThan(0)
@@ -86,7 +92,6 @@ test('messaging pages', async ({ browser }) => {
     const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
-  console.log(page2StatsReportJson)
 
   // page2 stats report
   const page2DataChannelStats = page2StatsReportJson.filter(
