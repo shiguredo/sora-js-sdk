@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         # node: ["18", "20", "22"]
-        node: ["20"]
+        node: ["18", "20", "22"]
         # browser: ["chromium", "firefox", "webkit"]
         browser: ["chromium"]
     env:
