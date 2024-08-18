@@ -9,13 +9,16 @@
   <div class="container">
     <h1>Sendrecv test</h1>
     <button id="start">start</button>
-    <button id="stop">stop</button><br />
+    <button id="stop">stop</button>
+    <button id="get-stats">getStats</button><br />
     <div id="connection-id"></div>
     <video id="local-video" autoplay="" playsinline="" controls="" muted=""
       style="width: 320px; height: 240px; border: 1px solid black;"></video>
     <div style="display: flex;">
       <div id="remote-videos"></div>
     </div>
+    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+    <div id="stats-report-json"></div>
   </div>
 
   <script type="module" src="./main.mts"></script>

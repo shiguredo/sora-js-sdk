@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
   const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
 
-  const sendrecv = new SoraClient(
+  const client = new SoraClient(
     SORA_SIGNALING_URL,
     SORA_CHANNEL_ID_PREFIX,
     SORA_CHANNEL_ID_SUFFIX,
@@ -19,10 +19,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelector('#start')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    await sendrecv.connect(stream)
+    await client.connect(stream)
   })
   document.querySelector('#stop')?.addEventListener('click', async () => {
-    await sendrecv.disconnect()
+    await client.disconnect()
+  })
+
+  document.querySelector('#get-stats')?.addEventListener('click', async () => {
+    const statsReport = await client.getStats()
+    const statsDiv = document.querySelector('#stats-report') as HTMLElement
+    const statsReportJsonDiv = document.querySelector('#stats-report-json')
+    if (statsDiv && statsReportJsonDiv) {
+      let statsHtml = ''
+      const statsReportJson: Record<string, unknown>[] = []
+      // biome-ignore lint/complexity/noForEach: <explanation>
+      statsReport.forEach((report) => {
+        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
+        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
+        for (const [key, value] of Object.entries(report)) {
+          if (key !== 'type' && key !== 'id') {
+            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
+            reportJson[key] = value
+          }
+        }
+        statsHtml += '</ul>'
+        statsReportJson.push(reportJson)
+      })
+      statsDiv.innerHTML = statsHtml
+      // データ属性としても保存（オプション）
+      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
+    }
   })
 })
 
@@ -75,6 +101,13 @@ class SoraClient {
     if (remoteVideos) {
       remoteVideos.innerHTML = ''
     }
+  }
+
+  getStats(): Promise<RTCStatsReport> {
+    if (this.connection.pc === null) {
+      return Promise.reject(new Error('PeerConnection is not ready'))
+    }
+    return this.connection.pc.getStats()
   }
 
   private onnotify(event: SignalingNotifyMessage): void {
