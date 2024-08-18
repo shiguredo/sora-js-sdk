@@ -82,6 +82,7 @@ test('messaging pages', async ({ browser }) => {
     const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
+  console.log(page2StatsReportJson)
 
   // page2 stats report
   const page2DataChannelStats = page2StatsReportJson.filter(
