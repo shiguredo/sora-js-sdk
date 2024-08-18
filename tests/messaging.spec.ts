@@ -20,6 +20,9 @@ test('messaging pages', async ({ browser }) => {
   const page2ConnectionId = await page2.$eval('#connection-id', (el) => el.textContent)
   console.log(`page2 connectionId=${page2ConnectionId}`)
 
+  page1.waitForTimeout(3000)
+  page2.waitForTimeout(3000)
+
   // page1からpage2へメッセージを送信
   const page1Message = 'Hello from page1'
   await page1.fill('input[name="message"]', page1Message)
