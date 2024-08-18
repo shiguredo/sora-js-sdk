@@ -1,29 +1,100 @@
-import { test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 test('sendrecv x2', async ({ browser }) => {
-  const page1 = await browser.newPage()
-  const page2 = await browser.newPage()
+  const sendrecv1 = await browser.newPage()
+  const sendrecv2 = await browser.newPage()
 
-  await page1.goto('http://localhost:9000/sendrecv/')
-  await page2.goto('http://localhost:9000/sendrecv/')
+  await sendrecv1.goto('http://localhost:9000/sendrecv/')
+  await sendrecv2.goto('http://localhost:9000/sendrecv/')
 
-  await page1.click('#start')
-  await page2.click('#start')
+  await sendrecv1.click('#start')
+  await sendrecv2.click('#start')
 
   // #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
-  await page1.waitForSelector('#connection-id:not(:empty)')
+  await sendrecv1.waitForSelector('#connection-id:not(:empty)')
 
   // #connection-id 要素の内容を取得
-  const sendrecv1ConnectionId = await page1.$eval('#connection-id', (el) => el.textContent)
+  const sendrecv1ConnectionId = await sendrecv1.$eval('#connection-id', (el) => el.textContent)
   console.log(`sendrecv1 connectionId=${sendrecv1ConnectionId}`)
 
   // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
-  await page2.waitForSelector('#connection-id:not(:empty)')
+  await sendrecv2.waitForSelector('#connection-id:not(:empty)')
 
   // #sendrecv1-connection-id 要素の内容を取得
-  const sendrecv2ConnectionId = await page2.$eval('#connection-id', (el) => el.textContent)
+  const sendrecv2ConnectionId = await sendrecv2.$eval('#connection-id', (el) => el.textContent)
   console.log(`sendrecv2 connectionId=${sendrecv2ConnectionId}`)
 
-  await page1.click('#stop')
-  await page2.click('#stop')
+  // レース対策
+  await sendrecv1.waitForTimeout(1000)
+  await sendrecv2.waitForTimeout(1000)
+
+  // page1 stats report
+
+  // 'Get Stats' ボタンをクリックして統計情報を取得
+  await sendrecv1.click('#get-stats')
+
+  // 統計情報が表示されるまで待機
+  await sendrecv1.waitForSelector('#stats-report')
+  // データセットから統計情報を取得
+  const sendrecv1StatsReportJson: Record<string, unknown>[] = await sendrecv1.evaluate(() => {
+    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
+  })
+
+  const page1VideoCodecStats = sendrecv1StatsReportJson.find(
+    (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP9',
+  )
+  expect(page1VideoCodecStats).toBeDefined()
+
+  const page1VideoOutboundRtpStats = sendrecv1StatsReportJson.find(
+    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video',
+  )
+  expect(page1VideoOutboundRtpStats).toBeDefined()
+  expect(page1VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(page1VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+
+  const sendrecv1VideoInboundRtpStats = sendrecv1StatsReportJson.find(
+    (stats) => stats.type === 'inbound-rtp' && stats.kind === 'video',
+  )
+  expect(sendrecv1VideoInboundRtpStats).toBeDefined()
+  expect(sendrecv1VideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
+  expect(sendrecv1VideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
+
+  // page2 stats report
+
+  // 'Get Stats' ボタンをクリックして統計情報を取得
+  await sendrecv2.click('#get-stats')
+
+  // 統計情報が表示されるまで待機
+  await sendrecv2.waitForSelector('#stats-report')
+  // データセットから統計情報を取得
+  const sendrecv2StatsReportJson: Record<string, unknown>[] = await sendrecv2.evaluate(() => {
+    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
+  })
+
+  const page2VideoCodecStats = sendrecv1StatsReportJson.find(
+    (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP9',
+  )
+  expect(page1VideoCodecStats).toBeDefined()
+
+  const page2VideoOutboundRtpStats = sendrecv2StatsReportJson.find(
+    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video',
+  )
+  expect(page2VideoOutboundRtpStats).toBeDefined()
+  expect(page2VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(page2VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+
+  const sendrecv2VideoInboundRtpStats = sendrecv2StatsReportJson.find(
+    (stats) => stats.type === 'inbound-rtp' && stats.kind === 'video',
+  )
+  expect(sendrecv2VideoInboundRtpStats).toBeDefined()
+  expect(sendrecv2VideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
+  expect(sendrecv2VideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
+
+  await sendrecv1.click('#stop')
+  await sendrecv2.click('#stop')
+
+  await sendrecv1.close()
+  await sendrecv2.close()
 })
