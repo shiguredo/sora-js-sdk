@@ -1,25 +1,29 @@
 import { test } from '@playwright/test'
 
-test('sendrecv x2', async ({ page }) => {
-  await page.goto('http://localhost:9000/sendrecv/')
+test('sendrecv x2', async ({ browser }) => {
+  const page1 = await browser.newPage()
+  const page2 = await browser.newPage()
 
-  await page.click('#sendrecv1-start')
-  await page.click('#sendrecv2-start')
+  await page1.goto('http://localhost:9000/sendrecv/')
+  await page2.goto('http://localhost:9000/sendrecv/')
 
-  // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
-  await page.waitForSelector('#sendrecv1-connection-id:not(:empty)')
+  await page1.click('#start')
+  await page2.click('#start')
 
-  // #sendrecv1-connection-id 要素の内容を取得
-  const sendrecv1ConnectionId = await page.$eval('#sendrecv1-connection-id', (el) => el.textContent)
+  // #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
+  await page1.waitForSelector('#connection-id:not(:empty)')
+
+  // #connection-id 要素の内容を取得
+  const sendrecv1ConnectionId = await page1.$eval('#connection-id', (el) => el.textContent)
   console.log(`sendrecv1 connectionId=${sendrecv1ConnectionId}`)
 
   // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
-  await page.waitForSelector('#sendrecv1-connection-id:not(:empty)')
+  await page2.waitForSelector('#connection-id:not(:empty)')
 
   // #sendrecv1-connection-id 要素の内容を取得
-  const sendrecv2ConnectionId = await page.$eval('#sendrecv2-connection-id', (el) => el.textContent)
+  const sendrecv2ConnectionId = await page2.$eval('#connection-id', (el) => el.textContent)
   console.log(`sendrecv2 connectionId=${sendrecv2ConnectionId}`)
 
-  await page.click('#sendrecv1-stop')
-  await page.click('#sendrecv2-stop')
+  await page1.click('#stop')
+  await page2.click('#stop')
 })
