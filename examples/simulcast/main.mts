@@ -112,6 +112,13 @@ class SimulcastSendonlySoraClient {
     }
   }
 
+  getStats(): Promise<RTCStatsReport> {
+    if (this.connection.pc === null) {
+      return Promise.reject(new Error('PeerConnection is not ready'))
+    }
+    return this.connection.pc.getStats()
+  }
+
   private onnotify(event: SignalingNotifyMessage) {
     if (
       event.event_type === 'connection.created' &&

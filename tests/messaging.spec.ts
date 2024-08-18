@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 test('messaging pages', async ({ browser }) => {
   // 新しいページを2つ作成
@@ -24,6 +24,103 @@ test('messaging pages', async ({ browser }) => {
   const page1Message = 'Hello from page1'
   await page1.fill('input[name="message"]', page1Message)
   await page1.click('#send-message')
+
+  // 'Get Stats' ボタンをクリックして統計情報を取得
+  await page1.click('#get-stats')
+
+  // 'Get Stats' ボタンをクリックして統計情報を取得
+  await page2.click('#get-stats')
+
+  // 統計情報が表示されるまで待機
+  await page1.waitForSelector('#stats-report')
+  // データセットから統計情報を取得
+  const page1StatsReportJson: Record<string, unknown>[] = await page1.evaluate(() => {
+    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
+  })
+
+  // page1 stats report
+  const page1DataChannelStats = page1StatsReportJson.filter(
+    (report) => report.type === 'data-channel',
+  )
+
+  expect(
+    page1DataChannelStats.find((stats) => {
+      return stats.label === 'signaling' && stats.state === 'open'
+    }),
+  ).toBeDefined()
+
+  expect(
+    page1DataChannelStats.find((stats) => {
+      return stats.label === 'push' && stats.state === 'open'
+    }),
+  ).toBeDefined()
+
+  expect(
+    page1DataChannelStats.find((stats) => {
+      return stats.label === 'notify' && stats.state === 'open'
+    }),
+  ).toBeDefined()
+
+  expect(
+    page1DataChannelStats.find((stats) => {
+      return stats.label === 'stats' && stats.state === 'open'
+    }),
+  ).toBeDefined()
+
+  const exampleStats = page1DataChannelStats.find((stats) => {
+    return stats.label === '#example' && stats.state === 'open'
+  })
+  expect(exampleStats).toBeDefined()
+  expect(exampleStats?.messagesSent).toBeGreaterThan(0)
+  expect(exampleStats?.bytesSent).toBeGreaterThan(0)
+
+  // 統計情報が表示されるまで待機
+  await page2.waitForSelector('#stats-report')
+  // データセットから統計情報を取得
+  const page2StatsReportJson: Record<string, unknown>[] = await page2.evaluate(() => {
+    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
+  })
+
+  // page2 stats report
+  const page2DataChannelStats = page2StatsReportJson.filter(
+    (report) => report.type === 'data-channel',
+  )
+
+  expect(
+    page2DataChannelStats.find((stats) => {
+      return stats.label === 'signaling' && stats.state === 'open'
+    }),
+  ).toBeDefined()
+
+  expect(
+    page2DataChannelStats.find((stats) => {
+      return stats.label === 'push' && stats.state === 'open'
+    }),
+  ).toBeDefined()
+
+  expect(
+    page2DataChannelStats.find((stats) => {
+      return stats.label === 'notify' && stats.state === 'open'
+    }),
+  ).toBeDefined()
+
+  expect(
+    page2DataChannelStats.find((stats) => {
+      return stats.label === 'stats' && stats.state === 'open'
+    }),
+  ).toBeDefined()
+
+  const page2ExampleStats = page2DataChannelStats.find((stats) => {
+    return stats.label === '#example' && stats.state === 'open'
+  })
+  expect(page2ExampleStats).toBeDefined()
+
+  if (page2ExampleStats !== undefined) {
+    expect(page2ExampleStats.bytesReceived).toBeGreaterThan(0)
+    expect(page2ExampleStats.messagesReceived).toBeGreaterThan(0)
+  }
 
   // page2でメッセージが受信されたことを確認
   // await page2.waitForSelector('#received-messages li', { state: 'attached' })

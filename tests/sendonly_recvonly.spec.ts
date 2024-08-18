@@ -31,40 +31,64 @@ test('sendonly/recvonly pages', async ({ browser }) => {
 
   // 統計情報が表示されるまで待機
   await sendonly.waitForSelector('#stats-report')
-
   // データセットから統計情報を取得
-  const statsJson: [Record<string, unknown>] = await sendonly.evaluate(() => {
-    const statsDiv = document.querySelector('#stats-report') as HTMLElement
-    return statsDiv ? JSON.parse(statsDiv.dataset.statsJson || '[]') : []
+  const sendonlyStatsReportJson: Record<string, unknown>[] = await sendonly.evaluate(() => {
+    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
-  // // 音声の audioCodecStats を取得
-  // const audioCodecStats = statsJson.find(
-  //   (report) => report.type === 'codec' && report.mimeType === 'audio/opus',
-  // )
-  // expect(audioCodecStats).toBeDefined()
+  // 'Get Stats' ボタンをクリックして統計情報を取得
+  await recvonly.click('#get-stats')
 
-  // // 音声の audioOutboundRtp を取得
-  // const audioOutboundRtp = statsJson.find(
-  //   (report) => report.type === 'outbound-rtp' && report.kind === 'audio',
-  // )
-  // expect(audioOutboundRtp).toBeDefined()
-  // expect(audioOutboundRtp?.bytesSent).toBeGreaterThan(0)
-  // expect(audioOutboundRtp?.packetsSent).toBeGreaterThan(0)
+  // 統計情報が表示されるまで待機
+  await recvonly.waitForSelector('#stats-report')
+  // データセットから統計情報を取得
+  const recvonlyStatsReportJson: Record<string, unknown>[] = await recvonly.evaluate(() => {
+    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
+  })
 
-  // 音声の videoCodecStats を取得
-  const videoCodecStats = statsJson.find(
-    (report) => report.type === 'codec' && report.mimeType === 'video/VP9',
+  /*
+  GitHub Actions 上の playwright の場合はどうやら音声が配信されない模様
+
+  const sendonlyAudioCodecStats = statsJson.find(
+    (report) => report.type === 'codec' && report.mimeType === 'audio/opus',
   )
-  expect(videoCodecStats).toBeDefined()
+  expect(sendonlyAudioCodecStats).toBeDefined()
 
-  // 音声の videoOutboundRtp を取得
-  const videoOutboundRtp = statsJson.find(
-    (report) => report.type === 'outbound-rtp' && report.kind === 'video',
+  const sendonlyAudioOutboundRtp = statsJson.find(
+    (report) => report.type === 'outbound-rtp' && report.kind === 'audio',
   )
-  expect(videoOutboundRtp).toBeDefined()
-  expect(videoOutboundRtp?.bytesSent).toBeGreaterThan(0)
-  expect(videoOutboundRtp?.packetsSent).toBeGreaterThan(0)
+  expect(sendonlyAudioOutboundRtp).toBeDefined()
+  expect(sendonlyAudioOutboundRtp?.bytesSent).toBeGreaterThan(0)
+  expect(sendonlyAudioOutboundRtp?.packetsSent).toBeGreaterThan(0)
+  */
+
+  // sendonly stats report
+  const sendonlyVideoCodecStats = sendonlyStatsReportJson.find(
+    (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP9',
+  )
+  expect(sendonlyVideoCodecStats).toBeDefined()
+
+  const sendonlyVideoOutboundRtpStats = sendonlyStatsReportJson.find(
+    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video',
+  )
+  expect(sendonlyVideoOutboundRtpStats).toBeDefined()
+  expect(sendonlyVideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(sendonlyVideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+
+  // recvonly stats report
+  const recvonlyVideoCodecStats = recvonlyStatsReportJson.find(
+    (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP9',
+  )
+  expect(recvonlyVideoCodecStats).toBeDefined()
+
+  const recvonlyVideoInboundRtpStats = recvonlyStatsReportJson.find(
+    (stats) => stats.type === 'inbound-rtp' && stats.kind === 'video',
+  )
+  expect(recvonlyVideoInboundRtpStats).toBeDefined()
+  expect(recvonlyVideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
+  expect(recvonlyVideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
 
   await sendonly.click('#stop')
   await recvonly.click('#stop')
