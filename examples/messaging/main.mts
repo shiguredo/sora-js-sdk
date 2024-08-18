@@ -3,6 +3,7 @@ import Sora, {
   type ConnectionSubscriber,
   type SignalingNotifyMessage,
   type DataChannelMessageEvent,
+  type DataChannelEvent,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -28,6 +29,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     const value = document.querySelector<HTMLInputElement>('input[name=message]')?.value
     if (value !== undefined && value !== '') {
       client.send_message(value)
+    }
+  })
+
+  document.querySelector('#get-stats')?.addEventListener('click', async () => {
+    const statsReport = await client.getStats()
+    const statsDiv = document.querySelector('#stats-report') as HTMLElement
+    const statsReportJsonDiv = document.querySelector('#stats-report-json')
+    if (statsDiv && statsReportJsonDiv) {
+      let statsHtml = ''
+      const statsReportJson: Record<string, unknown>[] = []
+      // biome-ignore lint/complexity/noForEach: <explanation>
+      statsReport.forEach((report) => {
+        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
+        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
+        for (const [key, value] of Object.entries(report)) {
+          if (key !== 'type' && key !== 'id') {
+            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
+            reportJson[key] = value
+          }
+        }
+        statsHtml += '</ul>'
+        statsReportJson.push(reportJson)
+      })
+      statsDiv.innerHTML = statsHtml
+      // データ属性としても保存（オプション）
+      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
     }
   })
 })
@@ -65,6 +92,7 @@ class SoraClient {
     this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options)
 
     this.connection.on('notify', this.onnotify.bind(this))
+    this.connection.on('datachannel', this.ondatachannel.bind(this))
     this.connection.on('message', this.onmessage.bind(this))
   }
 
@@ -105,6 +133,13 @@ class SoraClient {
     }
   }
 
+  getStats(): Promise<RTCStatsReport> {
+    if (this.connection.pc === null) {
+      return Promise.reject(new Error('PeerConnection is not ready'))
+    }
+    return this.connection.pc.getStats()
+  }
+
   send_message(message: string) {
     if (message !== '') {
       this.connection.sendMessage('#example', new TextEncoder().encode(message))
@@ -127,6 +162,14 @@ class SoraClient {
         sendMessageButton.disabled = false
       }
     }
+  }
+
+  private ondatachannel(event: DataChannelEvent) {
+    const openDataChannel = document.createElement('li')
+    openDataChannel.textContent = new TextDecoder().decode(
+      new TextEncoder().encode(event.datachannel.label),
+    )
+    document.querySelector('#messaging')?.appendChild(openDataChannel)
   }
 
   private onmessage(event: DataChannelMessageEvent) {

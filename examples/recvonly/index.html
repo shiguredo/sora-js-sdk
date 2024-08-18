@@ -9,11 +9,14 @@
   <div class="container">
     <h1>Recvonly test</h1>
     <button id="start">start</button>
-    <button id="stop">stop</button><br />
+    <button id="stop">stop</button>
+    <button id="get-stats">getStats</button><br />
     <div id="connection-id"></div>
     <div style="display: flex;">
       <div id="remote-videos"></div>
     </div>
+    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+    <div id="stats-report-json"></div>
   </div>
 
   <script type="module" src="./main.mts"></script>
