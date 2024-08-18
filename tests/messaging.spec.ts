@@ -98,7 +98,7 @@ test('messaging pages', async ({ browser }) => {
   const page1ExampleStats = page1DataChannelStats.find((stats) => {
     return stats.label === '#example' && stats.state === 'open'
   })
-  // ここで undefined かどうかチェックしてる
+  // ここで undefined ではないことを確認してる
   expect(page1ExampleStats).toBeDefined()
   expect(page1ExampleStats?.messagesSent).toBeGreaterThan(0)
   expect(page1ExampleStats?.bytesSent).toBeGreaterThan(0)
@@ -145,7 +145,7 @@ test('messaging pages', async ({ browser }) => {
   const page2ExampleStats = page2DataChannelStats.find((stats) => {
     return stats.label === '#example' && stats.state === 'open'
   })
-  // ここで undefined かどうかチェックしてる
+  // ここで undefined ではないことを確認してる
   expect(page2ExampleStats).toBeDefined()
   expect(page2ExampleStats?.bytesReceived).toBeGreaterThan(0)
   expect(page2ExampleStats?.messagesReceived).toBeGreaterThan(0)
