@@ -26,6 +26,9 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   const recvonlyConnectionId = await recvonly.$eval('#connection-id', (el) => el.textContent)
   console.log(`recvonly connectionId=${recvonlyConnectionId}`)
 
+  await sendonly.waitForTimeout(1000)
+  await recvonly.waitForTimeout(1000)
+
   // 'Get Stats' ボタンをクリックして統計情報を取得
   await sendonly.click('#get-stats')
 
