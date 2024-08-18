@@ -35,6 +35,23 @@ test('messaging pages', async ({ browser }) => {
   await page2.waitForSelector('#received-messages li', { state: 'attached' })
   const receivedMessage1 = await page2.$eval('#received-messages li', (el) => el.textContent)
 
+  // 受信したメッセージが期待したものであるか検証
+  console.log(`Received message on page2: ${receivedMessage1}`)
+  test.expect(receivedMessage1).toBe(page1Message)
+
+  // page2からpage1へメッセージを送信
+  const page2Message = 'Hello from page2'
+  await page2.fill('input[name="message"]', page2Message)
+  await page2.click('#send-message')
+
+  // page1でメッセージが受信されたことを確認
+  await page1.waitForSelector('#received-messages li', { state: 'attached' })
+  const receivedMessage2 = await page1.$eval('#received-messages li', (el) => el.textContent)
+
+  // 受信したメッセージが期待したものであるか検証
+  console.log(`Received message on page1: ${receivedMessage2}`)
+  test.expect(receivedMessage2).toBe(page2Message)
+
   // 'Get Stats' ボタンをクリックして統計情報を取得
   await page1.click('#get-stats')
 
@@ -78,12 +95,15 @@ test('messaging pages', async ({ browser }) => {
     }),
   ).toBeDefined()
 
-  const exampleStats = page1DataChannelStats.find((stats) => {
+  const page1ExampleStats = page1DataChannelStats.find((stats) => {
     return stats.label === '#example' && stats.state === 'open'
   })
-  expect(exampleStats).toBeDefined()
-  expect(exampleStats?.messagesSent).toBeGreaterThan(0)
-  expect(exampleStats?.bytesSent).toBeGreaterThan(0)
+  // ここで undefined かどうかチェックしてる
+  expect(page1ExampleStats).toBeDefined()
+  expect(page1ExampleStats?.messagesSent).toBeGreaterThan(0)
+  expect(page1ExampleStats?.bytesSent).toBeGreaterThan(0)
+  expect(page1ExampleStats?.bytesSent).toBeGreaterThan(0)
+  expect(page1ExampleStats?.messagesSent).toBeGreaterThan(0)
 
   // 統計情報が表示されるまで待機
   await page2.waitForSelector('#stats-report')
@@ -125,33 +145,12 @@ test('messaging pages', async ({ browser }) => {
   const page2ExampleStats = page2DataChannelStats.find((stats) => {
     return stats.label === '#example' && stats.state === 'open'
   })
+  // ここで undefined かどうかチェックしてる
   expect(page2ExampleStats).toBeDefined()
-
-  if (page2ExampleStats !== undefined) {
-    expect(page2ExampleStats.bytesReceived).toBeGreaterThan(0)
-    expect(page2ExampleStats.messagesReceived).toBeGreaterThan(0)
-  }
-
-  // page2でメッセージが受信されたことを確認
-  // await page2.waitForSelector('#received-messages li', { state: 'attached' })
-  // const receivedMessage1 = await page2.$eval('#received-messages li', (el) => el.textContent)
-
-  // // 受信したメッセージが期待したものであるか検証
-  // console.log(`Received message on page2: ${receivedMessage1}`)
-  // test.expect(receivedMessage1).toBe(page1Message)
-
-  // // page2からpage1へメッセージを送信
-  // const page2Message = 'Hello from page2'
-  // await page2.fill('input[name="message"]', page2Message)
-  // await page2.click('#send-message')
-
-  // // page1でメッセージが受信されたことを確認
-  // await page1.waitForSelector('li', { state: 'attached' })
-  // const receivedMessage2 = await page1.$eval('#received-messages li', (el) => el.textContent)
-
-  // // 受信したメッセージが期待したものであるか検証
-  // console.log(`Received message on page1: ${receivedMessage2}`)
-  // test.expect(receivedMessage2).toBe(page2Message)
+  expect(page2ExampleStats?.bytesReceived).toBeGreaterThan(0)
+  expect(page2ExampleStats?.messagesReceived).toBeGreaterThan(0)
+  expect(page2ExampleStats?.bytesSent).toBeGreaterThan(0)
+  expect(page2ExampleStats?.messagesSent).toBeGreaterThan(0)
 
   await page1.click('#stop')
   await page2.click('#stop')
