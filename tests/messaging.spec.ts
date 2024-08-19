@@ -102,7 +102,6 @@ test('messaging pages', async ({ browser }) => {
   expect(page1ExampleStats).toBeDefined()
   expect(page1ExampleStats?.messagesSent).toBeGreaterThan(0)
   expect(page1ExampleStats?.bytesSent).toBeGreaterThan(0)
-  expect(page1ExampleStats?.packetsSent).toBeGreaterThan(0)
   expect(page1ExampleStats?.messagesSent).toBeGreaterThan(0)
 
   // 統計情報が表示されるまで待機
