@@ -56,6 +56,7 @@ test('simulcast sendonly/recvonly pages', async ({ page }) => {
   expect(sendonlyVideoR0OutboundRtpStats).toBeDefined()
   expect(sendonlyVideoR0OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR0OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+  expect(sendonlyVideoR0OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
 
   const sendonlyVideoR1OutboundRtpStats = sendonlyStatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r1',
@@ -63,6 +64,7 @@ test('simulcast sendonly/recvonly pages', async ({ page }) => {
   expect(sendonlyVideoR1OutboundRtpStats).toBeDefined()
   expect(sendonlyVideoR1OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR1OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+  expect(sendonlyVideoR1OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
 
   const sendonlyVideoR2OutboundRtpStats = sendonlyStatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r2',
@@ -70,6 +72,7 @@ test('simulcast sendonly/recvonly pages', async ({ page }) => {
   expect(sendonlyVideoR2OutboundRtpStats).toBeDefined()
   expect(sendonlyVideoR2OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR2OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+  expect(sendonlyVideoR2OutboundRtpStats?.scalabilityMode).toEqual('L1T2')
 
   await page.click('#stop')
 })
