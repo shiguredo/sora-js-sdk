@@ -72,7 +72,7 @@ test('simulcast sendonly/recvonly pages', async ({ page }) => {
   expect(sendonlyVideoR2OutboundRtpStats).toBeDefined()
   expect(sendonlyVideoR2OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR2OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
-  expect(sendonlyVideoR2OutboundRtpStats?.scalabilityMode).toEqual('L1T2')
+  expect(sendonlyVideoR2OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
 
   await page.click('#stop')
 })
