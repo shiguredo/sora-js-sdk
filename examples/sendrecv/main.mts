@@ -62,6 +62,8 @@ class SoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
+  private streams: Record<string, MediaStream> = {}
+
   constructor(
     signalingUrl: string,
     channelIdPrefix: string,
@@ -110,6 +112,10 @@ class SoraClient {
     return this.connection.pc.getStats()
   }
 
+  getStreams(): Record<string, MediaStream> {
+    return this.streams
+  }
+
   private onnotify(event: SignalingNotifyMessage): void {
     if (
       event.event_type === 'connection.created' &&
@@ -138,6 +144,10 @@ class SoraClient {
       remoteVideo.srcObject = stream
       remoteVideos.appendChild(remoteVideo)
     }
+
+    if (this.streams[stream.id] === undefined) {
+      this.streams[stream.id] = stream
+    }
   }
 
   private onremovetrack(event: MediaStreamTrackEvent): void {
@@ -145,6 +155,10 @@ class SoraClient {
     const remoteVideo = document.querySelector(`#remote-video-${target.id}`)
     if (remoteVideo) {
       document.querySelector('#remote-videos')?.removeChild(remoteVideo)
+    }
+
+    if (this.streams[target.id] !== undefined) {
+      delete this.streams[target.id]
     }
   }
 }
