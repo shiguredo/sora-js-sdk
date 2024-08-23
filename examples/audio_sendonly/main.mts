@@ -18,7 +18,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   )
 
   document.querySelector('#start')?.addEventListener('click', async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+    const audioBitRate = document.querySelector<HTMLInputElement>('#audio-bit-rate')?.value
+
+    console.log(audioBitRate)
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: false,
+      audio: true,
+    })
     await client.connect(stream)
   })
 
@@ -27,8 +34,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
-    console.log('get stats')
-
     const statsReport = await client.getStats()
     const statsDiv = document.querySelector('#stats-report') as HTMLElement
     const statsReportJsonDiv = document.querySelector('#stats-report-json')
@@ -73,7 +78,7 @@ class SoraClient {
     this.sora = Sora.connection(signaling_url, this.debug)
 
     // channel_id の生成
-    this.channelId = `${channel_id_prefix}sendonly_recvonly${channel_id_suffix}`
+    this.channelId = `${channel_id_prefix}audio_sendonly${channel_id_suffix}`
     // access_token を指定する metadata の生成
     this.metadata = { access_token: access_token }
 
