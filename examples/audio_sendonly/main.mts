@@ -26,7 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await client.disconnect()
   })
 
-  document.querySelector('#get-status')?.addEventListener('click', async () => {
+  document.querySelector('#get-stats')?.addEventListener('click', async () => {
+    console.log('get stats')
+
     const statsReport = await client.getStats()
     const statsDiv = document.querySelector('#stats-report') as HTMLElement
     const statsReportJsonDiv = document.querySelector('#stats-report-json')
@@ -80,10 +82,15 @@ class SoraClient {
   }
 
   async connect(stream: MediaStream): Promise<void> {
+    // start ボタンを無効にする
+    const startButton = document.querySelector<HTMLButtonElement>('#start')
+    if (startButton) {
+      startButton.disabled = true
+    }
+
     await this.connection.connect(stream)
 
-    console.log('connected... !')
-    // stop ボタンを有効化
+    // stop ボタンを有効にする
     const stopButton = document.querySelector<HTMLButtonElement>('#stop')
     if (stopButton) {
       stopButton.disabled = false
@@ -91,15 +98,15 @@ class SoraClient {
   }
 
   async disconnect(): Promise<void> {
-    // start ボタンを有効化
+    await this.connection.disconnect()
+
+    // start ボタンを有効にする
     const startButton = document.querySelector<HTMLButtonElement>('#start')
     if (startButton) {
       startButton.disabled = false
     }
 
-    await this.connection.disconnect()
-
-    // stop ボタンを無効化
+    // stop ボタンを無効にする
     const stopButton = document.querySelector<HTMLButtonElement>('#stop')
     if (stopButton) {
       stopButton.disabled = true
