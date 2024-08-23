@@ -1,13 +1,13 @@
 <html lang="ja">
-  <head>
-    <meta charset="utf-8" />
-    <title>audio_sendonly tests</title>
-  </head>
+<head>
+<meta charset="utf-8" />
+<title>audio_sendonly tests</title>
+</head>
 
-  <body>
+<body>
     <div class="container">
-      <h1>Audio Sendonly</h1>
-      <select id="audioBitRate">
+        <h1>Audio Sendonly</h1>
+        <select id="audioBitRate">
         <option value="">指定なし</option>
         <option value="8">8</option>
         <option value="16">16</option>
@@ -18,17 +18,16 @@
         <option value="128">128</option>
         <option value="256">256</option>
         <option value="384">384</option>
-      </select>
-      <button id="start">start</button>
-      <button id="stop" disabled>stop</button>
-      <button id="get-stats">getStats</button><br />
-      <div
-        id="stats-report"
-        style="white-space: pre-wrap; font-family: monospace"
-      ></div>
-      <div id="stats-report-json"></div>
+        </select>
+        <button id="start">start</button>
+        <button id="stop" disabled>stop</button>
+        <button id="get-stats">getStats</button><br />
+        <div id="stats-report" style="white-space: pre-wrap; font-family: monospace"></div>
+        <div id="stats-report-json"></div>
     </div>
 
     <script type="module" src="./main.mts"></script>
-  </body>
+
+</body>
+
 </html>

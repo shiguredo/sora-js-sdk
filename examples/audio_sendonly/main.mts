@@ -81,6 +81,8 @@ class SoraClient {
 
   async connect(stream: MediaStream): Promise<void> {
     await this.connection.connect(stream)
+
+    console.log('connected... !')
     // stop ボタンを有効化
     const stopButton = document.querySelector<HTMLButtonElement>('#stop')
     if (stopButton) {
@@ -92,7 +94,7 @@ class SoraClient {
     // start ボタンを有効化
     const startButton = document.querySelector<HTMLButtonElement>('#start')
     if (startButton) {
-      startButton.disabled = true
+      startButton.disabled = false
     }
 
     await this.connection.disconnect()
@@ -100,7 +102,7 @@ class SoraClient {
     // stop ボタンを無効化
     const stopButton = document.querySelector<HTMLButtonElement>('#stop')
     if (stopButton) {
-      stopButton.disabled = false
+      stopButton.disabled = true
     }
   }
 
