@@ -28,7 +28,7 @@ importers:
         version: 5.4.2(@types/node@22.5.0)
       vitest:
         specifier: 2.0.5
-        version: 2.0.5(@types/node@22.5.0)(jsdom@24.1.1)
+        version: 2.0.5(@types/node@22.5.0)(jsdom@25.0.0)
 
   examples:
     dependencies:
@@ -50,13 +50,13 @@ importers:
         version: 5.0.7(rollup@4.21.0)
       '@rollup/plugin-typescript':
         specifier: 11.1.6
-        version: 11.1.6(rollup@4.21.0)(tslib@2.6.3)(typescript@5.5.4)
+        version: 11.1.6(rollup@4.21.0)(tslib@2.7.0)(typescript@5.5.4)
       rollup:
         specifier: 4.21.0
         version: 4.21.0
       tslib:
-        specifier: 2.6.3
-        version: 2.6.3
+        specifier: 2.7.0
+        version: 2.7.0
 
   packages/go-wasm: {}
 
@@ -80,10 +80,10 @@ importers:
         version: 5.0.7(rollup@4.21.0)
       '@rollup/plugin-typescript':
         specifier: 11.1.6
-        version: 11.1.6(rollup@4.21.0)(tslib@2.6.3)(typescript@5.5.4)
+        version: 11.1.6(rollup@4.21.0)(tslib@2.7.0)(typescript@5.5.4)
       jsdom:
-        specifier: 24.1.1
-        version: 24.1.1
+        specifier: 25.0.0
+        version: 25.0.0
       rollup:
         specifier: 4.21.0
         version: 4.21.0
@@ -816,8 +816,8 @@ packages:
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
 
-  jsdom@24.1.1:
-    resolution: {integrity: sha512-5O1wWV99Jhq4DV7rCLIoZ/UIhyQeDR7wHVyZAHAshbrvZsLs+Xzz7gtwnlJTJDjleiTKh54F4dXrX70vJQTyJQ==}
+  jsdom@25.0.0:
+    resolution: {integrity: sha512-OhoFVT59T7aEq75TVw9xxEfkXgacpqAhQaYgP9y/fDqWQCMB/b1H66RfmPm/MaeaAIU9nDwMOVTlPN51+ao6CQ==}
     engines: {node: '>=18'}
     peerDependencies:
       canvas: ^2.11.2
@@ -854,8 +854,8 @@ packages:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
 
-  micromatch@4.0.7:
-    resolution: {integrity: sha512-LPP/3KorzCwBxfeUuZmaR6bG2kdeHSbe0P2tY3FLRU4vYrjYz5hI4QZwV0njUx3jeuKe67YukQ1LSPZBKDqO/Q==}
+  micromatch@4.0.8:
+    resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
 
   mime-db@1.52.0:
@@ -1108,8 +1108,8 @@ packages:
     resolution: {integrity: sha512-tk2G5R2KRwBd+ZN0zaEXpmzdKyOYksXwywulIX95MBODjSzMIuQnQ3m8JxgbhnL1LeVo7lqQKsYa1O3Htl7K5g==}
     engines: {node: '>=18'}
 
-  tslib@2.6.3:
-    resolution: {integrity: sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==}
+  tslib@2.7.0:
+    resolution: {integrity: sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==}
 
   typedoc@0.26.6:
     resolution: {integrity: sha512-SfEU3SH3wHNaxhFPjaZE2kNl/NFtLNW5c1oHsg7mti7GjmUj1Roq6osBQeMd+F4kL0BoRBBr8gQAuqBlfFu8LA==}
@@ -1447,14 +1447,14 @@ snapshots:
     optionalDependencies:
       rollup: 4.21.0
 
-  '@rollup/plugin-typescript@11.1.6(rollup@4.21.0)(tslib@2.6.3)(typescript@5.5.4)':
+  '@rollup/plugin-typescript@11.1.6(rollup@4.21.0)(tslib@2.7.0)(typescript@5.5.4)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.21.0)
       resolve: 1.22.8
       typescript: 5.5.4
     optionalDependencies:
       rollup: 4.21.0
-      tslib: 2.6.3
+      tslib: 2.7.0
 
   '@rollup/pluginutils@5.1.0(rollup@4.21.0)':
     dependencies:
@@ -1744,7 +1744,7 @@ snapshots:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.7
+      micromatch: 4.0.8
 
   fastq@1.17.1:
     dependencies:
@@ -1895,7 +1895,7 @@ snapshots:
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
 
-  jsdom@24.1.1:
+  jsdom@25.0.0:
     dependencies:
       cssstyle: 4.0.1
       data-urls: 5.0.0
@@ -1954,7 +1954,7 @@ snapshots:
 
   merge2@1.4.1: {}
 
-  micromatch@4.0.7:
+  micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
       picomatch: 2.3.1
@@ -2178,7 +2178,7 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  tslib@2.6.3: {}
+  tslib@2.7.0: {}
 
   typedoc@0.26.6(typescript@5.5.4):
     dependencies:
@@ -2229,7 +2229,7 @@ snapshots:
       '@types/node': 22.5.0
       fsevents: 2.3.3
 
-  vitest@2.0.5(@types/node@22.5.0)(jsdom@24.1.1):
+  vitest@2.0.5(@types/node@22.5.0)(jsdom@25.0.0):
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@vitest/expect': 2.0.5
@@ -2252,7 +2252,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.5.0
-      jsdom: 24.1.1
+      jsdom: 25.0.0
     transitivePeerDependencies:
       - less
       - lightningcss
