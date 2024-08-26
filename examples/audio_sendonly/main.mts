@@ -1,7 +1,7 @@
 import Sora, {
+  type SoraConnection,
   type SignalingNotifyMessage,
   type ConnectionPublisher,
-  type SoraConnection,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -18,10 +18,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   )
 
   document.querySelector('#start')?.addEventListener('click', async () => {
-    const audioBitRate = document.querySelector<HTMLInputElement>('#audio-bit-rate')?.value
-
-    console.log(audioBitRate)
-
     const stream = await navigator.mediaDevices.getUserMedia({
       video: false,
       audio: true,
@@ -82,8 +78,8 @@ class SoraClient {
     // access_token を指定する metadata の生成
     this.metadata = { access_token: access_token }
 
-    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
-    this.connection.on('notify', this.onnotify.bind(this))
+    // this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
+    // this.connection.on('notify', this.onnotify.bind(this))
   }
 
   async connect(stream: MediaStream): Promise<void> {
@@ -93,6 +89,14 @@ class SoraClient {
       startButton.disabled = true
     }
 
+    const audioBitRate = document.querySelector<HTMLInputElement>('#audio-bit-rate')?.value
+    if (audioBitRate) {
+      this.options = { audioBitRate: Number(audioBitRate) }
+    } else {
+      this.options = {}
+    }
+    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
+    this.connection.on('notify', this.onnotify.bind(this))
     await this.connection.connect(stream)
 
     // stop ボタンを有効にする
@@ -103,13 +107,13 @@ class SoraClient {
   }
 
   async disconnect(): Promise<void> {
-    await this.connection.disconnect()
-
     // start ボタンを有効にする
     const startButton = document.querySelector<HTMLButtonElement>('#start')
     if (startButton) {
       startButton.disabled = false
     }
+
+    await this.connection.disconnect()
 
     // stop ボタンを無効にする
     const stopButton = document.querySelector<HTMLButtonElement>('#stop')
