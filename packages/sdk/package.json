@@ -14,7 +14,7 @@
     "@rollup/plugin-replace": "5.0.7",
     "@rollup/plugin-typescript": "11.1.6",
     "jsdom": "25.0.0",
-    "rollup": "4.21.0",
+    "rollup": "4.21.1",
     "rollup-plugin-delete": "2.0.0"
   },
   "dependencies": {
