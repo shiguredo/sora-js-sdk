@@ -78,8 +78,8 @@ class SoraClient {
     // access_token を指定する metadata の生成
     this.metadata = { access_token: access_token }
 
-    // this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
-    // this.connection.on('notify', this.onnotify.bind(this))
+    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
+    this.connection.on('notify', this.onnotify.bind(this))
   }
 
   async connect(stream: MediaStream): Promise<void> {
