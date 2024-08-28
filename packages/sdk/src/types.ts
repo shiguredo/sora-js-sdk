@@ -74,7 +74,6 @@ export type SignalingConnectMessage = {
   sdp: string
   sora_client: string
   environment: string
-  e2ee?: boolean
   spotlight_focus_rid?: SpotlightFocusRid
   spotlight_unfocus_rid?: SpotlightFocusRid
   data_channel_signaling?: boolean
@@ -315,7 +314,6 @@ export type ConnectionOptions = {
   clientId?: string
   timeout?: number // deprecated option
   connectionTimeout?: number
-  e2ee?: boolean
   signalingNotifyMetadata?: JSONType
   dataChannelSignaling?: boolean
   ignoreDisconnectWebSocket?: boolean
