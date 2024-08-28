@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] E2EE 機能を削除する
+  - @voluntas
+
 ### misc
 
 - [ADD] サンプルに getStats を追加する
