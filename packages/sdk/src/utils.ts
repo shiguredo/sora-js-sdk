@@ -325,26 +325,6 @@ export function createSignalingMessage(
   if (message.simulcast && !enabledSimulcast() && role !== 'recvonly') {
     throw new Error('Simulcast can not be used with this browser')
   }
-  if (typeof options.e2ee === 'boolean') {
-    message.e2ee = options.e2ee
-  }
-  if (options.e2ee === true) {
-    if (message.signaling_notify_metadata === undefined) {
-      message.signaling_notify_metadata = {}
-    }
-    if (
-      message.signaling_notify_metadata === null ||
-      typeof message.signaling_notify_metadata !== 'object'
-    ) {
-      throw new Error("E2EE failed. Options signalingNotifyMetadata must be type 'object'")
-    }
-    if (message.video === true) {
-      message.video = {}
-    }
-    if (message.video) {
-      message.video.codec_type = 'VP8'
-    }
-  }
 
   if (Array.isArray(options.dataChannels) && 0 < options.dataChannels.length) {
     message.data_channels = parseDataChannelConfigurations(options.dataChannels)

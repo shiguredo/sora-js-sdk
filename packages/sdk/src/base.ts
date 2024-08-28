@@ -1,6 +1,5 @@
 import { unzlibSync, zlibSync } from 'fflate'
 
-import SoraE2EE from '@sora/e2ee'
 import type {
   Callbacks,
   ConnectionOptions,
@@ -194,16 +193,6 @@ export default class ConnectionBase {
    * イベントコールバックのリスト
    */
   protected callbacks: Callbacks
-  /**
-   * E2EE インスタンス
-   *
-   * @internal
-   */
-  protected e2ee: SoraE2EE | null
-  /**
-   * キーとなる sender が setupSenderTransform で初期化済みかどうか
-   */
-  private senderStreamInitialized: WeakSet<RTCRtpSender> = new WeakSet()
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -268,7 +257,6 @@ export default class ConnectionBase {
       datachannel: (): void => {},
     }
     this.authMetadata = null
-    this.e2ee = null
     this.connectionTimeoutTimerId = 0
     this.monitorSignalingWebSocketEventTimerId = 0
     this.monitorIceConnectionStateChangeTimerId = 0
@@ -498,7 +486,6 @@ export default class ConnectionBase {
     }
     stream.addTrack(audioTrack)
     await transceiver.sender.replaceTrack(audioTrack)
-    await this.setupSenderTransform(transceiver.sender)
   }
 
   /**
@@ -530,7 +517,6 @@ export default class ConnectionBase {
     }
     stream.addTrack(videoTrack)
     await transceiver.sender.replaceTrack(videoTrack)
-    await this.setupSenderTransform(transceiver.sender)
   }
 
   /**
@@ -550,9 +536,6 @@ export default class ConnectionBase {
     }
     if (this.pc) {
       this.pc.close()
-    }
-    if (this.e2ee) {
-      this.e2ee.terminateWorker()
     }
     this.initializeConnection()
   }
@@ -611,10 +594,6 @@ export default class ConnectionBase {
     // PeerConnection を終了する
     if (this.pc) {
       this.pc.close()
-    }
-    // E2EE worker を終了する
-    if (this.e2ee) {
-      this.e2ee.terminateWorker()
     }
     this.initializeConnection()
     const event = this.soraCloseEvent('abend', title)
@@ -719,9 +698,6 @@ export default class ConnectionBase {
     }
     await this.disconnectWebSocket(title)
     await this.disconnectPeerConnection()
-    if (this.e2ee) {
-      this.e2ee.terminateWorker()
-    }
     this.initializeConnection()
     if (title === 'WEBSOCKET-ONCLOSE' && params && (params.code === 1000 || params.code === 1005)) {
       const event = this.soraCloseEvent('normal', 'DISCONNECT', params)
@@ -752,7 +728,6 @@ export default class ConnectionBase {
     this.pc = null
     this.encodings = []
     this.authMetadata = null
-    this.e2ee = null
     this.soraDataChannels = {}
     this.mids = {
       audio: '',
@@ -1028,9 +1003,6 @@ export default class ConnectionBase {
         event = this.soraCloseEvent('normal', 'DISCONNECT', reason)
       }
     }
-    if (this.e2ee) {
-      this.e2ee.terminateWorker()
-    }
     this.initializeConnection()
     if (event) {
       if (event.type === 'abend') {
@@ -1039,39 +1011,6 @@ export default class ConnectionBase {
         this.writeSoraTimelineLog('disconnect-normal', event)
       }
       this.callbacks.disconnect(event)
-    }
-  }
-
-  /**
-   * E2EE の初期設定をするメソッド
-   */
-  protected setupE2EE(): void {
-    if (this.options.e2ee === true) {
-      this.e2ee = new SoraE2EE()
-      this.e2ee.onWorkerDisconnect = async (): Promise<void> => {
-        await this.abend('INTERNAL-ERROR', { reason: 'CRASH-E2EE-WORKER' })
-      }
-      this.e2ee.startWorker()
-    }
-  }
-
-  /**
-   * E2EE を開始するメソッド
-   */
-  protected startE2EE(): void {
-    if (this.options.e2ee === true && this.e2ee) {
-      if (!this.connectionId) {
-        const error = new Error()
-        error.message = 'E2EE failed. Self connectionId is null'
-        throw error
-      }
-      this.e2ee.clearWorker()
-      const result = this.e2ee.start(this.connectionId)
-      this.e2ee.postSelfSecretKeyMaterial(
-        this.connectionId,
-        result.selfKeyId,
-        result.selfSecretKeyMaterial,
-      )
     }
   }
 
@@ -1231,12 +1170,6 @@ export default class ConnectionBase {
         reject(error)
       }
       ws.onmessage = async (event): Promise<void> => {
-        // E2EE 時専用処理
-        if (event.data instanceof ArrayBuffer) {
-          this.writeWebSocketSignalingLog('onmessage-e2ee', event.data)
-          this.signalingOnMessageE2EE(event.data)
-          return
-        }
         if (typeof event.data !== 'string') {
           throw new Error('Received invalid signaling data')
         }
@@ -1291,11 +1224,6 @@ export default class ConnectionBase {
           reject(error)
           return
         }
-        if (signalingMessage.e2ee && this.e2ee) {
-          const initResult = await this.e2ee.init()
-          // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
-          signalingMessage.signaling_notify_metadata.pre_key_bundle = initResult
-        }
         this.trace('SIGNALING CONNECT MESSAGE', signalingMessage)
         if (ws) {
           ws.send(JSON.stringify(signalingMessage))
@@ -1318,10 +1246,6 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config)
-    if (this.e2ee) {
-      // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
-      config = Object.assign({ encodedInsertableStreams: true }, config)
-    }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
       const certificate = await window.RTCPeerConnection.generateCertificate({
         name: 'ECDSA',
@@ -1467,61 +1391,6 @@ export default class ConnectionBase {
     }
 
     return sdp
-  }
-
-  /**
-   * E2EE あるいはカスタムコーデックが有効になっている場合に、送信側の WebRTC Encoded Transform をセットアップする
-   *
-   * @param sender 対象となる RTCRtpSender インスタンス
-   */
-  protected async setupSenderTransform(sender: RTCRtpSender): Promise<void> {
-    if (this.e2ee === null || sender.track === null) {
-      return
-    }
-    // 既に初期化済み
-    if (this.senderStreamInitialized.has(sender)) {
-      return
-    }
-
-    if ('transform' in RTCRtpSender.prototype) {
-      // WebRTC Encoded Transform に対応しているブラウザ
-      return
-    }
-
-    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-    // @ts-ignore
-    const senderStreams = sender.createEncodedStreams() as TransformStream
-    const readable = senderStreams.readable
-    this.e2ee.setupSenderTransform(readable, senderStreams.writable)
-    this.senderStreamInitialized.add(sender)
-  }
-
-  /**
-   * E2EE あるいはカスタムコーデックが有効になっている場合に、受信側の WebRTC Encoded Transform をセットアップする
-   *
-   * @param mid コーデックの判別に使う mid
-   * @param receiver 対象となる RTCRtpReceiver インスタンス
-   */
-  protected async setupReceiverTransform(
-    mid: string | null,
-    receiver: RTCRtpReceiver,
-  ): Promise<void> {
-    if (this.e2ee === null) {
-      return
-    }
-
-    if ('transform' in RTCRtpSender.prototype) {
-      // WebRTC Encoded Transform に対応しているブラウザ
-      return
-    }
-
-    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-    // @ts-ignore
-    const receiverStreams = receiver.createEncodedStreams() as TransformStream
-    const writable = receiverStreams.writable
-    this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
   }
 
   /**
@@ -1877,22 +1746,6 @@ export default class ConnectionBase {
   }
 
   /**
-   * シグナリングサーバーから受け取った type e2ee メッセージを処理をするメソッド
-   *
-   * @param data - E2EE 用バイナリメッセージ
-   */
-  private signalingOnMessageE2EE(data: ArrayBuffer): void {
-    if (this.e2ee) {
-      const message = new Uint8Array(data)
-      const result = this.e2ee.receiveMessage(message)
-      this.e2ee.postRemoteSecretKeyMaterials(result)
-      result.messages.filter((message) => {
-        this.sendE2EEMessage(message.buffer)
-      })
-    }
-  }
-
-  /**
    * シグナリングサーバーから受け取った type offer メッセージを処理をするメソッド
    *
    * @param message - type offer メッセージ
@@ -2014,46 +1867,8 @@ export default class ConnectionBase {
       if (this.connectionId !== connectionId) {
         const authnMetadata = getSignalingNotifyAuthnMetadata(message)
         const preKeyBundle = getPreKeyBundle(authnMetadata)
-        if (preKeyBundle && this.e2ee && connectionId) {
-          const result = this.e2ee.startSession(connectionId, preKeyBundle)
-          this.e2ee.postRemoteSecretKeyMaterials(result)
-          result.messages.filter((message) => {
-            this.sendE2EEMessage(message.buffer)
-          })
-          // messages を送信し終えてから、selfSecretKeyMaterial を更新する
-          this.e2ee.postSelfSecretKeyMaterial(
-            result.selfConnectionId,
-            result.selfKeyId,
-            result.selfSecretKeyMaterial,
-          )
-        }
       }
       const data = getSignalingNotifyData(message)
-      data.filter((metadata) => {
-        const authnMetadata = getSignalingNotifyAuthnMetadata(metadata)
-        const preKeyBundle = getPreKeyBundle(authnMetadata)
-        const connectionId = metadata.connection_id
-        if (connectionId && this.e2ee && preKeyBundle) {
-          this.e2ee.addPreKeyBundle(connectionId, preKeyBundle)
-        }
-      })
-    } else if (message.event_type === 'connection.destroyed') {
-      const authnMetadata = getSignalingNotifyAuthnMetadata(message)
-      const preKeyBundle = getPreKeyBundle(authnMetadata)
-      const connectionId = message.connection_id
-      if (preKeyBundle && this.e2ee && connectionId) {
-        const result = this.e2ee.stopSession(connectionId)
-        this.e2ee.postSelfSecretKeyMaterial(
-          result.selfConnectionId,
-          result.selfKeyId,
-          result.selfSecretKeyMaterial,
-          5000,
-        )
-        result.messages.filter((message) => {
-          this.sendE2EEMessage(message.buffer)
-        })
-        this.e2ee.postRemoveRemoteDeriveKey(connectionId)
-      }
     }
     this.callbacks.notify(message, transportType)
   }
@@ -2235,13 +2050,6 @@ export default class ConnectionBase {
         const message = JSON.parse(data) as SignalingPushMessage
         this.callbacks.push(message, 'datachannel')
       }
-    } else if (dataChannelEvent.channel.label === 'e2ee') {
-      dataChannelEvent.channel.onmessage = (event): void => {
-        const channel = event.currentTarget as RTCDataChannel
-        const data = event.data as ArrayBuffer
-        this.signalingOnMessageE2EE(data)
-        this.writeDataChannelSignalingLog('onmessage-e2ee', channel, data)
-      }
     } else if (dataChannelEvent.channel.label === 'stats') {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
@@ -2322,21 +2130,6 @@ export default class ConnectionBase {
     } else if (this.ws !== null) {
       this.ws.send(JSON.stringify(message))
       this.writeWebSocketSignalingLog(`send-${message.type}`, message)
-    }
-  }
-
-  /**
-   * シグナリングサーバーに E2E 用メッセージを投げるメソッド
-   *
-   * @param message - 送信するバイナリメッセージ
-   */
-  private sendE2EEMessage(message: ArrayBuffer): void {
-    if (this.soraDataChannels.e2ee) {
-      this.soraDataChannels.e2ee.send(message)
-      this.writeDataChannelSignalingLog('send-e2ee', this.soraDataChannels.e2ee, message)
-    } else if (this.ws !== null) {
-      this.ws.send(message)
-      this.writeWebSocketSignalingLog('send-e2ee', message)
     }
   }
 
@@ -2452,26 +2245,6 @@ export default class ConnectionBase {
     } else {
       dataChannel.send(message)
     }
-  }
-
-  /**
-   * E2EE の自分のフィンガープリント
-   */
-  get e2eeSelfFingerprint(): string | undefined {
-    if (this.options.e2ee && this.e2ee) {
-      return this.e2ee.selfFingerprint()
-    }
-    return undefined
-  }
-
-  /**
-   * E2EE のリモートのフィンガープリントリスト
-   */
-  get e2eeRemoteFingerprints(): Record<string, string> | undefined {
-    if (this.options.e2ee && this.e2ee) {
-      return this.e2ee.remoteFingerprints()
-    }
-    return undefined
   }
 
   /**

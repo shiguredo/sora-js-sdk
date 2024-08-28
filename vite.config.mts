@@ -17,7 +17,6 @@ export default defineConfig({
         spotlight_sendonly: resolve(__dirname, 'examples/spotlight_sendonly/index.html'),
         spotlight_recvonly: resolve(__dirname, 'examples/spotlight_recvonly/index.html'),
         messaging: resolve(__dirname, 'examples/messaging/index.html'),
-        e2ee: resolve(__dirname, 'examples/e2ee/index.html'),
       },
     },
   },

@@ -52,12 +52,6 @@ $ pnpm exec playwright install chromium --with-deps
 $ pnpm run e2e-test
 ```
 
-## E2EE (End to End Encryption) について
-
-詳細については以下をご確認ください。
-
-[WebRTC SFU Sora 向け E2EE ライブラリ](https://github.com/shiguredo/sora-e2ee)
-
 ## マルチトラックについて
 
 [WebRTC SFU Sora](https://sora.shiguredo.jp) は 1 メディアストリームにつき 1 音声トラック、
