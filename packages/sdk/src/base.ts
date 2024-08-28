@@ -31,7 +31,6 @@ import {
   createSignalingEvent,
   createSignalingMessage,
   createTimelineEvent,
-  getPreKeyBundle,
   getSignalingNotifyAuthnMetadata,
   getSignalingNotifyData,
   isFirefox,
@@ -1863,11 +1862,6 @@ export default class ConnectionBase {
     transportType: TransportType,
   ): void {
     if (message.event_type === 'connection.created') {
-      const connectionId = message.connection_id
-      if (this.connectionId !== connectionId) {
-        const authnMetadata = getSignalingNotifyAuthnMetadata(message)
-        const preKeyBundle = getPreKeyBundle(authnMetadata)
-      }
       const data = getSignalingNotifyData(message)
     }
     this.callbacks.notify(message, transportType)

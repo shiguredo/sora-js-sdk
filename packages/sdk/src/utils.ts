@@ -364,13 +364,6 @@ export function getSignalingNotifyData(
   return []
 }
 
-export function getPreKeyBundle(message: JSONType): PreKeyBundle | null {
-  if (typeof message === 'object' && message !== null && 'pre_key_bundle' in message) {
-    return message.pre_key_bundle as PreKeyBundle
-  }
-  return null
-}
-
 export function trace(clientId: string | null, title: string, value: unknown): void {
   const dump = (record: unknown) => {
     if (record && typeof record === 'object') {
