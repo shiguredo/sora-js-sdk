@@ -47,6 +47,8 @@ export default class ConnectionPublisher extends ConnectionBase {
   /**
    * レガシーストリームで Sora へ接続するメソッド
    *
+   * @deprecated この関数は非推奨です、マルチストリームを利用してください。
+   *
    * @param stream - メディアストリーム
    */
   private async legacyStream(stream: MediaStream): Promise<MediaStream> {

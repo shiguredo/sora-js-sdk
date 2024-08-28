@@ -341,12 +341,6 @@ export type Callbacks = {
   datachannel: (event: DataChannelEvent) => void
 }
 
-export type PreKeyBundle = {
-  identityKey: string
-  signedPreKey: string
-  preKeySignature: string
-}
-
 export type Browser = 'edge' | 'chrome' | 'safari' | 'opera' | 'firefox' | null
 
 export type TransportType = 'websocket' | 'datachannel' | 'peerconnection'

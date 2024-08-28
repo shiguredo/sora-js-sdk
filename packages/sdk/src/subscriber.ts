@@ -45,6 +45,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
 
   /**
    * レガシーストリームで Sora へ接続するメソッド
+   *
+   * @deprecated この関数は非推奨です、マルチストリームを利用してください。
+   *
    */
   private async legacyStream(): Promise<MediaStream> {
     await this.disconnect()

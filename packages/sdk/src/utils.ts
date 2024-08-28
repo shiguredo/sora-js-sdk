@@ -7,7 +7,6 @@ import type {
   DataChannelEvent,
   DataChannelMessageEvent,
   JSONType,
-  PreKeyBundle,
   SignalingConnectDataChannel,
   SignalingConnectMessage,
   SignalingEvent,
