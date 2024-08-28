@@ -89,7 +89,7 @@ class SoraConnection {
     )
   }
   /**
-   * role sendonly で接続するための Connecion インスタンスを生成するメソッド
+   * role sendonly で接続するための Connection インスタンスを生成するメソッド
    *
    * @param channelId - チャネルID
    * @param metadata - メタデータ
@@ -121,7 +121,7 @@ class SoraConnection {
     )
   }
   /**
-   * role recvonly で接続するための Connecion インスタンスを生成するメソッド
+   * role recvonly で接続するための Connection インスタンスを生成するメソッド
    *
    * @example
    * ```typescript
