@@ -7,21 +7,14 @@
 <body>
     <div class="container">
         <h1>Audio Sendonly</h1>
-        <select id="audio-bit-rate">
-        <option value="">指定なし</option>
-        <option value="8">8</option>
-        <option value="16">16</option>
-        <option value="24">24</option>
-        <option value="32">32</option>
-        <option value="64">64</option>
-        <option value="96">96</option>
-        <option value="128">128</option>
-        <option value="256">256</option>
-        <option value="384">384</option>
-        </select>
+        <div>
+            <label for="audio-bit-rate">Audio Bit Rate :</label>
+            <input name="audio-bit-rate" type="text" />
+        </div>
         <button id="start">start</button>
         <button id="stop" disabled>stop</button>
-        <button id="get-stats">getStats</button><br />
+        <button id="get-stats">getStats</button>
+        <br />
         <div id="stats-report" style="white-space: pre-wrap; font-family: monospace"></div>
         <div id="stats-report-json"></div>
     </div>
