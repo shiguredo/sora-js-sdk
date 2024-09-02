@@ -21,7 +21,9 @@ test('sendonly audioBitRate', async ({ page }) => {
   // await page.reload()
 
   // audioBitRate=指定あり の時 targetBitrate=指定した数 [32-384]
-  const audioBitRate: number = Math.floor(Math.random() * (384 - 32) + 32)
+  const audioBitRateList: number[] = [0, 32, 64, 128, 256, 324]
+  const length: number = audioBitRateList.length
+  const audioBitRate: number = Math.floor(Math.random() * length)
   const targetBitRate: number = audioBitRate * 1000
   console.log('audioBitRate =%s', audioBitRate)
   await page.fill('input[name="audio-bit-rate"]', String(audioBitRate))
