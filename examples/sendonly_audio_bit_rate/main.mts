@@ -19,7 +19,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelector('#start')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
-    await client.connect(stream)
+
+    const audioBitRateSelect = document.getElementById('audio-bit-rate') as HTMLSelectElement
+    const selectedBitRate = audioBitRateSelect.value
+      ? Number.parseInt(audioBitRateSelect.value)
+      : undefined
+
+    await client.connect(stream, selectedBitRate)
   })
 
   document.querySelector('#stop')?.addEventListener('click', async () => {
@@ -57,9 +63,7 @@ class SoraClient {
   private debug = false
   private channelId: string
   private metadata: { access_token: string }
-  private options: object = {
-    audioBitRate: 384,
-  }
+  private options: object = {}
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
@@ -81,7 +85,11 @@ class SoraClient {
     this.connection.on('notify', this.onnotify.bind(this))
   }
 
-  async connect(stream: MediaStream): Promise<void> {
+  async connect(stream: MediaStream, audioBitRate?: number): Promise<void> {
+    if (audioBitRate) {
+      // 音声ビットレートを上書きする
+      this.connection.options.audioBitRate = audioBitRate
+    }
     await this.connection.connect(stream)
 
     const audioElement = document.querySelector<HTMLAudioElement>('#local-audio')
