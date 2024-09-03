@@ -25,8 +25,8 @@ test('sendrecv x2', async ({ browser }) => {
   console.log(`sendrecv2 connectionId=${sendrecv2ConnectionId}`)
 
   // レース対策
-  await sendrecv1.waitForTimeout(1000)
-  await sendrecv2.waitForTimeout(1000)
+  await sendrecv1.waitForTimeout(3000)
+  await sendrecv2.waitForTimeout(3000)
 
   // page1 stats report
 
@@ -41,17 +41,17 @@ test('sendrecv x2', async ({ browser }) => {
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
-  const page1VideoCodecStats = sendrecv1StatsReportJson.find(
+  const sendrecv1VideoCodecStats = sendrecv1StatsReportJson.find(
     (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP9',
   )
-  expect(page1VideoCodecStats).toBeDefined()
+  expect(sendrecv1VideoCodecStats).toBeDefined()
 
-  const page1VideoOutboundRtpStats = sendrecv1StatsReportJson.find(
+  const sendrecv1VideoOutboundRtpStats = sendrecv1StatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video',
   )
-  expect(page1VideoOutboundRtpStats).toBeDefined()
-  expect(page1VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
-  expect(page1VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+  expect(sendrecv1VideoOutboundRtpStats).toBeDefined()
+  expect(sendrecv1VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(sendrecv1VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
 
   const sendrecv1VideoInboundRtpStats = sendrecv1StatsReportJson.find(
     (stats) => stats.type === 'inbound-rtp' && stats.kind === 'video',
@@ -73,17 +73,17 @@ test('sendrecv x2', async ({ browser }) => {
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
-  const page2VideoCodecStats = sendrecv1StatsReportJson.find(
+  const sendrecv2VideoCodecStats = sendrecv1StatsReportJson.find(
     (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP9',
   )
-  expect(page1VideoCodecStats).toBeDefined()
+  expect(sendrecv2VideoCodecStats).toBeDefined()
 
-  const page2VideoOutboundRtpStats = sendrecv2StatsReportJson.find(
+  const sendrecv2VideoOutboundRtpStats = sendrecv2StatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video',
   )
-  expect(page2VideoOutboundRtpStats).toBeDefined()
-  expect(page2VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
-  expect(page2VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+  expect(sendrecv2VideoOutboundRtpStats).toBeDefined()
+  expect(sendrecv2VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(sendrecv2VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
 
   const sendrecv2VideoInboundRtpStats = sendrecv2StatsReportJson.find(
     (stats) => stats.type === 'inbound-rtp' && stats.kind === 'video',
