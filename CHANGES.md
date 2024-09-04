@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] メッセージングの compress で fflate を利用せず decompressionStream API を利用するようにする
+  - @voluntas
+
 ### misc
 
 - [ADD] サンプルに getStats を追加する
