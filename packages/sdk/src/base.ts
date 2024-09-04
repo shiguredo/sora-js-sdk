@@ -1,4 +1,4 @@
-import { zlibSync } from 'fflate'
+import { compress, zlibSync } from 'fflate'
 
 import SoraE2EE from '@sora/e2ee'
 import type {
@@ -911,25 +911,29 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = zlibSync(binaryMessage, {})
-        if (this.soraDataChannels.signaling.readyState === 'open') {
-          // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-          try {
-            this.soraDataChannels.signaling.send(zlibMessage)
-            this.writeDataChannelSignalingLog(
-              'send-disconnect',
-              this.soraDataChannels.signaling,
-              message,
-            )
-          } catch (e) {
-            const errorMessage = (e as Error).message
-            this.writeDataChannelSignalingLog(
-              'failed-to-send-disconnect',
-              this.soraDataChannels.signaling,
-              errorMessage,
-            )
+        compressMessage(binaryMessage).then((zlibMessage) => {
+          if (
+            this.soraDataChannels.signaling?.readyState &&
+            this.soraDataChannels.signaling.readyState === 'open'
+          ) {
+            // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+            try {
+              this.soraDataChannels.signaling.send(zlibMessage)
+              this.writeDataChannelSignalingLog(
+                'send-disconnect',
+                this.soraDataChannels.signaling,
+                message,
+              )
+            } catch (e) {
+              const errorMessage = (e as Error).message
+              this.writeDataChannelSignalingLog(
+                'failed-to-send-disconnect',
+                this.soraDataChannels.signaling,
+                errorMessage,
+              )
+            }
           }
-        }
+        })
       } else {
         if (this.soraDataChannels.signaling.readyState === 'open') {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
@@ -2259,7 +2263,7 @@ export default class ConnectionBase {
         const message = JSON.parse(data) as SignalingReqStatsMessage
         if (message.type === 'req-stats') {
           const stats = await this.getStats()
-          this.sendStatsMessage(stats)
+          await this.sendStatsMessage(stats)
         }
       }
     } else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
@@ -2301,18 +2305,21 @@ export default class ConnectionBase {
    *
    * @param message - 送信するメッセージ
    */
-  private async sendSignalingMessage(message: {
+  private sendSignalingMessage(message: {
     type: string
     [key: string]: unknown
-  }): Promise<void> {
+  }): void {
     if (this.soraDataChannels.signaling) {
       if (
         this.signalingOfferMessageDataChannels.signaling &&
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = await compressMessage(binaryMessage)
-        this.soraDataChannels.signaling.send(zlibMessage)
+        compressMessage(binaryMessage).then((zlibMessage) => {
+          if (this.soraDataChannels.signaling) {
+            this.soraDataChannels.signaling.send(zlibMessage)
+          }
+        })
       } else {
         this.soraDataChannels.signaling.send(JSON.stringify(message))
       }
@@ -2347,7 +2354,7 @@ export default class ConnectionBase {
    *
    * @param reports - RTCStatsReport のリスト
    */
-  private async sendStatsMessage(reports: RTCStatsReport[]): Promise<void> {
+  sendStatsMessage(reports: RTCStatsReport[]): void {
     if (this.soraDataChannels.stats) {
       const message = {
         type: 'stats',
@@ -2358,8 +2365,11 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.stats.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = await compressMessage(binaryMessage)
-        this.soraDataChannels.stats.send(zlibMessage)
+        compressMessage(binaryMessage).then((zlibMessage) => {
+          if (this.soraDataChannels.stats) {
+            this.soraDataChannels.stats.send(zlibMessage)
+          }
+        })
       } else {
         this.soraDataChannels.stats.send(JSON.stringify(message))
       }
@@ -2435,7 +2445,7 @@ export default class ConnectionBase {
    * @param label - メッセージを送信する DataChannel のラベル
    * @param message - Uint8Array
    */
-  async sendMessage(label: string, message: Uint8Array): Promise<void> {
+  sendMessage(label: string, message: Uint8Array): void {
     const dataChannel = this.soraDataChannels[label]
     // 接続していない場合は何もしない
     if (this.pc === null) {
@@ -2449,8 +2459,9 @@ export default class ConnectionBase {
     }
     const settings = this.signalingOfferMessageDataChannels[label]
     if (settings !== undefined && settings.compress === true) {
-      const zlibMessage = await compressMessage(message)
-      dataChannel.send(zlibMessage)
+      compressMessage(message).then((zlibMessage) => {
+        dataChannel.send(zlibMessage)
+      })
     } else {
       dataChannel.send(message)
     }

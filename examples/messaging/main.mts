@@ -140,7 +140,7 @@ class SoraClient {
     return this.connection.pc.getStats()
   }
 
-  send_message(message: string) {
+  send_message(message: string): void {
     if (message !== '') {
       this.connection.sendMessage('#example', new TextEncoder().encode(message))
     }
