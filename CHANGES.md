@@ -11,17 +11,19 @@
 
 ## develop
 
-- [UPDATE] メッセージングの圧縮を fflate を利用せず compressionStream API を利用するようにする
+- [CHANGE] メッセージングを送信する `sendMessage` が `void` ではなく `Promise<void>` を返すようになりました
   - @voluntas
-- [UPDATE] メッセージングの展開を fflate を利用せず decompressionStream API を利用するようにする
+- [UPDATE] メッセージングの圧縮を `fflate` を利用せず compressionStream API を利用するようにする
+  - @voluntas
+- [UPDATE] メッセージングの展開を `fflate` を利用せず decompressionStream API を利用するようにする
   - @voluntas
 - [CHANGE] E2EE 機能を削除する
+  - @voluntas
+- [CHANGE] fflate を依存から削除する
   - @voluntas
 
 ### misc
 
-- [CHANGE] fflate を依存から削除する
-  - @voluntas
 - [ADD] サンプルに getStats を追加する
   - sendrecv / sendonly / recvonly / messaging / simulcast
   - dataset に getStats の結果を入れて E2E テストで利用しやすくする
