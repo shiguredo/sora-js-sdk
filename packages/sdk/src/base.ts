@@ -882,6 +882,7 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
+        // Promise.all の中身なのでここはブロックする
         compressMessage(binaryMessage).then((zlibMessage) => {
           if (
             this.soraDataChannels.signaling?.readyState &&
@@ -1428,7 +1429,7 @@ export default class ConnectionBase {
             }
           }
         }
-        this.pc.onicecandidate = (event): void => {
+        this.pc.onicecandidate = async (event): Promise<void> => {
           this.writePeerConnectionTimelineLog('onicecandidate', event.candidate)
           if (this.pc) {
             this.trace('ONICECANDIDATE ICEGATHERINGSTATE', this.pc.iceGatheringState)
@@ -1443,7 +1444,7 @@ export default class ConnectionBase {
               [key: string]: unknown
             }
             this.trace('ONICECANDIDATE CANDIDATE MESSAGE', message)
-            this.sendSignalingMessage(message)
+            await this.sendSignalingMessage(message)
           }
         }
       }
@@ -1788,10 +1789,10 @@ export default class ConnectionBase {
   /**
    * シグナリングサーバーに type update を投げるメソッド
    */
-  private sendUpdateAnswer(): void {
+  private async sendUpdateAnswer(): Promise<void> {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({
+      await this.sendSignalingMessage({
         type: 'update',
         sdp: this.pc.localDescription.sdp,
       })
@@ -1801,10 +1802,10 @@ export default class ConnectionBase {
   /**
    * シグナリングサーバーに type re-answer を投げるメソッド
    */
-  private sendReAnswer(): void {
+  private async sendReAnswer(): Promise<void> {
     if (this.pc?.localDescription) {
       this.trace('RE ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({
+      await this.sendSignalingMessage({
         type: 're-answer',
         sdp: this.pc.localDescription.sdp,
       })
@@ -2104,21 +2105,18 @@ export default class ConnectionBase {
    *
    * @param message - 送信するメッセージ
    */
-  private sendSignalingMessage(message: {
+  private async sendSignalingMessage(message: {
     type: string
     [key: string]: unknown
-  }): void {
+  }): Promise<void> {
     if (this.soraDataChannels.signaling) {
       if (
         this.signalingOfferMessageDataChannels.signaling &&
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        compressMessage(binaryMessage).then((zlibMessage) => {
-          if (this.soraDataChannels.signaling) {
-            this.soraDataChannels.signaling.send(zlibMessage)
-          }
-        })
+        const zlibMessage = await compressMessage(binaryMessage)
+        this.soraDataChannels.signaling.send(zlibMessage)
       } else {
         this.soraDataChannels.signaling.send(JSON.stringify(message))
       }
@@ -2138,7 +2136,7 @@ export default class ConnectionBase {
    *
    * @param reports - RTCStatsReport のリスト
    */
-  private sendStatsMessage(reports: RTCStatsReport[]): void {
+  private async sendStatsMessage(reports: RTCStatsReport[]): Promise<void> {
     if (this.soraDataChannels.stats) {
       const message = {
         type: 'stats',
@@ -2149,11 +2147,8 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.stats.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        compressMessage(binaryMessage).then((zlibMessage) => {
-          if (this.soraDataChannels.stats) {
-            this.soraDataChannels.stats.send(zlibMessage)
-          }
-        })
+        const zlibMessage = await compressMessage(binaryMessage)
+        this.soraDataChannels.stats.send(zlibMessage)
       } else {
         this.soraDataChannels.stats.send(JSON.stringify(message))
       }
@@ -2229,7 +2224,7 @@ export default class ConnectionBase {
    * @param label - メッセージを送信する DataChannel のラベル
    * @param message - Uint8Array
    */
-  sendMessage(label: string, message: Uint8Array): void {
+  async sendMessage(label: string, message: Uint8Array): Promise<void> {
     const dataChannel = this.soraDataChannels[label]
     // 接続していない場合は何もしない
     if (this.pc === null) {
@@ -2243,9 +2238,8 @@ export default class ConnectionBase {
     }
     const settings = this.signalingOfferMessageDataChannels[label]
     if (settings !== undefined && settings.compress === true) {
-      compressMessage(message).then((zlibMessage) => {
-        dataChannel.send(zlibMessage)
-      })
+      const zlibMessage = await compressMessage(message)
+      dataChannel.send(zlibMessage)
     } else {
       dataChannel.send(message)
     }
