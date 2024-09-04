@@ -12,10 +12,10 @@
 ## develop
 
 - [UPDATE] メッセージングの compress で fflate を利用せず decompressionStream API を利用するようにする
+- [CHANGE] E2EE 機能を削除する
 
 ### misc
 
-- [CHANGE] E2EE 機能を削除する
 - [ADD] サンプルに getStats を追加する
   - sendrecv / sendonly / recvonly / messaging / simulcast
   - dataset に getStats の結果を入れて E2E テストで利用しやすくする
