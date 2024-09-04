@@ -2352,7 +2352,7 @@ export default class ConnectionBase {
    *
    * @param reports - RTCStatsReport のリスト
    */
-  sendStatsMessage(reports: RTCStatsReport[]): void {
+  private sendStatsMessage(reports: RTCStatsReport[]): void {
     if (this.soraDataChannels.stats) {
       const message = {
         type: 'stats',
