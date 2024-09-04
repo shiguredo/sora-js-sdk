@@ -1,5 +1,3 @@
-import { unzlibSync } from 'fflate'
-
 import type {
   Browser,
   ConnectionOptions,
@@ -505,10 +503,29 @@ export function createDataChannelEvent(channel: DataChannelConfiguration): DataC
   return event
 }
 
-export function parseDataChannelEventData(eventData: unknown, compress: boolean): string {
+export const parseDataChannelEventData = async (
+  eventData: unknown,
+  compress: boolean,
+): Promise<string> => {
   if (compress) {
-    const unzlibMessage = unzlibSync(new Uint8Array(eventData as Uint8Array))
+    const unzlibMessage = await decompressMessage(new Uint8Array(eventData as Uint8Array))
     return new TextDecoder().decode(unzlibMessage)
   }
   return eventData as string
+}
+
+export const compressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
+  const cs = new CompressionStream('deflate')
+  const writer = cs.writable.getWriter()
+  await writer.write(binaryMessage)
+  await writer.close()
+  return await new Response(cs.readable).arrayBuffer()
+}
+
+export const decompressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
+  const ds = new DecompressionStream('deflate')
+  const writer = ds.writable.getWriter()
+  await writer.write(binaryMessage)
+  await writer.close()
+  return await new Response(ds.readable).arrayBuffer()
 }
