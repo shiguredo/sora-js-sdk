@@ -11,11 +11,15 @@
 
 ## develop
 
-- [UPDATE] メッセージングの compress で fflate を利用せず decompressionStream API を利用するようにする
+- [UPDATE] メッセージングの圧縮を fflate を利用せず compressionStream API を利用するようにする
+  - @voluntas
+- [UPDATE] メッセージングの展開を fflate を利用せず decompressionStream API を利用するようにする
   - @voluntas
 
 ### misc
 
+- [CHANGE] fflate を依存から削除する
+  - @voluntas
 - [ADD] サンプルに getStats を追加する
   - sendrecv / sendonly / recvonly / messaging / simulcast
   - dataset に getStats の結果を入れて E2E テストで利用しやすくする
