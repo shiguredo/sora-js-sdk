@@ -35,13 +35,13 @@
     "@playwright/test": "1.46.1",
     "typedoc": "0.26.6",
     "typescript": "5.5.4",
-    "vite": "5.4.2",
+    "vite": "5.4.3",
     "vitest": "2.0.5"
   },
   "resolutions": {
     "get-pkg-repo": "5.0.0"
   },
-  "packageManager": "pnpm@9.7.1",
+  "packageManager": "pnpm@9.9.0",
   "engines": {
     "node": ">=18"
   }

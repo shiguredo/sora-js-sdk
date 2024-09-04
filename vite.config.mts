@@ -18,7 +18,6 @@ export default defineConfig({
         spotlight_recvonly: resolve(__dirname, 'examples/spotlight_recvonly/index.html'),
         sendonly_audio_bit_rate: resolve(__dirname, 'examples/sendonly_audio_bit_rate/index.html'),
         messaging: resolve(__dirname, 'examples/messaging/index.html'),
-        e2ee: resolve(__dirname, 'examples/e2ee/index.html'),
       },
     },
   },

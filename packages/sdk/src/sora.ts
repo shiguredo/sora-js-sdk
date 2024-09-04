@@ -1,5 +1,3 @@
-import SoraE2EE from '@sora/e2ee'
-
 import type ConnectionBase from './base'
 import { applyMediaStreamConstraints } from './helpers'
 import ConnectionPublisher from './publisher'
@@ -91,7 +89,7 @@ class SoraConnection {
     )
   }
   /**
-   * role sendonly で接続するための Connecion インスタンスを生成するメソッド
+   * role sendonly で接続するための Connection インスタンスを生成するメソッド
    *
    * @param channelId - チャネルID
    * @param metadata - メタデータ
@@ -123,7 +121,7 @@ class SoraConnection {
     )
   }
   /**
-   * role recvonly で接続するための Connecion インスタンスを生成するメソッド
+   * role recvonly で接続するための Connection インスタンスを生成するメソッド
    *
    * @example
    * ```typescript
@@ -169,20 +167,6 @@ class SoraConnection {
  * Sora JS SDK package
  */
 export default {
-  /**
-   * E2EE で使用する WASM の読み込みを行うメソッド
-   *
-   * @example
-   * ```typescript
-   * Sora.initE2EE("http://192.0.2.100/wasm.wasm");
-   * ```
-   * @param wasmUrl - E2EE WASM の URL
-   *
-   * @public
-   */
-  initE2EE: async (wasmUrl: string): Promise<void> => {
-    await SoraE2EE.loadWasm(wasmUrl)
-  },
   /**
    * SoraConnection インスタンスを生成するメソッド
    *

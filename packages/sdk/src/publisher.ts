@@ -47,14 +47,14 @@ export default class ConnectionPublisher extends ConnectionBase {
   /**
    * レガシーストリームで Sora へ接続するメソッド
    *
+   * @deprecated この関数は非推奨です、マルチストリームを利用してください。
+   *
    * @param stream - メディアストリーム
    */
   private async legacyStream(stream: MediaStream): Promise<MediaStream> {
     await this.disconnect()
-    this.setupE2EE()
     const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)
     const signalingMessage = await this.signaling(ws)
-    this.startE2EE()
     await this.connectPeerConnection(signalingMessage)
     await this.setRemoteDescription(signalingMessage)
     stream.getTracks().filter((track) => {
@@ -62,11 +62,6 @@ export default class ConnectionPublisher extends ConnectionBase {
         this.pc.addTrack(track, stream)
       }
     })
-    if (this.pc) {
-      for (const sender of this.pc.getSenders()) {
-        await this.setupSenderTransform(sender)
-      }
-    }
     this.stream = stream
     await this.createAnswer(signalingMessage)
     this.sendAnswer()
@@ -82,15 +77,11 @@ export default class ConnectionPublisher extends ConnectionBase {
    */
   private async multiStream(stream: MediaStream): Promise<MediaStream> {
     await this.disconnect()
-    this.setupE2EE()
     const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)
     const signalingMessage = await this.signaling(ws)
-    this.startE2EE()
     await this.connectPeerConnection(signalingMessage)
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        await this.setupReceiverTransform(event.transceiver.mid, event.receiver)
-
         const stream = event.streams[0]
         if (!stream) {
           return
@@ -140,12 +131,6 @@ export default class ConnectionPublisher extends ConnectionBase {
         this.pc.addTrack(track, stream)
       }
     })
-    if (this.pc) {
-      for (const sender of this.pc.getSenders()) {
-        await this.setupSenderTransform(sender)
-      }
-    }
-
     this.stream = stream
     await this.createAnswer(signalingMessage)
     this.sendAnswer()

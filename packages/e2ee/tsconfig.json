@@ -1,8 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "declarationDir": "."
-  },
-  "include": ["src/sora_e2ee.ts"],
-  "exclude": ["node_modules"]
-}
