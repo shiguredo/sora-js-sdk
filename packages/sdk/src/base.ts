@@ -1822,7 +1822,7 @@ export default class ConnectionBase {
     this.trace('UPDATE SDP', message.sdp)
     await this.setRemoteDescription(message)
     await this.createAnswer(message)
-    this.sendUpdateAnswer()
+    await this.sendUpdateAnswer()
   }
 
   /**
@@ -1835,7 +1835,7 @@ export default class ConnectionBase {
     this.trace('RE OFFER SDP', message.sdp)
     await this.setRemoteDescription(message)
     await this.createAnswer(message)
-    this.sendReAnswer()
+    await this.sendReAnswer()
   }
 
   /**
