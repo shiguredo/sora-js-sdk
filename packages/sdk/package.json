@@ -18,7 +18,6 @@
     "rollup-plugin-delete": "2.0.0"
   },
   "dependencies": {
-    "@sora/e2ee": "workspace:^",
-    "fflate": "0.8.2"
+    "@sora/e2ee": "workspace:^"
   }
 }
