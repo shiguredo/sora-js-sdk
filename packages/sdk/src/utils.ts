@@ -505,10 +505,25 @@ export function createDataChannelEvent(channel: DataChannelConfiguration): DataC
   return event
 }
 
-export function parseDataChannelEventData(eventData: unknown, compress: boolean): string {
+export async function parseDataChannelEventData(
+  eventData: unknown,
+  compress: boolean,
+): Promise<string> {
   if (compress) {
-    const unzlibMessage = unzlibSync(new Uint8Array(eventData as Uint8Array))
+    const unzlibMessage = await decompressMessage(new Uint8Array(eventData as Uint8Array))
     return new TextDecoder().decode(unzlibMessage)
   }
   return eventData as string
+}
+
+export const compressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
+  const readableStream = new Blob([binaryMessage]).stream()
+  const compressedStream = readableStream.pipeThrough(new CompressionStream('deflate'))
+  return await new Response(compressedStream).arrayBuffer()
+}
+
+export const decompressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
+  const readableStream = new Blob([binaryMessage]).stream()
+  const decompressedStream = readableStream.pipeThrough(new DecompressionStream('deflate'))
+  return await new Response(decompressedStream).arrayBuffer()
 }
