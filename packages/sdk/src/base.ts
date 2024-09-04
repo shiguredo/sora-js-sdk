@@ -2063,7 +2063,7 @@ export default class ConnectionBase {
         const message = JSON.parse(data) as SignalingReqStatsMessage
         if (message.type === 'req-stats') {
           const stats = await this.getStats()
-          this.sendStatsMessage(stats)
+          await this.sendStatsMessage(stats)
         }
       }
     } else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
