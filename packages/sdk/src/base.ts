@@ -1,4 +1,4 @@
-import { unzlibSync, zlibSync } from 'fflate'
+import { zlibSync } from 'fflate'
 
 import type {
   Callbacks,
@@ -31,7 +31,7 @@ import {
   createSignalingEvent,
   createSignalingMessage,
   createTimelineEvent,
-  getSignalingNotifyAuthnMetadata,
+  decompressMessage,
   getSignalingNotifyData,
   isFirefox,
   isSafari,
@@ -2002,7 +2002,7 @@ export default class ConnectionBase {
           )
           return
         }
-        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress)
+        const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as SignalingMessage
         this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message)
         if (message.type === 're-offer') {
@@ -2010,7 +2010,7 @@ export default class ConnectionBase {
         }
       }
     } else if (dataChannelEvent.channel.label === 'notify') {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
         const dataChannelSettings = this.signalingOfferMessageDataChannels[label]
@@ -2020,7 +2020,7 @@ export default class ConnectionBase {
           )
           return
         }
-        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress)
+        const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as SignalingNotifyMessage
         if (message.event_type === 'connection.created') {
           this.writeDataChannelTimelineLog('notify-connection.created', channel, message)
@@ -2030,7 +2030,7 @@ export default class ConnectionBase {
         this.signalingOnMessageTypeNotify(message, 'datachannel')
       }
     } else if (dataChannelEvent.channel.label === 'push') {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
         const dataChannelSettings = this.signalingOfferMessageDataChannels[label]
@@ -2040,7 +2040,7 @@ export default class ConnectionBase {
           )
           return
         }
-        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress)
+        const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as SignalingPushMessage
         this.callbacks.push(message, 'datachannel')
       }
@@ -2055,7 +2055,7 @@ export default class ConnectionBase {
           )
           return
         }
-        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress)
+        const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as SignalingReqStatsMessage
         if (message.type === 'req-stats') {
           const stats = await this.getStats()
@@ -2063,7 +2063,7 @@ export default class ConnectionBase {
         }
       }
     } else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         if (event.currentTarget === null) {
           return
         }
@@ -2088,7 +2088,7 @@ export default class ConnectionBase {
 
         if (data !== undefined) {
           if (dataChannelSettings.compress === true) {
-            data = unzlibSync(new Uint8Array(data)).buffer
+            data = await decompressMessage(new Uint8Array(data))
           }
           this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data))
         }
