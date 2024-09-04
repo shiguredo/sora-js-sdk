@@ -15,6 +15,8 @@
   - @voluntas
 - [UPDATE] メッセージングの展開を fflate を利用せず decompressionStream API を利用するようにする
   - @voluntas
+- [CHANGE] E2EE 機能を削除する
+  - @voluntas
 
 ### misc
 

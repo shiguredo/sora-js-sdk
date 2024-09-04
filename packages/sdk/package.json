@@ -3,8 +3,8 @@
   "scripts": {
     "build": "rollup -c rollup.config.mjs --bundleConfigAsCjs",
     "watch": "rollup -c -w",
-    "lint": "biome lint ./src",
-    "fmt": "biome format --write ./src",
+    "lint": "biome lint src",
+    "fmt": "biome format --write src",
     "check": "tsc --noEmit",
     "test": "vitest run"
   },
@@ -16,8 +16,5 @@
     "jsdom": "25.0.0",
     "rollup": "4.21.2",
     "rollup-plugin-delete": "2.0.0"
-  },
-  "dependencies": {
-    "@sora/e2ee": "workspace:^"
   }
 }
