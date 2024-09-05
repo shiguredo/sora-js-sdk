@@ -57,7 +57,7 @@ class SoraConnection {
     this.debug = debug
   }
   /**
-   * role sendrecv で接続するための Connecion インスタンスを生成するメソッド
+   * role sendrecv で接続するための Connection インスタンスを生成するメソッド
    *
    * @example
    * ```typescript
