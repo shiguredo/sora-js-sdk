@@ -17,6 +17,7 @@ export default defineConfig({
         spotlight_sendonly: resolve(__dirname, 'examples/spotlight_sendonly/index.html'),
         spotlight_recvonly: resolve(__dirname, 'examples/spotlight_recvonly/index.html'),
         sendonly_audio_bit_rate: resolve(__dirname, 'examples/sendonly_audio_bit_rate/index.html'),
+        sendonly_audio_codec: resolve(__dirname, 'examples/sendonly_audio_codec/index.html'),
         messaging: resolve(__dirname, 'examples/messaging/index.html'),
       },
     },

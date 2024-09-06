@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>Sendonly Audio Codec test</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Sendonly Audio Codec test</h1>
+    <button id="start">start</button>
+    <button id="stop">stop</button>
+    <button id="get-stats">getStats</button>
+    <br />
+    <div id="connection-id"></div>
+    <label for="audio-codec-type">音声コーディック：</label>
+    <select id="audio-codec-type">
+      <option value="">未指定</option>
+      <option value="OPUS">OPUS</option>
+    </select>
+    <br />
+    <audio id="local-audio" autoplay="" playsinline="" controls="" muted=""
+      style="width: 320px; height: 240px; border: 1px solid black;"></audio>
+    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+    <div id="stats-report-json"></div>
+  </div>
+  <script type="module" src="./main.mts"></script>
+</body>
+
+</html>
