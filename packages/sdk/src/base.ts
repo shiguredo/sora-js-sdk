@@ -1,3 +1,4 @@
+import { DisconnectWaitTimeoutError } from './errors'
 import type {
   Callbacks,
   ConnectionOptions,
@@ -800,10 +801,10 @@ export default class ConnectionBase {
    * @remarks
    * 正常/異常どちらの切断でも使用する
    */
-  private async disconnectDataChannel2(): Promise<{
+  private async disconnectDataChannel(): Promise<{
     code: number
     reason: string
-  } | null> {
+  }> {
     // DataChannel の強制終了処理
     const closeDataChannels = () => {
       for (const key of Object.keys(this.soraDataChannels)) {
@@ -823,7 +824,7 @@ export default class ConnectionBase {
 
     // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
     const disconnectWaitTimeoutId = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(), this.disconnectWaitTimeout)
+      setTimeout(() => reject(new DisconnectWaitTimeoutError()), this.disconnectWaitTimeout)
     })
 
     // 全ての DataChannel の onclose が発火したことを確認する Promise を生成する
@@ -900,146 +901,11 @@ export default class ConnectionBase {
     } catch (e) {
       // 正常終了できなかったので全てのチャネルを強制的に閉じる
       closeDataChannels()
-      // if (e instanceof Error && e.message === 'Disconnect timeout') {
-      //   return { code: 4000, reason: 'Disconnect timeout' }
-      // }
+      if (e instanceof DisconnectWaitTimeoutError) {
+        return { code: 4000, reason: 'Disconnect timeout' }
+      }
       return { code: 4999, reason: '' }
     }
-  }
-
-  /**
-   * DataChannel を切断するメソッド
-   *
-   * @remarks
-   * 正常/異常どちらの切断でも使用する
-   */
-  private disconnectDataChannel(): Promise<{
-    code: number
-    reason: string
-  } | null> {
-    // DataChannel の強制終了処理
-    const closeDataChannels = () => {
-      for (const key of Object.keys(this.soraDataChannels)) {
-        const dataChannel = this.soraDataChannels[key]
-        if (dataChannel) {
-          dataChannel.onerror = null
-          dataChannel.close()
-        }
-        delete this.soraDataChannels[key]
-      }
-    }
-    return new Promise((resolve, reject) => {
-      // DataChannel label signaling が存在しない場合は強制終了処理をする
-      if (!this.soraDataChannels.signaling) {
-        closeDataChannels()
-        return resolve({ code: 4999, reason: '' })
-      }
-      // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
-      const disconnectWaitTimeoutId = setTimeout(() => {
-        closeDataChannels()
-        return reject()
-      }, this.disconnectWaitTimeout)
-
-      const onClosePromises: Promise<void>[] = []
-      for (const key of Object.keys(this.soraDataChannels)) {
-        const dataChannel = this.soraDataChannels[key]
-        if (dataChannel) {
-          // onerror が発火した場合は強制終了処理をする
-          dataChannel.onerror = () => {
-            clearTimeout(disconnectWaitTimeoutId)
-            closeDataChannels()
-            return resolve({ code: 4999, reason: '' })
-          }
-          // すべての DataChannel の readyState が "closed" になったことを確認する Promsie を生成する
-          const p = (): Promise<void> => {
-            return new Promise((res, _) => {
-              // disconnectWaitTimeout 時間を過ぎた場合に終了させるための counter を作成する
-              let counter = 0
-              // onclose 内で readyState の変化を待つと非同期のまま複数回 disconnect を呼んだ場合に
-              // callback が上書きされて必ず DISCONNECT-TIMEOUT になってしまうので setInterval を使う
-              const timerId = setInterval(() => {
-                counter++
-                if (dataChannel.readyState === 'closed') {
-                  clearInterval(timerId)
-                  res()
-                }
-                if (this.disconnectWaitTimeout < counter * 100) {
-                  res()
-                  clearInterval(timerId)
-                }
-              }, 100)
-            })
-          }
-          onClosePromises.push(p())
-        }
-      }
-      // すべての DataChannel で onclose が発火した場合は resolve にする
-      Promise.all(onClosePromises)
-        .then(() => {
-          // dataChannels が空の場合は切断処理が終わっているとみなす
-          if (0 === Object.keys(this.soraDataChannels).length) {
-            resolve(null)
-          } else {
-            resolve({ code: 4999, reason: '' })
-          }
-        })
-        // eslint 対策、エラーが発生したら reject(error) を返す
-        .catch((error) => reject(error))
-        .finally(() => {
-          closeDataChannels()
-          clearTimeout(disconnectWaitTimeoutId)
-        })
-      const message = { type: 'disconnect', reason: 'NO-ERROR' }
-      if (
-        this.signalingOfferMessageDataChannels.signaling &&
-        this.signalingOfferMessageDataChannels.signaling.compress === true
-      ) {
-        const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        // Promise.all の中身なのでここはブロックする
-        compressMessage(binaryMessage).then((zlibMessage) => {
-          if (
-            this.soraDataChannels.signaling?.readyState &&
-            this.soraDataChannels.signaling.readyState === 'open'
-          ) {
-            // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-            try {
-              this.soraDataChannels.signaling.send(zlibMessage)
-              this.writeDataChannelSignalingLog(
-                'send-disconnect',
-                this.soraDataChannels.signaling,
-                message,
-              )
-            } catch (e) {
-              const errorMessage = (e as Error).message
-              this.writeDataChannelSignalingLog(
-                'failed-to-send-disconnect',
-                this.soraDataChannels.signaling,
-                errorMessage,
-              )
-            }
-          }
-        })
-      } else {
-        if (this.soraDataChannels.signaling.readyState === 'open') {
-          // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-          try {
-            this.soraDataChannels.signaling.send(JSON.stringify(message))
-            this.writeDataChannelSignalingLog(
-              'send-disconnect',
-              this.soraDataChannels.signaling,
-              message,
-            )
-          } catch (e) {
-            const errorMessage = (e as Error).message
-            this.writeDataChannelSignalingLog(
-              'failed-to-send-disconnect',
-              this.soraDataChannels.signaling,
-              errorMessage,
-            )
-          }
-        }
-      }
-    })
   }
 
   /**
@@ -1103,11 +969,8 @@ export default class ConnectionBase {
     if (this.signalingSwitched) {
       // DataChannel の切断処理がタイムアウトした場合は event を abend に差し替える
       try {
-        const reason = await this.disconnectDataChannel2()
-        // const reason = await this.disconnectDataChannel()
-        if (reason !== null) {
-          event = this.soraCloseEvent('normal', 'DISCONNECT', reason)
-        }
+        const reason = await this.disconnectDataChannel()
+        event = this.soraCloseEvent('normal', 'DISCONNECT', reason)
       } catch (_) {
         event = this.soraCloseEvent('abend', 'DISCONNECT-TIMEOUT')
       }
