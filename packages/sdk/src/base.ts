@@ -898,6 +898,7 @@ export default class ConnectionBase {
       await Promise.race([disconnectWaitTimeoutId, dataChannelClosePromise])
       return { code: 1000, reason: '' }
     } catch (e) {
+      // 正常終了できなかったので全てのチャネルを強制的に閉じる
       closeDataChannels()
       // if (e instanceof Error && e.message === 'Disconnect timeout') {
       //   return { code: 4000, reason: 'Disconnect timeout' }
