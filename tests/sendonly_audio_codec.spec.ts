@@ -42,7 +42,7 @@ test('sendonly audio codec type pages', async ({ browser }) => {
     (report) => report.type === 'codec' && report.mimeType === 'audio/opus',
   )
 
-  // 今は指定してもしなくても OOPUS のみ
+  // 今は指定してもしなくても OPUS のみ
   expect(sendonlyAudioCodecStats).toBeDefined()
   const sendonlyAudioOutboundRtp = sendonlyStatsReportJson.find(
     (report) => report.type === 'outbound-rtp' && report.kind === 'audio',
