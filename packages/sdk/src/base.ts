@@ -817,9 +817,10 @@ export default class ConnectionBase {
       }
     }
 
+    // label: signaling が存在しない場合は閉じて終了
     if (!this.soraDataChannels.signaling) {
       closeDataChannels()
-      return { code: 4999, reason: '' }
+      return { code: 4999, reason: 'DISCONNECT-INTERNAL-ERROR' }
     }
 
     // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
@@ -902,9 +903,9 @@ export default class ConnectionBase {
       // 正常終了できなかったので全てのチャネルを強制的に閉じる
       closeDataChannels()
       if (e instanceof DisconnectWaitTimeoutError) {
-        return { code: 4000, reason: 'Disconnect timeout' }
+        return { code: 4000, reason: 'DISCONNECT-WAIT-TIMEOUT-ERROR' }
       }
-      return { code: 4999, reason: '' }
+      return { code: 4999, reason: 'DISCONNECT-DATA-CHANNEL-ERROR' }
     }
   }
 
@@ -968,12 +969,14 @@ export default class ConnectionBase {
     let event = null
     if (this.signalingSwitched) {
       // DataChannel の切断処理がタイムアウトした場合は event を abend に差し替える
-      try {
-        const reason = await this.disconnectDataChannel()
-        event = this.soraCloseEvent('normal', 'DISCONNECT', reason)
-      } catch (_) {
+      const result = await this.disconnectDataChannel()
+      if (result.code === 4000) {
         event = this.soraCloseEvent('abend', 'DISCONNECT-TIMEOUT')
       }
+      if (result.code === 4999) {
+        event = this.soraCloseEvent('abend', 'DISCONNECT-INTERNAL-ERROR')
+      }
+      event = this.soraCloseEvent('normal', 'DISCONNECT', result)
       await this.disconnectWebSocket('NO-ERROR')
       await this.disconnectPeerConnection()
     } else {
