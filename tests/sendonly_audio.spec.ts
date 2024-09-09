@@ -65,7 +65,7 @@ test('sendonly audio pages', async ({ browser }) => {
   expect(sendonlyAudioOutboundRtp?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyAudioOutboundRtp?.packetsSent).toBeGreaterThan(0)
 
-  // 選択に基づいて期待値を設定
+  // 音声ビットレートの選択に基づいて期待値を設定
   const expectedBitrate = Number.parseInt(randomBitrate) * 1000
   expect(sendonlyAudioOutboundRtp?.targetBitrate).toEqual(expectedBitrate)
 
