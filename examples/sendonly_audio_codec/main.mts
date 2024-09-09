@@ -85,7 +85,7 @@ class SoraClient {
 
   async connect(stream: MediaStream, audioCodecType?: string): Promise<void> {
     if (audioCodecType && audioCodecType === 'OPUS') {
-      // 音声コーディックを上書きする
+      // 音声コーデックを上書きする
       this.connection.options.audioCodecType = audioCodecType
     }
     await this.connection.connect(stream)

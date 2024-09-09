@@ -13,7 +13,7 @@ test('sendonly audio codec type pages', async ({ browser }) => {
     return randomOption.value
   })
 
-  // 選択したコーディックタイプをログに出力
+  // 選択したコーデックタイプをログに出力
   console.log('Selected codec:', randomAudioCodec)
 
   // Start ボタンクリック

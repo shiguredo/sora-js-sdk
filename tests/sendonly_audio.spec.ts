@@ -7,7 +7,7 @@ test('sendonly audio pages', async ({ browser }) => {
   await sendonly.goto('http://localhost:9000/sendonly_audio/')
 
   // select 要素から直接オプションを取得してランダムに選択
-  // 音声コーディック
+  // 音声コーデック
   const randomAudioCodec = await sendonly.evaluate(() => {
     const select = document.querySelector('#audio-codec-type') as HTMLSelectElement
     const options = Array.from(select.options)
@@ -24,7 +24,7 @@ test('sendonly audio pages', async ({ browser }) => {
     return randomOption.value
   })
 
-  // ログで選択された音声コーディック・音声ビットレートを表示
+  // ログで選択された音声コーデック・音声ビットレートを表示
   console.log(`Selected codec: ${randomAudioCodec}`)
   console.log(`Selected bitrate: ${randomBitrate} kbps`)
 
@@ -49,7 +49,7 @@ test('sendonly audio pages', async ({ browser }) => {
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
-  // 音声コーディック : 今は指定してもしなくても OPUS のみ
+  // 音声コーデック : 今は指定してもしなくても OPUS のみ
   const sendonlyAudioCodecStats = sendonlyStatsReportJson.find(
     (report) => report.type === 'codec' && report.mimeType === 'audio/opus',
   )
