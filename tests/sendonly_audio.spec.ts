@@ -7,6 +7,15 @@ test('sendonly audio pages', async ({ browser }) => {
   await sendonly.goto('http://localhost:9000/sendonly_audio/')
 
   // select 要素から直接オプションを取得してランダムに選択
+  // 音声コーディック
+  const randomAudioCodec = await sendonly.evaluate(() => {
+    const select = document.querySelector('#audio-codec-type') as HTMLSelectElement
+    const options = Array.from(select.options)
+    const randomOption = options[Math.floor(Math.random() * options.length)]
+    select.value = randomOption.value
+    return randomOption.value
+  })
+  // 音声ビットレート
   const randomBitrate = await sendonly.evaluate(() => {
     const select = document.querySelector('#audio-bit-rate') as HTMLSelectElement
     const options = Array.from(select.options).filter((option) => option.value !== '') // 未指定を除外
@@ -15,17 +24,9 @@ test('sendonly audio pages', async ({ browser }) => {
     return randomOption.value
   })
 
-  const randomAudioCodec = await sendonly.evaluate(() => {
-    const select = document.querySelector('#audio-codec-type') as HTMLSelectElement
-    const options = Array.from(select.options)
-    const randomOption = options[Math.floor(Math.random() * options.length)]
-    select.value = randomOption.value
-    return randomOption.value
-  })
-
-  // ログで選択されたビットレート・コーディックを表示
+  // ログで選択された音声コーディック・音声ビットレートを表示
+  console.log(`Selected codec: ${randomAudioCodec}`)
   console.log(`Selected bitrate: ${randomBitrate} kbps`)
-  console.log('Selected codec:', randomAudioCodec)
 
   await sendonly.click('#start')
   // #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
@@ -52,16 +53,19 @@ test('sendonly audio pages', async ({ browser }) => {
   const sendonlyAudioCodecStats = sendonlyStatsReportJson.find(
     (report) => report.type === 'codec' && report.mimeType === 'audio/opus',
   )
-
   expect(sendonlyAudioCodecStats).toBeDefined()
+
+  // 音声ビットレート
   const sendonlyAudioOutboundRtp = sendonlyStatsReportJson.find(
     (report) => report.type === 'outbound-rtp' && report.kind === 'audio',
   )
   expect(sendonlyAudioOutboundRtp).toBeDefined()
+
+  // 音声が正常に送れているか確認
   expect(sendonlyAudioOutboundRtp?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyAudioOutboundRtp?.packetsSent).toBeGreaterThan(0)
 
-  // 選択されたビットレートに基づいて期待値を設定
+  // 選択に基づいて期待値を設定
   const expectedBitrate = Number.parseInt(randomBitrate) * 1000
   expect(sendonlyAudioOutboundRtp?.targetBitrate).toEqual(expectedBitrate)
 

@@ -19,16 +19,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelector('#start')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+
+    // 音声コーディック
+    const audioCodecType = document.getElementById('audio-codec-type') as HTMLSelectElement
+    const selectedCodecType = audioCodecType.value === 'OPUS' ? audioCodecType.value : undefined
+
     // 音声ビットレート
     const audioBitRateSelect = document.getElementById('audio-bit-rate') as HTMLSelectElement
     const selectedBitRate = audioBitRateSelect.value
       ? Number.parseInt(audioBitRateSelect.value)
       : undefined
-    // 音声コーディック
-    const audioCodecType = document.getElementById('audio-codec-type') as HTMLSelectElement
-    const selectedCodecType = audioCodecType.value === 'OPUS' ? audioCodecType.value : undefined
 
-    await client.connect(stream, selectedBitRate, selectedCodecType)
+    await client.connect(stream, selectedCodecType, selectedBitRate)
   })
 
   document.querySelector('#stop')?.addEventListener('click', async () => {
@@ -90,16 +92,16 @@ class SoraClient {
 
   async connect(
     stream: MediaStream,
-    audioBitRate?: number,
     audioCodecType?: string,
+    audioBitRate?: number,
   ): Promise<void> {
-    if (audioBitRate) {
-      // 音声ビットレートを上書きする
-      this.connection.options.audioBitRate = audioBitRate
-    }
     if (audioCodecType && audioCodecType === 'OPUS') {
       // 音声コーディックを上書きする
       this.connection.options.audioCodecType = audioCodecType
+    }
+    if (audioBitRate) {
+      // 音声ビットレートを上書きする
+      this.connection.options.audioBitRate = audioBitRate
     }
     await this.connection.connect(stream)
 

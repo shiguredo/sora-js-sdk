@@ -9,6 +9,12 @@
 <body>
   <div class="container">
     <h1>Sendonly Audio Test</h1>
+    <label for="audio-codec-type">音声コーディック：</label>
+    <select id="audio-codec-type">
+      <option value="">未指定</option>
+      <option value="OPUS">OPUS</option>
+    </select>
+    <br />
     <label for="audio-bit-rate">音声ビットレート：</label>
     <select id="audio-bit-rate">
       <option value="">未指定</option>
@@ -17,12 +23,6 @@
       <option value="128">128 kbps</option>
       <option value="256">256 kbps</option>
       <option value="384">384 kbps</option>
-    </select>
-    <br />
-    <label for="audio-codec-type">音声コーディック：</label>
-    <select id="audio-codec-type">
-      <option value="">未指定</option>
-      <option value="OPUS">OPUS</option>
     </select>
     <br />
     <button id="start">start</button>
