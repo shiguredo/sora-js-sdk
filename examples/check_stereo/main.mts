@@ -101,40 +101,38 @@ class SoraClient {
     return this.connection.pc.getStats()
   }
 
-  checkStereo(remoteStream: MediaStream) {
+  analyzeAudioStream(stream: MediaStream) {
     const audioContext = new AudioContext()
-    const mediaStreamSource = audioContext.createMediaStreamSource(remoteStream)
-    const analyser = audioContext.createAnalyser()
-    mediaStreamSource.connect(analyser)
+    const source = audioContext.createMediaStreamSource(stream)
+    const splitter = audioContext.createChannelSplitter(2)
+    const analyserL = audioContext.createAnalyser()
+    const analyserR = audioContext.createAnalyser()
 
-    const bufferLength = analyser.frequencyBinCount
-    const leftData = new Float32Array(bufferLength)
-    const rightData = new Float32Array(bufferLength)
+    source.connect(splitter)
+    splitter.connect(analyserL, 0)
+    splitter.connect(analyserR, 1)
 
-    let isStereo = false
-    let sampleCount = 0
-    const totalSamples = 100 // 分析するサンプル数
+    const dataArrayL = new Float32Array(2048)
+    const dataArrayR = new Float32Array(2048)
 
-    const checkAudio = () => {
-      analyser.getFloatTimeDomainData(leftData)
-      if (analyser.channelCount >= 2) {
-        analyser.getFloatTimeDomainData(rightData)
-        const difference = leftData.some((val, index) => Math.abs(val - rightData[index]) > 0.01)
-        if (difference) {
-          isStereo = true
-        }
+    const analyze = () => {
+      analyserL.getFloatTimeDomainData(dataArrayL)
+      analyserR.getFloatTimeDomainData(dataArrayR)
+
+      let difference = 0
+      for (let i = 0; i < dataArrayL.length; i++) {
+        difference += Math.abs(dataArrayL[i] - dataArrayR[i])
       }
 
-      sampleCount++
-      if (sampleCount < totalSamples) {
-        requestAnimationFrame(checkAudio)
-      } else {
-        console.log(`ステレオ判定結果: ${isStereo ? 'ステレオ' : 'モノラル'}`)
-        audioContext.close()
-      }
+      const isStereo = difference > 0.1
+      console.log(isStereo ? 'Stereo' : 'Mono')
     }
 
-    checkAudio()
+    setInterval(analyze, 1000)
+
+    if (audioContext.state === 'suspended') {
+      audioContext.resume()
+    }
   }
 
   private onnotify(event: SignalingNotifyMessage) {
@@ -154,7 +152,7 @@ class SoraClient {
     // Sora の場合、event.streams には MediaStream が 1 つだけ含まれる
     const stream = event.streams[0]
     if (event.track.kind === 'audio') {
-      this.checkStereo(stream)
+      this.analyzeAudioStream(stream)
     }
   }
 
