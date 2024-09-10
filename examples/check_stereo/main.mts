@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         noiseSuppression: false,
         autoGainControl: false,
         channelCount: 2,
+        sampleRate: 48000,
+        sampleSize: 16,
       },
     })
     await sendonly.connect(stream)
@@ -87,7 +89,8 @@ class SendonlyClient {
 
   async connect(stream: MediaStream): Promise<void> {
     await this.connection.connect(stream)
-    this.analyzeAudioStream(new MediaStream([stream.getAudioTracks()[0]]))
+    const audioTrack = stream.getAudioTracks()[0]
+    this.analyzeAudioStream(new MediaStream([audioTrack]))
   }
 
   async disconnect(): Promise<void> {
@@ -95,7 +98,7 @@ class SendonlyClient {
   }
 
   analyzeAudioStream(stream: MediaStream) {
-    const audioContext = new AudioContext()
+    const audioContext = new AudioContext({ sampleRate: 48000, latencyHint: 'interactive' })
     const source = audioContext.createMediaStreamSource(stream)
     const splitter = audioContext.createChannelSplitter(2)
     const analyserL = audioContext.createAnalyser()
@@ -117,7 +120,7 @@ class SendonlyClient {
         difference += Math.abs(dataArrayL[i] - dataArrayR[i])
       }
 
-      const isStereo = difference > 0.1
+      const isStereo = difference !== 0
       const result = isStereo ? 'Stereo' : 'Mono'
 
       // sendonly-stereo 要素に結果を反映
