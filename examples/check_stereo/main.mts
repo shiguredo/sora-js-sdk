@@ -1,104 +1,97 @@
 import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
+  type ConnectionPublisher,
   type ConnectionSubscriber,
 } from 'sora-js-sdk'
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // 環境変数の読み込み
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
-  const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
-  const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
-  const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
 
   // Sora クライアントの初期化
-  const client = new SoraClient(
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
-  )
+  const sendonly = new SendonlyClient(SORA_SIGNALING_URL, 'stereo_check')
 
-  document.querySelector('#start')?.addEventListener('click', async () => {
-    await client.connect()
+  const recvonly = new RecvonlyClient(SORA_SIGNALING_URL, 'stereo_check')
+
+  // デバイスリストの取得と設定
+  await updateDeviceLists()
+
+  // デバイスの変更を監視
+  navigator.mediaDevices.addEventListener('devicechange', updateDeviceLists)
+
+  document.querySelector('#sendonly-start')?.addEventListener('click', async () => {
+    const audioInputSelect = document.querySelector<HTMLSelectElement>('#sendonly-audio-input')
+    const selectedAudioDeviceId = audioInputSelect?.value
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: false,
+      audio: {
+        deviceId: selectedAudioDeviceId ? { exact: selectedAudioDeviceId } : undefined,
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        channelCount: 2,
+      },
+    })
+    await sendonly.connect(stream)
   })
 
-  document.querySelector('#stop')?.addEventListener('click', async () => {
-    await client.disconnect()
+  document.querySelector('#sendonly-stop')?.addEventListener('click', async () => {
+    await sendonly.disconnect()
   })
 
-  document.querySelector('#get-stats')?.addEventListener('click', async () => {
-    const statsReport = await client.getStats()
-    const statsDiv = document.querySelector('#stats-report') as HTMLElement
-    const statsReportJsonDiv = document.querySelector('#stats-report-json')
-    if (statsDiv && statsReportJsonDiv) {
-      let statsHtml = ''
-      const statsReportJson: Record<string, unknown>[] = []
-      // biome-ignore lint/complexity/noForEach: <explanation>
-      statsReport.forEach((report) => {
-        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
-        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
-        for (const [key, value] of Object.entries(report)) {
-          if (key !== 'type' && key !== 'id') {
-            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
-            reportJson[key] = value
-          }
-        }
-        statsHtml += '</ul>'
-        statsReportJson.push(reportJson)
-      })
-      statsDiv.innerHTML = statsHtml
-      // データ属性としても保存（オプション）
-      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
-    }
+  document.querySelector('#recvonly-start')?.addEventListener('click', async () => {
+    await recvonly.connect()
+  })
+
+  document.querySelector('#recvonly-stop')?.addEventListener('click', async () => {
+    await recvonly.disconnect()
   })
 })
 
-class SoraClient {
+// デバイスリストを更新する関数
+async function updateDeviceLists() {
+  const devices = await navigator.mediaDevices.enumerateDevices()
+
+  const audioInputSelect = document.querySelector<HTMLSelectElement>('#sendonly-audio-input')
+
+  if (audioInputSelect) {
+    audioInputSelect.innerHTML = ''
+    const audioInputDevices = devices.filter((device) => device.kind === 'audioinput')
+    for (const device of audioInputDevices) {
+      const option = document.createElement('option')
+      option.value = device.deviceId
+      option.text = device.label || `マイク ${audioInputSelect.length + 1}`
+      audioInputSelect.appendChild(option)
+    }
+  }
+}
+
+class SendonlyClient {
   private debug = false
   private channelId: string
-  private metadata: { access_token: string }
   private options: object = {}
 
   private sora: SoraConnection
-  private connection: ConnectionSubscriber
+  private connection: ConnectionPublisher
 
-  constructor(
-    signaling_url: string,
-    channel_id_prefix: string,
-    channel_id_suffix: string,
-    access_token: string,
-  ) {
+  constructor(signaling_url: string, channel_id: string) {
     this.sora = Sora.connection(signaling_url, this.debug)
 
-    // channel_id の生成
-    this.channelId = 'stereo_check'
-    // access_token を指定する metadata の生成
-    this.metadata = { access_token: access_token }
+    this.channelId = channel_id
 
-    this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options)
+    this.connection = this.sora.sendonly(this.channelId, undefined, this.options)
+
     this.connection.on('notify', this.onnotify.bind(this))
-    this.connection.on('track', this.ontrack.bind(this))
-    this.connection.on('removetrack', this.onremovetrack.bind(this))
   }
 
-  async connect(): Promise<void> {
-    await this.connection.connect()
+  async connect(stream: MediaStream): Promise<void> {
+    await this.connection.connect(stream)
+    this.analyzeAudioStream(new MediaStream([stream.getAudioTracks()[0]]))
   }
 
   async disconnect(): Promise<void> {
     await this.connection.disconnect()
-    const remoteAudios = document.querySelector('#remote-videos')
-    if (remoteAudios) {
-      remoteAudios.innerHTML = ''
-    }
-  }
-
-  getStats(): Promise<RTCStatsReport> {
-    if (this.connection.pc === null) {
-      return Promise.reject(new Error('PeerConnection is not ready'))
-    }
-    return this.connection.pc.getStats()
   }
 
   analyzeAudioStream(stream: MediaStream) {
@@ -125,7 +118,13 @@ class SoraClient {
       }
 
       const isStereo = difference > 0.1
-      console.log(isStereo ? 'Stereo' : 'Mono')
+      const result = isStereo ? 'Stereo' : 'Mono'
+
+      // sendonly-stereo 要素に結果を反映
+      const sendonlyStereoElement = document.querySelector<HTMLDivElement>('#sendonly-stereo')
+      if (sendonlyStereoElement) {
+        sendonlyStereoElement.textContent = result
+      }
     }
 
     setInterval(analyze, 1000)
@@ -141,7 +140,93 @@ class SoraClient {
       event.event_type === 'connection.created' &&
       this.connection.connectionId === event.connection_id
     ) {
-      const connectionIdElement = document.querySelector<HTMLDivElement>('#connection-id')
+      const connectionIdElement = document.querySelector<HTMLDivElement>('#sendonly-connection-id')
+      if (connectionIdElement) {
+        connectionIdElement.textContent = event.connection_id
+      }
+    }
+  }
+}
+
+class RecvonlyClient {
+  private debug = false
+  private channelId: string
+  private options: object = {}
+
+  private sora: SoraConnection
+  private connection: ConnectionSubscriber
+
+  constructor(signaling_url: string, channel_id: string) {
+    this.channelId = channel_id
+
+    this.sora = Sora.connection(signaling_url, this.debug)
+
+    this.connection = this.sora.recvonly(this.channelId, undefined, this.options)
+
+    this.connection.on('notify', this.onnotify.bind(this))
+    this.connection.on('track', this.ontrack.bind(this))
+    this.connection.on('removetrack', this.onremovetrack.bind(this))
+  }
+
+  async connect(): Promise<void> {
+    await this.connection.connect()
+  }
+
+  async disconnect(): Promise<void> {
+    await this.connection.disconnect()
+    const remoteAudios = document.querySelector('#remote-videos')
+    if (remoteAudios) {
+      remoteAudios.innerHTML = ''
+    }
+  }
+
+  analyzeAudioStream(stream: MediaStream) {
+    const audioContext = new AudioContext()
+    const source = audioContext.createMediaStreamSource(stream)
+    const splitter = audioContext.createChannelSplitter(2)
+    const analyserL = audioContext.createAnalyser()
+    const analyserR = audioContext.createAnalyser()
+
+    source.connect(splitter)
+    splitter.connect(analyserL, 0)
+    splitter.connect(analyserR, 1)
+
+    const dataArrayL = new Float32Array(2048)
+    const dataArrayR = new Float32Array(2048)
+
+    const analyze = () => {
+      analyserL.getFloatTimeDomainData(dataArrayL)
+      analyserR.getFloatTimeDomainData(dataArrayR)
+
+      let difference = 0
+      for (let i = 0; i < dataArrayL.length; i++) {
+        difference += Math.abs(dataArrayL[i] - dataArrayR[i])
+      }
+
+      const isStereo = difference > 0.1
+      const result = isStereo ? 'Stereo' : 'Mono'
+
+      // recvonly-stereo 要素に結果を反映
+      const recvonlyStereoElement = document.querySelector<HTMLDivElement>('#recvonly-stereo')
+      if (recvonlyStereoElement) {
+        recvonlyStereoElement.textContent = result
+      }
+    }
+
+    setInterval(analyze, 1000)
+
+    if (audioContext.state === 'suspended') {
+      audioContext.resume()
+    }
+  }
+
+  private onnotify(event: SignalingNotifyMessage) {
+    // 自分の connection_id を取得する
+    if (
+      event.event_type === 'connection.created' &&
+      this.connection.connectionId === event.connection_id
+    ) {
+      const connectionIdElement = document.querySelector<HTMLDivElement>('#recvonly-connection-id')
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
       }

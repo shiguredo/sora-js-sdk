@@ -2,21 +2,32 @@
 
 <head>
   <meta charset="utf-8">
-  <title>Recvonly test</title>
+  <title>stereo check</title>
 </head>
 
 <body>
   <div class="container">
-    <h1>Recvonly test</h1>
-    <button id="start">start</button>
-    <button id="stop">stop</button>
-    <button id="get-stats">getStats</button><br />
-    <div id="connection-id"></div>
-    <div style="display: flex;">
-      <div id="remote-audios"></div>
+    <h1>Sendonly Stereo Check</h1>
+    <!-- 音声入力デバイス選択を追加 -->
+    <div>
+      <label for="sendonly-audio-input">音声入力デバイス：</label>
+      <select id="sendonly-audio-input"></select>
     </div>
-    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
-    <div id="stats-report-json"></div>
+    <button id="sendonly-start">start</button>
+    <button id="sendonly-stop">stop</button>
+    <div id="sendonly-connection-id"></div>
+    <div style="display: flex;">
+      <div id="sendonly-stereo"></div>
+    </div>
+  </div>
+  <div class="container">
+    <h1>Recvonly Stereo Check</h1>
+    <button id="recvonly-start">start</button>
+    <button id="recvonly-stop">stop</button>
+    <div id="recvonly-connection-id"></div>
+    <div style="display: flex;">
+      <div id="recvonly-stereo"></div>
+    </div>
   </div>
 
   <script type="module" src="./main.mts"></script>
