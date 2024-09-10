@@ -77,6 +77,9 @@ class SendonlyClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
+  private canvas: HTMLCanvasElement | null = null
+  private canvasCtx: CanvasRenderingContext2D | null = null
+
   constructor(signaling_url: string, channel_id: string) {
     this.sora = Sora.connection(signaling_url, this.debug)
 
@@ -85,6 +88,8 @@ class SendonlyClient {
     this.connection = this.sora.sendonly(this.channelId, undefined, this.options)
 
     this.connection.on('notify', this.onnotify.bind(this))
+
+    this.initializeCanvas()
   }
 
   async connect(stream: MediaStream): Promise<void> {
@@ -95,6 +100,13 @@ class SendonlyClient {
 
   async disconnect(): Promise<void> {
     await this.connection.disconnect()
+  }
+
+  private initializeCanvas() {
+    this.canvas = document.querySelector<HTMLCanvasElement>('#waveform')
+    if (this.canvas) {
+      this.canvasCtx = this.canvas.getContext('2d')
+    }
   }
 
   analyzeAudioStream(stream: MediaStream) {
@@ -108,12 +120,18 @@ class SendonlyClient {
     splitter.connect(analyserL, 0)
     splitter.connect(analyserR, 1)
 
-    const dataArrayL = new Float32Array(2048)
-    const dataArrayR = new Float32Array(2048)
+    analyserL.fftSize = 2048
+    analyserR.fftSize = 2048
+
+    const bufferLength = analyserL.frequencyBinCount
+    const dataArrayL = new Float32Array(bufferLength)
+    const dataArrayR = new Float32Array(bufferLength)
 
     const analyze = () => {
       analyserL.getFloatTimeDomainData(dataArrayL)
       analyserR.getFloatTimeDomainData(dataArrayR)
+
+      this.drawWaveforms(dataArrayL, dataArrayR)
 
       let difference = 0
       for (let i = 0; i < dataArrayL.length; i++) {
@@ -128,13 +146,76 @@ class SendonlyClient {
       if (sendonlyStereoElement) {
         sendonlyStereoElement.textContent = result
       }
+
+      requestAnimationFrame(analyze)
     }
 
-    setInterval(analyze, 1000)
+    analyze()
 
     if (audioContext.state === 'suspended') {
       audioContext.resume()
     }
+  }
+
+  private drawWaveforms(dataArrayL: Float32Array, dataArrayR: Float32Array) {
+    if (!this.canvasCtx || !this.canvas) return
+
+    const width = this.canvas.width
+    const height = this.canvas.height
+    const bufferLength = dataArrayL.length
+
+    this.canvasCtx.fillStyle = 'rgb(240, 240, 240)'
+    this.canvasCtx.fillRect(0, 0, width, height)
+    const drawChannel = (dataArray: Float32Array, color: string, offset: number) => {
+      if (!this.canvasCtx) return
+
+      this.canvasCtx.lineWidth = 3
+      this.canvasCtx.strokeStyle = color
+      this.canvasCtx.beginPath()
+
+      const sliceWidth = (width * 1.0) / bufferLength
+      let x = 0
+
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i]
+        const y = height / 2 + v * height * 0.8 + offset
+
+        if (i === 0) {
+          this.canvasCtx?.moveTo(x, y)
+        } else {
+          this.canvasCtx?.lineTo(x, y)
+        }
+
+        x += sliceWidth
+      }
+
+      this.canvasCtx?.lineTo(width, height / 2 + offset)
+      this.canvasCtx?.stroke()
+    }
+
+    // 左チャンネル（青）を少し上にずらして描画
+    this.canvasCtx.globalAlpha = 0.7
+    drawChannel(dataArrayL, 'rgb(0, 0, 255)', -10)
+
+    // 右チャンネル（赤）を少し下にずらして描画
+    this.canvasCtx.globalAlpha = 0.7
+    drawChannel(dataArrayR, 'rgb(255, 0, 0)', 10)
+
+    // モノラルかステレオかを判定して表示
+    const isMonaural = this.isMonaural(dataArrayL, dataArrayR)
+    this.canvasCtx.fillStyle = 'black'
+    this.canvasCtx.font = '20px Arial'
+    this.canvasCtx.fillText(isMonaural ? 'Monaural' : 'Stereo', 10, 30)
+  }
+
+  private isMonaural(dataArrayL: Float32Array, dataArrayR: Float32Array): boolean {
+    const threshold = 0.001
+    for (let i = 0; i < dataArrayL.length; i++) {
+      if (Math.abs(dataArrayL[i] - dataArrayR[i]) > threshold) {
+        return false
+      }
+    }
+    return true
   }
 
   private onnotify(event: SignalingNotifyMessage) {
