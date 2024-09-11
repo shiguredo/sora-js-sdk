@@ -11,8 +11,18 @@
 
 ## develop
 
-- [UPDATE] メッセージングの compress で fflate を利用せず decompressionStream API を利用するようにする
+- [CHANGE] メッセージングを送信する `sendMessage` が `void` ではなく `Promise<void>` を返すようになりました
+  - DataChannel の切断部分のロジックを大幅に書き換えた
+  - 複数回 Disconnect を呼んだときの挙動に懸念あり
+  - @voluntas
+- [UPDATE] メッセージングの圧縮を `fflate` を利用せず compressionStream API を利用するようにする
+  - @voluntas
+- [UPDATE] メッセージングの展開を `fflate` を利用せず decompressionStream API を利用するようにする
+  - @voluntas
 - [CHANGE] E2EE 機能を削除する
+  - @voluntas
+- [CHANGE] fflate を依存から削除する
+  - @voluntas
 
 ### misc
 

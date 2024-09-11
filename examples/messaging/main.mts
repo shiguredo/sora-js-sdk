@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelector('#stop')?.addEventListener('click', async () => {
     await client.disconnect()
   })
-  document.querySelector('#send-message')?.addEventListener('click', () => {
+  document.querySelector('#send-message')?.addEventListener('click', async () => {
     const value = document.querySelector<HTMLInputElement>('input[name=message]')?.value
     if (value !== undefined && value !== '') {
-      client.send_message(value)
+      await client.sendMessage(value)
     }
   })
 
@@ -140,9 +140,9 @@ class SoraClient {
     return this.connection.pc.getStats()
   }
 
-  send_message(message: string) {
+  async sendMessage(message: string) {
     if (message !== '') {
-      this.connection.sendMessage('#example', new TextEncoder().encode(message))
+      await this.connection.sendMessage('#example', new TextEncoder().encode(message))
     }
   }
 

@@ -1,5 +1,3 @@
-import { unzlibSync } from 'fflate'
-
 import type {
   Browser,
   ConnectionOptions,
