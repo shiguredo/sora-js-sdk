@@ -20,12 +20,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelector('#start')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
 
+    // 音声コーデックの選択を取得
+    const audioCodecType = document.getElementById('audio-codec-type') as HTMLSelectElement
+    const selectedCodecType = audioCodecType.value === 'OPUS' ? audioCodecType.value : undefined
+
+    // 音声ビットレートの選択を取得
     const audioBitRateSelect = document.getElementById('audio-bit-rate') as HTMLSelectElement
     const selectedBitRate = audioBitRateSelect.value
       ? Number.parseInt(audioBitRateSelect.value)
       : undefined
 
-    await client.connect(stream, selectedBitRate)
+    await client.connect(stream, selectedCodecType, selectedBitRate)
   })
 
   document.querySelector('#stop')?.addEventListener('click', async () => {
@@ -77,7 +82,7 @@ class SoraClient {
     this.sora = Sora.connection(signaling_url, this.debug)
 
     // channel_id の生成
-    this.channelId = `${channel_id_prefix}sendonly_recvonly${channel_id_suffix}`
+    this.channelId = `${channel_id_prefix}sendonly_audio_codec${channel_id_suffix}`
     // access_token を指定する metadata の生成
     this.metadata = { access_token: access_token }
 
@@ -85,7 +90,15 @@ class SoraClient {
     this.connection.on('notify', this.onnotify.bind(this))
   }
 
-  async connect(stream: MediaStream, audioBitRate?: number): Promise<void> {
+  async connect(
+    stream: MediaStream,
+    audioCodecType?: string,
+    audioBitRate?: number,
+  ): Promise<void> {
+    if (audioCodecType && audioCodecType === 'OPUS') {
+      // 音声コーデックを上書きする
+      this.connection.options.audioCodecType = audioCodecType
+    }
     if (audioBitRate) {
       // 音声ビットレートを上書きする
       this.connection.options.audioBitRate = audioBitRate
