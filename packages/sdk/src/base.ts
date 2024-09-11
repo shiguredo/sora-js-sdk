@@ -1,4 +1,8 @@
-import { DisconnectWaitTimeoutError } from './errors'
+import {
+  DisconnectDataChannelError,
+  DisconnectInternalError,
+  DisconnectWaitTimeoutError,
+} from './errors'
 import type {
   Callbacks,
   ConnectionOptions,
@@ -820,7 +824,7 @@ export default class ConnectionBase {
     // label: signaling が存在しない場合は閉じて終了
     if (!this.soraDataChannels.signaling) {
       closeDataChannels()
-      return { code: 4999, reason: 'DISCONNECT-INTERNAL-ERROR' }
+      return { code: 4999, reason: new DisconnectInternalError().message }
     }
 
     // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
@@ -837,7 +841,7 @@ export default class ConnectionBase {
         onDataChannelClosePromises.push(
           new Promise<void>((resolve, reject) => {
             dataChannel.onclose = () => resolve()
-            dataChannel.onerror = () => reject()
+            dataChannel.onerror = () => reject(new DisconnectDataChannelError())
           }),
         )
       }
@@ -902,10 +906,7 @@ export default class ConnectionBase {
     } catch (e) {
       // 正常終了できなかったので全てのチャネルを強制的に閉じる
       closeDataChannels()
-      if (e instanceof DisconnectWaitTimeoutError) {
-        return { code: 4999, reason: 'DISCONNECT-WAIT-TIMEOUT-ERROR' }
-      }
-      return { code: 4999, reason: 'DISCONNECT-DATA-CHANNEL-ERROR' }
+      return { code: 4999, reason: (e as Error).message }
     }
   }
 
