@@ -903,7 +903,7 @@ export default class ConnectionBase {
       // 正常終了できなかったので全てのチャネルを強制的に閉じる
       closeDataChannels()
       if (e instanceof DisconnectWaitTimeoutError) {
-        return { code: 4000, reason: 'DISCONNECT-WAIT-TIMEOUT-ERROR' }
+        return { code: 4999, reason: 'DISCONNECT-WAIT-TIMEOUT-ERROR' }
       }
       return { code: 4999, reason: 'DISCONNECT-DATA-CHANNEL-ERROR' }
     }
@@ -968,13 +968,10 @@ export default class ConnectionBase {
     }
     let event = null
     if (this.signalingSwitched) {
-      // DataChannel の切断処理がタイムアウトした場合は event を abend に差し替える
       const result = await this.disconnectDataChannel()
-      if (result.code === 4000) {
-        event = this.soraCloseEvent('abend', 'DISCONNECT-TIMEOUT')
-      }
       if (result.code === 4999) {
-        event = this.soraCloseEvent('abend', 'DISCONNECT-INTERNAL-ERROR')
+        // DataChannel の切断処理がエラーの場合は event を abend に差し替える
+        event = this.soraCloseEvent('abend', result.reason)
       }
       event = this.soraCloseEvent('normal', 'DISCONNECT', result)
       await this.disconnectWebSocket('NO-ERROR')

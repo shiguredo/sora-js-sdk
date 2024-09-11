@@ -12,6 +12,8 @@
 ## develop
 
 - [CHANGE] メッセージングを送信する `sendMessage` が `void` ではなく `Promise<void>` を返すようになりました
+  - DataChannel の切断部分のロジックを大幅に書き換えた
+  - 複数回 Disconnect を呼んだときの挙動に懸念あり
   - @voluntas
 - [UPDATE] メッセージングの圧縮を `fflate` を利用せず compressionStream API を利用するようにする
   - @voluntas
