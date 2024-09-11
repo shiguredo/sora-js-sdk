@@ -24,6 +24,8 @@
   - @voluntas
 - [UPDATE] examples で sora-js-sdk を使うよう `workspace:*` に変更する
   - @voluntas
+- [ADD] E2E テストに音声のみ配信サンプルを追加する
+  - @blaue-fuchs
 
 ## 2024.1.2
 
