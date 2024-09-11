@@ -9,8 +9,8 @@ test('spotlight sendonly/recvonly pages', async ({ browser }) => {
   await sendonly.goto('http://localhost:9000/spotlight_sendonly/')
   await recvonly.goto('http://localhost:9000/spotlight_recvonly/')
 
-  await sendonly.click('#start')
-  await recvonly.click('#start')
+  await sendonly.click('#connect')
+  await recvonly.click('#connect')
 
   // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await sendonly.waitForSelector('#connection-id:not(:empty)')
@@ -26,8 +26,8 @@ test('spotlight sendonly/recvonly pages', async ({ browser }) => {
   const recvonlyConnectionId = await recvonly.$eval('#connection-id', (el) => el.textContent)
   console.log(`recvonly connectionId=${recvonlyConnectionId}`)
 
-  await sendonly.click('#stop')
-  await recvonly.click('#stop')
+  await sendonly.click('#disconnect')
+  await recvonly.click('#disconnect')
 
   await sendonly.close()
   await recvonly.close()
