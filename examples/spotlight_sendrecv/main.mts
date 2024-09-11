@@ -26,21 +26,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     ACCESS_TOKEN,
   )
 
-  document.querySelector('#sendrecv1-start')?.addEventListener('click', async () => {
+  document.querySelector('#sendrecv1-connect')?.addEventListener('click', async () => {
     // sendrecv1
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
     await sendrecv1.connect(stream)
   })
-  document.querySelector('#sendrecv1-stop')?.addEventListener('click', async () => {
+  document.querySelector('#sendrecv1-disconnect')?.addEventListener('click', async () => {
     await sendrecv1.disconnect()
   })
 
-  document.querySelector('#sendrecv2-start')?.addEventListener('click', async () => {
+  document.querySelector('#sendrecv2-connect')?.addEventListener('click', async () => {
     // sendrecv2
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
     await sendrecv2.connect(stream)
   })
-  document.querySelector('#sendrecv2-stop')?.addEventListener('click', async () => {
+  document.querySelector('#sendrecv2-disconnect')?.addEventListener('click', async () => {
     await sendrecv2.disconnect()
   })
 })
