@@ -235,7 +235,10 @@ class SendonlyClient {
 class RecvonlyClient {
   private debug = false
   private channelId: string
-  private options: object = {}
+  private options: object = {
+    video: false,
+    audio: true,
+  }
 
   private sora: SoraConnection
   private connection: ConnectionSubscriber
@@ -391,9 +394,14 @@ class RecvonlyClient {
     // Sora の場合、event.streams には MediaStream が 1 つだけ含まれる
     const stream = event.streams[0]
     if (event.track.kind === 'audio') {
-      console.log(event.track.kind)
-      console.log(stream.getAudioTracks()[0].getSettings())
       this.analyzeAudioStream(new MediaStream([event.track]))
+
+      // <audio> 要素に音声ストリームを設定
+      const audioElement = document.querySelector<HTMLAudioElement>('#recvonly-audio')
+      if (audioElement) {
+        audioElement.srcObject = stream
+        audioElement.play().catch((error) => console.error('音声の再生に失敗しました:', error))
+      }
     }
   }
 }
