@@ -287,12 +287,8 @@ class RecvonlyClient {
   }
 
   async connect(): Promise<void> {
-    const forceStereoOutputElement = document.querySelector<HTMLInputElement>(
-      'input[name="forceStereoOutput"]:checked',
-    )
-    const forceStereoOutput = forceStereoOutputElement
-      ? forceStereoOutputElement.value === 'true'
-      : false
+    const forceStereoOutputElement = document.querySelector<HTMLInputElement>('#forceStereoOutput')
+    const forceStereoOutput = forceStereoOutputElement ? forceStereoOutputElement.checked : false
     this.connection.options.forceStereoOutput = forceStereoOutput
 
     await this.connection.connect()
