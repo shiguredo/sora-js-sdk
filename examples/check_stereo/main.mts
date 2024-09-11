@@ -103,7 +103,7 @@ class SendonlyClient {
   }
 
   private initializeCanvas() {
-    this.canvas = document.querySelector<HTMLCanvasElement>('#waveform')
+    this.canvas = document.querySelector<HTMLCanvasElement>('#sendonly-waveform')
     if (this.canvas) {
       this.canvasCtx = this.canvas.getContext('2d')
     }
@@ -240,6 +240,9 @@ class RecvonlyClient {
   private sora: SoraConnection
   private connection: ConnectionSubscriber
 
+  private canvas: HTMLCanvasElement | null = null
+  private canvasCtx: CanvasRenderingContext2D | null = null
+
   constructor(signaling_url: string, channel_id: string) {
     this.channelId = channel_id
 
@@ -249,7 +252,8 @@ class RecvonlyClient {
 
     this.connection.on('notify', this.onnotify.bind(this))
     this.connection.on('track', this.ontrack.bind(this))
-    this.connection.on('removetrack', this.onremovetrack.bind(this))
+
+    this.initializeCanvas()
   }
 
   async connect(): Promise<void> {
@@ -258,14 +262,17 @@ class RecvonlyClient {
 
   async disconnect(): Promise<void> {
     await this.connection.disconnect()
-    const remoteAudios = document.querySelector('#remote-videos')
-    if (remoteAudios) {
-      remoteAudios.innerHTML = ''
+  }
+
+  private initializeCanvas() {
+    this.canvas = document.querySelector<HTMLCanvasElement>('#recvonly-waveform')
+    if (this.canvas) {
+      this.canvasCtx = this.canvas.getContext('2d')
     }
   }
 
   analyzeAudioStream(stream: MediaStream) {
-    const audioContext = new AudioContext()
+    const audioContext = new AudioContext({ sampleRate: 48000, latencyHint: 'interactive' })
     const source = audioContext.createMediaStreamSource(stream)
     const splitter = audioContext.createChannelSplitter(2)
     const analyserL = audioContext.createAnalyser()
@@ -275,33 +282,96 @@ class RecvonlyClient {
     splitter.connect(analyserL, 0)
     splitter.connect(analyserR, 1)
 
-    const dataArrayL = new Float32Array(2048)
-    const dataArrayR = new Float32Array(2048)
+    analyserL.fftSize = 2048
+    analyserR.fftSize = 2048
+
+    const bufferLength = analyserL.frequencyBinCount
+    const dataArrayL = new Float32Array(bufferLength)
+    const dataArrayR = new Float32Array(bufferLength)
 
     const analyze = () => {
       analyserL.getFloatTimeDomainData(dataArrayL)
       analyserR.getFloatTimeDomainData(dataArrayR)
+
+      this.drawWaveforms(dataArrayL, dataArrayR)
 
       let difference = 0
       for (let i = 0; i < dataArrayL.length; i++) {
         difference += Math.abs(dataArrayL[i] - dataArrayR[i])
       }
 
-      const isStereo = difference > 0.1
+      const isStereo = difference !== 0
       const result = isStereo ? 'Stereo' : 'Mono'
 
-      // recvonly-stereo 要素に結果を反映
       const recvonlyStereoElement = document.querySelector<HTMLDivElement>('#recvonly-stereo')
       if (recvonlyStereoElement) {
         recvonlyStereoElement.textContent = result
       }
+
+      requestAnimationFrame(analyze)
     }
 
-    setInterval(analyze, 1000)
+    analyze()
 
     if (audioContext.state === 'suspended') {
       audioContext.resume()
     }
+  }
+
+  private drawWaveforms(dataArrayL: Float32Array, dataArrayR: Float32Array) {
+    if (!this.canvasCtx || !this.canvas) return
+
+    const width = this.canvas.width
+    const height = this.canvas.height
+    const bufferLength = dataArrayL.length
+
+    this.canvasCtx.fillStyle = 'rgb(240, 240, 240)'
+    this.canvasCtx.fillRect(0, 0, width, height)
+    const drawChannel = (dataArray: Float32Array, color: string, offset: number) => {
+      if (!this.canvasCtx) return
+
+      this.canvasCtx.lineWidth = 3
+      this.canvasCtx.strokeStyle = color
+      this.canvasCtx.beginPath()
+
+      const sliceWidth = (width * 1.0) / bufferLength
+      let x = 0
+
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i]
+        const y = height / 2 + v * height * 0.8 + offset
+
+        if (i === 0) {
+          this.canvasCtx?.moveTo(x, y)
+        } else {
+          this.canvasCtx?.lineTo(x, y)
+        }
+
+        x += sliceWidth
+      }
+
+      this.canvasCtx?.lineTo(width, height / 2 + offset)
+      this.canvasCtx?.stroke()
+    }
+
+    this.canvasCtx.globalAlpha = 0.7
+    drawChannel(dataArrayL, 'rgb(0, 0, 255)', -10)
+    drawChannel(dataArrayR, 'rgb(255, 0, 0)', 10)
+
+    const isMonaural = this.isMonaural(dataArrayL, dataArrayR)
+    this.canvasCtx.fillStyle = 'black'
+    this.canvasCtx.font = '20px Arial'
+    this.canvasCtx.fillText(isMonaural ? 'Monaural' : 'Stereo', 10, 30)
+  }
+
+  private isMonaural(dataArrayL: Float32Array, dataArrayR: Float32Array): boolean {
+    const threshold = 0.001
+    for (let i = 0; i < dataArrayL.length; i++) {
+      if (Math.abs(dataArrayL[i] - dataArrayR[i]) > threshold) {
+        return false
+      }
+    }
+    return true
   }
 
   private onnotify(event: SignalingNotifyMessage) {
@@ -321,16 +391,9 @@ class RecvonlyClient {
     // Sora の場合、event.streams には MediaStream が 1 つだけ含まれる
     const stream = event.streams[0]
     if (event.track.kind === 'audio') {
-      this.analyzeAudioStream(stream)
-    }
-  }
-
-  private onremovetrack(event: MediaStreamTrackEvent) {
-    // このトラックが属している MediaStream の id を取得する
-    const stream = event.target as MediaStream
-    const remoteAudio = document.querySelector(`#remote-audio-${stream.id}`)
-    if (remoteAudio) {
-      document.querySelector('#remote-audios')?.removeChild(remoteAudio)
+      console.log(event.track.kind)
+      console.log(stream.getAudioTracks()[0].getSettings())
+      this.analyzeAudioStream(new MediaStream([event.track]))
     }
   }
 }
