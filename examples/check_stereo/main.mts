@@ -9,10 +9,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 環境変数の読み込み
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
 
-  // Sora クライアントの初期化
-  const sendonly = new SendonlyClient(SORA_SIGNALING_URL, 'stereo_check')
+  const uuid = crypto.randomUUID()
 
-  const recvonly = new RecvonlyClient(SORA_SIGNALING_URL, 'stereo_check')
+  // Sora クライアントの初期化
+  const sendonly = new SendonlyClient(SORA_SIGNALING_URL, uuid)
+
+  const recvonly = new RecvonlyClient(SORA_SIGNALING_URL, uuid)
 
   // デバイスリストの取得と設定
   await updateDeviceLists()
