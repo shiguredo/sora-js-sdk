@@ -6,9 +6,9 @@ test('sendonly audio pages', async ({ browser }) => {
   // ページに対して操作を行う
   await sendonly.goto('http://localhost:9000/sendonly_audio/')
 
-  // select 要素から直接オプションを取得してランダムに選択
+  // select 要素から直接オプションを取得してランダムに選択する
   // 音声コーデック
-  const randomAudioCodec = await sendonly.evaluate(() => {
+  const selectedAudioCodec = await sendonly.evaluate(() => {
     const select = document.querySelector('#audio-codec-type') as HTMLSelectElement
     const options = Array.from(select.options)
     const randomOption = options[Math.floor(Math.random() * options.length)]
@@ -16,7 +16,7 @@ test('sendonly audio pages', async ({ browser }) => {
     return randomOption.value
   })
   // 音声ビットレート
-  const randomBitrate = await sendonly.evaluate(() => {
+  const selectedBitRate = await sendonly.evaluate(() => {
     const select = document.querySelector('#audio-bit-rate') as HTMLSelectElement
     const options = Array.from(select.options).filter((option) => option.value !== '') // 未指定を除外
     const randomOption = options[Math.floor(Math.random() * options.length)]
@@ -24,10 +24,11 @@ test('sendonly audio pages', async ({ browser }) => {
     return randomOption.value
   })
 
-  // ログで選択された音声コーデック・音声ビットレートを表示
-  console.log(`Selected codec: ${randomAudioCodec}`)
-  console.log(`Selected bitrate: ${randomBitrate} kbps`)
+  // ランダムで選択した音声コーデック・音声ビットレートをログに表示する
+  console.log(`Selected AudioCodec: ${selectedAudioCodec}`)
+  console.log(`Selected BitRate: ${selectedBitRate} kbps`)
 
+  // 'Start' ボタンをクリックして音声の送信を開始する
   await sendonly.click('#start')
   // #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await sendonly.waitForSelector('#connection-id:not(:empty)')
@@ -49,25 +50,25 @@ test('sendonly audio pages', async ({ browser }) => {
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
-  // 音声コーデック : 今は指定してもしなくても OPUS のみ
+  // 音声コーデックを確認する : 今は指定してもしなくても OPUS のみ
   const sendonlyAudioCodecStats = sendonlyStatsReportJson.find(
     (report) => report.type === 'codec' && report.mimeType === 'audio/opus',
   )
   expect(sendonlyAudioCodecStats).toBeDefined()
 
-  // 音声ビットレート
+  // 音声ビットレートを確認する：音声を送れているかと targetBitrate の確認
   const sendonlyAudioOutboundRtp = sendonlyStatsReportJson.find(
     (report) => report.type === 'outbound-rtp' && report.kind === 'audio',
   )
   expect(sendonlyAudioOutboundRtp).toBeDefined()
 
-  // 音声が正常に送れているか確認
+  // 音声が正常に送れているかを確認する
   expect(sendonlyAudioOutboundRtp?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyAudioOutboundRtp?.packetsSent).toBeGreaterThan(0)
 
-  // 音声ビットレートの選択に基づいて期待値を設定
-  const expectedBitrate = Number.parseInt(randomBitrate) * 1000
-  expect(sendonlyAudioOutboundRtp?.targetBitrate).toEqual(expectedBitrate)
+  // 音声ビットレートの選択に基づいて期待値を設定し一致するかを確認する
+  const expectedBitRate = Number.parseInt(selectedBitRate) * 1000
+  expect(sendonlyAudioOutboundRtp?.targetBitrate).toEqual(expectedBitRate)
 
   await sendonly.click('#stop')
   await sendonly.close()

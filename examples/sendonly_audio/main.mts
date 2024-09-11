@@ -20,11 +20,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelector('#start')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
 
-    // 音声コーデック
+    // 音声コーデックの選択を取得
     const audioCodecType = document.getElementById('audio-codec-type') as HTMLSelectElement
     const selectedCodecType = audioCodecType.value === 'OPUS' ? audioCodecType.value : undefined
 
-    // 音声ビットレート
+    // 音声ビットレートの選択を取得
     const audioBitRateSelect = document.getElementById('audio-bit-rate') as HTMLSelectElement
     const selectedBitRate = audioBitRateSelect.value
       ? Number.parseInt(audioBitRateSelect.value)
