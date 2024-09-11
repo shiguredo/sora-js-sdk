@@ -1366,6 +1366,16 @@ export default class ConnectionBase {
     }
     const sessionDescription = await this.pc.createAnswer()
     this.writePeerConnectionTimelineLog('create-answer', sessionDescription)
+
+    // SDPを修正
+    if (sessionDescription.sdp) {
+      const regex = /minptime=10(?!;stereo=1)/g
+      sessionDescription.sdp = sessionDescription.sdp.replace(
+        regex,
+        'minptime=10;stereo=1;sprop-stereo=1',
+      )
+    }
+
     await this.pc.setLocalDescription(sessionDescription)
     this.writePeerConnectionTimelineLog('set-local-description', sessionDescription)
     return
