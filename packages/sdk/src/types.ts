@@ -323,6 +323,10 @@ export type ConnectionOptions = {
   bundleId?: string
   audioStreamingLanguageCode?: string
   forwardingFilter?: JSONType
+
+  // Sora JavaScript SDK 内部で利用するオプション
+  // SDP で Answer に stereo=1 を追記する
+  forceStereoOutput?: boolean
 }
 
 export type Callbacks = {

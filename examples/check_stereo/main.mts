@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // デバイスの変更を監視
   navigator.mediaDevices.addEventListener('devicechange', updateDeviceLists)
 
-  document.querySelector('#sendonly-start')?.addEventListener('click', async () => {
+  document.querySelector('#sendonly-connect')?.addEventListener('click', async () => {
     const audioInputSelect = document.querySelector<HTMLSelectElement>('#sendonly-audio-input')
     const selectedAudioDeviceId = audioInputSelect?.value
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -40,16 +40,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await sendonly.connect(stream)
   })
 
-  document.querySelector('#sendonly-stop')?.addEventListener('click', async () => {
-    await sendonly.disconnect()
-  })
-
-  document.querySelector('#recvonly-start')?.addEventListener('click', async () => {
+  document.querySelector('#recvonly-connect')?.addEventListener('click', async () => {
     await recvonly.connect()
-  })
-
-  document.querySelector('#recvonly-stop')?.addEventListener('click', async () => {
-    await recvonly.disconnect()
   })
 })
 
@@ -107,12 +99,6 @@ class SendonlyClient {
 
     // チャネル数の定期チェックを開始
     this.startChannelCheck()
-  }
-
-  async disconnect(): Promise<void> {
-    await this.connection.disconnect()
-    // チャネル数の定期チェックを停止
-    this.stopChannelCheck()
   }
 
   async getChannels(): Promise<number | undefined> {
@@ -271,13 +257,6 @@ class SendonlyClient {
       }
     }, 1000) // 1秒ごとにチェック
   }
-
-  private stopChannelCheck() {
-    if (this.channelCheckInterval !== undefined) {
-      clearInterval(this.channelCheckInterval)
-      this.channelCheckInterval = undefined
-    }
-  }
 }
 
 class RecvonlyClient {
@@ -308,11 +287,15 @@ class RecvonlyClient {
   }
 
   async connect(): Promise<void> {
-    await this.connection.connect()
-  }
+    const forceStereoOutputElement = document.querySelector<HTMLInputElement>(
+      'input[name="forceStereoOutput"]:checked',
+    )
+    const forceStereoOutput = forceStereoOutputElement
+      ? forceStereoOutputElement.value === 'true'
+      : false
+    this.connection.options.forceStereoOutput = forceStereoOutput
 
-  async disconnect(): Promise<void> {
-    await this.connection.disconnect()
+    await this.connection.connect()
   }
 
   private initializeCanvas() {

@@ -1367,13 +1367,17 @@ export default class ConnectionBase {
     const sessionDescription = await this.pc.createAnswer()
     this.writePeerConnectionTimelineLog('create-answer', sessionDescription)
 
-    // SDPを修正
-    if (sessionDescription.sdp) {
-      const regex = /minptime=10(?!;stereo=1)/g
-      sessionDescription.sdp = sessionDescription.sdp.replace(
-        regex,
-        'minptime=10;stereo=1;sprop-stereo=1',
-      )
+    // TODO: sendrecv または recvonly で設定で forceStereo: true という options を追加する
+    // Chrome/Edge 向けのハック stereo=1 が CreateOffer では付与されないので、
+    // SDP を書き換えて stereo=1 を付与する
+    // https://github.com/w3c/webrtc-stats/issues/686
+    // https://github.com/w3c/webrtc-extensions/issues/63
+    // https://issues.webrtc.org/issues/41481053#comment18
+
+    if (this.options.forceStereoOutput && sessionDescription.sdp) {
+      const regexp = /minptime=\d+;(?!.*stereo=1)/
+      const replacement = 'minptime=$&stereo=1;'
+      sessionDescription.sdp = sessionDescription.sdp.replace(regexp, replacement)
     }
 
     await this.pc.setLocalDescription(sessionDescription)
