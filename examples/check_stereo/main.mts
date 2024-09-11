@@ -80,6 +80,8 @@ class SendonlyClient {
   private canvas: HTMLCanvasElement | null = null
   private canvasCtx: CanvasRenderingContext2D | null = null
 
+  private channelCheckInterval: number | undefined
+
   constructor(signaling_url: string, channel_id: string) {
     this.sora = Sora.connection(signaling_url, this.debug)
 
@@ -93,13 +95,33 @@ class SendonlyClient {
   }
 
   async connect(stream: MediaStream): Promise<void> {
-    await this.connection.connect(stream)
     const audioTrack = stream.getAudioTracks()[0]
+    if (!audioTrack) {
+      throw new Error('Audio track not found')
+    }
+
+    await this.connection.connect(stream)
     this.analyzeAudioStream(new MediaStream([audioTrack]))
+
+    // チャネル数の定期チェックを開始
+    this.startChannelCheck()
   }
 
   async disconnect(): Promise<void> {
     await this.connection.disconnect()
+    // チャネル数の定期チェックを停止
+    this.stopChannelCheck()
+  }
+
+  async getChannels(): Promise<number | undefined> {
+    if (!this.connection.pc) {
+      return undefined
+    }
+    const sender = this.connection.pc.getSenders().find((sender) => sender.track?.kind === 'audio')
+    if (!sender) {
+      return undefined
+    }
+    return sender.getParameters().codecs[0].channels
   }
 
   private initializeCanvas() {
@@ -140,6 +162,12 @@ class SendonlyClient {
 
       const isStereo = difference !== 0
       const result = isStereo ? 'Stereo' : 'Mono'
+
+      // differenceの値を表示する要素を追加
+      const differenceElement = document.querySelector<HTMLDivElement>('#sendonly-difference-value')
+      if (differenceElement) {
+        differenceElement.textContent = `Difference: ${difference.toFixed(6)}`
+      }
 
       // sendonly-stereo 要素に結果を反映
       const sendonlyStereoElement = document.querySelector<HTMLDivElement>('#sendonly-stereo')
@@ -230,6 +258,24 @@ class SendonlyClient {
       }
     }
   }
+
+  private startChannelCheck() {
+    this.channelCheckInterval = window.setInterval(async () => {
+      const channels = await this.getChannels()
+      const channelElement = document.querySelector<HTMLDivElement>('#sendonly-channels')
+      if (channelElement) {
+        channelElement.textContent =
+          channels !== undefined ? `getParameters codecs channels: ${channels}` : 'undefined'
+      }
+    }, 1000) // 1秒ごとにチェック
+  }
+
+  private stopChannelCheck() {
+    if (this.channelCheckInterval !== undefined) {
+      clearInterval(this.channelCheckInterval)
+      this.channelCheckInterval = undefined
+    }
+  }
 }
 
 class RecvonlyClient {
@@ -306,6 +352,13 @@ class RecvonlyClient {
       const isStereo = difference !== 0
       const result = isStereo ? 'Stereo' : 'Mono'
 
+      // differenceの値を表示する要素を追加
+      const differenceElement = document.querySelector<HTMLDivElement>('#recvonly-difference-value')
+      if (differenceElement) {
+        differenceElement.textContent = `Difference: ${difference.toFixed(6)}`
+      }
+
+      // 既存のコード
       const recvonlyStereoElement = document.querySelector<HTMLDivElement>('#recvonly-stereo')
       if (recvonlyStereoElement) {
         recvonlyStereoElement.textContent = result
