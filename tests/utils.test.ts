@@ -7,7 +7,7 @@ const metadata = 'PG9A6RXgYqiqWKOVO'
 const clientId = 'clientId'
 const sdp = 'v=0...'
 const userAgent = window.navigator.userAgent
-const soraClient = 'Sora JavaScript SDK __SORA_JS_SDK_VERSION__'
+const soraClient = `Sora JavaScript SDK ${__SORA_JS_SDK_VERSION__}`
 const audioCodecType: AudioCodecType = 'OPUS'
 const videoCodecType: VideoCodecType = 'VP9'
 const baseExpectedMessage = Object.freeze({

@@ -8,13 +8,12 @@
   "types": "dist/sora.d.ts",
   "scripts": {
     "dev": "vite",
-    "examples": "vite build",
     "build": "vite build",
     "e2e-test": "pnpm run build && playwright test --project=chromium",
-    "lint": "pnpm -r --filter=./src/* --filter=./examples lint",
-    "fmt": "pnpm -r --filter=./packages/* --filter=./examples fmt",
-    "test": "pnpm -r --filter=./packages/* test",
-    "check": "pnpm -r --filter=./packages/* --filter=./examples check",
+    "lint": "biome lint src/",
+    "fmt": "biome format --write src/",
+    "test": "vitest run",
+    "check": "tsc --noEmit",
     "doc": "typedoc",
     "release:canary": "./scripts/release_canary.sh"
   },
