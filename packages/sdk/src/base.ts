@@ -1358,7 +1358,7 @@ export default class ConnectionBase {
 
     if (this.options.forceStereoOutput && sessionDescription.sdp) {
       const regexp = /(?<!stereo=1;.*)minptime=\d+(?!.*stereo=1)/
-      const replacementFunc = (match: string) => match+  ';stereo=1'
+      const replacementFunc = (match: string) => `${match};stereo=1`
       sessionDescription.sdp = sessionDescription.sdp.replace(regexp, replacementFunc)
     }
 
