@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
-import type { AudioCodecType, DataChannelDirection, VideoCodecType } from '../src/types'
-import { createSignalingMessage } from '../src/utils'
+import type { AudioCodecType, DataChannelDirection, VideoCodecType } from '../../src/types'
+import { createSignalingMessage } from '../../src/utils'
 
 const channelId = '7N3fsMHob'
 const metadata = 'PG9A6RXgYqiqWKOVO'

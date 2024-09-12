@@ -9,10 +9,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "e2e-test": "pnpm run build && playwright test --project=chromium",
+    "test": "vitest run",
+    "test:e2e": "pnpm run build && playwright test --project=chromium",
     "lint": "biome lint src/",
     "fmt": "biome format --write src/",
-    "test": "vitest run",
     "check": "tsc --noEmit",
     "doc": "typedoc",
     "release:canary": "./scripts/release_canary.sh"
