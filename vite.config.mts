@@ -1,25 +1,44 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
+import dts from 'vite-plugin-dts'
+import pkg from './package.json'
 
-// root が examples なので examples/dist にビルドされる
+const banner = `/**
+ * ${pkg.name}
+ * ${pkg.description}
+ * @version: ${pkg.version}
+ * @author: ${pkg.author}
+ * @license: ${pkg.license}
+ **/
+`
 
 export default defineConfig({
-  root: resolve(__dirname, 'examples'),
+  define: {
+    __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
+  },
+  root: process.cwd(),
   build: {
+    minify: 'esbuild',
+    target: 'es2020',
+    emptyOutDir: true,
+    manifest: true,
+    outDir: resolve(__dirname, 'dist'),
+    lib: {
+      entry: resolve(__dirname, 'src/sora.ts'),
+      name: 'WebRTC SFU Sora JavaScript SDK',
+      formats: ['es'],
+      fileName: 'sora',
+    },
     rollupOptions: {
-      input: {
-        index: resolve(__dirname, 'examples/index.html'),
-        sendrecv: resolve(__dirname, 'examples/sendrecv/index.html'),
-        sendonly: resolve(__dirname, 'examples/sendonly/index.html'),
-        recvonly: resolve(__dirname, 'examples/recvonly/index.html'),
-        simulcast: resolve(__dirname, 'examples/simulcast/index.html'),
-        spotlight_sendrecv: resolve(__dirname, 'examples/spotlight_sendrecv/index.html'),
-        spotlight_sendonly: resolve(__dirname, 'examples/spotlight_sendonly/index.html'),
-        spotlight_recvonly: resolve(__dirname, 'examples/spotlight_recvonly/index.html'),
-        sendonly_audio: resolve(__dirname, 'examples/sendonly_audio/index.html'),
-        messaging: resolve(__dirname, 'examples/messaging/index.html'),
+      output: {
+        banner: banner,
       },
     },
   },
   envDir: resolve(__dirname, './'),
+  plugins: [
+    dts({
+      include: ['src/**/*'],
+    }),
+  ],
 })

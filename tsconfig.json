@@ -4,6 +4,7 @@
     "module": "ES2020",
     "strict": true,
     "declaration": true,
+    "declarationDir": "dist",
     "strictNullChecks": true,
     "importHelpers": true,
     "moduleResolution": "node",
@@ -16,5 +17,6 @@
     "types": [],
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "tests"]
 }
