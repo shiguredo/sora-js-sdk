@@ -1357,9 +1357,9 @@ export default class ConnectionBase {
     // https://issues.webrtc.org/issues/41481053#comment18
 
     if (this.options.forceStereoOutput && sessionDescription.sdp) {
-      const regexp = /minptime=\d+;(?!.*stereo=1)/
-      const replacement = 'minptime=$&stereo=1;'
-      sessionDescription.sdp = sessionDescription.sdp.replace(regexp, replacement)
+      const regexp = /(?<!stereo=1;.*)minptime=\d+(?!.*stereo=1)/
+      const replacementFunc = (match: string) => match+  ';stereo=1'
+      sessionDescription.sdp = sessionDescription.sdp.replace(regexp, replacementFunc)
     }
 
     await this.pc.setLocalDescription(sessionDescription)
