@@ -7,8 +7,5 @@
   },
   "dependencies": {
     "sora-js-sdk": "workspace:*"
-  },
-  "devDependencies": {
-    "vite-plugin-dts": "4.2.1"
   }
 }
