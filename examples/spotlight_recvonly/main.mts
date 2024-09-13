@@ -19,11 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
     ACCESS_TOKEN,
   )
 
-  document.querySelector('#start')?.addEventListener('click', async () => {
+  document.querySelector('#connect')?.addEventListener('click', async () => {
     await client.connect()
   })
 
-  document.querySelector('#stop')?.addEventListener('click', async () => {
+  document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
   })
 })

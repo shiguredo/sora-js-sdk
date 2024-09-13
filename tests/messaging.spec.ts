@@ -9,8 +9,8 @@ test('messaging pages', async ({ browser }) => {
   await page1.goto('http://localhost:9000/messaging/')
   await page2.goto('http://localhost:9000/messaging/')
 
-  await page1.click('#start')
-  await page2.click('#start')
+  await page1.click('#connect')
+  await page2.click('#connect')
 
   await page1.waitForSelector('#connection-id:not(:empty)')
   const page1ConnectionId = await page1.$eval('#connection-id', (el) => el.textContent)
@@ -151,8 +151,8 @@ test('messaging pages', async ({ browser }) => {
   expect(page2ExampleStats?.bytesSent).toBeGreaterThan(0)
   expect(page2ExampleStats?.messagesSent).toBeGreaterThan(0)
 
-  await page1.click('#stop')
-  await page2.click('#stop')
+  await page1.click('#disconnect')
+  await page2.click('#disconnect')
 
   await page1.close()
   await page2.close()

@@ -28,8 +28,8 @@ test('sendonly audio pages', async ({ browser }) => {
   console.log(`Selected AudioCodec: ${selectedAudioCodec}`)
   console.log(`Selected BitRate: ${selectedBitRate} kbps`)
 
-  // 'Start' ボタンをクリックして音声の送信を開始する
-  await sendonly.click('#start')
+  // 'connect' ボタンをクリックして音声の送信を開始する
+  await sendonly.click('#connect')
   // #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await sendonly.waitForSelector('#connection-id:not(:empty)')
   // #connection-id 要素の内容を取得
@@ -70,6 +70,6 @@ test('sendonly audio pages', async ({ browser }) => {
   const expectedBitRate = Number.parseInt(selectedBitRate) * 1000
   expect(sendonlyAudioOutboundRtp?.targetBitrate).toEqual(expectedBitRate)
 
-  await sendonly.click('#stop')
+  await sendonly.click('#disconnect')
   await sendonly.close()
 })

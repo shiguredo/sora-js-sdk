@@ -1,5 +1,8 @@
-import { zlibSync } from 'fflate'
-
+import {
+  DisconnectDataChannelError,
+  DisconnectInternalError,
+  DisconnectWaitTimeoutError,
+} from './errors'
 import type {
   Callbacks,
   ConnectionOptions,
@@ -25,6 +28,7 @@ import type {
 } from './types'
 import {
   ConnectError,
+  compressMessage,
   createDataChannelData,
   createDataChannelEvent,
   createDataChannelMessageEvent,
@@ -647,7 +651,7 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = zlibSync(binaryMessage, {})
+        const zlibMessage = await decompressMessage(binaryMessage)
         if (this.soraDataChannels.signaling.readyState === 'open') {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
@@ -801,10 +805,10 @@ export default class ConnectionBase {
    * @remarks
    * 正常/異常どちらの切断でも使用する
    */
-  private disconnectDataChannel(): Promise<{
+  private async disconnectDataChannel(): Promise<{
     code: number
     reason: string
-  } | null> {
+  }> {
     // DataChannel の強制終了処理
     const closeDataChannels = () => {
       for (const key of Object.keys(this.soraDataChannels)) {
@@ -816,113 +820,94 @@ export default class ConnectionBase {
         delete this.soraDataChannels[key]
       }
     }
-    return new Promise((resolve, reject) => {
-      // DataChannel label signaling が存在しない場合は強制終了処理をする
-      if (!this.soraDataChannels.signaling) {
-        closeDataChannels()
-        return resolve({ code: 4999, reason: '' })
-      }
-      // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
-      const disconnectWaitTimeoutId = setTimeout(() => {
-        closeDataChannels()
-        return reject()
-      }, this.disconnectWaitTimeout)
 
-      const onClosePromises: Promise<void>[] = []
-      for (const key of Object.keys(this.soraDataChannels)) {
-        const dataChannel = this.soraDataChannels[key]
-        if (dataChannel) {
-          // onerror が発火した場合は強制終了処理をする
-          dataChannel.onerror = () => {
-            clearTimeout(disconnectWaitTimeoutId)
-            closeDataChannels()
-            return resolve({ code: 4999, reason: '' })
-          }
-          // すべての DataChannel の readyState が "closed" になったことを確認する Promsie を生成する
-          const p = (): Promise<void> => {
-            return new Promise((res, _) => {
-              // disconnectWaitTimeout 時間を過ぎた場合に終了させるための counter を作成する
-              let counter = 0
-              // onclose 内で readyState の変化を待つと非同期のまま複数回 disconnect を呼んだ場合に
-              // callback が上書きされて必ず DISCONNECT-TIMEOUT になってしまうので setInterval を使う
-              const timerId = setInterval(() => {
-                counter++
-                if (dataChannel.readyState === 'closed') {
-                  clearInterval(timerId)
-                  res()
-                }
-                if (this.disconnectWaitTimeout < counter * 100) {
-                  res()
-                  clearInterval(timerId)
-                }
-              }, 100)
-            })
-          }
-          onClosePromises.push(p())
-        }
-      }
-      // すべての DataChannel で onclose が発火した場合は resolve にする
-      Promise.all(onClosePromises)
-        .then(() => {
-          // dataChannels が空の場合は切断処理が終わっているとみなす
-          if (0 === Object.keys(this.soraDataChannels).length) {
-            resolve(null)
-          } else {
-            resolve({ code: 4999, reason: '' })
-          }
-        })
-        // eslint 対策、エラーが発生したら reject(error) を返す
-        .catch((error) => reject(error))
-        .finally(() => {
-          closeDataChannels()
-          clearTimeout(disconnectWaitTimeoutId)
-        })
-      const message = { type: 'disconnect', reason: 'NO-ERROR' }
-      if (
-        this.signalingOfferMessageDataChannels.signaling &&
-        this.signalingOfferMessageDataChannels.signaling.compress === true
-      ) {
-        const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = zlibSync(binaryMessage, {})
-        if (this.soraDataChannels.signaling.readyState === 'open') {
-          // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-          try {
-            this.soraDataChannels.signaling.send(zlibMessage)
-            this.writeDataChannelSignalingLog(
-              'send-disconnect',
-              this.soraDataChannels.signaling,
-              message,
-            )
-          } catch (e) {
-            const errorMessage = (e as Error).message
-            this.writeDataChannelSignalingLog(
-              'failed-to-send-disconnect',
-              this.soraDataChannels.signaling,
-              errorMessage,
-            )
-          }
-        }
-      } else {
-        if (this.soraDataChannels.signaling.readyState === 'open') {
-          // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-          try {
-            this.soraDataChannels.signaling.send(JSON.stringify(message))
-            this.writeDataChannelSignalingLog(
-              'send-disconnect',
-              this.soraDataChannels.signaling,
-              message,
-            )
-          } catch (e) {
-            const errorMessage = (e as Error).message
-            this.writeDataChannelSignalingLog(
-              'failed-to-send-disconnect',
-              this.soraDataChannels.signaling,
-              errorMessage,
-            )
-          }
-        }
-      }
+    // label: signaling が存在しない場合は閉じて終了
+    if (!this.soraDataChannels.signaling) {
+      closeDataChannels()
+      return { code: 4999, reason: new DisconnectInternalError().message }
+    }
+
+    // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
+    const disconnectWaitTimeoutId = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new DisconnectWaitTimeoutError()), this.disconnectWaitTimeout)
     })
+
+    // 全ての DataChannel の onclose が発火したことを確認する Promise を生成する
+    // さらにそんな中で onerror が発火したら reject する
+    const onDataChannelClosePromises: Promise<void>[] = []
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key]
+      if (dataChannel) {
+        onDataChannelClosePromises.push(
+          new Promise<void>((resolve, reject) => {
+            dataChannel.onclose = () => resolve()
+            dataChannel.onerror = () => reject(new DisconnectDataChannelError())
+          }),
+        )
+      }
+    }
+    const dataChannelClosePromise = Promise.all(onDataChannelClosePromises)
+
+    // 準備はできたのでメッセージを送る
+    const message = { type: 'disconnect', reason: 'NO-ERROR' }
+    if (
+      this.signalingOfferMessageDataChannels.signaling &&
+      this.signalingOfferMessageDataChannels.signaling.compress === true
+    ) {
+      const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
+      const zlibMessage = await compressMessage(binaryMessage)
+      if (
+        this.soraDataChannels.signaling?.readyState &&
+        this.soraDataChannels.signaling.readyState === 'open'
+      ) {
+        // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+        try {
+          this.soraDataChannels.signaling.send(zlibMessage)
+          this.writeDataChannelSignalingLog(
+            'send-disconnect',
+            this.soraDataChannels.signaling,
+            message,
+          )
+        } catch (e) {
+          const errorMessage = (e as Error).message
+          this.writeDataChannelSignalingLog(
+            'failed-to-send-disconnect',
+            this.soraDataChannels.signaling,
+            errorMessage,
+          )
+        }
+      }
+    } else {
+      if (this.soraDataChannels.signaling.readyState === 'open') {
+        // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+        try {
+          this.soraDataChannels.signaling.send(JSON.stringify(message))
+          this.writeDataChannelSignalingLog(
+            'send-disconnect',
+            this.soraDataChannels.signaling,
+            message,
+          )
+        } catch (e) {
+          const errorMessage = (e as Error).message
+          this.writeDataChannelSignalingLog(
+            'failed-to-send-disconnect',
+            this.soraDataChannels.signaling,
+            errorMessage,
+          )
+        }
+      }
+    }
+
+    try {
+      // closed チェックと、タイムアウトを競わせる
+      // タイムアウトする前に全てが閉じたら問題なし
+      await Promise.race([disconnectWaitTimeoutId, dataChannelClosePromise])
+      return { code: 1000, reason: '' }
+    } catch (e) {
+      // 正常終了できなかったので全てのチャネルを強制的に閉じる
+      closeDataChannels()
+      return { code: 4999, reason: (e as Error).message }
+    }
   }
 
   /**
@@ -984,15 +969,12 @@ export default class ConnectionBase {
     }
     let event = null
     if (this.signalingSwitched) {
-      // DataChannel の切断処理がタイムアウトした場合は event を abend に差し替える
-      try {
-        const reason = await this.disconnectDataChannel()
-        if (reason !== null) {
-          event = this.soraCloseEvent('normal', 'DISCONNECT', reason)
-        }
-      } catch (_) {
-        event = this.soraCloseEvent('abend', 'DISCONNECT-TIMEOUT')
+      const result = await this.disconnectDataChannel()
+      if (result.code === 4999) {
+        // DataChannel の切断処理がエラーの場合は event を abend に差し替える
+        event = this.soraCloseEvent('abend', result.reason)
       }
+      event = this.soraCloseEvent('normal', 'DISCONNECT', result)
       await this.disconnectWebSocket('NO-ERROR')
       await this.disconnectPeerConnection()
     } else {
@@ -1425,7 +1407,7 @@ export default class ConnectionBase {
             }
           }
         }
-        this.pc.onicecandidate = (event): void => {
+        this.pc.onicecandidate = async (event): Promise<void> => {
           this.writePeerConnectionTimelineLog('onicecandidate', event.candidate)
           if (this.pc) {
             this.trace('ONICECANDIDATE ICEGATHERINGSTATE', this.pc.iceGatheringState)
@@ -1440,7 +1422,7 @@ export default class ConnectionBase {
               [key: string]: unknown
             }
             this.trace('ONICECANDIDATE CANDIDATE MESSAGE', message)
-            this.sendSignalingMessage(message)
+            await this.sendSignalingMessage(message)
           }
         }
       }
@@ -1785,10 +1767,10 @@ export default class ConnectionBase {
   /**
    * シグナリングサーバーに type update を投げるメソッド
    */
-  private sendUpdateAnswer(): void {
+  private async sendUpdateAnswer(): Promise<void> {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({
+      await this.sendSignalingMessage({
         type: 'update',
         sdp: this.pc.localDescription.sdp,
       })
@@ -1798,10 +1780,10 @@ export default class ConnectionBase {
   /**
    * シグナリングサーバーに type re-answer を投げるメソッド
    */
-  private sendReAnswer(): void {
+  private async sendReAnswer(): Promise<void> {
     if (this.pc?.localDescription) {
       this.trace('RE ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({
+      await this.sendSignalingMessage({
         type: 're-answer',
         sdp: this.pc.localDescription.sdp,
       })
@@ -1818,7 +1800,7 @@ export default class ConnectionBase {
     this.trace('UPDATE SDP', message.sdp)
     await this.setRemoteDescription(message)
     await this.createAnswer(message)
-    this.sendUpdateAnswer()
+    await this.sendUpdateAnswer()
   }
 
   /**
@@ -1831,7 +1813,7 @@ export default class ConnectionBase {
     this.trace('RE OFFER SDP', message.sdp)
     await this.setRemoteDescription(message)
     await this.createAnswer(message)
-    this.sendReAnswer()
+    await this.sendReAnswer()
   }
 
   /**
@@ -2059,7 +2041,7 @@ export default class ConnectionBase {
         const message = JSON.parse(data) as SignalingReqStatsMessage
         if (message.type === 'req-stats') {
           const stats = await this.getStats()
-          this.sendStatsMessage(stats)
+          await this.sendStatsMessage(stats)
         }
       }
     } else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
@@ -2101,17 +2083,17 @@ export default class ConnectionBase {
    *
    * @param message - 送信するメッセージ
    */
-  private sendSignalingMessage(message: {
+  private async sendSignalingMessage(message: {
     type: string
     [key: string]: unknown
-  }): void {
+  }): Promise<void> {
     if (this.soraDataChannels.signaling) {
       if (
         this.signalingOfferMessageDataChannels.signaling &&
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = zlibSync(binaryMessage, {})
+        const zlibMessage = await compressMessage(binaryMessage)
         this.soraDataChannels.signaling.send(zlibMessage)
       } else {
         this.soraDataChannels.signaling.send(JSON.stringify(message))
@@ -2132,7 +2114,7 @@ export default class ConnectionBase {
    *
    * @param reports - RTCStatsReport のリスト
    */
-  private sendStatsMessage(reports: RTCStatsReport[]): void {
+  private async sendStatsMessage(reports: RTCStatsReport[]): Promise<void> {
     if (this.soraDataChannels.stats) {
       const message = {
         type: 'stats',
@@ -2143,7 +2125,7 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.stats.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = zlibSync(binaryMessage, {})
+        const zlibMessage = await compressMessage(binaryMessage)
         this.soraDataChannels.stats.send(zlibMessage)
       } else {
         this.soraDataChannels.stats.send(JSON.stringify(message))
@@ -2220,7 +2202,7 @@ export default class ConnectionBase {
    * @param label - メッセージを送信する DataChannel のラベル
    * @param message - Uint8Array
    */
-  sendMessage(label: string, message: Uint8Array): void {
+  async sendMessage(label: string, message: Uint8Array): Promise<void> {
     const dataChannel = this.soraDataChannels[label]
     // 接続していない場合は何もしない
     if (this.pc === null) {
@@ -2234,7 +2216,7 @@ export default class ConnectionBase {
     }
     const settings = this.signalingOfferMessageDataChannels[label]
     if (settings !== undefined && settings.compress === true) {
-      const zlibMessage = zlibSync(message, {})
+      const zlibMessage = await compressMessage(message)
       dataChannel.send(zlibMessage)
     } else {
       dataChannel.send(message)

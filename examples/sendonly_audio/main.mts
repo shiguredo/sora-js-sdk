@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ACCESS_TOKEN,
   )
 
-  document.querySelector('#start')?.addEventListener('click', async () => {
+  document.querySelector('#connect')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
 
     // 音声コーデックの選択を取得
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await client.connect(stream, selectedCodecType, selectedBitRate)
   })
 
-  document.querySelector('#stop')?.addEventListener('click', async () => {
+  document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
   })
 

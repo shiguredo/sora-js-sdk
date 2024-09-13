@@ -16,8 +16,5 @@
     "jsdom": "25.0.0",
     "rollup": "4.21.2",
     "rollup-plugin-delete": "2.1.0"
-  },
-  "dependencies": {
-    "fflate": "0.8.2"
   }
 }
