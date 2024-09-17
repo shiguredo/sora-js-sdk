@@ -42,15 +42,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = ''
       const statsReportJson: Record<string, unknown>[] = []
-      for (const [report_id, report] of statsReport) {
+      for (const [_index, report] of statsReport.entries()) {
         statsHtml += `<h3>Type: ${report.type}</h3><ul>`
-        const reportJson: Record<string, unknown> = { id: report_id, type: report.type }
-        for (const [key, value] of Object.entries(report)) {
-          if (key !== 'type' && key !== 'id') {
-            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
-            reportJson[key] = value
-          }
-        }
+        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
+        statsHtml += Object.entries(report)
+          .map(([key, value]) => {
+            if (key !== 'type' && key !== 'id') {
+              reportJson[key] = value
+              return `<li><strong>${key}:</strong> ${value}</li>`
+            }
+          })
+          .join('')
         statsHtml += '</ul>'
         statsReportJson.push(reportJson)
       }
