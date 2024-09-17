@@ -100,13 +100,13 @@ class SoraClient {
   }
 
   async connect(compress: boolean) {
-    // start ボタンを無効にする
-    const startButton = document.querySelector<HTMLButtonElement>('#connect')
-    if (startButton) {
-      startButton.disabled = true
+    // connect ボタンを無効にする
+    const connectButton = document.querySelector<HTMLButtonElement>('#connect')
+    if (connectButton) {
+      connectButton.disabled = true
     }
 
-    // compress の設定を上書きする
+    // dataChannels の compress の設定を上書きする
     this.connection.options.dataChannels = [
       {
         label: '#example',
