@@ -20,7 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   )
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    await client.connect()
+    const checkCompress = document.getElementById('check-compress') as HTMLInputElement
+    const compress = checkCompress.checked
+
+    await client.connect(compress)
   })
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
@@ -95,13 +98,21 @@ class SoraClient {
     this.connection.on('message', this.onmessage.bind(this))
   }
 
-  async connect() {
+  async connect(compress: boolean) {
     // connect ボタンを無効にする
     const connectButton = document.querySelector<HTMLButtonElement>('#connect')
     if (connectButton) {
       connectButton.disabled = true
     }
 
+    // dataChannels の compress の設定を上書きする
+    this.connection.options.dataChannels = [
+      {
+        label: '#example',
+        direction: 'sendrecv',
+        compress: compress,
+      },
+    ]
     await this.connection.connect()
 
     // disconnect ボタンを有効にする
