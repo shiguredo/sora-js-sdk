@@ -31,12 +31,12 @@
     "dist"
   ],
   "devDependencies": {
-    "@biomejs/biome": "1.8.3",
-    "@playwright/test": "1.47.0",
+    "@biomejs/biome": "1.9.1",
+    "@playwright/test": "1.47.1",
     "typedoc": "0.26.7",
     "typescript": "5.6.2",
-    "vite": "5.4.3",
-    "vitest": "2.0.5"
+    "vite": "5.4.6",
+    "vitest": "2.1.1"
   },
   "resolutions": {
     "get-pkg-repo": "5.0.0"
