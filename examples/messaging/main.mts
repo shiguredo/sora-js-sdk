@@ -43,11 +43,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       let statsHtml = ''
       const statsReportJson: Record<string, unknown>[] = []
       for (const [_index, report] of statsReport.entries()) {
-        // キャプションになる Type を描画する
+        // キャプションになる Type を表示する
         statsHtml += `<h3>Type: ${report.type}</h3><ul>`
-        // 表示と同構造の JSON も生成する
+        // 同時に、stats の内容を JSON に変換する
         const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
-        // 子項目の描画と JSON へ追加を行う
+        // 子項目の表示と JSON へ追加を行う
         statsHtml += Object.entries(report)
           .map(([key, value]) => {
             if (key !== 'type' && key !== 'id') {
