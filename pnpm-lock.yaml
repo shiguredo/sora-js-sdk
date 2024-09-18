@@ -54,7 +54,7 @@ importers:
         specifier: 25.0.0
         version: 25.0.0
       rollup:
-        specifier: 4.21.3
+        specifier: 4.21.2
         version: 4.21.3
       rollup-plugin-delete:
         specifier: 2.1.0
@@ -439,6 +439,9 @@ packages:
 
   '@types/minimatch@5.1.2':
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
+
+  '@types/node@22.5.4':
+    resolution: {integrity: sha512-FDuKUJQm/ju9fT/SeX/6+gBzoPzlVCzfzmGkwKvRHQVxi4BntVbyIwf6a4Xn62mrvndLiml6z/UBXIdEVjQLXg==}
 
   '@types/node@22.5.5':
     resolution: {integrity: sha512-Xjs4y5UPO/CLdzpgR6GirZJx36yScjh73+2NlLlkFRSoQN8B0DpfXPdZGnvVmLRLOsqDpOfTNv7D9trgGhmOIA==}
@@ -1567,6 +1570,11 @@ snapshots:
   '@types/node@22.5.5':
     dependencies:
       undici-types: 6.19.8
+
+  '@types/node@22.5.5':
+    dependencies:
+      undici-types: 6.19.8
+    optional: true
 
   '@types/resolve@1.20.2': {}
 
