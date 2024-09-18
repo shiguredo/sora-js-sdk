@@ -349,8 +349,7 @@ export type TimelineEventLogType = 'websocket' | 'datachannel' | 'peerconnection
 
 export interface SignalingEvent extends Event {
   transportType: TransportType
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  data?: any
+  data?: unknown
 }
 
 export interface DataChannelMessageEvent extends Event {
@@ -364,8 +363,7 @@ export interface DataChannelEvent extends Event {
 
 export interface TimelineEvent extends Event {
   logType: TimelineEventLogType
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  data?: any
+  data?: unknown
   dataChannelId?: number | null
   dataChannelLabel?: string
 }
