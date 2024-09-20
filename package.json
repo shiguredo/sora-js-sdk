@@ -4,7 +4,13 @@
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.js",
   "module": "dist/sora.mjs",
-  "types": "dist/sora.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/sora.mjs",
+      "require": "./dist/sora.mjs",
+      "types": "./dist/sora.d.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "examples": "vite build",
