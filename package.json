@@ -37,11 +37,11 @@
     "dist"
   ],
   "devDependencies": {
-    "@biomejs/biome": "1.9.1",
-    "@playwright/test": "1.47.1",
+    "@biomejs/biome": "1.9.2",
+    "@playwright/test": "1.47.2",
     "typedoc": "0.26.7",
     "typescript": "5.6.2",
-    "vite": "5.4.6",
+    "vite": "5.4.7",
     "vitest": "2.1.1"
   },
   "packageManager": "pnpm@9.10.0",
