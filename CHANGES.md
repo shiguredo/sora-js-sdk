@@ -26,6 +26,9 @@
 
 ### misc
 
+- [CHANGE] ビルドシステムを Vite に変更する
+  - Rollup 関連を削除
+  - @voluntas
 - [ADD] サンプルに getStats を追加する
   - sendrecv / sendonly / recvonly / messaging / simulcast
   - dataset に getStats の結果を入れて E2E テストで利用しやすくする

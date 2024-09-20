@@ -16,7 +16,7 @@ Please read <https://github.com/shiguredo/oss> before use.
 
 Apache License 2.0
 
-```
+```text
 Copyright 2017-2024, Shiguredo Inc.
 Copyright 2017-2022, Yuki Ito (Original Author)
 
