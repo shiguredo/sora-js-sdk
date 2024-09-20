@@ -91,8 +91,7 @@ export default class ConnectionBase {
   /**
    * PeerConnection に渡す configuration
    */
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  constraints: any
+  constraints: unknown
   /**
    * デバッグフラグ
    */
@@ -1919,10 +1918,9 @@ export default class ConnectionBase {
       return stats
     }
     const reports = await this.pc.getStats()
-    // biome-ignore lint/complexity/noForEach: RTCStatsReport であって Array ではない
-    reports.forEach((s) => {
-      stats.push(s as RTCStatsReport)
-    })
+    for (const [_, s] of reports.entries()) {
+      stats.push(s)
+    }
     return stats
   }
 
