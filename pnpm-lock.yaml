@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  get-pkg-repo: 5.0.0
-
 importers:
 
   .:
