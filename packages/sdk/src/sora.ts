@@ -190,7 +190,7 @@ export default {
    * @public
    */
   version: (): string => {
-    return '__SORA_JS_SDK_VERSION__'
+    return __SORA_JS_SDK_VERSION__
   },
   /**
    * WebRTC のユーティリティ関数群
