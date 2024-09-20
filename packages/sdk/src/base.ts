@@ -604,6 +604,49 @@ export default class ConnectionBase {
   }
 
   /**
+   * WebSocket が Sora 側から正常に切断された場合の処理
+   * Lifetime で切れたり、 API 切られたりした場合に呼ばれる
+   *
+   * @param params - 切断時の状況を入れる Record
+   */
+  private async shutdown(params?: Record<string, unknown>): Promise<void> {
+    this.clearMonitorIceConnectionStateChange()
+    // callback を止める
+    if (this.pc) {
+      this.pc.ondatachannel = null
+      this.pc.oniceconnectionstatechange = null
+      this.pc.onicegatheringstatechange = null
+      this.pc.onconnectionstatechange = null
+    }
+
+    if (this.signalingSwitched) {
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key]
+        if (dataChannel) {
+          // onclose はログを吐く専用に残す
+          dataChannel.onclose = (event) => {
+            const channel = event.currentTarget as RTCDataChannel
+            this.writeDataChannelTimelineLog('onclose', channel)
+            this.trace('CLOSE DATA CHANNEL', channel.label)
+          }
+          dataChannel.onmessage = null
+          dataChannel.onerror = null
+          dataChannel.close()
+        }
+        delete this.soraDataChannels[key]
+      }
+    }
+
+    await this.disconnectPeerConnection()
+    this.initializeConnection()
+
+    const event = this.soraCloseEvent('normal', 'DISCONNECT', params)
+    this.writeSoraTimelineLog('disconnect-normal', event)
+    this.callbacks.disconnect(event)
+    return
+  }
+
+  /**
    * 何かしらの異常があった場合の切断処理
    *
    * @param title - disconnect callback に渡すイベントのタイトル
@@ -814,6 +857,8 @@ export default class ConnectionBase {
         const dataChannel = this.soraDataChannels[key]
         if (dataChannel) {
           dataChannel.onerror = null
+          dataChannel.onclose = null
+          dataChannel.onmessage = null
           dataChannel.close()
         }
         delete this.soraDataChannels[key]
@@ -822,6 +867,7 @@ export default class ConnectionBase {
 
     // label: signaling が存在しない場合は閉じて終了
     if (!this.soraDataChannels.signaling) {
+      // それ以外の DataChannel を強制的に閉じる
       closeDataChannels()
       return { code: 4999, reason: new DisconnectInternalError().message }
     }
@@ -839,7 +885,12 @@ export default class ConnectionBase {
       if (dataChannel) {
         onDataChannelClosePromises.push(
           new Promise<void>((resolve, reject) => {
-            dataChannel.onclose = () => resolve()
+            dataChannel.onclose = (event) => {
+              const channel = event.currentTarget as RTCDataChannel
+              this.writeDataChannelTimelineLog('onclose', channel)
+              this.trace('CLOSE DATA CHANNEL', channel.label)
+              resolve()
+            }
             dataChannel.onerror = () => reject(new DisconnectDataChannelError())
           }),
         )
@@ -1503,6 +1554,11 @@ export default class ConnectionBase {
         code: event.code,
         reason: event.reason,
       })
+      // Sora からの正常な終了は shutdown する
+      if (event.code === 1000) {
+        await this.shutdown({ code: event.code, reason: event.reason })
+        return
+      }
       await this.abend('WEBSOCKET-ONCLOSE', {
         code: event.code,
         reason: event.reason,
