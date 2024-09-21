@@ -861,7 +861,7 @@ export default class ConnectionBase {
     reason: string
   }> {
     // DataChannel の強制終了処理
-    const closeDataChannels = () => {
+    const forceCloseDataChannels = () => {
       for (const key of Object.keys(this.soraDataChannels)) {
         const dataChannel = this.soraDataChannels[key]
         if (dataChannel) {
@@ -877,7 +877,7 @@ export default class ConnectionBase {
     // label: signaling が存在しない場合は閉じて終了
     if (!this.soraDataChannels.signaling) {
       // それ以外の DataChannel を強制的に閉じる
-      closeDataChannels()
+      forceCloseDataChannels()
       return { code: 4999, reason: new DisconnectInternalError().message }
     }
 
@@ -964,7 +964,7 @@ export default class ConnectionBase {
       return { code: 1000, reason: '' }
     } catch (e) {
       // 正常終了できなかったので全てのチャネルを強制的に閉じる
-      closeDataChannels()
+      forceCloseDataChannels()
       return { code: 4999, reason: (e as Error).message }
     }
   }
@@ -1549,6 +1549,7 @@ export default class ConnectionBase {
    * WebSocket の切断を監視するメソッド
    *
    * @remarks
+   * WebSocket のクローズコードが 1000 の場合は正常終了処理を実行する
    * 意図しない切断があった場合には異常終了処理を実行する
    */
   protected monitorWebSocketEvent(): void {
@@ -1562,13 +1563,16 @@ export default class ConnectionBase {
       })
       // Sora からの正常な終了は shutdown する
       if (event.code === 1000) {
-        await this.shutdown({ code: event.code, reason: event.reason })
-        return
+        await this.shutdown({
+          code: event.code,
+          reason: event.reason,
+        })
+      } else {
+        await this.abend('WEBSOCKET-ONCLOSE', {
+          code: event.code,
+          reason: event.reason,
+        })
       }
-      await this.abend('WEBSOCKET-ONCLOSE', {
-        code: event.code,
-        reason: event.reason,
-      })
     }
     this.ws.onerror = async (_) => {
       this.writeWebSocketSignalingLog('onerror')
