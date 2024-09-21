@@ -701,11 +701,11 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = await decompressMessage(binaryMessage)
+        const compressedMessage = await compressMessage(binaryMessage)
         if (this.soraDataChannels.signaling.readyState === 'open') {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.soraDataChannels.signaling.send(zlibMessage)
+            this.soraDataChannels.signaling.send(compressedMessage)
             this.writeDataChannelSignalingLog(
               'send-disconnect',
               this.soraDataChannels.signaling,
@@ -913,14 +913,14 @@ export default class ConnectionBase {
       this.signalingOfferMessageDataChannels.signaling.compress === true
     ) {
       const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-      const zlibMessage = await compressMessage(binaryMessage)
+      const compressedMessage = await compressMessage(binaryMessage)
       if (
         this.soraDataChannels.signaling?.readyState &&
         this.soraDataChannels.signaling.readyState === 'open'
       ) {
         // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
         try {
-          this.soraDataChannels.signaling.send(zlibMessage)
+          this.soraDataChannels.signaling.send(compressedMessage)
           this.writeDataChannelSignalingLog(
             'send-disconnect',
             this.soraDataChannels.signaling,
@@ -2170,8 +2170,8 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = await compressMessage(binaryMessage)
-        this.soraDataChannels.signaling.send(zlibMessage)
+        const compressedMessage = await compressMessage(binaryMessage)
+        this.soraDataChannels.signaling.send(compressedMessage)
       } else {
         this.soraDataChannels.signaling.send(JSON.stringify(message))
       }
@@ -2202,8 +2202,8 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.stats.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = await compressMessage(binaryMessage)
-        this.soraDataChannels.stats.send(zlibMessage)
+        const compressedMessage = await compressMessage(binaryMessage)
+        this.soraDataChannels.stats.send(compressedMessage)
       } else {
         this.soraDataChannels.stats.send(JSON.stringify(message))
       }
@@ -2293,8 +2293,8 @@ export default class ConnectionBase {
     }
     const settings = this.signalingOfferMessageDataChannels[label]
     if (settings !== undefined && settings.compress === true) {
-      const zlibMessage = await compressMessage(message)
-      dataChannel.send(zlibMessage)
+      const compressedMessage = await compressMessage(message)
+      dataChannel.send(compressedMessage)
     } else {
       dataChannel.send(message)
     }
