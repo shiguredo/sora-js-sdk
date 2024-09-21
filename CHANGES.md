@@ -11,6 +11,9 @@
 
 ## develop
 
+- [CHANGE] ブラウザでは非推奨となっている `addstream` と `removestream` コールバックを削除する
+  - 廃止宣言から 4 年位経過した
+  - @voluntas
 - [CHANGE] メッセージングを送信する `sendMessage` が `void` ではなく `Promise<void>` を返すようになりました
   - DataChannel の切断部分のロジックを大幅に書き換えた
   - 複数回 Disconnect を呼んだときの挙動に懸念あり
