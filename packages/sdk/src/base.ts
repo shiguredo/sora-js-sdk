@@ -624,23 +624,22 @@ export default class ConnectionBase {
     // DataChannel シグナリングの場合は停止する
     // Sora 側からの切断なので待ってる必要はなく、
     // こちらからもさっさと終了してしまう
-    if (this.signalingSwitched) {
-      for (const key of Object.keys(this.soraDataChannels)) {
-        const dataChannel = this.soraDataChannels[key]
-        if (dataChannel) {
-          // onclose はログを吐く専用に残す
-          dataChannel.onclose = (event) => {
-            const channel = event.currentTarget as RTCDataChannel
-            this.writeDataChannelTimelineLog('onclose', channel)
-            this.trace('CLOSE DATA CHANNEL', channel.label)
-          }
-          dataChannel.onmessage = null
-          dataChannel.onerror = null
-          // 待たずにバンバン閉じる
-          dataChannel.close()
+    // DataChannel 使ってなくても soraDataChannels は {} 返すのでスキップされるだけ
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key]
+      if (dataChannel) {
+        // onclose はログを吐く専用に残す
+        dataChannel.onclose = (event) => {
+          const channel = event.currentTarget as RTCDataChannel
+          this.writeDataChannelTimelineLog('onclose', channel)
+          this.trace('CLOSE DATA CHANNEL', channel.label)
         }
-        delete this.soraDataChannels[key]
+        dataChannel.onmessage = null
+        dataChannel.onerror = null
+        // 待たずにバンバン閉じる
+        dataChannel.close()
       }
+      delete this.soraDataChannels[key]
     }
 
     // peerConnection を close する
