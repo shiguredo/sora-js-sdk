@@ -881,7 +881,7 @@ export default class ConnectionBase {
     }
 
     // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
-    const disconnectWaitTimeoutId = new Promise<never>((_, reject) => {
+    const disconnectWaitTimeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new DisconnectWaitTimeoutError()), this.disconnectWaitTimeout)
     })
 
@@ -959,7 +959,7 @@ export default class ConnectionBase {
     try {
       // closed チェックと、タイムアウトを競わせる
       // タイムアウトする前に全てが閉じたら問題なし
-      await Promise.race([disconnectWaitTimeoutId, dataChannelClosePromise])
+      await Promise.race([disconnectWaitTimeoutPromise, dataChannelClosePromise])
       return { code: 1000, reason: '' }
     } catch (e) {
       // 正常終了できなかったので全てのチャネルを強制的に閉じる
