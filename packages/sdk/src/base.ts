@@ -643,8 +643,8 @@ export default class ConnectionBase {
       }
     }
 
-    // XXX(v): これタイムアウトを付けないと一生終わらない場合があるので気になる
-    await this.disconnectPeerConnection()
+    // peerConnection を close する
+    this.maybeClosePeerConnection()
     this.initializeConnection()
 
     const event = this.soraCloseEvent('normal', 'DISCONNECT', params)
@@ -751,7 +751,7 @@ export default class ConnectionBase {
       delete this.soraDataChannels[key]
     }
     await this.disconnectWebSocket(title)
-    await this.disconnectPeerConnection()
+    this.maybeClosePeerConnection()
     this.initializeConnection()
     if (title === 'WEBSOCKET-ONCLOSE' && params && (params.code === 1000 || params.code === 1005)) {
       const event = this.soraCloseEvent('normal', 'DISCONNECT', params)
@@ -970,18 +970,15 @@ export default class ConnectionBase {
   }
 
   /**
-   * PeerConnection を切断するメソッド
+   * もし PeerConnection の状態が closed でなければ PeerConnection を閉じる
    *
    * @remarks
    * 正常/異常どちらの切断でも使用する
    */
-  private disconnectPeerConnection(): Promise<void> {
-    return new Promise((resolve, _) => {
-      if (this.pc && this.pc.connectionState !== 'closed') {
-        this.pc.close()
-      }
-      return resolve()
-    })
+  private maybeClosePeerConnection(): void {
+    if (this.pc && this.pc.connectionState !== 'closed') {
+      this.pc.close()
+    }
   }
 
   /**
@@ -1035,10 +1032,10 @@ export default class ConnectionBase {
       }
       event = this.soraCloseEvent('normal', 'DISCONNECT', result)
       await this.disconnectWebSocket('NO-ERROR')
-      await this.disconnectPeerConnection()
+      this.maybeClosePeerConnection()
     } else {
       const reason = await this.disconnectWebSocket('NO-ERROR')
-      await this.disconnectPeerConnection()
+      this.maybeClosePeerConnection()
       if (reason !== null) {
         event = this.soraCloseEvent('normal', 'DISCONNECT', reason)
       }
