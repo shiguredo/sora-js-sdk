@@ -9,6 +9,7 @@ import type {
   DataChannelConfiguration,
   JSONType,
   SignalingConnectMessage,
+  SignalingDisconnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
   SignalingOfferMessage,
@@ -604,8 +605,9 @@ export default class ConnectionBase {
   }
 
   /**
-   * WebSocket が Sora 側から正常に切断された場合の処理
-   * Lifetime で切れたり、 API 切られたりした場合に呼ばれる
+   * WebSocket が Sora 側から正常に切断されたり、
+   * DataChannel 経由で Type: Disconnect のメッセージを受信した場合の処理
+   * ライフタイムで切れたり、 切断系の API 切られたりした場合に呼ばれる
    *
    * @param params - 切断時の状況を入れる Record
    */
@@ -619,6 +621,9 @@ export default class ConnectionBase {
       this.pc.onconnectionstatechange = null
     }
 
+    // DataChannel シグナリングの場合は停止する
+    // Sora 側からの切断なので待ってる必要はなく、
+    // こちらからもさっさと終了してしまう
     if (this.signalingSwitched) {
       for (const key of Object.keys(this.soraDataChannels)) {
         const dataChannel = this.soraDataChannels[key]
@@ -631,17 +636,21 @@ export default class ConnectionBase {
           }
           dataChannel.onmessage = null
           dataChannel.onerror = null
+          // 待たずにバンバン閉じる
           dataChannel.close()
         }
         delete this.soraDataChannels[key]
       }
     }
 
+    // XXX(v): これタイムアウトを付けないと一生終わらない場合があるので気になる
     await this.disconnectPeerConnection()
     this.initializeConnection()
 
     const event = this.soraCloseEvent('normal', 'DISCONNECT', params)
     this.writeSoraTimelineLog('disconnect-normal', event)
+    // 切断完了したコールバックを呼ぶ
+    // XXX(v): disconnect ではなく disconnected にした方が良い
     this.callbacks.disconnect(event)
     return
   }
@@ -1872,6 +1881,18 @@ export default class ConnectionBase {
   }
 
   /**
+   * シグナリングサーバーから受け取った type disconnect メッセージを処理をするメソッド
+   *
+   * @param message - type disconnect メッセージ
+   */
+  private async signalingOnMessageTypeDisconnect(
+    message: SignalingDisconnectMessage,
+  ): Promise<void> {
+    this.trace('SIGNALING DISCONNECT MESSAGE', message)
+    await this.shutdown()
+  }
+
+  /**
    * シグナリングサーバーから受け取った type ping メッセージを処理をするメソッド
    *
    * @param message - type ping メッセージ
@@ -2043,6 +2064,8 @@ export default class ConnectionBase {
         this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message)
         if (message.type === 're-offer') {
           await this.signalingOnMessageTypeReOffer(message)
+        } else if (message.type === 'disconnect') {
+          await this.signalingOnMessageTypeDisconnect(message)
         }
       }
     } else if (dataChannelEvent.channel.label === 'notify') {

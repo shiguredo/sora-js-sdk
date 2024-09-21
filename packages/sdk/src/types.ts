@@ -94,7 +94,7 @@ export type SignalingMessage =
   | SignalingReqStatsMessage
   | SignalingSwitchedMessage
   | SignalingRedirectMessage
-
+  | SignalingDisconnectMessage
 export type SignalingOfferMessageDataChannel = {
   label: string
   direction: DataChannelDirection
@@ -161,6 +161,13 @@ export type SignalingSwitchedMessage = {
 export type SignalingRedirectMessage = {
   type: 'redirect'
   location: string
+}
+
+// DataChannel シグナリングでのみ利用される
+export type SignalingDisconnectMessage = {
+  type: 'disconnect'
+  code?: number
+  reason: string
 }
 
 export type SignalingNotifyMessage =

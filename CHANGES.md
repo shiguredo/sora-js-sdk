@@ -9,6 +9,14 @@
 - FIX
   - バグ修正
 
+## feature/recv-type-disconnect
+
+- [ADD] Sora からの `"type": "disconnect"` メッセージを受信した場合の処理を追加する
+  - Sora 側には未実装
+  - WebSocket シグナリングには Close フレームの Code/Reason があるが、DataChannel シグナリングではないため
+  - `"type": "disconnect"` は DataChannel シグナリング経由でのみ送られてくる
+  - @voluntas
+
 ## develop
 
 - [CHANGE] メッセージングを送信する `sendMessage` が `void` ではなく `Promise<void>` を返すようになりました
