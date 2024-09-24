@@ -8,8 +8,8 @@ import type {
   ConnectionOptions,
   DataChannelConfiguration,
   JSONType,
+  SignalingCloseMessage,
   SignalingConnectMessage,
-  SignalingDisconnectMessage,
   SignalingMessage,
   SignalingNotifyMessage,
   SignalingOfferMessage,
@@ -606,7 +606,7 @@ export default class ConnectionBase {
 
   /**
    * WebSocket が Sora 側から正常に切断されたり、
-   * DataChannel 経由で Type: Disconnect のメッセージを受信した場合の処理
+   * DataChannel 経由で Type: close のメッセージを受信した場合の処理
    * ライフタイムで切れたり、 切断系の API 切られたりした場合に呼ばれる
    *
    * @param params - 切断時の状況を入れる Record
@@ -1885,9 +1885,7 @@ export default class ConnectionBase {
    *
    * @param message - type disconnect メッセージ
    */
-  private async signalingOnMessageTypeDisconnect(
-    message: SignalingDisconnectMessage,
-  ): Promise<void> {
+  private async signalingOnMessageTypeClose(message: SignalingCloseMessage): Promise<void> {
     this.trace('SIGNALING DISCONNECT MESSAGE', message)
     await this.shutdown()
   }
@@ -2064,8 +2062,8 @@ export default class ConnectionBase {
         this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message)
         if (message.type === 're-offer') {
           await this.signalingOnMessageTypeReOffer(message)
-        } else if (message.type === 'disconnect') {
-          await this.signalingOnMessageTypeDisconnect(message)
+        } else if (message.type === 'close') {
+          await this.signalingOnMessageTypeClose(message)
         }
       }
     } else if (dataChannelEvent.channel.label === 'notify') {
