@@ -849,6 +849,20 @@ export default class ConnectionBase {
     })
   }
 
+  // DataChannel の強制終了処理
+  private forceCloseDataChannels(): void {
+    // 強制的に閉じるのでログには出力されない
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key]
+      if (dataChannel) {
+        dataChannel.onerror = null
+        dataChannel.onclose = null
+        dataChannel.onmessage = null
+        dataChannel.close()
+      }
+    }
+  }
+
   /**
    * DataChannel を切断するメソッド
    *
@@ -859,20 +873,6 @@ export default class ConnectionBase {
     code: number
     reason: string
   }> {
-    // DataChannel の強制終了処理
-    const forceCloseDataChannels = () => {
-      for (const key of Object.keys(this.soraDataChannels)) {
-        const dataChannel = this.soraDataChannels[key]
-        if (dataChannel) {
-          dataChannel.onerror = null
-          dataChannel.onclose = null
-          dataChannel.onmessage = null
-          dataChannel.close()
-        }
-        delete this.soraDataChannels[key]
-      }
-    }
-
     // label: signaling が存在しない場合は閉じて終了
     if (!this.soraDataChannels.signaling) {
       // それ以外の DataChannel を強制的に閉じる
