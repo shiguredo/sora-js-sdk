@@ -876,7 +876,7 @@ export default class ConnectionBase {
     // label: signaling が存在しない場合は閉じて終了
     if (!this.soraDataChannels.signaling) {
       // それ以外の DataChannel を強制的に閉じる
-      forceCloseDataChannels()
+      this.forceCloseDataChannels()
       return { code: 4999, reason: new DisconnectInternalError().message }
     }
 
@@ -960,10 +960,10 @@ export default class ConnectionBase {
       // closed チェックと、タイムアウトを競わせる
       // タイムアウトする前に全てが閉じたら問題なし
       await Promise.race([disconnectWaitTimeoutPromise, dataChannelClosePromise])
-      return { code: 1000, reason: '' }
+      return { code: 1000, reason: 'TYPE-DISCONNECT' }
     } catch (e) {
       // 正常終了できなかったので全てのチャネルを強制的に閉じる
-      forceCloseDataChannels()
+      this.forceCloseDataChannels()
       return { code: 4999, reason: (e as Error).message }
     }
   }
@@ -1010,18 +1010,7 @@ export default class ConnectionBase {
       this.ws.onmessage = null
       this.ws.onerror = null
     }
-    for (const key of Object.keys(this.soraDataChannels)) {
-      const dataChannel = this.soraDataChannels[key]
-      if (dataChannel) {
-        dataChannel.onmessage = null
-        // onclose はログを吐く専用に残す
-        dataChannel.onclose = (event): void => {
-          const channel = event.currentTarget as RTCDataChannel
-          this.writeDataChannelTimelineLog('onclose', channel)
-          this.trace('CLOSE DATA CHANNEL', channel.label)
-        }
-      }
-    }
+
     let event = null
     if (this.signalingSwitched) {
       const result = await this.disconnectDataChannel()
@@ -1035,6 +1024,8 @@ export default class ConnectionBase {
     } else {
       const reason = await this.disconnectWebSocket('NO-ERROR')
       this.maybeClosePeerConnection()
+      // switched にはなっていないが dataChannel が存在する場合の掃除
+      this.forceCloseDataChannels()
       if (reason !== null) {
         event = this.soraCloseEvent('normal', 'DISCONNECT', reason)
       }
@@ -1887,7 +1878,7 @@ export default class ConnectionBase {
    */
   private async signalingOnMessageTypeClose(message: SignalingCloseMessage): Promise<void> {
     this.trace('SIGNALING DISCONNECT MESSAGE', message)
-    await this.shutdown()
+    await this.shutdown({ code: message.code, reason: message.reason })
   }
 
   /**
