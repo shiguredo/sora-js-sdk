@@ -12,9 +12,14 @@
 ## feature/type-close
 
 - [ADD] Sora からの `"type": "close"` メッセージを受信した場合の処理を追加する
-  - Sora 側には未実装
+  - SignalingCloseMessage を追加
   - WebSocket シグナリングには Close フレームの Code/Reason があるが、DataChannel シグナリングではないため
   - `"type": "disconnect"` は DataChannel シグナリング経由でのみ送られてくる
+  - @voluntas
+
+### misc
+
+- [FIX] RTCPeerConnection.close は Promise ではないので await しないようにする
   - @voluntas
 
 ## develop
