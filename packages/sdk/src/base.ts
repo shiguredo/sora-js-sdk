@@ -621,7 +621,7 @@ export default class ConnectionBase {
   /**
    * WebSocket が Sora 側から正常に切断されたり、
    * DataChannel 経由で Type: close のメッセージを受信した場合の処理
-   * ライフ��イムで切れたり、 切断系の API 切られたりした場合に呼ばれる
+   * ライフタイムで切れたり、 切断系の API 切られたりした場合に呼ばれる
    *
    * @param params - 切断時の状況を入れる Record
    */
@@ -650,7 +650,7 @@ export default class ConnectionBase {
         }
         dataChannel.onmessage = null
         dataChannel.onerror = null
-        // 待たずにバンバ���閉じる
+        // 待たずにバンバン閉じる
         dataChannel.close()
       }
       delete this.soraDataChannels[key]
