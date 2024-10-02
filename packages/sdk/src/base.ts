@@ -14,9 +14,9 @@ import {
   SIGNALING_MESSAGE_TYPE_STATS,
   SIGNALING_MESSAGE_TYPE_SWITCHED,
   SIGNALING_MESSAGE_TYPE_UPDATE,
-  SORA_ROLE_RECVONLY,
-  SORA_ROLE_SENDONLY,
-  SORA_ROLE_SENDRECV,
+  SIGNALING_ROLE_RECVONLY,
+  SIGNALING_ROLE_SENDONLY,
+  SIGNALING_ROLE_SENDRECV,
   TRANSPORT_TYPE_DATACHANNEL,
   TRANSPORT_TYPE_WEBSOCKET,
 } from './constants'
@@ -1365,12 +1365,15 @@ export default class ConnectionBase {
     // mid と transceiver.direction を合わせる
     for (const mid of Object.values(this.mids)) {
       const transceiver = this.pc.getTransceivers().find((t) => t.mid === mid)
-      if (transceiver && transceiver.direction === SORA_ROLE_RECVONLY) {
-        transceiver.direction = SORA_ROLE_SENDRECV
+      if (transceiver && transceiver.direction === SIGNALING_ROLE_RECVONLY) {
+        transceiver.direction = SIGNALING_ROLE_SENDRECV
       }
     }
     // simulcast の場合
-    if (this.simulcast && (this.role === SORA_ROLE_SENDRECV || this.role === SORA_ROLE_SENDONLY)) {
+    if (
+      this.simulcast &&
+      (this.role === SIGNALING_ROLE_SENDRECV || this.role === SIGNALING_ROLE_SENDONLY)
+    ) {
       const transceiver = this.pc.getTransceivers().find((t) => {
         if (t.mid === null) {
           return
@@ -1378,7 +1381,7 @@ export default class ConnectionBase {
         if (t.sender.track === null) {
           return
         }
-        if (t.currentDirection !== null && t.currentDirection !== SORA_ROLE_SENDONLY) {
+        if (t.currentDirection !== null && t.currentDirection !== SIGNALING_ROLE_SENDONLY) {
           return
         }
         if (this.mids.video !== '' && this.mids.video === t.mid) {

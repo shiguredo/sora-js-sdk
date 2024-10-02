@@ -9,9 +9,9 @@ import type {
   SIGNALING_MESSAGE_TYPE_RE_OFFER,
   SIGNALING_MESSAGE_TYPE_SWITCHED,
   SIGNALING_MESSAGE_TYPE_UPDATE,
-  SORA_ROLE_RECVONLY,
-  SORA_ROLE_SENDONLY,
-  SORA_ROLE_SENDRECV,
+  SIGNALING_ROLE_RECVONLY,
+  SIGNALING_ROLE_SENDONLY,
+  SIGNALING_ROLE_SENDRECV,
   TRANSPORT_TYPE_DATACHANNEL,
   TRANSPORT_TYPE_WEBSOCKET,
 } from './constants'
@@ -62,7 +62,10 @@ export type SignalingVideo =
       av1_params?: JSONType
     }
 
-export type Role = typeof SORA_ROLE_SENDRECV | typeof SORA_ROLE_SENDONLY | typeof SORA_ROLE_RECVONLY
+export type Role =
+  | typeof SIGNALING_ROLE_SENDRECV
+  | typeof SIGNALING_ROLE_SENDONLY
+  | typeof SIGNALING_ROLE_RECVONLY
 
 export type SignalingConnectDataChannel = {
   label?: string
