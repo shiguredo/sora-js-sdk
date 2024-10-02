@@ -1,5 +1,6 @@
 import Sora, {
   type SignalingNotifyMessage,
+  type SignalingMessageEvent,
   type ConnectionPublisher,
   type SoraConnection,
 } from 'sora-js-sdk'
@@ -77,6 +78,7 @@ class SoraClient {
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onnotify.bind(this))
+    this.connection.on('signalingmessage', this.onsignalingmessage.bind(this))
   }
 
   async connect(stream: MediaStream): Promise<void> {
@@ -114,5 +116,9 @@ class SoraClient {
         connectionIdElement.textContent = event.connection_id
       }
     }
+  }
+
+  private onsignalingmessage(event: SignalingMessageEvent): void {
+    console.log('signalingmessage', event)
   }
 }

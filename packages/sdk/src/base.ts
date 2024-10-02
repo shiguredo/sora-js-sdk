@@ -6,6 +6,7 @@ import {
   SIGNALING_MESSAGE_TYPE_ANSWER,
   SIGNALING_MESSAGE_TYPE_CANDIDATE,
   SIGNALING_MESSAGE_TYPE_CLOSE,
+  SIGNALING_MESSAGE_TYPE_CONNECT,
   SIGNALING_MESSAGE_TYPE_DISCONNECT,
   SIGNALING_MESSAGE_TYPE_NOTIFY,
   SIGNALING_MESSAGE_TYPE_OFFER,
@@ -58,11 +59,12 @@ import type {
 import {
   ConnectError,
   compressMessage,
+  createConnectSignalingMessage,
   createDataChannelData,
   createDataChannelEvent,
   createDataChannelMessageEvent,
   createSignalingEvent,
-  createSignalingMessage,
+  createSignalingMessageEvent,
   createTimelineEvent,
   decompressMessage,
   getSignalingNotifyData,
@@ -282,6 +284,7 @@ export default class ConnectionBase {
       timeout: (): void => {},
       timeline: (): void => {},
       signaling: (): void => {},
+      signalingmessage: (): void => {},
       message: (): void => {},
       datachannel: (): void => {},
     }
@@ -618,7 +621,7 @@ export default class ConnectionBase {
   /**
    * WebSocket が Sora 側から正常に切断されたり、
    * DataChannel 経由で Type: close のメッセージを受信した場合の処理
-   * ライフタイムで切れたり、 切断系の API 切られたりした場合に呼ばれる
+   * ライフ��イムで切れたり、 切断系の API 切られたりした場合に呼ばれる
    *
    * @param params - 切断時の状況を入れる Record
    */
@@ -647,7 +650,7 @@ export default class ConnectionBase {
         }
         dataChannel.onmessage = null
         dataChannel.onerror = null
-        // 待たずにバンバン閉じる
+        // 待たずにバンバ���閉じる
         dataChannel.close()
       }
       delete this.soraDataChannels[key]
@@ -1214,6 +1217,7 @@ export default class ConnectionBase {
           throw new Error('Received invalid signaling data')
         }
         const message = JSON.parse(event.data) as WebSocketSignalingMessage
+
         if (message.type === SIGNALING_MESSAGE_TYPE_OFFER) {
           this.writeWebSocketSignalingLog('onmessage-offer', message)
           this.signalingOnMessageTypeOffer(message)
@@ -1250,9 +1254,9 @@ export default class ConnectionBase {
         }
       }
       ;(async () => {
-        let signalingMessage: SignalingConnectMessage
+        let signalingConnectMessage: SignalingConnectMessage
         try {
-          signalingMessage = createSignalingMessage(
+          signalingConnectMessage = createConnectSignalingMessage(
             offer.sdp || '',
             this.role,
             this.channelId,
@@ -1264,10 +1268,16 @@ export default class ConnectionBase {
           reject(error)
           return
         }
-        this.trace('SIGNALING CONNECT MESSAGE', signalingMessage)
+        this.trace('SIGNALING CONNECT MESSAGE', signalingConnectMessage)
         if (ws) {
-          ws.send(JSON.stringify(signalingMessage))
-          this.writeWebSocketSignalingLog(`send-${signalingMessage.type}`, signalingMessage)
+          ws.send(JSON.stringify(signalingConnectMessage))
+          this.writeWebSocketSignalingLog(
+            `send-${signalingConnectMessage.type}`,
+            signalingConnectMessage,
+          )
+          this.callbacks.signalingmessage(
+            createSignalingMessageEvent(TRANSPORT_TYPE_WEBSOCKET, 'sent', signalingConnectMessage),
+          )
           this.ws = ws
           // 初回に接続した URL を状態管理する
           if (!redirect) {

@@ -4,16 +4,20 @@ import type {
   DataChannelConfiguration,
   DataChannelEvent,
   DataChannelMessageEvent,
+  DataChannelSignalingMessage,
   JSONType,
   SignalingConnectDataChannel,
   SignalingConnectMessage,
   SignalingEvent,
+  SignalingMessageDirection,
+  SignalingMessageEvent,
   SignalingNotifyConnectionCreated,
   SignalingNotifyConnectionDestroyed,
   SignalingNotifyMetadata,
   TimelineEvent,
   TimelineEventLogType,
   TransportType,
+  WebSocketSignalingMessage,
 } from './types'
 
 function browser(): Browser {
@@ -116,7 +120,7 @@ export function isFirefox(): boolean {
   return browser() === 'firefox'
 }
 
-export function createSignalingMessage(
+export function createConnectSignalingMessage(
   offerSDP: string,
   role: string,
   channelId: string | null | undefined,
@@ -403,6 +407,18 @@ export function trace(clientId: string | null, title: string, value: unknown): v
 export class ConnectError extends Error {
   code?: number
   reason?: string
+}
+
+export function createSignalingMessageEvent(
+  transportType: TransportType,
+  direction: SignalingMessageDirection,
+  message: WebSocketSignalingMessage | DataChannelSignalingMessage,
+): SignalingMessageEvent {
+  const event = new Event('signaling-message') as SignalingMessageEvent
+  event.transportType = transportType
+  event.direction = direction
+  event.message = message
+  return event
 }
 
 export function createSignalingEvent(

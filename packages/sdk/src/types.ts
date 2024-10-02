@@ -368,6 +368,7 @@ export type Callbacks = {
   timeout: () => void
   timeline: (event: TimelineEvent) => void
   signaling: (event: SignalingEvent) => void
+  signalingmessage: (event: SignalingMessageEvent) => void
   message: (event: DataChannelMessageEvent) => void
   datachannel: (event: DataChannelEvent) => void
 }
@@ -381,7 +382,7 @@ export type TimelineEventLogType = TransportType | 'peerconnection' | 'sora'
 
 // @todo 未実装
 export interface SignalingMessageEvent extends Event {
-  type: TransportType
+  transportType: TransportType
   direction: SignalingMessageDirection
   message: WebSocketSignalingMessage | DataChannelSignalingMessage
 }
