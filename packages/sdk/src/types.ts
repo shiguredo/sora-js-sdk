@@ -1,8 +1,4 @@
 import type {
-  DATA_CHANNEL_LABEL_NOTIFY,
-  DATA_CHANNEL_LABEL_PUSH,
-  DATA_CHANNEL_LABEL_SIGNALING,
-  DATA_CHANNEL_LABEL_STATS,
   SIGNALING_MESSAGE_TYPE_CLOSE,
   SIGNALING_MESSAGE_TYPE_CONNECT,
   SIGNALING_MESSAGE_TYPE_NOTIFY,
@@ -10,6 +6,7 @@ import type {
   SIGNALING_MESSAGE_TYPE_PING,
   SIGNALING_MESSAGE_TYPE_PUSH,
   SIGNALING_MESSAGE_TYPE_REDIRECT,
+  SIGNALING_MESSAGE_TYPE_REQ_STATS,
   SIGNALING_MESSAGE_TYPE_RE_OFFER,
   SIGNALING_MESSAGE_TYPE_SWITCHED,
   SIGNALING_MESSAGE_TYPE_UPDATE,
@@ -178,7 +175,7 @@ export type SignalingPushMessage = {
 }
 
 export type SignalingReqStatsMessage = {
-  type: 'req-stats'
+  type: typeof SIGNALING_MESSAGE_TYPE_REQ_STATS
 }
 
 export type SignalingSwitchedMessage = {
@@ -381,6 +378,13 @@ export type TransportType = typeof TRANSPORT_TYPE_WEBSOCKET | typeof TRANSPORT_T
 export type SignalingMessageDirection = 'sent' | 'received'
 
 export type TimelineEventLogType = TransportType | 'peerconnection' | 'sora'
+
+// @todo 未実装
+export interface SignalingMessageEvent extends Event {
+  type: TransportType
+  direction: SignalingMessageDirection
+  message: WebSocketSignalingMessage | DataChannelSignalingMessage
+}
 
 export interface SignalingEvent extends Event {
   transportType: TransportType
