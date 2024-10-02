@@ -1,6 +1,11 @@
 import {
+  DATA_CHANNEL_LABEL_NOTIFY,
+  DATA_CHANNEL_LABEL_PUSH,
+  DATA_CHANNEL_LABEL_SIGNALING,
+  DATA_CHANNEL_LABEL_STATS,
   SIGNALING_MESSAGE_TYPE_ANSWER,
   SIGNALING_MESSAGE_TYPE_CANDIDATE,
+  SIGNALING_MESSAGE_TYPE_CLOSE,
   SIGNALING_MESSAGE_TYPE_DISCONNECT,
   SIGNALING_MESSAGE_TYPE_NOTIFY,
   SIGNALING_MESSAGE_TYPE_OFFER,
@@ -2051,7 +2056,7 @@ export default class ConnectionBase {
       })
     }
     // onmessage
-    if (dataChannelEvent.channel.label === 'signaling') {
+    if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_SIGNALING) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
@@ -2065,13 +2070,13 @@ export default class ConnectionBase {
         const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as DataChannelSignalingMessage
         this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message)
-        if (message.type === 're-offer') {
+        if (message.type === SIGNALING_MESSAGE_TYPE_RE_OFFER) {
           await this.signalingOnMessageTypeReOffer(message)
-        } else if (message.type === 'close') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_CLOSE) {
           await this.signalingOnMessageTypeClose(message)
         }
       }
-    } else if (dataChannelEvent.channel.label === 'notify') {
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_NOTIFY) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
@@ -2091,7 +2096,7 @@ export default class ConnectionBase {
         }
         this.signalingOnMessageTypeNotify(message, 'datachannel')
       }
-    } else if (dataChannelEvent.channel.label === 'push') {
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_PUSH) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
@@ -2106,7 +2111,7 @@ export default class ConnectionBase {
         const message = JSON.parse(data) as SignalingPushMessage
         this.callbacks.push(message, 'datachannel')
       }
-    } else if (dataChannelEvent.channel.label === 'stats') {
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_STATS) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label

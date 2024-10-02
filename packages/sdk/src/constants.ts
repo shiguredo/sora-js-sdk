@@ -31,3 +31,9 @@ export const SIGNALING_MESSAGE_TYPE_PUSH = 'push' as const
 
 // @deprecated この定数は将来的に削除される予定です
 export const SIGNALING_MESSAGE_TYPE_UPDATE = 'update' as const
+
+// データチャネル必須ラベル
+export const DATA_CHANNEL_LABEL_SIGNALING = 'signaling' as const
+export const DATA_CHANNEL_LABEL_PUSH = 'push' as const
+export const DATA_CHANNEL_LABEL_NOTIFY = 'notify' as const
+export const DATA_CHANNEL_LABEL_STATS = 'stats' as const

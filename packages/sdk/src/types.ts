@@ -1,4 +1,8 @@
 import type {
+  DATA_CHANNEL_LABEL_NOTIFY,
+  DATA_CHANNEL_LABEL_PUSH,
+  DATA_CHANNEL_LABEL_SIGNALING,
+  DATA_CHANNEL_LABEL_STATS,
   SIGNALING_MESSAGE_TYPE_CLOSE,
   SIGNALING_MESSAGE_TYPE_CONNECT,
   SIGNALING_MESSAGE_TYPE_NOTIFY,
@@ -67,8 +71,14 @@ export type Role =
   | typeof SIGNALING_ROLE_SENDONLY
   | typeof SIGNALING_ROLE_RECVONLY
 
+export type DataChannelSignalingLabel =
+  | typeof DATA_CHANNEL_LABEL_SIGNALING
+  | typeof DATA_CHANNEL_LABEL_PUSH
+  | typeof DATA_CHANNEL_LABEL_NOTIFY
+  | typeof DATA_CHANNEL_LABEL_STATS
+
 export type SignalingConnectDataChannel = {
-  label?: string
+  label?: DataChannelSignalingLabel | string
   direction?: DataChannelDirection
   compress?: boolean
   max_packet_life_time?: number
