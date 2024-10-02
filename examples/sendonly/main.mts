@@ -119,6 +119,12 @@ class SoraClient {
   }
 
   private onsignalingmessage(event: SignalingMessageEvent): void {
-    console.log('signalingmessage', event)
+    if (event.transportType === 'websocket' && event.direction === 'sent' && event.message.type === 'connect') {
+      const signalingMessageSentElement = document.createElement('div')
+      signalingMessageSentElement.id = 'signaling-message-sent-type-connect'
+      signalingMessageSentElement.textContent = 'Sent a message of type: connect'
+      signalingMessageSentElement.dataset.sent = 'true'
+      document.body.appendChild(signalingMessageSentElement)
+    }
   }
 }

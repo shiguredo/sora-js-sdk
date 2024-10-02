@@ -12,6 +12,11 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   await sendonly.click('#connect')
   await recvonly.click('#connect')
 
+  // シグナリングメッセージの送信を確認（sendonly のみ）
+  await sendonly.waitForSelector('#signaling-message-sent-type-connect')
+  const signalingMessageSent = await sendonly.$eval('#signaling-message-sent-type-connect', (el) => el.dataset.sent)
+  expect(signalingMessageSent).toBe('true')
+
   // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await sendonly.waitForSelector('#connection-id:not(:empty)')
 
