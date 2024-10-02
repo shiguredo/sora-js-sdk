@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { AudioCodecType, DataChannelDirection, VideoCodecType } from '../src/types'
-import { createSignalingMessage } from '../src/utils'
+import { createConnectSignalingMessage } from '../src/utils'
 
 const channelId = '7N3fsMHob'
 const metadata = 'PG9A6RXgYqiqWKOVO'
@@ -24,47 +24,61 @@ const baseExpectedMessage = Object.freeze({
 /**
  * role test
  */
-test('createSignalingMessage simple sendonly', () => {
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, {}, false)).toEqual(
+test('createConnectSignalingMessage simple sendonly', () => {
+  expect(createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, {}, false)).toEqual(
     baseExpectedMessage,
   )
 })
 
-test('createSignalingMessage simple recvonly', () => {
+test('createConnectSignalingMessage simple recvonly', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, { role: 'recvonly' })
-  expect(createSignalingMessage(sdp, 'recvonly', channelId, undefined, {}, false)).toEqual(
+  expect(createConnectSignalingMessage(sdp, 'recvonly', channelId, undefined, {}, false)).toEqual(
     expectedMessage,
   )
 })
 
-test('createSignalingMessage simple sendrecv', () => {
+test('createConnectSignalingMessage simple sendrecv', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     role: 'sendrecv',
     multistream: true,
   })
   expect(
-    createSignalingMessage(sdp, 'sendrecv', channelId, undefined, { multistream: true }, false),
+    createConnectSignalingMessage(
+      sdp,
+      'sendrecv',
+      channelId,
+      undefined,
+      { multistream: true },
+      false,
+    ),
   ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage sendrecv and undefined multistream', () => {
+test('createConnectSignalingMessage sendrecv and undefined multistream', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     role: 'sendrecv',
   })
-  expect(createSignalingMessage(sdp, 'sendrecv', channelId, undefined, {}, false)).toEqual(
+  expect(createConnectSignalingMessage(sdp, 'sendrecv', channelId, undefined, {}, false)).toEqual(
     expectedMessage,
   )
 })
 
-test('createSignalingMessage invalid role', () => {
+test('createConnectSignalingMessage invalid role', () => {
   expect(() => {
-    createSignalingMessage(sdp, 'test', channelId, metadata, {}, false)
+    createConnectSignalingMessage(sdp, 'test', channelId, metadata, {}, false)
   }).toThrow(Error('Unknown role type'))
 })
 
-test('createSignalingMessage sendrecv and multistream: false', () => {
+test('createConnectSignalingMessage sendrecv and multistream: false', () => {
   expect(() => {
-    createSignalingMessage(sdp, 'sendrecv', channelId, metadata, { multistream: false }, false)
+    createConnectSignalingMessage(
+      sdp,
+      'sendrecv',
+      channelId,
+      metadata,
+      { multistream: false },
+      false,
+    )
   }).toThrow(
     Error(
       "Failed to parse options. Options multistream must be true when connecting using 'sendrecv'",
@@ -75,37 +89,37 @@ test('createSignalingMessage sendrecv and multistream: false', () => {
 /**
  * channelId test
  */
-test('createSignalingMessage channelId: null', () => {
+test('createConnectSignalingMessage channelId: null', () => {
   expect(() => {
-    createSignalingMessage(sdp, 'sendonly', null, undefined, {}, false)
+    createConnectSignalingMessage(sdp, 'sendonly', null, undefined, {}, false)
   }).toThrow(Error('channelId can not be null or undefined'))
 })
 
-test('createSignalingMessage channelId: undefined', () => {
+test('createConnectSignalingMessage channelId: undefined', () => {
   expect(() => {
-    createSignalingMessage(sdp, 'sendonly', undefined, undefined, {}, false)
+    createConnectSignalingMessage(sdp, 'sendonly', undefined, undefined, {}, false)
   }).toThrow(Error('channelId can not be null or undefined'))
 })
 
 /**
  * metadata test
  */
-test('createSignalingMessage metadata', () => {
+test('createConnectSignalingMessage metadata', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, { metadata: metadata })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, metadata, {}, false)).toEqual(
+  expect(createConnectSignalingMessage(sdp, 'sendonly', channelId, metadata, {}, false)).toEqual(
     expectedMessage,
   )
 })
 
-test('createSignalingMessage metadata: null', () => {
+test('createConnectSignalingMessage metadata: null', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, { metadata: null })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, null, {}, false)).toEqual(
+  expect(createConnectSignalingMessage(sdp, 'sendonly', channelId, null, {}, false)).toEqual(
     expectedMessage,
   )
 })
 
-test('createSignalingMessage metadata: undefined', () => {
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, {}, false)).toEqual(
+test('createConnectSignalingMessage metadata: undefined', () => {
+  expect(createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, {}, false)).toEqual(
     baseExpectedMessage,
   )
 })
@@ -113,94 +127,94 @@ test('createSignalingMessage metadata: undefined', () => {
 /**
  * clientId test
  */
-test('createSignalingMessage clientId', () => {
+test('createConnectSignalingMessage clientId', () => {
   const options = { clientId: clientId }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { client_id: options.clientId })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage clientId: empty string', () => {
+test('createConnectSignalingMessage clientId: empty string', () => {
   const options = { clientId: '' }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { client_id: options.clientId })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage clientId: undefined', () => {
+test('createConnectSignalingMessage clientId: undefined', () => {
   const options = { clientId: undefined }
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
 /**
  * multistream test
  */
-test('createSignalingMessage multistream: true', () => {
+test('createConnectSignalingMessage multistream: true', () => {
   const options = { multistream: true }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     multistream: options.multistream,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage undefined multistream', () => {
+test('createConnectSignalingMessage undefined multistream', () => {
   const options = {}
   const expectedMessage = Object.assign({}, baseExpectedMessage, {})
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage multistream: false', () => {
+test('createConnectSignalingMessage multistream: false', () => {
   const options = { multistream: false }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     multistream: options.multistream,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
 /**
  * audio test
  */
-test('createSignalingMessage audio: false', () => {
+test('createConnectSignalingMessage audio: false', () => {
   const options = {
     audio: false,
     audioCodecType: audioCodecType,
     audioBitRate: 100,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { audio: false })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage audio: true', () => {
+test('createConnectSignalingMessage audio: true', () => {
   const options = {
     audio: true,
   }
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
-test('createSignalingMessage audio: undefined', () => {
+test('createConnectSignalingMessage audio: undefined', () => {
   const options = {
     audio: undefined,
   }
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
-test('createSignalingMessage audio parameters', () => {
+test('createConnectSignalingMessage audio parameters', () => {
   const options = {
     audioCodecType: audioCodecType,
     audioBitRate: 100,
@@ -211,12 +225,12 @@ test('createSignalingMessage audio parameters', () => {
       bit_rate: options.audioBitRate,
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage audioOpusParamsChannels', () => {
+test('createConnectSignalingMessage audioOpusParamsChannels', () => {
   const options = {
     audioOpusParamsChannels: 2,
   }
@@ -227,12 +241,12 @@ test('createSignalingMessage audioOpusParamsChannels', () => {
       },
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage audioOpusParamsMaxplaybackrate', () => {
+test('createConnectSignalingMessage audioOpusParamsMaxplaybackrate', () => {
   const options = {
     audioOpusParamsMaxplaybackrate: 48000,
   }
@@ -243,12 +257,12 @@ test('createSignalingMessage audioOpusParamsMaxplaybackrate', () => {
       },
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage audioOpusParamsStereo', () => {
+test('createConnectSignalingMessage audioOpusParamsStereo', () => {
   const options = {
     audioOpusParamsStereo: true,
   }
@@ -259,12 +273,12 @@ test('createSignalingMessage audioOpusParamsStereo', () => {
       },
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage audioOpusParamsSpropStereo', () => {
+test('createConnectSignalingMessage audioOpusParamsSpropStereo', () => {
   const options = {
     audioOpusParamsSpropStereo: true,
   }
@@ -275,12 +289,12 @@ test('createSignalingMessage audioOpusParamsSpropStereo', () => {
       },
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage audioOpusParamsMinptime', () => {
+test('createConnectSignalingMessage audioOpusParamsMinptime', () => {
   const options = {
     audioOpusParamsMinptime: 10,
   }
@@ -291,12 +305,12 @@ test('createSignalingMessage audioOpusParamsMinptime', () => {
       },
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage audioOpusParamsPtime', () => {
+test('createConnectSignalingMessage audioOpusParamsPtime', () => {
   const options = {
     audioOpusParamsPtime: 20,
   }
@@ -307,12 +321,12 @@ test('createSignalingMessage audioOpusParamsPtime', () => {
       },
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage audioOpusParamsUseinbandfec', () => {
+test('createConnectSignalingMessage audioOpusParamsUseinbandfec', () => {
   const options = {
     audioOpusParamsUseinbandfec: true,
   }
@@ -323,12 +337,12 @@ test('createSignalingMessage audioOpusParamsUseinbandfec', () => {
       },
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage audioOpusParamsUsedtx', () => {
+test('createConnectSignalingMessage audioOpusParamsUsedtx', () => {
   const options = {
     audioOpusParamsUsedtx: false,
   }
@@ -339,47 +353,47 @@ test('createSignalingMessage audioOpusParamsUsedtx', () => {
       },
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
 /**
  * video test
  */
-test('createSignalingMessage video: false', () => {
+test('createConnectSignalingMessage video: false', () => {
   const options = {
     video: false,
     videoCodecType: videoCodecType,
     videoBitRate: 100,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { video: false })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage video: true', () => {
+test('createConnectSignalingMessage video: true', () => {
   const options = {
     video: true,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { video: true })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage video: undefined', () => {
+test('createConnectSignalingMessage video: undefined', () => {
   const options = {
     video: undefined,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { video: true })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage video parameters', () => {
+test('createConnectSignalingMessage video parameters', () => {
   const options = {
     videoCodecType: videoCodecType,
     videoBitRate: 100,
@@ -390,146 +404,146 @@ test('createSignalingMessage video parameters', () => {
       bit_rate: options.videoBitRate,
     },
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
 /**
  * signalingNotifyMetadata test
  */
-test('createSignalingMessage signalingMetadata', () => {
+test('createConnectSignalingMessage signalingMetadata', () => {
   const options = {
     signalingNotifyMetadata: 'signalingNotifyMetadata',
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     signaling_notify_metadata: options.signalingNotifyMetadata,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage signalingMetadata: empty string', () => {
+test('createConnectSignalingMessage signalingMetadata: empty string', () => {
   const options = {
     signalingNotifyMetadata: '',
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     signaling_notify_metadata: options.signalingNotifyMetadata,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage signalingMetadata: object', () => {
+test('createConnectSignalingMessage signalingMetadata: object', () => {
   const options = {
     signalingNotifyMetadata: { key: 'value' },
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     signaling_notify_metadata: options.signalingNotifyMetadata,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage signalingMetadata: null', () => {
+test('createConnectSignalingMessage signalingMetadata: null', () => {
   const options = {
     signalingNotifyMetadata: null,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     signaling_notify_metadata: options.signalingNotifyMetadata,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
 /**
  * dataChannelSignaling test
  */
-test('createSignalingMessage dataChannelSignaling: true', () => {
+test('createConnectSignalingMessage dataChannelSignaling: true', () => {
   const options = {
     dataChannelSignaling: true,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     data_channel_signaling: options.dataChannelSignaling,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage dataChannelSignaling: false', () => {
+test('createConnectSignalingMessage dataChannelSignaling: false', () => {
   const options = {
     dataChannelSignaling: false,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     data_channel_signaling: options.dataChannelSignaling,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage dataChannelSignaling: undefined', () => {
+test('createConnectSignalingMessage dataChannelSignaling: undefined', () => {
   const options = {
     dataChannelSignaling: undefined,
   }
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
 /**
  * ignoreDisconnectWebSocket test
  */
-test('createSignalingMessage ignoreDisconnectWebSocket: true', () => {
+test('createConnectSignalingMessage ignoreDisconnectWebSocket: true', () => {
   const options = {
     ignoreDisconnectWebSocket: true,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     ignore_disconnect_websocket: options.ignoreDisconnectWebSocket,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage ignoreDisconnectWebSocket: false', () => {
+test('createConnectSignalingMessage ignoreDisconnectWebSocket: false', () => {
   const options = {
     ignoreDisconnectWebSocket: false,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     ignore_disconnect_websocket: options.ignoreDisconnectWebSocket,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage ignoreDisconnectWebSocket: undefined', () => {
+test('createConnectSignalingMessage ignoreDisconnectWebSocket: undefined', () => {
   const options = {
     ignoreDisconnectWebSocket: undefined,
   }
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
 /**
  * redirect test
  */
-test('createSignalingMessage redirect: true', () => {
+test('createConnectSignalingMessage redirect: true', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, { redirect: true })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, {}, true)).toEqual(
+  expect(createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, {}, true)).toEqual(
     expectedMessage,
   )
 })
 
-test('createSignalingMessage redirect: false', () => {
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, {}, false)).toEqual(
+test('createConnectSignalingMessage redirect: false', () => {
+  expect(createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, {}, false)).toEqual(
     baseExpectedMessage,
   )
 })
@@ -537,54 +551,54 @@ test('createSignalingMessage redirect: false', () => {
 /**
  * dataChannels test
  */
-test('createSignalingMessage dataChannels: invalid value', () => {
+test('createConnectSignalingMessage dataChannels: invalid value', () => {
   // array 以外の場合は追加されない
   const options = {
     dataChannels: 'test',
   }
   // @ts-ignore option で指定されている型以外を引数に指定する
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
-test('createSignalingMessage dataChannels: empty array ', () => {
+test('createConnectSignalingMessage dataChannels: empty array ', () => {
   // array が空の場合は追加されない
   const options = {
     dataChannels: [],
   }
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
-test('createSignalingMessage dataChannels: invalid array', () => {
+test('createConnectSignalingMessage dataChannels: invalid array', () => {
   // dataChannel に object 以外が含まれる場合は例外が発生する
   const options = {
     dataChannels: [{ label: 'test', direction: 'sendrecv' }, 'test'],
   }
   expect(() => {
     // @ts-ignore option で指定されている型以外を引数に指定する
-    createSignalingMessage(sdp, 'sendonly', channelId, null, options, false)
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, null, options, false)
   }).toThrow(
     "Failed to parse options dataChannels. Options dataChannels element must be type 'object'",
   )
 })
 
-test('createSignalingMessage dataChannels: invalid array(null in array)', () => {
+test('createConnectSignalingMessage dataChannels: invalid array(null in array)', () => {
   // dataChannel に null が含まれる場合は例外が発生する
   const options = {
     dataChannels: [{ label: 'test', direction: 'sendrecv' }, null],
   }
   expect(() => {
     // @ts-ignore option で指定されている型以外を引数に指定する
-    createSignalingMessage(sdp, 'sendonly', channelId, null, options, false)
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, null, options, false)
   }).toThrow(
     "Failed to parse options dataChannels. Options dataChannels element must be type 'object'",
   )
 })
 
-test('createSignalingMessage dataChannels', () => {
+test('createConnectSignalingMessage dataChannels', () => {
   // 正常系
   const options = {
     dataChannels: [
@@ -614,47 +628,47 @@ test('createSignalingMessage dataChannels', () => {
       },
     ],
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
 /**
  * bundleId test
  */
-test('createSignalingMessage bundleId', () => {
+test('createConnectSignalingMessage bundleId', () => {
   const options = {
     bundleId: 'bundleId',
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { bundle_id: options.bundleId })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage bundleId: empty string', () => {
+test('createConnectSignalingMessage bundleId: empty string', () => {
   const options = {
     bundleId: '',
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { bundle_id: options.bundleId })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage bundleId: undefined', () => {
+test('createConnectSignalingMessage bundleId: undefined', () => {
   const options = {
     bundleId: undefined,
   }
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
 /**
  * simulcastRid test
  */
-test('createSignalingMessage simulcastRid', () => {
+test('createConnectSignalingMessage simulcastRid', () => {
   const options = {
     simulcastRid: 'r0',
   }
@@ -662,49 +676,49 @@ test('createSignalingMessage simulcastRid', () => {
     simulcast_rid: options.simulcastRid,
   })
   // @ts-ignore option で指定されている型以外を引数に指定する
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage simulcastRid: unknown string', () => {
+test('createConnectSignalingMessage simulcastRid: unknown string', () => {
   // "r0", "r1", "r2" 以外の場合は追加されない
   const options = {
     simulcastRid: '',
   }
   // @ts-ignore option で指定されている型以外を引数に指定する
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
 /**
  * spotlight test
  */
-test('createSignalingMessage spotlight: true', () => {
+test('createConnectSignalingMessage spotlight: true', () => {
   const options = {
     spotlight: true,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { spotlight: options.spotlight })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage spotlight: false', () => {
+test('createConnectSignalingMessage spotlight: false', () => {
   const options = {
     spotlight: false,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, { spotlight: options.spotlight })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
 /**
  * spotlightFocusRid test
  */
-test('createSignalingMessage spotlightFocusRid', () => {
+test('createConnectSignalingMessage spotlightFocusRid', () => {
   const options = {
     spotlightFocusRid: 'r0',
   }
@@ -712,26 +726,26 @@ test('createSignalingMessage spotlightFocusRid', () => {
     spotlight_focus_rid: options.spotlightFocusRid,
   })
   // @ts-ignore option で指定されている型以外を引数に指定する
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage spotlightFocusRid: unknown string', () => {
+test('createConnectSignalingMessage spotlightFocusRid: unknown string', () => {
   // "none", "r0", "r1", "r2" 以外の場合は追加されない
   const options = {
     spotlightFocusRid: '',
   }
   // @ts-ignore option で指定されている型以外を引数に指定する
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
 /**
  * spotlightUnfocusRid test
  */
-test('createSignalingMessage spotlightUnfocusRid', () => {
+test('createConnectSignalingMessage spotlightUnfocusRid', () => {
   const options = {
     spotlightUnfocusRid: 'r0',
   }
@@ -739,75 +753,75 @@ test('createSignalingMessage spotlightUnfocusRid', () => {
     spotlight_unfocus_rid: options.spotlightUnfocusRid,
   })
   // @ts-ignore option で指定されている型以外を引数に指定する
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage spotlightFocusRid: unknown string', () => {
+test('createConnectSignalingMessage spotlightFocusRid: unknown string', () => {
   // "none", "r0", "r1", "r2" 以外の場合は追加されない
   const options = {
     spotlightUnfocusRid: '',
   }
   // @ts-ignore option で指定されている型以外を引数に指定する
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
 /**
  * spotlightNumber test
  */
-test('createSignalingMessage spotlightNumber', () => {
+test('createConnectSignalingMessage spotlightNumber', () => {
   const options = {
     spotlightNumber: 5,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     spotlight_number: options.spotlightNumber,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage spotlightNumber: 0', () => {
+test('createConnectSignalingMessage spotlightNumber: 0', () => {
   const options = {
     spotlightNumber: 0,
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     spotlight_number: options.spotlightNumber,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
 
-test('createSignalingMessage spotlightNumber: undefined', () => {
+test('createConnectSignalingMessage spotlightNumber: undefined', () => {
   const options = {
     spotlightNumber: undefined,
   }
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
-test('createSignalingMessage audioStreamingLanguageCode: undefined', () => {
+test('createConnectSignalingMessage audioStreamingLanguageCode: undefined', () => {
   const options = {
     audioStreamingLanguageCode: undefined,
   }
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(baseExpectedMessage)
 })
 
-test('createSignalingMessage audioStreamingLanguageCode: ja-JP', () => {
+test('createConnectSignalingMessage audioStreamingLanguageCode: ja-JP', () => {
   const options = {
     audioStreamingLanguageCode: 'ja-JP',
   }
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     audio_streaming_language_code: options.audioStreamingLanguageCode,
   })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(
+    createConnectSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false),
+  ).toEqual(expectedMessage)
 })
