@@ -1,4 +1,11 @@
 import {
+  SORA_ROLE_RECVONLY,
+  SORA_ROLE_SENDONLY,
+  SORA_ROLE_SENDRECV,
+  TRANSPORT_TYPE_DATACHANNEL,
+  TRANSPORT_TYPE_WEBSOCKET,
+} from './constants'
+import {
   DisconnectDataChannelError,
   DisconnectInternalError,
   DisconnectWaitTimeoutError,
@@ -1201,14 +1208,14 @@ export default class ConnectionBase {
         } else if (message.type === 'ping') {
           await this.signalingOnMessageTypePing(message)
         } else if (message.type === 'push') {
-          this.callbacks.push(message, 'websocket')
+          this.callbacks.push(message, TRANSPORT_TYPE_WEBSOCKET)
         } else if (message.type === 'notify') {
           if (message.event_type === 'connection.created') {
             this.writeWebSocketTimelineLog('notify-connection.created', message)
           } else if (message.event_type === 'connection.destroyed') {
             this.writeWebSocketTimelineLog('notify-connection.destroyed', message)
           }
-          this.signalingOnMessageTypeNotify(message, 'websocket')
+          this.signalingOnMessageTypeNotify(message, TRANSPORT_TYPE_WEBSOCKET)
         } else if (message.type === 'switched') {
           this.writeWebSocketSignalingLog('onmessage-switched', message)
           this.signalingOnMessageTypeSwitched(message)
@@ -1343,12 +1350,12 @@ export default class ConnectionBase {
     // mid と transceiver.direction を合わせる
     for (const mid of Object.values(this.mids)) {
       const transceiver = this.pc.getTransceivers().find((t) => t.mid === mid)
-      if (transceiver && transceiver.direction === 'recvonly') {
-        transceiver.direction = 'sendrecv'
+      if (transceiver && transceiver.direction === SORA_ROLE_RECVONLY) {
+        transceiver.direction = SORA_ROLE_SENDRECV
       }
     }
     // simulcast の場合
-    if (this.simulcast && (this.role === 'sendrecv' || this.role === 'sendonly')) {
+    if (this.simulcast && (this.role === SORA_ROLE_SENDRECV || this.role === SORA_ROLE_SENDONLY)) {
       const transceiver = this.pc.getTransceivers().find((t) => {
         if (t.mid === null) {
           return
@@ -1356,7 +1363,7 @@ export default class ConnectionBase {
         if (t.sender.track === null) {
           return
         }
-        if (t.currentDirection !== null && t.currentDirection !== 'sendonly') {
+        if (t.currentDirection !== null && t.currentDirection !== SORA_ROLE_SENDONLY) {
           return
         }
         if (this.mids.video !== '' && this.mids.video === t.mid) {
@@ -1674,7 +1681,7 @@ export default class ConnectionBase {
    * @param data - イベントデータ
    */
   protected writeWebSocketSignalingLog(eventType: string, data?: unknown): void {
-    this.callbacks.signaling(createSignalingEvent(eventType, data, 'websocket'))
+    this.callbacks.signaling(createSignalingEvent(eventType, data, TRANSPORT_TYPE_WEBSOCKET))
     this.writeWebSocketTimelineLog(eventType, data)
   }
 
@@ -1689,7 +1696,7 @@ export default class ConnectionBase {
     channel: RTCDataChannel,
     data?: unknown,
   ): void {
-    this.callbacks.signaling(createSignalingEvent(eventType, data, 'datachannel'))
+    this.callbacks.signaling(createSignalingEvent(eventType, data, TRANSPORT_TYPE_DATACHANNEL))
     this.writeDataChannelTimelineLog(eventType, channel, data)
   }
 
@@ -1700,7 +1707,7 @@ export default class ConnectionBase {
    * @param data - イベントデータ
    */
   protected writeWebSocketTimelineLog(eventType: string, data?: unknown): void {
-    const event = createTimelineEvent(eventType, data, 'websocket')
+    const event = createTimelineEvent(eventType, data, TRANSPORT_TYPE_WEBSOCKET)
     this.callbacks.timeline(event)
   }
 

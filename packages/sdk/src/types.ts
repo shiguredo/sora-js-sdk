@@ -1,3 +1,11 @@
+import type {
+  SORA_ROLE_RECVONLY,
+  SORA_ROLE_SENDONLY,
+  SORA_ROLE_SENDRECV,
+  TRANSPORT_TYPE_DATACHANNEL,
+  TRANSPORT_TYPE_WEBSOCKET,
+} from './constants'
+
 export type JSONType =
   | null
   | boolean
@@ -44,7 +52,7 @@ export type SignalingVideo =
       av1_params?: JSONType
     }
 
-export type Role = 'sendrecv' | 'sendonly' | 'recvonly'
+export type Role = typeof SORA_ROLE_SENDRECV | typeof SORA_ROLE_SENDONLY | typeof SORA_ROLE_RECVONLY
 
 export type SignalingConnectDataChannel = {
   label?: string
@@ -352,9 +360,10 @@ export type Callbacks = {
 
 export type Browser = 'edge' | 'chrome' | 'safari' | 'opera' | 'firefox' | null
 
-export type TransportType = 'websocket' | 'datachannel' | 'peerconnection'
+export type TransportType = typeof TRANSPORT_TYPE_WEBSOCKET | typeof TRANSPORT_TYPE_DATACHANNEL
+export type SignalingMessageDirection = 'sent' | 'received'
 
-export type TimelineEventLogType = 'websocket' | 'datachannel' | 'peerconnection' | 'sora'
+export type TimelineEventLogType = TransportType | 'peerconnection' | 'sora'
 
 export interface SignalingEvent extends Event {
   transportType: TransportType
