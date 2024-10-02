@@ -7,10 +7,10 @@ import type {
   Callbacks,
   ConnectionOptions,
   DataChannelConfiguration,
+  DataChannelSignalingMessage,
   JSONType,
   SignalingCloseMessage,
   SignalingConnectMessage,
-  SignalingMessage,
   SignalingNotifyMessage,
   SignalingOfferMessage,
   SignalingOfferMessageDataChannel,
@@ -26,6 +26,7 @@ import type {
   SoraCloseEventInitDict,
   SoraCloseEventType,
   TransportType,
+  WebSocketSignalingMessage,
 } from './types'
 import {
   ConnectError,
@@ -1185,7 +1186,7 @@ export default class ConnectionBase {
         if (typeof event.data !== 'string') {
           throw new Error('Received invalid signaling data')
         }
-        const message = JSON.parse(event.data) as SignalingMessage
+        const message = JSON.parse(event.data) as WebSocketSignalingMessage
         if (message.type === 'offer') {
           this.writeWebSocketSignalingLog('onmessage-offer', message)
           this.signalingOnMessageTypeOffer(message)
@@ -2034,7 +2035,7 @@ export default class ConnectionBase {
           return
         }
         const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
-        const message = JSON.parse(data) as SignalingMessage
+        const message = JSON.parse(data) as DataChannelSignalingMessage
         this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message)
         if (message.type === 're-offer') {
           await this.signalingOnMessageTypeReOffer(message)

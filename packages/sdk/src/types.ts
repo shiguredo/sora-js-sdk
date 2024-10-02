@@ -84,17 +84,19 @@ export type SignalingConnectMessage = {
   forwarding_filter?: JSONType
 }
 
-export type SignalingMessage =
+export type WebSocketSignalingMessage =
+  | SignalingConnectMessage
   | SignalingOfferMessage
   | SignalingUpdateMessage
   | SignalingReOfferMessage
   | SignalingPingMessage
   | SignalingPushMessage
   | SignalingNotifyMessage
-  | SignalingReqStatsMessage
   | SignalingSwitchedMessage
   | SignalingRedirectMessage
-  | SignalingCloseMessage
+
+export type DataChannelSignalingMessage = SignalingReOfferMessage | SignalingCloseMessage
+
 export type SignalingOfferMessageDataChannel = {
   label: string
   direction: DataChannelDirection
