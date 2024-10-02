@@ -21,5 +21,8 @@ export const SIGNALING_MESSAGE_TYPE_PUSH = 'push' as const
 export const SIGNALING_MESSAGE_TYPE_PING = 'ping' as const
 export const SIGNALING_MESSAGE_TYPE_PONG = 'pong' as const
 
+export const SIGNALING_MESSAGE_TYPE_REQ_STATS = 'req-stats' as const
+export const SIGNALING_MESSAGE_TYPE_STATS = 'stats' as const
+
 // @deprecated この定数は将来的に削除される予定です
 export const SIGNALING_MESSAGE_TYPE_UPDATE = 'update' as const

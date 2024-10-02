@@ -1,14 +1,17 @@
 import {
   SIGNALING_MESSAGE_TYPE_ANSWER,
   SIGNALING_MESSAGE_TYPE_CANDIDATE,
+  SIGNALING_MESSAGE_TYPE_DISCONNECT,
   SIGNALING_MESSAGE_TYPE_NOTIFY,
   SIGNALING_MESSAGE_TYPE_OFFER,
   SIGNALING_MESSAGE_TYPE_PING,
   SIGNALING_MESSAGE_TYPE_PONG,
   SIGNALING_MESSAGE_TYPE_PUSH,
   SIGNALING_MESSAGE_TYPE_REDIRECT,
+  SIGNALING_MESSAGE_TYPE_REQ_STATS,
   SIGNALING_MESSAGE_TYPE_RE_ANSWER,
   SIGNALING_MESSAGE_TYPE_RE_OFFER,
+  SIGNALING_MESSAGE_TYPE_STATS,
   SIGNALING_MESSAGE_TYPE_SWITCHED,
   SIGNALING_MESSAGE_TYPE_UPDATE,
   SORA_ROLE_RECVONLY,
@@ -698,7 +701,7 @@ export default class ConnectionBase {
     }
     // 終了処理を開始する
     if (this.soraDataChannels.signaling) {
-      const message = { type: 'disconnect', reason: title }
+      const message = { type: SIGNALING_MESSAGE_TYPE_DISCONNECT, reason: title }
       if (
         this.signalingOfferMessageDataChannels.signaling &&
         this.signalingOfferMessageDataChannels.signaling.compress === true
@@ -832,7 +835,7 @@ export default class ConnectionBase {
         return resolve({ code: event.code, reason: event.reason })
       }
       if (this.ws.readyState === 1) {
-        const message = { type: 'disconnect', reason: title }
+        const message = { type: SIGNALING_MESSAGE_TYPE_DISCONNECT, reason: title }
         this.ws.send(JSON.stringify(message))
         this.writeWebSocketSignalingLog('send-disconnect', message)
         // WebSocket 切断を待つ
@@ -910,7 +913,7 @@ export default class ConnectionBase {
     const dataChannelClosePromise = Promise.all(onDataChannelClosePromises)
 
     // 準備はできたのでメッセージを送る
-    const message = { type: 'disconnect', reason: 'NO-ERROR' }
+    const message = { type: SIGNALING_MESSAGE_TYPE_DISCONNECT, reason: 'NO-ERROR' }
     if (
       this.signalingOfferMessageDataChannels.signaling &&
       this.signalingOfferMessageDataChannels.signaling.compress === true
@@ -2113,7 +2116,7 @@ export default class ConnectionBase {
         }
         const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as SignalingReqStatsMessage
-        if (message.type === 'req-stats') {
+        if (message.type === SIGNALING_MESSAGE_TYPE_REQ_STATS) {
           const stats = await this.getStats()
           await this.sendStatsMessage(stats)
         }
@@ -2191,7 +2194,7 @@ export default class ConnectionBase {
   private async sendStatsMessage(reports: RTCStatsReport[]): Promise<void> {
     if (this.soraDataChannels.stats) {
       const message = {
-        type: 'stats',
+        type: SIGNALING_MESSAGE_TYPE_STATS,
         reports: reports,
       }
       if (
