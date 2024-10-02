@@ -629,7 +629,7 @@ export default class ConnectionBase {
     this.maybeClosePeerConnection()
     this.initializeConnection()
 
-    const event = this.soraCloseEvent('normal', 'DISCONNECT', params)
+    const event = this.soraCloseEvent('normal', 'SHUTDOWN', params)
     this.writeSoraTimelineLog('disconnect-normal', event)
     // 切断完了したコールバックを呼ぶ
     // XXX(v): disconnect ではなく disconnected にした方が良い
@@ -982,6 +982,7 @@ export default class ConnectionBase {
       this.pc.onicegatheringstatechange = null
       this.pc.onconnectionstatechange = null
     }
+    // WebSocket の監視を止める
     if (this.ws) {
       // onclose はログを吐く専用に残す
       this.ws.onclose = (event) => {
@@ -1002,6 +1003,7 @@ export default class ConnectionBase {
         event = this.soraCloseEvent('abend', result.reason)
       }
       event = this.soraCloseEvent('normal', 'DISCONNECT', result)
+      // もう切断されている可能性が高いが一応止める
       await this.disconnectWebSocket('NO-ERROR')
       this.maybeClosePeerConnection()
     } else {

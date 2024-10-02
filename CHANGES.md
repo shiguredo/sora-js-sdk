@@ -11,9 +11,12 @@
 
 ## develop
 
+- [CHANGE] Sora 側からの切断の SoraCloseEvent の title を `SHUTDOWN` に変更する
+  - @voluntas
 - [ADD] DataChannel のみのシグナリングを利用している際、 Sora から切断された場合に送られてくる `"type": "close"` メッセージの処理を追加する
   - WebSocket シグナリングには Close フレームの Code/Reason があるが、DataChannel シグナリングのみでは判断ができないため
   - `"type": "close"` は DataChannel シグナリング経由でのみ送られてくる
+  - @voluntas
 - [CHANGE] ブラウザでは非推奨となっている `addstream` と `removestream` コールバックを削除する
   - 廃止宣言から 4 年位経過した
   - @voluntas
