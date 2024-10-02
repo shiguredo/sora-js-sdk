@@ -9,21 +9,12 @@
 - FIX
   - バグ修正
 
-## feature/type-close
-
-- [ADD] Sora からの `"type": "close"` メッセージを受信した場合の処理を追加する
-  - SignalingCloseMessage を追加
-  - WebSocket シグナリングには Close フレームの Code/Reason があるが、DataChannel シグナリングではないため
-  - `"type": "disconnect"` は DataChannel シグナリング経由でのみ送られてくる
-  - @voluntas
-
-### misc
-
-- [FIX] RTCPeerConnection.close は Promise ではないので await しないようにする
-  - @voluntas
-
 ## develop
 
+- [ADD] DataChannel のみのシグナリングを利用している際、 Sora から切断された場合に送られてくる `"type": "close"` メッセージの処理を追加する
+  - WebSocket シグナリングには Close フレームの Code/Reason があるが、DataChannel シグナリングのみでは判断ができないため
+  - `"type": "close"` は DataChannel シグナリング経由でのみ送られてくる
+  - @voluntas
 - [CHANGE] メッセージングを送信する `sendMessage` が `void` ではなく `Promise<void>` を返すようになりました
   - DataChannel の切断部分のロジックを大幅に書き換えた
   - 複数回 Disconnect を呼んだときの挙動に懸念あり
@@ -39,6 +30,8 @@
 
 ### misc
 
+- [FIX] RTCPeerConnection.close は Promise ではないので await しないようにする
+  - @voluntas
 - [CHANGE] ビルドシステムを Vite に変更する
   - Rollup 関連を削除
   - @voluntas
