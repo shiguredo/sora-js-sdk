@@ -1,4 +1,14 @@
 import type {
+  SIGNALING_MESSAGE_TYPE_CLOSE,
+  SIGNALING_MESSAGE_TYPE_CONNECT,
+  SIGNALING_MESSAGE_TYPE_NOTIFY,
+  SIGNALING_MESSAGE_TYPE_OFFER,
+  SIGNALING_MESSAGE_TYPE_PING,
+  SIGNALING_MESSAGE_TYPE_PUSH,
+  SIGNALING_MESSAGE_TYPE_REDIRECT,
+  SIGNALING_MESSAGE_TYPE_RE_OFFER,
+  SIGNALING_MESSAGE_TYPE_SWITCHED,
+  SIGNALING_MESSAGE_TYPE_UPDATE,
   SORA_ROLE_RECVONLY,
   SORA_ROLE_SENDONLY,
   SORA_ROLE_SENDRECV,
@@ -65,7 +75,7 @@ export type SignalingConnectDataChannel = {
 }
 
 export type SignalingConnectMessage = {
-  type: 'connect'
+  type: typeof SIGNALING_MESSAGE_TYPE_CONNECT
   role: Role
   channel_id: string
   client_id?: string
@@ -112,7 +122,7 @@ export type SignalingOfferMessageDataChannel = {
 }
 
 export type SignalingOfferMessage = {
-  type: 'offer'
+  type: typeof SIGNALING_MESSAGE_TYPE_OFFER
   sdp: string
 
   multistream: boolean
@@ -141,22 +151,22 @@ export type SignalingOfferMessage = {
 
 // @deprecated この型は非推奨です。将来のバージョンで削除される可能性があります。
 export type SignalingUpdateMessage = {
-  type: 'update'
+  type: typeof SIGNALING_MESSAGE_TYPE_UPDATE
   sdp: string
 }
 
 export type SignalingReOfferMessage = {
-  type: 're-offer'
+  type: typeof SIGNALING_MESSAGE_TYPE_RE_OFFER
   sdp: string
 }
 
 export type SignalingPingMessage = {
-  type: 'ping'
+  type: typeof SIGNALING_MESSAGE_TYPE_PING
   stats: boolean
 }
 
 export type SignalingPushMessage = {
-  type: 'push'
+  type: typeof SIGNALING_MESSAGE_TYPE_PUSH
   data: Record<string, unknown>
 }
 
@@ -165,18 +175,18 @@ export type SignalingReqStatsMessage = {
 }
 
 export type SignalingSwitchedMessage = {
-  type: 'switched'
+  type: typeof SIGNALING_MESSAGE_TYPE_SWITCHED
   ignore_disconnect_websocket: boolean
 }
 
 export type SignalingRedirectMessage = {
-  type: 'redirect'
+  type: typeof SIGNALING_MESSAGE_TYPE_REDIRECT
   location: string
 }
 
 // DataChannel シグナリングでのみ利用される
 export type SignalingCloseMessage = {
-  type: 'close'
+  type: typeof SIGNALING_MESSAGE_TYPE_CLOSE
   code: number
   reason: string
 }
@@ -199,7 +209,7 @@ export type SignalingNotifyMetadata = {
 }
 
 export type SignalingNotifyConnectionCreated = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'connection.created'
   role: Role
   client_id?: string
@@ -220,7 +230,7 @@ export type SignalingNotifyConnectionCreated = {
 }
 
 export type SignalingNotifyConnectionUpdated = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'connection.updated'
   role: Role
   client_id?: string
@@ -236,7 +246,7 @@ export type SignalingNotifyConnectionUpdated = {
 }
 
 export type SignalingNotifyConnectionDestroyed = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'connection.destroyed'
   role: Role
   client_id?: string
@@ -255,7 +265,7 @@ export type SignalingNotifyConnectionDestroyed = {
 }
 
 export type SignalingNotifySpotlightChanged = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'spotlight.changed'
   client_id: string | null
   connection_id: string | null
@@ -266,7 +276,7 @@ export type SignalingNotifySpotlightChanged = {
 }
 
 export type SignalingNotifySpotlightFocused = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'spotlight.focused'
   client_id: string | null
   connection_id: string
@@ -276,7 +286,7 @@ export type SignalingNotifySpotlightFocused = {
 }
 
 export type SignalingNotifySpotlightUnfocused = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'spotlight.unfocused'
   client_id: string | null
   connection_id: string
@@ -286,7 +296,7 @@ export type SignalingNotifySpotlightUnfocused = {
 }
 
 export type SignalingNotifyNetworkStatus = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'network.status'
   unstable_level: 0 | 1 | 2 | 3
 }

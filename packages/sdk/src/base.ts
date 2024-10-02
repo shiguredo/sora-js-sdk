@@ -1,4 +1,16 @@
 import {
+  SIGNALING_MESSAGE_TYPE_ANSWER,
+  SIGNALING_MESSAGE_TYPE_CANDIDATE,
+  SIGNALING_MESSAGE_TYPE_NOTIFY,
+  SIGNALING_MESSAGE_TYPE_OFFER,
+  SIGNALING_MESSAGE_TYPE_PING,
+  SIGNALING_MESSAGE_TYPE_PONG,
+  SIGNALING_MESSAGE_TYPE_PUSH,
+  SIGNALING_MESSAGE_TYPE_REDIRECT,
+  SIGNALING_MESSAGE_TYPE_RE_ANSWER,
+  SIGNALING_MESSAGE_TYPE_RE_OFFER,
+  SIGNALING_MESSAGE_TYPE_SWITCHED,
+  SIGNALING_MESSAGE_TYPE_UPDATE,
   SORA_ROLE_RECVONLY,
   SORA_ROLE_SENDONLY,
   SORA_ROLE_SENDRECV,
@@ -1194,32 +1206,32 @@ export default class ConnectionBase {
           throw new Error('Received invalid signaling data')
         }
         const message = JSON.parse(event.data) as WebSocketSignalingMessage
-        if (message.type === 'offer') {
+        if (message.type === SIGNALING_MESSAGE_TYPE_OFFER) {
           this.writeWebSocketSignalingLog('onmessage-offer', message)
           this.signalingOnMessageTypeOffer(message)
           this.connectedSignalingUrl = ws.url
           resolve(message)
-        } else if (message.type === 'update') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_UPDATE) {
           this.writeWebSocketSignalingLog('onmessage-update', message)
           await this.signalingOnMessageTypeUpdate(message)
-        } else if (message.type === 're-offer') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_RE_OFFER) {
           this.writeWebSocketSignalingLog('onmessage-re-offer', message)
           await this.signalingOnMessageTypeReOffer(message)
-        } else if (message.type === 'ping') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_PING) {
           await this.signalingOnMessageTypePing(message)
-        } else if (message.type === 'push') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_PUSH) {
           this.callbacks.push(message, TRANSPORT_TYPE_WEBSOCKET)
-        } else if (message.type === 'notify') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_NOTIFY) {
           if (message.event_type === 'connection.created') {
             this.writeWebSocketTimelineLog('notify-connection.created', message)
           } else if (message.event_type === 'connection.destroyed') {
             this.writeWebSocketTimelineLog('notify-connection.destroyed', message)
           }
           this.signalingOnMessageTypeNotify(message, TRANSPORT_TYPE_WEBSOCKET)
-        } else if (message.type === 'switched') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_SWITCHED) {
           this.writeWebSocketSignalingLog('onmessage-switched', message)
           this.signalingOnMessageTypeSwitched(message)
-        } else if (message.type === 'redirect') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_REDIRECT) {
           this.writeWebSocketSignalingLog('onmessage-redirect', message)
           try {
             const redirectMessage = await this.signalingOnMessageTypeRedirect(message)
@@ -1325,7 +1337,7 @@ export default class ConnectionBase {
 
     const sdp = this.processOfferSdp(message.sdp)
     const sessionDescription = new RTCSessionDescription({
-      type: 'offer',
+      type: SIGNALING_MESSAGE_TYPE_OFFER,
       sdp,
     })
     await this.pc.setRemoteDescription(sessionDescription)
@@ -1420,7 +1432,7 @@ export default class ConnectionBase {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
       const sdp = this.pc.localDescription.sdp
-      const message = { type: 'answer', sdp }
+      const message = { type: SIGNALING_MESSAGE_TYPE_ANSWER, sdp }
       this.ws.send(JSON.stringify(message))
       this.writeWebSocketSignalingLog('send-answer', message)
     }
@@ -1456,7 +1468,9 @@ export default class ConnectionBase {
             resolve()
           } else {
             const candidate = event.candidate.toJSON()
-            const message = Object.assign(candidate, { type: 'candidate' }) as {
+            const message = Object.assign(candidate, {
+              type: SIGNALING_MESSAGE_TYPE_CANDIDATE,
+            }) as {
               type: string
               [key: string]: unknown
             }
@@ -1817,9 +1831,9 @@ export default class ConnectionBase {
    */
   private async sendUpdateAnswer(): Promise<void> {
     if (this.pc && this.ws && this.pc.localDescription) {
-      this.trace('ANSWER SDP', this.pc.localDescription.sdp)
+      this.trace('UPDATE ANSWER SDP', this.pc.localDescription.sdp)
       await this.sendSignalingMessage({
-        type: 'update',
+        type: SIGNALING_MESSAGE_TYPE_UPDATE,
         sdp: this.pc.localDescription.sdp,
       })
     }
@@ -1827,12 +1841,13 @@ export default class ConnectionBase {
 
   /**
    * シグナリングサーバーに type re-answer を投げるメソッド
+   * @deprecated このメソッドは非推奨です。将来のバージョンで削除される可能性があります。
    */
   private async sendReAnswer(): Promise<void> {
     if (this.pc?.localDescription) {
       this.trace('RE ANSWER SDP', this.pc.localDescription.sdp)
       await this.sendSignalingMessage({
-        type: 're-answer',
+        type: SIGNALING_MESSAGE_TYPE_RE_ANSWER,
         sdp: this.pc.localDescription.sdp,
       })
     }
@@ -1880,8 +1895,8 @@ export default class ConnectionBase {
    * @param message - type ping メッセージ
    */
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
-    const pongMessage: { type: 'pong'; stats?: RTCStatsReport[] } = {
-      type: 'pong',
+    const pongMessage: { type: typeof SIGNALING_MESSAGE_TYPE_PONG; stats?: RTCStatsReport[] } = {
+      type: SIGNALING_MESSAGE_TYPE_PONG,
     }
     if (message.stats) {
       const stats = await this.getStats()
