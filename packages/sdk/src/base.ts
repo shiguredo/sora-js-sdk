@@ -247,9 +247,7 @@ export default class ConnectionBase {
     this.callbacks = {
       disconnect: (): void => {},
       push: (): void => {},
-      addstream: (): void => {},
       track: (): void => {},
-      removestream: (): void => {},
       removetrack: (): void => {},
       notify: (): void => {},
       log: (): void => {},
@@ -285,27 +283,12 @@ export default class ConnectionBase {
    * });
    * ```
    *
-   * @remarks
-   * addstream イベントは非推奨です. track イベントを使用してください
-   *
-   * removestream イベントは非推奨です. removetrack イベントを使用してください
-   *
    * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message, datachannel)
    * @param callback - コールバック関数
    *
    * @public
    */
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
-    // @deprecated message
-    if (kind === 'addstream') {
-      console.warn(
-        '@deprecated addstream callback will be removed in a future version. Use track callback.',
-      )
-    } else if (kind === 'removestream') {
-      console.warn(
-        '@deprecated removestream callback will be removed in a future version. Use removetrack callback.',
-      )
-    }
     if (kind in this.callbacks) {
       this.callbacks[kind] = callback
     }
@@ -1847,7 +1830,7 @@ export default class ConnectionBase {
 
   /**
    * シグナリングサーバーから受け取った type update メッセージを処理をするメソッド
-   *
+   * @deprecated このメソッドは非推奨です。将来のバージョンで削除される可能性があります。
    * @param message - type update メッセージ
    */
   private async signalingOnMessageTypeUpdate(message: SignalingUpdateMessage): Promise<void> {

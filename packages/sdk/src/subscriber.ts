@@ -75,24 +75,17 @@ export default class ConnectionSubscriber extends ConnectionBase {
         this.stream.onremovetrack = (event): void => {
           this.callbacks.removetrack(event)
           if (event.target) {
-            // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-            const targetId = event.target.id as string
-            const index = this.remoteConnectionIds.indexOf(targetId)
+            const streamId = (event.target as MediaStreamTrack).id
+            const index = this.remoteConnectionIds.indexOf(streamId)
             if (-1 < index) {
               delete this.remoteConnectionIds[index]
-              // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-              event.stream = event.target
-              this.callbacks.removestream(event)
             }
           }
         }
         if (-1 < this.remoteConnectionIds.indexOf(streamId)) {
           return
         }
-        // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-        event.stream = this.stream
         this.remoteConnectionIds.push(streamId)
-        this.callbacks.addstream(event)
       }
     }
     await this.setRemoteDescription(signalingMessage)
@@ -134,24 +127,17 @@ export default class ConnectionSubscriber extends ConnectionBase {
         stream.onremovetrack = (event): void => {
           this.callbacks.removetrack(event)
           if (event.target) {
-            // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-            const targetId = event.target.id as string
-            const index = this.remoteConnectionIds.indexOf(targetId)
+            const streamId = (event.target as MediaStream).id
+            const index = this.remoteConnectionIds.indexOf(streamId)
             if (-1 < index) {
               delete this.remoteConnectionIds[index]
-              // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-              event.stream = event.target
-              this.callbacks.removestream(event)
             }
           }
         }
         if (-1 < this.remoteConnectionIds.indexOf(stream.id)) {
           return
         }
-        // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-        event.stream = stream
         this.remoteConnectionIds.push(stream.id)
-        this.callbacks.addstream(event)
       }
     }
     await this.setRemoteDescription(signalingMessage)

@@ -14,6 +14,8 @@
 - [ADD] DataChannel のみのシグナリングを利用している際、 Sora から切断された場合に送られてくる `"type": "close"` メッセージの処理を追加する
   - WebSocket シグナリングには Close フレームの Code/Reason があるが、DataChannel シグナリングのみでは判断ができないため
   - `"type": "close"` は DataChannel シグナリング経由でのみ送られてくる
+- [CHANGE] ブラウザでは非推奨となっている `addstream` と `removestream` コールバックを削除する
+  - 廃止宣言から 4 年位経過した
   - @voluntas
 - [CHANGE] メッセージングを送信する `sendMessage` が `void` ではなく `Promise<void>` を返すようになりました
   - DataChannel の切断部分のロジックを大幅に書き換えた
