@@ -129,6 +129,7 @@ export type SignalingOfferMessage = {
   }
 }
 
+// @deprecated この型は非推奨です。将来のバージョンで削除される可能性があります。
 export type SignalingUpdateMessage = {
   type: 'update'
   sdp: string
@@ -312,7 +313,8 @@ export type ConnectionOptions = {
   simulcast?: boolean
   simulcastRid?: SimulcastRid
   clientId?: string
-  timeout?: number // deprecated option
+  // @deprecated このオプションは非推奨です。将来のバージョンで削除される可能性があります。
+  timeout?: number
   connectionTimeout?: number
   signalingNotifyMetadata?: JSONType
   dataChannelSignaling?: boolean
@@ -328,9 +330,7 @@ export type ConnectionOptions = {
 export type Callbacks = {
   disconnect: (event: SoraCloseEvent) => void
   push: (event: SignalingPushMessage, transportType: TransportType) => void
-  addstream: (event: RTCTrackEvent) => void
   track: (event: RTCTrackEvent) => void
-  removestream: (event: MediaStreamTrackEvent) => void
   removetrack: (event: MediaStreamTrackEvent) => void
   notify: (event: SignalingNotifyMessage, transportType: TransportType) => void
   log: (title: string, message: JSONType) => void
