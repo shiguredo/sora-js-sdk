@@ -1839,6 +1839,7 @@ export default class ConnectionBase {
 
   /**
    * シグナリングサーバーに type update を投げるメソッド
+   * @deprecated このメソッドは非推奨です。将来のバージョンで削除される可能性があります。
    */
   private async sendUpdateAnswer(): Promise<void> {
     if (this.pc && this.ws && this.pc.localDescription) {
@@ -1852,7 +1853,6 @@ export default class ConnectionBase {
 
   /**
    * シグナリングサーバーに type re-answer を投げるメソッド
-   * @deprecated このメソッドは非推奨です。将来のバージョンで削除される可能性があります。
    */
   private async sendReAnswer(): Promise<void> {
     if (this.pc?.localDescription) {
