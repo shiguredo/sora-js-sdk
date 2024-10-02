@@ -1,4 +1,31 @@
 import {
+  DATA_CHANNEL_LABEL_NOTIFY,
+  DATA_CHANNEL_LABEL_PUSH,
+  DATA_CHANNEL_LABEL_SIGNALING,
+  DATA_CHANNEL_LABEL_STATS,
+  SIGNALING_MESSAGE_TYPE_ANSWER,
+  SIGNALING_MESSAGE_TYPE_CANDIDATE,
+  SIGNALING_MESSAGE_TYPE_CLOSE,
+  SIGNALING_MESSAGE_TYPE_DISCONNECT,
+  SIGNALING_MESSAGE_TYPE_NOTIFY,
+  SIGNALING_MESSAGE_TYPE_OFFER,
+  SIGNALING_MESSAGE_TYPE_PING,
+  SIGNALING_MESSAGE_TYPE_PONG,
+  SIGNALING_MESSAGE_TYPE_PUSH,
+  SIGNALING_MESSAGE_TYPE_REDIRECT,
+  SIGNALING_MESSAGE_TYPE_REQ_STATS,
+  SIGNALING_MESSAGE_TYPE_RE_ANSWER,
+  SIGNALING_MESSAGE_TYPE_RE_OFFER,
+  SIGNALING_MESSAGE_TYPE_STATS,
+  SIGNALING_MESSAGE_TYPE_SWITCHED,
+  SIGNALING_MESSAGE_TYPE_UPDATE,
+  SIGNALING_ROLE_RECVONLY,
+  SIGNALING_ROLE_SENDONLY,
+  SIGNALING_ROLE_SENDRECV,
+  TRANSPORT_TYPE_DATACHANNEL,
+  TRANSPORT_TYPE_WEBSOCKET,
+} from './constants'
+import {
   DisconnectDataChannelError,
   DisconnectInternalError,
   DisconnectWaitTimeoutError,
@@ -7,10 +34,10 @@ import type {
   Callbacks,
   ConnectionOptions,
   DataChannelConfiguration,
+  DataChannelSignalingMessage,
   JSONType,
   SignalingCloseMessage,
   SignalingConnectMessage,
-  SignalingMessage,
   SignalingNotifyMessage,
   SignalingOfferMessage,
   SignalingOfferMessageDataChannel,
@@ -26,6 +53,7 @@ import type {
   SoraCloseEventInitDict,
   SoraCloseEventType,
   TransportType,
+  WebSocketSignalingMessage,
 } from './types'
 import {
   ConnectError,
@@ -678,7 +706,7 @@ export default class ConnectionBase {
     }
     // 終了処理を開始する
     if (this.soraDataChannels.signaling) {
-      const message = { type: 'disconnect', reason: title }
+      const message = { type: SIGNALING_MESSAGE_TYPE_DISCONNECT, reason: title }
       if (
         this.signalingOfferMessageDataChannels.signaling &&
         this.signalingOfferMessageDataChannels.signaling.compress === true
@@ -812,7 +840,7 @@ export default class ConnectionBase {
         return resolve({ code: event.code, reason: event.reason })
       }
       if (this.ws.readyState === 1) {
-        const message = { type: 'disconnect', reason: title }
+        const message = { type: SIGNALING_MESSAGE_TYPE_DISCONNECT, reason: title }
         this.ws.send(JSON.stringify(message))
         this.writeWebSocketSignalingLog('send-disconnect', message)
         // WebSocket 切断を待つ
@@ -890,7 +918,7 @@ export default class ConnectionBase {
     const dataChannelClosePromise = Promise.all(onDataChannelClosePromises)
 
     // 準備はできたのでメッセージを送る
-    const message = { type: 'disconnect', reason: 'NO-ERROR' }
+    const message = { type: SIGNALING_MESSAGE_TYPE_DISCONNECT, reason: 'NO-ERROR' }
     if (
       this.signalingOfferMessageDataChannels.signaling &&
       this.signalingOfferMessageDataChannels.signaling.compress === true
@@ -1185,33 +1213,33 @@ export default class ConnectionBase {
         if (typeof event.data !== 'string') {
           throw new Error('Received invalid signaling data')
         }
-        const message = JSON.parse(event.data) as SignalingMessage
-        if (message.type === 'offer') {
+        const message = JSON.parse(event.data) as WebSocketSignalingMessage
+        if (message.type === SIGNALING_MESSAGE_TYPE_OFFER) {
           this.writeWebSocketSignalingLog('onmessage-offer', message)
           this.signalingOnMessageTypeOffer(message)
           this.connectedSignalingUrl = ws.url
           resolve(message)
-        } else if (message.type === 'update') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_UPDATE) {
           this.writeWebSocketSignalingLog('onmessage-update', message)
           await this.signalingOnMessageTypeUpdate(message)
-        } else if (message.type === 're-offer') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_RE_OFFER) {
           this.writeWebSocketSignalingLog('onmessage-re-offer', message)
           await this.signalingOnMessageTypeReOffer(message)
-        } else if (message.type === 'ping') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_PING) {
           await this.signalingOnMessageTypePing(message)
-        } else if (message.type === 'push') {
-          this.callbacks.push(message, 'websocket')
-        } else if (message.type === 'notify') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_PUSH) {
+          this.callbacks.push(message, TRANSPORT_TYPE_WEBSOCKET)
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_NOTIFY) {
           if (message.event_type === 'connection.created') {
             this.writeWebSocketTimelineLog('notify-connection.created', message)
           } else if (message.event_type === 'connection.destroyed') {
             this.writeWebSocketTimelineLog('notify-connection.destroyed', message)
           }
-          this.signalingOnMessageTypeNotify(message, 'websocket')
-        } else if (message.type === 'switched') {
+          this.signalingOnMessageTypeNotify(message, TRANSPORT_TYPE_WEBSOCKET)
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_SWITCHED) {
           this.writeWebSocketSignalingLog('onmessage-switched', message)
           this.signalingOnMessageTypeSwitched(message)
-        } else if (message.type === 'redirect') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_REDIRECT) {
           this.writeWebSocketSignalingLog('onmessage-redirect', message)
           try {
             const redirectMessage = await this.signalingOnMessageTypeRedirect(message)
@@ -1317,7 +1345,7 @@ export default class ConnectionBase {
 
     const sdp = this.processOfferSdp(message.sdp)
     const sessionDescription = new RTCSessionDescription({
-      type: 'offer',
+      type: SIGNALING_MESSAGE_TYPE_OFFER,
       sdp,
     })
     await this.pc.setRemoteDescription(sessionDescription)
@@ -1342,12 +1370,15 @@ export default class ConnectionBase {
     // mid と transceiver.direction を合わせる
     for (const mid of Object.values(this.mids)) {
       const transceiver = this.pc.getTransceivers().find((t) => t.mid === mid)
-      if (transceiver && transceiver.direction === 'recvonly') {
-        transceiver.direction = 'sendrecv'
+      if (transceiver && transceiver.direction === SIGNALING_ROLE_RECVONLY) {
+        transceiver.direction = SIGNALING_ROLE_SENDRECV
       }
     }
     // simulcast の場合
-    if (this.simulcast && (this.role === 'sendrecv' || this.role === 'sendonly')) {
+    if (
+      this.simulcast &&
+      (this.role === SIGNALING_ROLE_SENDRECV || this.role === SIGNALING_ROLE_SENDONLY)
+    ) {
       const transceiver = this.pc.getTransceivers().find((t) => {
         if (t.mid === null) {
           return
@@ -1355,7 +1386,7 @@ export default class ConnectionBase {
         if (t.sender.track === null) {
           return
         }
-        if (t.currentDirection !== null && t.currentDirection !== 'sendonly') {
+        if (t.currentDirection !== null && t.currentDirection !== SIGNALING_ROLE_SENDONLY) {
           return
         }
         if (this.mids.video !== '' && this.mids.video === t.mid) {
@@ -1412,7 +1443,7 @@ export default class ConnectionBase {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
       const sdp = this.pc.localDescription.sdp
-      const message = { type: 'answer', sdp }
+      const message = { type: SIGNALING_MESSAGE_TYPE_ANSWER, sdp }
       this.ws.send(JSON.stringify(message))
       this.writeWebSocketSignalingLog('send-answer', message)
     }
@@ -1448,7 +1479,9 @@ export default class ConnectionBase {
             resolve()
           } else {
             const candidate = event.candidate.toJSON()
-            const message = Object.assign(candidate, { type: 'candidate' }) as {
+            const message = Object.assign(candidate, {
+              type: SIGNALING_MESSAGE_TYPE_CANDIDATE,
+            }) as {
               type: string
               [key: string]: unknown
             }
@@ -1673,7 +1706,7 @@ export default class ConnectionBase {
    * @param data - イベントデータ
    */
   protected writeWebSocketSignalingLog(eventType: string, data?: unknown): void {
-    this.callbacks.signaling(createSignalingEvent(eventType, data, 'websocket'))
+    this.callbacks.signaling(createSignalingEvent(eventType, data, TRANSPORT_TYPE_WEBSOCKET))
     this.writeWebSocketTimelineLog(eventType, data)
   }
 
@@ -1688,7 +1721,7 @@ export default class ConnectionBase {
     channel: RTCDataChannel,
     data?: unknown,
   ): void {
-    this.callbacks.signaling(createSignalingEvent(eventType, data, 'datachannel'))
+    this.callbacks.signaling(createSignalingEvent(eventType, data, TRANSPORT_TYPE_DATACHANNEL))
     this.writeDataChannelTimelineLog(eventType, channel, data)
   }
 
@@ -1699,7 +1732,7 @@ export default class ConnectionBase {
    * @param data - イベントデータ
    */
   protected writeWebSocketTimelineLog(eventType: string, data?: unknown): void {
-    const event = createTimelineEvent(eventType, data, 'websocket')
+    const event = createTimelineEvent(eventType, data, TRANSPORT_TYPE_WEBSOCKET)
     this.callbacks.timeline(event)
   }
 
@@ -1806,12 +1839,13 @@ export default class ConnectionBase {
 
   /**
    * シグナリングサーバーに type update を投げるメソッド
+   * @deprecated このメソッドは非推奨です。将来のバージョンで削除される可能性があります。
    */
   private async sendUpdateAnswer(): Promise<void> {
     if (this.pc && this.ws && this.pc.localDescription) {
-      this.trace('ANSWER SDP', this.pc.localDescription.sdp)
+      this.trace('UPDATE ANSWER SDP', this.pc.localDescription.sdp)
       await this.sendSignalingMessage({
-        type: 'update',
+        type: SIGNALING_MESSAGE_TYPE_UPDATE,
         sdp: this.pc.localDescription.sdp,
       })
     }
@@ -1824,7 +1858,7 @@ export default class ConnectionBase {
     if (this.pc?.localDescription) {
       this.trace('RE ANSWER SDP', this.pc.localDescription.sdp)
       await this.sendSignalingMessage({
-        type: 're-answer',
+        type: SIGNALING_MESSAGE_TYPE_RE_ANSWER,
         sdp: this.pc.localDescription.sdp,
       })
     }
@@ -1872,8 +1906,8 @@ export default class ConnectionBase {
    * @param message - type ping メッセージ
    */
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
-    const pongMessage: { type: 'pong'; stats?: RTCStatsReport[] } = {
-      type: 'pong',
+    const pongMessage: { type: typeof SIGNALING_MESSAGE_TYPE_PONG; stats?: RTCStatsReport[] } = {
+      type: SIGNALING_MESSAGE_TYPE_PONG,
     }
     if (message.stats) {
       const stats = await this.getStats()
@@ -2022,7 +2056,7 @@ export default class ConnectionBase {
       })
     }
     // onmessage
-    if (dataChannelEvent.channel.label === 'signaling') {
+    if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_SIGNALING) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
@@ -2034,15 +2068,15 @@ export default class ConnectionBase {
           return
         }
         const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
-        const message = JSON.parse(data) as SignalingMessage
+        const message = JSON.parse(data) as DataChannelSignalingMessage
         this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message)
-        if (message.type === 're-offer') {
+        if (message.type === SIGNALING_MESSAGE_TYPE_RE_OFFER) {
           await this.signalingOnMessageTypeReOffer(message)
-        } else if (message.type === 'close') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_CLOSE) {
           await this.signalingOnMessageTypeClose(message)
         }
       }
-    } else if (dataChannelEvent.channel.label === 'notify') {
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_NOTIFY) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
@@ -2062,7 +2096,7 @@ export default class ConnectionBase {
         }
         this.signalingOnMessageTypeNotify(message, 'datachannel')
       }
-    } else if (dataChannelEvent.channel.label === 'push') {
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_PUSH) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
@@ -2077,7 +2111,7 @@ export default class ConnectionBase {
         const message = JSON.parse(data) as SignalingPushMessage
         this.callbacks.push(message, 'datachannel')
       }
-    } else if (dataChannelEvent.channel.label === 'stats') {
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_STATS) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
@@ -2090,7 +2124,7 @@ export default class ConnectionBase {
         }
         const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as SignalingReqStatsMessage
-        if (message.type === 'req-stats') {
+        if (message.type === SIGNALING_MESSAGE_TYPE_REQ_STATS) {
           const stats = await this.getStats()
           await this.sendStatsMessage(stats)
         }
@@ -2168,7 +2202,7 @@ export default class ConnectionBase {
   private async sendStatsMessage(reports: RTCStatsReport[]): Promise<void> {
     if (this.soraDataChannels.stats) {
       const message = {
-        type: 'stats',
+        type: SIGNALING_MESSAGE_TYPE_STATS,
         reports: reports,
       }
       if (
