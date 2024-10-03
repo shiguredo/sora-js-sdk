@@ -13,7 +13,7 @@
 ## 開発準備
 
 - `pnpm install` を実行
-- `pnpm run start` でローカルサーバを起動する
+- `pnpm run dev` でローカルサーバを起動する
 
 ## 開発
 
