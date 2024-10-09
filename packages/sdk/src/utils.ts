@@ -558,35 +558,19 @@ export function addStereoToFmtp(sdp: string): string{
   }
 
   function isSetupActive(mediaDescription: string): boolean{
-    if (/a=setup:active/.test(mediaDescription)) {
-      return true
-    }
-
-    return false
+    return /a=setup:active/.test(mediaDescription)
   }
 
   function isRecvOnly(mediaDescription: string): boolean {
-    if (/a=recvonly/.test(mediaDescription)) {
-      return true
-    }
-
-    return false
+    return /a=recvonly/.test(mediaDescription)
   }
 
   function isOpus(mediaDescription: string): boolean {
-    if (/a=rtpmap:\d+\sopus/.test(mediaDescription)) {
-      return true
-    }
-
-    return false
+    return /a=rtpmap:\d+\sopus/.test(mediaDescription)
   }
 
   function isFmtp(mediaDescription: string): boolean {
-    if (/a=fmtp:\d+/.test(mediaDescription)) {
-      return true
-    }
-
-    return false
+    return /a=fmtp:\d+/.test(mediaDescription)
   }
 
   function appendStereo(mediaDescription: string): string {
