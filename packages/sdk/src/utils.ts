@@ -550,11 +550,7 @@ export function addStereoToFmtp(sdp: string): string{
 }
 
   function isAudio(mediaDescription: string): boolean{
-    if (/^m=audio/.test(mediaDescription)) {
-      return true
-    }
-
-    return false
+    return /^m=audio/.test(mediaDescription)
   }
 
   function isSetupActive(mediaDescription: string): boolean{
