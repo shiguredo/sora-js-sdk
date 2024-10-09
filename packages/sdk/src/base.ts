@@ -41,6 +41,7 @@ import {
   isSafari,
   parseDataChannelEventData,
   trace,
+  addStereoToFmtp,
 } from './utils'
 
 declare global {
@@ -1357,10 +1358,7 @@ export default class ConnectionBase {
     // https://issues.webrtc.org/issues/41481053#comment18
 
     if (this.options.forceStereoOutput && sessionDescription.sdp) {
-      // TODO: 順不同対応
-      const regexp = /m=audio.+?a=setup:active.+?a=recvonly.+?a=rtpmap:\d+\sopus.+?a=fmtp:\d+\s(?<!stereo=1;.*)minptime=\d+(?!.*stereo=1)[^\s]*?/msg
-      const replacementFunc = (match: string) => `${match};stereo=1`
-      sessionDescription.sdp = sessionDescription.sdp.replaceAll(regexp, replacementFunc)
+      sessionDescription.sdp = addStereoToFmtp(sessionDescription.sdp)
     }
 
     await this.pc.setLocalDescription(sessionDescription)
