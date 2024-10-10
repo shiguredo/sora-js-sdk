@@ -504,25 +504,25 @@ export function addStereoToFmtp(sdp: string): string{
     return sdp
   }
 
-  const session = splitSdp[1]
-  const mediaDescriptions = splitSdp[2]
+  const sessionDescription = splitSdp[1]
+
   const mediaDescriptionsList: string[][] = []
-  let mdList: string[] = []
-  for (const line of mediaDescriptions.split(/\n/)){
+  let mediaDescriptionList: string[] = []
+  for (const line of splitSdp[2].split(/\n/)){
     const typ = line[0]
     if (typ === 'm' ) {
-      mdList = [line]
-      mediaDescriptionsList.push(mdList)
+      mediaDescriptionList = [line]
+      mediaDescriptionsList.push(mediaDescriptionList)
     } else {
-      mdList.push(line)
+      mediaDescriptionList.push(line)
     }
   }
 
-  const mediaDescriptionList = mediaDescriptionsList.map(mediaDescription => {
+  const mediaDescriptions = mediaDescriptionsList.map(mediaDescription => {
     return mediaDescription.join('\n')
   })
 
-  const newMediaDescriptionList = mediaDescriptionList.map(mediaDescription => {
+  const newMediaDescriptions = mediaDescriptions.map(mediaDescription => {
     if (!isAudio(mediaDescription)) {
       return mediaDescription
     }
@@ -546,29 +546,29 @@ export function addStereoToFmtp(sdp: string): string{
     return appendStereo(mediaDescription)
   })
 
-  return `${session}${newMediaDescriptionList.join('\n')}`
+  return `${sessionDescription}${newMediaDescriptions.join('\n')}`
 }
 
-  function isAudio(mediaDescription: string): boolean{
-    return /^m=audio/.test(mediaDescription)
-  }
+function isAudio(mediaDescription: string): boolean{
+  return /^m=audio/.test(mediaDescription)
+}
 
-  function isSetupActive(mediaDescription: string): boolean{
-    return /a=setup:active/.test(mediaDescription)
-  }
+function isSetupActive(mediaDescription: string): boolean{
+  return /a=setup:active/.test(mediaDescription)
+}
 
-  function isRecvOnly(mediaDescription: string): boolean {
-    return /a=recvonly/.test(mediaDescription)
-  }
+function isRecvOnly(mediaDescription: string): boolean {
+  return /a=recvonly/.test(mediaDescription)
+}
 
-  function isOpus(mediaDescription: string): boolean {
-    return /a=rtpmap:\d+\sopus/.test(mediaDescription)
-  }
+function isOpus(mediaDescription: string): boolean {
+  return /a=rtpmap:\d+\sopus/.test(mediaDescription)
+}
 
-  function isFmtp(mediaDescription: string): boolean {
-    return /a=fmtp:\d+/.test(mediaDescription)
-  }
+function isFmtp(mediaDescription: string): boolean {
+  return /a=fmtp:\d+/.test(mediaDescription)
+}
 
-  function appendStereo(mediaDescription: string): string {
-    return mediaDescription.replace(/(?<!stereo=1;.*)minptime=\d+(?!.*stereo=1)/, (match) => `${match};stereo=1`)
-  }
+function appendStereo(mediaDescription: string): string {
+  return mediaDescription.replace(/(?<!stereo=1;.*)minptime=\d+(?!.*stereo=1)/, (match) => `${match};stereo=1`)
+}
