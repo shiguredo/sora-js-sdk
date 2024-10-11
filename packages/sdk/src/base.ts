@@ -1350,7 +1350,6 @@ export default class ConnectionBase {
     const sessionDescription = await this.pc.createAnswer()
     this.writePeerConnectionTimelineLog('create-answer', sessionDescription)
 
-    // TODO: sendrecv または recvonly で設定で forceStereo: true という options を追加する
     // Chrome/Edge 向けのハック stereo=1 が CreateOffer では付与されないので、
     // SDP を書き換えて stereo=1 を付与する
     // https://github.com/w3c/webrtc-stats/issues/686
