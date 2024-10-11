@@ -19,10 +19,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     ACCESS_TOKEN,
   )
 
-  document.querySelector('#start')?.addEventListener('click', async () => {
-    await client.connect()
+  document.querySelector('#connect')?.addEventListener('click', async () => {
+    const checkCompress = document.getElementById('check-compress') as HTMLInputElement
+    const compress = checkCompress.checked
+
+    await client.connect(compress)
   })
-  document.querySelector('#stop')?.addEventListener('click', async () => {
+  document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
   })
   document.querySelector('#send-message')?.addEventListener('click', async () => {
@@ -96,35 +99,43 @@ class SoraClient {
     this.connection.on('message', this.onmessage.bind(this))
   }
 
-  async connect() {
-    // start ボタンを無効にする
-    const startButton = document.querySelector<HTMLButtonElement>('#start')
-    if (startButton) {
-      startButton.disabled = true
+  async connect(compress: boolean) {
+    // connect ボタンを無効にする
+    const connectButton = document.querySelector<HTMLButtonElement>('#connect')
+    if (connectButton) {
+      connectButton.disabled = true
     }
 
+    // dataChannels の compress の設定を上書きする
+    this.connection.options.dataChannels = [
+      {
+        label: '#example',
+        direction: 'sendrecv',
+        compress: compress,
+      },
+    ]
     await this.connection.connect()
 
-    // stop ボタンを有効にする
-    const stopButton = document.querySelector<HTMLButtonElement>('#stop')
-    if (stopButton) {
-      stopButton.disabled = false
+    // disconnect ボタンを有効にする
+    const disconnectButton = document.querySelector<HTMLButtonElement>('#disconnect')
+    if (disconnectButton) {
+      disconnectButton.disabled = false
     }
   }
 
   async disconnect() {
     await this.connection.disconnect()
 
-    // start ボタンを有効にする
-    const startButton = document.querySelector<HTMLButtonElement>('#start')
-    if (startButton) {
-      startButton.disabled = false
+    // connect ボタンを有効にする
+    const connectButton = document.querySelector<HTMLButtonElement>('#connect')
+    if (connectButton) {
+      connectButton.disabled = false
     }
 
-    // stop ボタンを無効にする
-    const stopButton = document.querySelector<HTMLButtonElement>('#stop')
-    if (stopButton) {
-      stopButton.disabled = true
+    // disconnect ボタンを無効にする
+    const disconnectButton = document.querySelector<HTMLButtonElement>('#disconnect')
+    if (disconnectButton) {
+      disconnectButton.disabled = true
     }
 
     const receivedMessagesElement = document.querySelector('#received-messages')

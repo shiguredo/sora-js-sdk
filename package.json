@@ -1,10 +1,16 @@
 {
   "name": "sora-js-sdk",
-  "version": "2024.2.0-canary.0",
+  "version": "2024.2.0-canary.7",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.js",
   "module": "dist/sora.mjs",
-  "types": "dist/sora.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/sora.mjs",
+      "require": "./dist/sora.mjs",
+      "types": "./dist/sora.d.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "examples": "vite build",
@@ -31,17 +37,14 @@
     "dist"
   ],
   "devDependencies": {
-    "@biomejs/biome": "1.8.3",
-    "@playwright/test": "1.47.0",
+    "@biomejs/biome": "1.9.2",
+    "@playwright/test": "1.47.2",
     "typedoc": "0.26.7",
     "typescript": "5.6.2",
-    "vite": "5.4.3",
-    "vitest": "2.0.5"
+    "vite": "5.4.7",
+    "vitest": "2.1.1"
   },
-  "resolutions": {
-    "get-pkg-repo": "5.0.0"
-  },
-  "packageManager": "pnpm@9.10.0",
+  "packageManager": "pnpm@9.11.0",
   "engines": {
     "node": ">=18"
   }

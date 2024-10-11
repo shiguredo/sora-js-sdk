@@ -9,8 +9,8 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   await sendonly.goto('http://localhost:9000/sendonly/')
   await recvonly.goto('http://localhost:9000/recvonly/')
 
-  await sendonly.click('#start')
-  await recvonly.click('#start')
+  await sendonly.click('#connect')
+  await recvonly.click('#connect')
 
   // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await sendonly.waitForSelector('#connection-id:not(:empty)')
@@ -108,8 +108,8 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   expect(recvonlyVideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
   expect(recvonlyVideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
 
-  await sendonly.click('#stop')
-  await recvonly.click('#stop')
+  await sendonly.click('#disconnect')
+  await recvonly.click('#disconnect')
 
   await sendonly.close()
   await recvonly.close()

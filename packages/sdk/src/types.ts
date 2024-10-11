@@ -1,3 +1,22 @@
+import type {
+  SIGNALING_MESSAGE_TYPE_CLOSE,
+  SIGNALING_MESSAGE_TYPE_CONNECT,
+  SIGNALING_MESSAGE_TYPE_NOTIFY,
+  SIGNALING_MESSAGE_TYPE_OFFER,
+  SIGNALING_MESSAGE_TYPE_PING,
+  SIGNALING_MESSAGE_TYPE_PUSH,
+  SIGNALING_MESSAGE_TYPE_REDIRECT,
+  SIGNALING_MESSAGE_TYPE_REQ_STATS,
+  SIGNALING_MESSAGE_TYPE_RE_OFFER,
+  SIGNALING_MESSAGE_TYPE_SWITCHED,
+  SIGNALING_MESSAGE_TYPE_UPDATE,
+  SIGNALING_ROLE_RECVONLY,
+  SIGNALING_ROLE_SENDONLY,
+  SIGNALING_ROLE_SENDRECV,
+  TRANSPORT_TYPE_DATACHANNEL,
+  TRANSPORT_TYPE_WEBSOCKET,
+} from './constants'
+
 export type JSONType =
   | null
   | boolean
@@ -44,7 +63,10 @@ export type SignalingVideo =
       av1_params?: JSONType
     }
 
-export type Role = 'sendrecv' | 'sendonly' | 'recvonly'
+export type Role =
+  | typeof SIGNALING_ROLE_SENDRECV
+  | typeof SIGNALING_ROLE_SENDONLY
+  | typeof SIGNALING_ROLE_RECVONLY
 
 export type SignalingConnectDataChannel = {
   label?: string
@@ -57,7 +79,7 @@ export type SignalingConnectDataChannel = {
 }
 
 export type SignalingConnectMessage = {
-  type: 'connect'
+  type: typeof SIGNALING_MESSAGE_TYPE_CONNECT
   role: Role
   channel_id: string
   client_id?: string
@@ -84,16 +106,18 @@ export type SignalingConnectMessage = {
   forwarding_filter?: JSONType
 }
 
-export type SignalingMessage =
+export type WebSocketSignalingMessage =
+  | SignalingConnectMessage
   | SignalingOfferMessage
   | SignalingUpdateMessage
   | SignalingReOfferMessage
   | SignalingPingMessage
   | SignalingPushMessage
   | SignalingNotifyMessage
-  | SignalingReqStatsMessage
   | SignalingSwitchedMessage
   | SignalingRedirectMessage
+
+export type DataChannelSignalingMessage = SignalingReOfferMessage | SignalingCloseMessage
 
 export type SignalingOfferMessageDataChannel = {
   label: string
@@ -102,7 +126,7 @@ export type SignalingOfferMessageDataChannel = {
 }
 
 export type SignalingOfferMessage = {
-  type: 'offer'
+  type: typeof SIGNALING_MESSAGE_TYPE_OFFER
   sdp: string
 
   multistream: boolean
@@ -129,38 +153,46 @@ export type SignalingOfferMessage = {
   }
 }
 
+// @deprecated この型は非推奨です。将来のバージョンで削除される可能性があります。
 export type SignalingUpdateMessage = {
-  type: 'update'
+  type: typeof SIGNALING_MESSAGE_TYPE_UPDATE
   sdp: string
 }
 
 export type SignalingReOfferMessage = {
-  type: 're-offer'
+  type: typeof SIGNALING_MESSAGE_TYPE_RE_OFFER
   sdp: string
 }
 
 export type SignalingPingMessage = {
-  type: 'ping'
+  type: typeof SIGNALING_MESSAGE_TYPE_PING
   stats: boolean
 }
 
 export type SignalingPushMessage = {
-  type: 'push'
+  type: typeof SIGNALING_MESSAGE_TYPE_PUSH
   data: Record<string, unknown>
 }
 
 export type SignalingReqStatsMessage = {
-  type: 'req-stats'
+  type: typeof SIGNALING_MESSAGE_TYPE_REQ_STATS
 }
 
 export type SignalingSwitchedMessage = {
-  type: 'switched'
+  type: typeof SIGNALING_MESSAGE_TYPE_SWITCHED
   ignore_disconnect_websocket: boolean
 }
 
 export type SignalingRedirectMessage = {
-  type: 'redirect'
+  type: typeof SIGNALING_MESSAGE_TYPE_REDIRECT
   location: string
+}
+
+// DataChannel シグナリングでのみ利用される
+export type SignalingCloseMessage = {
+  type: typeof SIGNALING_MESSAGE_TYPE_CLOSE
+  code: number
+  reason: string
 }
 
 export type SignalingNotifyMessage =
@@ -181,7 +213,7 @@ export type SignalingNotifyMetadata = {
 }
 
 export type SignalingNotifyConnectionCreated = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'connection.created'
   role: Role
   client_id?: string
@@ -202,7 +234,7 @@ export type SignalingNotifyConnectionCreated = {
 }
 
 export type SignalingNotifyConnectionUpdated = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'connection.updated'
   role: Role
   client_id?: string
@@ -218,7 +250,7 @@ export type SignalingNotifyConnectionUpdated = {
 }
 
 export type SignalingNotifyConnectionDestroyed = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'connection.destroyed'
   role: Role
   client_id?: string
@@ -237,7 +269,7 @@ export type SignalingNotifyConnectionDestroyed = {
 }
 
 export type SignalingNotifySpotlightChanged = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'spotlight.changed'
   client_id: string | null
   connection_id: string | null
@@ -248,7 +280,7 @@ export type SignalingNotifySpotlightChanged = {
 }
 
 export type SignalingNotifySpotlightFocused = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'spotlight.focused'
   client_id: string | null
   connection_id: string
@@ -258,7 +290,7 @@ export type SignalingNotifySpotlightFocused = {
 }
 
 export type SignalingNotifySpotlightUnfocused = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'spotlight.unfocused'
   client_id: string | null
   connection_id: string
@@ -268,7 +300,7 @@ export type SignalingNotifySpotlightUnfocused = {
 }
 
 export type SignalingNotifyNetworkStatus = {
-  type: 'notify'
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'network.status'
   unstable_level: 0 | 1 | 2 | 3
 }
@@ -312,7 +344,8 @@ export type ConnectionOptions = {
   simulcast?: boolean
   simulcastRid?: SimulcastRid
   clientId?: string
-  timeout?: number // deprecated option
+  // @deprecated このオプションは非推奨です。将来のバージョンで削除される可能性があります。
+  timeout?: number
   connectionTimeout?: number
   signalingNotifyMetadata?: JSONType
   dataChannelSignaling?: boolean
@@ -332,9 +365,7 @@ export type ConnectionOptions = {
 export type Callbacks = {
   disconnect: (event: SoraCloseEvent) => void
   push: (event: SignalingPushMessage, transportType: TransportType) => void
-  addstream: (event: RTCTrackEvent) => void
   track: (event: RTCTrackEvent) => void
-  removestream: (event: MediaStreamTrackEvent) => void
   removetrack: (event: MediaStreamTrackEvent) => void
   notify: (event: SignalingNotifyMessage, transportType: TransportType) => void
   log: (title: string, message: JSONType) => void
@@ -347,14 +378,21 @@ export type Callbacks = {
 
 export type Browser = 'edge' | 'chrome' | 'safari' | 'opera' | 'firefox' | null
 
-export type TransportType = 'websocket' | 'datachannel' | 'peerconnection'
+export type TransportType = typeof TRANSPORT_TYPE_WEBSOCKET | typeof TRANSPORT_TYPE_DATACHANNEL
+export type SignalingMessageDirection = 'sent' | 'received'
 
-export type TimelineEventLogType = 'websocket' | 'datachannel' | 'peerconnection' | 'sora'
+export type TimelineEventLogType = TransportType | 'peerconnection' | 'sora'
+
+// @todo 未実装
+export interface SignalingMessageEvent extends Event {
+  type: TransportType
+  direction: SignalingMessageDirection
+  message: WebSocketSignalingMessage | DataChannelSignalingMessage
+}
 
 export interface SignalingEvent extends Event {
   transportType: TransportType
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  data?: any
+  data?: unknown
 }
 
 export interface DataChannelMessageEvent extends Event {
@@ -368,8 +406,7 @@ export interface DataChannelEvent extends Event {
 
 export interface TimelineEvent extends Event {
   logType: TimelineEventLogType
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  data?: any
+  data?: unknown
   dataChannelId?: number | null
   dataChannelLabel?: string
 }

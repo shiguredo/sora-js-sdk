@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'r2',
   )
 
-  document.querySelector('#start')?.addEventListener('click', async () => {
+  document.querySelector('#connect')?.addEventListener('click', async () => {
     // sendonly
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     await recvonlyR2.connect()
   })
 
-  document.querySelector('#stop')?.addEventListener('click', async () => {
+  document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await sendonly.disconnect()
 
     // recvonly r0

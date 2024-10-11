@@ -11,6 +11,15 @@
 
 ## develop
 
+- [CHANGE] Sora 側からの切断の SoraCloseEvent の title を `SHUTDOWN` に変更する
+  - @voluntas
+- [ADD] DataChannel のみのシグナリングを利用している際、 Sora から切断された場合に送られてくる `"type": "close"` メッセージの処理を追加する
+  - WebSocket シグナリングには Close フレームの Code/Reason があるが、DataChannel シグナリングのみでは判断ができないため
+  - `"type": "close"` は DataChannel シグナリング経由でのみ送られてくる
+  - @voluntas
+- [CHANGE] ブラウザでは非推奨となっている `addstream` と `removestream` コールバックを削除する
+  - 廃止宣言から 4 年位経過した
+  - @voluntas
 - [CHANGE] メッセージングを送信する `sendMessage` が `void` ではなく `Promise<void>` を返すようになりました
   - DataChannel の切断部分のロジックを大幅に書き換えた
   - 複数回 Disconnect を呼んだときの挙動に懸念あり
@@ -26,6 +35,11 @@
 
 ### misc
 
+- [FIX] RTCPeerConnection.close は Promise ではないので await しないようにする
+  - @voluntas
+- [CHANGE] ビルドシステムを Vite に変更する
+  - Rollup 関連を削除
+  - @voluntas
 - [ADD] サンプルに getStats を追加する
   - sendrecv / sendonly / recvonly / messaging / simulcast
   - dataset に getStats の結果を入れて E2E テストで利用しやすくする

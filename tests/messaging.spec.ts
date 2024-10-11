@@ -9,8 +9,28 @@ test('messaging pages', async ({ browser }) => {
   await page1.goto('http://localhost:9000/messaging/')
   await page2.goto('http://localhost:9000/messaging/')
 
-  await page1.click('#start')
-  await page2.click('#start')
+  // Compress のTrue/Falseをランダムで設定する
+  const selectedCompress1 = await page1.evaluate(() => {
+    const checkCompress = document.getElementById('check-compress') as HTMLInputElement
+    const getRandomBoolean = (): boolean => Math.random() >= 0.5
+    const randomCompress: boolean = getRandomBoolean()
+    checkCompress.checked = randomCompress
+    return randomCompress
+  })
+  const selectedCompress2 = await page2.evaluate(() => {
+    const checkCompress = document.getElementById('check-compress') as HTMLInputElement
+    const getRandomBoolean = (): boolean => Math.random() >= 0.5
+    const randomCompress: boolean = getRandomBoolean()
+    checkCompress.checked = randomCompress
+    return randomCompress
+  })
+  // 設定した Compress の True/False をログに流す
+  console.log(`page1 Compress = ${selectedCompress1}`)
+  console.log(`page2 Compress = ${selectedCompress2}`)
+
+  // connect ボタンを押して接続開始
+  await page1.click('#connect')
+  await page2.click('#connect')
 
   await page1.waitForSelector('#connection-id:not(:empty)')
   const page1ConnectionId = await page1.$eval('#connection-id', (el) => el.textContent)
@@ -52,10 +72,14 @@ test('messaging pages', async ({ browser }) => {
   console.log(`Received message on page1: ${receivedMessage2}`)
   test.expect(receivedMessage2).toBe(page2Message)
 
-  // 'Get Stats' ボタンをクリックして統計情報を取得
-  await page1.click('#get-stats')
+  // Compress で圧縮されているかを確認する(圧縮されていると Equal にならない)
+  if (selectedCompress1 !== selectedCompress2) {
+    test.expect(receivedMessage1).toEqual(page1Message)
+    test.expect(receivedMessage2).toEqual(page2Message)
+  }
 
   // 'Get Stats' ボタンをクリックして統計情報を取得
+  await page1.click('#get-stats')
   await page2.click('#get-stats')
 
   // 統計情報が表示されるまで待機
@@ -151,8 +175,8 @@ test('messaging pages', async ({ browser }) => {
   expect(page2ExampleStats?.bytesSent).toBeGreaterThan(0)
   expect(page2ExampleStats?.messagesSent).toBeGreaterThan(0)
 
-  await page1.click('#stop')
-  await page2.click('#stop')
+  await page1.click('#disconnect')
+  await page2.click('#disconnect')
 
   await page1.close()
   await page2.close()

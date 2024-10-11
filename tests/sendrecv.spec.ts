@@ -7,8 +7,8 @@ test('sendrecv x2', async ({ browser }) => {
   await sendrecv1.goto('http://localhost:9000/sendrecv/')
   await sendrecv2.goto('http://localhost:9000/sendrecv/')
 
-  await sendrecv1.click('#start')
-  await sendrecv2.click('#start')
+  await sendrecv1.click('#connect')
+  await sendrecv2.click('#connect')
 
   // #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await sendrecv1.waitForSelector('#connection-id:not(:empty)')
@@ -92,8 +92,8 @@ test('sendrecv x2', async ({ browser }) => {
   expect(sendrecv2VideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
   expect(sendrecv2VideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
 
-  await sendrecv1.click('#stop')
-  await sendrecv2.click('#stop')
+  await sendrecv1.click('#disconnect')
+  await sendrecv2.click('#disconnect')
 
   await sendrecv1.close()
   await sendrecv2.close()
