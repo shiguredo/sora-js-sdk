@@ -70,6 +70,7 @@ import {
   isSafari,
   parseDataChannelEventData,
   trace,
+  addStereoToFmtp,
 } from './utils'
 
 declare global {
@@ -1410,6 +1411,17 @@ export default class ConnectionBase {
     }
     const sessionDescription = await this.pc.createAnswer()
     this.writePeerConnectionTimelineLog('create-answer', sessionDescription)
+
+    // Chrome/Edge 向けのハック stereo=1 が CreateOffer では付与されないので、
+    // SDP を書き換えて stereo=1 を付与する
+    // https://github.com/w3c/webrtc-stats/issues/686
+    // https://github.com/w3c/webrtc-extensions/issues/63
+    // https://issues.webrtc.org/issues/41481053#comment18
+
+    if (this.options.forceStereoOutput && sessionDescription.sdp) {
+      sessionDescription.sdp = addStereoToFmtp(sessionDescription.sdp)
+    }
+
     await this.pc.setLocalDescription(sessionDescription)
     this.writePeerConnectionTimelineLog('set-local-description', sessionDescription)
     return

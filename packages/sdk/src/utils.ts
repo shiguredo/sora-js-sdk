@@ -497,3 +497,78 @@ export const decompressMessage = async (binaryMessage: Uint8Array): Promise<Arra
   const decompressedStream = readableStream.pipeThrough(new DecompressionStream('deflate'))
   return await new Response(decompressedStream).arrayBuffer()
 }
+
+export function addStereoToFmtp(sdp: string): string{
+  const splitSdp = sdp.match(/^(v=.+?)(m=audio.+)/sm)
+  if (splitSdp === null) {
+    return sdp
+  }
+
+  const sessionDescription = splitSdp[1]
+
+  const mediaDescriptionsList: string[][] = []
+  let mediaDescriptionList: string[] = []
+  for (const line of splitSdp[2].split(/\n/)){
+    const typ = line[0]
+    if (typ === 'm' ) {
+      mediaDescriptionList = [line]
+      mediaDescriptionsList.push(mediaDescriptionList)
+    } else {
+      mediaDescriptionList.push(line)
+    }
+  }
+
+  const mediaDescriptions = mediaDescriptionsList.map(mediaDescription => {
+    return mediaDescription.join('\n')
+  })
+
+  const newMediaDescriptions = mediaDescriptions.map(mediaDescription => {
+    if (!isAudio(mediaDescription)) {
+      return mediaDescription
+    }
+
+    if (!isSetupActive(mediaDescription)) {
+      return mediaDescription
+    }
+
+    if (!isRecvOnly(mediaDescription)) {
+      return mediaDescription
+    }
+
+    if (!isOpus(mediaDescription)) {
+      return mediaDescription
+    }
+
+    if (!isFmtp(mediaDescription)) {
+      return mediaDescription
+    }
+
+    return appendStereo(mediaDescription)
+  })
+
+  return `${sessionDescription}${newMediaDescriptions.join('\n')}`
+}
+
+function isAudio(mediaDescription: string): boolean{
+  return /^m=audio/.test(mediaDescription)
+}
+
+function isSetupActive(mediaDescription: string): boolean{
+  return /a=setup:active/.test(mediaDescription)
+}
+
+function isRecvOnly(mediaDescription: string): boolean {
+  return /a=recvonly/.test(mediaDescription)
+}
+
+function isOpus(mediaDescription: string): boolean {
+  return /a=rtpmap:\d+\sopus/.test(mediaDescription)
+}
+
+function isFmtp(mediaDescription: string): boolean {
+  return /a=fmtp:\d+/.test(mediaDescription)
+}
+
+function appendStereo(mediaDescription: string): string {
+  return mediaDescription.replace(/(?<!stereo=1;.*)minptime=\d+(?!.*stereo=1)/, (match) => `${match};stereo=1`)
+}

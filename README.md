@@ -27,7 +27,7 @@ Please read <https://github.com/shiguredo/oss> before use.
 ## システム条件
 
 - WebRTC SFU Sora 2023.2.0 以降
-- TypeScript 5.5 以降
+- TypeScript 5.6 以降
 
 ## サンプル集
 
