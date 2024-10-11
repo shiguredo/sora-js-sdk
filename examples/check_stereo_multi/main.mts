@@ -99,12 +99,12 @@ class SendonlyClient {
 
   private sendonlyClientId: number
 
-  constructor(signaling_url: string, channel_id: string, sendonlyClientId: number) {
+  constructor(signaling_url: string, channel_id: string, sendonly_client_id: number) {
     this.sora = Sora.connection(signaling_url, this.debug)
 
     this.channelId = channel_id
 
-    this.sendonlyClientId = sendonlyClientId
+    this.sendonlyClientId = sendonly_client_id
 
     this.connection = this.sora.sendonly(this.channelId, undefined, this.options)
 
