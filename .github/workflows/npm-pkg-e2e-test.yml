@@ -61,6 +61,12 @@ jobs:
       #     name: playwright-report
       #     path: playwright-report/
       #     retention-days: 30
+      
+  slack_notify_succeeded:
+    needs: [npm-pkg-e2e-test]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
       - name: Slack Notification
         if: success()
         uses: rtCamp/action-slack-notify@v2
@@ -70,6 +76,11 @@ jobs:
           SLACK_TITLE: Succeeded
           SLACK_ICON_EMOJI: ":star-struck:"
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  slack_notify_failed:
+    needs: [npm-pkg-e2e-test]
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
