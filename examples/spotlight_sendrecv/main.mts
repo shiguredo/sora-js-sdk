@@ -4,8 +4,6 @@ import Sora, {
   type SignalingNotifyMessage,
 } from 'sora-js-sdk'
 
-import { randomUUID } from 'node:crypto'
-
 document.addEventListener('DOMContentLoaded', async () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
   const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
@@ -70,7 +68,7 @@ class SoraClient {
     this.label = label
 
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}spotlight_sendrecv_${randomUUID()}_${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}spotlight_sendrecv${channelIdSuffix}`
     this.metadata = { access_token: accessToken }
     this.options = {
       audio: true,
