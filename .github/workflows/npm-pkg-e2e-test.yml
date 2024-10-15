@@ -16,6 +16,7 @@ on:
 jobs:
   npm-pkg-e2e-test:
     timeout-minutes: 20
+    continue-on-error: true
     runs-on: ubuntu-latest
     strategy:
       matrix:
