@@ -9,6 +9,15 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   await sendonly.goto('http://localhost:9000/sendonly/')
   await recvonly.goto('http://localhost:9000/recvonly/')
 
+  // SDK バージョンの表示
+  await sendonly.waitForSelector('#sdk-version')
+  const sendonlySdkVersion = await sendonly.$eval('#sdk-version', (el) => el.textContent)
+  console.log(`sendonly sdkVersion=${sendonlySdkVersion}`)
+
+  await recvonly.waitForSelector('#sdk-version')
+  const recvonlySdkVersion = await recvonly.$eval('#sdk-version', (el) => el.textContent)
+  console.log(`recvonly sdkVersion=${recvonlySdkVersion}`)
+
   await sendonly.click('#connect')
   await recvonly.click('#connect')
 
