@@ -13,7 +13,7 @@
     "resolveJsonModule": true,
     "stripInternal": true,
     "newLine": "LF",
-    "types": [],
+    "types": ["node"],
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
   "exclude": ["node_modules"]

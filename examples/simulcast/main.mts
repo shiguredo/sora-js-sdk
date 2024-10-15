@@ -6,6 +6,8 @@ import Sora, {
   type SimulcastRid,
 } from 'sora-js-sdk'
 
+import { randomUUID } from 'node:crypto'
+
 document.addEventListener('DOMContentLoaded', () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
   const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
@@ -110,7 +112,7 @@ class SimulcastSendonlySoraClient {
     channel_id_suffix: string,
     access_token: string,
   ) {
-    this.channelId = `${channel_id_prefix}simulcast${channel_id_suffix}`
+    this.channelId = `${channel_id_prefix}simulcast_${randomUUID()}_${channel_id_suffix}`
 
     this.sora = Sora.connection(signaling_url, this.debug)
     this.connection = this.sora.sendonly(

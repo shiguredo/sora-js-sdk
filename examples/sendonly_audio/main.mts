@@ -4,6 +4,8 @@ import Sora, {
   type SoraConnection,
 } from 'sora-js-sdk'
 
+import { randomUUID } from 'node:crypto'
+
 document.addEventListener('DOMContentLoaded', async () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
   const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
@@ -82,7 +84,7 @@ class SoraClient {
     this.sora = Sora.connection(signaling_url, this.debug)
 
     // channel_id の生成
-    this.channelId = `${channel_id_prefix}sendonly_audio_codec${channel_id_suffix}`
+    this.channelId = `${channel_id_prefix}sendonly_audio_${randomUUID()}_${channel_id_suffix}`
     // access_token を指定する metadata の生成
     this.metadata = { access_token: access_token }
 
