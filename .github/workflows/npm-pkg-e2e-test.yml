@@ -2,14 +2,14 @@ name: npm-pkg-e2e-test
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - develop
-  #     - feature/*
-  #   paths-ignore:
-  #     - "**.md"
-  #     - "LICENSE"
-  #     - "NOTICE"
+  push:
+    branches:
+      - develop
+      - feature/*
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - "NOTICE"
   schedule:
     # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
     - cron: "0 2 * * 1-5"
@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # メンテナンスはおてて
         sdk_version: [
           "2024.1.2",
           "2023.2.0",
@@ -29,8 +30,8 @@ jobs:
           "2022.1.0",
           "2021.2.3",
         ]
-        # node: ["18", "20", "22"]
-        node: ["18"]
+        node: ["18", "20", "22"]
+        # node: ["18"]
         # browser: ["chromium", "firefox", "webkit"]
         browser: ["chromium"]
     env:
