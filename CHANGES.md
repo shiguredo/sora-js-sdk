@@ -35,6 +35,8 @@
 
 ### misc
 
+- [ADD] npm に登録されている stable SDK の E2E テストを追加する
+  - @voluntas
 - [FIX] RTCPeerConnection.close は Promise ではないので await しないようにする
   - @voluntas
 - [CHANGE] ビルドシステムを Vite に変更する
