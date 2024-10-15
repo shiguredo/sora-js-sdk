@@ -1,0 +1,72 @@
+name: npm-latest-sdk-e2e-test
+
+on:
+  push:
+    branches:
+      - develop
+      - feature/*
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - "NOTICE"
+  schedule:
+    # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
+    - cron: "0 2 * * 1-5"
+
+jobs:
+  e2e-test:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # sdk_version: ["2024.1.2", "2023.2.0", "2023.1.0", "2022.3.2"]
+        sdk_version: ["2024.1.2"]
+        # node: ["18", "20", "22"]
+        node: ["18"]
+        # browser: ["chromium", "firefox", "webkit"]
+        browser: ["chromium"]
+    env:
+      VITE_SORA_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
+      VITE_SORA_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+      VITE_ACCESS_TOKEN: ${{ secrets.TEST_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
+      # sora-js-sdk を npm からインストールする
+      - run: pnpm --version
+      - run: pnpm install
+      - run: pnpm add -E sora-js-sdk@${{ matrix.sdk_version }}
+      
+        working-directory: ./examples
+      - run: pnpm run build
+      - run: pnpm exec playwright install ${{ matrix.browser }} --with-deps
+      - run: pnpm exec playwright test --project=${{ matrix.browser }}
+        env:
+          VITE_SORA_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
+      # - uses: actions/upload-artifact@v4
+      #   if: always()
+      #   with:
+      #     name: playwright-report
+      #     path: playwright-report/
+      #     retention-days: 30
+      - name: Slack Notification
+        if: success()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-js-sdk
+          SLACK_COLOR: good
+          SLACK_TITLE: Succeeded
+          SLACK_ICON_EMOJI: ":star-struck:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Slack Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-js-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: Failed
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
