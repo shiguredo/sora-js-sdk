@@ -5,6 +5,11 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   root: resolve(__dirname, 'examples'),
+  resolve: {
+    alias: {
+      'sora-js-sdk': resolve(__dirname, 'dist/sora.mjs'),
+    },
+  },
   build: {
     rollupOptions: {
       input: {
