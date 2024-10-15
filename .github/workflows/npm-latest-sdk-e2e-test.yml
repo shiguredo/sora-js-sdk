@@ -29,6 +29,7 @@ jobs:
       VITE_SORA_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_SORA_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       VITE_ACCESS_TOKEN: ${{ secrets.TEST_SECRET_KEY }}
+      NPM_LATEST_SDK_E2E_TEST: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,7 +42,7 @@ jobs:
       - run: pnpm add -E sora-js-sdk@${{ matrix.sdk_version }}
       
         working-directory: ./examples
-      - run: pnpm run build
+      # pnpm run build しない
       - run: pnpm exec playwright install ${{ matrix.browser }} --with-deps
       - run: pnpm exec playwright test --project=${{ matrix.browser }}
         env:

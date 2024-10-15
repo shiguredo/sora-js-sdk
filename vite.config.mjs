@@ -6,9 +6,14 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   root: resolve(__dirname, 'examples'),
   resolve: {
-    alias: {
-      'sora-js-sdk': resolve(__dirname, 'dist/sora.mjs'),
-    },
+    // NPM_LATEST_SDK_E2E_TEST が true の時は alias を無効化する
+    // これは .github/workflows/npm-latest-sdk-e2e-test.yml で、
+    // E2E テストで複数のバージョンの npm の sora-js-sdk をインストールして利用するため
+    alias: process.env.NPM_LATEST_SDK_E2E_TEST
+      ? {}
+      : {
+          'sora-js-sdk': resolve(__dirname, 'dist/sora.mjs'),
+        },
   },
   build: {
     rollupOptions: {
