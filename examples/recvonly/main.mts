@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
     ACCESS_TOKEN,
   )
 
+  // SDK バージョンの表示
+  const sdkVersionElement = document.querySelector('#sdk-version')
+  if (sdkVersionElement) {
+    sdkVersionElement.textContent = `${Sora.version()}`
+  }
+
   document.querySelector('#connect')?.addEventListener('click', async () => {
     await client.connect()
   })
