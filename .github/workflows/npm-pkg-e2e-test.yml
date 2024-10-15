@@ -1,4 +1,4 @@
-name: npm-latest-sdk-e2e-test
+name: npm-pkg-e2e-test
 
 on:
   push:
@@ -14,7 +14,7 @@ on:
     - cron: "0 2 * * 1-5"
 
 jobs:
-  e2e-test:
+  npm-pkg-e2e-test:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
@@ -29,7 +29,7 @@ jobs:
       VITE_SORA_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_SORA_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       VITE_ACCESS_TOKEN: ${{ secrets.TEST_SECRET_KEY }}
-      NPM_LATEST_SDK_E2E_TEST: true
+      NPM_PKG_E2E_TEST: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
