@@ -79,6 +79,7 @@ class SoraClient {
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.channelId = `${channelIdPrefix}messaging${channelIdSuffix}`
+    console.log(channelIdPrefix)
     this.metadata = { access_token: accessToken }
 
     this.options = {

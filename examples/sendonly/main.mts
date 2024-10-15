@@ -17,6 +17,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     ACCESS_TOKEN,
   )
 
+  // SDK バージョンの表示
+  const sdkVersionElement = document.querySelector('#sdk-version')
+  if (sdkVersionElement) {
+    sdkVersionElement.textContent = `${Sora.version()}`
+  }
+
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     await client.connect(stream)
