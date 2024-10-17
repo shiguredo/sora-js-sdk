@@ -2,7 +2,27 @@ import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
   type ConnectionPublisher,
+  type VideoCodecType,
+  type ConnectionOptions,
 } from 'sora-js-sdk'
+
+const getChannelName = (): string => {
+  const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
+  const channelName = channelNameElement?.value
+  if (channelName === '' || channelName === undefined) {
+    return 'sendrecv'
+  }
+  return channelName
+}
+
+const getVideoCodecType = (): VideoCodecType | undefined => {
+  const videoCodecTypeElement = document.querySelector<HTMLSelectElement>('#video-codec-type')
+  const videoCodecType = videoCodecTypeElement?.value
+  if (videoCodecType === '') {
+    return undefined
+  }
+  return videoCodecType as VideoCodecType
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
@@ -10,14 +30,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
   const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
 
-  const client = new SoraClient(
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
-  )
+  let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
+    const channelName = getChannelName()
+    const videoCodecType = getVideoCodecType()
+
+    client = new SoraClient(
+      SORA_SIGNALING_URL,
+      SORA_CHANNEL_ID_PREFIX,
+      SORA_CHANNEL_ID_SUFFIX,
+      ACCESS_TOKEN,
+      channelName,
+      videoCodecType,
+    )
+
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
     await client.connect(stream)
   })
@@ -57,7 +84,7 @@ class SoraClient {
 
   private channelId: string
   private metadata: { access_token: string }
-  private options: object
+  private options: ConnectionOptions
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
@@ -67,11 +94,18 @@ class SoraClient {
     channelIdPrefix: string,
     channelIdSuffix: string,
     accessToken: string,
+    channelName: string,
+    videoCodecType: VideoCodecType | undefined,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}sendrecv${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
     this.metadata = { access_token: accessToken }
     this.options = {}
+
+    if (videoCodecType !== undefined) {
+      console.log('videoCodecType', videoCodecType)
+      this.options = { ...this.options, videoCodecType: videoCodecType }
+    }
 
     this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options)
 
