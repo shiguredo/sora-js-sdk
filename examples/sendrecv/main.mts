@@ -10,7 +10,7 @@ const getChannelName = (): string => {
   const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
   const channelName = channelNameElement?.value
   if (channelName === '' || channelName === undefined) {
-    return 'sendrecv'
+    throw new Error('channelName is empty')
   }
   return channelName
 }
@@ -99,6 +99,7 @@ class SoraClient {
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+    console.log('channelId:', this.channelId)
     this.metadata = { access_token: accessToken }
     this.options = {}
 

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('sendrecv x2', async ({ browser }) => {
+test('sendrecv-different-video-codec-type x2', async ({ browser }) => {
   const sendrecv1 = await browser.newPage()
   const sendrecv2 = await browser.newPage()
 
