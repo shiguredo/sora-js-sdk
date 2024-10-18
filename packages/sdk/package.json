@@ -9,7 +9,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "jsdom": "25.0.0",
-    "vite-plugin-dts": "4.2.1"
+    "jsdom": "25.0.1",
+    "vite-plugin-dts": "4.2.4"
   }
 }

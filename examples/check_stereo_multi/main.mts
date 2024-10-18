@@ -69,7 +69,9 @@ async function updateDeviceLists() {
   const devices = await navigator.mediaDevices.enumerateDevices()
 
   for (let i = 0; i < 2; i++) {
-    const audioInputSelect = document.querySelector<HTMLSelectElement>(`#sendonly-audio-input-${i + 1}`)
+    const audioInputSelect = document.querySelector<HTMLSelectElement>(
+      `#sendonly-audio-input-${i + 1}`,
+    )
 
     if (audioInputSelect) {
       audioInputSelect.innerHTML = ''
@@ -138,7 +140,9 @@ class SendonlyClient {
   }
 
   private initializeCanvas() {
-    this.canvas = document.querySelector<HTMLCanvasElement>(`#sendonly-waveform-${this.sendonlyClientId}`)
+    this.canvas = document.querySelector<HTMLCanvasElement>(
+      `#sendonly-waveform-${this.sendonlyClientId}`,
+    )
     if (this.canvas) {
       this.canvasCtx = this.canvas.getContext('2d')
     }
@@ -177,13 +181,17 @@ class SendonlyClient {
       const result = isStereo ? 'Stereo' : 'Mono'
 
       // differenceの値を表示する要素を追加
-      const differenceElement = document.querySelector<HTMLDivElement>(`#sendonly-difference-value-${this.sendonlyClientId}`)
+      const differenceElement = document.querySelector<HTMLDivElement>(
+        `#sendonly-difference-value-${this.sendonlyClientId}`,
+      )
       if (differenceElement) {
         differenceElement.textContent = `Difference: ${difference.toFixed(6)}`
       }
 
       // sendonly-stereo 要素に結果を反映
-      const sendonlyStereoElement = document.querySelector<HTMLDivElement>(`#sendonly-stereo-${this.sendonlyClientId}`)
+      const sendonlyStereoElement = document.querySelector<HTMLDivElement>(
+        `#sendonly-stereo-${this.sendonlyClientId}`,
+      )
       if (sendonlyStereoElement) {
         sendonlyStereoElement.textContent = result
       }
@@ -265,7 +273,9 @@ class SendonlyClient {
       event.event_type === 'connection.created' &&
       this.connection.connectionId === event.connection_id
     ) {
-      const connectionIdElement = document.querySelector<HTMLDivElement>(`#sendonly-connection-id-${this.sendonlyClientId}`)
+      const connectionIdElement = document.querySelector<HTMLDivElement>(
+        `#sendonly-connection-id-${this.sendonlyClientId}`,
+      )
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
       }
@@ -275,7 +285,9 @@ class SendonlyClient {
   private startChannelCheck() {
     this.channelCheckInterval = window.setInterval(async () => {
       const channels = await this.getChannels()
-      const channelElement = document.querySelector<HTMLDivElement>(`#sendonly-channels-${this.sendonlyClientId}`)
+      const channelElement = document.querySelector<HTMLDivElement>(
+        `#sendonly-channels-${this.sendonlyClientId}`,
+      )
       if (channelElement) {
         channelElement.textContent =
           channels !== undefined ? `getParameters codecs channels: ${channels}` : 'undefined'
@@ -320,7 +332,9 @@ class RecvonlyClient {
   }
 
   private initializeCanvas(streamId: string) {
-    const canvas = document.querySelector<HTMLCanvasElement>(`#recvonly-waveform-canvas-${streamId}`)
+    const canvas = document.querySelector<HTMLCanvasElement>(
+      `#recvonly-waveform-canvas-${streamId}`,
+    )
     if (canvas) {
       this.canvases.set(streamId, canvas)
       this.canvasCtxs.set(streamId, canvas.getContext('2d'))
@@ -360,7 +374,9 @@ class RecvonlyClient {
       const result = isStereo ? 'Stereo' : 'Mono'
 
       // differenceの値を表示する要素を追加
-      const differenceElement = document.querySelector<HTMLDivElement>(`#recvonly-difference-value-${stream.id}`)
+      const differenceElement = document.querySelector<HTMLDivElement>(
+        `#recvonly-difference-value-${stream.id}`,
+      )
       if (differenceElement) {
         differenceElement.textContent = `Difference: ${difference.toFixed(6)}`
       }
@@ -474,7 +490,7 @@ class RecvonlyClient {
         waveformCanvas.id = `recvonly-waveform-canvas-${stream.id}`
         waveformCanvas.width = 800
         waveformCanvas.height = 400
-        
+
         waveformDiv.appendChild(h3)
         waveformDiv.appendChild(differenceValueDiv)
         waveformDiv.appendChild(waveformCanvas)
