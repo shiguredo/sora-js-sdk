@@ -8,11 +8,39 @@ test('sendrecv x2', async ({ browser }) => {
   await sendrecv2.goto('http://localhost:9000/sendrecv/')
 
   // チャンネル名を設定
-  await sendrecv1.fill('#channel-name', 'sendrecv')
-  await sendrecv2.fill('#channel-name', 'sendrecv')
+  await sendrecv1.fill('#channel-name', 'sendrecv-different-video-codec-type')
+  await sendrecv2.fill('#channel-name', 'sendrecv-different-video-codec-type')
 
-  console.log('sendrecv1 channelName: sendrecv')
-  console.log('sendrecv2 channelName: sendrecv')
+  console.log('sendrecv1 channelName: sendrecv-different-video-codec-type')
+  console.log('sendrecv2 channelName: sendrecv-different-video-codec-type')
+
+  // sendrecv1 のビデオコーデックをランダムに選択
+  await sendrecv1.evaluate(() => {
+    const videoCodecTypeSelect = document.getElementById('video-codec-type') as HTMLSelectElement
+    const options = Array.from(videoCodecTypeSelect.options).filter((option) => option.value !== '')
+    const randomIndex = Math.floor(Math.random() * options.length)
+    videoCodecTypeSelect.value = options[randomIndex].value
+  })
+
+  // sendrecv2 のビデオコーデックをランダムに選択
+  await sendrecv2.evaluate(() => {
+    const videoCodecTypeSelect = document.getElementById('video-codec-type') as HTMLSelectElement
+    const options = Array.from(videoCodecTypeSelect.options).filter((option) => option.value !== '')
+    const randomIndex = Math.floor(Math.random() * options.length)
+    videoCodecTypeSelect.value = options[randomIndex].value
+  })
+
+  // 選択されたコーデックをログに出力
+  const sendrecv1VideoCodecType = await sendrecv1.$eval(
+    '#video-codec-type',
+    (el) => (el as HTMLSelectElement).value,
+  )
+  const sendrecv2VideoCodecType = await sendrecv2.$eval(
+    '#video-codec-type',
+    (el) => (el as HTMLSelectElement).value,
+  )
+  console.log(`sendrecv1 videoCodecType: ${sendrecv1VideoCodecType}`)
+  console.log(`sendrecv2 videoCodecType: ${sendrecv2VideoCodecType}`)
 
   await sendrecv1.click('#connect')
   await sendrecv2.click('#connect')
@@ -49,7 +77,7 @@ test('sendrecv x2', async ({ browser }) => {
   })
 
   const sendrecv1VideoCodecStats = sendrecv1StatsReportJson.find(
-    (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP9',
+    (stats) => stats.type === 'codec' && stats.mimeType === `video/${sendrecv1VideoCodecType}`,
   )
   expect(sendrecv1VideoCodecStats).toBeDefined()
 
@@ -80,8 +108,8 @@ test('sendrecv x2', async ({ browser }) => {
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
-  const sendrecv2VideoCodecStats = sendrecv1StatsReportJson.find(
-    (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP9',
+  const sendrecv2VideoCodecStats = sendrecv2StatsReportJson.find(
+    (stats) => stats.type === 'codec' && stats.mimeType === `video/${sendrecv2VideoCodecType}`,
   )
   expect(sendrecv2VideoCodecStats).toBeDefined()
 
