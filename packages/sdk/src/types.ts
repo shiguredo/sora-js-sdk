@@ -104,6 +104,8 @@ export type SignalingConnectMessage = {
   redirect?: true
   data_channels?: SignalingConnectDataChannel[]
   audio_streaming_language_code?: string
+  forwarding_filters?: JSONType
+  // @deprecated このオプションは非推奨です。将来のバージョンで削除される可能性があります。
   forwarding_filter?: JSONType
 }
 
@@ -325,6 +327,31 @@ export type DataChannelConfiguration = {
   header?: MessagingHeaderField[]
 }
 
+type ForwardingFilterRuleField = 'connection_id' | 'client_id' | 'kind'
+
+type ForwardingFilterRuleOperator = 'is_in' | 'is_not_in'
+
+type ForwardingFilterRuleKindValue = 'audio' | 'video'
+
+type ForwardingFilterRuleValue = string | ForwardingFilterRuleKindValue
+
+type ForwardingFilterRule = {
+  field: ForwardingFilterRuleField
+  operator: ForwardingFilterRuleOperator
+  values: [ForwardingFilterRuleValue]
+}
+
+type ForwardingFilterAction = 'block' | 'allow'
+
+type ForwardingFilter = {
+  version?: string
+  metadata?: JSONType
+  action?: ForwardingFilterAction
+  rules: [[ForwardingFilterRule]]
+  name?: string
+  priority?: number
+}
+
 export type ConnectionOptions = {
   audio?: boolean
   audioCodecType?: AudioCodecType
@@ -363,7 +390,9 @@ export type ConnectionOptions = {
   dataChannels?: DataChannelConfiguration[]
   bundleId?: string
   audioStreamingLanguageCode?: string
-  forwardingFilter?: JSONType
+  forwardingFilters?: ForwardingFilter[]
+  // @deprecated このオプションは非推奨です。将来のバージョンで削除される可能性があります。
+  forwardingFilter?: ForwardingFilter
 
   // Sora JavaScript SDK 内部で利用するオプション
   // SDP で Answer に stereo=1 を追記する

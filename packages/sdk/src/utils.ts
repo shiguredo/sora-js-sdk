@@ -189,6 +189,9 @@ export function createSignalingMessage(
   if (options.signalingNotifyMetadata !== undefined) {
     message.signaling_notify_metadata = options.signalingNotifyMetadata
   }
+  if (options.forwardingFilters !== undefined) {
+    message.forwarding_filters = options.forwardingFilters
+  }
   if (options.forwardingFilter !== undefined) {
     message.forwarding_filter = options.forwardingFilter
   }
