@@ -11,7 +11,10 @@
 
 ## develop
 
-- [ADD] メッセージングヘッダーに対応する
+- [ADD] シグナリング項目に `forwarding_filters` を追加する
+  - @voluntas
+- [ADD] DataChannel メッセージング機能のヘッダー項目を追加する
+  - `header: [{"type": "sender_connection_id"}]`
   - @voluntas
 - [CHANGE] Sora 側からの切断の SoraCloseEvent の title を `SHUTDOWN` に変更する
   - @voluntas
