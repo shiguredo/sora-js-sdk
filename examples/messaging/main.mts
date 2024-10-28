@@ -22,8 +22,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const checkCompress = document.getElementById('check-compress') as HTMLInputElement
     const compress = checkCompress.checked
+    const checkHeader = document.getElementById('check-header') as HTMLInputElement
+    const header = checkHeader.checked
 
-    await client.connect(compress)
+    await client.connect(compress, header)
   })
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
@@ -100,7 +102,7 @@ class SoraClient {
     this.connection.on('message', this.onmessage.bind(this))
   }
 
-  async connect(compress: boolean) {
+  async connect(compress: boolean, header: boolean) {
     // connect ボタンを無効にする
     const connectButton = document.querySelector<HTMLButtonElement>('#connect')
     if (connectButton) {
@@ -113,6 +115,8 @@ class SoraClient {
         label: '#example',
         direction: 'sendrecv',
         compress: compress,
+        // header が true の場合は sender_connection_id を追加
+        header: header ? [{ type: 'sender_connection_id' }] : undefined,
       },
     ]
     await this.connection.connect()
