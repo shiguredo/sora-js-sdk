@@ -327,23 +327,23 @@ export type DataChannelConfiguration = {
   header?: MessagingHeaderField[]
 }
 
-type ForwardingFilterRuleField = 'connection_id' | 'client_id' | 'kind'
+export type ForwardingFilterRuleField = 'connection_id' | 'client_id' | 'kind'
 
-type ForwardingFilterRuleOperator = 'is_in' | 'is_not_in'
+export type ForwardingFilterRuleOperator = 'is_in' | 'is_not_in'
 
-type ForwardingFilterRuleKindValue = 'audio' | 'video'
+export type ForwardingFilterRuleKindValue = 'audio' | 'video'
 
 type ForwardingFilterRuleValue = string | ForwardingFilterRuleKindValue
 
-type ForwardingFilterRule = {
+export type ForwardingFilterRule = {
   field: ForwardingFilterRuleField
   operator: ForwardingFilterRuleOperator
   values: [ForwardingFilterRuleValue]
 }
 
-type ForwardingFilterAction = 'block' | 'allow'
+export type ForwardingFilterAction = 'block' | 'allow'
 
-type ForwardingFilter = {
+export type ForwardingFilter = {
   version?: string
   metadata?: JSONType
   action?: ForwardingFilterAction
