@@ -328,19 +328,14 @@ export type DataChannelConfiguration = {
 }
 
 export type ForwardingFilterRuleField = 'connection_id' | 'client_id' | 'kind'
-
 export type ForwardingFilterRuleOperator = 'is_in' | 'is_not_in'
-
 export type ForwardingFilterRuleKindValue = 'audio' | 'video'
-
-type ForwardingFilterRuleValue = string | ForwardingFilterRuleKindValue
-
+export type ForwardingFilterRuleValue = string | ForwardingFilterRuleKindValue
 export type ForwardingFilterRule = {
   field: ForwardingFilterRuleField
   operator: ForwardingFilterRuleOperator
   values: [ForwardingFilterRuleValue]
 }
-
 export type ForwardingFilterAction = 'block' | 'allow'
 
 export type ForwardingFilter = {
