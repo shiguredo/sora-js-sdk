@@ -104,9 +104,9 @@ export type SignalingConnectMessage = {
   redirect?: true
   data_channels?: SignalingConnectDataChannel[]
   audio_streaming_language_code?: string
-  forwarding_filters?: JSONType
+  forwarding_filters?: ForwardingFilter[]
   // @deprecated このオプションは非推奨です。将来のバージョンで削除される可能性があります。
-  forwarding_filter?: JSONType
+  forwarding_filter?: ForwardingFilter
 }
 
 export type WebSocketSignalingMessage =
