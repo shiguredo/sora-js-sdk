@@ -91,6 +91,10 @@ function parseDataChannelConfiguration(
   if (typeof configuration.protocol === 'string') {
     result.protocol = configuration.protocol
   }
+  // array の中身はチェックしていない
+  if (Array.isArray(configuration.header)) {
+    result.header = configuration.header
+  }
   return result
 }
 
