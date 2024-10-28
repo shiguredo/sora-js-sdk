@@ -76,6 +76,7 @@ export type SignalingConnectDataChannel = {
   max_retransmits?: number
   protocol?: string
   ordered?: boolean
+  header?: MessagingHeaderField[]
 }
 
 export type SignalingConnectMessage = {
@@ -123,6 +124,7 @@ export type SignalingOfferMessageDataChannel = {
   label: string
   direction: DataChannelDirection
   compress: boolean
+  header?: MessagingHeaderField[]
 }
 
 export type SignalingOfferMessage = {
@@ -307,6 +309,11 @@ export type SignalingNotifyNetworkStatus = {
 
 export type DataChannelDirection = 'sendonly' | 'sendrecv' | 'recvonly'
 
+export type MessagingHeaderFieldType = 'sender_connection_id'
+export type MessagingHeaderField = {
+  type: MessagingHeaderFieldType
+}
+
 export type DataChannelConfiguration = {
   label: string
   direction: DataChannelDirection
@@ -315,6 +322,7 @@ export type DataChannelConfiguration = {
   maxRetransmits?: number
   protocol?: string
   ordered?: boolean
+  header?: MessagingHeaderField[]
 }
 
 export type ConnectionOptions = {

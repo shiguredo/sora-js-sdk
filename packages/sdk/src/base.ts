@@ -2371,6 +2371,7 @@ export default class ConnectionBase {
         protocol: dataChannel.protocol,
         compress: settings.compress,
         direction: settings.direction,
+        header: settings.header,
       }
       if (typeof dataChannel.maxPacketLifeTime === 'number') {
         messagingDataChannel.maxPacketLifeTime = dataChannel.maxPacketLifeTime

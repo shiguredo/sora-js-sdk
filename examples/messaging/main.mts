@@ -6,24 +6,38 @@ import Sora, {
   type DataChannelEvent,
 } from 'sora-js-sdk'
 
+const getChannelName = (): string => {
+  const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
+  const channelName = channelNameElement?.value
+  if (channelName === '' || channelName === undefined) {
+    throw new Error('channelName is empty')
+  }
+  return channelName
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
   const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
   const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
   const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
 
-  const client = new SoraClient(
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
-  )
+  let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
+    const channelName = getChannelName()
+    client = new SoraClient(
+      SORA_SIGNALING_URL,
+      SORA_CHANNEL_ID_PREFIX,
+      SORA_CHANNEL_ID_SUFFIX,
+      ACCESS_TOKEN,
+      channelName,
+    )
     const checkCompress = document.getElementById('check-compress') as HTMLInputElement
     const compress = checkCompress.checked
+    const checkHeader = document.getElementById('check-header') as HTMLInputElement
+    const header = checkHeader.checked
 
-    await client.connect(compress)
+    await client.connect(compress, header)
   })
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
@@ -76,10 +90,10 @@ class SoraClient {
     channelIdPrefix: string,
     channelIdSuffix: string,
     accessToken: string,
+    channelName: string,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}messaging${channelIdSuffix}`
-    console.log(channelIdPrefix)
+    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
     this.metadata = { access_token: accessToken }
 
     this.options = {
@@ -100,7 +114,7 @@ class SoraClient {
     this.connection.on('message', this.onmessage.bind(this))
   }
 
-  async connect(compress: boolean) {
+  async connect(compress: boolean, header: boolean) {
     // connect ボタンを無効にする
     const connectButton = document.querySelector<HTMLButtonElement>('#connect')
     if (connectButton) {
@@ -113,6 +127,8 @@ class SoraClient {
         label: '#example',
         direction: 'sendrecv',
         compress: compress,
+        // header が true の場合は sender_connection_id を追加
+        header: header ? [{ type: 'sender_connection_id' }] : undefined,
       },
     ]
     await this.connection.connect()

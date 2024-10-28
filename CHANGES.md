@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] メッセージングヘッダーに対応する
+  - @voluntas
 - [CHANGE] Sora 側からの切断の SoraCloseEvent の title を `SHUTDOWN` に変更する
   - @voluntas
 - [ADD] DataChannel のみのシグナリングを利用している際、 Sora から切断された場合に送られてくる `"type": "close"` メッセージの処理を追加する
@@ -35,6 +37,8 @@
 
 ### misc
 
+- [ADD] メッセージングヘッダーの E2E テストを追加する
+  - @voluntas
 - [ADD] npm に登録されている stable SDK の E2E テストを追加する
   - @voluntas
 - [FIX] RTCPeerConnection.close は Promise ではないので await しないようにする
