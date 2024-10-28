@@ -314,6 +314,7 @@ export type DataChannelDirection = 'sendonly' | 'sendrecv' | 'recvonly'
 export type MessagingHeaderFieldType = 'sender_connection_id'
 export type MessagingHeaderField = {
   type: MessagingHeaderFieldType
+  length?: number
 }
 
 export type DataChannelConfiguration = {

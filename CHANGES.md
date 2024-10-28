@@ -22,6 +22,14 @@
   - WebSocket シグナリングには Close フレームの Code/Reason があるが、DataChannel シグナリングのみでは判断ができないため
   - `"type": "close"` は DataChannel シグナリング経由でのみ送られてくる
   - @voluntas
+- [CHANGE] ForwardingFilter の型を `JSONType` から `ForwardingFilter` に変更する
+  - `ForwardingFilter` 型を追加
+  - `ForwardingFilterAction` 型を追加
+  - `ForwardingFilterRule` 型を追加
+  - `ForwardingFilterRuleField` 型を追加
+  - `ForwardingFilterRuleKindValue` 型を追加
+  - `ForwardingFilterRuleOperator` 型を追加
+  - @voluntas
 - [CHANGE] ブラウザでは非推奨となっている `addstream` と `removestream` コールバックを削除する
   - 廃止宣言から 4 年位経過した
   - @voluntas
@@ -35,7 +43,7 @@
   - @voluntas
 - [CHANGE] E2EE 機能を削除する
   - @voluntas
-- [CHANGE] fflate を依存から削除する
+- [CHANGE] [fflate](https://www.npmjs.com/package/fflate) を依存から削除する
   - @voluntas
 
 ### misc
