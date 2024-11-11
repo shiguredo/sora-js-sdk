@@ -48,6 +48,8 @@
 
 ### misc
 
+- [ADD] リプレイストラックのサンプルを追加する
+  - @voluntas
 - [ADD] メッセージングヘッダーの E2E テストを追加する
   - @voluntas
 - [ADD] npm に登録されている stable SDK の E2E テストを追加する
