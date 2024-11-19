@@ -11,6 +11,11 @@
 
 ## develop
 
+- [ADD] Sora.messaging() を追加する
+  - @voluntas
+- [ADD] messaging_only 専用のクラスを追加する
+  - ConnectionMessaging
+  - @voluntas
 - [ADD] シグナリング項目に `forwarding_filters` を追加する
   - @voluntas
 - [ADD] DataChannel メッセージング機能のヘッダー項目を追加する
