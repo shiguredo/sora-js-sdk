@@ -56,6 +56,8 @@
   - @voluntas
 - [FIX] RTCPeerConnection.close は Promise ではないので await しないようにする
   - @voluntas
+- [CHANGE] メッセージングのサンプルでは role を sendonly にして空の MediaStream を渡すようにする
+  - @voluntas
 - [CHANGE] ビルドシステムを Vite に変更する
   - Rollup 関連を削除
   - @voluntas
