@@ -1,6 +1,6 @@
 import Sora, {
   type SoraConnection,
-  type ConnectionSubscriber,
+  type ConnectionPublisher,
   type SignalingNotifyMessage,
   type DataChannelMessageEvent,
   type DataChannelEvent,
@@ -84,7 +84,7 @@ class SoraClient {
   private options: object
 
   private sora: SoraConnection
-  private connection: ConnectionSubscriber
+  private connection: ConnectionPublisher
   constructor(
     signalingUrl: string,
     channelIdPrefix: string,
@@ -107,7 +107,7 @@ class SoraClient {
       ],
     }
 
-    this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options)
+    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
 
     this.connection.on('notify', this.onnotify.bind(this))
     this.connection.on('datachannel', this.ondatachannel.bind(this))
@@ -131,7 +131,8 @@ class SoraClient {
         header: header ? [{ type: 'sender_connection_id' }] : undefined,
       },
     ]
-    await this.connection.connect()
+    // sendonly の場合は空の MediaStream を渡す
+    await this.connection.connect(new MediaStream())
 
     // disconnect ボタンを有効にする
     const disconnectButton = document.querySelector<HTMLButtonElement>('#disconnect')
