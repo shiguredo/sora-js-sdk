@@ -168,6 +168,7 @@ class SoraConnection {
     options.audio = false
     options.video = false
     options.multistream = true
+    options.dataChannelSignaling = true
     return new ConnectionMessaging(
       this.signalingUrlCandidates,
       // messaging は role sendonly として扱う
