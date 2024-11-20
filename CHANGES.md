@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] シグナリングのみを利用する `ConnectionMessaging` クラスを追加する
+  - @voluntas
 - [ADD] シグナリング項目に `forwarding_filters` を追加する
   - @voluntas
 - [ADD] DataChannel メッセージング機能のヘッダー項目を追加する

@@ -1,5 +1,6 @@
 import type ConnectionBase from './base'
 import { applyMediaStreamConstraints } from './helpers'
+import ConnectionMessaging from './messaging'
 import ConnectionPublisher from './publisher'
 import ConnectionSubscriber from './subscriber'
 import type {
@@ -158,6 +159,27 @@ class SoraConnection {
       this.debug,
     )
   }
+
+  messaging(
+    channelId: string,
+    metadata: JSONType = null,
+    options: ConnectionOptions = { audio: false, video: false },
+  ): ConnectionMessaging {
+    options.audio = false
+    options.video = false
+    options.multistream = true
+    options.dataChannelSignaling = true
+    return new ConnectionMessaging(
+      this.signalingUrlCandidates,
+      // messaging は role sendonly として扱う
+      'sendonly',
+      channelId,
+      metadata,
+      options,
+      this.debug,
+    )
+  }
+
   /**
    * シグナリングに使用する URL の候補
    *
@@ -215,6 +237,7 @@ export type {
   ConnectionOptions,
   ConnectionPublisher,
   ConnectionSubscriber,
+  ConnectionMessaging,
   DataChannelConfiguration,
   DataChannelDirection,
   DataChannelEvent,

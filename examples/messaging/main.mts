@@ -1,6 +1,6 @@
 import Sora, {
   type SoraConnection,
-  type ConnectionSubscriber,
+  type ConnectionMessaging,
   type SignalingNotifyMessage,
   type DataChannelMessageEvent,
   type DataChannelEvent,
@@ -84,7 +84,7 @@ class SoraClient {
   private options: object
 
   private sora: SoraConnection
-  private connection: ConnectionSubscriber
+  private connection: ConnectionMessaging
   constructor(
     signalingUrl: string,
     channelIdPrefix: string,
@@ -107,7 +107,7 @@ class SoraClient {
       ],
     }
 
-    this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options)
+    this.connection = this.sora.messaging(this.channelId, this.metadata, this.options)
 
     this.connection.on('notify', this.onnotify.bind(this))
     this.connection.on('datachannel', this.ondatachannel.bind(this))
