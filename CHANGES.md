@@ -11,10 +11,7 @@
 
 ## develop
 
-- [ADD] Sora.messaging() を追加する
-  - @voluntas
-- [ADD] messaging_only 専用のクラスを追加する
-  - ConnectionMessaging
+- [ADD] シグナリングのみを利用する `ConnectionMessaging` クラスを追加する
   - @voluntas
 - [ADD] シグナリング項目に `forwarding_filters` を追加する
   - @voluntas
@@ -60,8 +57,6 @@
 - [ADD] npm に登録されている stable SDK の E2E テストを追加する
   - @voluntas
 - [FIX] RTCPeerConnection.close は Promise ではないので await しないようにする
-  - @voluntas
-- [CHANGE] メッセージングのサンプルでは role を sendonly にして空の MediaStream を渡すようにする
   - @voluntas
 - [CHANGE] ビルドシステムを Vite に変更する
   - Rollup 関連を削除
