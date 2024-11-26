@@ -2142,7 +2142,7 @@ export default class ConnectionBase {
         }
       }
     } else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
-      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+      dataChannelEvent.channel.onmessage = async (event: MessageEvent): Promise<void> => {
         if (event.currentTarget === null) {
           return
         }
