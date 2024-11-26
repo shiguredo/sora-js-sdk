@@ -57,6 +57,7 @@ import type {
 } from './types'
 import {
   ConnectError,
+  addStereoToFmtp,
   compressMessage,
   createDataChannelData,
   createDataChannelEvent,
@@ -70,7 +71,6 @@ import {
   isSafari,
   parseDataChannelEventData,
   trace,
-  addStereoToFmtp,
 } from './utils'
 
 declare global {
@@ -2158,7 +2158,7 @@ export default class ConnectionBase {
         const dataChannel = event.target as RTCDataChannel
         let data: ArrayBuffer | undefined = undefined
         if (typeof event.data === 'string') {
-          data = new TextEncoder().encode(event.data)
+          data = new TextEncoder().encode(event.data).buffer as ArrayBuffer
         } else if (event.data instanceof ArrayBuffer) {
           data = event.data
         } else {
