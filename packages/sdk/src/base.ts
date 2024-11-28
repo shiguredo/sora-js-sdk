@@ -623,7 +623,7 @@ export default class ConnectionBase {
    *
    * @param params - 切断時の状況を入れる Record
    */
-  private async shutdown(params?: Record<string, unknown>): Promise<void> {
+  private shutdown(params?: Record<string, unknown>): void {
     this.clearMonitorIceConnectionStateChange()
     // callback を止める
     if (this.pc) {
@@ -1066,7 +1066,7 @@ export default class ConnectionBase {
    * @param signalingUrlCandidates - シグナリング候補の URL. 後方互換のため string | string[] を受け取る
    *
    * @returns
-   * 接続できた WebScoket インスタンスを返します
+   * 接続できた WebSocket インスタンスを返します
    */
   protected async getSignalingWebSocket(
     signalingUrlCandidates: string | string[],
@@ -1463,7 +1463,7 @@ export default class ConnectionBase {
   }
 
   /**
-   * iceCnadidate 処理をするメソッド
+   * iceCandidate 処理をするメソッド
    */
   protected onIceCandidate(): Promise<void> {
     return new Promise((resolve, _) => {
@@ -1583,7 +1583,7 @@ export default class ConnectionBase {
       })
       // Sora からの正常な終了は shutdown する
       if (event.code === 1000) {
-        await this.shutdown({
+        this.shutdown({
           code: event.code,
           reason: event.reason,
         })
@@ -1651,7 +1651,7 @@ export default class ConnectionBase {
   /**
    * 初回シグナリングの接続タイムアウト処理をするメソッド
    */
-  protected setConnectionTimeout(): Promise<MediaStream> {
+  protected setConnectionTimeout(): Promise<void> {
     return new Promise((_, reject) => {
       if (0 < this.connectionTimeout) {
         this.connectionTimeoutTimerId = setTimeout(() => {
@@ -1909,7 +1909,7 @@ export default class ConnectionBase {
    */
   private async signalingOnMessageTypeClose(message: SignalingCloseMessage): Promise<void> {
     this.trace('SIGNALING DISCONNECT MESSAGE', message)
-    await this.shutdown({ code: message.code, reason: message.reason })
+    this.shutdown({ code: message.code, reason: message.reason })
   }
 
   /**
@@ -1982,6 +1982,7 @@ export default class ConnectionBase {
       this.ws.close()
       this.ws = null
     }
+    // XXX: 送られてきたシグナリング URL をそのまま使うようにする
     const ws = await this.getSignalingWebSocket(message.location)
     const signalingMessage = await this.signaling(ws, true)
     return signalingMessage
@@ -1998,7 +1999,6 @@ export default class ConnectionBase {
     encodings: RTCRtpEncodingParameters[],
   ): Promise<void> {
     const originalParameters = transceiver.sender.getParameters()
-    // @ts-ignore
     originalParameters.encodings = encodings
     await transceiver.sender.setParameters(originalParameters)
     this.trace('TRANSCEIVER SENDER SET_PARAMETERS', originalParameters)
@@ -2029,6 +2029,7 @@ export default class ConnectionBase {
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
     const dataChannel = dataChannelEvent.channel
     dataChannel.bufferedAmountLowThreshold = 65536
+    // TODO: blob を変更できるようにする
     dataChannel.binaryType = 'arraybuffer'
     this.soraDataChannels[dataChannel.label] = dataChannel
     this.writeDataChannelTimelineLog(
@@ -2045,6 +2046,7 @@ export default class ConnectionBase {
     dataChannelEvent.channel.onopen = (event): void => {
       const channel = event.currentTarget as RTCDataChannel
       this.trace('OPEN DATA CHANNEL', channel.label)
+      // XXX: ws が存在している場合に signaling に出している意味があまりない気がする
       if (channel.label === 'signaling' && this.ws) {
         this.writeDataChannelSignalingLog('onopen', channel)
       } else {
@@ -2350,13 +2352,13 @@ export default class ConnectionBase {
     if (!this.signalingSwitched) {
       return []
     }
-    const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter(
+    const messagingDataChannelLabels = Object.keys(this.signalingOfferMessageDataChannels).filter(
       (label) => {
         return /^#.*/.exec(label)
       },
     )
     const result: DataChannelConfiguration[] = []
-    for (const label of messagingDataChannellabels) {
+    for (const label of messagingDataChannelLabels) {
       const dataChannel = this.soraDataChannels[label]
       if (!dataChannel) {
         continue

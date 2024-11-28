@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2024.2.0
+
+**リリース日**: 2024-11-29
+
 - [ADD] シグナリングのみを利用する `ConnectionMessaging` クラスを追加する
   - @voluntas
 - [ADD] シグナリング項目に `forwarding_filters` を追加する
