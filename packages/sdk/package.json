@@ -1,24 +1,15 @@
 {
   "name": "@sora/sdk",
   "scripts": {
-    "build": "rollup -c rollup.config.mjs --bundleConfigAsCjs",
-    "watch": "rollup -c -w",
-    "lint": "biome lint ./src",
-    "fmt": "biome format --write ./src",
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "lint": "biome lint src",
+    "fmt": "biome format --write src",
     "check": "tsc --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "26.0.1",
-    "@rollup/plugin-node-resolve": "15.2.3",
-    "@rollup/plugin-replace": "5.0.7",
-    "@rollup/plugin-typescript": "11.1.6",
-    "jsdom": "24.1.0",
-    "rollup": "4.18.0",
-    "rollup-plugin-delete": "2.0.0"
-  },
-  "dependencies": {
-    "@sora/e2ee": "workspace:^",
-    "fflate": "0.8.2"
+    "jsdom": "25.0.1",
+    "vite-plugin-dts": "4.3.0"
   }
 }

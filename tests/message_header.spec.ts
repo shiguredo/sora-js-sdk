@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('messaging pages', async ({ browser }) => {
+test('messaging pages with header', async ({ browser }) => {
   // 新しいページを2つ作成
   const page1 = await browser.newPage()
   const page2 = await browser.newPage()
@@ -9,24 +9,13 @@ test('messaging pages', async ({ browser }) => {
   await page1.goto('http://localhost:9000/messaging/')
   await page2.goto('http://localhost:9000/messaging/')
 
-  // Compress のTrue/Falseをランダムで設定する
-  const selectedCompress1 = await page1.evaluate(() => {
-    const checkCompress = document.getElementById('check-compress') as HTMLInputElement
-    const getRandomBoolean = (): boolean => Math.random() >= 0.5
-    const randomCompress: boolean = getRandomBoolean()
-    checkCompress.checked = randomCompress
-    return randomCompress
-  })
-  const selectedCompress2 = await page2.evaluate(() => {
-    const checkCompress = document.getElementById('check-compress') as HTMLInputElement
-    const getRandomBoolean = (): boolean => Math.random() >= 0.5
-    const randomCompress: boolean = getRandomBoolean()
-    checkCompress.checked = randomCompress
-    return randomCompress
-  })
-  // 設定した Compress の True/False をログに流す
-  console.log(`page1 Compress = ${selectedCompress1}`)
-  console.log(`page2 Compress = ${selectedCompress2}`)
+  // チャネル名を設定する
+  await page1.fill('input[name="channel-name"]', 'message-header')
+  await page2.fill('input[name="channel-name"]', 'message-header')
+
+  // header を有効にする
+  await page1.check('#check-header')
+  await page2.check('#check-header')
 
   // connect ボタンを押して接続開始
   await page1.click('#connect')
@@ -56,8 +45,10 @@ test('messaging pages', async ({ browser }) => {
   const receivedMessage1 = await page2.$eval('#received-messages li', (el) => el.textContent)
 
   // 受信したメッセージが期待したものであるか検証
-  console.log(`Received message on page2: ${receivedMessage1}`)
-  test.expect(receivedMessage1).toBe(page1Message)
+  // receivedMessage の先頭 26 バイトには sender_connection_id が含まれている
+  test.expect(receivedMessage1?.slice(0, 26)).toBe(page1ConnectionId)
+  // 27 文字目からは page1 のメッセージがそのまま
+  test.expect(receivedMessage1).toContain(page1Message)
 
   // page2からpage1へメッセージを送信
   const page2Message = 'Hello from page2'
@@ -70,13 +61,10 @@ test('messaging pages', async ({ browser }) => {
 
   // 受信したメッセージが期待したものであるか検証
   console.log(`Received message on page1: ${receivedMessage2}`)
-  test.expect(receivedMessage2).toBe(page2Message)
-
-  // Compress で圧縮されているかを確認する(圧縮されていると Equal にならない)
-  if (selectedCompress1 !== selectedCompress2) {
-    test.expect(receivedMessage1).toEqual(page1Message)
-    test.expect(receivedMessage2).toEqual(page2Message)
-  }
+  // receivedMessage の先頭 26 バイトには sender_connection_id が含まれている
+  test.expect(receivedMessage2?.slice(0, 26)).toBe(page2ConnectionId)
+  // 27 文字目からは page2 のメッセージがそのまま
+  test.expect(receivedMessage2).toContain(page2Message)
 
   // 'Get Stats' ボタンをクリックして統計情報を取得
   await page1.click('#get-stats')

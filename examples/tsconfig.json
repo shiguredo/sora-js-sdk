@@ -1,27 +1,20 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "amd",
+    "target": "ESNext",
+    "module": "ESNext",
     "strict": true,
+    "declaration": true,
     "strictNullChecks": true,
     "importHelpers": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "stripInternal": true,
     "newLine": "LF",
     "types": [],
-    "lib": [
-      "esnext",
-      "es2017",
-      "webWorker"
-    ],
-    "outFile": "./_worker/sora_e2ee_worker.js"
+    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
-  "include": [
-    "src/worker/index.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

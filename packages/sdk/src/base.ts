@@ -1,13 +1,43 @@
-import { unzlibSync, zlibSync } from 'fflate'
-
-import SoraE2EE from '@sora/e2ee'
+import {
+  DATA_CHANNEL_LABEL_NOTIFY,
+  DATA_CHANNEL_LABEL_PUSH,
+  DATA_CHANNEL_LABEL_SIGNALING,
+  DATA_CHANNEL_LABEL_STATS,
+  SIGNALING_MESSAGE_TYPE_ANSWER,
+  SIGNALING_MESSAGE_TYPE_CANDIDATE,
+  SIGNALING_MESSAGE_TYPE_CLOSE,
+  SIGNALING_MESSAGE_TYPE_DISCONNECT,
+  SIGNALING_MESSAGE_TYPE_NOTIFY,
+  SIGNALING_MESSAGE_TYPE_OFFER,
+  SIGNALING_MESSAGE_TYPE_PING,
+  SIGNALING_MESSAGE_TYPE_PONG,
+  SIGNALING_MESSAGE_TYPE_PUSH,
+  SIGNALING_MESSAGE_TYPE_REDIRECT,
+  SIGNALING_MESSAGE_TYPE_REQ_STATS,
+  SIGNALING_MESSAGE_TYPE_RE_ANSWER,
+  SIGNALING_MESSAGE_TYPE_RE_OFFER,
+  SIGNALING_MESSAGE_TYPE_STATS,
+  SIGNALING_MESSAGE_TYPE_SWITCHED,
+  SIGNALING_MESSAGE_TYPE_UPDATE,
+  SIGNALING_ROLE_RECVONLY,
+  SIGNALING_ROLE_SENDONLY,
+  SIGNALING_ROLE_SENDRECV,
+  TRANSPORT_TYPE_DATACHANNEL,
+  TRANSPORT_TYPE_WEBSOCKET,
+} from './constants'
+import {
+  DisconnectDataChannelError,
+  DisconnectInternalError,
+  DisconnectWaitTimeoutError,
+} from './errors'
 import type {
   Callbacks,
   ConnectionOptions,
   DataChannelConfiguration,
+  DataChannelSignalingMessage,
   JSONType,
+  SignalingCloseMessage,
   SignalingConnectMessage,
-  SignalingMessage,
   SignalingNotifyMessage,
   SignalingOfferMessage,
   SignalingOfferMessageDataChannel,
@@ -23,17 +53,19 @@ import type {
   SoraCloseEventInitDict,
   SoraCloseEventType,
   TransportType,
+  WebSocketSignalingMessage,
 } from './types'
 import {
   ConnectError,
+  addStereoToFmtp,
+  compressMessage,
   createDataChannelData,
   createDataChannelEvent,
   createDataChannelMessageEvent,
   createSignalingEvent,
   createSignalingMessage,
   createTimelineEvent,
-  getPreKeyBundle,
-  getSignalingNotifyAuthnMetadata,
+  decompressMessage,
   getSignalingNotifyData,
   isFirefox,
   isSafari,
@@ -89,8 +121,7 @@ export default class ConnectionBase {
   /**
    * PeerConnection に渡す configuration
    */
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  constraints: any
+  constraints: unknown
   /**
    * デバッグフラグ
    */
@@ -194,16 +225,6 @@ export default class ConnectionBase {
    * イベントコールバックのリスト
    */
   protected callbacks: Callbacks
-  /**
-   * E2EE インスタンス
-   *
-   * @internal
-   */
-  protected e2ee: SoraE2EE | null
-  /**
-   * キーとなる sender が setupSenderTransform で初期化済みかどうか
-   */
-  private senderStreamInitialized: WeakSet<RTCRtpSender> = new WeakSet()
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -255,9 +276,7 @@ export default class ConnectionBase {
     this.callbacks = {
       disconnect: (): void => {},
       push: (): void => {},
-      addstream: (): void => {},
       track: (): void => {},
-      removestream: (): void => {},
       removetrack: (): void => {},
       notify: (): void => {},
       log: (): void => {},
@@ -268,7 +287,6 @@ export default class ConnectionBase {
       datachannel: (): void => {},
     }
     this.authMetadata = null
-    this.e2ee = null
     this.connectionTimeoutTimerId = 0
     this.monitorSignalingWebSocketEventTimerId = 0
     this.monitorIceConnectionStateChangeTimerId = 0
@@ -294,27 +312,12 @@ export default class ConnectionBase {
    * });
    * ```
    *
-   * @remarks
-   * addstream イベントは非推奨です. track イベントを使用してください
-   *
-   * removestream イベントは非推奨です. removetrack イベントを使用してください
-   *
    * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message, datachannel)
    * @param callback - コールバック関数
    *
    * @public
    */
   on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
-    // @deprecated message
-    if (kind === 'addstream') {
-      console.warn(
-        '@deprecated addstream callback will be removed in a future version. Use track callback.',
-      )
-    } else if (kind === 'removestream') {
-      console.warn(
-        '@deprecated removestream callback will be removed in a future version. Use removetrack callback.',
-      )
-    }
     if (kind in this.callbacks) {
       this.callbacks[kind] = callback
     }
@@ -498,7 +501,6 @@ export default class ConnectionBase {
     }
     stream.addTrack(audioTrack)
     await transceiver.sender.replaceTrack(audioTrack)
-    await this.setupSenderTransform(transceiver.sender)
   }
 
   /**
@@ -530,7 +532,6 @@ export default class ConnectionBase {
     }
     stream.addTrack(videoTrack)
     await transceiver.sender.replaceTrack(videoTrack)
-    await this.setupSenderTransform(transceiver.sender)
   }
 
   /**
@@ -550,9 +551,6 @@ export default class ConnectionBase {
     }
     if (this.pc) {
       this.pc.close()
-    }
-    if (this.e2ee) {
-      this.e2ee.terminateWorker()
     }
     this.initializeConnection()
   }
@@ -612,14 +610,60 @@ export default class ConnectionBase {
     if (this.pc) {
       this.pc.close()
     }
-    // E2EE worker を終了する
-    if (this.e2ee) {
-      this.e2ee.terminateWorker()
-    }
     this.initializeConnection()
     const event = this.soraCloseEvent('abend', title)
     this.callbacks.disconnect(event)
     this.writeSoraTimelineLog('disconnect-abend', event)
+  }
+
+  /**
+   * WebSocket が Sora 側から正常に切断されたり、
+   * DataChannel 経由で Type: close のメッセージを受信した場合の処理
+   * ライフタイムで切れたり、 切断系の API 切られたりした場合に呼ばれる
+   *
+   * @param params - 切断時の状況を入れる Record
+   */
+  private shutdown(params?: Record<string, unknown>): void {
+    this.clearMonitorIceConnectionStateChange()
+    // callback を止める
+    if (this.pc) {
+      this.pc.ondatachannel = null
+      this.pc.oniceconnectionstatechange = null
+      this.pc.onicegatheringstatechange = null
+      this.pc.onconnectionstatechange = null
+    }
+
+    // DataChannel シグナリングの場合は停止する
+    // Sora 側からの切断なので待ってる必要はなく、
+    // こちらからもさっさと終了してしまう
+    // DataChannel 使ってなくても soraDataChannels は {} 返すのでスキップされるだけ
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key]
+      if (dataChannel) {
+        // onclose はログを吐く専用に残す
+        dataChannel.onclose = (event) => {
+          const channel = event.currentTarget as RTCDataChannel
+          this.writeDataChannelTimelineLog('onclose', channel)
+          this.trace('CLOSE DATA CHANNEL', channel.label)
+        }
+        dataChannel.onmessage = null
+        dataChannel.onerror = null
+        // 待たずにバンバン閉じる
+        dataChannel.close()
+      }
+      delete this.soraDataChannels[key]
+    }
+
+    // peerConnection を close する
+    this.maybeClosePeerConnection()
+    this.initializeConnection()
+
+    const event = this.soraCloseEvent('normal', 'SHUTDOWN', params)
+    this.writeSoraTimelineLog('disconnect-normal', event)
+    // 切断完了したコールバックを呼ぶ
+    // XXX(v): disconnect ではなく disconnected にした方が良い
+    this.callbacks.disconnect(event)
+    return
   }
 
   /**
@@ -663,17 +707,17 @@ export default class ConnectionBase {
     }
     // 終了処理を開始する
     if (this.soraDataChannels.signaling) {
-      const message = { type: 'disconnect', reason: title }
+      const message = { type: SIGNALING_MESSAGE_TYPE_DISCONNECT, reason: title }
       if (
         this.signalingOfferMessageDataChannels.signaling &&
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = zlibSync(binaryMessage, {})
+        const compressedMessage = await compressMessage(binaryMessage)
         if (this.soraDataChannels.signaling.readyState === 'open') {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.soraDataChannels.signaling.send(zlibMessage)
+            this.soraDataChannels.signaling.send(compressedMessage)
             this.writeDataChannelSignalingLog(
               'send-disconnect',
               this.soraDataChannels.signaling,
@@ -718,10 +762,7 @@ export default class ConnectionBase {
       delete this.soraDataChannels[key]
     }
     await this.disconnectWebSocket(title)
-    await this.disconnectPeerConnection()
-    if (this.e2ee) {
-      this.e2ee.terminateWorker()
-    }
+    this.maybeClosePeerConnection()
     this.initializeConnection()
     if (title === 'WEBSOCKET-ONCLOSE' && params && (params.code === 1000 || params.code === 1005)) {
       const event = this.soraCloseEvent('normal', 'DISCONNECT', params)
@@ -752,7 +793,6 @@ export default class ConnectionBase {
     this.pc = null
     this.encodings = []
     this.authMetadata = null
-    this.e2ee = null
     this.soraDataChannels = {}
     this.mids = {
       audio: '',
@@ -801,7 +841,7 @@ export default class ConnectionBase {
         return resolve({ code: event.code, reason: event.reason })
       }
       if (this.ws.readyState === 1) {
-        const message = { type: 'disconnect', reason: title }
+        const message = { type: SIGNALING_MESSAGE_TYPE_DISCONNECT, reason: title }
         this.ws.send(JSON.stringify(message))
         this.writeWebSocketSignalingLog('send-disconnect', message)
         // WebSocket 切断を待つ
@@ -821,149 +861,135 @@ export default class ConnectionBase {
     })
   }
 
+  // DataChannel の強制終了処理
+  private forceCloseDataChannels(): void {
+    // 強制的に閉じるのでログには出力されない
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key]
+      if (dataChannel) {
+        dataChannel.onerror = null
+        dataChannel.onclose = null
+        dataChannel.onmessage = null
+        dataChannel.close()
+      }
+    }
+  }
+
   /**
    * DataChannel を切断するメソッド
    *
    * @remarks
    * 正常/異常どちらの切断でも使用する
    */
-  private disconnectDataChannel(): Promise<{
+  private async disconnectDataChannel(): Promise<{
     code: number
     reason: string
-  } | null> {
-    // DataChannel の強制終了処理
-    const closeDataChannels = () => {
-      for (const key of Object.keys(this.soraDataChannels)) {
-        const dataChannel = this.soraDataChannels[key]
-        if (dataChannel) {
-          dataChannel.onerror = null
-          dataChannel.close()
-        }
-        delete this.soraDataChannels[key]
+  }> {
+    // label: signaling が存在しない場合は閉じて終了
+    if (!this.soraDataChannels.signaling) {
+      // それ以外の DataChannel を強制的に閉じる
+      this.forceCloseDataChannels()
+      return { code: 4999, reason: new DisconnectInternalError().message }
+    }
+
+    // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
+    const disconnectWaitTimeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new DisconnectWaitTimeoutError()), this.disconnectWaitTimeout)
+    })
+
+    // 全ての DataChannel の onclose が発火したことを確認する Promise を生成する
+    // さらにそんな中で onerror が発火したら reject する
+    const onDataChannelClosePromises: Promise<void>[] = []
+    for (const key of Object.keys(this.soraDataChannels)) {
+      const dataChannel = this.soraDataChannels[key]
+      if (dataChannel) {
+        onDataChannelClosePromises.push(
+          new Promise<void>((resolve, reject) => {
+            dataChannel.onclose = (event) => {
+              const channel = event.currentTarget as RTCDataChannel
+              this.writeDataChannelTimelineLog('onclose', channel)
+              this.trace('CLOSE DATA CHANNEL', channel.label)
+              resolve()
+            }
+            dataChannel.onerror = () => reject(new DisconnectDataChannelError())
+          }),
+        )
       }
     }
-    return new Promise((resolve, reject) => {
-      // DataChannel label signaling が存在しない場合は強制終了処理をする
-      if (!this.soraDataChannels.signaling) {
-        closeDataChannels()
-        return resolve({ code: 4999, reason: '' })
-      }
-      // disconnectWaitTimeout で指定された時間経過しても切断しない場合は強制終了処理をする
-      const disconnectWaitTimeoutId = setTimeout(() => {
-        closeDataChannels()
-        return reject()
-      }, this.disconnectWaitTimeout)
+    const dataChannelClosePromise = Promise.all(onDataChannelClosePromises)
 
-      const onClosePromises: Promise<void>[] = []
-      for (const key of Object.keys(this.soraDataChannels)) {
-        const dataChannel = this.soraDataChannels[key]
-        if (dataChannel) {
-          // onerror が発火した場合は強制終了処理をする
-          dataChannel.onerror = () => {
-            clearTimeout(disconnectWaitTimeoutId)
-            closeDataChannels()
-            return resolve({ code: 4999, reason: '' })
-          }
-          // すべての DataChannel の readyState が "closed" になったことを確認する Promsie を生成する
-          const p = (): Promise<void> => {
-            return new Promise((res, _) => {
-              // disconnectWaitTimeout 時間を過ぎた場合に終了させるための counter を作成する
-              let counter = 0
-              // onclose 内で readyState の変化を待つと非同期のまま複数回 disconnect を呼んだ場合に
-              // callback が上書きされて必ず DISCONNECT-TIMEOUT になってしまうので setInterval を使う
-              const timerId = setInterval(() => {
-                counter++
-                if (dataChannel.readyState === 'closed') {
-                  clearInterval(timerId)
-                  res()
-                }
-                if (this.disconnectWaitTimeout < counter * 100) {
-                  res()
-                  clearInterval(timerId)
-                }
-              }, 100)
-            })
-          }
-          onClosePromises.push(p())
-        }
-      }
-      // すべての DataChannel で onclose が発火した場合は resolve にする
-      Promise.all(onClosePromises)
-        .then(() => {
-          // dataChannels が空の場合は切断処理が終わっているとみなす
-          if (0 === Object.keys(this.soraDataChannels).length) {
-            resolve(null)
-          } else {
-            resolve({ code: 4999, reason: '' })
-          }
-        })
-        // eslint 対策、エラーが発生したら reject(error) を返す
-        .catch((error) => reject(error))
-        .finally(() => {
-          closeDataChannels()
-          clearTimeout(disconnectWaitTimeoutId)
-        })
-      const message = { type: 'disconnect', reason: 'NO-ERROR' }
+    // 準備はできたのでメッセージを送る
+    const message = { type: SIGNALING_MESSAGE_TYPE_DISCONNECT, reason: 'NO-ERROR' }
+    if (
+      this.signalingOfferMessageDataChannels.signaling &&
+      this.signalingOfferMessageDataChannels.signaling.compress === true
+    ) {
+      const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
+      const compressedMessage = await compressMessage(binaryMessage)
       if (
-        this.signalingOfferMessageDataChannels.signaling &&
-        this.signalingOfferMessageDataChannels.signaling.compress === true
+        this.soraDataChannels.signaling?.readyState &&
+        this.soraDataChannels.signaling.readyState === 'open'
       ) {
-        const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = zlibSync(binaryMessage, {})
-        if (this.soraDataChannels.signaling.readyState === 'open') {
-          // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-          try {
-            this.soraDataChannels.signaling.send(zlibMessage)
-            this.writeDataChannelSignalingLog(
-              'send-disconnect',
-              this.soraDataChannels.signaling,
-              message,
-            )
-          } catch (e) {
-            const errorMessage = (e as Error).message
-            this.writeDataChannelSignalingLog(
-              'failed-to-send-disconnect',
-              this.soraDataChannels.signaling,
-              errorMessage,
-            )
-          }
-        }
-      } else {
-        if (this.soraDataChannels.signaling.readyState === 'open') {
-          // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-          try {
-            this.soraDataChannels.signaling.send(JSON.stringify(message))
-            this.writeDataChannelSignalingLog(
-              'send-disconnect',
-              this.soraDataChannels.signaling,
-              message,
-            )
-          } catch (e) {
-            const errorMessage = (e as Error).message
-            this.writeDataChannelSignalingLog(
-              'failed-to-send-disconnect',
-              this.soraDataChannels.signaling,
-              errorMessage,
-            )
-          }
+        // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+        try {
+          this.soraDataChannels.signaling.send(compressedMessage)
+          this.writeDataChannelSignalingLog(
+            'send-disconnect',
+            this.soraDataChannels.signaling,
+            message,
+          )
+        } catch (e) {
+          const errorMessage = (e as Error).message
+          this.writeDataChannelSignalingLog(
+            'failed-to-send-disconnect',
+            this.soraDataChannels.signaling,
+            errorMessage,
+          )
         }
       }
-    })
+    } else {
+      if (this.soraDataChannels.signaling.readyState === 'open') {
+        // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+        try {
+          this.soraDataChannels.signaling.send(JSON.stringify(message))
+          this.writeDataChannelSignalingLog(
+            'send-disconnect',
+            this.soraDataChannels.signaling,
+            message,
+          )
+        } catch (e) {
+          const errorMessage = (e as Error).message
+          this.writeDataChannelSignalingLog(
+            'failed-to-send-disconnect',
+            this.soraDataChannels.signaling,
+            errorMessage,
+          )
+        }
+      }
+    }
+
+    try {
+      // closed チェックと、タイムアウトを競わせる
+      // タイムアウトする前に全てが閉じたら問題なし
+      await Promise.race([disconnectWaitTimeoutPromise, dataChannelClosePromise])
+      return { code: 1000, reason: 'TYPE-DISCONNECT' }
+    } catch (e) {
+      // 正常終了できなかったので全てのチャネルを強制的に閉じる
+      this.forceCloseDataChannels()
+      return { code: 4999, reason: (e as Error).message }
+    }
   }
 
   /**
-   * PeerConnection を切断するメソッド
+   * もし PeerConnection の状態が closed でなければ PeerConnection を閉じる
    *
    * @remarks
    * 正常/異常どちらの切断でも使用する
    */
-  private disconnectPeerConnection(): Promise<void> {
-    return new Promise((resolve, _) => {
-      if (this.pc && this.pc.connectionState !== 'closed') {
-        this.pc.close()
-      }
-      return resolve()
-    })
+  private maybeClosePeerConnection(): void {
+    if (this.pc && this.pc.connectionState !== 'closed') {
+      this.pc.close()
+    }
   }
 
   /**
@@ -985,6 +1011,7 @@ export default class ConnectionBase {
       this.pc.onicegatheringstatechange = null
       this.pc.onconnectionstatechange = null
     }
+    // WebSocket の監視を止める
     if (this.ws) {
       // onclose はログを吐く専用に残す
       this.ws.onclose = (event) => {
@@ -996,40 +1023,26 @@ export default class ConnectionBase {
       this.ws.onmessage = null
       this.ws.onerror = null
     }
-    for (const key of Object.keys(this.soraDataChannels)) {
-      const dataChannel = this.soraDataChannels[key]
-      if (dataChannel) {
-        dataChannel.onmessage = null
-        // onclose はログを吐く専用に残す
-        dataChannel.onclose = (event): void => {
-          const channel = event.currentTarget as RTCDataChannel
-          this.writeDataChannelTimelineLog('onclose', channel)
-          this.trace('CLOSE DATA CHANNEL', channel.label)
-        }
-      }
-    }
+
     let event = null
     if (this.signalingSwitched) {
-      // DataChannel の切断処理がタイムアウトした場合は event を abend に差し替える
-      try {
-        const reason = await this.disconnectDataChannel()
-        if (reason !== null) {
-          event = this.soraCloseEvent('normal', 'DISCONNECT', reason)
-        }
-      } catch (_) {
-        event = this.soraCloseEvent('abend', 'DISCONNECT-TIMEOUT')
+      const result = await this.disconnectDataChannel()
+      if (result.code === 4999) {
+        // DataChannel の切断処理がエラーの場合は event を abend に差し替える
+        event = this.soraCloseEvent('abend', result.reason)
       }
+      event = this.soraCloseEvent('normal', 'DISCONNECT', result)
+      // もう切断されている可能性が高いが一応止める
       await this.disconnectWebSocket('NO-ERROR')
-      await this.disconnectPeerConnection()
+      this.maybeClosePeerConnection()
     } else {
       const reason = await this.disconnectWebSocket('NO-ERROR')
-      await this.disconnectPeerConnection()
+      this.maybeClosePeerConnection()
+      // switched にはなっていないが dataChannel が存在する場合の掃除
+      this.forceCloseDataChannels()
       if (reason !== null) {
         event = this.soraCloseEvent('normal', 'DISCONNECT', reason)
       }
-    }
-    if (this.e2ee) {
-      this.e2ee.terminateWorker()
     }
     this.initializeConnection()
     if (event) {
@@ -1039,39 +1052,6 @@ export default class ConnectionBase {
         this.writeSoraTimelineLog('disconnect-normal', event)
       }
       this.callbacks.disconnect(event)
-    }
-  }
-
-  /**
-   * E2EE の初期設定をするメソッド
-   */
-  protected setupE2EE(): void {
-    if (this.options.e2ee === true) {
-      this.e2ee = new SoraE2EE()
-      this.e2ee.onWorkerDisconnect = async (): Promise<void> => {
-        await this.abend('INTERNAL-ERROR', { reason: 'CRASH-E2EE-WORKER' })
-      }
-      this.e2ee.startWorker()
-    }
-  }
-
-  /**
-   * E2EE を開始するメソッド
-   */
-  protected startE2EE(): void {
-    if (this.options.e2ee === true && this.e2ee) {
-      if (!this.connectionId) {
-        const error = new Error()
-        error.message = 'E2EE failed. Self connectionId is null'
-        throw error
-      }
-      this.e2ee.clearWorker()
-      const result = this.e2ee.start(this.connectionId)
-      this.e2ee.postSelfSecretKeyMaterial(
-        this.connectionId,
-        result.selfKeyId,
-        result.selfSecretKeyMaterial,
-      )
     }
   }
 
@@ -1086,7 +1066,7 @@ export default class ConnectionBase {
    * @param signalingUrlCandidates - シグナリング候補の URL. 後方互換のため string | string[] を受け取る
    *
    * @returns
-   * 接続できた WebScoket インスタンスを返します
+   * 接続できた WebSocket インスタンスを返します
    */
   protected async getSignalingWebSocket(
     signalingUrlCandidates: string | string[],
@@ -1231,42 +1211,36 @@ export default class ConnectionBase {
         reject(error)
       }
       ws.onmessage = async (event): Promise<void> => {
-        // E2EE 時専用処理
-        if (event.data instanceof ArrayBuffer) {
-          this.writeWebSocketSignalingLog('onmessage-e2ee', event.data)
-          this.signalingOnMessageE2EE(event.data)
-          return
-        }
         if (typeof event.data !== 'string') {
           throw new Error('Received invalid signaling data')
         }
-        const message = JSON.parse(event.data) as SignalingMessage
-        if (message.type === 'offer') {
+        const message = JSON.parse(event.data) as WebSocketSignalingMessage
+        if (message.type === SIGNALING_MESSAGE_TYPE_OFFER) {
           this.writeWebSocketSignalingLog('onmessage-offer', message)
           this.signalingOnMessageTypeOffer(message)
           this.connectedSignalingUrl = ws.url
           resolve(message)
-        } else if (message.type === 'update') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_UPDATE) {
           this.writeWebSocketSignalingLog('onmessage-update', message)
           await this.signalingOnMessageTypeUpdate(message)
-        } else if (message.type === 're-offer') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_RE_OFFER) {
           this.writeWebSocketSignalingLog('onmessage-re-offer', message)
           await this.signalingOnMessageTypeReOffer(message)
-        } else if (message.type === 'ping') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_PING) {
           await this.signalingOnMessageTypePing(message)
-        } else if (message.type === 'push') {
-          this.callbacks.push(message, 'websocket')
-        } else if (message.type === 'notify') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_PUSH) {
+          this.callbacks.push(message, TRANSPORT_TYPE_WEBSOCKET)
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_NOTIFY) {
           if (message.event_type === 'connection.created') {
             this.writeWebSocketTimelineLog('notify-connection.created', message)
           } else if (message.event_type === 'connection.destroyed') {
             this.writeWebSocketTimelineLog('notify-connection.destroyed', message)
           }
-          this.signalingOnMessageTypeNotify(message, 'websocket')
-        } else if (message.type === 'switched') {
+          this.signalingOnMessageTypeNotify(message, TRANSPORT_TYPE_WEBSOCKET)
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_SWITCHED) {
           this.writeWebSocketSignalingLog('onmessage-switched', message)
           this.signalingOnMessageTypeSwitched(message)
-        } else if (message.type === 'redirect') {
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_REDIRECT) {
           this.writeWebSocketSignalingLog('onmessage-redirect', message)
           try {
             const redirectMessage = await this.signalingOnMessageTypeRedirect(message)
@@ -1291,11 +1265,6 @@ export default class ConnectionBase {
           reject(error)
           return
         }
-        if (signalingMessage.e2ee && this.e2ee) {
-          const initResult = await this.e2ee.init()
-          // @ts-ignore signalingMessage の e2ee が true の場合は signalingNotifyMetadata が必ず object になる
-          signalingMessage.signaling_notify_metadata.pre_key_bundle = initResult
-        }
         this.trace('SIGNALING CONNECT MESSAGE', signalingMessage)
         if (ws) {
           ws.send(JSON.stringify(signalingMessage))
@@ -1318,10 +1287,6 @@ export default class ConnectionBase {
    */
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = Object.assign({}, message.config)
-    if (this.e2ee) {
-      // @ts-ignore https://w3c.github.io/webrtc-encoded-transform/#specification
-      config = Object.assign({ encodedInsertableStreams: true }, config)
-    }
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
       const certificate = await window.RTCPeerConnection.generateCertificate({
         name: 'ECDSA',
@@ -1381,7 +1346,7 @@ export default class ConnectionBase {
 
     const sdp = this.processOfferSdp(message.sdp)
     const sessionDescription = new RTCSessionDescription({
-      type: 'offer',
+      type: SIGNALING_MESSAGE_TYPE_OFFER,
       sdp,
     })
     await this.pc.setRemoteDescription(sessionDescription)
@@ -1406,12 +1371,15 @@ export default class ConnectionBase {
     // mid と transceiver.direction を合わせる
     for (const mid of Object.values(this.mids)) {
       const transceiver = this.pc.getTransceivers().find((t) => t.mid === mid)
-      if (transceiver && transceiver.direction === 'recvonly') {
-        transceiver.direction = 'sendrecv'
+      if (transceiver && transceiver.direction === SIGNALING_ROLE_RECVONLY) {
+        transceiver.direction = SIGNALING_ROLE_SENDRECV
       }
     }
     // simulcast の場合
-    if (this.simulcast && (this.role === 'sendrecv' || this.role === 'sendonly')) {
+    if (
+      this.simulcast &&
+      (this.role === SIGNALING_ROLE_SENDRECV || this.role === SIGNALING_ROLE_SENDONLY)
+    ) {
       const transceiver = this.pc.getTransceivers().find((t) => {
         if (t.mid === null) {
           return
@@ -1419,7 +1387,7 @@ export default class ConnectionBase {
         if (t.sender.track === null) {
           return
         }
-        if (t.currentDirection !== null && t.currentDirection !== 'sendonly') {
+        if (t.currentDirection !== null && t.currentDirection !== SIGNALING_ROLE_SENDONLY) {
           return
         }
         if (this.mids.video !== '' && this.mids.video === t.mid) {
@@ -1443,6 +1411,17 @@ export default class ConnectionBase {
     }
     const sessionDescription = await this.pc.createAnswer()
     this.writePeerConnectionTimelineLog('create-answer', sessionDescription)
+
+    // Chrome/Edge 向けのハック stereo=1 が CreateOffer では付与されないので、
+    // SDP を書き換えて stereo=1 を付与する
+    // https://github.com/w3c/webrtc-stats/issues/686
+    // https://github.com/w3c/webrtc-extensions/issues/63
+    // https://issues.webrtc.org/issues/41481053#comment18
+
+    if (this.options.forceStereoOutput && sessionDescription.sdp) {
+      sessionDescription.sdp = addStereoToFmtp(sessionDescription.sdp)
+    }
+
     await this.pc.setLocalDescription(sessionDescription)
     this.writePeerConnectionTimelineLog('set-local-description', sessionDescription)
     return
@@ -1470,68 +1449,13 @@ export default class ConnectionBase {
   }
 
   /**
-   * E2EE あるいはカスタムコーデックが有効になっている場合に、送信側の WebRTC Encoded Transform をセットアップする
-   *
-   * @param sender 対象となる RTCRtpSender インスタンス
-   */
-  protected async setupSenderTransform(sender: RTCRtpSender): Promise<void> {
-    if (this.e2ee === null || sender.track === null) {
-      return
-    }
-    // 既に初期化済み
-    if (this.senderStreamInitialized.has(sender)) {
-      return
-    }
-
-    if ('transform' in RTCRtpSender.prototype) {
-      // WebRTC Encoded Transform に対応しているブラウザ
-      return
-    }
-
-    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-    // @ts-ignore
-    const senderStreams = sender.createEncodedStreams() as TransformStream
-    const readable = senderStreams.readable
-    this.e2ee.setupSenderTransform(readable, senderStreams.writable)
-    this.senderStreamInitialized.add(sender)
-  }
-
-  /**
-   * E2EE あるいはカスタムコーデックが有効になっている場合に、受信側の WebRTC Encoded Transform をセットアップする
-   *
-   * @param mid コーデックの判別に使う mid
-   * @param receiver 対象となる RTCRtpReceiver インスタンス
-   */
-  protected async setupReceiverTransform(
-    mid: string | null,
-    receiver: RTCRtpReceiver,
-  ): Promise<void> {
-    if (this.e2ee === null) {
-      return
-    }
-
-    if ('transform' in RTCRtpSender.prototype) {
-      // WebRTC Encoded Transform に対応しているブラウザ
-      return
-    }
-
-    // 古い API (i.e., createEncodedStreams) を使っているブラウザ
-
-    // @ts-ignore
-    const receiverStreams = receiver.createEncodedStreams() as TransformStream
-    const writable = receiverStreams.writable
-    this.e2ee.setupReceiverTransform(receiverStreams.readable, writable)
-  }
-
-  /**
    * シグナリングサーバーに type answer を投げるメソッド
    */
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace('ANSWER SDP', this.pc.localDescription.sdp)
       const sdp = this.pc.localDescription.sdp
-      const message = { type: 'answer', sdp }
+      const message = { type: SIGNALING_MESSAGE_TYPE_ANSWER, sdp }
       this.ws.send(JSON.stringify(message))
       this.writeWebSocketSignalingLog('send-answer', message)
     }
@@ -1539,7 +1463,7 @@ export default class ConnectionBase {
   }
 
   /**
-   * iceCnadidate 処理をするメソッド
+   * iceCandidate 処理をするメソッド
    */
   protected onIceCandidate(): Promise<void> {
     return new Promise((resolve, _) => {
@@ -1557,7 +1481,7 @@ export default class ConnectionBase {
             }
           }
         }
-        this.pc.onicecandidate = (event): void => {
+        this.pc.onicecandidate = async (event): Promise<void> => {
           this.writePeerConnectionTimelineLog('onicecandidate', event.candidate)
           if (this.pc) {
             this.trace('ONICECANDIDATE ICEGATHERINGSTATE', this.pc.iceGatheringState)
@@ -1567,12 +1491,14 @@ export default class ConnectionBase {
             resolve()
           } else {
             const candidate = event.candidate.toJSON()
-            const message = Object.assign(candidate, { type: 'candidate' }) as {
+            const message = Object.assign(candidate, {
+              type: SIGNALING_MESSAGE_TYPE_CANDIDATE,
+            }) as {
               type: string
               [key: string]: unknown
             }
             this.trace('ONICECANDIDATE CANDIDATE MESSAGE', message)
-            this.sendSignalingMessage(message)
+            await this.sendSignalingMessage(message)
           }
         }
       }
@@ -1643,6 +1569,7 @@ export default class ConnectionBase {
    * WebSocket の切断を監視するメソッド
    *
    * @remarks
+   * WebSocket のクローズコードが 1000 の場合は正常終了処理を実行する
    * 意図しない切断があった場合には異常終了処理を実行する
    */
   protected monitorWebSocketEvent(): void {
@@ -1654,10 +1581,18 @@ export default class ConnectionBase {
         code: event.code,
         reason: event.reason,
       })
-      await this.abend('WEBSOCKET-ONCLOSE', {
-        code: event.code,
-        reason: event.reason,
-      })
+      // Sora からの正常な終了は shutdown する
+      if (event.code === 1000) {
+        this.shutdown({
+          code: event.code,
+          reason: event.reason,
+        })
+      } else {
+        await this.abend('WEBSOCKET-ONCLOSE', {
+          code: event.code,
+          reason: event.reason,
+        })
+      }
     }
     this.ws.onerror = async (_) => {
       this.writeWebSocketSignalingLog('onerror')
@@ -1716,7 +1651,7 @@ export default class ConnectionBase {
   /**
    * 初回シグナリングの接続タイムアウト処理をするメソッド
    */
-  protected setConnectionTimeout(): Promise<MediaStream> {
+  protected setConnectionTimeout(): Promise<void> {
     return new Promise((_, reject) => {
       if (0 < this.connectionTimeout) {
         this.connectionTimeoutTimerId = setTimeout(() => {
@@ -1783,7 +1718,7 @@ export default class ConnectionBase {
    * @param data - イベントデータ
    */
   protected writeWebSocketSignalingLog(eventType: string, data?: unknown): void {
-    this.callbacks.signaling(createSignalingEvent(eventType, data, 'websocket'))
+    this.callbacks.signaling(createSignalingEvent(eventType, data, TRANSPORT_TYPE_WEBSOCKET))
     this.writeWebSocketTimelineLog(eventType, data)
   }
 
@@ -1798,7 +1733,7 @@ export default class ConnectionBase {
     channel: RTCDataChannel,
     data?: unknown,
   ): void {
-    this.callbacks.signaling(createSignalingEvent(eventType, data, 'datachannel'))
+    this.callbacks.signaling(createSignalingEvent(eventType, data, TRANSPORT_TYPE_DATACHANNEL))
     this.writeDataChannelTimelineLog(eventType, channel, data)
   }
 
@@ -1809,7 +1744,7 @@ export default class ConnectionBase {
    * @param data - イベントデータ
    */
   protected writeWebSocketTimelineLog(eventType: string, data?: unknown): void {
-    const event = createTimelineEvent(eventType, data, 'websocket')
+    const event = createTimelineEvent(eventType, data, TRANSPORT_TYPE_WEBSOCKET)
     this.callbacks.timeline(event)
   }
 
@@ -1877,22 +1812,6 @@ export default class ConnectionBase {
   }
 
   /**
-   * シグナリングサーバーから受け取った type e2ee メッセージを処理をするメソッド
-   *
-   * @param data - E2EE 用バイナリメッセージ
-   */
-  private signalingOnMessageE2EE(data: ArrayBuffer): void {
-    if (this.e2ee) {
-      const message = new Uint8Array(data)
-      const result = this.e2ee.receiveMessage(message)
-      this.e2ee.postRemoteSecretKeyMaterials(result)
-      result.messages.filter((message) => {
-        this.sendE2EEMessage(message.buffer)
-      })
-    }
-  }
-
-  /**
    * シグナリングサーバーから受け取った type offer メッセージを処理をするメソッド
    *
    * @param message - type offer メッセージ
@@ -1932,12 +1851,13 @@ export default class ConnectionBase {
 
   /**
    * シグナリングサーバーに type update を投げるメソッド
+   * @deprecated このメソッドは非推奨です。将来のバージョンで削除される可能性があります。
    */
-  private sendUpdateAnswer(): void {
+  private async sendUpdateAnswer(): Promise<void> {
     if (this.pc && this.ws && this.pc.localDescription) {
-      this.trace('ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({
-        type: 'update',
+      this.trace('UPDATE ANSWER SDP', this.pc.localDescription.sdp)
+      await this.sendSignalingMessage({
+        type: SIGNALING_MESSAGE_TYPE_UPDATE,
         sdp: this.pc.localDescription.sdp,
       })
     }
@@ -1946,11 +1866,11 @@ export default class ConnectionBase {
   /**
    * シグナリングサーバーに type re-answer を投げるメソッド
    */
-  private sendReAnswer(): void {
+  private async sendReAnswer(): Promise<void> {
     if (this.pc?.localDescription) {
       this.trace('RE ANSWER SDP', this.pc.localDescription.sdp)
-      this.sendSignalingMessage({
-        type: 're-answer',
+      await this.sendSignalingMessage({
+        type: SIGNALING_MESSAGE_TYPE_RE_ANSWER,
         sdp: this.pc.localDescription.sdp,
       })
     }
@@ -1958,7 +1878,7 @@ export default class ConnectionBase {
 
   /**
    * シグナリングサーバーから受け取った type update メッセージを処理をするメソッド
-   *
+   * @deprecated このメソッドは非推奨です。将来のバージョンで削除される可能性があります。
    * @param message - type update メッセージ
    */
   private async signalingOnMessageTypeUpdate(message: SignalingUpdateMessage): Promise<void> {
@@ -1966,7 +1886,7 @@ export default class ConnectionBase {
     this.trace('UPDATE SDP', message.sdp)
     await this.setRemoteDescription(message)
     await this.createAnswer(message)
-    this.sendUpdateAnswer()
+    await this.sendUpdateAnswer()
   }
 
   /**
@@ -1979,7 +1899,17 @@ export default class ConnectionBase {
     this.trace('RE OFFER SDP', message.sdp)
     await this.setRemoteDescription(message)
     await this.createAnswer(message)
-    this.sendReAnswer()
+    await this.sendReAnswer()
+  }
+
+  /**
+   * シグナリングサーバーから受け取った type disconnect メッセージを処理をするメソッド
+   *
+   * @param message - type disconnect メッセージ
+   */
+  private async signalingOnMessageTypeClose(message: SignalingCloseMessage): Promise<void> {
+    this.trace('SIGNALING DISCONNECT MESSAGE', message)
+    this.shutdown({ code: message.code, reason: message.reason })
   }
 
   /**
@@ -1988,8 +1918,8 @@ export default class ConnectionBase {
    * @param message - type ping メッセージ
    */
   private async signalingOnMessageTypePing(message: SignalingPingMessage): Promise<void> {
-    const pongMessage: { type: 'pong'; stats?: RTCStatsReport[] } = {
-      type: 'pong',
+    const pongMessage: { type: typeof SIGNALING_MESSAGE_TYPE_PONG; stats?: RTCStatsReport[] } = {
+      type: SIGNALING_MESSAGE_TYPE_PONG,
     }
     if (message.stats) {
       const stats = await this.getStats()
@@ -2010,50 +1940,7 @@ export default class ConnectionBase {
     transportType: TransportType,
   ): void {
     if (message.event_type === 'connection.created') {
-      const connectionId = message.connection_id
-      if (this.connectionId !== connectionId) {
-        const authnMetadata = getSignalingNotifyAuthnMetadata(message)
-        const preKeyBundle = getPreKeyBundle(authnMetadata)
-        if (preKeyBundle && this.e2ee && connectionId) {
-          const result = this.e2ee.startSession(connectionId, preKeyBundle)
-          this.e2ee.postRemoteSecretKeyMaterials(result)
-          result.messages.filter((message) => {
-            this.sendE2EEMessage(message.buffer)
-          })
-          // messages を送信し終えてから、selfSecretKeyMaterial を更新する
-          this.e2ee.postSelfSecretKeyMaterial(
-            result.selfConnectionId,
-            result.selfKeyId,
-            result.selfSecretKeyMaterial,
-          )
-        }
-      }
       const data = getSignalingNotifyData(message)
-      data.filter((metadata) => {
-        const authnMetadata = getSignalingNotifyAuthnMetadata(metadata)
-        const preKeyBundle = getPreKeyBundle(authnMetadata)
-        const connectionId = metadata.connection_id
-        if (connectionId && this.e2ee && preKeyBundle) {
-          this.e2ee.addPreKeyBundle(connectionId, preKeyBundle)
-        }
-      })
-    } else if (message.event_type === 'connection.destroyed') {
-      const authnMetadata = getSignalingNotifyAuthnMetadata(message)
-      const preKeyBundle = getPreKeyBundle(authnMetadata)
-      const connectionId = message.connection_id
-      if (preKeyBundle && this.e2ee && connectionId) {
-        const result = this.e2ee.stopSession(connectionId)
-        this.e2ee.postSelfSecretKeyMaterial(
-          result.selfConnectionId,
-          result.selfKeyId,
-          result.selfSecretKeyMaterial,
-          5000,
-        )
-        result.messages.filter((message) => {
-          this.sendE2EEMessage(message.buffer)
-        })
-        this.e2ee.postRemoveRemoteDeriveKey(connectionId)
-      }
     }
     this.callbacks.notify(message, transportType)
   }
@@ -2095,6 +1982,7 @@ export default class ConnectionBase {
       this.ws.close()
       this.ws = null
     }
+    // XXX: 送られてきたシグナリング URL をそのまま使うようにする
     const ws = await this.getSignalingWebSocket(message.location)
     const signalingMessage = await this.signaling(ws, true)
     return signalingMessage
@@ -2111,7 +1999,6 @@ export default class ConnectionBase {
     encodings: RTCRtpEncodingParameters[],
   ): Promise<void> {
     const originalParameters = transceiver.sender.getParameters()
-    // @ts-ignore
     originalParameters.encodings = encodings
     await transceiver.sender.setParameters(originalParameters)
     this.trace('TRANSCEIVER SENDER SET_PARAMETERS', originalParameters)
@@ -2128,10 +2015,9 @@ export default class ConnectionBase {
       return stats
     }
     const reports = await this.pc.getStats()
-    // biome-ignore lint/complexity/noForEach: RTCStatsReport であって Array ではない
-    reports.forEach((s) => {
-      stats.push(s as RTCStatsReport)
-    })
+    for (const [_, s] of reports.entries()) {
+      stats.push(s)
+    }
     return stats
   }
 
@@ -2143,6 +2029,7 @@ export default class ConnectionBase {
   private onDataChannel(dataChannelEvent: RTCDataChannelEvent): void {
     const dataChannel = dataChannelEvent.channel
     dataChannel.bufferedAmountLowThreshold = 65536
+    // TODO: blob を変更できるようにする
     dataChannel.binaryType = 'arraybuffer'
     this.soraDataChannels[dataChannel.label] = dataChannel
     this.writeDataChannelTimelineLog(
@@ -2159,6 +2046,7 @@ export default class ConnectionBase {
     dataChannelEvent.channel.onopen = (event): void => {
       const channel = event.currentTarget as RTCDataChannel
       this.trace('OPEN DATA CHANNEL', channel.label)
+      // XXX: ws が存在している場合に signaling に出している意味があまりない気がする
       if (channel.label === 'signaling' && this.ws) {
         this.writeDataChannelSignalingLog('onopen', channel)
       } else {
@@ -2182,7 +2070,7 @@ export default class ConnectionBase {
       })
     }
     // onmessage
-    if (dataChannelEvent.channel.label === 'signaling') {
+    if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_SIGNALING) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
@@ -2193,15 +2081,17 @@ export default class ConnectionBase {
           )
           return
         }
-        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress)
-        const message = JSON.parse(data) as SignalingMessage
+        const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
+        const message = JSON.parse(data) as DataChannelSignalingMessage
         this.writeDataChannelSignalingLog(`onmessage-${message.type}`, channel, message)
-        if (message.type === 're-offer') {
+        if (message.type === SIGNALING_MESSAGE_TYPE_RE_OFFER) {
           await this.signalingOnMessageTypeReOffer(message)
+        } else if (message.type === SIGNALING_MESSAGE_TYPE_CLOSE) {
+          await this.signalingOnMessageTypeClose(message)
         }
       }
-    } else if (dataChannelEvent.channel.label === 'notify') {
-      dataChannelEvent.channel.onmessage = (event): void => {
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_NOTIFY) {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
         const dataChannelSettings = this.signalingOfferMessageDataChannels[label]
@@ -2211,7 +2101,7 @@ export default class ConnectionBase {
           )
           return
         }
-        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress)
+        const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as SignalingNotifyMessage
         if (message.event_type === 'connection.created') {
           this.writeDataChannelTimelineLog('notify-connection.created', channel, message)
@@ -2220,29 +2110,7 @@ export default class ConnectionBase {
         }
         this.signalingOnMessageTypeNotify(message, 'datachannel')
       }
-    } else if (dataChannelEvent.channel.label === 'push') {
-      dataChannelEvent.channel.onmessage = (event): void => {
-        const channel = event.currentTarget as RTCDataChannel
-        const label = channel.label
-        const dataChannelSettings = this.signalingOfferMessageDataChannels[label]
-        if (!dataChannelSettings) {
-          console.warn(
-            `Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`,
-          )
-          return
-        }
-        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress)
-        const message = JSON.parse(data) as SignalingPushMessage
-        this.callbacks.push(message, 'datachannel')
-      }
-    } else if (dataChannelEvent.channel.label === 'e2ee') {
-      dataChannelEvent.channel.onmessage = (event): void => {
-        const channel = event.currentTarget as RTCDataChannel
-        const data = event.data as ArrayBuffer
-        this.signalingOnMessageE2EE(data)
-        this.writeDataChannelSignalingLog('onmessage-e2ee', channel, data)
-      }
-    } else if (dataChannelEvent.channel.label === 'stats') {
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_PUSH) {
       dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
         const channel = event.currentTarget as RTCDataChannel
         const label = channel.label
@@ -2253,15 +2121,30 @@ export default class ConnectionBase {
           )
           return
         }
-        const data = parseDataChannelEventData(event.data, dataChannelSettings.compress)
+        const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
+        const message = JSON.parse(data) as SignalingPushMessage
+        this.callbacks.push(message, 'datachannel')
+      }
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_STATS) {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+        const channel = event.currentTarget as RTCDataChannel
+        const label = channel.label
+        const dataChannelSettings = this.signalingOfferMessageDataChannels[label]
+        if (!dataChannelSettings) {
+          console.warn(
+            `Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`,
+          )
+          return
+        }
+        const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
         const message = JSON.parse(data) as SignalingReqStatsMessage
-        if (message.type === 'req-stats') {
+        if (message.type === SIGNALING_MESSAGE_TYPE_REQ_STATS) {
           const stats = await this.getStats()
-          this.sendStatsMessage(stats)
+          await this.sendStatsMessage(stats)
         }
       }
     } else if (/^#.*/.exec(dataChannelEvent.channel.label)) {
-      dataChannelEvent.channel.onmessage = (event): void => {
+      dataChannelEvent.channel.onmessage = async (event: MessageEvent): Promise<void> => {
         if (event.currentTarget === null) {
           return
         }
@@ -2277,7 +2160,7 @@ export default class ConnectionBase {
         const dataChannel = event.target as RTCDataChannel
         let data: ArrayBuffer | undefined = undefined
         if (typeof event.data === 'string') {
-          data = new TextEncoder().encode(event.data)
+          data = new TextEncoder().encode(event.data).buffer as ArrayBuffer
         } else if (event.data instanceof ArrayBuffer) {
           data = event.data
         } else {
@@ -2286,7 +2169,7 @@ export default class ConnectionBase {
 
         if (data !== undefined) {
           if (dataChannelSettings.compress === true) {
-            data = unzlibSync(new Uint8Array(data)).buffer
+            data = await decompressMessage(new Uint8Array(data))
           }
           this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data))
         }
@@ -2299,18 +2182,18 @@ export default class ConnectionBase {
    *
    * @param message - 送信するメッセージ
    */
-  private sendSignalingMessage(message: {
+  private async sendSignalingMessage(message: {
     type: string
     [key: string]: unknown
-  }): void {
+  }): Promise<void> {
     if (this.soraDataChannels.signaling) {
       if (
         this.signalingOfferMessageDataChannels.signaling &&
         this.signalingOfferMessageDataChannels.signaling.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = zlibSync(binaryMessage, {})
-        this.soraDataChannels.signaling.send(zlibMessage)
+        const compressedMessage = await compressMessage(binaryMessage)
+        this.soraDataChannels.signaling.send(compressedMessage)
       } else {
         this.soraDataChannels.signaling.send(JSON.stringify(message))
       }
@@ -2326,29 +2209,14 @@ export default class ConnectionBase {
   }
 
   /**
-   * シグナリングサーバーに E2E 用メッセージを投げるメソッド
-   *
-   * @param message - 送信するバイナリメッセージ
-   */
-  private sendE2EEMessage(message: ArrayBuffer): void {
-    if (this.soraDataChannels.e2ee) {
-      this.soraDataChannels.e2ee.send(message)
-      this.writeDataChannelSignalingLog('send-e2ee', this.soraDataChannels.e2ee, message)
-    } else if (this.ws !== null) {
-      this.ws.send(message)
-      this.writeWebSocketSignalingLog('send-e2ee', message)
-    }
-  }
-
-  /**
    * シグナリングサーバーに stats メッセージを投げるメソッド
    *
    * @param reports - RTCStatsReport のリスト
    */
-  private sendStatsMessage(reports: RTCStatsReport[]): void {
+  private async sendStatsMessage(reports: RTCStatsReport[]): Promise<void> {
     if (this.soraDataChannels.stats) {
       const message = {
-        type: 'stats',
+        type: SIGNALING_MESSAGE_TYPE_STATS,
         reports: reports,
       }
       if (
@@ -2356,8 +2224,8 @@ export default class ConnectionBase {
         this.signalingOfferMessageDataChannels.stats.compress === true
       ) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message))
-        const zlibMessage = zlibSync(binaryMessage, {})
-        this.soraDataChannels.stats.send(zlibMessage)
+        const compressedMessage = await compressMessage(binaryMessage)
+        this.soraDataChannels.stats.send(compressedMessage)
       } else {
         this.soraDataChannels.stats.send(JSON.stringify(message))
       }
@@ -2433,7 +2301,7 @@ export default class ConnectionBase {
    * @param label - メッセージを送信する DataChannel のラベル
    * @param message - Uint8Array
    */
-  sendMessage(label: string, message: Uint8Array): void {
+  async sendMessage(label: string, message: Uint8Array): Promise<void> {
     const dataChannel = this.soraDataChannels[label]
     // 接続していない場合は何もしない
     if (this.pc === null) {
@@ -2447,31 +2315,11 @@ export default class ConnectionBase {
     }
     const settings = this.signalingOfferMessageDataChannels[label]
     if (settings !== undefined && settings.compress === true) {
-      const zlibMessage = zlibSync(message, {})
-      dataChannel.send(zlibMessage)
+      const compressedMessage = await compressMessage(message)
+      dataChannel.send(compressedMessage)
     } else {
       dataChannel.send(message)
     }
-  }
-
-  /**
-   * E2EE の自分のフィンガープリント
-   */
-  get e2eeSelfFingerprint(): string | undefined {
-    if (this.options.e2ee && this.e2ee) {
-      return this.e2ee.selfFingerprint()
-    }
-    return undefined
-  }
-
-  /**
-   * E2EE のリモートのフィンガープリントリスト
-   */
-  get e2eeRemoteFingerprints(): Record<string, string> | undefined {
-    if (this.options.e2ee && this.e2ee) {
-      return this.e2ee.remoteFingerprints()
-    }
-    return undefined
   }
 
   /**
@@ -2504,13 +2352,13 @@ export default class ConnectionBase {
     if (!this.signalingSwitched) {
       return []
     }
-    const messagingDataChannellabels = Object.keys(this.signalingOfferMessageDataChannels).filter(
+    const messagingDataChannelLabels = Object.keys(this.signalingOfferMessageDataChannels).filter(
       (label) => {
         return /^#.*/.exec(label)
       },
     )
     const result: DataChannelConfiguration[] = []
-    for (const label of messagingDataChannellabels) {
+    for (const label of messagingDataChannelLabels) {
       const dataChannel = this.soraDataChannels[label]
       if (!dataChannel) {
         continue
@@ -2525,6 +2373,7 @@ export default class ConnectionBase {
         protocol: dataChannel.protocol,
         compress: settings.compress,
         direction: settings.direction,
+        header: settings.header,
       }
       if (typeof dataChannel.maxPacketLifeTime === 'number') {
         messagingDataChannel.maxPacketLifeTime = dataChannel.maxPacketLifeTime

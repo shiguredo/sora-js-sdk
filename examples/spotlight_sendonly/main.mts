@@ -2,7 +2,7 @@ import Sora, {
   type SignalingNotifyMessage,
   type ConnectionPublisher,
   type SoraConnection,
-} from '../../dist/sora'
+} from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
@@ -17,12 +17,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     ACCESS_TOKEN,
   )
 
-  document.querySelector('#start')?.addEventListener('click', async () => {
+  document.querySelector('#connect')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     await client.connect(stream)
   })
 
-  document.querySelector('#stop')?.addEventListener('click', async () => {
+  document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
   })
 })

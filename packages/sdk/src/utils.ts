@@ -1,5 +1,3 @@
-import { unzlibSync } from 'fflate'
-
 import type {
   Browser,
   ConnectionOptions,
@@ -7,7 +5,6 @@ import type {
   DataChannelEvent,
   DataChannelMessageEvent,
   JSONType,
-  PreKeyBundle,
   SignalingConnectDataChannel,
   SignalingConnectMessage,
   SignalingEvent,
@@ -94,6 +91,10 @@ function parseDataChannelConfiguration(
   if (typeof configuration.protocol === 'string') {
     result.protocol = configuration.protocol
   }
+  // array の中身はチェックしていない
+  if (Array.isArray(configuration.header)) {
+    result.header = configuration.header
+  }
   return result
 }
 
@@ -135,7 +136,7 @@ export function createSignalingMessage(
   }
   const message: SignalingConnectMessage = {
     type: 'connect',
-    sora_client: 'Sora JavaScript SDK __SORA_JS_SDK_VERSION__',
+    sora_client: `Sora JavaScript SDK ${__SORA_JS_SDK_VERSION__}`,
     environment: window.navigator.userAgent,
     role: role,
     channel_id: channelId,
@@ -187,6 +188,9 @@ export function createSignalingMessage(
   }
   if (options.signalingNotifyMetadata !== undefined) {
     message.signaling_notify_metadata = options.signalingNotifyMetadata
+  }
+  if (options.forwardingFilters !== undefined) {
+    message.forwarding_filters = options.forwardingFilters
   }
   if (options.forwardingFilter !== undefined) {
     message.forwarding_filter = options.forwardingFilter
@@ -325,26 +329,6 @@ export function createSignalingMessage(
   if (message.simulcast && !enabledSimulcast() && role !== 'recvonly') {
     throw new Error('Simulcast can not be used with this browser')
   }
-  if (typeof options.e2ee === 'boolean') {
-    message.e2ee = options.e2ee
-  }
-  if (options.e2ee === true) {
-    if (message.signaling_notify_metadata === undefined) {
-      message.signaling_notify_metadata = {}
-    }
-    if (
-      message.signaling_notify_metadata === null ||
-      typeof message.signaling_notify_metadata !== 'object'
-    ) {
-      throw new Error("E2EE failed. Options signalingNotifyMetadata must be type 'object'")
-    }
-    if (message.video === true) {
-      message.video = {}
-    }
-    if (message.video) {
-      message.video.codec_type = 'VP8'
-    }
-  }
 
   if (Array.isArray(options.dataChannels) && 0 < options.dataChannels.length) {
     message.data_channels = parseDataChannelConfigurations(options.dataChannels)
@@ -382,13 +366,6 @@ export function getSignalingNotifyData(
     return message.metadata_list
   }
   return []
-}
-
-export function getPreKeyBundle(message: JSONType): PreKeyBundle | null {
-  if (typeof message === 'object' && message !== null && 'pre_key_bundle' in message) {
-    return message.pre_key_bundle as PreKeyBundle
-  }
-  return null
 }
 
 export function trace(clientId: string | null, title: string, value: unknown): void {
@@ -505,10 +482,103 @@ export function createDataChannelEvent(channel: DataChannelConfiguration): DataC
   return event
 }
 
-export function parseDataChannelEventData(eventData: unknown, compress: boolean): string {
+export async function parseDataChannelEventData(
+  eventData: unknown,
+  compress: boolean,
+): Promise<string> {
   if (compress) {
-    const unzlibMessage = unzlibSync(new Uint8Array(eventData as Uint8Array))
+    const unzlibMessage = await decompressMessage(new Uint8Array(eventData as Uint8Array))
     return new TextDecoder().decode(unzlibMessage)
   }
   return eventData as string
+}
+
+export const compressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
+  const readableStream = new Blob([binaryMessage]).stream()
+  const compressedStream = readableStream.pipeThrough(new CompressionStream('deflate'))
+  return await new Response(compressedStream).arrayBuffer()
+}
+
+export const decompressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
+  const readableStream = new Blob([binaryMessage]).stream()
+  const decompressedStream = readableStream.pipeThrough(new DecompressionStream('deflate'))
+  return await new Response(decompressedStream).arrayBuffer()
+}
+
+export function addStereoToFmtp(sdp: string): string {
+  const splitSdp = sdp.match(/^(v=.+?)(m=audio.+)/ms)
+  if (splitSdp === null) {
+    return sdp
+  }
+
+  const sessionDescription = splitSdp[1]
+
+  const mediaDescriptionsList: string[][] = []
+  let mediaDescriptionList: string[] = []
+  for (const line of splitSdp[2].split(/\n/)) {
+    const typ = line[0]
+    if (typ === 'm') {
+      mediaDescriptionList = [line]
+      mediaDescriptionsList.push(mediaDescriptionList)
+    } else {
+      mediaDescriptionList.push(line)
+    }
+  }
+
+  const mediaDescriptions = mediaDescriptionsList.map((mediaDescription) => {
+    return mediaDescription.join('\n')
+  })
+
+  const newMediaDescriptions = mediaDescriptions.map((mediaDescription) => {
+    if (!isAudio(mediaDescription)) {
+      return mediaDescription
+    }
+
+    if (!isSetupActive(mediaDescription)) {
+      return mediaDescription
+    }
+
+    if (!isRecvOnly(mediaDescription)) {
+      return mediaDescription
+    }
+
+    if (!isOpus(mediaDescription)) {
+      return mediaDescription
+    }
+
+    if (!isFmtp(mediaDescription)) {
+      return mediaDescription
+    }
+
+    return appendStereo(mediaDescription)
+  })
+
+  return `${sessionDescription}${newMediaDescriptions.join('\n')}`
+}
+
+function isAudio(mediaDescription: string): boolean {
+  return /^m=audio/.test(mediaDescription)
+}
+
+function isSetupActive(mediaDescription: string): boolean {
+  return /a=setup:active/.test(mediaDescription)
+}
+
+function isRecvOnly(mediaDescription: string): boolean {
+  return /a=recvonly/.test(mediaDescription)
+}
+
+function isOpus(mediaDescription: string): boolean {
+  return /a=rtpmap:\d+\sopus/.test(mediaDescription)
+}
+
+function isFmtp(mediaDescription: string): boolean {
+  return /a=fmtp:\d+/.test(mediaDescription)
+}
+
+function appendStereo(mediaDescription: string): string {
+  return mediaDescription.replace(
+    /(?<!stereo=1;.*)minptime=\d+(?!.*stereo=1)/,
+    (match) => `${match};stereo=1`,
+  )
 }

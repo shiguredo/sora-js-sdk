@@ -1,7 +1,6 @@
-import SoraE2EE from '@sora/e2ee'
-
 import type ConnectionBase from './base'
 import { applyMediaStreamConstraints } from './helpers'
+import ConnectionMessaging from './messaging'
 import ConnectionPublisher from './publisher'
 import ConnectionSubscriber from './subscriber'
 import type {
@@ -12,6 +11,12 @@ import type {
   DataChannelDirection,
   DataChannelEvent,
   DataChannelMessageEvent,
+  ForwardingFilter,
+  ForwardingFilterAction,
+  ForwardingFilterRule,
+  ForwardingFilterRuleField,
+  ForwardingFilterRuleKindValue,
+  ForwardingFilterRuleOperator,
   JSONType,
   Role,
   SignalingEvent,
@@ -59,7 +64,7 @@ class SoraConnection {
     this.debug = debug
   }
   /**
-   * role sendrecv で接続するための Connecion インスタンスを生成するメソッド
+   * role sendrecv で接続するための Connection インスタンスを生成するメソッド
    *
    * @example
    * ```typescript
@@ -91,7 +96,7 @@ class SoraConnection {
     )
   }
   /**
-   * role sendonly で接続するための Connecion インスタンスを生成するメソッド
+   * role sendonly で接続するための Connection インスタンスを生成するメソッド
    *
    * @param channelId - チャネルID
    * @param metadata - メタデータ
@@ -123,7 +128,7 @@ class SoraConnection {
     )
   }
   /**
-   * role recvonly で接続するための Connecion インスタンスを生成するメソッド
+   * role recvonly で接続するための Connection インスタンスを生成するメソッド
    *
    * @example
    * ```typescript
@@ -154,6 +159,27 @@ class SoraConnection {
       this.debug,
     )
   }
+
+  messaging(
+    channelId: string,
+    metadata: JSONType = null,
+    options: ConnectionOptions = { audio: false, video: false },
+  ): ConnectionMessaging {
+    options.audio = false
+    options.video = false
+    options.multistream = true
+    options.dataChannelSignaling = true
+    return new ConnectionMessaging(
+      this.signalingUrlCandidates,
+      // messaging は role sendonly として扱う
+      'sendonly',
+      channelId,
+      metadata,
+      options,
+      this.debug,
+    )
+  }
+
   /**
    * シグナリングに使用する URL の候補
    *
@@ -169,20 +195,6 @@ class SoraConnection {
  * Sora JS SDK package
  */
 export default {
-  /**
-   * E2EE で使用する WASM の読み込みを行うメソッド
-   *
-   * @example
-   * ```typescript
-   * Sora.initE2EE("http://192.0.2.100/wasm.wasm");
-   * ```
-   * @param wasmUrl - E2EE WASM の URL
-   *
-   * @public
-   */
-  initE2EE: async (wasmUrl: string): Promise<void> => {
-    await SoraE2EE.loadWasm(wasmUrl)
-  },
   /**
    * SoraConnection インスタンスを生成するメソッド
    *
@@ -206,7 +218,7 @@ export default {
    * @public
    */
   version: (): string => {
-    return '__SORA_JS_SDK_VERSION__'
+    return __SORA_JS_SDK_VERSION__
   },
   /**
    * WebRTC のユーティリティ関数群
@@ -225,10 +237,17 @@ export type {
   ConnectionOptions,
   ConnectionPublisher,
   ConnectionSubscriber,
+  ConnectionMessaging,
   DataChannelConfiguration,
   DataChannelDirection,
   DataChannelEvent,
   DataChannelMessageEvent,
+  ForwardingFilter,
+  ForwardingFilterAction,
+  ForwardingFilterRule,
+  ForwardingFilterRuleField,
+  ForwardingFilterRuleKindValue,
+  ForwardingFilterRuleOperator,
   JSONType,
   Role,
   SignalingEvent,

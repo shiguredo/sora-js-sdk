@@ -27,7 +27,7 @@ Please read <https://github.com/shiguredo/oss> before use.
 ## システム条件
 
 - WebRTC SFU Sora 2023.2.0 以降
-- TypeScript 5.5 以降
+- TypeScript 5.6 以降
 
 ## サンプル集
 
@@ -51,12 +51,6 @@ $ pnpm run build
 $ pnpm exec playwright install chromium --with-deps
 $ pnpm run e2e-test
 ```
-
-## E2EE (End to End Encryption) について
-
-詳細については以下をご確認ください。
-
-[WebRTC SFU Sora 向け E2EE ライブラリ](https://github.com/shiguredo/sora-e2ee)
 
 ## マルチトラックについて
 

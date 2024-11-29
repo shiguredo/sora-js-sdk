@@ -45,18 +45,17 @@ export default class ConnectionSubscriber extends ConnectionBase {
 
   /**
    * レガシーストリームで Sora へ接続するメソッド
+   *
+   * @deprecated この関数は非推奨です、マルチストリームを利用してください。
+   *
    */
   private async legacyStream(): Promise<MediaStream> {
     await this.disconnect()
-    this.setupE2EE()
     const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)
     const signalingMessage = await this.signaling(ws)
-    this.startE2EE()
     await this.connectPeerConnection(signalingMessage)
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        await this.setupReceiverTransform(event.transceiver.mid, event.receiver)
-
         this.stream = event.streams[0]
         const streamId = this.stream.id
         if (streamId === 'default') {
@@ -76,24 +75,17 @@ export default class ConnectionSubscriber extends ConnectionBase {
         this.stream.onremovetrack = (event): void => {
           this.callbacks.removetrack(event)
           if (event.target) {
-            // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-            const targetId = event.target.id as string
-            const index = this.remoteConnectionIds.indexOf(targetId)
+            const streamId = (event.target as MediaStreamTrack).id
+            const index = this.remoteConnectionIds.indexOf(streamId)
             if (-1 < index) {
               delete this.remoteConnectionIds[index]
-              // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-              event.stream = event.target
-              this.callbacks.removestream(event)
             }
           }
         }
         if (-1 < this.remoteConnectionIds.indexOf(streamId)) {
           return
         }
-        // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-        event.stream = this.stream
         this.remoteConnectionIds.push(streamId)
-        this.callbacks.addstream(event)
       }
     }
     await this.setRemoteDescription(signalingMessage)
@@ -109,15 +101,11 @@ export default class ConnectionSubscriber extends ConnectionBase {
    */
   private async multiStream(): Promise<void> {
     await this.disconnect()
-    this.setupE2EE()
     const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)
     const signalingMessage = await this.signaling(ws)
-    this.startE2EE()
     await this.connectPeerConnection(signalingMessage)
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        await this.setupReceiverTransform(event.transceiver.mid, event.receiver)
-
         const stream = event.streams[0]
         if (stream.id === 'default') {
           return
@@ -139,24 +127,17 @@ export default class ConnectionSubscriber extends ConnectionBase {
         stream.onremovetrack = (event): void => {
           this.callbacks.removetrack(event)
           if (event.target) {
-            // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-            const targetId = event.target.id as string
-            const index = this.remoteConnectionIds.indexOf(targetId)
+            const streamId = (event.target as MediaStream).id
+            const index = this.remoteConnectionIds.indexOf(streamId)
             if (-1 < index) {
               delete this.remoteConnectionIds[index]
-              // @ts-ignore TODO(yuito): 後方互換のため peerConnection.onremovestream と同じ仕様で残す
-              event.stream = event.target
-              this.callbacks.removestream(event)
             }
           }
         }
         if (-1 < this.remoteConnectionIds.indexOf(stream.id)) {
           return
         }
-        // @ts-ignore TODO(yuito): 最新ブラウザでは無くなった API だが後方互換のため残す
-        event.stream = stream
         this.remoteConnectionIds.push(stream.id)
-        this.callbacks.addstream(event)
       }
     }
     await this.setRemoteDescription(signalingMessage)

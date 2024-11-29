@@ -2,9 +2,9 @@ import Sora, {
   type SoraConnection,
   type ConnectionPublisher,
   type SignalingNotifyMessage,
-  ConnectionSubscriber,
-  SimulcastRid,
-} from '../../dist/sora'
+  type ConnectionSubscriber,
+  type SimulcastRid,
+} from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'r2',
   )
 
-  document.querySelector('#start')?.addEventListener('click', async () => {
+  document.querySelector('#connect')?.addEventListener('click', async () => {
     // sendonly
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     await recvonlyR2.connect()
   })
 
-  document.querySelector('#stop')?.addEventListener('click', async () => {
+  document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await sendonly.disconnect()
 
     // recvonly r0
@@ -68,6 +68,32 @@ document.addEventListener('DOMContentLoaded', () => {
     await recvonlyR1.disconnect()
     // recvonly r2
     await recvonlyR2.disconnect()
+  })
+
+  document.querySelector('#get-stats')?.addEventListener('click', async () => {
+    const statsReport = await sendonly.getStats()
+    const statsDiv = document.querySelector('#stats-report') as HTMLElement
+    const statsReportJsonDiv = document.querySelector('#stats-report-json')
+    if (statsDiv && statsReportJsonDiv) {
+      let statsHtml = ''
+      const statsReportJson: Record<string, unknown>[] = []
+      // biome-ignore lint/complexity/noForEach: <explanation>
+      statsReport.forEach((report) => {
+        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
+        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
+        for (const [key, value] of Object.entries(report)) {
+          if (key !== 'type' && key !== 'id') {
+            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
+            reportJson[key] = value
+          }
+        }
+        statsHtml += '</ul>'
+        statsReportJson.push(reportJson)
+      })
+      statsDiv.innerHTML = statsHtml
+      // データ属性としても保存（オプション）
+      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
+    }
   })
 })
 
@@ -110,6 +136,13 @@ class SimulcastSendonlySoraClient {
     if (localVideo) {
       localVideo.srcObject = null
     }
+  }
+
+  getStats(): Promise<RTCStatsReport> {
+    if (this.connection.pc === null) {
+      return Promise.reject(new Error('PeerConnection is not ready'))
+    }
+    return this.connection.pc.getStats()
   }
 
   private onnotify(event: SignalingNotifyMessage) {

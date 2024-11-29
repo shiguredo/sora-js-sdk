@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { type AudioCodecType, DataChannelDirection, VideoCodecType } from '../src/types'
+import type { AudioCodecType, DataChannelDirection, VideoCodecType } from '../src/types'
 import { createSignalingMessage } from '../src/utils'
 
 const channelId = '7N3fsMHob'
@@ -7,7 +7,7 @@ const metadata = 'PG9A6RXgYqiqWKOVO'
 const clientId = 'clientId'
 const sdp = 'v=0...'
 const userAgent = window.navigator.userAgent
-const soraClient = 'Sora JavaScript SDK __SORA_JS_SDK_VERSION__'
+const soraClient = `Sora JavaScript SDK ${__SORA_JS_SDK_VERSION__}`
 const audioCodecType: AudioCodecType = 'OPUS'
 const videoCodecType: VideoCodecType = 'VP9'
 const baseExpectedMessage = Object.freeze({
@@ -389,70 +389,6 @@ test('createSignalingMessage video parameters', () => {
       codec_type: options.videoCodecType,
       bit_rate: options.videoBitRate,
     },
-  })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
-})
-
-/**
- * e2ee test
- */
-test('createSignalingMessage e2ee: true', () => {
-  const options = {
-    e2ee: true,
-    e2eeWasmUrl: 'wasm',
-  }
-  const expectedMessage = Object.assign({}, baseExpectedMessage, {
-    e2ee: true,
-    video: {
-      codec_type: 'VP8',
-    },
-    signaling_notify_metadata: {},
-  })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
-})
-
-test('createSignalingMessage e2ee: false', () => {
-  const options = {
-    e2ee: false,
-  }
-  const expectedMessage = Object.assign({}, baseExpectedMessage, { e2ee: false })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
-})
-
-test('createSignalingMessage e2ee: true, video: false', () => {
-  const options = {
-    e2ee: true,
-    e2eeWasmUrl: 'wasm',
-    video: false,
-  }
-  const expectedMessage = Object.assign({}, baseExpectedMessage, {
-    e2ee: true,
-    video: false,
-    signaling_notify_metadata: {},
-  })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
-})
-
-test("createSignalingMessage e2ee: true, videoCodecType: 'VP9'", () => {
-  const options = {
-    e2ee: true,
-    e2eeWasmUrl: 'wasm',
-    videoCodecType: 'VP9' as VideoCodecType,
-  }
-  const expectedMessage = Object.assign({}, baseExpectedMessage, {
-    e2ee: true,
-    video: {
-      codec_type: 'VP8',
-    },
-    signaling_notify_metadata: {},
   })
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     expectedMessage,

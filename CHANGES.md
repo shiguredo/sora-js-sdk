@@ -11,9 +11,74 @@
 
 ## develop
 
+## 2024.2.0
+
+**リリース日**: 2024-11-29
+
+- [ADD] シグナリングのみを利用する `ConnectionMessaging` クラスを追加する
+  - @voluntas
+- [ADD] シグナリング項目に `forwarding_filters` を追加する
+  - @voluntas
+- [ADD] DataChannel メッセージング機能のヘッダー項目を追加する
+  - `header: [{"type": "sender_connection_id"}]`
+  - @voluntas
+- [CHANGE] Sora 側からの切断の SoraCloseEvent の title を `SHUTDOWN` に変更する
+  - @voluntas
+- [ADD] DataChannel のみのシグナリングを利用している際、 Sora から切断された場合に送られてくる `"type": "close"` メッセージの処理を追加する
+  - WebSocket シグナリングには Close フレームの Code/Reason があるが、DataChannel シグナリングのみでは判断ができないため
+  - `"type": "close"` は DataChannel シグナリング経由でのみ送られてくる
+  - @voluntas
+- [CHANGE] ForwardingFilter の型を `JSONType` から `ForwardingFilter` に変更する
+  - `ForwardingFilter` 型を追加
+  - `ForwardingFilterAction` 型を追加
+  - `ForwardingFilterRule` 型を追加
+  - `ForwardingFilterRuleField` 型を追加
+  - `ForwardingFilterRuleKindValue` 型を追加
+  - `ForwardingFilterRuleOperator` 型を追加
+  - @voluntas
+- [CHANGE] ブラウザでは非推奨となっている `addstream` と `removestream` コールバックを削除する
+  - 廃止宣言から 4 年位経過した
+  - @voluntas
+- [CHANGE] メッセージングを送信する `sendMessage` が `void` ではなく `Promise<void>` を返すようになりました
+  - DataChannel の切断部分のロジックを大幅に書き換えた
+  - 複数回 Disconnect を呼んだときの挙動に懸念あり
+  - @voluntas
+- [UPDATE] メッセージングの圧縮を `fflate` を利用せず compressionStream API を利用するようにする
+  - @voluntas
+- [UPDATE] メッセージングの展開を `fflate` を利用せず decompressionStream API を利用するようにする
+  - @voluntas
+- [CHANGE] E2EE 機能を削除する
+  - @voluntas
+- [CHANGE] [fflate](https://www.npmjs.com/package/fflate) を依存から削除する
+  - @voluntas
+
+### misc
+
+- [ADD] リプレイストラックのサンプルを追加する
+  - @voluntas
+- [ADD] メッセージングヘッダーの E2E テストを追加する
+  - @voluntas
+- [ADD] npm に登録されている stable SDK の E2E テストを追加する
+  - @voluntas
+- [FIX] RTCPeerConnection.close は Promise ではないので await しないようにする
+  - @voluntas
+- [CHANGE] ビルドシステムを Vite に変更する
+  - Rollup 関連を削除
+  - @voluntas
+- [ADD] サンプルに getStats を追加する
+  - sendrecv / sendonly / recvonly / messaging / simulcast
+  - dataset に getStats の結果を入れて E2E テストで利用しやすくする
+  - @voluntas
+- [UPDATE] E2E テストに getStats の結果を利用する用にする
+  - @voluntas
+- [UPDATE] examples で sora-js-sdk を使うよう `workspace:*` に変更する
+  - @voluntas
+- [ADD] E2E テストに音声のみ配信サンプルを追加する
+  - @blaue-fuchs
+
 ## 2024.1.2
 
-**2024-07-09**
+**リリース日**: 2024-07-09
 
 - [FIX] `"type": "offer"` の `simulcast` の値が反映されていない問題を修正する
   - @voluntas
@@ -22,23 +87,15 @@
 
 ## 2024.1.1
 
-**2024-06-17**
+**リリース日**: 2024-06-17
 
 - [FIX] リリースミス
   - @voluntas
 
 ## 2024.1.0
 
-**2024-06-07**
+**リリース日**: 2024-06-07
 
-- [UPDATE] tsconfig.json を統一する
-  - @voluntas
-- [UPDATE] CI の pnpm を 9 に上げる
-  - @voluntas
-- [UPDATE] Biome 1.8.0 に上げる
-  - @voluntas
-- [ADD] `tsc --noEmit` で型チェックを行うようにする
-  - @voluntas
 - [CHANGE] オーディオコーデック `LYRA` のサポートを削除する
   - @tnamao
 - [CHANGE] シグナリングオプションの `multistream` は false の時のみレガシーストリームを使用する
@@ -46,6 +103,15 @@
   - @tnamao
 - [CHANGE] stopAudioTrack と stopVideoTrack を非推奨にする
   - 代わりに名前を変えただけの removeAudioTrack と removeVideoTrack を用意する
+  - @voluntas
+
+### misc
+
+- [UPDATE] CI の pnpm を 9 に上げる
+  - @voluntas
+- [UPDATE] tsconfig.json を統一する
+  - @voluntas
+- [UPDATE] Biome 1.8.0 に上げる
   - @voluntas
 - [CHANGE] examples を Vite を利用して動かすように変更する
   - serve を削除
@@ -57,14 +123,16 @@
   - @voluntas
 - [CHANGE] サンプルを class ベースに変更する
   - @voluntas
-- [ADD] サンプル用の .env.template を用意する
-  - @voluntas
-- [ADD] tests に Playwright を利用した E2E テストを追加する
-  - e2ee と messaging は一旦 skip で追加
-  - @voluntas
 - [ADD] .github/workflows/e2e-test.yml を追加する
   - Node.js {18,20,22} で E2E テストを実行する
   - Chromium で E2E テストを実行する
+  - @voluntas
+- [ADD] サンプル用の .env.template を用意する
+  - @voluntas
+- [ADD] `tsc --noEmit` で型チェックを行うようにする
+  - @voluntas
+- [ADD] tests に Playwright を利用した E2E テストを追加する
+  - e2ee と messaging は一旦 skip で追加
   - @voluntas
 - [FIX] examples 実行時に環境変数が設定されていない場合は空文字にする
   - 対象項目は SORA_CHANNEL_ID_PREFIX, VITE_SORA_CHANNEL_ID_PREFIX, VITE_ACCESS_TOKEN
@@ -72,7 +140,7 @@
 
 ## 2023.2.0
 
-**2023-12-08**
+**リリース日**: 2023-12-08
 
 - [ADD] type: offer で受け取ったセッション ID を保持する
   - @tnamao
@@ -101,7 +169,7 @@
 
 ## 2023.1.0
 
-**2023-06-20**
+**リリース日**: 2023-06-20
 
 - [ADD] 接続オプションとしてビデオコーデック用パラメータの送信を追加
   - `ConnectionOptions` 型に `videoVP9Params` `videoH264Params` `videoAV1Params` フィールドを追加

@@ -2,7 +2,7 @@ import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
   type ConnectionSubscriber,
-} from '../../dist/sora'
+} from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
   // 環境変数の読み込み
@@ -19,11 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
     ACCESS_TOKEN,
   )
 
-  document.querySelector('#start')?.addEventListener('click', async () => {
+  document.querySelector('#connect')?.addEventListener('click', async () => {
     await client.connect()
   })
 
-  document.querySelector('#stop')?.addEventListener('click', async () => {
+  document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
   })
 })
