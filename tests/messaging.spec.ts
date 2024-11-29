@@ -1,6 +1,13 @@
 import { expect, test } from '@playwright/test'
+import { isVersionGreaterThanOrEqual } from './helper'
 
+// sora-js-sdk のバージョンが 2024.2.0 以降の場合のみ実行したい
 test('messaging pages', async ({ browser }) => {
+  test.skip(
+    !isVersionGreaterThanOrEqual('2024.2.0'),
+    'このテストは sora-js-sdk 2024.2.0 以降でのみ実行されます',
+  )
+
   // 新しいページを2つ作成
   const page1 = await browser.newPage()
   const page2 = await browser.newPage()
