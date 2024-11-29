@@ -29,15 +29,13 @@ Please read <https://github.com/shiguredo/oss> before use.
 - WebRTC SFU Sora 2023.2.0 以降
 - TypeScript 5.6 以降
 
-:::note warn
-注意
-Sora JavaScript SDK 2024.1.0 以降は [Compression Stream API](https://developer.mozilla.org/ja/docs/Web/API/Compression_Streams_API) を利用しているため、
-以下のバージョンのブラウザが必要になります
+### 注意
+
+Sora JavaScript SDK 2024.2.0 以降は [Compression Stream API](https://developer.mozilla.org/ja/docs/Web/API/Compression_Streams_API) を利用しているため、ブラウザの要件がありますのでご確認ください。
 
 - Chrome / Edge 80 以降
 - Firefox 113 以降
 - Safari 16.4 以降
-:::
 
 ## サンプル集
 
