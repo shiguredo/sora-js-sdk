@@ -2,14 +2,12 @@ name: npm-pkg-e2e-test
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - develop
-  #     - feature/*
-  #   paths-ignore:
-  #     - "**.md"
-  #     - "LICENSE"
-  #     - "NOTICE"
+  push:
+    branches:
+      - develop
+      - feature/*
+    paths:
+      - .github/workflows/npm-pkg-e2e-test.yml
   schedule:
     # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
     - cron: "0 2 * * 1-5"
