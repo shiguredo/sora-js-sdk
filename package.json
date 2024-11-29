@@ -20,8 +20,7 @@
     "fmt": "pnpm -r --filter=./packages/* --filter=./examples fmt",
     "test": "pnpm -r --filter=./packages/* test",
     "check": "pnpm -r --filter=./packages/* --filter=./examples check",
-    "doc": "typedoc",
-    "release:canary": "./scripts/release_canary.sh"
+    "doc": "typedoc"
   },
   "repository": {
     "type": "git",
