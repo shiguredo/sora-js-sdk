@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
   const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
 
+  const soraJsSdkVersion = Sora.version()
+  const soraJsSdkVersionElement = document.getElementById('sora-js-sdk-version')
+  if (soraJsSdkVersionElement) {
+    soraJsSdkVersionElement.textContent = soraJsSdkVersion
+  }
+
   let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {

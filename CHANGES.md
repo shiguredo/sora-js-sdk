@@ -11,15 +11,13 @@
 
 ## develop
 
-
 ### misc
 
 - [CHANGE] canary リリース方法を `canary.py` に変更する
   - `release_canary.sh` は削除
   - @voluntas
-
-### misc
-
+- [FIX] パッケージの E2E テストを修正する
+  - @voluntas
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
 

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { isVersionGreaterThanOrEqual } from './helper'
 
 test('messaging pages with header', async ({ browser }) => {
   // 新しいページを2つ作成
@@ -8,6 +9,18 @@ test('messaging pages with header', async ({ browser }) => {
   // それぞれのページに対して操作を行う
   await page1.goto('http://localhost:9000/messaging/')
   await page2.goto('http://localhost:9000/messaging/')
+
+  // sora js sdk のバージョンを取得する
+  await page1.waitForSelector('#sora-js-sdk-version')
+  const page1SoraJsSdkVersion = await page1.$eval('#sora-js-sdk-version', (el) => el.textContent)
+  if (page1SoraJsSdkVersion === null) {
+    throw new Error('page1SoraJsSdkVersion is null')
+  }
+  // sora-js-sdk のバージョンが 2024.2.0 以上であるか確認して、2024.2.0 未満の場合はテストをスキップする
+  test.skip(
+    !isVersionGreaterThanOrEqual(page1SoraJsSdkVersion, '2024.2.0'),
+    'sora-js-sdk のバージョンが 2024.2.0 以上である必要があります',
+  )
 
   // チャネル名を設定する
   await page1.fill('input[name="channel-name"]', 'message-header')

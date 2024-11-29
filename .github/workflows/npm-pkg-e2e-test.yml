@@ -8,6 +8,7 @@ on:
       - feature/*
     paths:
       - .github/workflows/npm-pkg-e2e-test.yml
+      - tests/**
   schedule:
     # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
     - cron: "0 2 * * 1-5"
@@ -15,7 +16,6 @@ on:
 jobs:
   npm-pkg-e2e-test:
     timeout-minutes: 20
-    continue-on-error: true
     runs-on: ubuntu-latest
     strategy:
       matrix:
