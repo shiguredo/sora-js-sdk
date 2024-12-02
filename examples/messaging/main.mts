@@ -62,8 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = ''
       const statsReportJson: Record<string, unknown>[] = []
-      // biome-ignore lint/complexity/noForEach: <explanation>
-      statsReport.forEach((report) => {
+      for (const report of statsReport.values()) {
         statsHtml += `<h3>Type: ${report.type}</h3><ul>`
         const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
         for (const [key, value] of Object.entries(report)) {
@@ -74,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         statsHtml += '</ul>'
         statsReportJson.push(reportJson)
-      })
+      }
       statsDiv.innerHTML = statsHtml
       // データ属性としても保存（オプション）
       statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
