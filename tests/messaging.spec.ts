@@ -18,7 +18,10 @@ test('messaging pages', async ({ browser }) => {
     throw new Error('page1SoraJsSdkVersion is null')
   }
   // sora-js-sdk のバージョンが 2024.2.0 以上であるか確認して、2024.2.0 未満の場合はテストをスキップする
-  test.skip(!isVersionGreaterThanOrEqual(page1SoraJsSdkVersion, '2024.2.0'), 'sora-js-sdk のバージョンが 2024.2.0 以上である必要があります')
+  test.skip(
+    !isVersionGreaterThanOrEqual(page1SoraJsSdkVersion, '2024.2.0'),
+    'sora-js-sdk のバージョンが 2024.2.0 以上である必要があります',
+  )
 
   // Compress のTrue/Falseをランダムで設定する
   const selectedCompress1 = await page1.evaluate(() => {

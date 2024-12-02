@@ -16,8 +16,8 @@
     "examples": "vite build",
     "e2e-test": "pnpm run build && playwright test --project=chromium",
     "build": "pnpm -r --filter=./packages/* build",
-    "lint": "pnpm -r --filter=./packages/* --filter=./examples lint",
-    "fmt": "pnpm -r --filter=./packages/* --filter=./examples fmt",
+    "lint": "biome lint",
+    "fmt": "biome format --write",
     "test": "pnpm -r --filter=./packages/* test",
     "check": "pnpm -r --filter=./packages/* --filter=./examples check",
     "doc": "typedoc"
@@ -32,9 +32,7 @@
     "url": "https://discord.gg/shiguredo"
   },
   "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@playwright/test": "1.49.0",

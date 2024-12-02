@@ -3,6 +3,9 @@
   "organizeImports": {
     "enabled": true
   },
+  "files": {
+    "include": ["src/**", "examples/**", "tests/**", "*.config.mjs", "package.json", "biome.jsonc"]
+  },
   "linter": {
     "enabled": true,
     "rules": {
