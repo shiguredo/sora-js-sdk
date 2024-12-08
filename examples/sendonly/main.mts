@@ -1,5 +1,6 @@
 import Sora, {
   type SignalingNotifyMessage,
+  type SignalingEvent,
   type ConnectionPublisher,
   type SoraConnection,
 } from 'sora-js-sdk'
@@ -81,7 +82,10 @@ class SoraClient {
     this.metadata = { access_token: access_token }
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
-    this.connection.on('notify', this.onnotify.bind(this))
+    this.connection.on('notify', this.onNotify.bind(this))
+
+    // E2E テスト用のコード
+    this.connection.on('signaling', this.onSignaling.bind(this))
   }
 
   async connect(stream: MediaStream): Promise<void> {
@@ -109,7 +113,7 @@ class SoraClient {
     return this.connection.pc.getStats()
   }
 
-  private onnotify(event: SignalingNotifyMessage): void {
+  private onNotify(event: SignalingNotifyMessage): void {
     if (
       event.event_type === 'connection.created' &&
       this.connection.connectionId === event.connection_id
@@ -118,6 +122,13 @@ class SoraClient {
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
       }
+    }
+  }
+
+  // E2E テスト用のコード
+  private onSignaling(event: SignalingEvent): void {
+    if (event.type === 'onmessage-switched') {
+      console.log('[signaling]', event.type, event.transportType)
     }
   }
 }
