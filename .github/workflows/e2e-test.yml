@@ -52,20 +52,20 @@ jobs:
       #     path: playwright-report/
       #     retention-days: 30
 
-  slack_notify_succeeded:
-    needs: [e2e-test]
-    runs-on: ubuntu-24.04
-    if: success()
-    steps:
-      - name: Slack Notification
-        if: success()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: sora-js-sdk
-          SLACK_COLOR: good
-          SLACK_TITLE: Succeeded
-          SLACK_ICON_EMOJI: ":star-struck:"
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  # slack_notify_succeeded:
+  #   needs: [e2e-test]
+  #   runs-on: ubuntu-24.04
+  #   if: success()
+  #   steps:
+  #     - name: Slack Notification
+  #       if: success()
+  #       uses: rtCamp/action-slack-notify@v2
+  #       env:
+  #         SLACK_CHANNEL: sora-js-sdk
+  #         SLACK_COLOR: good
+  #         SLACK_TITLE: Succeeded
+  #         SLACK_ICON_EMOJI: ":star-struck:"
+  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   slack_notify_failed:
     needs: [e2e-test]
     runs-on: ubuntu-24.04
