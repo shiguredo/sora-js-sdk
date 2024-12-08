@@ -16,7 +16,7 @@ on:
 jobs:
   npm-pkg-e2e-test:
     timeout-minutes: 20
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         # メンテナンスはおてて
@@ -66,7 +66,7 @@ jobs:
       
   slack_notify_succeeded:
     needs: [npm-pkg-e2e-test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: success()
     steps:
       - name: Slack Notification
@@ -79,7 +79,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   slack_notify_failed:
     needs: [npm-pkg-e2e-test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: failure()
     steps:
       - name: Slack Notification
