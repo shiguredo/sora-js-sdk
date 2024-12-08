@@ -32,13 +32,16 @@ test('sendonly type:switched pages', async ({ browser }) => {
 
   // Console log の Promise が解決されるまで待機する
   const msg = await consolePromise
-  // log [signaling] switched が出力されるので、args 0/1 をそれぞれチェックする
+  // log [signaling] switched websocket が出力されるので、args 0/1/2 をそれぞれチェックする
   // [signaling]
   const value1 = await msg.args()[0].jsonValue()
   expect(value1).toBe('[signaling]')
   // switched
   const value2 = await msg.args()[1].jsonValue()
   expect(value2).toBe('onmessage-switched')
+  // websocket
+  const value3 = await msg.args()[2].jsonValue()
+  expect(value3).toBe('websocket')
 
   // 'Get Stats' ボタンをクリックして統計情報を取得
   await sendonly.click('#get-stats')

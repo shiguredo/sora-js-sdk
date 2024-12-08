@@ -125,9 +125,10 @@ class SoraClient {
     }
   }
 
+  // E2E テスト用のコード
   private onSignaling(event: SignalingEvent): void {
     if (event.type === 'onmessage-switched') {
-      console.log('[signaling]', event.type)
+      console.log('[signaling]', event.type, event.transportType)
     }
   }
 }
