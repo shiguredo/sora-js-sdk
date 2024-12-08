@@ -29,8 +29,7 @@ jobs:
       VITE_ACCESS_TOKEN: ${{ secrets.TEST_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - name: Tailscale
-        uses: tailscale/github-action@v2
+      - uses: tailscale/github-action@v2
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
