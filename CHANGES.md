@@ -13,6 +13,8 @@
 
 ### misc
 
+- [ADD] E2E テストに `"type": "close"` のテストを追加する
+  - @voluntas
 - [ADD] E2E テストに `"type": "switched"` のテストを追加する
   - @voluntas
 - [CHANGE] canary リリース方法を `canary.py` に変更する
