@@ -126,7 +126,8 @@ class SoraClient {
   }
 
   private onSignaling(event: SignalingEvent): void {
-    console.log(event)
-    console.log(event.type, event.transportType)
+    if (event.type === 'onmessage-switched') {
+      console.log('[signaling]', event.type)
+    }
   }
 }
