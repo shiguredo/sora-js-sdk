@@ -16,7 +16,7 @@ on:
 jobs:
   npm-pkg-e2e-test:
     timeout-minutes: 20
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         # メンテナンスはおてて
@@ -38,10 +38,16 @@ jobs:
     env:
       VITE_SORA_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_SORA_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+      VITE_SORA_API_URL: ${{ secrets.TEST_API_URL }}
       VITE_ACCESS_TOKEN: ${{ secrets.TEST_SECRET_KEY }}
       NPM_PKG_E2E_TEST: true
     steps:
       - uses: actions/checkout@v4
+      - uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -66,7 +72,7 @@ jobs:
       
   slack_notify_succeeded:
     needs: [npm-pkg-e2e-test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: success()
     steps:
       - name: Slack Notification
@@ -79,7 +85,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   slack_notify_failed:
     needs: [npm-pkg-e2e-test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: failure()
     steps:
       - name: Slack Notification

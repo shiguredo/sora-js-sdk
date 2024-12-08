@@ -9,6 +9,10 @@ export default defineConfig({
   use: {
     launchOptions: {
       args: [
+        // CORS 無効
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process',
+
         '--use-fake-ui-for-media-stream',
         '--use-fake-device-for-media-stream',
         // "--use-file-for-fake-video-capture=/app/sample.mjpeg",

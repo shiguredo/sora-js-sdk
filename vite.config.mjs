@@ -31,6 +31,10 @@ export default defineConfig({
         spotlight_recvonly: resolve(__dirname, 'examples/spotlight_recvonly/index.html'),
         sendonly_audio: resolve(__dirname, 'examples/sendonly_audio/index.html'),
         messaging: resolve(__dirname, 'examples/messaging/index.html'),
+        data_channel_signaling_only: resolve(
+          __dirname,
+          'examples/data_channel_signaling_only/index.html',
+        ),
       },
     },
   },
