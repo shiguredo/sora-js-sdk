@@ -39,11 +39,11 @@ test('data_channel_signaling_only type:switched pages', async ({ browser }) => {
 
   // Console log の Promise が解決されるまで待機する
   const msg = await consolePromise
-  // log [signaling] switched websocket が出力されるので、args 0/1/2 をそれぞれチェックする
+  // log [signaling] onmessage-switched websocket が出力されるので、args 0/1/2 をそれぞれチェックする
   // [signaling]
   const value1 = await msg.args()[0].jsonValue()
   expect(value1).toBe('[signaling]')
-  // switched
+  // onmessage-switched
   const value2 = await msg.args()[1].jsonValue()
   expect(value2).toBe('onmessage-switched')
   // websocket
