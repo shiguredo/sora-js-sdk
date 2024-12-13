@@ -37,8 +37,8 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@playwright/test": "1.49.0",
-    "typedoc": "0.27.3",
+    "@playwright/test": "1.49.1",
+    "typedoc": "0.27.4",
     "typescript": "5.7.2",
     "vite": "6.0.3",
     "vitest": "2.1.8"
