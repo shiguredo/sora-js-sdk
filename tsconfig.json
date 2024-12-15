@@ -13,8 +13,14 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "stripInternal": true,
+    // 未使用のローカル変数をエラーにする
     "noUnusedLocals": true,
+    // 未使用のパラメータをエラーにする
     "noUnusedParameters": true,
+    // 関数の引数の型を厳密にチェックする
+    "strictFunctionTypes": true,
+    // プロパティの初期化を厳密にチェックする
+    "strictPropertyInitialization": true,
     "newLine": "LF",
     "types": [],
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
