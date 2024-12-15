@@ -21,6 +21,8 @@
   - @voluntas
 - [ADD] E2E テストに `"type": "switched"` のテストを追加する
   - @voluntas
+- [CHANGE] tsconfig.json の moduleResolution を Bundler に変更する
+  - @voluntas
 - [CHANGE] tsconfig.json の target と module を ES2022 に変更する
   - @voluntas
 - [CHANGE] examples 以下専用の vite.config.mjs を用意する
