@@ -13,6 +13,8 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "stripInternal": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "newLine": "LF",
     "types": [],
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]

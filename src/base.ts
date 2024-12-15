@@ -66,7 +66,6 @@ import {
   createSignalingMessage,
   createTimelineEvent,
   decompressMessage,
-  getSignalingNotifyData,
   isFirefox,
   isSafari,
   parseDataChannelEventData,
@@ -1939,9 +1938,6 @@ export default class ConnectionBase {
     message: SignalingNotifyMessage,
     transportType: TransportType,
   ): void {
-    if (message.event_type === 'connection.created') {
-      const data = getSignalingNotifyData(message)
-    }
     this.callbacks.notify(message, transportType)
   }
 
