@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         node: ["18", "20", "22"]
+        typescript: ["5.5", "5.6", "5.7"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,6 +22,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm --version
       - run: pnpm install
+      - run: pnpm add -E -D typescript@${{ matrix.typescript }} -w
       - run: pnpm run build
       - run: pnpm run lint
       - run: pnpm run check

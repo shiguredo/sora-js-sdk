@@ -22,7 +22,6 @@ jobs:
         node: ["18", "20", "22"]
         # browser: ["chromium", "firefox", "webkit"]
         browser: ["chromium"]
-        typescript: ["5.5", "5.6", "5.7"]
     env:
       VITE_SORA_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_SORA_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
@@ -41,7 +40,6 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm --version
       - run: pnpm install
-      - run: pnpm add -E -D typescript@${{ matrix.typescript }} -w
       - run: pnpm run build
       - run: pnpm exec playwright install ${{ matrix.browser }} --with-deps
       - run: pnpm exec playwright test --project=${{ matrix.browser }}
