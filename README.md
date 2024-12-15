@@ -27,13 +27,11 @@ Please read <https://github.com/shiguredo/oss> before use.
 - TypeScript 5.1 以降
 - Node.js 18.0 以降
 
-### 注意
-
-Sora JavaScript SDK 2024.2.0 以降は [Compression Stream API](https://developer.mozilla.org/ja/docs/Web/API/Compression_Streams_API) を利用しているため、ブラウザの要件がありますのでご確認ください。
-
-- Chrome / Edge 80 以降
-- Firefox 113 以降
-- Safari 16.4 以降
+> [!CAUTION]
+> Sora JavaScript SDK 2024.2.0 以降は [Compression Stream API](https://developer.mozilla.org/ja/docs/Web/API/Compression_Streams_API) を利用しているため、ブラウザの要件がありますのでご確認ください。
+> - Chrome / Edge 80 以降
+> - Firefox 113 以降
+> - Safari 16.4 以降
 
 ## サンプル集
 
