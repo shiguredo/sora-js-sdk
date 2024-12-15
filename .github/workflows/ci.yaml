@@ -8,7 +8,7 @@ on:
       - "NOTICE"
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
