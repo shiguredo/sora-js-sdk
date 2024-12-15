@@ -21,12 +21,9 @@ Please read <https://github.com/shiguredo/oss> before use.
 
 使い方は [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/) を参照してください。
 
-- sora.min.js
-  - <https://www.jsdelivr.com/package/npm/sora-js-sdk>
-
 ## システム条件
 
-- WebRTC SFU Sora 2023.2.0 以降
+- WebRTC SFU Sora 2024.1.0 以降
 - TypeScript 5.2 以降
 
 ### 注意
@@ -111,18 +108,19 @@ limitations under the License.
 - [Sora JavaScript SDK](https://github.com/shiguredo/sora-javascript-sdk)
   - [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/)
 - [Sora iOS SDK](https://github.com/shiguredo/sora-ios-sdk)
+  - [Sora iOS SDK ドキュメント](https://sora-ios-sdk.shiguredo.jp/)
   - [Sora iOS SDK クイックスタート](https://github.com/shiguredo/sora-ios-sdk-quickstart)
   - [Sora iOS SDK サンプル集](https://github.com/shiguredo/sora-ios-sdk-samples)
-  - [Sora iOS SDK ドキュメント](https://sora-ios-sdk.shiguredo.jp/)
 - [Sora Android SDK](https://github.com/shiguredo/sora-android-sdk)
+  - [Sora Android SDK ドキュメント](https://sora-android-sdk.shiguredo.jp/)
   - [Sora Android SDK クイックスタート](https://github.com/shiguredo/sora-android-sdk-quickstart)
   - [Sora Android SDK サンプル集](https://github.com/shiguredo/sora-android-sdk-samples)
-  - [Sora Android SDK ドキュメント](https://sora-android-sdk.shiguredo.jp/)
 - [Sora Unity SDK](https://github.com/shiguredo/sora-unity-sdk)
-  - [Sora Unity SDK サンプル集](https://github.com/shiguredo/sora-unity-sdk-samples)
   - [Sora Unity SDK ドキュメント](https://sora-unity-sdk.shiguredo.jp/)
+  - [Sora Unity SDK サンプル集](https://github.com/shiguredo/sora-unity-sdk-samples)
 - [Sora Python SDK](https://github.com/shiguredo/sora-python-sdk)
   - [Sora Python SDK ドキュメント](https://sora-python-sdk.shiguredo.jp/)
+  - [Sora Python SDK サンプル集](https://github.com/shiguredo/sora-python-sdk-samples)
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk)
 - [Sora C SDK](https://github.com/shiguredo/sora-c-sdk)
 
