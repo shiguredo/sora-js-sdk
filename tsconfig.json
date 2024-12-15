@@ -5,7 +5,6 @@
     "strict": true,
     "declaration": true,
     "declarationDir": "./dist",
-    "emitDeclarationOnly": true,
     "strictNullChecks": true,
     "importHelpers": true,
     "moduleResolution": "Bundler",
