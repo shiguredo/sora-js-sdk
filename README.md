@@ -25,6 +25,7 @@ Please read <https://github.com/shiguredo/oss> before use.
 
 - WebRTC SFU Sora 2024.1.0 以降
 - TypeScript 5.1 以降
+- Node.js 18.0 以降
 
 ### 注意
 
