@@ -17,6 +17,13 @@
   - @voluntas
 - [ADD] E2E テストに `"type": "switched"` のテストを追加する
   - @voluntas
+- [CHANGE] examples 以下専用の vite.config.mjs を用意する
+  - pnpm run dev は vite --config examples/vite.config.mjs を実行するようにする
+  - @voluntas
+- [CHANGE] tests/ 以下を vitest と playwright に分ける
+  - @voluntas
+- [CHANGE] pnpm workspace の packages を辞めて src に切り替える
+  - @voluntas
 - [CHANGE] canary リリース方法を `canary.py` に変更する
   - `release_canary.sh` は削除
   - @voluntas
