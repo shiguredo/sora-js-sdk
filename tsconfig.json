@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ES2020",
+    "target": "ES2022",
+    "module": "ES2022",
     "strict": true,
     "declaration": true,
     "strictNullChecks": true,
@@ -16,5 +16,6 @@
     "types": [],
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "tests"]
 }
