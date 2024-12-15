@@ -17,6 +17,8 @@ import type {
   TRANSPORT_TYPE_WEBSOCKET,
 } from './constants'
 
+// declare const __SORA_JS_SDK_VERSION__: string
+
 export type JSONType =
   | null
   | boolean
