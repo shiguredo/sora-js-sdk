@@ -13,9 +13,13 @@
 
 ### misc
 
+- [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
+  - @voluntas
 - [ADD] E2E テストに `"type": "close"` のテストを追加する
   - @voluntas
 - [ADD] E2E テストに `"type": "switched"` のテストを追加する
+  - @voluntas
+- [CHANGE] tsconfig.json の target と module を ES2022 に変更する
   - @voluntas
 - [CHANGE] examples 以下専用の vite.config.mjs を用意する
   - pnpm run dev は vite --config examples/vite.config.mjs を実行するようにする
@@ -28,8 +32,6 @@
   - `release_canary.sh` は削除
   - @voluntas
 - [FIX] パッケージの E2E テストを修正する
-  - @voluntas
-- [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
 
 ## 2024.2.2
