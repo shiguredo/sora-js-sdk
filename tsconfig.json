@@ -4,6 +4,8 @@
     "module": "ES2022",
     "strict": true,
     "declaration": true,
+    "declarationDir": "./dist",
+    "emitDeclarationOnly": true,
     "strictNullChecks": true,
     "importHelpers": true,
     "moduleResolution": "Bundler",

@@ -14,12 +14,14 @@
   "scripts": {
     "build": "vite build",
     "watch": "vite build --watch",
+    "dist": "pnpm clean && pnpm install && vite build && tsc",
     "dev": "vite --config examples/vite.config.mjs",
-    "e2e-test": "pnpm run build && playwright test --project=chromium",
+    "e2e-test": "pnpm build && playwright test --project=chromium",
     "lint": "biome lint",
     "fmt": "biome format --write",
     "check": "tsc --noEmit",
     "test": "vitest run",
+    "clean": "git clean -ffdx --exclude .env",
     "doc": "typedoc"
   },
   "repository": {
@@ -43,7 +45,6 @@
     "typedoc": "0.27.5",
     "typescript": "5.7.2",
     "vite": "6.0.3",
-    "vite-plugin-dts": "4.3.0",
     "vitest": "2.1.8"
   },
   "packageManager": "pnpm@9.15.0",

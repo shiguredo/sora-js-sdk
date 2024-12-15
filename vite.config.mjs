@@ -1,6 +1,6 @@
+import { execSync } from 'node:child_process'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
-import dts from 'vite-plugin-dts'
 import pkg from './package.json'
 
 const banner = `/**
@@ -18,7 +18,7 @@ export default defineConfig({
   root: process.cwd(),
   build: {
     minify: 'esbuild',
-    target: 'es2020',
+    target: 'es2022',
     emptyOutDir: true,
     manifest: true,
     outDir: resolve(__dirname, './dist'),
@@ -35,9 +35,4 @@ export default defineConfig({
     },
   },
   envDir: resolve(__dirname, './'),
-  plugins: [
-    dts({
-      include: ['src/**/*'],
-    }),
-  ],
 })
