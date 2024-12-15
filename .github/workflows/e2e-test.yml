@@ -41,7 +41,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm --version
       - run: pnpm install
-      - run: pnpm add -E typescript@${{ matrix.typescript }}
+      - run: pnpm add -E -D typescript@${{ matrix.typescript }}
       - run: pnpm run build
       - run: pnpm exec playwright install ${{ matrix.browser }} --with-deps
       - run: pnpm exec playwright test --project=${{ matrix.browser }}
