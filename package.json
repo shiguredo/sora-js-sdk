@@ -1,6 +1,6 @@
 {
   "name": "sora-js-sdk",
-  "version": "2024.2.2",
+  "version": "2025.1.0-canary.0",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.js",
   "module": "dist/sora.mjs",
@@ -32,7 +32,9 @@
     "url": "https://discord.gg/shiguredo"
   },
   "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@playwright/test": "1.49.1",
