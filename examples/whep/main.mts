@@ -1,14 +1,30 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const channelIdPrefix = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX
   const endpointUrl = import.meta.env.VITE_SORA_WHEP_ENDPOINT_URL
   const accessToken = import.meta.env.VITE_ACCESS_TOKEN
 
-  const whepClient = new WhepClient(endpointUrl, accessToken)
+  let whepClient: WhepClient | undefined
 
   document.getElementById('connect')?.addEventListener('click', async () => {
+    const channelName = document.getElementById('channel-name') as HTMLInputElement
+    if (!channelName) {
+      throw new Error('Channel name input element not found')
+    }
+    const channelId = `${channelIdPrefix}${channelName.value}`
+
+    const videoCodecTypeElement = document.getElementById('video-codec-type') as HTMLSelectElement
+    if (!videoCodecTypeElement) {
+      throw new Error('Video codec type select element not found')
+    }
+
+    whepClient = new WhepClient(endpointUrl, channelId, videoCodecTypeElement.value, accessToken)
     await whepClient.connect()
   })
 
   document.getElementById('disconnect')?.addEventListener('click', async () => {
+    if (!whepClient) {
+      throw new Error('WhepClient not found')
+    }
     await whepClient.disconnect()
   })
 })
@@ -19,11 +35,15 @@ class WhepClient {
   // WHIP Resource URL
   private resourceUrl: string | undefined
 
+  private channelId: string
+  private videoCodecType: string
   private accessToken: string
   private pc: RTCPeerConnection | undefined
 
-  constructor(endpointUrl: string, accessToken: string) {
+  constructor(endpointUrl: string, channelId: string, videoCodecType: string, accessToken: string) {
     this.endpointUrl = endpointUrl
+    this.channelId = channelId
+    this.videoCodecType = videoCodecType
     this.accessToken = accessToken
   }
 
@@ -54,16 +74,19 @@ class WhepClient {
     }
     audioTransceiver.setCodecPreferences(opusCodecs)
 
-    const videoCodecs = RTCRtpSender.getCapabilities('video')?.codecs
-    if (!videoCodecs) {
+    const senderVideoCodecs = RTCRtpSender.getCapabilities('video')?.codecs
+    if (!senderVideoCodecs) {
       throw new Error('Video codecs not found')
     }
-    // mimeType が video/AV1 の codec のみを filter する
-    const av1Codecs = videoCodecs.filter((codec) => codec.mimeType === 'video/AV1')
-    if (av1Codecs.length === 0) {
-      throw new Error('AV1 codec not found')
+    // mimeType が video/${this.videoCodecType} の codec のみを filter する
+    const videoCodecs = senderVideoCodecs.filter(
+      (codec) => codec.mimeType === `video/${this.videoCodecType}`,
+    )
+    if (videoCodecs.length === 0) {
+      throw new Error(`${this.videoCodecType} codec not found`)
     }
-    videoTransceiver.setCodecPreferences(av1Codecs)
+    // コーデックは必ず 1 つだけにする、ただしリストで渡す
+    videoTransceiver.setCodecPreferences([videoCodecs[0]])
 
     this.pc.ontrack = (event) => {
       const remoteVideo = document.getElementById('remote-video') as HTMLVideoElement
@@ -78,7 +101,9 @@ class WhepClient {
     const offer = await this.pc.createOffer()
     console.log('offer.sdp:', offer.sdp)
 
-    const response = await fetch(this.endpointUrl, {
+    const whepEndpointUrl = `${this.endpointUrl}/${this.channelId}`
+
+    const response = await fetch(whepEndpointUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.accessToken}`,
@@ -129,6 +154,8 @@ class WhepClient {
       throw new Error('Resource URL not found')
     }
 
+    console.log('resourceUrl:', this.resourceUrl)
+
     const response = await fetch(this.resourceUrl, {
       method: 'DELETE',
       headers: {
@@ -137,14 +164,14 @@ class WhepClient {
     })
 
     if (response.status !== 200) {
-      throw new Error('Failed to disconnect')
+      console.warn('Failed to disconnect')
     }
-    console.log('Disconnected')
 
     const remoteVideo = document.getElementById('remote-video') as HTMLVideoElement
     remoteVideo.srcObject = null
 
     this.pc?.close()
+    this.pc = undefined
   }
 
   getStats(): Promise<RTCStatsReport> {

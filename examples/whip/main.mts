@@ -1,10 +1,24 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const endpointUrl = import.meta.env.VITE_WHIP_ENDPOINT_URL
+  const channelIdPrefix = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX
+  const endpointUrl = import.meta.env.VITE_SORA_WHIP_ENDPOINT_URL
   const accessToken = import.meta.env.VITE_ACCESS_TOKEN
 
-  const whipClient = new WhipClient(endpointUrl, accessToken)
+  let whipClient: WhipClient | undefined
 
   document.getElementById('connect')?.addEventListener('click', async () => {
+    const channelName = document.getElementById('channel-name') as HTMLInputElement
+    if (!channelName) {
+      throw new Error('Channel name input element not found')
+    }
+    const channelId = `${channelIdPrefix}${channelName.value}`
+
+    const videoCodecTypeElement = document.getElementById('video-codec-type') as HTMLSelectElement
+    if (!videoCodecTypeElement) {
+      throw new Error('Video codec type select element not found')
+    }
+
+    whipClient = new WhipClient(endpointUrl, channelId, videoCodecTypeElement.value, accessToken)
+
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true,
@@ -16,10 +30,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     localVideo.srcObject = stream
 
-    await whipClient.connect(stream)
+    await whipClient.connect(stream, channelId)
   })
 
   document.getElementById('disconnect')?.addEventListener('click', async () => {
+    if (!whipClient) {
+      throw new Error('WhipClient not found')
+    }
     await whipClient.disconnect()
 
     const localVideo = document.getElementById('local-video') as HTMLVideoElement
@@ -36,17 +53,23 @@ class WhipClient {
   // WHIP Resource URL
   private resourceUrl: string | undefined
 
+  private channelId: string
+
+  private videoCodecType: string
+
   private accessToken: string
   private pc: RTCPeerConnection | undefined
 
   private stream: MediaStream | undefined
 
-  constructor(endpointUrl: string, accessToken: string) {
+  constructor(endpointUrl: string, channelId: string, videoCodecType: string, accessToken: string) {
     this.endpointUrl = endpointUrl
+    this.channelId = channelId
+    this.videoCodecType = videoCodecType
     this.accessToken = accessToken
   }
 
-  async connect(stream: MediaStream): Promise<void> {
+  async connect(stream: MediaStream, channelId: string): Promise<void> {
     if (!stream) {
       throw new Error('Stream not found')
     }
@@ -78,16 +101,19 @@ class WhipClient {
     }
     audioTransceiver.setCodecPreferences(opusCodecs)
 
-    const videoCodecs = RTCRtpSender.getCapabilities('video')?.codecs
-    if (!videoCodecs) {
+    const senderVideoCodecs = RTCRtpSender.getCapabilities('video')?.codecs
+    if (!senderVideoCodecs) {
       throw new Error('Video codecs not found')
     }
-    // mimeType が video/AV1 の codec のみを filter する
-    const av1Codecs = videoCodecs.filter((codec) => codec.mimeType === 'video/AV1')
-    if (av1Codecs.length === 0) {
-      throw new Error('AV1 codec not found')
+    // mimeType が video/${this.videoCodecType} の codec のみを filter する
+    const videoCodecs = senderVideoCodecs.filter(
+      (codec) => codec.mimeType === `video/${this.videoCodecType}`,
+    )
+    if (videoCodecs.length === 0) {
+      throw new Error(`${this.videoCodecType} codec not found`)
     }
-    videoTransceiver.setCodecPreferences(av1Codecs)
+    // コーデックは必ず 1 つだけにする、ただしリストで渡す
+    videoTransceiver.setCodecPreferences([videoCodecs[0]])
 
     this.pc.addTrack(this.stream.getVideoTracks()[0], this.stream)
     this.pc.addTrack(this.stream.getAudioTracks()[0], this.stream)
@@ -96,8 +122,12 @@ class WhipClient {
     const offer = await this.pc.createOffer()
     console.log('offer.sdp:', offer.sdp)
 
+    // channelId を path に含める
+    const whipEndpointUrl = `${this.endpointUrl}/${this.channelId}`
+    console.log('whipEndpointUrl:', whipEndpointUrl)
+
     // /whip/:channel_id に POST する
-    const response = await fetch(this.endpointUrl, {
+    const response = await fetch(whipEndpointUrl.toString(), {
       method: 'POST',
       headers: {
         // 認証は Bearer Token を利用する
@@ -165,12 +195,8 @@ class WhipClient {
     })
 
     if (response.status !== 200) {
-      throw new Error('Failed to disconnect')
+      console.warn('Failed to disconnect')
     }
-    console.log('Disconnected')
-
-    // 接続を切断する
-    this.pc?.close()
 
     if (!this.stream) {
       throw new Error('Stream not found')
@@ -181,6 +207,10 @@ class WhipClient {
       track.stop()
     }
     this.stream = undefined
+
+    // 接続を切断する
+    this.pc?.close()
+    this.pc = undefined
   }
 
   getStats(): Promise<RTCStatsReport> {
