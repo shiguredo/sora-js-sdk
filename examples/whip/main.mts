@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const endpointUrl = import.meta.env.VITE_SORA_WHIP_ENDPOINT_URL
-  console.log('endpointUrl:', endpointUrl)
   const channelIdPrefix = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
   const accessToken = import.meta.env.VITE_ACCESS_TOKEN
