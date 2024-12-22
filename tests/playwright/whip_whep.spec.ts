@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test.skip('sendrecv x2', async ({ browser }) => {
+test('sendrecv x2', async ({ browser }) => {
   const whip = await browser.newPage()
   const whep = await browser.newPage()
 
