@@ -11,3 +11,12 @@ $ pnpm install
 $ pnpm build
 $ pnpm dev
 ```
+
+## WHIP/WHEP
+
+SDK では対応していない WHIP/WHEP のサンプルを用意しています。
+
+WHIP/WHEP を利用するには whip/whep が有効になっており、
+whip_turn/whep_turn も有効になっている必要があります。
+
+さらにブラウザから fetch する場合は CORS の設定が必要です。

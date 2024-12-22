@@ -15,6 +15,8 @@
 
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
+- [ADD] E2E テストに `WHIP` と `WHEP` のテストを追加する
+  - @voluntas
 - [ADD] CI に TypeScript 5.1 から 5.7 までのビルドとテストを追加する
   - @voluntas
 - [ADD] E2E テストに `"type": "close"` のテストを追加する
