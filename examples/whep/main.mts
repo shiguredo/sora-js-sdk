@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const channelIdPrefix = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX
   const endpointUrl = import.meta.env.VITE_SORA_WHEP_ENDPOINT_URL
+  const channelIdPrefix = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
+  const channelIdSuffix = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
   const accessToken = import.meta.env.VITE_ACCESS_TOKEN
 
   let whepClient: WhepClient | undefined
@@ -10,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!channelName) {
       throw new Error('Channel name input element not found')
     }
-    const channelId = `${channelIdPrefix}${channelName.value}`
+    const channelId = `${channelIdPrefix}${channelName.value}${channelIdSuffix}`
 
     const videoCodecTypeElement = document.getElementById('video-codec-type') as HTMLSelectElement
     if (!videoCodecTypeElement) {
@@ -52,6 +53,11 @@ class WhepClient {
 
     this.pc.onconnectionstatechange = (event) => {
       console.log('connectionState:', this.pc?.connectionState)
+      const connectionState = this.pc?.connectionState
+      const connectionStateElement = document.getElementById('connection-state') as HTMLDivElement
+      if (connectionStateElement && connectionState) {
+        connectionStateElement.textContent = connectionState
+      }
     }
     this.pc.onicecandidate = (event) => {
       console.log('iceConnectionState:', this.pc?.iceConnectionState)
