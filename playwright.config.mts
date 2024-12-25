@@ -36,7 +36,7 @@ export default defineConfig({
     // },
   ],
   webServer: {
-    command: 'pnpm run dev --port 9000',
+    command: 'pnpm run e2e-dev --port 9000',
     url: 'http://localhost:9000/',
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
