@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const endpointUrl = import.meta.env.VITE_SORA_WHIP_ENDPOINT_URL
-  const channelIdPrefix = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
-  const accessToken = import.meta.env.VITE_ACCESS_TOKEN
+  const endpointUrl = import.meta.env.VITE_TEST_WHIP_ENDPOINT_URL
+  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
+  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
+  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   let whipClient: WhipClient | undefined
 
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       throw new Error('Video codec type select element not found')
     }
 
-    whipClient = new WhipClient(endpointUrl, channelId, videoCodecTypeElement.value, accessToken)
+    whipClient = new WhipClient(endpointUrl, channelId, videoCodecTypeElement.value, secretKey)
 
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
@@ -58,16 +58,16 @@ class WhipClient {
 
   private videoCodecType: string
 
-  private accessToken: string
+  private secretKey: string
   private pc: RTCPeerConnection | undefined
 
   private stream: MediaStream | undefined
 
-  constructor(endpointUrl: string, channelId: string, videoCodecType: string, accessToken: string) {
+  constructor(endpointUrl: string, channelId: string, videoCodecType: string, secretKey: string) {
     this.endpointUrl = endpointUrl
     this.channelId = channelId
     this.videoCodecType = videoCodecType
-    this.accessToken = accessToken
+    this.secretKey = secretKey
   }
 
   async connect(stream: MediaStream, channelId: string): Promise<void> {
@@ -137,7 +137,7 @@ class WhipClient {
       method: 'POST',
       headers: {
         // 認証は Bearer Token を利用する
-        Authorization: `Bearer ${this.accessToken}`,
+        Authorization: `Bearer ${this.secretKey}`,
         // application/sdp を指定する
         'Content-Type': 'application/sdp',
       },
@@ -196,7 +196,7 @@ class WhipClient {
     const response = await fetch(this.resourceUrl, {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${this.accessToken}`,
+        Authorization: `Bearer ${this.secretKey}`,
       },
     })
 

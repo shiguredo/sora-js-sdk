@@ -5,16 +5,16 @@ import Sora, {
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
-  const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
-  const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
-  const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
+  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
+  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
+  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
+  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   const client = new SoraClient(
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
+    signalingUrl,
+    channelIdPrefix,
+    channelIdSuffix,
+    secretKey,
   )
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
@@ -37,12 +37,12 @@ class SoraClient {
   private connection: ConnectionPublisher
 
   constructor(
-    signaling_url: string,
-    channel_id_prefix: string,
-    channel_id_suffix: string,
-    access_token: string,
+    signalingUrl: string,
+    channelIdPrefix: string,
+    channelIdSuffix: string,
+    secretKey: string,
   ) {
-    this.sora = Sora.connection(signaling_url, this.debug)
+    this.sora = Sora.connection(signalingUrl, this.debug)
 
     this.options = {
       multistream: true,
@@ -51,9 +51,9 @@ class SoraClient {
     }
 
     // channel_id の生成
-    this.channelId = `${channel_id_prefix}spotlight_sendonly_recvonly${channel_id_suffix}`
+    this.channelId = `${channelIdPrefix}spotlight_sendonly_recvonly${channelIdSuffix}`
     // access_token を指定する metadata の生成
-    this.metadata = { access_token: access_token }
+    this.metadata = { access_token: secretKey }
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onnotify.bind(this))

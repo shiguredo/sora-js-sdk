@@ -25,10 +25,10 @@ const getVideoCodecType = (): VideoCodecType | undefined => {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
-  const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
-  const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
-  const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
+  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
+  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
+  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
+  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   let client: SoraClient
 
@@ -37,10 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const videoCodecType = getVideoCodecType()
 
     client = new SoraClient(
-      SORA_SIGNALING_URL,
-      SORA_CHANNEL_ID_PREFIX,
-      SORA_CHANNEL_ID_SUFFIX,
-      ACCESS_TOKEN,
+      signalingUrl,
+      channelIdPrefix,
+      channelIdSuffix,
+      secretKey,
       channelName,
       videoCodecType,
     )
@@ -92,7 +92,7 @@ class SoraClient {
     signalingUrl: string,
     channelIdPrefix: string,
     channelIdSuffix: string,
-    accessToken: string,
+    secretKey: string,
     channelName: string,
     videoCodecType: VideoCodecType | undefined,
   ) {
@@ -100,7 +100,7 @@ class SoraClient {
 
     this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
 
-    this.metadata = { access_token: accessToken }
+    this.metadata = { access_token: secretKey }
     this.options = {}
 
     if (videoCodecType !== undefined) {
