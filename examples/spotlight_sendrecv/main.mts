@@ -5,26 +5,12 @@ import Sora, {
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
-  const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
-  const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
-  const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
+  const signalingUrl = import.meta.env.VITE_SORA_SIGNALING_URL
+  const channelId = import.meta.env.VITE_SORA_CHANNEL_ID || ''
+  const accessToken = import.meta.env.VITE_ACCESS_TOKEN || ''
 
-  const sendrecv1 = new SoraClient(
-    'sendrecv1',
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
-  )
-
-  const sendrecv2 = new SoraClient(
-    'sendrecv2',
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
-  )
+  const sendrecv1 = new SoraClient('sendrecv1', signalingUrl, channelId, accessToken)
+  const sendrecv2 = new SoraClient('sendrecv2', signalingUrl, channelId, accessToken)
 
   document.querySelector('#sendrecv1-connect')?.addEventListener('click', async () => {
     // sendrecv1
@@ -58,17 +44,11 @@ class SoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    label: string,
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    accessToken: string,
-  ) {
+  constructor(label: string, signalingUrl: string, channelId: string, accessToken: string) {
     this.label = label
 
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}spotlight_sendrecv${channelIdSuffix}`
+    this.channelId = channelId
     this.metadata = { access_token: accessToken }
     this.options = {
       audio: true,

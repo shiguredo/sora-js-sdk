@@ -7,42 +7,17 @@ import Sora, {
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
-  const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
-  const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
-  const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
-  const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
+  const signalingUrl = import.meta.env.VITE_SORA_SIGNALING_URL
+  const channelId = import.meta.env.VITE_SORA_CHANNEL_ID || ''
+  const accessToken = import.meta.env.VITE_ACCESS_TOKEN || ''
 
-  const sendonly = new SimulcastSendonlySoraClient(
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
-  )
+  const sendonly = new SimulcastSendonlySoraClient(signalingUrl, channelId, accessToken)
 
-  const recvonlyR0 = new SimulcastRecvonlySoraClient(
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
-    'r0',
-  )
+  const recvonlyR0 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r0')
+  const recvonlyR1 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r1')
+  const recvonlyR2 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r2')
 
-  const recvonlyR1 = new SimulcastRecvonlySoraClient(
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
-    'r1',
-  )
-
-  const recvonlyR2 = new SimulcastRecvonlySoraClient(
-    SORA_SIGNALING_URL,
-    SORA_CHANNEL_ID_PREFIX,
-    SORA_CHANNEL_ID_SUFFIX,
-    ACCESS_TOKEN,
-    'r2',
-  )
-
+  document.querySelector('#connect')?.addEventListener('click', async () => {
   document.querySelector('#connect')?.addEventListener('click', async () => {
     // sendonly
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -166,20 +141,14 @@ class SimulcastRecvonlySoraClient {
   private sora: SoraConnection
   private connection: ConnectionSubscriber
 
-  constructor(
-    signaling_url: string,
-    channel_id_prefix: string,
-    channel_id_suffix: string,
-    access_token: string,
-    rid: SimulcastRid,
-  ) {
-    this.channelId = `${channel_id_prefix}simulcast${channel_id_suffix}`
+  constructor(signalingUrl: string, channelId: string, accessToken: string, rid: SimulcastRid) {
+    this.channelId = channelId
     this.rid = rid
 
-    this.sora = Sora.connection(signaling_url, this.debug)
+    this.sora = Sora.connection(signalingUrl, this.debug)
     this.connection = this.sora.recvonly(
       this.channelId,
-      { access_token },
+      { access_token: accessToken },
       { simulcastRid: this.rid, simulcast: true },
     )
 

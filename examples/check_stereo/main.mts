@@ -7,14 +7,13 @@ import Sora, {
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 環境変数の読み込み
-  const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
+  const signalingUrl = import.meta.env.VITE_SORA_SIGNALING_URL
 
   const uuid = crypto.randomUUID()
 
   // Sora クライアントの初期化
-  const sendonly = new SendonlyClient(SORA_SIGNALING_URL, uuid)
-
-  const recvonly = new RecvonlyClient(SORA_SIGNALING_URL, uuid)
+  const sendonly = new SendonlyClient(signalingUrl, uuid)
+  const recvonly = new RecvonlyClient(signalingUrl, uuid)
 
   // デバイスリストの取得と設定
   await updateDeviceLists()
@@ -76,10 +75,10 @@ class SendonlyClient {
 
   private channelCheckInterval: number | undefined
 
-  constructor(signaling_url: string, channel_id: string) {
-    this.sora = Sora.connection(signaling_url, this.debug)
+  constructor(signalingUrl: string, channelId: string) {
+    this.sora = Sora.connection(signalingUrl, this.debug)
 
-    this.channelId = channel_id
+    this.channelId = channelId
 
     this.connection = this.sora.sendonly(this.channelId, undefined, this.options)
 
@@ -273,10 +272,10 @@ class RecvonlyClient {
   private canvas: HTMLCanvasElement | null = null
   private canvasCtx: CanvasRenderingContext2D | null = null
 
-  constructor(signaling_url: string, channel_id: string) {
-    this.channelId = channel_id
+  constructor(signalingUrl: string, channelId: string) {
+    this.channelId = channelId
 
-    this.sora = Sora.connection(signaling_url, this.debug)
+    this.sora = Sora.connection(signalingUrl, this.debug)
 
     this.connection = this.sora.recvonly(this.channelId, undefined, this.options)
 

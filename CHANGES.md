@@ -25,7 +25,10 @@
   - @voluntas
 - [ADD] .markdownlint.yaml ファイルを追加する
   - @voluntas
+- [ADD] 新しい examples を追加する
+  - @voluntas
 - [CHANGE] examples を e2e-tests に変更する
+  - 環境変数の Prefix を TEST_ に切り替える
   - @voluntas
 - [CHANGE] tsconfig.json の moduleResolution を Bundler に変更する
   - @voluntas
