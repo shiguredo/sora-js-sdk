@@ -12,12 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   // Sora クライアントの初期化
-  const client = new SoraClient(
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-  )
+  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
 
   // SDK バージョンの表示
   const sdkVersionElement = document.querySelector('#sdk-version')

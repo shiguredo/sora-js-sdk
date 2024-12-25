@@ -31,13 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const channelName = getChannelName()
-    client = new SoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-    )
+    client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey, channelName)
     const checkCompress = document.getElementById('check-compress') as HTMLInputElement
     const compress = checkCompress.checked
     const checkHeader = document.getElementById('check-header') as HTMLInputElement
