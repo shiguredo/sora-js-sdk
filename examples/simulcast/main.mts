@@ -12,11 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const accessToken = import.meta.env.VITE_ACCESS_TOKEN || ''
 
   const sendonly = new SimulcastSendonlySoraClient(signalingUrl, channelId, accessToken)
-
   const recvonlyR0 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r0')
-
   const recvonlyR1 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r1')
-
   const recvonlyR2 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r2')
 
   document.querySelector('#connect')?.addEventListener('click', async () => {

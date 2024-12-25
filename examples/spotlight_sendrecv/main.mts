@@ -9,25 +9,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelId = import.meta.env.VITE_SORA_CHANNEL_ID || ''
   const accessToken = import.meta.env.VITE_ACCESS_TOKEN || ''
 
-  const sendrecv1 = new SoraClient('sendrecv1', signalingUrl, channelId, accessToken)
-  const sendrecv2 = new SoraClient('sendrecv2', signalingUrl, channelId, accessToken)
+  const sendrecv = new SoraClient('sendrecv', signalingUrl, channelId, accessToken)
 
-  document.querySelector('#sendrecv1-connect')?.addEventListener('click', async () => {
-    // sendrecv1
+  document.querySelector('#sendrecv-connect')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    await sendrecv1.connect(stream)
+    await sendrecv.connect(stream)
   })
-  document.querySelector('#sendrecv1-disconnect')?.addEventListener('click', async () => {
-    await sendrecv1.disconnect()
-  })
-
-  document.querySelector('#sendrecv2-connect')?.addEventListener('click', async () => {
-    // sendrecv2
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    await sendrecv2.connect(stream)
-  })
-  document.querySelector('#sendrecv2-disconnect')?.addEventListener('click', async () => {
-    await sendrecv2.disconnect()
+  document.querySelector('#sendrecv-disconnect')?.addEventListener('click', async () => {
+    await sendrecv.disconnect()
   })
 })
 
