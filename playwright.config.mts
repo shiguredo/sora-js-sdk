@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test'
 // pnpm exec playwright test --ui
 
 export default defineConfig({
-  testDir: 'tests/playwright',
+  testDir: 'e2e-tests/tests',
   // fullyParallel: true,
   reporter: 'html',
   use: {

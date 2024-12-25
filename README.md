@@ -46,16 +46,6 @@ pnpm add sora-js-sdk
 > - Firefox 113 以降
 > - Safari 16.4 以降
 
-## サンプル集
-
-```bash
-# .env.local を作成して適切な値を設定してください
-$ cp .env.template .env.local
-$ pnpm install
-$ pnpm run build
-$ pnpm run dev
-```
-
 ## E2E (End to End) テスト
 
 Playwright を利用した E2E テストを実行できます。

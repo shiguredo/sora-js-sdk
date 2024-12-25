@@ -57,7 +57,7 @@ jobs:
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm add -E sora-js-sdk@${{ matrix.sdk_version }}
-        working-directory: ./examples
+        working-directory: ./e2e-tests
       # pnpm run build しない
       - run: pnpm exec playwright install ${{ matrix.browser }} --with-deps
       - run: pnpm exec playwright test --project=${{ matrix.browser }}

@@ -97,7 +97,9 @@ class SoraClient {
     videoCodecType: VideoCodecType | undefined,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
+
     this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+
     this.metadata = { access_token: accessToken }
     this.options = {}
 

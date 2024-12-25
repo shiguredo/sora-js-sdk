@@ -1,4 +1,4 @@
-# Sora JavaScript SDK サンプル
+# Sora JavaScript SDK E2E テスト
 
 ## 使い方
 
@@ -9,12 +9,14 @@ $ cd sora-js-sdk
 $ cp .env.template .env.local
 $ pnpm install
 $ pnpm build
-$ pnpm dev
+$ pnpm e2e-test
 ```
 
 ## WHIP/WHEP
 
-SDK では対応していない WHIP/WHEP のサンプルを用意しています。
+SDK では対応していないブラウザレベルでの WHIP/WHEP の E2E テストを用意しています。
+
+このサンプルは Chrome / Edge でのみ動作します。
 
 WHIP/WHEP を利用するには whip/whep が有効になっており、
 whip_turn/whep_turn も有効になっている必要があります。

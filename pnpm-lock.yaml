@@ -36,12 +36,6 @@ importers:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.8.4)(jsdom@25.0.1)
 
-  examples:
-    dependencies:
-      sora-js-sdk:
-        specifier: workspace:*
-        version: link:..
-
 packages:
 
   '@babel/helper-string-parser@7.25.9':
