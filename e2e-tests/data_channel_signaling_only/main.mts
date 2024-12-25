@@ -145,9 +145,9 @@ class SoraClient {
 
   // E2E テスト側で実行した方が良い気がする
   async apiDisconnect(): Promise<void> {
-    const apiUrl = import.meta.env.VITE_SORA_API_URL
+    const apiUrl = import.meta.env.VITE_TEST_API_URL
     if (apiUrl === '') {
-      console.error('VITE_SORA_API_URL is not set')
+      console.error('VITE_TEST_API_URL is not set')
     }
     const response = await fetch(apiUrl, {
       method: 'POST',
