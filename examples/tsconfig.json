@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "strict": true,
+    "declaration": true,
+    "strictNullChecks": true,
+    "importHelpers": true,
+    "moduleResolution": "Bundler",
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "stripInternal": true,
+    "newLine": "LF",
+    "types": [],
+    "paths": {
+      "sora-js-sdk": ["../dist/sora.d.ts"]
+    },
+    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
+  },
+  "exclude": ["node_modules"]
+}

@@ -14,7 +14,8 @@
   "scripts": {
     "build": "vite build",
     "watch": "vite build --watch",
-    "dev": "vite --config e2e-tests/vite.config.mjs",
+    "dev": "vite --config examples/vite.config.mjs",
+    "e2e-dev": "vite --config e2e-tests/vite.config.mjs",
     "e2e-test": "pnpm build && playwright test --project=chromium",
     "lint": "biome lint",
     "fmt": "biome format --write",
@@ -32,9 +33,7 @@
     "url": "https://discord.gg/shiguredo"
   },
   "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@playwright/test": "1.49.1",

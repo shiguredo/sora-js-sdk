@@ -3,16 +3,14 @@ import Sora, {
   type SignalingEvent,
   type ConnectionPublisher,
   type SoraConnection,
-  type ConnectionOptions,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
-  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+  const signalingUrl = import.meta.env.VITE_SORA_SIGNALING_URL
+  const channelId = import.meta.env.VITE_SORA_CHANNEL_ID || ''
+  const accessToken = import.meta.env.VITE_ACCESS_TOKEN || ''
 
-  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
+  const client = new SoraClient(signalingUrl, channelId, accessToken)
 
   // SDK バージョンの表示
   const sdkVersionElement = document.querySelector('#sdk-version')
@@ -27,10 +25,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
-  })
-
-  document.querySelector('#disconnect-api')?.addEventListener('click', async () => {
-    await client.apiDisconnect()
   })
 
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
@@ -63,26 +57,18 @@ class SoraClient {
   private debug = false
   private channelId: string
   private metadata: { access_token: string }
-  private options: ConnectionOptions = {
-    dataChannelSignaling: true,
-    ignoreDisconnectWebSocket: true,
-  }
+  private options: object = {}
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-  ) {
+  constructor(signalingUrl: string, channelId: string, accessToken: string) {
     this.sora = Sora.connection(signalingUrl, this.debug)
 
     // channel_id の生成
-    this.channelId = `${channelIdPrefix}sendonly_recvonly${channelIdSuffix}`
+    this.channelId = channelId
     // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey }
+    this.metadata = { access_token: accessToken }
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onNotify.bind(this))
@@ -132,31 +118,6 @@ class SoraClient {
   private onSignaling(event: SignalingEvent): void {
     if (event.type === 'onmessage-switched') {
       console.log('[signaling]', event.type, event.transportType)
-    }
-    if (event.type === 'onmessage-close') {
-      console.log('[signaling]', event.type, event.transportType)
-    }
-  }
-
-  // E2E テスト側で実行した方が良い気がする
-  async apiDisconnect(): Promise<void> {
-    const apiUrl = import.meta.env.VITE_TEST_API_URL
-    if (apiUrl === '') {
-      console.error('VITE_TEST_API_URL is not set')
-    }
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Sora-Target': 'Sora_20151104.DisconnectConnection',
-      },
-      body: JSON.stringify({
-        channel_id: this.channelId,
-        connection_id: this.connection.connectionId,
-      }),
-    })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
     }
   }
 }

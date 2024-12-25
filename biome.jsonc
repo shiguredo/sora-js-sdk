@@ -4,7 +4,15 @@
     "enabled": true
   },
   "files": {
-    "include": ["src/**", "examples/**", "tests/**", "*.config.mjs", "package.json", "biome.jsonc"]
+    "include": [
+      "src/**",
+      "examples/**",
+      "tests/**",
+      "e2e-tests/**",
+      "*.config.mjs",
+      "package.json",
+      "biome.jsonc"
+    ]
   },
   "linter": {
     "enabled": true,

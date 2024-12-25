@@ -23,12 +23,12 @@ jobs:
         # browser: ["chromium", "firefox", "webkit"]
         browser: ["chromium"]
     env:
-      VITE_SORA_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
-      VITE_SORA_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
-      VITE_SORA_WHEP_ENDPOINT_URL: ${{ secrets.TEST_WHEP_ENDPOINT_URL }}
-      VITE_SORA_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
-      VITE_SORA_API_URL: ${{ secrets.TEST_API_URL }}
-      VITE_ACCESS_TOKEN: ${{ secrets.TEST_SECRET_KEY }}
+      VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
+      VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
+      VITE_TEST_WHEP_ENDPOINT_URL: ${{ secrets.TEST_WHEP_ENDPOINT_URL }}
+      VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
+      VITE_TEST_API_URL: ${{ secrets.TEST_API_URL }}
+      VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: tailscale/github-action@v2
@@ -46,7 +46,7 @@ jobs:
       - run: pnpm exec playwright install ${{ matrix.browser }} --with-deps
       - run: pnpm exec playwright test --project=${{ matrix.browser }}
         env:
-          VITE_SORA_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
+          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
       #   if: always()
       #   with:

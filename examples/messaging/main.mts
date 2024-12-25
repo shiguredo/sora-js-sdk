@@ -6,20 +6,10 @@ import Sora, {
   type DataChannelEvent,
 } from 'sora-js-sdk'
 
-const getChannelName = (): string => {
-  const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
-  const channelName = channelNameElement?.value
-  if (channelName === '' || channelName === undefined) {
-    throw new Error('channelName is empty')
-  }
-  return channelName
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
-  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
-  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+  const signalingUrl = import.meta.env.VITE_SORA_SIGNALING_URL
+  const channelId = import.meta.env.VITE_SORA_CHANNEL_ID || ''
+  const accessToken = import.meta.env.VITE_ACCESS_TOKEN || ''
 
   const soraJsSdkVersion = Sora.version()
   const soraJsSdkVersionElement = document.getElementById('sora-js-sdk-version')
@@ -30,8 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    const channelName = getChannelName()
-    client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey, channelName)
+    client = new SoraClient(signalingUrl, channelId, accessToken)
     const checkCompress = document.getElementById('check-compress') as HTMLInputElement
     const compress = checkCompress.checked
     const checkHeader = document.getElementById('check-header') as HTMLInputElement
@@ -84,16 +73,10 @@ class SoraClient {
 
   private sora: SoraConnection
   private connection: ConnectionMessaging
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
+  constructor(signalingUrl: string, channelId: string, accessToken: string) {
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-    this.metadata = { access_token: secretKey }
+    this.channelId = channelId
+    this.metadata = { access_token: accessToken }
 
     this.options = {
       dataChannelSignaling: true,

@@ -5,43 +5,18 @@ import Sora, {
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
-  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+  const signalingUrl = import.meta.env.VITE_SORA_SIGNALING_URL
+  const channelId = import.meta.env.VITE_SORA_CHANNEL_ID || ''
+  const accessToken = import.meta.env.VITE_ACCESS_TOKEN || ''
 
-  const sendrecv1 = new SoraClient(
-    'sendrecv1',
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-  )
+  const sendrecv = new SoraClient('sendrecv', signalingUrl, channelId, accessToken)
 
-  const sendrecv2 = new SoraClient(
-    'sendrecv2',
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-  )
-
-  document.querySelector('#sendrecv1-connect')?.addEventListener('click', async () => {
-    // sendrecv1
+  document.querySelector('#sendrecv-connect')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    await sendrecv1.connect(stream)
+    await sendrecv.connect(stream)
   })
-  document.querySelector('#sendrecv1-disconnect')?.addEventListener('click', async () => {
-    await sendrecv1.disconnect()
-  })
-
-  document.querySelector('#sendrecv2-connect')?.addEventListener('click', async () => {
-    // sendrecv2
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    await sendrecv2.connect(stream)
-  })
-  document.querySelector('#sendrecv2-disconnect')?.addEventListener('click', async () => {
-    await sendrecv2.disconnect()
+  document.querySelector('#sendrecv-disconnect')?.addEventListener('click', async () => {
+    await sendrecv.disconnect()
   })
 })
 
@@ -58,18 +33,12 @@ class SoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    label: string,
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-  ) {
+  constructor(label: string, signalingUrl: string, channelId: string, accessToken: string) {
     this.label = label
 
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}spotlight_sendrecv${channelIdSuffix}`
-    this.metadata = { access_token: secretKey }
+    this.channelId = channelId
+    this.metadata = { access_token: accessToken }
     this.options = {
       audio: true,
       video: true,

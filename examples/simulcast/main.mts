@@ -7,41 +7,14 @@ import Sora, {
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
-  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
-  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+  const signalingUrl = import.meta.env.VITE_SORA_SIGNALING_URL
+  const channelId = import.meta.env.VITE_SORA_CHANNEL_ID || ''
+  const accessToken = import.meta.env.VITE_ACCESS_TOKEN || ''
 
-  const sendonly = new SimulcastSendonlySoraClient(
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-  )
-
-  const recvonlyR0 = new SimulcastRecvonlySoraClient(
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-    'r0',
-  )
-
-  const recvonlyR1 = new SimulcastRecvonlySoraClient(
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-    'r1',
-  )
-
-  const recvonlyR2 = new SimulcastRecvonlySoraClient(
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-    'r2',
-  )
+  const sendonly = new SimulcastSendonlySoraClient(signalingUrl, channelId, accessToken)
+  const recvonlyR0 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r0')
+  const recvonlyR1 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r1')
+  const recvonlyR2 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r2')
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     // sendonly
@@ -103,18 +76,13 @@ class SimulcastSendonlySoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-  ) {
-    this.channelId = `${channelIdPrefix}simulcast${channelIdSuffix}`
+  constructor(signaling_url: string, channel_id: string, access_token: string) {
+    this.channelId = channel_id
 
-    this.sora = Sora.connection(signalingUrl, this.debug)
+    this.sora = Sora.connection(signaling_url, this.debug)
     this.connection = this.sora.sendonly(
       this.channelId,
-      { access_token: secretKey },
+      { access_token },
       { audio: false, video: true, videoCodecType: 'VP8', videoBitRate: 2500, simulcast: true },
     )
 
@@ -166,20 +134,14 @@ class SimulcastRecvonlySoraClient {
   private sora: SoraConnection
   private connection: ConnectionSubscriber
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    rid: SimulcastRid,
-  ) {
-    this.channelId = `${channelIdPrefix}simulcast${channelIdSuffix}`
+  constructor(signaling_url: string, channel_id: string, access_token: string, rid: SimulcastRid) {
+    this.channelId = channel_id
     this.rid = rid
 
-    this.sora = Sora.connection(signalingUrl, this.debug)
+    this.sora = Sora.connection(signaling_url, this.debug)
     this.connection = this.sora.recvonly(
       this.channelId,
-      { access_token: secretKey },
+      { access_token },
       { simulcastRid: this.rid, simulcast: true },
     )
 

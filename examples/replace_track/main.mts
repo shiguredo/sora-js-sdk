@@ -6,15 +6,6 @@ import Sora, {
   type ConnectionOptions,
 } from 'sora-js-sdk'
 
-const getChannelName = (): string => {
-  const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
-  const channelName = channelNameElement?.value
-  if (channelName === '' || channelName === undefined) {
-    throw new Error('channelName is empty')
-  }
-  return channelName
-}
-
 const getVideoCodecType = (): VideoCodecType | undefined => {
   const videoCodecTypeElement = document.querySelector<HTMLSelectElement>('#video-codec-type')
   const videoCodecType = videoCodecTypeElement?.value
@@ -25,25 +16,16 @@ const getVideoCodecType = (): VideoCodecType | undefined => {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
-  const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
-  const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
-  const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
+  const signalingUrl = import.meta.env.VITE_SORA_SIGNALING_URL
+  const channelId = import.meta.env.VITE_SORA_CHANNEL_ID || ''
+  const accessToken = import.meta.env.VITE_ACCESS_TOKEN || ''
 
   let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    const channelName = getChannelName()
     const videoCodecType = getVideoCodecType()
 
-    client = new SoraClient(
-      SORA_SIGNALING_URL,
-      SORA_CHANNEL_ID_PREFIX,
-      SORA_CHANNEL_ID_SUFFIX,
-      ACCESS_TOKEN,
-      channelName,
-      videoCodecType,
-    )
+    client = new SoraClient(signalingUrl, channelId, accessToken, videoCodecType)
 
     await client.connect()
   })
@@ -98,14 +80,12 @@ class SoraClient {
 
   constructor(
     signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
+    channelId: string,
     accessToken: string,
-    channelName: string,
     videoCodecType: VideoCodecType | undefined,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+    this.channelId = channelId
     this.metadata = { access_token: accessToken }
     this.options = {}
 

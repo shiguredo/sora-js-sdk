@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const endpointUrl = import.meta.env.VITE_SORA_WHEP_ENDPOINT_URL
-  const channelIdPrefix = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
-  const accessToken = import.meta.env.VITE_ACCESS_TOKEN
+  const endpointUrl = import.meta.env.VITE_TEST_WHEP_ENDPOINT_URL
+  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
+  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
+  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   let whepClient: WhepClient | undefined
 
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       throw new Error('Video codec type select element not found')
     }
 
-    whepClient = new WhepClient(endpointUrl, channelId, videoCodecTypeElement.value, accessToken)
+    whepClient = new WhepClient(endpointUrl, channelId, videoCodecTypeElement.value, secretKey)
     await whepClient.connect()
   })
 
@@ -38,14 +38,14 @@ class WhepClient {
 
   private channelId: string
   private videoCodecType: string
-  private accessToken: string
+  private secretKey: string
   private pc: RTCPeerConnection | undefined
 
-  constructor(endpointUrl: string, channelId: string, videoCodecType: string, accessToken: string) {
+  constructor(endpointUrl: string, channelId: string, videoCodecType: string, secretKey: string) {
     this.endpointUrl = endpointUrl
     this.channelId = channelId
     this.videoCodecType = videoCodecType
-    this.accessToken = accessToken
+    this.secretKey = secretKey
   }
 
   async connect(): Promise<void> {
@@ -112,7 +112,7 @@ class WhepClient {
     const response = await fetch(whepEndpointUrl, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${this.accessToken}`,
+        Authorization: `Bearer ${this.secretKey}`,
         'Content-Type': 'application/sdp',
       },
       body: offer.sdp,
@@ -165,7 +165,7 @@ class WhepClient {
     const response = await fetch(this.resourceUrl, {
       method: 'DELETE',
       headers: {
-        Authorization: `Bearer ${this.accessToken}`,
+        Authorization: `Bearer ${this.secretKey}`,
       },
     })
 
