@@ -8,7 +8,7 @@ export default mergeConfig(
   defineConfig({
     test: {
       environment: 'jsdom',
-      include: ['tests/vitest/**/*.ts'],
+      include: ['tests/**/*.ts'],
     },
   }),
 )

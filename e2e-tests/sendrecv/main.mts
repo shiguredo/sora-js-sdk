@@ -26,6 +26,7 @@ const getVideoCodecType = (): VideoCodecType | undefined => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const SORA_SIGNALING_URL = import.meta.env.VITE_SORA_SIGNALING_URL
+  const SORA_CHANNEL_ID = import.meta.env.VITE_SORA_CHANNEL_ID || ''
   const SORA_CHANNEL_ID_PREFIX = import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
   const SORA_CHANNEL_ID_SUFFIX = import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
   const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN || ''
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     client = new SoraClient(
       SORA_SIGNALING_URL,
+      SORA_CHANNEL_ID,
       SORA_CHANNEL_ID_PREFIX,
       SORA_CHANNEL_ID_SUFFIX,
       ACCESS_TOKEN,
@@ -90,6 +92,7 @@ class SoraClient {
 
   constructor(
     signalingUrl: string,
+    channelId: string,
     channelIdPrefix: string,
     channelIdSuffix: string,
     accessToken: string,
@@ -97,7 +100,13 @@ class SoraClient {
     videoCodecType: VideoCodecType | undefined,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+
+    if (channelId === '') {
+      this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+    } else {
+      this.channelId = channelId
+    }
+
     this.metadata = { access_token: accessToken }
     this.options = {}
 

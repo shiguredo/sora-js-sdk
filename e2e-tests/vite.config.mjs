@@ -32,6 +32,8 @@ export default defineConfig({
         sendonly_audio: resolve(__dirname, 'sendonly_audio/index.html'),
         messaging: resolve(__dirname, 'messaging/index.html'),
         data_channel_signaling_only: resolve(__dirname, 'data_channel_signaling_only/index.html'),
+        whip: resolve(__dirname, 'whip/index.html'),
+        whep: resolve(__dirname, 'whep/index.html'),
       },
     },
   },
