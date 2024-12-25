@@ -25,6 +25,8 @@
   - @voluntas
 - [ADD] .markdownlint.yaml ファイルを追加する
   - @voluntas
+- [CHANGE] examples を e2e-tests に変更する
+  - @voluntas
 - [CHANGE] tsconfig.json の moduleResolution を Bundler に変更する
   - @voluntas
 - [CHANGE] tsconfig.json の target と module を ES2022 に変更する
