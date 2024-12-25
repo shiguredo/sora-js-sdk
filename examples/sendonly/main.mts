@@ -62,11 +62,7 @@ class SoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelId: string,
-    accessToken: string,
-  ) {
+  constructor(signalingUrl: string, channelId: string, accessToken: string) {
     this.sora = Sora.connection(signalingUrl, this.debug)
 
     // channel_id の生成

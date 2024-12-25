@@ -6,7 +6,6 @@ import Sora, {
   type ConnectionOptions,
 } from 'sora-js-sdk'
 
-
 const getVideoCodecType = (): VideoCodecType | undefined => {
   const videoCodecTypeElement = document.querySelector<HTMLSelectElement>('#video-codec-type')
   const videoCodecType = videoCodecTypeElement?.value
