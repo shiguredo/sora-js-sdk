@@ -48,7 +48,7 @@ pnpm add sora-js-sdk
 
 ## サンプル
 
-Vite を利用したサンプルを提供しています。
+サンプルを Vite にて起動できます。
 
 ```bash
 # .env.local を作成して適切な値を設定してください
@@ -69,6 +69,14 @@ $ pnpm install
 $ pnpm run build
 $ pnpm exec playwright install chromium --with-deps
 $ pnpm run e2e-test
+```
+
+### E2E テストページ
+
+E2E テストで実行するページを Vite にて起動できます。
+
+```bash
+pnpm run e2e-dev
 ```
 
 ## マルチトラックについて
