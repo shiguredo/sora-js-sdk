@@ -1,5 +1,5 @@
 {
-  "name": "sora-js-sdk-examples",
+  "name": "sora-js-sdk-e2e-tests",
   "scripts": {
     "lint": "biome lint .",
     "fmt": "biome format --write .",
