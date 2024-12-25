@@ -14,10 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const sendonly = new SimulcastSendonlySoraClient(signalingUrl, channelId, accessToken)
 
   const recvonlyR0 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r0')
+
   const recvonlyR1 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r1')
+
   const recvonlyR2 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, accessToken, 'r2')
 
-  document.querySelector('#connect')?.addEventListener('click', async () => {
   document.querySelector('#connect')?.addEventListener('click', async () => {
     // sendonly
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -78,13 +79,8 @@ class SimulcastSendonlySoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signaling_url: string,
-    channel_id_prefix: string,
-    channel_id_suffix: string,
-    access_token: string,
-  ) {
-    this.channelId = `${channel_id_prefix}simulcast${channel_id_suffix}`
+  constructor(signaling_url: string, channel_id: string, access_token: string) {
+    this.channelId = channel_id
 
     this.sora = Sora.connection(signaling_url, this.debug)
     this.connection = this.sora.sendonly(
@@ -141,14 +137,14 @@ class SimulcastRecvonlySoraClient {
   private sora: SoraConnection
   private connection: ConnectionSubscriber
 
-  constructor(signalingUrl: string, channelId: string, accessToken: string, rid: SimulcastRid) {
-    this.channelId = channelId
+  constructor(signaling_url: string, channel_id: string, access_token: string, rid: SimulcastRid) {
+    this.channelId = channel_id
     this.rid = rid
 
-    this.sora = Sora.connection(signalingUrl, this.debug)
+    this.sora = Sora.connection(signaling_url, this.debug)
     this.connection = this.sora.recvonly(
       this.channelId,
-      { access_token: accessToken },
+      { access_token },
       { simulcastRid: this.rid, simulcast: true },
     )
 
