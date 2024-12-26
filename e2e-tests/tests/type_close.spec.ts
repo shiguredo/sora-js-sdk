@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+// Sora API を利用するので要注意
 test('data_channel_signaling_only type:close pages', async ({ browser }) => {
   // 新しいページを2つ作成
   const dataChannelSignalingOnly = await browser.newPage()

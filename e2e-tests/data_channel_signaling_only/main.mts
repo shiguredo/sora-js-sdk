@@ -11,8 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+  const apiUrl = import.meta.env.VITE_TEST_API_URL
 
-  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
+  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey, apiUrl)
 
   // SDK バージョンの表示
   const sdkVersionElement = document.querySelector('#sdk-version')
@@ -71,12 +72,17 @@ class SoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
+  private apiUrl: string
+
   constructor(
     signalingUrl: string,
     channelIdPrefix: string,
     channelIdSuffix: string,
     secretKey: string,
+    apiUrl: string,
   ) {
+    this.apiUrl = apiUrl
+
     this.sora = Sora.connection(signalingUrl, this.debug)
 
     // channel_id の生成
@@ -140,11 +146,10 @@ class SoraClient {
 
   // E2E テスト側で実行した方が良い気がする
   async apiDisconnect(): Promise<void> {
-    const apiUrl = import.meta.env.VITE_TEST_API_URL
-    if (apiUrl === '') {
-      console.error('VITE_TEST_API_URL is not set')
+    if (!this.apiUrl) {
+      throw new Error('VITE_TEST_API_URL is not set')
     }
-    const response = await fetch(apiUrl, {
+    const response = await fetch(this.apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
