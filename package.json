@@ -33,15 +33,17 @@
     "url": "https://discord.gg/shiguredo"
   },
   "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@playwright/test": "1.49.1",
     "jsdom": "25.0.1",
     "tslib": "2.8.1",
-    "typedoc": "0.27.5",
+    "typedoc": "0.27.6",
     "typescript": "5.7.2",
-    "vite": "6.0.5",
+    "vite": "6.0.6",
     "vite-plugin-dts": "4.4.0",
     "vitest": "2.1.8"
   },
