@@ -15,6 +15,9 @@
 
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
+- [ADD] Node.js 23 をビルドとテストに追加する
+  - Node.js 24 LTS が出たら削除する
+  - @voluntas
 - [ADD] CI に TypeScript next のビルドとテストを追加する
   - @voluntas
 - [ADD] E2E テストに `WHIP` と `WHEP` のテストを追加する
