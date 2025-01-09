@@ -33,11 +33,15 @@ npm install sora-js-sdk
 pnpm add sora-js-sdk
 ```
 
-## システム条件
+## 条件
 
 - WebRTC SFU Sora 2024.1.0 以降
 - TypeScript 5.1 以降
-- Node.js 20.0 以降
+
+### Node.js の条件
+
+- Sora JavaScript SDK 2024.2.x までは **Node.js 18.0 以降** を要求します
+- 次のリリース Sora JavaScript SDK 2025.1.0 以降は **Node.js 20.0 以降** を要求します
 
 > [!CAUTION]
 > Sora JavaScript SDK 2024.2.0 以降は [Compression Stream API](https://developer.mozilla.org/ja/docs/Web/API/Compression_Streams_API) を利用しているため、ブラウザの要件がありますのでご確認ください。
