@@ -42,13 +42,13 @@
     "jsdom": "25.0.1",
     "tslib": "2.8.1",
     "typedoc": "0.27.6",
-    "typescript": "5.7.2",
+    "typescript": "5.7.3",
     "vite": "6.0.7",
     "vite-plugin-dts": "4.4.0",
     "vitest": "2.1.8"
   },
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@9.15.3",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }

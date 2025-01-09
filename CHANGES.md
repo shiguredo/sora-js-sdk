@@ -15,6 +15,11 @@
 
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
+- [ADD] Node.js 23 をビルドとテストに追加する
+  - Node.js 24 LTS が出たら削除する
+  - @voluntas
+- [ADD] CI に TypeScript next のビルドとテストを追加する
+  - @voluntas
 - [ADD] E2E テストに `WHIP` と `WHEP` のテストを追加する
   - @voluntas
 - [ADD] CI に TypeScript 5.1 から 5.7 までのビルドとテストを追加する
@@ -26,6 +31,8 @@
 - [ADD] .markdownlint.yaml ファイルを追加する
   - @voluntas
 - [ADD] 新しい examples を追加する
+  - @voluntas
+- [CHANGE] Node.js 18 をビルドとテストから落とす
   - @voluntas
 - [CHANGE] examples を e2e-tests に変更する
   - 環境変数の Prefix を TEST_ に切り替える
