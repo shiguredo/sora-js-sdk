@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        node: ["18", "20", "22"]
+        node: ["20", "22", "23"]
         # browser: ["chromium", "firefox", "webkit"]
         browser: ["chromium"]
     env:
