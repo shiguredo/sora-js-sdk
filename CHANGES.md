@@ -13,6 +13,8 @@
 
 ### misc
 
+- [UPDATE] `*.spec.ts` を `*.test.ts` に変更する
+  - @voluntas
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
 - [ADD] Node.js 23 をビルドとテストに追加する
