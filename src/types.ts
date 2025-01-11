@@ -222,7 +222,10 @@ export type SignalingNotifyConnectionCreated = {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'connection.created'
   role: Role
+  timestamp?: string
+  session_id?: string
   client_id?: string
+  bundle_id?: string
   connection_id?: string
   audio?: boolean
   video?: boolean
@@ -243,7 +246,9 @@ export type SignalingNotifyConnectionUpdated = {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'connection.updated'
   role: Role
+  session_id?: string
   client_id?: string
+  bundle_id?: string
   connection_id?: string
   audio?: boolean
   video?: boolean
@@ -259,7 +264,9 @@ export type SignalingNotifyConnectionDestroyed = {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
   event_type: 'connection.destroyed'
   role: Role
+  session_id?: string
   client_id?: string
+  bundle_id?: string
   connection_id?: string
   audio?: boolean
   video?: boolean
