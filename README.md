@@ -17,9 +17,20 @@ Please read <https://github.com/shiguredo/oss> before use.
 
 利用前に <https://github.com/shiguredo/oss> をお読みください。
 
+## 条件
+
+- WebRTC SFU Sora 2024.1.0 以降
+- TypeScript 5.1 以降
+
 ## 使い方
 
 使い方は [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/) を参照してください。
+
+## サンプル
+
+サンプルは [sora-js-sdk-examples](https://github.com/shiguredo/sora-js-sdk-examples) を参照してください。
+
+## インストール
 
 ### npm
 
@@ -33,11 +44,6 @@ npm install sora-js-sdk
 pnpm add sora-js-sdk
 ```
 
-## 条件
-
-- WebRTC SFU Sora 2024.1.0 以降
-- TypeScript 5.1 以降
-
 ### Node.js の条件
 
 - Sora JavaScript SDK 2024.2.x までは **Node.js 18.0 以降** を要求します
@@ -49,18 +55,6 @@ pnpm add sora-js-sdk
 > - Chrome / Edge 80 以降
 > - Firefox 113 以降
 > - Safari 16.4 以降
-
-## サンプル
-
-サンプルを Vite にて起動できます。
-
-```bash
-# .env.local を作成して適切な値を設定してください
-$ cp .env.template .env.local
-$ pnpm install
-$ pnpm run build
-$ pnpm run dev
-```
 
 ## E2E (End to End) テスト
 
