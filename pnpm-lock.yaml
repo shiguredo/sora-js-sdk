@@ -42,12 +42,6 @@ importers:
         specifier: workspace:*
         version: link:..
 
-  examples:
-    dependencies:
-      sora-js-sdk:
-        specifier: workspace:*
-        version: link:..
-
 packages:
 
   '@asamuzakjp/css-color@2.8.2':
