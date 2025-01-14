@@ -34,6 +34,9 @@
   - @voluntas
 - [ADD] 新しい examples を追加する
   - @voluntas
+- [CHANGE] examples を削除する
+  - <https://github.com/shiguredo/sora-js-sdk-examples> へ移動
+  - @voluntas
 - [CHANGE] Node.js 18 をビルドとテストから落とす
   - @voluntas
 - [CHANGE] examples を e2e-tests に変更する
