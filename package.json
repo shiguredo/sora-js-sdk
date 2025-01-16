@@ -14,7 +14,6 @@
   "scripts": {
     "build": "vite build",
     "watch": "vite build --watch",
-    "dev": "vite --config examples/vite.config.mjs",
     "e2e-dev": "vite --config e2e-tests/vite.config.mjs",
     "e2e-test": "pnpm build && playwright test --project=chromium",
     "lint": "biome lint",
