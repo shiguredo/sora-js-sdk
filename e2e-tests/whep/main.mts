@@ -105,7 +105,6 @@ class WhepClient {
     }
 
     const offer = await this.pc.createOffer()
-    console.log('offer.sdp:', offer.sdp)
 
     const whepEndpointUrl = `${this.endpointUrl}/${this.channelId}`
 
@@ -128,17 +127,14 @@ class WhepClient {
     }
     // path なので endpointUrl の host と port を付与する
     this.resourceUrl = new URL(resourcePath, this.endpointUrl).toString()
-    console.log('resourceUrl:', this.resourceUrl)
 
     const linkHeader = response.headers.get('Link')
     if (!linkHeader) {
       throw new Error('Link header not found')
     }
-    console.log('linkHeader:', linkHeader)
 
     // link ヘッダーから ICE サーバーを取得する
     const iceServers = this.parseLinkHeader(linkHeader)
-    console.log('iceServers:', iceServers)
 
     this.pc.setConfiguration({
       iceServers: iceServers,
@@ -151,7 +147,6 @@ class WhepClient {
 
     const answerSdp = await response.text()
     const answer = new RTCSessionDescription({ type: 'answer', sdp: answerSdp })
-    console.log('answer.sdp:', answer.sdp)
     await this.pc.setRemoteDescription(answer)
   }
 
@@ -159,8 +154,6 @@ class WhepClient {
     if (!this.resourceUrl) {
       throw new Error('Resource URL not found')
     }
-
-    console.log('resourceUrl:', this.resourceUrl)
 
     const response = await fetch(this.resourceUrl, {
       method: 'DELETE',
