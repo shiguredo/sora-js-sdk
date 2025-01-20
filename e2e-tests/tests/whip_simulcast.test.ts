@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test.skip('whip-simulcast', async ({ browser }) => {
+test('whip-simulcast', async ({ browser }) => {
   const whip = await browser.newPage()
 
   await whip.goto('http://localhost:9000/whip_simulcast/')
