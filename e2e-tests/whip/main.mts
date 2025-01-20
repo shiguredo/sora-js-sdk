@@ -130,7 +130,6 @@ class WhipClient {
 
     // channelId を path に含める
     const whipEndpointUrl = `${this.endpointUrl}/${this.channelId}`
-    console.log('whipEndpointUrl:', whipEndpointUrl)
 
     // /whip/:channel_id に POST する
     const response = await fetch(whipEndpointUrl.toString(), {
@@ -155,18 +154,15 @@ class WhipClient {
     }
     // path なので endpointUrl の host と port を付与する
     this.resourceUrl = new URL(resourcePath, this.endpointUrl).toString()
-    console.log('resourceUrl:', this.resourceUrl)
 
     // TURN-URL を取得するために Link ヘッダーを取得する
     const linkHeader = response.headers.get('Link')
     if (!linkHeader) {
       throw new Error('Link header not found')
     }
-    console.log('linkHeader:', linkHeader)
 
     // Link ヘッダーから ICE サーバーを取得する
     const iceServers = this.parseLinkHeader(linkHeader)
-    console.log('iceServers:', iceServers)
 
     // ICE サーバーを設定する
     this.pc.setConfiguration({
@@ -182,7 +178,6 @@ class WhipClient {
     const answerSdp = await response.text()
     // RTCSessionDescription に変換する
     const answer = new RTCSessionDescription({ type: 'answer', sdp: answerSdp })
-    console.log('answer.sdp:', answer.sdp)
     // Answer を設定する
     await this.pc.setRemoteDescription(answer)
   }
