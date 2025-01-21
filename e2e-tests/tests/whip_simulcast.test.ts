@@ -40,11 +40,6 @@ test('whip-simulcast', async ({ browser }) => {
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
-  const whipVideoOutboundRtpStats = whipStatsReportJson.filter(
-    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video',
-  )
-  console.log(whipVideoOutboundRtpStats)
-
   // sendonly stats report
   const whipVideoCodecStats = whipStatsReportJson.find(
     (stats) => stats.type === 'codec' && stats.mimeType === `video/${whipVideoCodecType}`,

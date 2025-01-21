@@ -126,7 +126,6 @@ class WhipClient {
 
     // まずは offer を作成する
     const offer = await this.pc.createOffer()
-    console.log('offer.sdp:', offer.sdp)
 
     // channelId を path に含める
     const whipEndpointUrl = `${this.endpointUrl}/${this.channelId}`
