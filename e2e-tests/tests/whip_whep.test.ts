@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('whip/whep', async ({ browser }) => {
+  // NPM パッケージの E2E テストでは WHIP/WHEP 関連のテストはスキップする
   if (process.env.NPM_PKG_E2E_TEST === 'true') {
     test.skip()
   }
