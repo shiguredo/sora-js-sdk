@@ -13,7 +13,7 @@
     "resolveJsonModule": true,
     "stripInternal": true,
     "newLine": "LF",
-    "types": [],
+    "types": ["node"],
     "paths": {
       "sora-js-sdk": ["../dist/sora.d.ts"]
     },

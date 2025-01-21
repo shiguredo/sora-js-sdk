@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test'
 
 test('whip/whep', async ({ browser }) => {
+  if (process.env.NPM_PKG_E2E_TEST === 'true') {
+    test.skip()
+  }
+
   const whip = await browser.newPage()
   const whep = await browser.newPage()
 
