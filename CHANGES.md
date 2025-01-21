@@ -17,9 +17,9 @@
   - @voluntas
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
-- [ADD] e2e-tests に WHIP サイマルキャストのテストを追加する
+- [ADD] e2e-tests に `WHIP` サイマルキャストのテストを追加する
   - @voluntas
-- [ADD] e2e-tests に jose を追加する
+- [ADD] e2e-tests に `jose` を追加する
   - @voluntas
 - [ADD] Node.js 23 をビルドとテストに追加する
   - Node.js 24 LTS が出たら削除する
@@ -36,7 +36,7 @@
   - @voluntas
 - [ADD] .markdownlint.yaml ファイルを追加する
   - @voluntas
-- [ADD] 新しい examples を追加する
+- [CHANGE] WHIP/WHEP 関連のテストは NPM パッケージの E2E テストではスキップするようにする
   - @voluntas
 - [CHANGE] examples を削除する
   - <https://github.com/shiguredo/sora-js-sdk-examples> へ移動
