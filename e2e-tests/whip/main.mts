@@ -126,6 +126,7 @@ class WhipClient {
 
     // まずは offer を作成する
     const offer = await this.pc.createOffer()
+    console.log('offerSdp:', offer.sdp)
 
     // channelId を path に含める
     const whipEndpointUrl = `${this.endpointUrl}/${this.channelId}`
@@ -175,6 +176,7 @@ class WhipClient {
 
     // Answer を取得する
     const answerSdp = await response.text()
+    console.log('answerSdp:', answerSdp)
     // RTCSessionDescription に変換する
     const answer = new RTCSessionDescription({ type: 'answer', sdp: answerSdp })
     // Answer を設定する
