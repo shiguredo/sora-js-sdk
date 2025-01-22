@@ -176,13 +176,14 @@ class WhipSimulcastClient {
     }
     // mimeType が video/${this.videoCodecType} の codec のみを filter する
     const videoCodecs = senderVideoCodecs.filter(
-      (codec) => codec.mimeType === `video/${this.videoCodecType}`,
+      (codec) =>
+        codec.mimeType === `video/${this.videoCodecType}` || codec.mimeType === 'video/rtx',
     )
     if (videoCodecs.length === 0) {
       throw new Error(`${this.videoCodecType} codec not found`)
     }
     // コーデックは必ず 1 つだけにする、ただしリストで渡す
-    videoTransceiver.setCodecPreferences([videoCodecs[0]])
+    videoTransceiver.setCodecPreferences(videoCodecs)
 
     this.pc.addTrack(this.stream.getVideoTracks()[0], this.stream)
     this.pc.addTrack(this.stream.getAudioTracks()[0], this.stream)
