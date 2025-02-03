@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] pnpm 10 系に上げる
+  - @voluntas
+
 ### misc
 
 - [UPDATE] `*.spec.ts` を `*.test.ts` に変更する
