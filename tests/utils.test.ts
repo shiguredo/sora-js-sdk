@@ -1,3 +1,4 @@
+// XXX: assert を使うと型がエラーがうるさいため expect を使ってる
 import { expect, test } from 'vitest'
 import type { AudioCodecType, DataChannelDirection, VideoCodecType } from '../src/types'
 import { createSignalingMessage } from '../src/utils'
