@@ -26,6 +26,8 @@ export default defineConfig({
         check_stereo_multi: resolve(__dirname, 'check_stereo_multi/index.html'),
         replace_track: resolve(__dirname, 'replace_track/index.html'),
         simulcast: resolve(__dirname, 'simulcast/index.html'),
+        simulcast_sendonly: resolve(__dirname, 'simulcast_sendonly/index.html'),
+        simulcast_recvonly: resolve(__dirname, 'simulcast_recvonly/index.html'),
         spotlight_sendrecv: resolve(__dirname, 'spotlight_sendrecv/index.html'),
         spotlight_sendonly: resolve(__dirname, 'spotlight_sendonly/index.html'),
         spotlight_recvonly: resolve(__dirname, 'spotlight_recvonly/index.html'),

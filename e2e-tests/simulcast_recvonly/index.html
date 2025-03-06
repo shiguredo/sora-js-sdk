@@ -1,0 +1,34 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <title>Simulcast test</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Simulcast test</h1>
+    <button id="connect">connect</button>
+    <button id="disconnect">disconnect</button>
+    <div>
+      <label for="simulcast-rid">simulcast_rid: </label>
+      <select id="simulcast-rid">
+        <option value="">未指定</option>
+        <option value="r0">r0</option>
+        <option value="r1">r1</option>
+        <option value="r2">r2</option>
+      </select>
+    </div>
+    <button id="get-stats">getStats</button><br />
+    <div id="connection-id"></div>
+    <div id="remote-videos"></div>
+
+    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+    <div id="stats-report-json"></div>
+  </div>
+
+  <script type="module" src="./main.mts"></script>
+</body>
+
+</html>

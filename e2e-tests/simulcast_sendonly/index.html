@@ -1,0 +1,29 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <title>Simulcast test</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Simulcast test</h1>
+    <button id="connect">connect</button>
+    <button id="disconnect">disconnect</button>
+    <button id="get-stats">getStats</button><br />
+    <div>
+      <h2>sendonly</h2>
+      <div id="connection-id"></div>
+      <video id="local-video" autoplay="" playsinline="" controls=""
+        style="width: 320px; height: 180px; border: 1px solid blue;"></video>
+    </div>
+
+    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+    <div id="stats-report-json"></div>
+  </div>
+
+  <script type="module" src="./main.mts"></script>
+</body>
+
+</html>

@@ -1,38 +1,39 @@
 import Sora, {
-  type SignalingNotifyMessage,
-  type SignalingEvent,
-  type ConnectionPublisher,
   type SoraConnection,
+  type ConnectionPublisher,
+  type SignalingNotifyMessage,
+  type ConnectionSubscriber,
+  type SimulcastRid,
 } from 'sora-js-sdk'
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
-
-  // SDK バージョンの表示
-  const sdkVersionElement = document.querySelector('#sdk-version')
-  if (sdkVersionElement) {
-    sdkVersionElement.textContent = `${Sora.version()}`
-  }
+  const sendonly = new SimulcastSendonlySoraClient(
+    signalingUrl,
+    channelIdPrefix,
+    channelIdSuffix,
+    secretKey,
+  )
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
+    // sendonly
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
-      video: true,
+      video: { width: { exact: 1280 }, height: { exact: 720 } },
     })
-    await client.connect(stream)
+    await sendonly.connect(stream)
   })
 
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
-    await client.disconnect()
+    await sendonly.disconnect()
   })
 
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
-    const statsReport = await client.getStats()
+    const statsReport = await sendonly.getStats()
     const statsDiv = document.querySelector('#stats-report') as HTMLElement
     const statsReportJsonDiv = document.querySelector('#stats-report-json')
     if (statsDiv && statsReportJsonDiv) {
@@ -57,11 +58,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 })
 
-class SoraClient {
+class SimulcastSendonlySoraClient {
   private debug = false
   private channelId: string
-  private metadata: { access_token: string }
-  private options: object = {}
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
@@ -72,35 +71,31 @@ class SoraClient {
     channelIdSuffix: string,
     secretKey: string,
   ) {
+    this.channelId = `${channelIdPrefix}simulcast_rid${channelIdSuffix}`
+
     this.sora = Sora.connection(signalingUrl, this.debug)
+    this.connection = this.sora.sendonly(
+      this.channelId,
+      { access_token: secretKey },
+      { audio: false, video: true, videoCodecType: 'VP8', videoBitRate: 2500, simulcast: true },
+    )
 
-    // channel_id の生成
-    this.channelId = `${channelIdPrefix}sendonly_recvonly${channelIdSuffix}`
-    // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey }
-
-    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
-    this.connection.on('notify', this.onNotify.bind(this))
-
-    // E2E テスト用のコード
-    this.connection.on('signaling', this.onSignaling.bind(this))
+    this.connection.on('notify', this.onnotify.bind(this))
   }
 
-  async connect(stream: MediaStream): Promise<void> {
+  async connect(stream: MediaStream) {
     await this.connection.connect(stream)
-
-    const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
-    if (videoElement !== null) {
-      videoElement.srcObject = stream
+    const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
+    if (localVideo) {
+      localVideo.srcObject = stream
     }
   }
 
-  async disconnect(): Promise<void> {
+  async disconnect() {
     await this.connection.disconnect()
-
-    const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
-    if (videoElement !== null) {
-      videoElement.srcObject = null
+    const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
+    if (localVideo) {
+      localVideo.srcObject = null
     }
   }
 
@@ -111,22 +106,15 @@ class SoraClient {
     return this.connection.pc.getStats()
   }
 
-  private onNotify(event: SignalingNotifyMessage): void {
+  private onnotify(event: SignalingNotifyMessage) {
     if (
       event.event_type === 'connection.created' &&
-      this.connection.connectionId === event.connection_id
+      event.connection_id === this.connection.connectionId
     ) {
-      const connectionIdElement = document.querySelector('#connection-id')
-      if (connectionIdElement) {
-        connectionIdElement.textContent = event.connection_id
+      const localVideoConnectionId = document.querySelector('#connection-id')
+      if (localVideoConnectionId) {
+        localVideoConnectionId.textContent = `${event.connection_id}`
       }
-    }
-  }
-
-  // E2E テスト用のコード
-  private onSignaling(event: SignalingEvent): void {
-    if (event.type === 'onmessage-switched') {
-      console.log('[signaling]', event.type, event.transportType)
     }
   }
 }
