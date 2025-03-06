@@ -89,7 +89,7 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   )
   expect(recvonlyVideoInboundRtpStats).toBeDefined()
   // r2 を指定してるので解像度を確認する
-  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(1281)
+  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(1280)
   expect(recvonlyVideoInboundRtpStats?.frameHeight).toBe(720)
   expect(recvonlyVideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
   expect(recvonlyVideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
