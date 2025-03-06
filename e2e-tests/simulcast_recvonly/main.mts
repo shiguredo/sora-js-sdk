@@ -88,6 +88,7 @@ class SimulcastRecvonlySoraClient {
 
   async connect(simulcastRid?: SimulcastRid) {
     if (simulcastRid) {
+      this.rid = simulcastRid
       this.connection.options.simulcastRid = simulcastRid
     }
 
