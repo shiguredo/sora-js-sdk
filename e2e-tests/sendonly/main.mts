@@ -20,7 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { width: { exact: 1280 }, height: { exact: 720 } },
+    })
     await client.connect(stream)
   })
 

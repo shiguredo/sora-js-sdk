@@ -71,7 +71,7 @@ class SimulcastSendonlySoraClient {
     channelIdSuffix: string,
     secretKey: string,
   ) {
-    this.channelId = `${channelIdPrefix}simulcast${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}simulcast_rid${channelIdSuffix}`
 
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.connection = this.sora.sendonly(
@@ -111,7 +111,7 @@ class SimulcastSendonlySoraClient {
       event.event_type === 'connection.created' &&
       event.connection_id === this.connection.connectionId
     ) {
-      const localVideoConnectionId = document.querySelector('#local-video-connection-id')
+      const localVideoConnectionId = document.querySelector('#connection-id')
       if (localVideoConnectionId) {
         localVideoConnectionId.textContent = `${event.connection_id}`
       }

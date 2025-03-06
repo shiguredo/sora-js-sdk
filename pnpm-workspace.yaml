@@ -1,2 +1,5 @@
 packages:
-  - "e2e-tests"
+  - e2e-tests
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - esbuild

@@ -72,7 +72,7 @@ class SimulcastRecvonlySoraClient {
     channelIdSuffix: string,
     secretKey: string,
   ) {
-    this.channelId = `${channelIdPrefix}simulcast${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}simulcast_rid${channelIdSuffix}`
 
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.connection = this.sora.recvonly(
@@ -114,9 +114,7 @@ class SimulcastRecvonlySoraClient {
       event.event_type === 'connection.created' &&
       event.connection_id === this.connection.connectionId
     ) {
-      const localVideoConnectionId = document.querySelector(
-        `#remote-video-connection-id-${this.rid}`,
-      )
+      const localVideoConnectionId = document.querySelector('#connection-id')
       if (localVideoConnectionId) {
         localVideoConnectionId.textContent = `${event.connection_id}`
       }
