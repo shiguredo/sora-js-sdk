@@ -20,6 +20,8 @@
   - @voluntas
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
+- [ADD] simulcast_sendonly / simulcast_recvonly を使った simulcast_rid のテストを追加する
+  - @voluntas
 - [ADD] e2e-tests に `WHIP` サイマルキャストのテストを追加する
   - @voluntas
 - [ADD] e2e-tests に `jose` を追加する
