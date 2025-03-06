@@ -8,7 +8,9 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   await recvonly.goto('http://localhost:9000/simulcast_recvonly/')
 
   // recvonly の simulcast_rid を r2 に設定
-  await recvonly.selectOption('#simulcast-rid', 'r2')
+  const simulcastRid = 'r2'
+  await recvonly.selectOption('#simulcast-rid', simulcastRid)
+  console.log(`recvonly simulcast_rid=${simulcastRid}`)
 
   await sendonly.click('#connect')
   await recvonly.click('#connect')
@@ -91,6 +93,10 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   // r2 を指定してるので解像度を確認する
   expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(1280)
   expect(recvonlyVideoInboundRtpStats?.frameHeight).toBe(720)
+  console.log(`recvonlyVideoInboundRtpStatsFrameWidth=${recvonlyVideoInboundRtpStats?.frameWidth}`)
+  console.log(
+    `recvonlyVideoInboundRtpStatsFrameHeight=${recvonlyVideoInboundRtpStats?.frameHeight}`,
+  )
   expect(recvonlyVideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
   expect(recvonlyVideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
 
