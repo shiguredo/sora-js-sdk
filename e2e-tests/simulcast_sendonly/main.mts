@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('#connect')?.addEventListener('click', async () => {
     // sendonly
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
+      audio: true,
       video: { width: { exact: 1280 }, height: { exact: 720 } },
     })
     await sendonly.connect(stream)
