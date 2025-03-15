@@ -6,7 +6,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "jose": "6.0.8",
+    "jose": "6.0.10",
     "sora-js-sdk": "workspace:*"
   }
 }
