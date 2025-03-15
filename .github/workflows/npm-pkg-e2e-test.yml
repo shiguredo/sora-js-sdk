@@ -53,6 +53,8 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       # sora-js-sdk を npm からインストールする
       - run: pnpm --version
       - run: pnpm install
