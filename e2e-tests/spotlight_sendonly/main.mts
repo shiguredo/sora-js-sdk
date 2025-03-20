@@ -40,7 +40,6 @@ class SoraClient {
     this.sora = Sora.connection(signalingUrl, this.debug)
 
     this.options = {
-      multistream: true,
       simulcast: true,
       spotlight: true,
     }

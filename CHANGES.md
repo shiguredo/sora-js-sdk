@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] レガシーストリーム `multistream: false` を廃止に伴い `multistream` オプションを削除する
+  - @voluntas
+- [CHANGE] レガシーストリーム `multistream: false` を廃止する
+  - @voluntas
 - [UPDATE] pnpm 10 系に上げる
   - @voluntas
 - [FIX] `signalingUrlCandidates` が `string[]` で長さが 1 の場合 `signalingUrlCandidates[0]` を利用して接続確認を行わない用に修正する
