@@ -1070,9 +1070,13 @@ export default class ConnectionBase {
   protected async getSignalingWebSocket(
     signalingUrlCandidates: string | string[],
   ): Promise<WebSocket> {
-    if (typeof signalingUrlCandidates === 'string') {
-      // signaling url の候補が文字列の場合
-      const signalingUrl = signalingUrlCandidates
+    // signalingUrlCandidates が string の場合はそのまま返す
+    // string[] の場合は 1 つのみの場合もそのまま返す
+    if (typeof signalingUrlCandidates === 'string' || signalingUrlCandidates.length === 1) {
+      const signalingUrl =
+        typeof signalingUrlCandidates === 'string'
+          ? signalingUrlCandidates
+          : signalingUrlCandidates[0]
       return new Promise((resolve, reject) => {
         const ws = new WebSocket(signalingUrl)
         ws.onclose = (event): void => {
