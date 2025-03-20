@@ -13,6 +13,10 @@
 
 - [UPDATE] pnpm 10 系に上げる
   - @voluntas
+- [FIX] `signalingUrlCandidates` が `string[]` で長さが 1 の場合 `signalingUrlCandidates[0]` を利用して接続確認を行わない用に修正する
+  - @voluntas
+- [FIX] `signalingUrlCandidates` が `[]` の場合はエラーにする
+  - @voluntas
 
 ### misc
 
