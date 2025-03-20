@@ -1071,7 +1071,7 @@ export default class ConnectionBase {
     signalingUrlCandidates: string | string[],
   ): Promise<WebSocket> {
     if (Array.isArray(signalingUrlCandidates) && signalingUrlCandidates.length === 0) {
-      throw new ConnectError('Signaling failed. Invalid format signaling URL candidates')
+      throw new ConnectError('Signaling failed. The signalingUrlCandidates array is empty.')
     }
 
     // signalingUrlCandidates が string の場合はそのまま返す
