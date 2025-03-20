@@ -13,8 +13,9 @@
 
 - [UPDATE] pnpm 10 系に上げる
   - @voluntas
-- [FIX] シグナリング URL が `string[]` の場合でも長さが 1 の場合は URL をそのまま利用するように修正する
-  - 今までは 1 つの場合でも無駄に複数ある時と同様に利用できるかどうかを確認してしまっていた
+- [FIX] `signalingUrlCandidates` が `string[]` で長さが 1 の場合 `signalingUrlCandidates[0]` を利用して接続確認を行わない用に修正する
+  - @voluntas
+- [FIX] `signalingUrlCandidates` が `[]` の場合はエラーにする
   - @voluntas
 
 ### misc
