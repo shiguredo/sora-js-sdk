@@ -65,7 +65,9 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.stream = stream
     await this.createAnswer(signalingMessage)
     this.sendAnswer()
-    await this.onIceCandidate()
+    if (this.pc?.getConfiguration().iceTransportPolicy === 'all') {
+      await this.onIceCandidate()
+    }
     await this.waitChangeConnectionStateConnected()
     return stream
   }
@@ -128,7 +130,9 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.stream = stream
     await this.createAnswer(signalingMessage)
     this.sendAnswer()
-    await this.onIceCandidate()
+    if (this.pc?.getConfiguration().iceTransportPolicy === 'all') {
+      await this.onIceCandidate()
+    }
     await this.waitChangeConnectionStateConnected()
     return stream
   }

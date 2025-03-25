@@ -17,6 +17,9 @@
   - @voluntas
 - [FIX] `signalingUrlCandidates` が `[]` の場合はエラーにする
   - @voluntas
+- [FIX] `iceTransportPolicy` が `relay` の場合は `onIceCandidate` を実行しないようにする
+  - TURN サーバーを常に利用するので `onIceCandidate` は不要
+  - @voluntas
 
 ### misc
 
