@@ -62,7 +62,6 @@ jobs:
   #   if: success()
   #   steps:
   #     - name: Slack Notification
-  #       if: success()
   #       uses: rtCamp/action-slack-notify@v2
   #       env:
   #         SLACK_CHANNEL: sora-js-sdk
@@ -76,7 +75,6 @@ jobs:
     if: failure()
     steps:
       - name: Slack Notification
-        if: failure()
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: sora-js-sdk
