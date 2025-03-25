@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
+  let client: SoraClient | undefined = undefined
 
   // SDK バージョンの表示
   const sdkVersionElement = document.querySelector('#sdk-version')
@@ -20,18 +20,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
+    if (client) {
+      await client.disconnect()
+    }
+
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: true,
     })
+
+    const channelName = document.querySelector('#channel-name') as HTMLInputElement
+    if (!channelName) {
+      throw new Error('Channel name input element not found')
+    }
+
+    client = new SoraClient(
+      signalingUrl,
+      channelIdPrefix,
+      channelIdSuffix,
+      secretKey,
+      channelName.value,
+    )
     await client.connect(stream)
   })
 
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
-    await client.disconnect()
+    if (client) {
+      await client.disconnect()
+    }
   })
 
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
+    if (!client) {
+      return
+    }
+
     const statsReport = await client.getStats()
     const statsDiv = document.querySelector('#stats-report') as HTMLElement
     const statsReportJsonDiv = document.querySelector('#stats-report-json')
@@ -71,11 +94,12 @@ class SoraClient {
     channelIdPrefix: string,
     channelIdSuffix: string,
     secretKey: string,
+    channelName: string,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
 
     // channel_id の生成
-    this.channelId = `${channelIdPrefix}sendonly_recvonly${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
     // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey }
 
