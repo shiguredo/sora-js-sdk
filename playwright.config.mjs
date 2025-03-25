@@ -22,10 +22,7 @@ export default defineConfig({
     },
   },
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
+    // Chrome
     {
       name: 'Google Chrome',
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
@@ -41,6 +38,24 @@ export default defineConfig({
     {
       name: 'Google Chrome Canary',
       use: { ...devices['Desktop Chrome'], channel: 'chrome-canary' },
+    },
+
+    // Edge
+    {
+      name: 'Microsoft Edge',
+      use: { ...devices['Desktop Edge'], channel: 'msedge' },
+    },
+    {
+      name: 'Microsoft Edge Beta',
+      use: { ...devices['Desktop Edge'], channel: 'msedge-beta' },
+    },
+    {
+      name: 'Microsoft Edge Dev',
+      use: { ...devices['Desktop Edge'], channel: 'msedge-dev' },
+    },
+    {
+      name: 'Microsoft Edge Canary',
+      use: { ...devices['Desktop Edge'], channel: 'msedge-canary' },
     },
 
     // {
