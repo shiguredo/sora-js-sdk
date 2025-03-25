@@ -129,13 +129,6 @@ test('createSignalingMessage clientId: undefined', () => {
 /**
  * multistream test
  */
-test('createSignalingMessage multistream: true', () => {
-  const options = {}
-  const expectedMessage = Object.assign({}, baseExpectedMessage, {})
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
-})
 
 test('createSignalingMessage undefined multistream', () => {
   const options = {}
