@@ -144,7 +144,7 @@ class SoraClient {
   private ontrack(event: RTCTrackEvent) {
     // Sora の場合、event.streams には MediaStream が 1 つだけ含まれる
     const stream = event.streams[0]
-    const remoteVideoId = `remotevideo-${stream.id}`
+    const remoteVideoId = `remote-video-${stream.id}`
     const remoteVideos = document.querySelector<HTMLDivElement>('#remote-videos')
     if (remoteVideos && !remoteVideos.querySelector(`#${remoteVideoId}`)) {
       const remoteVideo = document.createElement('video')
@@ -161,7 +161,7 @@ class SoraClient {
   private onremovetrack(event: MediaStreamTrackEvent) {
     // このトラックが属している MediaStream の id を取得する
     const stream = event.target as MediaStream
-    const remoteVideo = document.querySelector(`#remotevideo-${stream.id}`)
+    const remoteVideo = document.querySelector(`#remote-video-${stream.id}`)
     if (remoteVideo) {
       document.querySelector('#remote-videos')?.removeChild(remoteVideo)
     }

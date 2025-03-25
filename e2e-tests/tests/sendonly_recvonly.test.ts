@@ -43,8 +43,8 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   console.log(`recvonly connectionId=${recvonlyConnectionId}`)
 
   // レース対策
-  await sendonly.waitForTimeout(5000)
-  await recvonly.waitForTimeout(5000)
+  await sendonly.waitForTimeout(3000)
+  await recvonly.waitForTimeout(3000)
 
   // 'Get Stats' ボタンをクリックして統計情報を取得
   await sendonly.click('#get-stats')
