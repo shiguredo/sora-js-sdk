@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:,">
   <title>Sora WHIP Client</title>
 </head>
@@ -23,12 +24,17 @@
 
   <button id="connect">connect</button>
   <button id="disconnect">disconnect</button>
+  <button id="get-stats">getStats</button><br />
 
   <p>
     <video id="local-video" autoplay playsinline muted></video>
   </p>
 
   <div id="connection-state"></div>
+
+  <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+  <div id="stats-report-json"></div>
+
   <script type="module" src="./main.mts"></script>
 </body>
 

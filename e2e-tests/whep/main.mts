@@ -28,6 +28,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     await whepClient.disconnect()
   })
+
+  document.querySelector('#get-stats')?.addEventListener('click', async () => {
+    if (!whepClient) {
+      return
+    }
+
+    const statsReport = await whepClient.getStats()
+    const statsDiv = document.querySelector('#stats-report') as HTMLElement
+    const statsReportJsonDiv = document.querySelector('#stats-report-json')
+    if (statsDiv && statsReportJsonDiv) {
+      let statsHtml = ''
+      const statsReportJson: Record<string, unknown>[] = []
+      for (const report of statsReport.values()) {
+        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
+        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
+        for (const [key, value] of Object.entries(report)) {
+          if (key !== 'type' && key !== 'id') {
+            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
+            reportJson[key] = value
+          }
+        }
+        statsHtml += '</ul>'
+        statsReportJson.push(reportJson)
+      }
+      statsDiv.innerHTML = statsHtml
+      // データ属性としても保存（オプション）
+      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
+    }
+  })
 })
 
 class WhepClient {

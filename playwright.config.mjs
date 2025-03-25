@@ -16,6 +16,8 @@ export default defineConfig({
         '--use-fake-ui-for-media-stream',
         '--use-fake-device-for-media-stream',
         // "--use-file-for-fake-video-capture=/app/sample.mjpeg",
+
+        '--enable-features=WebRtcAllowH265Send,WebRtcAllowH265Receive',
       ],
     },
   },
@@ -23,6 +25,22 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'Google Chrome',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    },
+    {
+      name: 'Google Chrome Beta',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome-beta' },
+    },
+    {
+      name: 'Google Chrome Dev',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome-dev' },
+    },
+    {
+      name: 'Google Chrome Canary',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome-canary' },
     },
 
     // {
