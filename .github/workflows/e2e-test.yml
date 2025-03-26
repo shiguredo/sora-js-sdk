@@ -19,8 +19,8 @@ jobs:
       matrix:
         node:
           - "20"
-          # - "22"
-          # - "23"
+          - "22"
+          - "23"
         browser:
           - name: "Chromium"
             type: "chromium"
