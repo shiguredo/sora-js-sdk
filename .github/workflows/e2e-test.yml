@@ -15,8 +15,6 @@ on:
 
 jobs:
   e2e-test:
-    timeout-minutes: 20
-    runs-on: ubuntu-24.04
     strategy:
       matrix:
         node:
@@ -26,23 +24,21 @@ jobs:
         browser:
           # - name: "Google Chrome"
           #   type: "chrome"
-          - name: "Google Chrome Beta"
-            type: "chrome-beta"
-          # - name: "Google Chrome Dev"
-          #   type: "chrome"
-          #   version: "dev"
+          # - name: "Google Chrome Beta"
+          #   type: "chrome-beta"
+          - name: "Google Chrome Dev"
+            type: "chrome-dev"
+          # linux では利用できない
           # - name: "Google Chrome Canary"
-          #   type: "chrome"
-          #   version: "canary"
+          #   type: "chrome-canary"
           # - name: "Microsoft Edge"
           #   type: "msedge"
-          #   version: "stable"
-          - name: "Microsoft Edge Beta"
-            type: "msedge-beta"
-          # - name: "Microsoft Edge Dev"
-          #   type: "msedge"
-          # - name: "Microsoft Edge Canary"
-          #   type: "edge"
+          # - name: "Microsoft Edge Beta"
+          #   type: "msedge-beta"
+          - name: "Microsoft Edge Dev"
+            type: "msedge-dev"
+          - name: "Microsoft Edge Canary"
+            type: "msedge-canary"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
@@ -50,6 +46,8 @@ jobs:
       VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       VITE_TEST_API_URL: ${{ secrets.TEST_API_URL }}
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: tailscale/github-action@v2
