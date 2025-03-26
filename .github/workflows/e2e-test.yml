@@ -71,7 +71,10 @@ jobs:
       #     path: playwright-report/
       #     retention-days: 30
 
-  e2e-test-macos:
+  # Chrome と Edge の Canary バージョンでのテスト
+  # Playwright 経由では Canary バージョンのブラウザをインストールできない
+  # Homebrew 経由でインストールしている
+  e2e-test-canary:
     strategy:
       matrix:
         node:
@@ -85,16 +88,6 @@ jobs:
           - name: "Microsoft Edge Canary"
             type: "msedge"
             version: canary
-          # - name: "Google Chrome"
-          #   type: "chrome"
-          # - name: "Google Chrome Beta"
-          #   type: "chrome-beta"
-          # - name: "Microsoft Edge"
-          #   type: "msedge"
-          # - name: "Microsoft Edge Beta"
-          #   type: "msedge-beta"
-          # - name: "Microsoft Edge Dev"
-          #   type: "msedge-dev"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
@@ -145,7 +138,7 @@ jobs:
   #         SLACK_ICON_EMOJI: ":star-struck:"
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   slack_notify_failed:
-    needs: [e2e-test]
+    needs: [e2e-test, e2e-test-canary]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
