@@ -80,8 +80,11 @@ jobs:
           - "23"
         browser:
           - name: "Google Chrome Canary"
-          # - name: "Chromium"
-          #   type: "chromium"
+            type: "chrome"
+            version: canary
+          - name: "Microsoft Edge Canary"
+            type: "msedge"
+            version: canary
           # - name: "Google Chrome"
           #   type: "chrome"
           # - name: "Google Chrome Beta"
@@ -104,7 +107,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Homebrew/actions/setup-homebrew@master
-      - run: brew install --cask google-chrome@canary
+      - run: brew install --cask google-chrome@${{ matrix.browser.version }}
+        if: ${{ matrix.browser.type == 'chrome' }}
+      - run: brew install --cask microsoft-edge@${{ matrix.browser.version }}
+        if: ${{ matrix.browser.type == 'msedge' }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
