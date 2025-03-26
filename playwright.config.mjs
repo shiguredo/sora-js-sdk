@@ -27,36 +27,44 @@ export default defineConfig({
     {
       name: 'Google Chrome',
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+      executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
     },
     {
       name: 'Google Chrome Beta',
       use: { ...devices['Desktop Chrome'], channel: 'chrome-beta' },
+      executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
     },
     {
       name: 'Google Chrome Dev',
       use: { ...devices['Desktop Chrome'], channel: 'chrome-dev' },
+      executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
     },
     {
       name: 'Google Chrome Canary',
       use: { ...devices['Desktop Chrome'], channel: 'chrome-canary' },
+      executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
     },
 
     // Edge
     {
       name: 'Microsoft Edge',
       use: { ...devices['Desktop Edge'], channel: 'msedge' },
+      executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
     },
     {
       name: 'Microsoft Edge Beta',
       use: { ...devices['Desktop Edge'], channel: 'msedge-beta' },
+      executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
     },
     {
       name: 'Microsoft Edge Dev',
       use: { ...devices['Desktop Edge'], channel: 'msedge-dev' },
+      executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
     },
     {
       name: 'Microsoft Edge Canary',
       use: { ...devices['Desktop Edge'], channel: 'msedge-canary' },
+      executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
     },
 
     // {
