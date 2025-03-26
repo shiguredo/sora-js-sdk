@@ -80,8 +80,8 @@ jobs:
         browser:
           - name: "Google Chrome Canary"
             type: "chrome-canary"
-          - name: "Microsoft Edge Canary"
-            type: "msedge-canary"
+          # - name: "Microsoft Edge Canary"
+          #   type: "msedge-canary"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
@@ -96,13 +96,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+      - uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: canary
       - uses: pnpm/action-setup@v4
         with:
           version: 10
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build
-      - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
       - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
