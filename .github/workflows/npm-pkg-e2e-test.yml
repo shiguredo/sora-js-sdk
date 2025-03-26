@@ -32,8 +32,8 @@ jobs:
           "2021.1.7",
         ]
         node: ["18", "20", "22", "23"]
-        # browser: ["chromium", "firefox", "webkit"]
-        browser: ["chromium"]
+        # browser: ["Chrome*", "Edge*"]
+        browser: ["Chrome"]
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
