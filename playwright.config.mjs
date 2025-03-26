@@ -26,14 +26,14 @@ export default defineConfig({
     // Chrome
     {
       name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+      use: { ...devices['Desktop Chrome'] },
       launchOptions: {
         executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
       },
     },
     {
       name: 'Google Chrome Beta',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome-beta' },
+      use: { ...devices['Desktop Chrome'] },
       launchOptions: {
         executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
       },
@@ -63,7 +63,7 @@ export default defineConfig({
     },
     {
       name: 'Microsoft Edge Beta',
-      use: { ...devices['Desktop Edge'], channel: 'msedge-beta' },
+      use: { ...devices['Desktop Edge'] },
       launchOptions: {
         executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
       },
