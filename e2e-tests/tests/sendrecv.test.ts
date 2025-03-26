@@ -62,8 +62,8 @@ test('sendrecv x2', async ({ browser }) => {
   console.log(`sendrecv2 connectionId=${sendrecv2ConnectionId}`)
 
   // レース対策
-  await sendrecv1.waitForTimeout(3000)
-  await sendrecv2.waitForTimeout(3000)
+  await sendrecv1.waitForTimeout(5000)
+  await sendrecv2.waitForTimeout(5000)
 
   // page1 stats report
 
