@@ -33,7 +33,7 @@ jobs:
         ]
         node: ["18", "20", "22", "23"]
         browser: 
-            - name: "Chrome"
+            - name: "Google Chrome"
               type: "chrome"
             - name: "Microsoft Edge"
               type: "msedge"
