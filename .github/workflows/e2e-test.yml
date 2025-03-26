@@ -81,12 +81,12 @@ jobs:
       - run: pnpm run build
       - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
         env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+          BROWSER_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
         if: matrix.browser.type == 'chrome'
       - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
         env:
-          PLAYWRIGHT_BROWSERS_PATH: ${{ steps.setup-msedge.outputs.msedge-path }}
+          BROWSER_PATH: ${{ steps.setup-msedge.outputs.msedge-path }}
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
         if: matrix.browser.type == 'msedge'
       # - uses: actions/upload-artifact@v4
