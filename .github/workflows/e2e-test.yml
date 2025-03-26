@@ -15,7 +15,6 @@ on:
 
 jobs:
   e2e-test:
-    if: false
     strategy:
       matrix:
         node:
