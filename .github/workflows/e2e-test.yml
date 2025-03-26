@@ -104,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Homebrew/actions/setup-homebrew@master
-      - run: brew install --cask google-chrome-canary
+      - run: brew install --cask google-chrome@canary
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
