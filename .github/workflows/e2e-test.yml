@@ -95,7 +95,9 @@ jobs:
       VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       VITE_TEST_API_URL: ${{ secrets.TEST_API_URL }}
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
-    runs-on: macos-15
+    runs-on:
+      group: Self
+      labels: [self-hosted, self-hosted, macOS, ARM64, Apple-M2-Pro]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
