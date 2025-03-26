@@ -32,8 +32,11 @@ jobs:
           "2021.1.7",
         ]
         node: ["18", "20", "22", "23"]
-        # browser: ["Chrome*", "Edge*"]
-        browser: ["Chrome"]
+        browser: 
+            - name: "Chrome"
+              type: "chrome"
+            - name: "Microsoft Edge"
+              type: "msedge"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
@@ -61,8 +64,8 @@ jobs:
       - run: pnpm add -E sora-js-sdk@${{ matrix.sdk_version }}
         working-directory: ./e2e-tests
       # pnpm run build しない
-      - run: pnpm exec playwright install ${{ matrix.browser }} --with-deps
-      - run: pnpm exec playwright test --project=${{ matrix.browser }}
+      - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
+      - run: pnpm exec playwright test --project=${{ matrix.browser.name }}
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}_${{ matrix.sdk_version }}
       # - uses: actions/upload-artifact@v4
