@@ -37,13 +37,13 @@ jobs:
           #   type: "chrome"
           #   version: "canary"
           - name: "Microsoft Edge"
-            type: "edge"
+            type: "msedge"
             version: "stable"
           - name: "Microsoft Edge Beta"
-            type: "edge"
+            type: "msedge"
             version: "beta"
           - name: "Microsoft Edge Dev"
-            type: "edge"
+            type: "msedge"
             version: "dev"
           # - name: "Microsoft Edge Canary"
           #   type: "edge"
@@ -66,7 +66,7 @@ jobs:
         uses: browser-actions/setup-chrome@v1
         with:
           chrome-version: ${{ matrix.browser.version }}
-      - if: matrix.browser.type == 'edge'
+      - if: matrix.browser.type == 'msedge'
         uses: browser-actions/setup-edge@v1
         with:
           edge-version: ${{ matrix.browser.version }}
@@ -79,6 +79,7 @@ jobs:
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build
+      - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
       - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
