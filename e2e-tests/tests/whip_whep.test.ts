@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto'
-import { platform } from 'node:os'
 import { expect, test } from '@playwright/test'
 
 // H.265 は HWA のみの対応なので環境依存

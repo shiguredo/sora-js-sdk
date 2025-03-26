@@ -1,10 +1,15 @@
-import { expect, test } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
+import { expect, test } from '@playwright/test'
 test('sendonly audio pages', async ({ browser }) => {
   // 新しいページを作成
   const sendonly = await browser.newPage()
   // ページに対して操作を行う
   await sendonly.goto('http://localhost:9000/sendonly_audio/')
+
+  // チャネル名を uuid で生成する
+  const channelName = randomUUID()
+
+  await sendonly.fill('#channel-name', channelName)
 
   // select 要素から直接オプションを取得してランダムに選択する
   // 音声コーデック
@@ -27,10 +32,6 @@ test('sendonly audio pages', async ({ browser }) => {
   // ランダムで選択した音声コーデック・音声ビットレートをログに表示する
   console.log(`Selected AudioCodec: ${selectedAudioCodec}`)
   console.log(`Selected BitRate: ${selectedBitRate} kbps`)
-
-  // チャネル名を uuid で生成する
-  const channelName = randomUUID()
-  await sendonly.fill('#channel-name', channelName)
 
   // 'connect' ボタンをクリックして音声の送信を開始する
   await sendonly.click('#connect')
