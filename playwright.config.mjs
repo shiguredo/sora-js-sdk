@@ -43,7 +43,13 @@ export default defineConfig({
     },
     {
       name: 'Google Chrome Canary',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome-canary' },
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: 'chrome-canary',
+        launchOptions: {
+          executablePath: process.env.BROWSER_PATH ?? undefined,
+        },
+      },
     },
 
     // Edge
