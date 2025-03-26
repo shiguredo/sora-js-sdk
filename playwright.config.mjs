@@ -31,7 +31,7 @@ export default defineConfig({
     // Chrome
     {
       name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
     {
       name: 'Google Chrome Beta',
