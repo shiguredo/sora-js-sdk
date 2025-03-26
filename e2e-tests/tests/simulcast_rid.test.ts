@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test('simulcast sendonly/recvonly pages', async ({ browser }) => {
@@ -6,6 +7,12 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
 
   await sendonly.goto('http://localhost:9000/simulcast_sendonly/')
   await recvonly.goto('http://localhost:9000/simulcast_recvonly/')
+
+  const channelName = randomUUID()
+
+  // チャンネル名を設定
+  await sendonly.fill('#channel-name', channelName)
+  await recvonly.fill('#channel-name', channelName)
 
   // recvonly の simulcast_rid を r2 に設定
   const simulcastRid = 'r2'
