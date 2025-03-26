@@ -65,7 +65,7 @@ jobs:
         working-directory: ./e2e-tests
       # pnpm run build しない
       - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
-      - run: pnpm exec playwright test --project=${{ matrix.browser.name }}
+      - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}_${{ matrix.sdk_version }}
       # - uses: actions/upload-artifact@v4
