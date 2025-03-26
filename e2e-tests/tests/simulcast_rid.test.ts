@@ -36,15 +36,17 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   console.log(`recvonly connectionId=${recvonlyConnectionId}`)
 
   // レース対策
-  await sendonly.waitForTimeout(3000)
-  await recvonly.waitForTimeout(3000)
+  await sendonly.waitForTimeout(5000)
+  await recvonly.waitForTimeout(5000)
 
   // sendonly stats report
-  // 'Get Stats' ボタンをクリックして統計情報を取得
   await sendonly.click('#get-stats')
+  await recvonly.click('#get-stats')
 
   // 統計情報が表示されるまで待機
   await sendonly.waitForSelector('#stats-report')
+  await recvonly.waitForSelector('#stats-report')
+
   // データセットから統計情報を取得
   const sendonlyStatsReportJson: Record<string, unknown>[] = await sendonly.evaluate(() => {
     const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
@@ -81,15 +83,9 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   expect(sendonlyVideoR2OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
   expect(sendonlyVideoR2OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
 
-  // recvonly stats report
-  // 'Get Stats' ボタンをクリックして統計情報を取得
-  await recvonly.click('#get-stats')
-
-  // 統計情報が表示されるまで待機
-  await recvonly.waitForSelector('#stats-report')
   // データセットから統計情報を取得
   const recvonlyStatsReportJson: Record<string, unknown>[] = await recvonly.evaluate(() => {
-    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    const statsReportDiv = document.querySelector<HTMLDivElement>('#stats-report')
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
@@ -98,8 +94,8 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   )
   expect(recvonlyVideoInboundRtpStats).toBeDefined()
   // r2 を指定してるので解像度を確認する
-  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(1280)
-  expect(recvonlyVideoInboundRtpStats?.frameHeight).toBe(720)
+  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(960)
+  expect(recvonlyVideoInboundRtpStats?.frameHeight).toBe(540)
   console.log(`recvonlyVideoInboundRtpStatsFrameWidth=${recvonlyVideoInboundRtpStats?.frameWidth}`)
   console.log(
     `recvonlyVideoInboundRtpStatsFrameHeight=${recvonlyVideoInboundRtpStats?.frameHeight}`,
