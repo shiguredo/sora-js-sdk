@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
 
     // channel_name を取得
-    const channelName = document.querySelector('#channel-name') as HTMLInputElement
+    const channelName = document.querySelector<HTMLInputElement>('#channel-name')
     if (!channelName) {
       throw new Error('Channel name input element not found')
     }
