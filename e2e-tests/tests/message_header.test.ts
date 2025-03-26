@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { isVersionGreaterThanOrEqual } from './helper'
 
@@ -22,9 +23,12 @@ test('messaging pages with header', async ({ browser }) => {
     'sora-js-sdk のバージョンが 2024.2.0 以上である必要があります',
   )
 
-  // チャネル名を設定する
-  await page1.fill('input[name="channel-name"]', 'message-header')
-  await page2.fill('input[name="channel-name"]', 'message-header')
+  // チャンネル名を uuid 文字列にする
+  const channelName = randomUUID()
+
+  // チャンネル名を設定
+  await page1.fill('#channel-name', channelName)
+  await page2.fill('#channel-name', channelName)
 
   // header を有効にする
   await page1.check('#check-header')

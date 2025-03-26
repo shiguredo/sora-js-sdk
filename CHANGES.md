@@ -19,12 +19,26 @@
   - @voluntas
 - [FIX] `signalingUrlCandidates` が `[]` の場合はエラーにする
   - @voluntas
+- [FIX] `iceTransportPolicy` が `all` の場合のみ `onIceCandidate` を実行するようにする
+  - `iceTransportPolicy` が `relay` の場合は常に TURN を経由するため `onIceCandidate` は不要
+  - @voluntas
 
 ### misc
 
 - [UPDATE] `*.spec.ts` を `*.test.ts` に変更する
   - @voluntas
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
+  - @voluntas
+- [ADD] Playwright で Chrome / Edge をインストールして E2E テストできるようにする
+  - Chrome は stable / beta
+  - Edge は stable / beta / dev
+  - @voluntas
+- [ADD] Playwright で macOS 上に Chrome と Edge Canary のテストを追加する
+  - Playwright でのインストールだと Canary は利用できないため Brew でインストールしている
+  - @voluntas
+- [ADD] Chrome で H.265 の E2E テストを追加する
+  - e2e-test-h265.yml で独立させている
+  - self-hosted runner の macOS を利用して h265.test.ts のみをテストしている
   - @voluntas
 - [ADD] simulcast_sendonly / simulcast_recvonly を使った simulcast_rid のテストを追加する
   - @voluntas

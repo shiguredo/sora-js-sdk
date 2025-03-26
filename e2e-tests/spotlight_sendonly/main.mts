@@ -10,10 +10,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
+  let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+
+    // channel_name を取得
+    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
+    if (!channelName) {
+      console.error('channel_name is required')
+      return
+    }
+
+    client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey, channelName)
     await client.connect(stream)
   })
 
@@ -36,6 +45,7 @@ class SoraClient {
     channelIdPrefix: string,
     channelIdSuffix: string,
     secretKey: string,
+    channelName: string,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
 
@@ -46,7 +56,7 @@ class SoraClient {
     }
 
     // channel_id の生成
-    this.channelId = `${channelIdPrefix}spotlight_sendonly_recvonly${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
     // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey }
 
