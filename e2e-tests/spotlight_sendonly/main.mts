@@ -10,10 +10,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
+  let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
     await client.connect(stream)
   })
 

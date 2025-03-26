@@ -1,5 +1,5 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
-
 test('sendrecv x2', async ({ browser }) => {
   const sendrecv1 = await browser.newPage()
   const sendrecv2 = await browser.newPage()
@@ -7,12 +7,14 @@ test('sendrecv x2', async ({ browser }) => {
   await sendrecv1.goto('http://localhost:9000/sendrecv/')
   await sendrecv2.goto('http://localhost:9000/sendrecv/')
 
-  // チャンネル名を設定
-  await sendrecv1.fill('#channel-name', 'sendrecv-different-video-codec-type')
-  await sendrecv2.fill('#channel-name', 'sendrecv-different-video-codec-type')
+  const channelName = randomUUID()
 
-  console.log('sendrecv1 channelName: sendrecv-different-video-codec-type')
-  console.log('sendrecv2 channelName: sendrecv-different-video-codec-type')
+  // チャンネル名を設定
+  await sendrecv1.fill('#channel-name', channelName)
+  await sendrecv2.fill('#channel-name', channelName)
+
+  console.log(`sendrecv1 channelName: ${channelName}`)
+  console.log(`sendrecv2 channelName: ${channelName}`)
 
   // sendrecv1 のビデオコーデックをランダムに選択
   await sendrecv1.evaluate(() => {

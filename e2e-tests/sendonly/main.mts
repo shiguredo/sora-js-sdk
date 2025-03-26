@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  let client: SoraClient | undefined = undefined
+  let client: SoraClient
 
   // SDK バージョンの表示
   const sdkVersionElement = document.querySelector('#sdk-version')
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       video: true,
     })
 
+    // channel_name を取得
     const channelName = document.querySelector('#channel-name') as HTMLInputElement
     if (!channelName) {
       throw new Error('Channel name input element not found')

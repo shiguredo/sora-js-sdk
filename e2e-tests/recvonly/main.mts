@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   // Sora クライアントの初期化
-  let client: SoraClient | undefined = undefined
+  let client: SoraClient
 
   // SDK バージョンの表示
   const sdkVersionElement = document.querySelector('#sdk-version')
