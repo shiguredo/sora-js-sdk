@@ -20,53 +20,16 @@ export default class ConnectionPublisher extends ConnectionBase {
    */
   async connect(stream: MediaStream): Promise<MediaStream> {
     // options.multistream が明示的に false を指定した時だけレガシーストリームにする
-    if (this.options.multistream === false) {
-      await Promise.race([
-        this.legacyStream(stream).finally(() => {
-          this.clearConnectionTimeout()
-          this.clearMonitorSignalingWebSocketEvent()
-        }),
-        this.setConnectionTimeout(),
-        this.monitorSignalingWebSocketEvent(),
-      ])
-    } else {
-      await Promise.race([
-        this.multiStream(stream).finally(() => {
-          this.clearConnectionTimeout()
-          this.clearMonitorSignalingWebSocketEvent()
-        }),
-        this.setConnectionTimeout(),
-        this.monitorSignalingWebSocketEvent(),
-      ])
-    }
+    await Promise.race([
+      this.multiStream(stream).finally(() => {
+        this.clearConnectionTimeout()
+        this.clearMonitorSignalingWebSocketEvent()
+      }),
+      this.setConnectionTimeout(),
+      this.monitorSignalingWebSocketEvent(),
+    ])
     this.monitorWebSocketEvent()
     this.monitorPeerConnectionState()
-    return stream
-  }
-
-  /**
-   * レガシーストリームで Sora へ接続するメソッド
-   *
-   * @deprecated この関数は非推奨です、マルチストリームを利用してください。
-   *
-   * @param stream - メディアストリーム
-   */
-  private async legacyStream(stream: MediaStream): Promise<MediaStream> {
-    await this.disconnect()
-    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)
-    const signalingMessage = await this.signaling(ws)
-    await this.connectPeerConnection(signalingMessage)
-    await this.setRemoteDescription(signalingMessage)
-    stream.getTracks().filter((track) => {
-      if (this.pc) {
-        this.pc.addTrack(track, stream)
-      }
-    })
-    this.stream = stream
-    await this.createAnswer(signalingMessage)
-    this.sendAnswer()
-    await this.onIceCandidate()
-    await this.waitChangeConnectionStateConnected()
     return stream
   }
 

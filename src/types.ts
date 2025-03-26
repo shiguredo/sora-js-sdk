@@ -89,7 +89,6 @@ export type SignalingConnectMessage = {
   bundle_id?: string
   metadata?: JSONType
   signaling_notify_metadata?: JSONType
-  multistream?: boolean
   spotlight?: boolean
   spotlight_number?: number
   simulcast?: Simulcast
@@ -135,7 +134,6 @@ export type SignalingOfferMessage = {
   type: typeof SIGNALING_MESSAGE_TYPE_OFFER
   sdp: string
 
-  multistream: boolean
   simulcast: boolean
   simulcast_multicodec: boolean
   spotlight: boolean
@@ -376,7 +374,6 @@ export type ConnectionOptions = {
   videoH264Params?: JSONType
   videoH265Params?: JSONType
   videoAV1Params?: JSONType
-  multistream?: boolean
   spotlight?: boolean
   spotlightNumber?: number
   spotlightFocusRid?: SpotlightFocusRid

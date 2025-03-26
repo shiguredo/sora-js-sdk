@@ -41,11 +41,10 @@ test('createSignalingMessage simple recvonly', () => {
 test('createSignalingMessage simple sendrecv', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     role: 'sendrecv',
-    multistream: true,
   })
-  expect(
-    createSignalingMessage(sdp, 'sendrecv', channelId, undefined, { multistream: true }, false),
-  ).toEqual(expectedMessage)
+  expect(createSignalingMessage(sdp, 'sendrecv', channelId, undefined, {}, false)).toEqual(
+    expectedMessage,
+  )
 })
 
 test('createSignalingMessage sendrecv and undefined multistream', () => {
@@ -61,16 +60,6 @@ test('createSignalingMessage invalid role', () => {
   expect(() => {
     createSignalingMessage(sdp, 'test', channelId, metadata, {}, false)
   }).toThrow(Error('Unknown role type'))
-})
-
-test('createSignalingMessage sendrecv and multistream: false', () => {
-  expect(() => {
-    createSignalingMessage(sdp, 'sendrecv', channelId, metadata, { multistream: false }, false)
-  }).toThrow(
-    Error(
-      "Failed to parse options. Options multistream must be true when connecting using 'sendrecv'",
-    ),
-  )
 })
 
 /**
@@ -140,29 +129,10 @@ test('createSignalingMessage clientId: undefined', () => {
 /**
  * multistream test
  */
-test('createSignalingMessage multistream: true', () => {
-  const options = { multistream: true }
-  const expectedMessage = Object.assign({}, baseExpectedMessage, {
-    multistream: options.multistream,
-  })
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
-})
 
 test('createSignalingMessage undefined multistream', () => {
   const options = {}
   const expectedMessage = Object.assign({}, baseExpectedMessage, {})
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
-})
-
-test('createSignalingMessage multistream: false', () => {
-  const options = { multistream: false }
-  const expectedMessage = Object.assign({}, baseExpectedMessage, {
-    multistream: options.multistream,
-  })
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     expectedMessage,
   )
