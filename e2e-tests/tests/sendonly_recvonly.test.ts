@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test('sendonly/recvonly pages', async ({ browser }) => {
@@ -18,20 +19,26 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   const recvonlySdkVersion = await recvonly.$eval('#sdk-version', (el) => el.textContent)
   console.log(`recvonly sdkVersion=${recvonlySdkVersion}`)
 
+  const channelName = randomUUID()
+
+  // チャンネル名を設定
+  await sendonly.fill('#channel-name', channelName)
+  await recvonly.fill('#channel-name', channelName)
+
   await sendonly.click('#connect')
   await recvonly.click('#connect')
 
-  // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
+  // sendonly の #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await sendonly.waitForSelector('#connection-id:not(:empty)')
 
-  // #sendonly-connection-id 要素の内容を取得
+  // sendonly の #connection-id 要素の内容を取得
   const sendonlyConnectionId = await sendonly.$eval('#connection-id', (el) => el.textContent)
   console.log(`sendonly connectionId=${sendonlyConnectionId}`)
 
-  // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
+  // recvonly の #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await recvonly.waitForSelector('#connection-id:not(:empty)')
 
-  // #sendrecv1-connection-id 要素の内容を取得
+  // recvonly の #connection-id 要素の内容を取得
   const recvonlyConnectionId = await recvonly.$eval('#connection-id', (el) => el.textContent)
   console.log(`recvonly connectionId=${recvonlyConnectionId}`)
 

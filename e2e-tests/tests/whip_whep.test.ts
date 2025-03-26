@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test('whip/whep', async ({ browser }) => {
@@ -24,6 +25,13 @@ test('whip/whep', async ({ browser }) => {
     return videoElement.value
   })
   console.log(`whepVideoCodecType=${whepVideoCodecType}`)
+
+  // チャンネル名を uuid 文字列にする
+  const channelName = randomUUID()
+
+  // チャンネル名を設定
+  await whip.fill('#channel-name', channelName)
+  await whep.fill('#channel-name', channelName)
 
   await whip.click('#connect')
   await whep.click('#connect')
