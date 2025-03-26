@@ -35,7 +35,7 @@ jobs:
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
     runs-on:
       group: Self
-      labels: [self-hosted, self-hosted, macOS, ARM64, Apple-M2-Pro]
+      labels: [self-hosted, macOS, ARM64, Apple-M2-Pro]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
