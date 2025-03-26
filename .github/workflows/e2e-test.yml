@@ -22,23 +22,18 @@ jobs:
           # - "22"
           # - "23"
         browser:
-          # - name: "Google Chrome"
-          #   type: "chrome"
-          # - name: "Google Chrome Beta"
-          #   type: "chrome-beta"
-          - name: "Google Chrome Dev"
-            type: "chrome-dev"
-          # linux では利用できない
-          # - name: "Google Chrome Canary"
-          #   type: "chrome-canary"
-          # - name: "Microsoft Edge"
-          #   type: "msedge"
-          # - name: "Microsoft Edge Beta"
-          #   type: "msedge-beta"
+          - name: "Chromium"
+            type: "chromium"
+          - name: "Google Chrome"
+            type: "chrome"
+          - name: "Google Chrome Beta"
+            type: "chrome-beta"
+          - name: "Microsoft Edge"
+            type: "msedge"
+          - name: "Microsoft Edge Beta"
+            type: "msedge-beta"
           - name: "Microsoft Edge Dev"
             type: "msedge-dev"
-          - name: "Microsoft Edge Canary"
-            type: "msedge-canary"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}

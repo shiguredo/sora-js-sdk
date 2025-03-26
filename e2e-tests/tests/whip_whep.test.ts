@@ -17,6 +17,11 @@ for (const videoCodecType of ['AV1', 'H264']) {
     )
 
     test.skip(
+      test.info().project.name.includes('Chromium') && videoCodecType.startsWith('H'),
+      'Chromium の場合は H264/H265 のテストはスキップする',
+    )
+
+    test.skip(
       process.env.NPM_PKG_E2E_TEST === 'true',
       'NPM パッケージの E2E テストでは WHIP/WHEP 関連のテストはスキップする',
     )
