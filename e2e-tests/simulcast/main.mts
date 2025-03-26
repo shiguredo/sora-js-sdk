@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // sendonly
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { width: { exact: 1280 }, height: { exact: 720 } },
+      video: { width: { exact: 960 }, height: { exact: 540 } },
     })
 
     // channel name 取得
@@ -133,7 +133,7 @@ class SimulcastSendonlySoraClient {
     this.connection = this.sora.sendonly(
       this.channelId,
       { access_token: secretKey },
-      { audio: false, video: true, videoCodecType: 'VP8', videoBitRate: 2500, simulcast: true },
+      { audio: false, video: true, videoCodecType: 'VP8', videoBitRate: 1500, simulcast: true },
     )
 
     this.connection.on('notify', this.onnotify.bind(this))
