@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 
 test('H265', async ({ browser }) => {
   test.skip(
-    process.env.RUNNER_ENVIRONMENT === 'self-hosted' && process.platform !== 'darwin',
+    process.env.RUNNER_ENVIRONMENT !== 'self-hosted' && process.platform !== 'darwin',
     'H265 は Self-hosted の macOS でのみテストを行う',
   )
 
