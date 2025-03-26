@@ -4,6 +4,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: 'e2e-tests/tests',
+  workers: 1,
   // fullyParallel: true,
   reporter: 'html',
   use: {

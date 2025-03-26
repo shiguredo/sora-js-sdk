@@ -81,10 +81,22 @@ test('sendrecv x2', async ({ browser }) => {
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
+  const sendrecv1AudioCodecStats = sendrecv1StatsReportJson.find(
+    (stats) => stats.type === 'codec' && stats.mimeType === 'audio/opus',
+  )
+  expect(sendrecv1AudioCodecStats).toBeDefined()
+
   const sendrecv1VideoCodecStats = sendrecv1StatsReportJson.find(
     (stats) => stats.type === 'codec' && stats.mimeType === `video/${sendrecv1VideoCodecType}`,
   )
   expect(sendrecv1VideoCodecStats).toBeDefined()
+
+  const sendrecv1AudioOutboundRtpStats = sendrecv1StatsReportJson.find(
+    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'audio',
+  )
+  expect(sendrecv1AudioOutboundRtpStats).toBeDefined()
+  expect(sendrecv1AudioOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(sendrecv1AudioOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
 
   const sendrecv1VideoOutboundRtpStats = sendrecv1StatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video',
@@ -92,6 +104,13 @@ test('sendrecv x2', async ({ browser }) => {
   expect(sendrecv1VideoOutboundRtpStats).toBeDefined()
   expect(sendrecv1VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendrecv1VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+
+  const sendrecv1AudioInboundRtpStats = sendrecv1StatsReportJson.find(
+    (stats) => stats.type === 'inbound-rtp' && stats.kind === 'audio',
+  )
+  expect(sendrecv1AudioInboundRtpStats).toBeDefined()
+  expect(sendrecv1AudioInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
+  expect(sendrecv1AudioInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
 
   const sendrecv1VideoInboundRtpStats = sendrecv1StatsReportJson.find(
     (stats) => stats.type === 'inbound-rtp' && stats.kind === 'video',
@@ -106,10 +125,22 @@ test('sendrecv x2', async ({ browser }) => {
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
+  const sendrecv2AudioCodecStats = sendrecv2StatsReportJson.find(
+    (stats) => stats.type === 'codec' && stats.mimeType === 'audio/opus',
+  )
+  expect(sendrecv2AudioCodecStats).toBeDefined()
+
   const sendrecv2VideoCodecStats = sendrecv2StatsReportJson.find(
     (stats) => stats.type === 'codec' && stats.mimeType === `video/${sendrecv2VideoCodecType}`,
   )
   expect(sendrecv2VideoCodecStats).toBeDefined()
+
+  const sendrecv2AudioOutboundRtpStats = sendrecv2StatsReportJson.find(
+    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'audio',
+  )
+  expect(sendrecv2AudioOutboundRtpStats).toBeDefined()
+  expect(sendrecv2AudioOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
+  expect(sendrecv2AudioOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
 
   const sendrecv2VideoOutboundRtpStats = sendrecv2StatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video',
@@ -117,6 +148,13 @@ test('sendrecv x2', async ({ browser }) => {
   expect(sendrecv2VideoOutboundRtpStats).toBeDefined()
   expect(sendrecv2VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendrecv2VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0)
+
+  const sendrecv2AudioInboundRtpStats = sendrecv2StatsReportJson.find(
+    (stats) => stats.type === 'inbound-rtp' && stats.kind === 'audio',
+  )
+  expect(sendrecv2AudioInboundRtpStats).toBeDefined()
+  expect(sendrecv2AudioInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
+  expect(sendrecv2AudioInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
 
   const sendrecv2VideoInboundRtpStats = sendrecv2StatsReportJson.find(
     (stats) => stats.type === 'inbound-rtp' && stats.kind === 'video',
