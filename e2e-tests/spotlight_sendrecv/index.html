@@ -9,26 +9,23 @@
 <body>
   <div class="container">
     <h1>Spotlight Sendrecv test</h1>
+    <label for="channel-name">チャンネル名:</label>
+    <input type="text" id="channel-name" name="channel-name" value="spotlight"><br>
+
+    <button id="connect">connect</button>
+    <button id="disconnect">disconnect</button><br />
+    <button id="get-stats">getStats</button><br />
+
+    <video id="local-video" autoplay="" playsinline="" controls=""
+      style="width: 320px; height: 240px; border: 1px solid black;"></video>
+    <div id="connection-id"></div>
     <div style="display: flex;">
-      <div>
-        <h2>sendrecv1</h2>
-        <button id="sendrecv1-connect">connect</button>
-        <button id="sendrecv1-disconnect">disconnect</button><br />
-        <video id="sendrecv1-local-video" autoplay="" playsinline="" controls=""
-          style="width: 320px; height: 240px; border: 1px solid black;"></video>
-        <div id="sendrecv1-connection-id"></div>
-        <div id="sendrecv1-remote-videos"></div>
-      </div>
-      <div>
-        <h2>sendrecv2</h2>
-        <button id="sendrecv2-connect">connect</button>
-        <button id="sendrecv2-disconnect">disconnect</button><br />
-        <video id="sendrecv2-local-video" autoplay="" playsinline="" controls=""
-          style="width: 320px; height: 240px; border: 1px solid black;"></video>
-        <div id="sendrecv2-connection-id"></div>
-        <div id="sendrecv2-remote-videos"></div>
-      </div>
+      <div id="remote-videos"></div>
     </div>
+
+    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+    <div id="stats-report-json"></div>
+
   </div>
 
   <script type="module" src="./main.mts"></script>
