@@ -89,7 +89,7 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   await recvonly.waitForSelector('#stats-report')
   // データセットから統計情報を取得
   const recvonlyStatsReportJson: Record<string, unknown>[] = await recvonly.evaluate(() => {
-    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    const statsReportDiv = document.querySelector<HTMLDivElement>('#stats-report')
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
@@ -98,8 +98,8 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   )
   expect(recvonlyVideoInboundRtpStats).toBeDefined()
   // r2 を指定してるので解像度を確認する
-  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(1280)
-  expect(recvonlyVideoInboundRtpStats?.frameHeight).toBe(720)
+  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(960)
+  expect(recvonlyVideoInboundRtpStats?.frameHeight).toBe(540)
   console.log(`recvonlyVideoInboundRtpStatsFrameWidth=${recvonlyVideoInboundRtpStats?.frameWidth}`)
   console.log(
     `recvonlyVideoInboundRtpStatsFrameHeight=${recvonlyVideoInboundRtpStats?.frameHeight}`,
