@@ -10,6 +10,12 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   await sendonly.goto('http://localhost:9000/sendonly/')
   await recvonly.goto('http://localhost:9000/recvonly/')
 
+  const channelName = randomUUID()
+
+  // チャンネル名を設定
+  await sendonly.fill('#channel-name', channelName)
+  await recvonly.fill('#channel-name', channelName)
+
   // SDK バージョンの表示
   await sendonly.waitForSelector('#sdk-version')
   const sendonlySdkVersion = await sendonly.$eval('#sdk-version', (el) => el.textContent)
@@ -18,12 +24,6 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   await recvonly.waitForSelector('#sdk-version')
   const recvonlySdkVersion = await recvonly.$eval('#sdk-version', (el) => el.textContent)
   console.log(`recvonly sdkVersion=${recvonlySdkVersion}`)
-
-  const channelName = randomUUID()
-
-  // チャンネル名を設定
-  await sendonly.fill('#channel-name', channelName)
-  await recvonly.fill('#channel-name', channelName)
 
   await sendonly.click('#connect')
   await recvonly.click('#connect')
@@ -43,8 +43,8 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   console.log(`recvonly connectionId=${recvonlyConnectionId}`)
 
   // レース対策
-  await sendonly.waitForTimeout(5000)
-  await recvonly.waitForTimeout(5000)
+  await sendonly.waitForTimeout(3000)
+  await recvonly.waitForTimeout(3000)
 
   // 'Get Stats' ボタンをクリックして統計情報を取得
   await sendonly.click('#get-stats')

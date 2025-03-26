@@ -12,17 +12,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  const recvonly = new SimulcastRecvonlySoraClient(
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-  )
+  let recvonly: SimulcastRecvonlySoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const simulcastRidElement = document.querySelector<HTMLSelectElement>('#simulcast-rid')
     const simulcastRid =
       simulcastRidElement?.value === '' ? undefined : (simulcastRidElement?.value as SimulcastRid)
+
+    // channel_name を取得
+    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
+    if (!channelName) {
+      console.error('channel_name is required')
+      return
+    }
+
+    recvonly = new SimulcastRecvonlySoraClient(
+      signalingUrl,
+      channelIdPrefix,
+      channelIdSuffix,
+      secretKey,
+      channelName,
+    )
 
     await recvonly.connect(simulcastRid)
   })
@@ -71,8 +81,9 @@ class SimulcastRecvonlySoraClient {
     channelIdPrefix: string,
     channelIdSuffix: string,
     secretKey: string,
+    channelName: string,
   ) {
-    this.channelId = `${channelIdPrefix}simulcast_rid${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
 
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.connection = this.sora.recvonly(

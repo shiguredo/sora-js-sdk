@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test'
+import { randomUUID } from 'node:crypto'
 
 test('simulcast sendonly/recvonly pages', async ({ page }) => {
   await page.goto('http://localhost:9000/simulcast/')
+
+  const channelName = randomUUID()
+
+  await page.fill('#channel-name', channelName)
 
   await page.click('#connect')
 

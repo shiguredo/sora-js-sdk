@@ -10,45 +10,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  const sendrecv1 = new SoraClient(
-    'sendrecv1',
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-  )
+  let sendrecv: SoraClient
 
-  const sendrecv2 = new SoraClient(
-    'sendrecv2',
-    signalingUrl,
-    channelIdPrefix,
-    channelIdSuffix,
-    secretKey,
-  )
-
-  document.querySelector('#sendrecv1-connect')?.addEventListener('click', async () => {
-    // sendrecv1
+  document.querySelector('#connect')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    await sendrecv1.connect(stream)
-  })
-  document.querySelector('#sendrecv1-disconnect')?.addEventListener('click', async () => {
-    await sendrecv1.disconnect()
-  })
 
-  document.querySelector('#sendrecv2-connect')?.addEventListener('click', async () => {
-    // sendrecv2
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    await sendrecv2.connect(stream)
+    // channelName を取得
+    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
+    if (!channelName) {
+      throw new Error('channelName is empty')
+    }
+
+    sendrecv = new SoraClient(
+      signalingUrl,
+      channelIdPrefix,
+      channelIdSuffix,
+      secretKey,
+      channelName,
+    )
+
+    await sendrecv.connect(stream)
   })
-  document.querySelector('#sendrecv2-disconnect')?.addEventListener('click', async () => {
-    await sendrecv2.disconnect()
+  document.querySelector('#disconnect')?.addEventListener('click', async () => {
+    await sendrecv.disconnect()
   })
 })
 
 class SoraClient {
-  // sendrecv1 or sendrecv2
-  private label: string
-
   private debug = false
 
   private channelId: string
@@ -59,16 +47,14 @@ class SoraClient {
   private connection: ConnectionPublisher
 
   constructor(
-    label: string,
     signalingUrl: string,
     channelIdPrefix: string,
     channelIdSuffix: string,
     secretKey: string,
+    channelName: string,
   ) {
-    this.label = label
-
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}spotlight_sendrecv${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
     this.metadata = { access_token: secretKey }
     this.options = {
       audio: true,
@@ -87,7 +73,7 @@ class SoraClient {
 
   async connect(stream: MediaStream) {
     await this.connection.connect(stream)
-    const localVideo = document.querySelector<HTMLVideoElement>(`#${this.label}-local-video`)
+    const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
     if (localVideo) {
       localVideo.srcObject = stream
     }
@@ -97,12 +83,12 @@ class SoraClient {
     await this.connection.disconnect()
 
     // お掃除
-    const localVideo = document.querySelector<HTMLVideoElement>(`#${this.label}-local-video`)
+    const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
     if (localVideo) {
       localVideo.srcObject = null
     }
     // お掃除
-    const remoteVideos = document.querySelector(`#${this.label}-remote-videos`)
+    const remoteVideos = document.querySelector<HTMLDivElement>('#remote-videos')
     if (remoteVideos) {
       remoteVideos.innerHTML = ''
     }
@@ -113,7 +99,7 @@ class SoraClient {
       event.event_type === 'connection.created' &&
       this.connection.connectionId === event.connection_id
     ) {
-      const connectionIdElement = document.querySelector(`#${this.label}-connection-id`)
+      const connectionIdElement = document.querySelector('#connection-id')
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
       }
@@ -122,8 +108,8 @@ class SoraClient {
 
   private ontrack(event: RTCTrackEvent): void {
     const stream = event.streams[0]
-    const remoteVideoId = `${this.label}-remote-video-${stream.id}`
-    const remoteVideos = document.querySelector(`#${this.label}-remote-videos`)
+    const remoteVideoId = `remote-video-${stream.id}`
+    const remoteVideos = document.querySelector<HTMLDivElement>('#remote-videos')
     if (remoteVideos && !remoteVideos.querySelector(`#${remoteVideoId}`)) {
       const remoteVideo = document.createElement('video')
       remoteVideo.id = remoteVideoId
@@ -140,9 +126,9 @@ class SoraClient {
 
   private onremovetrack(event: MediaStreamTrackEvent): void {
     const target = event.target as MediaStream
-    const remoteVideo = document.querySelector(`#${this.label}-remote-video-${target.id}`)
+    const remoteVideo = document.querySelector(`#remote-video-${target.id}`)
     if (remoteVideo) {
-      document.querySelector(`#${this.label}-remote-videos`)?.removeChild(remoteVideo)
+      document.querySelector<HTMLDivElement>('#remote-videos')?.removeChild(remoteVideo)
     }
   }
 }
