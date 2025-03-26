@@ -79,7 +79,6 @@ jobs:
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build
-      - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
       - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
         env:
           PLAYWRIGHT_BROWSERS_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
