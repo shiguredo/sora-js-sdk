@@ -1,4 +1,5 @@
 import { SignJWT } from 'jose'
+import type { VideoCodecType } from 'sora-js-sdk'
 
 export const generateJwt = async (
   channelId: string,
@@ -20,37 +21,20 @@ export const generateJwt = async (
   )
 }
 
-export const generateChannelId = (): string => {
-  // qs を確認する
-  const urlParams = new URLSearchParams(window.location.search)
-  const qsChannelId = urlParams.get('channelId') || ''
-  const qsChannelIdPrefix = urlParams.get('channelIdPrefix') || ''
-  const qsChannelIdSuffix = urlParams.get('channelIdSuffix') || ''
-
-  // qs が指定されていればその値を優先するようにする
-  const channelId = qsChannelId || import.meta.env.VITE_SORA_CHANNEL_ID || ''
-  const channelIdPrefix = qsChannelIdPrefix || import.meta.env.VITE_SORA_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = qsChannelIdSuffix || import.meta.env.VITE_SORA_CHANNEL_ID_SUFFIX || ''
-
-  // 環境変数の channelId が指定されていない場合はエラー
-  if (!channelId) {
-    throw new Error('VITE_SORA_CHANNEL_ID is not set')
+export const getChannelName = (): string => {
+  const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
+  const channelName = channelNameElement?.value
+  if (channelName === '' || channelName === undefined) {
+    throw new Error('channelName is empty')
   }
+  return channelName
+}
 
-  // channelIdPrefix と channelIdSuffix が指定されている場合はそれを利用する
-  if (channelIdPrefix && channelIdSuffix) {
-    return `${channelIdPrefix}${channelId}${channelIdSuffix}`
+export const getVideoCodecType = (): VideoCodecType | undefined => {
+  const videoCodecTypeElement = document.querySelector<HTMLSelectElement>('#video-codec-type')
+  const videoCodecType = videoCodecTypeElement?.value
+  if (videoCodecType === '') {
+    return undefined
   }
-
-  // channelIdPrefix が指定されている場合はそれを利用する
-  if (channelIdPrefix) {
-    return `${channelIdPrefix}${channelId}`
-  }
-
-  // channelIdSuffix が指定されている場合はそれを利用する
-  if (channelIdSuffix) {
-    return `${channelId}${channelIdSuffix}`
-  }
-
-  return channelId
+  return videoCodecType as VideoCodecType
 }

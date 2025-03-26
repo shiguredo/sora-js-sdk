@@ -12,9 +12,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   // Sora クライアントの初期化
-  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
+  let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
+    // channel_name を取得
+    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
+    if (!channelName) {
+      console.error('channel_name is required')
+      return
+    }
+
+    client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey, channelName)
     await client.connect()
   })
 
@@ -37,6 +45,7 @@ class SoraClient {
     channelIdPrefix: string,
     channelIdSuffix: string,
     secretKey: string,
+    channelName: string,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
 
@@ -47,7 +56,7 @@ class SoraClient {
     }
 
     // channel_id の生成
-    this.channelId = `${channelIdPrefix}spotlight_recvonly${channelIdSuffix}`
+    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
     // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey }
 

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { isVersionGreaterThanOrEqual } from './helper'
 
@@ -22,6 +23,13 @@ test('messaging pages', async ({ browser }) => {
     !isVersionGreaterThanOrEqual(page1SoraJsSdkVersion, '2024.2.0'),
     'sora-js-sdk のバージョンが 2024.2.0 以上である必要があります',
   )
+
+  // チャンネル名を uuid 文字列にする
+  const channelName = randomUUID()
+
+  // チャンネル名を設定
+  await page1.fill('#channel-name', channelName)
+  await page2.fill('#channel-name', channelName)
 
   // Compress のTrue/Falseをランダムで設定する
   const selectedCompress1 = await page1.evaluate(() => {

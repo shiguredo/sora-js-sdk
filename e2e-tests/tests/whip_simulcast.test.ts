@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test('whip-simulcast', async ({ browser }) => {
@@ -21,6 +22,10 @@ test('whip-simulcast', async ({ browser }) => {
   if (whipVideoCodecType !== 'AV1') {
     throw new Error('whipVideoCodecType is not AV1')
   }
+
+  const channelName = randomUUID()
+
+  await whip.fill('#channel-name', channelName)
 
   await whip.click('#connect')
 

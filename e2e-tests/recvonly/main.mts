@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   // Sora クライアントの初期化
-  const client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey)
+  let client: SoraClient
 
   // SDK バージョンの表示
   const sdkVersionElement = document.querySelector('#sdk-version')
@@ -21,14 +21,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
+    if (client) {
+      await client.disconnect()
+    }
+
+    // channelName を取得
+    const channelName = document.querySelector('#channel-name') as HTMLInputElement
+    if (!channelName) {
+      throw new Error('Channel name input element not found')
+    }
+
+    client = new SoraClient(
+      signalingUrl,
+      channelIdPrefix,
+      channelIdSuffix,
+      secretKey,
+      channelName.value,
+    )
+
     await client.connect()
   })
 
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
+    if (!client) {
+      return
+    }
+
     await client.disconnect()
   })
 
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
+    if (!client) {
+      return
+    }
+
     const statsReport = await client.getStats()
     const statsDiv = document.querySelector('#stats-report') as HTMLElement
     const statsReportJsonDiv = document.querySelector('#stats-report-json')
@@ -64,17 +90,18 @@ class SoraClient {
   private connection: ConnectionSubscriber
 
   constructor(
-    signaling_url: string,
-    channel_id_prefix: string,
-    channel_id_suffix: string,
-    access_token: string,
+    signalingUrl: string,
+    channelIdPrefix: string,
+    channelIdSuffix: string,
+    secretKey: string,
+    channelName: string,
   ) {
-    this.sora = Sora.connection(signaling_url, this.debug)
+    this.sora = Sora.connection(signalingUrl, this.debug)
 
     // channel_id の生成
-    this.channelId = `${channel_id_prefix}sendonly_recvonly${channel_id_suffix}`
+    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
     // access_token を指定する metadata の生成
-    this.metadata = { access_token: access_token }
+    this.metadata = { access_token: secretKey }
 
     this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onnotify.bind(this))
@@ -117,7 +144,7 @@ class SoraClient {
   private ontrack(event: RTCTrackEvent) {
     // Sora の場合、event.streams には MediaStream が 1 つだけ含まれる
     const stream = event.streams[0]
-    const remoteVideoId = `remotevideo-${stream.id}`
+    const remoteVideoId = `remote-video-${stream.id}`
     const remoteVideos = document.querySelector<HTMLDivElement>('#remote-videos')
     if (remoteVideos && !remoteVideos.querySelector(`#${remoteVideoId}`)) {
       const remoteVideo = document.createElement('video')
@@ -134,7 +161,7 @@ class SoraClient {
   private onremovetrack(event: MediaStreamTrackEvent) {
     // このトラックが属している MediaStream の id を取得する
     const stream = event.target as MediaStream
-    const remoteVideo = document.querySelector(`#remotevideo-${stream.id}`)
+    const remoteVideo = document.querySelector(`#remote-video-${stream.id}`)
     if (remoteVideo) {
       document.querySelector('#remote-videos')?.removeChild(remoteVideo)
     }
