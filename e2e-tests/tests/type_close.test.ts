@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 // Sora API を利用するので要注意
@@ -25,6 +26,9 @@ test('data_channel_signaling_only type:close pages', async ({ browser }) => {
     (el) => el.textContent,
   )
   console.log(`dataChannelSignalingOnly sdkVersion=${dataChannelSignalingOnlySdkVersion}`)
+
+  const channelName = randomUUID()
+  await dataChannelSignalingOnly.fill('#channel-name', channelName)
 
   await dataChannelSignalingOnly.click('#connect')
 

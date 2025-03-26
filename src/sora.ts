@@ -167,7 +167,6 @@ class SoraConnection {
   ): ConnectionMessaging {
     options.audio = false
     options.video = false
-    options.multistream = true
     options.dataChannelSignaling = true
     return new ConnectionMessaging(
       this.signalingUrlCandidates,

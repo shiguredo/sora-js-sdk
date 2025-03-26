@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] レガシーストリーム `multistream: false` を廃止に伴い `multistream` オプションを削除する
+  - @voluntas
+- [CHANGE] レガシーストリーム `multistream: false` を廃止する
+  - @voluntas
 - [UPDATE] pnpm 10 系に上げる
   - @voluntas
 - [UPDATE] `iceTransportPolicy` が `all` の時だけ `onIceCandidate` を呼ぶようにする
