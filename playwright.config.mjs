@@ -43,14 +43,7 @@ export default defineConfig({
     },
     {
       name: 'Google Chrome Canary',
-      use: {
-        ...devices['Desktop Chrome'],
-        channel: 'chrome-canary',
-        launchOptions: {
-          executablePath:
-            '/Users/runner/hostedtoolcache/setup-chrome/chromium/canary/arm64/Contents/MacOS/chrome',
-        },
-      },
+      use: { ...devices['Desktop Chrome'], channel: 'chrome-canary' },
     },
 
     // Edge
