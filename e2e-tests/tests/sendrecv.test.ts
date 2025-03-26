@@ -69,9 +69,12 @@ test('sendrecv x2', async ({ browser }) => {
 
   // 'Get Stats' ボタンをクリックして統計情報を取得
   await sendrecv1.click('#get-stats')
+  await sendrecv2.click('#get-stats')
 
   // 統計情報が表示されるまで待機
   await sendrecv1.waitForSelector('#stats-report')
+  await sendrecv2.waitForSelector('#stats-report')
+
   // データセットから統計情報を取得
   const sendrecv1StatsReportJson: Record<string, unknown>[] = await sendrecv1.evaluate(() => {
     const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
@@ -97,13 +100,6 @@ test('sendrecv x2', async ({ browser }) => {
   expect(sendrecv1VideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
   expect(sendrecv1VideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
 
-  // page2 stats report
-
-  // 'Get Stats' ボタンをクリックして統計情報を取得
-  await sendrecv2.click('#get-stats')
-
-  // 統計情報が表示されるまで待機
-  await sendrecv2.waitForSelector('#stats-report')
   // データセットから統計情報を取得
   const sendrecv2StatsReportJson: Record<string, unknown>[] = await sendrecv2.evaluate(() => {
     const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement

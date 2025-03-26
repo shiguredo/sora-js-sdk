@@ -15,7 +15,7 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "e2e-dev": "vite --config e2e-tests/vite.config.mjs",
-    "e2e-test": "pnpm build && playwright test --project='Google Chrome*' --project='Microsoft Edge*'",
+    "e2e-test": "pnpm build && playwright test --project='chromium'",
     "lint": "biome lint",
     "fmt": "biome format --write",
     "check": "tsc --noEmit",
