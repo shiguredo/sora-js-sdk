@@ -47,7 +47,8 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         channel: 'chrome-canary',
         launchOptions: {
-          executablePath: process.env.BROWSER_PATH ?? undefined,
+          executablePath:
+            '/Users/runner/hostedtoolcache/setup-chrome/chromium/canary/arm64/Contents/MacOS/chrome',
         },
       },
     },
