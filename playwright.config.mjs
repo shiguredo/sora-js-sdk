@@ -19,6 +19,7 @@ export default defineConfig({
 
         '--enable-features=WebRtcAllowH265Send,WebRtcAllowH265Receive',
       ],
+      executablePath: process.env.BROWSER_PATH ? process.env.BROWSER_PATH : undefined,
     },
   },
   projects: [
