@@ -26,10 +26,8 @@ jobs:
         browser:
           # - name: "Google Chrome"
           #   type: "chrome"
-          #   version: "stable"
           - name: "Google Chrome Beta"
-            type: "chrome"
-            version: "beta"
+            type: "chrome-beta"
           # - name: "Google Chrome Dev"
           #   type: "chrome"
           #   version: "dev"
@@ -40,14 +38,11 @@ jobs:
           #   type: "msedge"
           #   version: "stable"
           - name: "Microsoft Edge Beta"
-            type: "msedge"
-            version: "beta"
+            type: "msedge-beta"
           # - name: "Microsoft Edge Dev"
           #   type: "msedge"
-          #   version: "dev"
           # - name: "Microsoft Edge Canary"
           #   type: "edge"
-          #   version: "canary"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
@@ -62,14 +57,6 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-      - if: matrix.browser.type == 'chrome'
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: ${{ matrix.browser.version }}
-      - if: matrix.browser.type == 'msedge'
-        uses: browser-actions/setup-edge@v1
-        with:
-          edge-version: ${{ matrix.browser.version }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -79,16 +66,10 @@ jobs:
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build
+      - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
       - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
         env:
-          BROWSER_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
-        if: matrix.browser.type == 'chrome'
-      - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
-        env:
-          BROWSER_PATH: ${{ steps.setup-msedge.outputs.msedge-path }}
-          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
-        if: matrix.browser.type == 'msedge'
       # - uses: actions/upload-artifact@v4
       #   if: always()
       #   with:
