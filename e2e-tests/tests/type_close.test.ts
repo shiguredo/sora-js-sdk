@@ -4,8 +4,8 @@ import { expect, test } from '@playwright/test'
 // Sora API を利用するので要注意
 test('data_channel_signaling_only type:close pages', async ({ browser }) => {
   test.skip(
-    process.env.CI === 'true' && process.platform === 'darwin',
-    'Sora API を利用するので Tailscale が利用できない GitHub Actions かつ macOS では実行しない',
+    process.env.RUNNER_ENVIRONMENT === 'self-hosted',
+    'Sora API を利用するので Tailscale が利用できない self-hosted では実行しない',
   )
 
   // 新しいページを2つ作成
