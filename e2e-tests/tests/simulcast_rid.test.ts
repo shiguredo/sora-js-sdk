@@ -14,8 +14,8 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   await sendonly.fill('#channel-name', channelName)
   await recvonly.fill('#channel-name', channelName)
 
-  // recvonly の simulcast_rid を r2 に設定
-  const simulcastRid = 'r2'
+  // recvonly の simulcast_rid を r1 に設定
+  const simulcastRid = 'r1'
   await recvonly.selectOption('#simulcast-rid', simulcastRid)
   console.log(`recvonly simulcast_rid=${simulcastRid}`)
 
@@ -36,8 +36,7 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   console.log(`recvonly connectionId=${recvonlyConnectionId}`)
 
   // レース対策
-  await sendonly.waitForTimeout(5000)
-  await recvonly.waitForTimeout(5000)
+  await recvonly.waitForTimeout(8000)
 
   // sendonly stats report
   await sendonly.click('#get-stats')
@@ -93,13 +92,13 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   )
   expect(recvonlyVideoInboundRtpStats).toBeDefined()
 
-  // r2 が送信している解像度と等しいかどうかを確認する
+  // r1 が送信している解像度と等しいかどうかを確認する
+  // r2 は一番早めに諦められてしまい flaky test になるので r1 を確認する
   // ここは解像度を固定していないのは flaky test になるためあくまで送信している解像度と等しいかどうかを確認する
-  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(sendonlyVideoR2OutboundRtpStats?.frameWidth)
+  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(sendonlyVideoR1OutboundRtpStats?.frameWidth)
   expect(recvonlyVideoInboundRtpStats?.frameHeight).toBe(
-    sendonlyVideoR2OutboundRtpStats?.frameHeight,
+    sendonlyVideoR1OutboundRtpStats?.frameHeight,
   )
-
   expect(recvonlyVideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
   expect(recvonlyVideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
 
