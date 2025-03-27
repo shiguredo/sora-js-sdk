@@ -21,10 +21,11 @@ jobs:
   e2e-test-canary:
     strategy:
       matrix:
+        # Nodejs のテストではないので 20 でのみ動作確認する
         node:
           - "20"
-          - "22"
-          - "23"
+          # - "22"
+          # - "23"
         browser:
           - name: "Google Chrome Canary"
             type: "google-chrome"
