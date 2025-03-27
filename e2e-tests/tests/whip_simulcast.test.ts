@@ -13,7 +13,10 @@ test('whip-simulcast', async ({ browser }) => {
 
   // コーデックの取得
   const whipVideoCodecType = await whip.evaluate(() => {
-    const videoElement = document.querySelector('#video-codec-type') as HTMLSelectElement
+    const videoElement = document.querySelector<HTMLSelectElement>('#video-codec-type')
+    if (!videoElement) {
+      throw new Error('videoElement not found')
+    }
     return videoElement.value
   })
   console.log(`whipVideoCodecType=${whipVideoCodecType}`)

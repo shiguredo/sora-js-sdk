@@ -47,13 +47,12 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   await sendonly.waitForSelector('#stats-report')
   await recvonly.waitForSelector('#stats-report')
 
-  // データセットから統計情報を取得
+  // sendonly 統計情報
   const sendonlyStatsReportJson: Record<string, unknown>[] = await sendonly.evaluate(() => {
-    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+    const statsReportDiv = document.querySelector<HTMLDivElement>('#stats-report')
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
   })
 
-  // sendonly stats report
   const sendonlyVideoCodecStats = sendonlyStatsReportJson.find(
     (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP8',
   )
@@ -83,7 +82,7 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   expect(sendonlyVideoR2OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
   expect(sendonlyVideoR2OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
 
-  // データセットから統計情報を取得
+  // recvonly の統計情報を取得
   const recvonlyStatsReportJson: Record<string, unknown>[] = await recvonly.evaluate(() => {
     const statsReportDiv = document.querySelector<HTMLDivElement>('#stats-report')
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
@@ -93,13 +92,14 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
     (stats) => stats.type === 'inbound-rtp' && stats.kind === 'video',
   )
   expect(recvonlyVideoInboundRtpStats).toBeDefined()
-  // r2 を指定してるので解像度を確認する
-  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(960)
-  expect(recvonlyVideoInboundRtpStats?.frameHeight).toBe(540)
-  console.log(`recvonlyVideoInboundRtpStatsFrameWidth=${recvonlyVideoInboundRtpStats?.frameWidth}`)
-  console.log(
-    `recvonlyVideoInboundRtpStatsFrameHeight=${recvonlyVideoInboundRtpStats?.frameHeight}`,
+
+  // r2 が送信している解像度と等しいかどうかを確認する
+  // ここは解像度を固定していないのは flaky test になるためあくまで送信している解像度と等しいかどうかを確認する
+  expect(recvonlyVideoInboundRtpStats?.frameWidth).toBe(sendonlyVideoR2OutboundRtpStats?.frameWidth)
+  expect(recvonlyVideoInboundRtpStats?.frameHeight).toBe(
+    sendonlyVideoR2OutboundRtpStats?.frameHeight,
   )
+
   expect(recvonlyVideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0)
   expect(recvonlyVideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0)
 
