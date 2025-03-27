@@ -29,6 +29,11 @@
 
 ### misc
 
+- [CHANGE] Chrome/Edge Canary の E2E テストは Nodejs 20 でのみ行うようにする
+  - Nodejs 20 が EoL が一番近い LTS であるため
+  - @voluntas
+- [CHANGE] Chrome/Edge Canary の E2E テストを e2e-test-canary.yml に移動する
+  - @voluntas
 - [UPDATE] `*.spec.ts` を `*.test.ts` に変更する
   - @voluntas
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
