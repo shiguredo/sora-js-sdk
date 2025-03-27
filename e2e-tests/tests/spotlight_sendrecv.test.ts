@@ -20,6 +20,10 @@ test('spotlight sendrecv x2', async ({ browser }) => {
   await sendrecv1.waitForSelector('#connection-id:not(:empty)')
   await sendrecv2.waitForSelector('#connection-id:not(:empty)')
 
+  // レース対策
+  await sendrecv1.waitForTimeout(3000)
+  await sendrecv2.waitForTimeout(3000)
+
   // #sendrecv1-connection-id 要素の内容を取得
   const sendrecv1ConnectionId = await sendrecv1.$eval('#connection-id', (el) => el.textContent)
   console.log(`sendrecv1 connectionId=${sendrecv1ConnectionId}`)

@@ -76,7 +76,9 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.setRemoteDescription(signalingMessage)
     await this.createAnswer(signalingMessage)
     this.sendAnswer()
-    await this.onIceCandidate()
+    if (this.pc?.getConfiguration().iceTransportPolicy === 'all') {
+      await this.onIceCandidate()
+    }
     await this.waitChangeConnectionStateConnected()
     return
   }

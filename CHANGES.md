@@ -17,9 +17,14 @@
   - @voluntas
 - [UPDATE] pnpm 10 系に上げる
   - @voluntas
-- [FIX] `signalingUrlCandidates` が `string[]` で長さが 1 の場合 `signalingUrlCandidates[0]` を利用して接続確認を行わない用に修正する
+- [UPDATE] `iceTransportPolicy` が `all` の時だけ `onIceCandidate` を呼ぶようにする
+  - @voluntas
+- [FIX] `signalingUrlCandidates` が `string[]` で長さが 1 の場合 `signalingUrlCandidates[0]` を利用して `string` と同じ処理にする
   - @voluntas
 - [FIX] `signalingUrlCandidates` が `[]` の場合はエラーにする
+  - @voluntas
+- [FIX] `iceTransportPolicy` が `all` の場合のみ `onIceCandidate` を実行するようにする
+  - `iceTransportPolicy` が `relay` の場合は常に TURN を経由するため `onIceCandidate` は不要
   - @voluntas
 
 ### misc

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test('data_channel_signaling_only type:switched pages', async ({ browser }) => {
@@ -20,7 +21,11 @@ test('data_channel_signaling_only type:switched pages', async ({ browser }) => {
   )
   console.log(`dataChannelSignalingOnly sdkVersion=${dataChannelSignalingOnlySdkVersion}`)
 
+  const channelName = randomUUID()
+  await dataChannelSignalingOnly.fill('#channel-name', channelName)
+
   await dataChannelSignalingOnly.click('#connect')
+
   // console.log に [signaling] switched が出力されるまで待機するための Promise を作成する
   const consolePromise = dataChannelSignalingOnly.waitForEvent('console')
 
