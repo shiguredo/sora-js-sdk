@@ -15,9 +15,8 @@ on:
 
 jobs:
   npm-pkg-e2e-test:
-    timeout-minutes: 20
-    runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
         # メンテナンスはおてて
         sdk_version: [
@@ -48,6 +47,8 @@ jobs:
       VITE_TEST_API_URL: ${{ secrets.TEST_API_URL }}
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       NPM_PKG_E2E_TEST: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: tailscale/github-action@v2
