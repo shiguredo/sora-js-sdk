@@ -79,7 +79,7 @@ pnpm run e2e-dev
 
 ### npm に公開されている安定版のパッケージの E2E テスト
 
-以下のバージョンの npm に公開されている安定版のパッケージが、
+以下のバージョンの npm に公開されている安定版のパッケージは、
 最新の Sora で E2E テストが通ることを確認しています。
 
 - 2024.2.2
@@ -157,7 +157,6 @@ limitations under the License.
   - [Sora Python SDK ドキュメント](https://sora-python-sdk.shiguredo.jp/)
   - [Sora Python SDK サンプル集](https://github.com/shiguredo/sora-python-sdk-samples)
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk)
-- [Sora C SDK](https://github.com/shiguredo/sora-c-sdk)
 
 ### クライアントツール
 
