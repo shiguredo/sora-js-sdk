@@ -1,15 +1,18 @@
+import { generateJwt } from '../src/misc'
+
 import Sora, {
   type SignalingNotifyMessage,
   type SignalingEvent,
   type ConnectionPublisher,
   type SoraConnection,
+  type ConnectionOptions,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
-  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY || ''
 
   let client: SoraClient
 
@@ -84,11 +87,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 class SoraClient {
   private debug = false
   private channelId: string
-  private metadata: { access_token: string }
   private options: object = {}
 
+  private metadata: Record<string, string> = {}
+
   private sora: SoraConnection
-  private connection: ConnectionPublisher
+  private connection: ConnectionPublisher | undefined
+
+  private secretKey: string
 
   constructor(
     signalingUrl: string,
@@ -98,20 +104,27 @@ class SoraClient {
     channelName: string,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
+    this.secretKey = secretKey
 
     // channel_id の生成
     this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-    // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey }
+  }
+
+  async connect(stream: MediaStream): Promise<void> {
+    // SecretKey が空文字列じゃなければ JWT を生成して metadata に設定する
+    if (this.secretKey !== '') {
+      const jwt = await generateJwt(this.channelId, this.secretKey)
+      this.metadata = {
+        access_token: jwt,
+      }
+    }
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onNotify.bind(this))
 
     // E2E テスト用のコード
     this.connection.on('signaling', this.onSignaling.bind(this))
-  }
 
-  async connect(stream: MediaStream): Promise<void> {
     await this.connection.connect(stream)
 
     const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
@@ -121,6 +134,10 @@ class SoraClient {
   }
 
   async disconnect(): Promise<void> {
+    if (!this.connection) {
+      throw new Error('Connection is not ready')
+    }
+
     await this.connection.disconnect()
 
     const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
@@ -130,6 +147,10 @@ class SoraClient {
   }
 
   getStats(): Promise<RTCStatsReport> {
+    if (!this.connection) {
+      throw new Error('Connection is not ready')
+    }
+
     if (this.connection.pc === null) {
       return Promise.reject(new Error('PeerConnection is not ready'))
     }
@@ -137,6 +158,10 @@ class SoraClient {
   }
 
   private onNotify(event: SignalingNotifyMessage): void {
+    if (!this.connection) {
+      throw new Error('Connection is not ready')
+    }
+
     if (
       event.event_type === 'connection.created' &&
       this.connection.connectionId === event.connection_id
