@@ -21,11 +21,14 @@ jobs:
     strategy:
       matrix:
         node:
-          - "23"
+          - "20"
         browser:
           - name: "Google Chrome Canary"
             type: "google-chrome"
             version: canary
+          - name: "Google Chrome Dev"
+            type: "google-chrome"
+            version: dev
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
