@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         node:
-          - "23"
+          - "20"
         browser:
           - name: "Google Chrome Canary"
             type: "google-chrome"
