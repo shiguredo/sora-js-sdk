@@ -27,24 +27,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       await client.disconnect()
     }
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: true,
-    })
-
     // channel_name を取得
     const channelName = document.querySelector<HTMLInputElement>('#channel-name')
     if (!channelName) {
       throw new Error('Channel name input element not found')
     }
 
-    client = new SoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName.value,
-    )
+    const channelId = channelIdPrefix + channelName.value + channelIdSuffix
+
+    let accessToken: string | undefined
+    // secretKey が空じゃなければ accessToken を生成
+    if (secretKey !== '') {
+      accessToken = await generateJwt(channelId, secretKey)
+    }
+
+    client = new SoraClient(signalingUrl, channelId, accessToken)
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true,
+    })
     await client.connect(stream)
   })
 
@@ -87,35 +89,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 class SoraClient {
   private debug = false
   private channelId: string
+  private metadata: Record<string, string> = {}
   private options: object = {}
 
-  private metadata: Record<string, string> = {}
-
   private sora: SoraConnection
-  private connection: ConnectionPublisher | undefined
+  private connection: ConnectionPublisher
 
-  private secretKey: string
+  private accessToken: string | undefined
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
+  constructor(signalingUrl: string, channelId: string, accessToken: string | undefined) {
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.secretKey = secretKey
+    this.channelId = channelId
+    this.accessToken = accessToken
 
-    // channel_id の生成
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-  }
-
-  async connect(stream: MediaStream): Promise<void> {
-    // SecretKey が空文字列じゃなければ JWT を生成して metadata に設定する
-    if (this.secretKey !== '') {
-      const jwt = await generateJwt(this.channelId, this.secretKey)
+    if (this.accessToken) {
       this.metadata = {
-        access_token: jwt,
+        access_token: this.accessToken,
       }
     }
 
@@ -124,7 +113,9 @@ class SoraClient {
 
     // E2E テスト用のコード
     this.connection.on('signaling', this.onSignaling.bind(this))
+  }
 
+  async connect(stream: MediaStream): Promise<void> {
     await this.connection.connect(stream)
 
     const videoElement = document.querySelector<HTMLVideoElement>('#local-video')

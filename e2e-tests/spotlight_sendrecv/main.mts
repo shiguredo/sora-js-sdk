@@ -1,7 +1,10 @@
+import { generateJwt } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type ConnectionPublisher,
   type SignalingNotifyMessage,
+  type ConnectionOptions,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -13,22 +16,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   let sendrecv: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-
     // channelName を取得
     const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
     if (!channelName) {
       throw new Error('channelName is empty')
     }
 
-    sendrecv = new SoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-    )
+    let accessToken: string | undefined
+    // secretKey が空じゃなければ accessToken を生成
+    if (secretKey !== '') {
+      accessToken = await generateJwt(channelIdPrefix + channelName + channelIdSuffix, secretKey)
+    }
 
+    const channelId = channelIdPrefix + channelName + channelIdSuffix
+    sendrecv = new SoraClient(signalingUrl, channelId, accessToken)
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
     await sendrecv.connect(stream)
   })
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
@@ -40,28 +43,31 @@ class SoraClient {
   private debug = false
 
   private channelId: string
-  private metadata: { access_token: string }
-  private options: object
+  private metadata: Record<string, string> = {}
+  private options: ConnectionOptions = {}
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
+  private accessToken: string | undefined
+
+  constructor(signalingUrl: string, channelId: string, accessToken: string | undefined) {
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-    this.metadata = { access_token: secretKey }
+    this.channelId = channelId
+    this.accessToken = accessToken
+
     this.options = {
       audio: true,
       video: true,
       simulcast: true,
       spotlight: true,
       spotlightNumber: 1,
+    }
+
+    if (this.accessToken) {
+      this.metadata = {
+        access_token: this.accessToken,
+      }
     }
 
     this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options)

@@ -34,13 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
       throw new Error('Channel name input element not found')
     }
 
-    client = new SoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName.value,
-    )
+    const channelId = `${channelIdPrefix}${channelName.value}${channelIdSuffix}`
+
+    let accessToken: string | undefined
+    // secretKey が空じゃなければ accessToken を生成
+    if (secretKey !== '') {
+      accessToken = await generateJwt(channelId, secretKey)
+    }
+
+    client = new SoraClient(signalingUrl, channelId, accessToken)
 
     await client.connect()
   })
@@ -90,31 +92,18 @@ class SoraClient {
   private options: ConnectionOptions = {}
 
   private sora: SoraConnection
-  private connection: ConnectionSubscriber | undefined
+  private connection: ConnectionSubscriber
 
-  private secretKey: string
+  private accessToken: string | undefined
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
+  constructor(signalingUrl: string, channelId: string, accessToken: string | undefined) {
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.secretKey = secretKey
+    this.channelId = channelId
+    this.accessToken = accessToken
 
-    // channel_id の生成
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-  }
-
-  async connect(): Promise<void> {
-    // SecretKey が空文字列じゃなければ JWT を生成して metadata に設定する
-    if (this.secretKey !== '') {
-      const jwt = await generateJwt(this.channelId, this.secretKey)
-      // access_token を指定する metadata の生成
+    if (this.accessToken) {
       this.metadata = {
-        access_token: jwt,
+        access_token: this.accessToken,
       }
     }
 
@@ -122,7 +111,9 @@ class SoraClient {
     this.connection.on('notify', this.onnotify.bind(this))
     this.connection.on('track', this.ontrack.bind(this))
     this.connection.on('removetrack', this.onremovetrack.bind(this))
+  }
 
+  async connect(): Promise<void> {
     await this.connection.connect()
   }
 
