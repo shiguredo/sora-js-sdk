@@ -1,4 +1,4 @@
-import { generateJwt } from '../src/misc'
+import { generateJwt, getChannelId } from '../src/misc'
 
 import Sora, {
   type SoraConnection,
@@ -10,8 +10,6 @@ import Sora, {
 document.addEventListener('DOMContentLoaded', () => {
   // 環境変数の読み込み
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   // Sora クライアントの初期化
@@ -28,13 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await client.disconnect()
     }
 
-    // channelName を取得
-    const channelName = document.querySelector('#channel-name') as HTMLInputElement
-    if (!channelName) {
-      throw new Error('Channel name input element not found')
-    }
-
-    const channelId = `${channelIdPrefix}${channelName.value}${channelIdSuffix}`
+    const channelId = getChannelId()
 
     let accessToken: string | undefined
     // secretKey が空じゃなければ accessToken を生成

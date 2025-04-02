@@ -1,4 +1,4 @@
-import { generateJwt } from '../src/misc'
+import { generateJwt, getChannelId } from '../src/misc'
 
 import Sora, {
   type SignalingNotifyMessage,
@@ -10,8 +10,6 @@ import Sora, {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY || ''
 
   let client: SoraClient
@@ -27,13 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await client.disconnect()
     }
 
-    // channel_name を取得
-    const channelName = document.querySelector<HTMLInputElement>('#channel-name')
-    if (!channelName) {
-      throw new Error('Channel name input element not found')
-    }
-
-    const channelId = channelIdPrefix + channelName.value + channelIdSuffix
+    const channelId = getChannelId()
 
     let accessToken: string | undefined
     // secretKey が空じゃなければ accessToken を生成

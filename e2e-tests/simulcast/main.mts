@@ -1,15 +1,16 @@
+import { generateJwt, getChannelId } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type ConnectionPublisher,
   type SignalingNotifyMessage,
   type ConnectionSubscriber,
   type SimulcastRid,
+  type JSONType,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
   let sendonly: SimulcastSendonlySoraClient
@@ -24,66 +25,32 @@ document.addEventListener('DOMContentLoaded', () => {
       video: { width: { exact: 960 }, height: { exact: 540 } },
     })
 
-    // channel name 取得
-    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
-    if (!channelName) {
-      console.error('channel_name is required')
-      return
+    const channelId = getChannelId()
+
+    let accessToken: string | undefined
+    // secretKey が空じゃなければ accessToken を生成
+    if (secretKey !== '') {
+      accessToken = await generateJwt(channelId, secretKey)
     }
 
-    sendonly = new SimulcastSendonlySoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-    )
+    sendonly = new SimulcastSendonlySoraClient(signalingUrl, channelId, accessToken)
 
-    recvonlyR0 = new SimulcastRecvonlySoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-      'r0',
-    )
-
-    recvonlyR1 = new SimulcastRecvonlySoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-      'r1',
-    )
-
-    recvonlyR2 = new SimulcastRecvonlySoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-      'r2',
-    )
+    recvonlyR0 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, 'r0', accessToken)
+    recvonlyR1 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, 'r1', accessToken)
+    recvonlyR2 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, 'r2', accessToken)
 
     await sendonly.connect(stream)
 
-    // recvonly r0
     await recvonlyR0.connect()
-    // recvonly r1
     await recvonlyR1.connect()
-    // recvonly r2
     await recvonlyR2.connect()
   })
 
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await sendonly.disconnect()
 
-    // recvonly r0
     await recvonlyR0.disconnect()
-    // recvonly r1
     await recvonlyR1.disconnect()
-    // recvonly r2
     await recvonlyR2.disconnect()
   })
 
@@ -116,25 +83,30 @@ document.addEventListener('DOMContentLoaded', () => {
 class SimulcastSendonlySoraClient {
   private debug = false
   private channelId: string
+  private metadata: JSONType = {}
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+  private accessToken: string | undefined
+
+  constructor(signalingUrl: string, channelId: string, accessToken: string | undefined) {
+    this.channelId = channelId
+    this.accessToken = accessToken
+
+    if (this.accessToken) {
+      this.metadata = { access_token: this.accessToken }
+    }
 
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.connection = this.sora.sendonly(
-      this.channelId,
-      { access_token: secretKey },
-      { audio: false, video: true, videoCodecType: 'VP8', videoBitRate: 1500, simulcast: true },
-    )
+
+    this.connection = this.sora.sendonly(this.channelId, this.metadata, {
+      audio: false,
+      video: true,
+      videoCodecType: 'VP8',
+      videoBitRate: 1500,
+      simulcast: true,
+    })
 
     this.connection.on('notify', this.onnotify.bind(this))
   }
@@ -179,28 +151,33 @@ class SimulcastRecvonlySoraClient {
   private debug = false
 
   private channelId: string
+  private metadata: JSONType = {}
   private rid: SimulcastRid
 
   private sora: SoraConnection
   private connection: ConnectionSubscriber
 
+  private accessToken: string | undefined
+
   constructor(
     signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
+    channelId: string,
     rid: SimulcastRid,
+    accessToken: string | undefined,
   ) {
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+    this.channelId = channelId
+    this.accessToken = accessToken
     this.rid = rid
 
+    if (this.accessToken) {
+      this.metadata = { access_token: this.accessToken }
+    }
+
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.connection = this.sora.recvonly(
-      this.channelId,
-      { access_token: secretKey },
-      { simulcastRid: this.rid, simulcast: true },
-    )
+    this.connection = this.sora.recvonly(this.channelId, this.metadata, {
+      simulcastRid: this.rid,
+      simulcast: true,
+    })
 
     this.connection.on('notify', this.onnotify.bind(this))
     this.connection.on('track', this.ontrack.bind(this))

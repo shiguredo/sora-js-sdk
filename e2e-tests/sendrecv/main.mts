@@ -1,3 +1,5 @@
+import { generateJwt, getChannelId, getVideoCodecType } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
@@ -6,44 +8,23 @@ import Sora, {
   type ConnectionOptions,
 } from 'sora-js-sdk'
 
-const getChannelName = (): string => {
-  const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
-  const channelName = channelNameElement?.value
-  if (channelName === '' || channelName === undefined) {
-    throw new Error('channelName is empty')
-  }
-  return channelName
-}
-
-const getVideoCodecType = (): VideoCodecType | undefined => {
-  const videoCodecTypeElement = document.querySelector<HTMLSelectElement>('#video-codec-type')
-  const videoCodecType = videoCodecTypeElement?.value
-  if (videoCodecType === '') {
-    return undefined
-  }
-  return videoCodecType as VideoCodecType
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
-  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY || ''
 
   let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    const channelName = getChannelName()
+    const channelId = getChannelId()
     const videoCodecType = getVideoCodecType()
 
-    client = new SoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-      videoCodecType,
-    )
+    let accessToken: string | undefined
+    // secretKey が空じゃなければ accessToken を生成
+    if (secretKey !== '') {
+      accessToken = await generateJwt(channelId, secretKey)
+    }
+
+    client = new SoraClient(signalingUrl, channelId, videoCodecType, accessToken)
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
     await client.connect(stream)
@@ -82,26 +63,27 @@ class SoraClient {
   private debug = false
 
   private channelId: string
-  private metadata: { access_token: string }
-  private options: ConnectionOptions
+  private metadata: Record<string, string> = {}
+  private options: ConnectionOptions = {}
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
+  private accessToken: string | undefined
+
   constructor(
     signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
+    channelId: string,
     videoCodecType: VideoCodecType | undefined,
+    accessToken: string | undefined,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
+    this.channelId = channelId
+    this.accessToken = accessToken
 
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-
-    this.metadata = { access_token: secretKey }
-    this.options = {}
+    if (this.accessToken) {
+      this.metadata = { access_token: this.accessToken }
+    }
 
     if (videoCodecType !== undefined) {
       this.options = { ...this.options, videoCodecType: videoCodecType }

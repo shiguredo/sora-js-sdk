@@ -21,13 +21,16 @@ export const generateJwt = async (
   )
 }
 
-export const getChannelName = (): string => {
+export const getChannelId = (): string => {
+  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
+  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
+
   const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
   const channelName = channelNameElement?.value
   if (channelName === '' || channelName === undefined) {
     throw new Error('channelName is empty')
   }
-  return channelName
+  return channelIdPrefix + channelName + channelIdSuffix
 }
 
 export const getVideoCodecType = (): VideoCodecType | undefined => {
