@@ -1,7 +1,11 @@
+import { generateJwt, getChannelId } from '../src/misc'
+
 import Sora, {
   type SignalingNotifyMessage,
   type ConnectionPublisher,
   type SoraConnection,
+  type ConnectionOptions,
+  type JSONType,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -25,14 +29,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? Number.parseInt(audioBitRateSelect.value)
       : undefined
 
-    // channel_name を取得
-    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
-    if (!channelName) {
-      console.error('channel_name is required')
-      return
+    const channelId = getChannelId()
+
+    let accessToken: string | undefined
+    if (secretKey) {
+      accessToken = await generateJwt(channelId, secretKey)
     }
 
-    client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey, channelName)
+    client = new SoraClient(signalingUrl, channelId, accessToken)
     await client.connect(stream, selectedCodecType, selectedBitRate)
   })
 
@@ -69,25 +73,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 class SoraClient {
   private debug = false
   private channelId: string
-  private metadata: { access_token: string }
-  private options: object = {}
+  private metadata: JSONType | undefined
+  private options: ConnectionOptions = {}
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
-    this.sora = Sora.connection(signalingUrl, this.debug)
+  private accessToken: string | undefined
 
-    // channel_id の生成
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-    // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey }
+  constructor(signalingUrl: string, channelId: string, accessToken: string | undefined) {
+    this.sora = Sora.connection(signalingUrl, this.debug)
+    this.channelId = channelId
+    this.accessToken = accessToken
+
+    if (this.accessToken) {
+      this.metadata = { access_token: this.accessToken }
+    }
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onnotify.bind(this))

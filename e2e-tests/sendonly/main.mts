@@ -6,6 +6,7 @@ import Sora, {
   type ConnectionPublisher,
   type SoraConnection,
   type ConnectionOptions,
+  type JSONType,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -81,8 +82,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 class SoraClient {
   private debug = false
   private channelId: string
-  private metadata: Record<string, string> = {}
-  private options: object = {}
+  private metadata: JSONType | undefined
+  private options: ConnectionOptions = {}
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
