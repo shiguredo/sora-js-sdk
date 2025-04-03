@@ -16,7 +16,7 @@ on:
 jobs:
   npm-pkg-e2e-test:
     strategy:
-      fail-fast: false
+      # fail-fast: false
       matrix:
         # メンテナンスはおてて
         sdk_version: [
