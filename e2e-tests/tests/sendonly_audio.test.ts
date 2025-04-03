@@ -13,7 +13,9 @@ test('sendonly audio pages', async ({ browser }) => {
 
   // select 要素から直接オプションを取得してランダムに選択する
   // 音声コーデック
-  const selectedAudioCodec = await sendonly.evaluate(() => {
+  const selectedAudioCodec = await sendonly.evaluate(async () => {
+    // audio-codec-type が表示されるまで待つ
+    await sendonly.waitForSelector('#audio-codec-type')
     const select = document.querySelector('#audio-codec-type') as HTMLSelectElement
     const options = Array.from(select.options)
     const randomOption = options[Math.floor(Math.random() * options.length)]
@@ -21,7 +23,9 @@ test('sendonly audio pages', async ({ browser }) => {
     return randomOption.value
   })
   // 音声ビットレート
-  const selectedBitRate = await sendonly.evaluate(() => {
+  const selectedBitRate = await sendonly.evaluate(async () => {
+    // audio-bit-rate が表示されるまで待つ
+    await sendonly.waitForSelector('#audio-bit-rate')
     const select = document.querySelector('#audio-bit-rate') as HTMLSelectElement
     const options = Array.from(select.options).filter((option) => option.value !== '') // 未指定を除外
     const randomOption = options[Math.floor(Math.random() * options.length)]
