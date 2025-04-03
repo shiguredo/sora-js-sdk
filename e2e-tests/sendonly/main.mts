@@ -118,10 +118,6 @@ class SoraClient {
   }
 
   async disconnect(): Promise<void> {
-    if (!this.connection) {
-      throw new Error('Connection is not ready')
-    }
-
     await this.connection.disconnect()
 
     const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
@@ -131,10 +127,6 @@ class SoraClient {
   }
 
   getStats(): Promise<RTCStatsReport> {
-    if (!this.connection) {
-      throw new Error('Connection is not ready')
-    }
-
     if (this.connection.pc === null) {
       return Promise.reject(new Error('PeerConnection is not ready'))
     }
@@ -142,10 +134,6 @@ class SoraClient {
   }
 
   private onNotify(event: SignalingNotifyMessage): void {
-    if (!this.connection) {
-      throw new Error('Connection is not ready')
-    }
-
     if (
       event.event_type === 'connection.created' &&
       this.connection.connectionId === event.connection_id
