@@ -1,3 +1,5 @@
+import { getChannelId } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type ConnectionMessaging,
@@ -30,8 +32,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    const channelName = getChannelName()
-    client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey, channelName)
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+
+    client = new SoraClient(signalingUrl, channelId, secretKey)
     const checkCompress = document.getElementById('check-compress') as HTMLInputElement
     const compress = checkCompress.checked
     const checkHeader = document.getElementById('check-header') as HTMLInputElement
@@ -84,15 +87,10 @@ class SoraClient {
 
   private sora: SoraConnection
   private connection: ConnectionMessaging
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
+
+  constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+    this.channelId = channelId
     this.metadata = { access_token: secretKey }
 
     this.options = {

@@ -1,4 +1,4 @@
-import { getChannelId } from '../src/misc'
+import { getChannelId, getVideoCodecType } from '../src/misc'
 
 import Sora, {
   type SoraConnection,
@@ -7,15 +7,6 @@ import Sora, {
   type VideoCodecType,
   type ConnectionOptions,
 } from 'sora-js-sdk'
-
-const getVideoCodecType = (): VideoCodecType | undefined => {
-  const videoCodecTypeElement = document.querySelector<HTMLSelectElement>('#video-codec-type')
-  const videoCodecType = videoCodecTypeElement?.value
-  if (videoCodecType === '') {
-    return undefined
-  }
-  return videoCodecType as VideoCodecType
-}
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL

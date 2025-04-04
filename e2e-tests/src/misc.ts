@@ -21,8 +21,12 @@ export const generateJwt = async (
   )
 }
 
-export const getChannelId = (channelIdPrefix: string, channelIdSuffix: string): string => {
-  const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
+export const getChannelId = (
+  channelIdPrefix: string,
+  channelIdSuffix: string,
+  id = 'channel-name',
+): string => {
+  const channelNameElement = document.querySelector<HTMLInputElement>(`#${id}`)
   const channelName = channelNameElement?.value
   if (channelName === '' || channelName === undefined) {
     throw new Error('channelName is empty')
@@ -30,8 +34,8 @@ export const getChannelId = (channelIdPrefix: string, channelIdSuffix: string): 
   return `${channelIdPrefix}${channelName}${channelIdSuffix}`
 }
 
-export const getVideoCodecType = (): VideoCodecType | undefined => {
-  const videoCodecTypeElement = document.querySelector<HTMLSelectElement>('#video-codec-type')
+export const getVideoCodecType = (id = 'video-codec-type'): VideoCodecType | undefined => {
+  const videoCodecTypeElement = document.querySelector<HTMLSelectElement>(`#${id}`)
   const videoCodecType = videoCodecTypeElement?.value
   if (videoCodecType === '') {
     return undefined
