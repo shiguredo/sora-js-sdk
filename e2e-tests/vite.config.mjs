@@ -20,6 +20,7 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         sendrecv: resolve(__dirname, 'sendrecv/index.html'),
+        sendrecv_webkit: resolve(__dirname, 'sendrecv_webkit/index.html'),
         sendonly: resolve(__dirname, 'sendonly/index.html'),
         recvonly: resolve(__dirname, 'recvonly/index.html'),
         check_stereo: resolve(__dirname, 'check_stereo/index.html'),

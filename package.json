@@ -18,6 +18,7 @@
     "e2e-test": "pnpm build && playwright test --project='chromium'",
     "e2e-test-chrome": "pnpm build && playwright test --project='Google Chrome*'",
     "e2e-test-edge": "pnpm build && playwright test --project='Microsoft Edge*'",
+    "e2e-test-webkit": "pnpm build && playwright test --project='WebKit'",
     "lint": "biome lint",
     "fmt": "biome format --write",
     "check": "tsc --noEmit",
