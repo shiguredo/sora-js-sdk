@@ -3,8 +3,8 @@ import { expect, test } from '@playwright/test'
 
 test('WebKit', async ({ browser }) => {
   test.skip(
-    test.info().project.name !== 'WebKit' && process.platform !== 'darwin',
-    'WebKit は macOS でのみテストを行う',
+    test.info().project.name !== 'WebKit' || process.platform !== 'darwin',
+    'WebKit かつ macOS でのみテストを行う',
   )
 
   const sendrecv1 = await browser.newPage()
