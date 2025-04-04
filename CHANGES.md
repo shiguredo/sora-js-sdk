@@ -36,6 +36,8 @@
   - @voluntas
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
+- [ADD] Firefox/WebKit で E2E テストを実現するため getFakeMedia を追加する
+  - @voluntas
 - [ADD] Playwright で Chrome / Edge をインストールして E2E テストできるようにする
   - Chrome は stable / beta
   - Edge は stable / beta / dev
