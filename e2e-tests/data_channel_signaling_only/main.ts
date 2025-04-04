@@ -1,4 +1,4 @@
-import { setSdkVersion } from '../src/misc'
+import { setSoraJsSdkVersion } from '../src/misc'
 
 import Sora, {
   type SignalingNotifyMessage,
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
   const apiUrl = import.meta.env.VITE_TEST_API_URL
 
-  setSdkVersion()
+  setSoraJsSdkVersion()
 
   let client: SoraClient
 

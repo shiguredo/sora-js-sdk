@@ -1,4 +1,4 @@
-import { getChannelId, setSdkVersion } from '../src/misc'
+import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
 import Sora, {
   type SoraConnection,
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  setSdkVersion()
+  setSoraJsSdkVersion()
 
   let recvonly: SimulcastRecvonlySoraClient
 

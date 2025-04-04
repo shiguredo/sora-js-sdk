@@ -23,7 +23,7 @@ export const generateJwt = async (
   )
 }
 
-export const setSdkVersion = (id = 'sdk-version'): void => {
+export const setSoraJsSdkVersion = (id = 'sora-js-sdk-version'): void => {
   const sdkVersionElement = document.querySelector<HTMLDivElement>(`#${id}`)
   if (sdkVersionElement) {
     sdkVersionElement.textContent = `${Sora.version()}`

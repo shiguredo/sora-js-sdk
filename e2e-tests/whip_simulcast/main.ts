@@ -1,4 +1,4 @@
-import { generateJwt, getChannelId, getVideoCodecType, setSdkVersion } from '../src/misc'
+import { generateJwt, getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
 
 import Sora, { type VideoCodecType } from 'sora-js-sdk'
 
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  setSdkVersion()
+  setSoraJsSdkVersion()
 
   let whipSimulcastClient: WhipSimulcastClient | undefined
 
