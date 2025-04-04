@@ -20,9 +20,9 @@ test('data_channel_signaling_only type:close pages', async ({ browser }) => {
   await dataChannelSignalingOnly.goto('http://localhost:9000/data_channel_signaling_only/')
 
   // SDK バージョンの表示
-  await dataChannelSignalingOnly.waitForSelector('#sdk-version')
+  await dataChannelSignalingOnly.waitForSelector('#sora-js-sdk-version')
   const dataChannelSignalingOnlySdkVersion = await dataChannelSignalingOnly.$eval(
-    '#sdk-version',
+    '#sora-js-sdk-version',
     (el) => el.textContent,
   )
   console.log(`dataChannelSignalingOnly sdkVersion=${dataChannelSignalingOnlySdkVersion}`)
