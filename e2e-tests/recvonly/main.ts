@@ -1,3 +1,5 @@
+import { getChannelId } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
@@ -25,19 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
       await client.disconnect()
     }
 
-    // channelName を取得
-    const channelName = document.querySelector('#channel-name') as HTMLInputElement
-    if (!channelName) {
-      throw new Error('Channel name input element not found')
-    }
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
 
-    client = new SoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName.value,
-    )
+    client = new SoraClient(signalingUrl, channelId, secretKey)
 
     await client.connect()
   })
@@ -89,17 +81,10 @@ class SoraClient {
   private sora: SoraConnection
   private connection: ConnectionSubscriber
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
+  constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug)
+    this.channelId = channelId
 
-    // channel_id の生成
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
     // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey }
 
