@@ -1,9 +1,5 @@
-import {
-  createFakeAudioTrack,
-  createFakeVideoTrack,
-  getChannelId,
-  setSoraJsSdkVersion,
-} from '../src/misc'
+import { getFakeMedia } from '../src/fake'
+import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
 import Sora, {
   type SignalingNotifyMessage,
@@ -34,16 +30,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const useFakeAudio = (document.querySelector('#use-fake-audio') as HTMLInputElement).checked
     const useFakeVideo = (document.querySelector('#use-fake-video') as HTMLInputElement).checked
 
-    const fakeAudioTrack = useFakeAudio ? createFakeAudioTrack() : null
-    const fakeVideoTrack = useFakeVideo ? createFakeVideoTrack() : null
-    const tracks: MediaStreamTrack[] = []
-    if (fakeAudioTrack) {
-      tracks.push(fakeAudioTrack)
-    }
-    if (fakeVideoTrack) {
-      tracks.push(fakeVideoTrack)
-    }
-    const stream = new MediaStream(tracks)
+    const stream = getFakeMedia({
+      audio: useFakeAudio,
+      video: useFakeVideo,
+    })
+
     await client.connect(stream)
   })
 
