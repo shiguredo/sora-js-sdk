@@ -1,11 +1,9 @@
-import { getChannelId, getVideoCodecType, setSdkVersion } from '../src/misc'
+import { getChannelId, setSdkVersion } from '../src/misc'
 
 import Sora, {
   type SoraConnection,
-  type SignalingNotifyMessage,
   type ConnectionPublisher,
-  type VideoCodecType,
-  type ConnectionOptions,
+  type SignalingNotifyMessage,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -16,44 +14,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   setSdkVersion()
 
-  let client: SoraClient
+  let sendrecv: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
-    const videoCodecType = getVideoCodecType()
 
-    client = new SoraClient(signalingUrl, channelId, secretKey, videoCodecType)
+    sendrecv = new SoraClient(signalingUrl, channelId, secretKey)
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    await client.connect(stream)
+    await sendrecv.connect(stream)
   })
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
-    await client.disconnect()
-  })
-
-  document.querySelector('#get-stats')?.addEventListener('click', async () => {
-    const statsReport = await client.getStats()
-    const statsDiv = document.querySelector('#stats-report') as HTMLElement
-    const statsReportJsonDiv = document.querySelector('#stats-report-json')
-    if (statsDiv && statsReportJsonDiv) {
-      let statsHtml = ''
-      const statsReportJson: Record<string, unknown>[] = []
-      for (const report of statsReport.values()) {
-        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
-        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
-        for (const [key, value] of Object.entries(report)) {
-          if (key !== 'type' && key !== 'id') {
-            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
-            reportJson[key] = value
-          }
-        }
-        statsHtml += '</ul>'
-        statsReportJson.push(reportJson)
-      }
-      statsDiv.innerHTML = statsHtml
-      // データ属性としても保存（オプション）
-      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
-    }
+    await sendrecv.disconnect()
   })
 })
 
@@ -62,25 +34,24 @@ class SoraClient {
 
   private channelId: string
   private metadata: { access_token: string }
-  private options: ConnectionOptions
+  private options: object
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelId: string,
-    secretKey: string,
-    videoCodecType: VideoCodecType | undefined,
-  ) {
-    this.sora = Sora.connection(signalingUrl, this.debug)
+  constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.channelId = channelId
 
-    this.metadata = { access_token: secretKey }
-    this.options = {}
+    this.sora = Sora.connection(signalingUrl, this.debug)
 
-    if (videoCodecType !== undefined) {
-      this.options = { ...this.options, videoCodecType: videoCodecType }
+    this.metadata = { access_token: secretKey }
+
+    this.options = {
+      audio: true,
+      video: true,
+      simulcast: true,
+      spotlight: true,
+      spotlightNumber: 1,
     }
 
     this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options)
@@ -107,17 +78,10 @@ class SoraClient {
       localVideo.srcObject = null
     }
     // お掃除
-    const remoteVideos = document.querySelector('#remote-videos')
+    const remoteVideos = document.querySelector<HTMLDivElement>('#remote-videos')
     if (remoteVideos) {
       remoteVideos.innerHTML = ''
     }
-  }
-
-  getStats(): Promise<RTCStatsReport> {
-    if (this.connection.pc === null) {
-      return Promise.reject(new Error('PeerConnection is not ready'))
-    }
-    return this.connection.pc.getStats()
   }
 
   private onnotify(event: SignalingNotifyMessage): void {
@@ -135,7 +99,7 @@ class SoraClient {
   private ontrack(event: RTCTrackEvent): void {
     const stream = event.streams[0]
     const remoteVideoId = `remote-video-${stream.id}`
-    const remoteVideos = document.querySelector('#remote-videos')
+    const remoteVideos = document.querySelector<HTMLDivElement>('#remote-videos')
     if (remoteVideos && !remoteVideos.querySelector(`#${remoteVideoId}`)) {
       const remoteVideo = document.createElement('video')
       remoteVideo.id = remoteVideoId
@@ -143,8 +107,8 @@ class SoraClient {
       remoteVideo.autoplay = true
       remoteVideo.playsInline = true
       remoteVideo.controls = true
-      remoteVideo.width = 320
-      remoteVideo.height = 240
+      remoteVideo.width = 160
+      remoteVideo.height = 120
       remoteVideo.srcObject = stream
       remoteVideos.appendChild(remoteVideo)
     }
@@ -154,7 +118,7 @@ class SoraClient {
     const target = event.target as MediaStream
     const remoteVideo = document.querySelector(`#remote-video-${target.id}`)
     if (remoteVideo) {
-      document.querySelector('#remote-videos')?.removeChild(remoteVideo)
+      document.querySelector<HTMLDivElement>('#remote-videos')?.removeChild(remoteVideo)
     }
   }
 }

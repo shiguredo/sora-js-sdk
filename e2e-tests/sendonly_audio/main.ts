@@ -1,9 +1,9 @@
+import { getChannelId, setSdkVersion } from '../src/misc'
+
 import Sora, {
   type SignalingNotifyMessage,
-  type SignalingEvent,
   type ConnectionPublisher,
   type SoraConnection,
-  type ConnectionOptions,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -11,42 +11,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
-  const apiUrl = import.meta.env.VITE_TEST_API_URL
+
+  setSdkVersion()
 
   let client: SoraClient
 
-  // SDK バージョンの表示
-  const sdkVersionElement = document.querySelector('#sdk-version')
-  if (sdkVersionElement) {
-    sdkVersionElement.textContent = `${Sora.version()}`
-  }
-
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    // 音声コーデックの選択を取得
+    const audioCodecType = document.getElementById('audio-codec-type') as HTMLSelectElement
+    const selectedCodecType = audioCodecType.value === 'OPUS' ? audioCodecType.value : undefined
 
-    // channelName
-    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
-    if (!channelName) {
-      throw new Error('channelName is required')
-    }
+    // 音声ビットレートの選択を取得
+    const audioBitRateSelect = document.getElementById('audio-bit-rate') as HTMLSelectElement
+    const selectedBitRate = audioBitRateSelect.value
+      ? Number.parseInt(audioBitRateSelect.value)
+      : undefined
 
-    client = new SoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-      apiUrl,
-    )
-    await client.connect(stream)
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+
+    client = new SoraClient(signalingUrl, channelId, secretKey)
+
+    const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+    await client.connect(stream, selectedCodecType, selectedBitRate)
   })
 
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await client.disconnect()
-  })
-
-  document.querySelector('#disconnect-api')?.addEventListener('click', async () => {
-    await client.apiDisconnect()
   })
 
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
@@ -79,55 +69,49 @@ class SoraClient {
   private debug = false
   private channelId: string
   private metadata: { access_token: string }
-  private options: ConnectionOptions = {
-    dataChannelSignaling: true,
-    ignoreDisconnectWebSocket: true,
-  }
+  private options: object = {}
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  private apiUrl: string
-
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-    apiUrl: string,
-  ) {
-    this.apiUrl = apiUrl
-
+  constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug)
+    this.channelId = channelId
 
-    // channel_id の生成
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
     // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey }
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
-    this.connection.on('notify', this.onNotify.bind(this))
-
-    // E2E テスト用のコード
-    this.connection.on('signaling', this.onSignaling.bind(this))
+    this.connection.on('notify', this.onnotify.bind(this))
   }
 
-  async connect(stream: MediaStream): Promise<void> {
+  async connect(
+    stream: MediaStream,
+    audioCodecType?: string,
+    audioBitRate?: number,
+  ): Promise<void> {
+    if (audioCodecType && audioCodecType === 'OPUS') {
+      // 音声コーデックを上書きする
+      this.connection.options.audioCodecType = audioCodecType
+    }
+    if (audioBitRate) {
+      // 音声ビットレートを上書きする
+      this.connection.options.audioBitRate = audioBitRate
+    }
     await this.connection.connect(stream)
 
-    const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
-    if (videoElement !== null) {
-      videoElement.srcObject = stream
+    const audioElement = document.querySelector<HTMLAudioElement>('#local-audio')
+    if (audioElement !== null) {
+      audioElement.srcObject = stream
     }
   }
 
   async disconnect(): Promise<void> {
     await this.connection.disconnect()
 
-    const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
-    if (videoElement !== null) {
-      videoElement.srcObject = null
+    const audioElement = document.querySelector<HTMLAudioElement>('#local-audio')
+    if (audioElement !== null) {
+      audioElement.srcObject = null
     }
   }
 
@@ -138,7 +122,7 @@ class SoraClient {
     return this.connection.pc.getStats()
   }
 
-  private onNotify(event: SignalingNotifyMessage): void {
+  private onnotify(event: SignalingNotifyMessage): void {
     if (
       event.event_type === 'connection.created' &&
       this.connection.connectionId === event.connection_id
@@ -147,37 +131,6 @@ class SoraClient {
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
       }
-    }
-  }
-
-  // E2E テスト用のコード
-  private onSignaling(event: SignalingEvent): void {
-    if (event.type === 'onmessage-switched') {
-      console.log('[signaling]', event.type, event.transportType)
-    }
-    if (event.type === 'onmessage-close') {
-      console.log('[signaling]', event.type, event.transportType)
-    }
-  }
-
-  // E2E テスト側で実行した方が良い気がする
-  async apiDisconnect(): Promise<void> {
-    if (!this.apiUrl) {
-      throw new Error('VITE_TEST_API_URL is not set')
-    }
-    const response = await fetch(this.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Sora-Target': 'Sora_20151104.DisconnectConnection',
-      },
-      body: JSON.stringify({
-        channel_id: this.channelId,
-        connection_id: this.connection.connectionId,
-      }),
-    })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
     }
   }
 }

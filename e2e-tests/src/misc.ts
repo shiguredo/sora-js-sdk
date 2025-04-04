@@ -1,6 +1,8 @@
 import { SignJWT } from 'jose'
 import type { VideoCodecType } from 'sora-js-sdk'
 
+import Sora from 'sora-js-sdk'
+
 export const generateJwt = async (
   channelId: string,
   secretKey: string,
@@ -21,6 +23,13 @@ export const generateJwt = async (
   )
 }
 
+export const setSdkVersion = (id = 'sdk-version'): void => {
+  const sdkVersionElement = document.querySelector<HTMLDivElement>(`#${id}`)
+  if (sdkVersionElement) {
+    sdkVersionElement.textContent = `${Sora.version()}`
+  }
+}
+
 export const getChannelId = (
   channelIdPrefix: string,
   channelIdSuffix: string,
@@ -34,11 +43,11 @@ export const getChannelId = (
   return `${channelIdPrefix}${channelName}${channelIdSuffix}`
 }
 
-export const getVideoCodecType = (id = 'video-codec-type'): VideoCodecType | undefined => {
+export const getVideoCodecType = (id = 'video-codec-type'): VideoCodecType => {
   const videoCodecTypeElement = document.querySelector<HTMLSelectElement>(`#${id}`)
   const videoCodecType = videoCodecTypeElement?.value
   if (videoCodecType === '') {
-    return undefined
+    throw new Error('videoCodecType is empty')
   }
   return videoCodecType as VideoCodecType
 }

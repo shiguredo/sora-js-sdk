@@ -1,3 +1,5 @@
+import { getChannelId, setSdkVersion } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
@@ -5,24 +7,19 @@ import Sora, {
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 環境変数の読み込み
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  // Sora クライアントの初期化
+  setSdkVersion()
+
   let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    // channel_name を取得
-    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
-    if (!channelName) {
-      console.error('channel_name is required')
-      return
-    }
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
 
-    client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey, channelName)
+    client = new SoraClient(signalingUrl, channelId, secretKey)
     await client.connect()
   })
 
@@ -40,24 +37,17 @@ class SoraClient {
   private sora: SoraConnection
   private connection: ConnectionSubscriber
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
+  constructor(signalingUrl: string, channelId: string, secretKey: string) {
+    this.channelId = channelId
     this.sora = Sora.connection(signalingUrl, this.debug)
+
+    // access_token を指定する metadata の生成
+    this.metadata = { access_token: secretKey }
 
     this.options = {
       simulcast: true,
       spotlight: true,
     }
-
-    // channel_id の生成
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-    // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey }
 
     this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onnotify.bind(this))

@@ -1,3 +1,5 @@
+import { getChannelId, setSdkVersion } from '../src/misc'
+
 import Sora, {
   type SignalingNotifyMessage,
   type ConnectionPublisher,
@@ -10,19 +12,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
+  setSdkVersion()
+
   let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+
+    client = new SoraClient(signalingUrl, channelId, secretKey)
+
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-
-    // channel_name を取得
-    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
-    if (!channelName) {
-      console.error('channel_name is required')
-      return
-    }
-
-    client = new SoraClient(signalingUrl, channelIdPrefix, channelIdSuffix, secretKey, channelName)
     await client.connect(stream)
   })
 
@@ -40,24 +39,18 @@ class SoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
+  constructor(signalingUrl: string, channelId: string, secretKey: string) {
+    this.channelId = channelId
+
     this.sora = Sora.connection(signalingUrl, this.debug)
+
+    // access_token を指定する metadata の生成
+    this.metadata = { access_token: secretKey }
 
     this.options = {
       simulcast: true,
       spotlight: true,
     }
-
-    // channel_id の生成
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-    // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey }
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onnotify.bind(this))

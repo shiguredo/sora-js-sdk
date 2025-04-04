@@ -1,3 +1,5 @@
+import { getChannelId, setSdkVersion } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type ConnectionPublisher,
@@ -12,7 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
+  setSdkVersion()
+
   let sendonly: SimulcastSendonlySoraClient
+  let recvonlyR0: SimulcastRecvonlySoraClient
+  let recvonlyR1: SimulcastRecvonlySoraClient
+  let recvonlyR2: SimulcastRecvonlySoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     // sendonly
@@ -21,26 +28,35 @@ document.addEventListener('DOMContentLoaded', () => {
       video: { width: { exact: 960 }, height: { exact: 540 } },
     })
 
-    // channel name 取得
-    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
-    if (!channelName) {
-      console.error('channel_name is required')
-      return
-    }
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
 
-    sendonly = new SimulcastSendonlySoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-    )
+    sendonly = new SimulcastSendonlySoraClient(signalingUrl, channelId, secretKey)
+
+    recvonlyR0 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, 'r0', secretKey)
+
+    recvonlyR1 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, 'r1', secretKey)
+
+    recvonlyR2 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, 'r2', secretKey)
 
     await sendonly.connect(stream)
+
+    // recvonly r0
+    await recvonlyR0.connect()
+    // recvonly r1
+    await recvonlyR1.connect()
+    // recvonly r2
+    await recvonlyR2.connect()
   })
 
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await sendonly.disconnect()
+
+    // recvonly r0
+    await recvonlyR0.disconnect()
+    // recvonly r1
+    await recvonlyR1.disconnect()
+    // recvonly r2
+    await recvonlyR2.disconnect()
   })
 
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
@@ -76,16 +92,10 @@ class SimulcastSendonlySoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-
+  constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug)
+    this.channelId = channelId
+
     this.connection = this.sora.sendonly(
       this.channelId,
       { access_token: secretKey },
@@ -123,10 +133,77 @@ class SimulcastSendonlySoraClient {
       event.event_type === 'connection.created' &&
       event.connection_id === this.connection.connectionId
     ) {
-      const localVideoConnectionId = document.querySelector('#connection-id')
+      const localVideoConnectionId = document.querySelector('#local-video-connection-id')
       if (localVideoConnectionId) {
         localVideoConnectionId.textContent = `${event.connection_id}`
       }
+    }
+  }
+}
+
+class SimulcastRecvonlySoraClient {
+  private debug = false
+
+  private channelId: string
+  private rid: SimulcastRid
+
+  private sora: SoraConnection
+  private connection: ConnectionSubscriber
+
+  constructor(signalingUrl: string, channelId: string, rid: SimulcastRid, secretKey: string) {
+    this.channelId = channelId
+    this.rid = rid
+
+    this.sora = Sora.connection(signalingUrl, this.debug)
+
+    this.connection = this.sora.recvonly(
+      this.channelId,
+      { access_token: secretKey },
+      { simulcastRid: this.rid, simulcast: true },
+    )
+
+    this.connection.on('notify', this.onnotify.bind(this))
+    this.connection.on('track', this.ontrack.bind(this))
+    this.connection.on('removetrack', this.onremovetrack.bind(this))
+  }
+
+  async connect() {
+    await this.connection.connect()
+  }
+
+  async disconnect() {
+    await this.connection.disconnect()
+    const remoteVideo = document.querySelector<HTMLVideoElement>(`#remote-video-${this.rid}`)
+    if (remoteVideo) {
+      remoteVideo.srcObject = null
+    }
+  }
+
+  private onnotify(event: SignalingNotifyMessage) {
+    if (
+      event.event_type === 'connection.created' &&
+      event.connection_id === this.connection.connectionId
+    ) {
+      const localVideoConnectionId = document.querySelector(
+        `#remote-video-connection-id-${this.rid}`,
+      )
+      if (localVideoConnectionId) {
+        localVideoConnectionId.textContent = `${event.connection_id}`
+      }
+    }
+  }
+
+  private ontrack(event: RTCTrackEvent) {
+    const remoteVideo = document.querySelector<HTMLVideoElement>(`#remote-video-${this.rid}`)
+    if (remoteVideo) {
+      remoteVideo.srcObject = event.streams[0]
+    }
+  }
+
+  private onremovetrack(event: MediaStreamTrackEvent) {
+    const remoteVideo = document.querySelector<HTMLVideoElement>(`#remote-video-${this.rid}`)
+    if (remoteVideo) {
+      remoteVideo.srcObject = null
     }
   }
 }

@@ -1,4 +1,4 @@
-import { getChannelId } from '../src/misc'
+import { getChannelId, setSdkVersion } from '../src/misc'
 
 import Sora, {
   type SoraConnection,
@@ -8,26 +8,13 @@ import Sora, {
   type DataChannelEvent,
 } from 'sora-js-sdk'
 
-const getChannelName = (): string => {
-  const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
-  const channelName = channelNameElement?.value
-  if (channelName === '' || channelName === undefined) {
-    throw new Error('channelName is empty')
-  }
-  return channelName
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  const soraJsSdkVersion = Sora.version()
-  const soraJsSdkVersionElement = document.getElementById('sora-js-sdk-version')
-  if (soraJsSdkVersionElement) {
-    soraJsSdkVersionElement.textContent = soraJsSdkVersion
-  }
+  setSdkVersion()
 
   let client: SoraClient
 

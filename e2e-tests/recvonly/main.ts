@@ -1,4 +1,4 @@
-import { getChannelId } from '../src/misc'
+import { getChannelId, setSdkVersion } from '../src/misc'
 
 import Sora, {
   type SoraConnection,
@@ -7,20 +7,14 @@ import Sora, {
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 環境変数の読み込み
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  // Sora クライアントの初期化
-  let client: SoraClient
+  setSdkVersion()
 
-  // SDK バージョンの表示
-  const sdkVersionElement = document.querySelector('#sdk-version')
-  if (sdkVersionElement) {
-    sdkVersionElement.textContent = `${Sora.version()}`
-  }
+  let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     if (client) {
