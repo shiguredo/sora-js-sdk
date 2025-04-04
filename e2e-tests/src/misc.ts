@@ -21,13 +21,13 @@ export const generateJwt = async (
   )
 }
 
-export const getChannelName = (): string => {
+export const getChannelId = (channelIdPrefix: string, channelIdSuffix: string): string => {
   const channelNameElement = document.querySelector<HTMLInputElement>('#channel-name')
   const channelName = channelNameElement?.value
   if (channelName === '' || channelName === undefined) {
     throw new Error('channelName is empty')
   }
-  return channelName
+  return `${channelIdPrefix}${channelName}${channelIdSuffix}`
 }
 
 export const getVideoCodecType = (): VideoCodecType | undefined => {
