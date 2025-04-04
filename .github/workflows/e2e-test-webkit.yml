@@ -15,7 +15,7 @@ on:
 
 jobs:
   # WebKit のテスト
-  e2e-test-h265:
+  e2e-test-webkit:
     strategy:
       matrix:
         node:
@@ -68,7 +68,7 @@ jobs:
   #         SLACK_ICON_EMOJI: ":star-struck:"
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   slack_notify_failed:
-    needs: [e2e-test-h265]
+    needs: [e2e-test-webkit]
     runs-on: ubuntu-24.04
     if: failure()
     steps:
