@@ -36,6 +36,12 @@
   - @voluntas
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
+- [ADD] WebKit の E2E テストを追加する
+  - まずは sendrecv のテストのみ
+  - AV1 には対応していないためテストから外している
+  - H.264/H.265 は対応している
+  - self-hosted runner の macOS でテストを行っている
+  - @voluntas
 - [ADD] Firefox/WebKit で E2E テストを実現するため getFakeMedia を追加する
   - @voluntas
 - [ADD] Playwright で Chrome / Edge をインストールして E2E テストできるようにする

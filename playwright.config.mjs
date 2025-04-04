@@ -65,14 +65,14 @@ export default defineConfig({
       use: { ...devices['Desktop Edge'], channel: 'msedge-canary' },
     },
 
+    {
+      name: 'WebKit',
+      use: { ...devices['Desktop Safari'] },
+    },
+
     // {
     //   name: 'firefox',
     //   use: { ...devices['Desktop Firefox'] },
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
     // },
   ],
   webServer: {

@@ -1,12 +1,17 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
-test('sendrecv x2', async ({ browser }) => {
+test('WebKit', async ({ browser }) => {
+  test.skip(
+    test.info().project.name !== 'WebKit' || process.platform !== 'darwin',
+    'WebKit かつ macOS でのみテストを行う',
+  )
+
   const sendrecv1 = await browser.newPage()
   const sendrecv2 = await browser.newPage()
 
-  await sendrecv1.goto('http://localhost:9000/sendrecv/')
-  await sendrecv2.goto('http://localhost:9000/sendrecv/')
+  await sendrecv1.goto('http://localhost:9000/sendrecv_webkit/')
+  await sendrecv2.goto('http://localhost:9000/sendrecv_webkit/')
 
   const channelName = randomUUID()
 
