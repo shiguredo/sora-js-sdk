@@ -6,7 +6,7 @@ export default defineConfig({
   testDir: 'e2e-tests/tests',
   workers: 1,
   // fullyParallel: true,
-  reporter: ['list'],
+  reporter: 'list',
   use: {
     launchOptions: {
       args: [
