@@ -1,3 +1,5 @@
+import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type ConnectionPublisher,
@@ -10,25 +12,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
+  setSoraJsSdkVersion()
+
   let sendrecv: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+
+    sendrecv = new SoraClient(signalingUrl, channelId, secretKey)
+
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-
-    // channelName を取得
-    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
-    if (!channelName) {
-      throw new Error('channelName is empty')
-    }
-
-    sendrecv = new SoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-    )
-
     await sendrecv.connect(stream)
   })
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
@@ -46,16 +39,13 @@ class SoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
+  constructor(signalingUrl: string, channelId: string, secretKey: string) {
+    this.channelId = channelId
+
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+
     this.metadata = { access_token: secretKey }
+
     this.options = {
       audio: true,
       video: true,

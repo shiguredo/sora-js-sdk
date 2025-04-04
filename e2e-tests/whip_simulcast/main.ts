@@ -1,4 +1,6 @@
-import { generateJwt } from '../src/misc'
+import { generateJwt, getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
+
+import Sora, { type VideoCodecType } from 'sora-js-sdk'
 
 declare global {
   interface RTCRtpEncodingParameters {
@@ -12,26 +14,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
+  setSoraJsSdkVersion()
+
   let whipSimulcastClient: WhipSimulcastClient | undefined
 
   document.getElementById('connect')?.addEventListener('click', async () => {
-    const channelName = document.getElementById('channel-name') as HTMLInputElement
-    if (!channelName) {
-      throw new Error('Channel name input element not found')
-    }
-    const channelId = `${channelIdPrefix}${channelName.value}${channelIdSuffix}`
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+    const videoCodecType = getVideoCodecType()
 
-    const videoCodecTypeElement = document.getElementById('video-codec-type') as HTMLSelectElement
-    if (!videoCodecTypeElement) {
-      throw new Error('Video codec type select element not found')
-    }
-
-    whipSimulcastClient = new WhipSimulcastClient(
-      endpointUrl,
-      channelId,
-      videoCodecTypeElement.value,
-      secretKey,
-    )
+    whipSimulcastClient = new WhipSimulcastClient(endpointUrl, channelId, videoCodecType, secretKey)
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
@@ -97,14 +88,19 @@ class WhipSimulcastClient {
 
   private channelId: string
 
-  private videoCodecType: string
+  private videoCodecType: VideoCodecType
 
   private secretKey: string
   private pc: RTCPeerConnection | undefined
 
   private stream: MediaStream | undefined
 
-  constructor(endpointUrl: string, channelId: string, videoCodecType: string, secretKey: string) {
+  constructor(
+    endpointUrl: string,
+    channelId: string,
+    videoCodecType: VideoCodecType,
+    secretKey: string,
+  ) {
     this.endpointUrl = endpointUrl
     this.channelId = channelId
     this.videoCodecType = videoCodecType

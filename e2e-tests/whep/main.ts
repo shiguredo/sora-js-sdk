@@ -1,24 +1,22 @@
+import { getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
+
+import Sora, { type VideoCodecType } from 'sora-js-sdk'
+
 document.addEventListener('DOMContentLoaded', async () => {
   const endpointUrl = import.meta.env.VITE_TEST_WHEP_ENDPOINT_URL
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
+  setSoraJsSdkVersion()
+
   let whepClient: WhepClient | undefined
 
   document.getElementById('connect')?.addEventListener('click', async () => {
-    const channelName = document.getElementById('channel-name') as HTMLInputElement
-    if (!channelName) {
-      throw new Error('Channel name input element not found')
-    }
-    const channelId = `${channelIdPrefix}${channelName.value}${channelIdSuffix}`
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+    const videoCodecType = getVideoCodecType()
 
-    const videoCodecTypeElement = document.getElementById('video-codec-type') as HTMLSelectElement
-    if (!videoCodecTypeElement) {
-      throw new Error('Video codec type select element not found')
-    }
-
-    whepClient = new WhepClient(endpointUrl, channelId, videoCodecTypeElement.value, secretKey)
+    whepClient = new WhepClient(endpointUrl, channelId, videoCodecType, secretKey)
     await whepClient.connect()
   })
 
@@ -66,11 +64,16 @@ class WhepClient {
   private resourceUrl: string | undefined
 
   private channelId: string
-  private videoCodecType: string
+  private videoCodecType: VideoCodecType
   private secretKey: string
   private pc: RTCPeerConnection | undefined
 
-  constructor(endpointUrl: string, channelId: string, videoCodecType: string, secretKey: string) {
+  constructor(
+    endpointUrl: string,
+    channelId: string,
+    videoCodecType: VideoCodecType,
+    secretKey: string,
+  ) {
     this.endpointUrl = endpointUrl
     this.channelId = channelId
     this.videoCodecType = videoCodecType

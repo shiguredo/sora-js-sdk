@@ -17,12 +17,12 @@ test('sendonly/recvonly pages', async ({ browser }) => {
   await recvonly.fill('#channel-name', channelName)
 
   // SDK バージョンの表示
-  await sendonly.waitForSelector('#sdk-version')
-  const sendonlySdkVersion = await sendonly.$eval('#sdk-version', (el) => el.textContent)
+  await sendonly.waitForSelector('#sora-js-sdk-version')
+  const sendonlySdkVersion = await sendonly.$eval('#sora-js-sdk-version', (el) => el.textContent)
   console.log(`sendonly sdkVersion=${sendonlySdkVersion}`)
 
-  await recvonly.waitForSelector('#sdk-version')
-  const recvonlySdkVersion = await recvonly.$eval('#sdk-version', (el) => el.textContent)
+  await recvonly.waitForSelector('#sora-js-sdk-version')
+  const recvonlySdkVersion = await recvonly.$eval('#sora-js-sdk-version', (el) => el.textContent)
   console.log(`recvonly sdkVersion=${recvonlySdkVersion}`)
 
   await sendonly.click('#connect')

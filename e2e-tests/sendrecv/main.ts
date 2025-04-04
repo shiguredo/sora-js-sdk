@@ -1,60 +1,37 @@
+import { getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type SignalingNotifyMessage,
-  type ConnectionSubscriber,
+  type ConnectionPublisher,
+  type VideoCodecType,
+  type ConnectionOptions,
 } from 'sora-js-sdk'
 
-document.addEventListener('DOMContentLoaded', () => {
-  // 環境変数の読み込み
+document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
-  // Sora クライアントの初期化
+  setSoraJsSdkVersion()
+
   let client: SoraClient
 
-  // SDK バージョンの表示
-  const sdkVersionElement = document.querySelector('#sdk-version')
-  if (sdkVersionElement) {
-    sdkVersionElement.textContent = `${Sora.version()}`
-  }
-
   document.querySelector('#connect')?.addEventListener('click', async () => {
-    if (client) {
-      await client.disconnect()
-    }
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+    const videoCodecType = getVideoCodecType()
 
-    // channelName を取得
-    const channelName = document.querySelector('#channel-name') as HTMLInputElement
-    if (!channelName) {
-      throw new Error('Channel name input element not found')
-    }
+    client = new SoraClient(signalingUrl, channelId, secretKey, videoCodecType)
 
-    client = new SoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName.value,
-    )
-
-    await client.connect()
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+    await client.connect(stream)
   })
-
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
-    if (!client) {
-      return
-    }
-
     await client.disconnect()
   })
 
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
-    if (!client) {
-      return
-    }
-
     const statsReport = await client.getStats()
     const statsDiv = document.querySelector('#stats-report') as HTMLElement
     const statsReportJsonDiv = document.querySelector('#stats-report-json')
@@ -82,39 +59,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
 class SoraClient {
   private debug = false
+
   private channelId: string
   private metadata: { access_token: string }
-  private options: object = {}
+  private options: ConnectionOptions
 
   private sora: SoraConnection
-  private connection: ConnectionSubscriber
+  private connection: ConnectionPublisher
 
   constructor(
     signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
+    channelId: string,
     secretKey: string,
-    channelName: string,
+    videoCodecType: VideoCodecType | undefined,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
+    this.channelId = channelId
 
-    // channel_id の生成
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-    // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey }
+    this.options = {}
 
-    this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options)
+    if (videoCodecType !== undefined) {
+      this.options = { ...this.options, videoCodecType: videoCodecType }
+    }
+
+    this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options)
+
     this.connection.on('notify', this.onnotify.bind(this))
     this.connection.on('track', this.ontrack.bind(this))
     this.connection.on('removetrack', this.onremovetrack.bind(this))
   }
 
-  async connect(): Promise<void> {
-    await this.connection.connect()
+  async connect(stream: MediaStream) {
+    await this.connection.connect(stream)
+    const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
+    if (localVideo) {
+      localVideo.srcObject = stream
+    }
   }
 
-  async disconnect(): Promise<void> {
+  async disconnect() {
     await this.connection.disconnect()
+
+    // お掃除
+    const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
+    if (localVideo) {
+      localVideo.srcObject = null
+    }
+    // お掃除
     const remoteVideos = document.querySelector('#remote-videos')
     if (remoteVideos) {
       remoteVideos.innerHTML = ''
@@ -128,24 +120,22 @@ class SoraClient {
     return this.connection.pc.getStats()
   }
 
-  private onnotify(event: SignalingNotifyMessage) {
-    // 自分の connection_id を取得する
+  private onnotify(event: SignalingNotifyMessage): void {
     if (
       event.event_type === 'connection.created' &&
       this.connection.connectionId === event.connection_id
     ) {
-      const connectionIdElement = document.querySelector<HTMLDivElement>('#connection-id')
+      const connectionIdElement = document.querySelector('#connection-id')
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
       }
     }
   }
 
-  private ontrack(event: RTCTrackEvent) {
-    // Sora の場合、event.streams には MediaStream が 1 つだけ含まれる
+  private ontrack(event: RTCTrackEvent): void {
     const stream = event.streams[0]
     const remoteVideoId = `remote-video-${stream.id}`
-    const remoteVideos = document.querySelector<HTMLDivElement>('#remote-videos')
+    const remoteVideos = document.querySelector('#remote-videos')
     if (remoteVideos && !remoteVideos.querySelector(`#${remoteVideoId}`)) {
       const remoteVideo = document.createElement('video')
       remoteVideo.id = remoteVideoId
@@ -153,15 +143,16 @@ class SoraClient {
       remoteVideo.autoplay = true
       remoteVideo.playsInline = true
       remoteVideo.controls = true
+      remoteVideo.width = 320
+      remoteVideo.height = 240
       remoteVideo.srcObject = stream
       remoteVideos.appendChild(remoteVideo)
     }
   }
 
-  private onremovetrack(event: MediaStreamTrackEvent) {
-    // このトラックが属している MediaStream の id を取得する
-    const stream = event.target as MediaStream
-    const remoteVideo = document.querySelector(`#remote-video-${stream.id}`)
+  private onremovetrack(event: MediaStreamTrackEvent): void {
+    const target = event.target as MediaStream
+    const remoteVideo = document.querySelector(`#remote-video-${target.id}`)
     if (remoteVideo) {
       document.querySelector('#remote-videos')?.removeChild(remoteVideo)
     }

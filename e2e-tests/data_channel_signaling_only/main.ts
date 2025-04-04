@@ -1,3 +1,5 @@
+import { setSoraJsSdkVersion } from '../src/misc'
+
 import Sora, {
   type SignalingNotifyMessage,
   type SignalingEvent,
@@ -13,13 +15,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
   const apiUrl = import.meta.env.VITE_TEST_API_URL
 
-  let client: SoraClient
+  setSoraJsSdkVersion()
 
-  // SDK バージョンの表示
-  const sdkVersionElement = document.querySelector('#sdk-version')
-  if (sdkVersionElement) {
-    sdkVersionElement.textContent = `${Sora.version()}`
-  }
+  let client: SoraClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })

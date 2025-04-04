@@ -1,3 +1,5 @@
+import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
+
 import Sora, {
   type SoraConnection,
   type ConnectionPublisher,
@@ -12,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
 
+  setSoraJsSdkVersion()
+
   let sendonly: SimulcastSendonlySoraClient
   let recvonlyR0: SimulcastRecvonlySoraClient
   let recvonlyR1: SimulcastRecvonlySoraClient
@@ -24,47 +28,15 @@ document.addEventListener('DOMContentLoaded', () => {
       video: { width: { exact: 960 }, height: { exact: 540 } },
     })
 
-    // channel name 取得
-    const channelName = document.querySelector<HTMLInputElement>('#channel-name')?.value
-    if (!channelName) {
-      console.error('channel_name is required')
-      return
-    }
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
 
-    sendonly = new SimulcastSendonlySoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-    )
+    sendonly = new SimulcastSendonlySoraClient(signalingUrl, channelId, secretKey)
 
-    recvonlyR0 = new SimulcastRecvonlySoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-      'r0',
-    )
+    recvonlyR0 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, 'r0', secretKey)
 
-    recvonlyR1 = new SimulcastRecvonlySoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-      'r1',
-    )
+    recvonlyR1 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, 'r1', secretKey)
 
-    recvonlyR2 = new SimulcastRecvonlySoraClient(
-      signalingUrl,
-      channelIdPrefix,
-      channelIdSuffix,
-      secretKey,
-      channelName,
-      'r2',
-    )
+    recvonlyR2 = new SimulcastRecvonlySoraClient(signalingUrl, channelId, 'r2', secretKey)
 
     await sendonly.connect(stream)
 
@@ -120,16 +92,10 @@ class SimulcastSendonlySoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-  ) {
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
-
+  constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug)
+    this.channelId = channelId
+
     this.connection = this.sora.sendonly(
       this.channelId,
       { access_token: secretKey },
@@ -184,18 +150,12 @@ class SimulcastRecvonlySoraClient {
   private sora: SoraConnection
   private connection: ConnectionSubscriber
 
-  constructor(
-    signalingUrl: string,
-    channelIdPrefix: string,
-    channelIdSuffix: string,
-    secretKey: string,
-    channelName: string,
-    rid: SimulcastRid,
-  ) {
-    this.channelId = `${channelIdPrefix}${channelName}${channelIdSuffix}`
+  constructor(signalingUrl: string, channelId: string, rid: SimulcastRid, secretKey: string) {
+    this.channelId = channelId
     this.rid = rid
 
     this.sora = Sora.connection(signalingUrl, this.debug)
+
     this.connection = this.sora.recvonly(
       this.channelId,
       { access_token: secretKey },
