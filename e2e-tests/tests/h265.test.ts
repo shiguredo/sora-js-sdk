@@ -4,10 +4,11 @@ import { expect, test } from '@playwright/test'
 test('H265', async ({ browser }) => {
   test.skip(
     (test.info().project.name !== 'Google Chrome Canary' &&
-      test.info().project.name !== 'Google Chrome Dev') ||
+      test.info().project.name !== 'Google Chrome Dev' &&
+      test.info().project.name !== 'Google Chrome Beta') ||
       process.env.RUNNER_ENVIRONMENT !== 'self-hosted' ||
       process.platform !== 'darwin',
-    'H265 は Self-hosted の macOS の Google Chrome Canary または Google Chrome Dev でテストを行う',
+    'H265 は Self-hosted の macOS の Google Chrome {Canary,Dev,Beta} でテストを行う',
   )
 
   const sendrecv1 = await browser.newPage()
