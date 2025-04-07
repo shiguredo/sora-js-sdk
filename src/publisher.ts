@@ -1,5 +1,4 @@
 import ConnectionBase from './base'
-import { isFirefox } from './utils'
 
 /**
  * Role が "sendonly" または "sendrecv" の場合に Sora との WebRTC 接続を扱うクラス
@@ -92,7 +91,7 @@ export default class ConnectionPublisher extends ConnectionBase {
     this.stream = stream
     await this.createAnswer(signalingMessage)
     this.sendAnswer()
-    if (this.pc?.getConfiguration().iceTransportPolicy === 'all' || isFirefox()) {
+    if (!this.options.skipIceCandidateEvent) {
       await this.onIceCandidate()
     }
     await this.waitChangeConnectionStateConnected()

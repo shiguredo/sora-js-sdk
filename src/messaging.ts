@@ -1,5 +1,4 @@
 import ConnectionBase from './base'
-import { isFirefox } from './utils'
 
 /**
  * messaging_only 専用のクラス
@@ -43,7 +42,7 @@ export default class ConnectionMessaging extends ConnectionBase {
     await this.setRemoteDescription(signalingMessage)
     await this.createAnswer(signalingMessage)
     this.sendAnswer()
-    if (this.pc?.getConfiguration().iceTransportPolicy === 'all' || isFirefox()) {
+    if (!this.options.skipIceCandidateEvent) {
       await this.onIceCandidate()
     }
     await this.waitChangeConnectionStateConnected()

@@ -399,6 +399,9 @@ export type ConnectionOptions = {
   // Sora JavaScript SDK 内部で利用するオプション
   // SDP で Answer に stereo=1 を追記する
   forceStereoOutput?: boolean
+
+  // ICE 候補をスキップする
+  skipIceCandidateEvent?: boolean
 }
 
 export type Callbacks = {
