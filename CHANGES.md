@@ -21,8 +21,9 @@
   - @voluntas
 - [FIX] `signalingUrlCandidates` が `[]` の場合はエラーにする
   - @voluntas
-- [FIX] `iceTransportPolicy` が `all` の場合のみ `onIceCandidate` を実行するようにする
+- [FIX] `iceTransportPolicy` が `all` または Firefox の場合のみ `onIceCandidate` を実行するようにする
   - `iceTransportPolicy` が `relay` の場合は常に TURN を経由するため `onIceCandidate` は不要
+  - Firefox は `all` でも `onIceCandidate` は必要
   - @voluntas
 
 ### misc
