@@ -15,15 +15,15 @@
   - @voluntas
 - [CHANGE] レガシーストリーム `multistream: false` を廃止する
   - @voluntas
+- [ADD] `ConnectionOptions` に `skipIceCandidateEvent` を追加する
+  - デフォルトは false
+  - `onIceCandidate` をスキップする
+  - @voluntas
 - [UPDATE] pnpm 10 系に上げる
   - @voluntas
 - [FIX] `signalingUrlCandidates` が `string[]` で長さが 1 の場合 `signalingUrlCandidates[0]` を利用して `string` と同じ処理にする
   - @voluntas
 - [FIX] `signalingUrlCandidates` が `[]` の場合はエラーにする
-  - @voluntas
-- [FIX] `iceTransportPolicy` が `all` または Firefox の場合のみ `onIceCandidate` を実行するようにする
-  - `iceTransportPolicy` が `relay` の場合は常に TURN を経由するため `onIceCandidate` は不要
-  - Firefox は `all` でも `onIceCandidate` は必要
   - @voluntas
 
 ### misc

@@ -238,6 +238,14 @@ export default class ConnectionBase {
     this.metadata = metadata
     this.signalingUrlCandidates = signalingUrlCandidates
     this.options = options
+
+    // options に skipIceCandidateEvent が指定されていなかったら false を指定する
+    // ちなみに this.options.skipIceCandidateEvent ??= false とも書ける
+    // https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing_assignment
+    if (this.options.skipIceCandidateEvent === undefined) {
+      this.options.skipIceCandidateEvent = false
+    }
+
     // connection timeout の初期値をセットする
     this.connectionTimeout = 60000
     if (typeof this.options.timeout === 'number') {

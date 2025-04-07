@@ -77,7 +77,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.setRemoteDescription(signalingMessage)
     await this.createAnswer(signalingMessage)
     this.sendAnswer()
-    if (this.pc?.getConfiguration().iceTransportPolicy === 'all' || isFirefox()) {
+    if (!this.options.skipIceCandidateEvent) {
       await this.onIceCandidate()
     }
     await this.waitChangeConnectionStateConnected()
