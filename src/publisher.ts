@@ -1,5 +1,4 @@
 import ConnectionBase from './base'
-import { isFirefox } from './utils'
 
 /**
  * Role が "sendonly" または "sendrecv" の場合に Sora との WebRTC 接続を扱うクラス

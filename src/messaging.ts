@@ -1,5 +1,4 @@
 import ConnectionBase from './base'
-import { isFirefox } from './utils'
 
 /**
  * messaging_only 専用のクラス
