@@ -74,7 +74,7 @@ jobs:
           - "20"
         browser:
           - name: "Google Chrome Beta"
-            type: "google-chrome"
+            type: "chrome-beta"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
