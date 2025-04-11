@@ -96,6 +96,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
+      - name: Set Homebrew environment variables to avoid sudo
+        run: |
+          echo "HOMEBREW_NO_AUTO_UPDATE=1" >> $GITHUB_ENV
+          echo "HOMEBREW_NO_INSTALL_DEPENDENCIES=1" >> $GITHUB_ENV
+          echo "HOMEBREW_NO_ENV_HINTS=1" >> $GITHUB_ENV
       - uses: Homebrew/actions/setup-homebrew@master
       - run: brew install --cask ${{ matrix.browser.type}}@${{ matrix.browser.version }}
       - uses: actions/setup-node@v4
