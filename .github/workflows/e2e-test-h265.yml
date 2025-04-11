@@ -73,15 +73,8 @@ jobs:
         node:
           - "20"
         browser:
-          - name: "Google Chrome Canary"
-            type: "google-chrome"
-            version: canary
-          - name: "Google Chrome Dev"
-            type: "google-chrome"
-            version: dev
           - name: "Google Chrome Beta"
             type: "google-chrome"
-            version: beta
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
@@ -95,14 +88,6 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-      - name: Set Homebrew environment variables to avoid sudo
-        run: |
-          echo "HOMEBREW_NO_AUTO_UPDATE=1" >> $GITHUB_ENV
-          echo "HOMEBREW_NO_INSTALL_DEPENDENCIES=1" >> $GITHUB_ENV
-          echo "HOMEBREW_NO_ENV_HINTS=1" >> $GITHUB_ENV
-      - uses: Homebrew/actions/setup-homebrew@master
-      - run: brew install --cask ${{ matrix.browser.type}}@${{ matrix.browser.version }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -112,6 +97,7 @@ jobs:
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build
+      - run: pnpm exec playwright install ${{ matrix.browser.type }}
       - run: pnpm exec playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/h265.test.ts
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
