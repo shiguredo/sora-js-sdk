@@ -18,7 +18,7 @@ export default defineConfig({
         '--use-fake-device-for-media-stream',
         // "--use-file-for-fake-video-capture=/app/sample.mjpeg",
 
-        '--enable-features=WebRtcAllowH265Send,WebRtcAllowH265Receive',
+        // '--enable-features=WebRtcAllowH265Send,WebRtcAllowH265Receive',
       ],
     },
   },
