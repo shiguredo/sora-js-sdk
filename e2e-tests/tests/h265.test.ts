@@ -11,6 +11,8 @@ test('H265', async ({ browser }) => {
     'H265 は Self-hosted の macOS の Google Chrome {Canary,Dev,Beta} でテストを行う',
   )
 
+  console.log(`${browser.browserType().name()}: ${browser.version()}`)
+
   const sendrecv1 = await browser.newPage()
   const sendrecv2 = await browser.newPage()
 
