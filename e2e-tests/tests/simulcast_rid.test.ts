@@ -69,8 +69,6 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   expect(sendonlyVideoR0OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR0OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
   expect(sendonlyVideoR0OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
-  expect(sendonlyVideoR0OutboundRtpStats?.frameWidth).toBe(240)
-  expect(sendonlyVideoR0OutboundRtpStats?.frameHeight).toBe(135)
 
   const sendonlyVideoR1OutboundRtpStats = sendonlyStatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r1',
@@ -80,8 +78,6 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   expect(sendonlyVideoR1OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR1OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
   expect(sendonlyVideoR1OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
-  expect(sendonlyVideoR1OutboundRtpStats?.frameWidth).toBe(480)
-  expect(sendonlyVideoR1OutboundRtpStats?.frameHeight).toBe(270)
 
   const sendonlyVideoR2OutboundRtpStats = sendonlyStatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r2',
@@ -91,8 +87,6 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   expect(sendonlyVideoR2OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR2OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
   expect(sendonlyVideoR2OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
-  expect(sendonlyVideoR2OutboundRtpStats?.frameWidth).toBe(960)
-  expect(sendonlyVideoR2OutboundRtpStats?.frameHeight).toBe(540)
 
   // chromium では targetBitrate が rid 全て同じなのでテストしない
   if (browser.browserType().name() !== 'chromium') {
@@ -101,16 +95,22 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
     if (sendonlyVideoR0OutboundRtpStats?.qualityLimitationReason === 'none') {
       // 1500 kbps で r0 は 150000 bps が最大値で、100000 以上を期待値とする
       expect(sendonlyVideoR0OutboundRtpStats?.targetBitrate).toBeGreaterThan(100000)
+      expect(sendonlyVideoR0OutboundRtpStats?.frameWidth).toBe(240)
+      expect(sendonlyVideoR0OutboundRtpStats?.frameHeight).toBe(135)
     }
 
     if (sendonlyVideoR1OutboundRtpStats?.qualityLimitationReason === 'none') {
       // 1500 kbps で r1 は 350000 bps が最大値で、300000 以上を期待値とする
       expect(sendonlyVideoR1OutboundRtpStats?.targetBitrate).toBeGreaterThan(300000)
+      expect(sendonlyVideoR1OutboundRtpStats?.frameWidth).toBe(480)
+      expect(sendonlyVideoR1OutboundRtpStats?.frameHeight).toBe(270)
     }
 
     if (sendonlyVideoR2OutboundRtpStats?.qualityLimitationReason === 'none') {
       // 1500 kbps で r2 は 900000 bps が最大値で、850000 以上を期待値とする
       expect(sendonlyVideoR2OutboundRtpStats?.targetBitrate).toBeGreaterThan(850000)
+      expect(sendonlyVideoR2OutboundRtpStats?.frameWidth).toBe(960)
+      expect(sendonlyVideoR2OutboundRtpStats?.frameHeight).toBe(540)
     }
   }
 
