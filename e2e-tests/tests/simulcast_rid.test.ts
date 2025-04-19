@@ -14,10 +14,14 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   await sendonly.fill('#channel-name', channelName)
   await recvonly.fill('#channel-name', channelName)
 
+  // sendonly の
+  await sendonly.selectOption('#video-codec-type', 'VP8')
+  await sendonly.fill('#video-bit-rate', '1500')
+
   // recvonly の simulcast_rid を r1 に設定
   const simulcastRid = 'r1'
   await recvonly.selectOption('#simulcast-rid', simulcastRid)
-  console.log(`recvonly simulcast_rid=${simulcastRid}`)
+  // console.log(`recvonly simulcast_rid=${simulcastRid}`)
 
   await sendonly.click('#connect')
   await recvonly.click('#connect')
@@ -64,6 +68,10 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   expect(sendonlyVideoR0OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR0OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
   expect(sendonlyVideoR0OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
+  console.log(sendonlyVideoR0OutboundRtpStats?.rid)
+  console.log(sendonlyVideoR0OutboundRtpStats?.frameWidth)
+  console.log(sendonlyVideoR0OutboundRtpStats?.frameHeight)
+  console.log(sendonlyVideoR0OutboundRtpStats?.targetBitrate)
 
   const sendonlyVideoR1OutboundRtpStats = sendonlyStatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r1',
@@ -72,6 +80,10 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   expect(sendonlyVideoR1OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR1OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
   expect(sendonlyVideoR1OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
+  console.log(sendonlyVideoR1OutboundRtpStats?.rid)
+  console.log(sendonlyVideoR1OutboundRtpStats?.frameWidth)
+  console.log(sendonlyVideoR1OutboundRtpStats?.frameHeight)
+  console.log(sendonlyVideoR1OutboundRtpStats?.targetBitrate)
 
   const sendonlyVideoR2OutboundRtpStats = sendonlyStatsReportJson.find(
     (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r2',
@@ -80,6 +92,10 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
   expect(sendonlyVideoR2OutboundRtpStats?.bytesSent).toBeGreaterThan(0)
   expect(sendonlyVideoR2OutboundRtpStats?.packetsSent).toBeGreaterThan(0)
   expect(sendonlyVideoR2OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
+  console.log(sendonlyVideoR2OutboundRtpStats?.rid)
+  console.log(sendonlyVideoR2OutboundRtpStats?.frameWidth)
+  console.log(sendonlyVideoR2OutboundRtpStats?.frameHeight)
+  console.log(sendonlyVideoR2OutboundRtpStats?.targetBitrate)
 
   // recvonly の統計情報を取得
   const recvonlyStatsReportJson: Record<string, unknown>[] = await recvonly.evaluate(() => {

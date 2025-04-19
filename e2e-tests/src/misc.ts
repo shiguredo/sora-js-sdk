@@ -43,11 +43,20 @@ export const getChannelId = (
   return `${channelIdPrefix}${channelName}${channelIdSuffix}`
 }
 
-export const getVideoCodecType = (id = 'video-codec-type'): VideoCodecType => {
+export const getVideoCodecType = (id = 'video-codec-type'): VideoCodecType | undefined => {
   const videoCodecTypeElement = document.querySelector<HTMLSelectElement>(`#${id}`)
   const videoCodecType = videoCodecTypeElement?.value
-  if (videoCodecType === '') {
-    throw new Error('videoCodecType is empty')
+  if (videoCodecType === 'undefined') {
+    return undefined
   }
   return videoCodecType as VideoCodecType
+}
+
+export const getVideoBitRate = (id = 'video-bit-rate'): number | undefined => {
+  const videoBitRateElement = document.querySelector<HTMLInputElement>(`#${id}`)
+  const videoBitRate = videoBitRateElement?.value
+  if (videoBitRate === '' || videoBitRate === undefined) {
+    return undefined
+  }
+  return Number.parseInt(videoBitRate)
 }

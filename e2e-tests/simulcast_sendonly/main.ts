@@ -1,9 +1,11 @@
-import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
+import { getChannelId, getVideoBitRate, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
 
 import Sora, {
   type SoraConnection,
+  type VideoCodecType,
   type ConnectionPublisher,
   type SignalingNotifyMessage,
+  type ConnectionOptions,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,8 +20,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+    const videoCodecType = getVideoCodecType()
+    const videoBitRate = getVideoBitRate()
 
-    sendonly = new SimulcastSendonlySoraClient(signalingUrl, channelId, secretKey)
+    sendonly = new SimulcastSendonlySoraClient(
+      signalingUrl,
+      channelId,
+      videoCodecType,
+      videoBitRate,
+      secretKey,
+    )
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -65,15 +75,31 @@ class SimulcastSendonlySoraClient {
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(signalingUrl: string, channelId: string, secretKey: string) {
+  constructor(
+    signalingUrl: string,
+    channelId: string,
+    videoCodecType: VideoCodecType | undefined,
+    videoBitRate: number | undefined,
+    secretKey: string,
+  ) {
     this.channelId = channelId
 
+    const options: ConnectionOptions = {
+      audio: false,
+      video: true,
+      simulcast: true,
+    }
+
+    if (videoCodecType) {
+      options.videoCodecType = videoCodecType
+    }
+
+    if (videoBitRate) {
+      options.videoBitRate = videoBitRate
+    }
+
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.connection = this.sora.sendonly(
-      this.channelId,
-      { access_token: secretKey },
-      { audio: false, video: true, videoCodecType: 'VP8', videoBitRate: 1500, simulcast: true },
-    )
+    this.connection = this.sora.sendonly(this.channelId, { access_token: secretKey }, options)
 
     this.connection.on('notify', this.onnotify.bind(this))
   }
