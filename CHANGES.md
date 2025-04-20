@@ -28,6 +28,9 @@
 
 ### misc
 
+- [CHANGE] WHIP/WHEP の E2E テストは e2e-test-wish.yml にまとめる
+  - E2E_TEST_WISH=true でのみ動作するようにする
+  - @voluntas
 - [CHANGE] Chrome/Edge Canary の E2E テストは Nodejs 20 でのみ行うようにする
   - Nodejs 20 が EoL が一番近い LTS であるため
   - @voluntas
