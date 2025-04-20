@@ -28,11 +28,9 @@ jobs:
           # - "23"
         browser:
           - name: "Google Chrome Canary"
-            type: "google-chrome"
-            version: canary
+            type: "google-chrome@canary"
           - name: "Microsoft Edge Canary"
-            type: "microsoft-edge"
-            version: canary
+            type: "microsoft-edge@canary"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
@@ -51,7 +49,7 @@ jobs:
           tags: tag:ci
           version: latest
       - uses: Homebrew/actions/setup-homebrew@master
-      - run: brew install --cask ${{ matrix.browser.type}}@${{ matrix.browser.version }}
+      - run: brew install --cask ${{ matrix.browser.type}}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
