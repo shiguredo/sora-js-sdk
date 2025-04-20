@@ -12,13 +12,16 @@ $ pnpm build
 $ pnpm e2e-test
 ```
 
-## WHIP/WHEP
+## WHIP/WHEP E2E テスト
 
 SDK では対応していないブラウザレベルでの WHIP/WHEP の E2E テストを用意しています。
+環境変数に `E2E_TEST_WISH=true` を設定することで実行する事ができます。
 
-このサンプルは Chrome / Edge でのみ動作します。
+このサンプルは Chrome でのみ動作します。
 
-WHIP/WHEP を利用するには whip/whep が有効になっており、
-whip_turn/whep_turn も有効になっている必要があります。
+WHIP/WHEP の E2E テストを実行する場合は、
+`whip` と `whep` が有効になっており、
+`whip_turn` と `whep_turn` も有効になっている必要があります。
 
-さらにブラウザから fetch する場合は CORS の設定が必要です。
+> [!WARNING]  
+> ブラウザから fetch する場合は CORS の設定が必要です。
