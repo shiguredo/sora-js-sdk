@@ -1,84 +1,84 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
-test('whip-simulcast', async ({ browser }) => {
-  test.skip(
-    process.env.NPM_PKG_E2E_TEST === 'true',
-    'NPM パッケージの E2E テストでは WHIP/WHEP 関連のテストはスキップする',
-  )
+for (const videoCodecType of ['AV1', 'H264', 'H265']) {
+  test(`whip-simulcast/${videoCodecType}`, async ({ browser }) => {
+    test.skip(
+      process.env.E2E_TEST_WISH !== 'true',
+      'E2E_TEST_WISH が true でない場合は WHIP/WHEP 関連のテストはスキップする',
+    )
 
-  const whip = await browser.newPage()
+    // Google Chrome (m136) になったらこの skip は削除する
+    test.skip(
+      test.info().project.name === 'Google Chrome' && videoCodecType === 'H265',
+      'Google Chrome (m135) では H.265 に対応していないのでスキップします',
+    )
 
-  await whip.goto('http://localhost:9000/whip_simulcast/')
+    // ブラウザのバージョンを取得
+    const browserName = browser.browserType().name()
+    const browserVersion = browser.version()
+    console.log(`browser name=${browserName} version=${browserVersion}`)
 
-  // コーデックの取得
-  const whipVideoCodecType = await whip.evaluate(() => {
-    const videoElement = document.querySelector<HTMLSelectElement>('#video-codec-type')
-    if (!videoElement) {
-      throw new Error('videoElement not found')
-    }
-    return videoElement.value
+    const page = await browser.newPage()
+
+    await page.goto('http://localhost:9000/whip_simulcast/')
+
+    const channelName = randomUUID()
+
+    await page.fill('#channel-name', channelName)
+
+    await page.selectOption('#video-codec-type', videoCodecType)
+
+    await page.click('#connect')
+
+    // 安全によせて 5 秒待つ
+    await page.waitForTimeout(5000)
+
+    // connection-state が "connected" になるまで待つ
+    await page.waitForSelector('#connection-state:has-text("connected")')
+
+    // connection-stateの値を取得して確認
+    const whipConnectionState = await page.$eval('#connection-state', (el) => el.textContent)
+    console.log(`whip connectionState=${whipConnectionState}`)
+
+    // 'Get Stats' ボタンをクリックして統計情報を取得
+    await page.click('#get-stats')
+
+    // 統計情報が表示されるまで待機
+    await page.waitForSelector('#stats-report')
+    // データセットから統計情報を取得
+    const statsReportJson: Record<string, unknown>[] = await page.evaluate(() => {
+      const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
+      return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
+    })
+
+    // sendonly stats report
+    const videoCodecStats = statsReportJson.find(
+      (stats) => stats.type === 'codec' && stats.mimeType === `video/${videoCodecType}`,
+    )
+    expect(videoCodecStats).toBeDefined()
+
+    const videoR0OutboundRtpStats = statsReportJson.find(
+      (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r0',
+    )
+    expect(videoR0OutboundRtpStats).toBeDefined()
+
+    const videoR1OutboundRtpStats = statsReportJson.find(
+      (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r1',
+    )
+    expect(videoR1OutboundRtpStats).toBeDefined()
+
+    const videoR2OutboundRtpStats = statsReportJson.find(
+      (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r2',
+    )
+    expect(videoR2OutboundRtpStats).toBeDefined()
+
+    await page.click('#disconnect')
+
+    // disconnected になるまで待つ
+    // await page.waitForSelector('#connection-state:has-text("disconnected")')
+
+    // ページを閉じる
+    await page.close()
   })
-  console.log(`whipVideoCodecType=${whipVideoCodecType}`)
-
-  // E2E テストでコーデックは AV1 でなければエラーにする
-  if (whipVideoCodecType !== 'AV1') {
-    throw new Error('whipVideoCodecType is not AV1')
-  }
-
-  const channelName = randomUUID()
-
-  await whip.fill('#channel-name', channelName)
-
-  await whip.click('#connect')
-
-  // 安全によせて 5 秒待つ
-  await whip.waitForTimeout(5000)
-
-  // connection-state が "connected" になるまで待つ
-  await whip.waitForSelector('#connection-state:has-text("connected")')
-
-  // connection-stateの値を取得して確認
-  const whipConnectionState = await whip.$eval('#connection-state', (el) => el.textContent)
-  console.log(`whip connectionState=${whipConnectionState}`)
-
-  // 'Get Stats' ボタンをクリックして統計情報を取得
-  await whip.click('#get-stats')
-
-  // 統計情報が表示されるまで待機
-  await whip.waitForSelector('#stats-report')
-  // データセットから統計情報を取得
-  const whipStatsReportJson: Record<string, unknown>[] = await whip.evaluate(() => {
-    const statsReportDiv = document.querySelector('#stats-report') as HTMLDivElement
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || '[]') : []
-  })
-
-  // sendonly stats report
-  const whipVideoCodecStats = whipStatsReportJson.find(
-    (stats) => stats.type === 'codec' && stats.mimeType === `video/${whipVideoCodecType}`,
-  )
-  expect(whipVideoCodecStats).toBeDefined()
-
-  const whipVideoR0OutboundRtpStats = whipStatsReportJson.find(
-    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r0',
-  )
-  expect(whipVideoR0OutboundRtpStats).toBeDefined()
-
-  const whipVideoR1OutboundRtpStats = whipStatsReportJson.find(
-    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r1',
-  )
-  expect(whipVideoR1OutboundRtpStats).toBeDefined()
-
-  const whipVideoR2OutboundRtpStats = whipStatsReportJson.find(
-    (stats) => stats.type === 'outbound-rtp' && stats.kind === 'video' && stats.rid === 'r2',
-  )
-  expect(whipVideoR2OutboundRtpStats).toBeDefined()
-
-  await whip.click('#disconnect')
-
-  // disconnected になるまで待つ
-  // await whip.waitForSelector('#connection-state:has-text("disconnected")')
-
-  // ページを閉じる
-  await whip.close()
-})
+}

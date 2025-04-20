@@ -1,8 +1,4 @@
-name: e2e-test-canary
-
-# Chrome と Edge の Canary バージョンでのテスト
-# Playwright 経由では Canary バージョンのブラウザをインストールできない
-# Homebrew 経由でインストールしている
+name: e2e-test-wish
 
 on:
   push:
@@ -18,19 +14,23 @@ on:
     - cron: "0 2 * * 1-5"
 
 jobs:
-  e2e-test-canary:
+  # Canary バージョンでのテスト
+  # Playwright 経由では Canary バージョンのブラウザをインストールできない
+  # Homebrew 経由でインストールしている
+  e2e-test-wish:
     strategy:
       matrix:
-        # Nodejs のテストではないので 20 でのみ動作確認する
         node:
           - "20"
-          # - "22"
-          # - "23"
         browser:
           - name: "Google Chrome Canary"
             type: "google-chrome@canary"
-          - name: "Microsoft Edge Canary"
-            type: "microsoft-edge@canary"
+          - name: "Google Chrome Dev"
+            type: "google-chrome@dev"
+          - name: "Google Chrome Beta"
+            type: "google-chrome@beta"
+          # - name: "Google Chrome"
+          #   type: "google-chrome"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
@@ -38,16 +38,13 @@ jobs:
       VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       VITE_TEST_API_URL: ${{ secrets.TEST_API_URL }}
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
-    runs-on: macos-15
+      E2E_TEST_WISH: true
+    runs-on:
+      group: Self
+      labels: [self-hosted, macOS, ARM64, Apple-M2-Pro]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          version: latest
       - uses: Homebrew/actions/setup-homebrew@master
       - run: brew install --cask ${{ matrix.browser.type}}
       - uses: actions/setup-node@v4
@@ -59,7 +56,7 @@ jobs:
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build
-      - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
+      - run: pnpm exec playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/whip_*.test.ts
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
@@ -84,7 +81,7 @@ jobs:
   #         SLACK_ICON_EMOJI: ":star-struck:"
   #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   slack_notify_failed:
-    needs: [e2e-test-canary]
+    needs: [e2e-test-wish]
     runs-on: ubuntu-24.04
     if: failure()
     steps:

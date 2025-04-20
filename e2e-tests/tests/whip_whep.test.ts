@@ -1,29 +1,23 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
-// H.265 は HWA のみの対応なので環境依存
-// for (const videoCodecType of ['AV1', 'H264', 'H265']) {
-for (const videoCodecType of ['AV1', 'H264']) {
+for (const videoCodecType of ['AV1', 'H264', 'H265']) {
   test(`whip/whep/${videoCodecType}`, async ({ browser }) => {
+    test.skip(
+      process.env.E2E_TEST_WISH !== 'true',
+      'E2E_TEST_WISH が true でない場合は WHIP/WHEP 関連のテストはスキップする',
+    )
+
+    // Google Chrome (m136) になったらこの skip は削除する
+    test.skip(
+      test.info().project.name === 'Google Chrome' && videoCodecType === 'H265',
+      'Google Chrome (m135) では H.265 に対応していないのでスキップします',
+    )
+
     // ブラウザのバージョンを取得
     const browserName = browser.browserType().name()
     const browserVersion = browser.version()
     console.log(`browser name=${browserName} version=${browserVersion}`)
-
-    test.skip(
-      test.info().project.name.includes('Edge') && videoCodecType.startsWith('H'),
-      'Edge の場合は H264/H265 のテストはスキップする',
-    )
-
-    test.skip(
-      test.info().project.name.includes('Chromium') && videoCodecType.startsWith('H'),
-      'Chromium の場合は H264/H265 のテストはスキップする',
-    )
-
-    test.skip(
-      process.env.NPM_PKG_E2E_TEST === 'true',
-      'NPM パッケージの E2E テストでは WHIP/WHEP 関連のテストはスキップする',
-    )
 
     const whip = await browser.newPage()
     const whep = await browser.newPage()
