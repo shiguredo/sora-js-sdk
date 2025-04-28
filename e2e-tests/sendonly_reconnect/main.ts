@@ -166,10 +166,12 @@ class SoraClient {
     console.log('[disconnect] 切断を検知しました')
     console.log('[disconnect] connectionId', this.connectionId)
 
-    const previousConnectionIdElement = document.querySelector('#previous-connection-id')
-    if (previousConnectionIdElement) {
-      previousConnectionIdElement.textContent = this.connectionId
+    const reconnectConnectionIdElement = document.querySelector('#connection-id')
+    if (reconnectConnectionIdElement) {
+      reconnectConnectionIdElement.textContent = null
     }
+
+    this.connectionId = null
 
     if (this.autoReconnect && this.mediaStream) {
       console.log('[reconnect] 再接続を試みています...')

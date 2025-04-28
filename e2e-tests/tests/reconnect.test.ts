@@ -28,6 +28,8 @@ test('sendonly_reconnect type:reconnect pages', async ({ page }) => {
 
   // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await page.waitForSelector('#connection-id:not(:empty)')
+  const connectionId = await page.$eval('#connection-id', (el) => el.textContent)
+  console.log(`connectionId=${connectionId}`)
 
   // レース対策
   await page.waitForTimeout(3000)
@@ -38,15 +40,12 @@ test('sendonly_reconnect type:reconnect pages', async ({ page }) => {
   // レース対策
   await page.waitForTimeout(3000)
 
-  // #previous-connection-id 要素の内容を取得
-  const previousConnectionId = await page.$eval('#previous-connection-id', (el) => el.textContent)
-  console.log(`previousConnectionId=${previousConnectionId}`)
+  // #reconnect-connection-id 要素の内容を取得
+  await page.waitForSelector('#connection-id:not(:empty)')
+  const reconnectConnectionId = await page.$eval('#connection-id', (el) => el.textContent)
+  console.log(`reconnectConnectionId=${reconnectConnectionId}`)
 
-  // #connection-id 要素の内容を取得
-  const connectionId = await page.$eval('#connection-id', (el) => el.textContent)
-  console.log(`connectionId=${connectionId}`)
-
-  expect(previousConnectionId).not.toBe(connectionId)
+  expect(reconnectConnectionId).not.toBe(connectionId)
 
   await page.waitForSelector('#reconnect-log')
   const reconnectLog = await page.$eval('#reconnect-log', (el) => el.textContent)
