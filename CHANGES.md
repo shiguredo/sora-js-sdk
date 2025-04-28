@@ -40,6 +40,8 @@
   - @voluntas
 - [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
   - @voluntas
+- [ADD] 再接続の E2E テストを追加する
+  - @voluntas
 - [ADD] WebKit の E2E テストを追加する
   - まずは sendrecv のテストのみ
   - AV1 には対応していないためテストから外している
