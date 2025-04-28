@@ -168,7 +168,7 @@ class SoraClient {
 
     const reconnectConnectionIdElement = document.querySelector('#connection-id')
     if (reconnectConnectionIdElement) {
-      reconnectConnectionIdElement.textContent = null
+      reconnectConnectionIdElement.textContent = ''
     }
 
     this.connectionId = null
