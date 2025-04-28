@@ -48,6 +48,7 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
           version: latest
+          use-cache: 'true'
       - uses: Homebrew/actions/setup-homebrew@master
       - run: brew install --cask ${{ matrix.browser.type}}
       - uses: actions/setup-node@v4
