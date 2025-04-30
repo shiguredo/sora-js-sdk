@@ -1,4 +1,4 @@
-import { getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
+import { generateJwt, getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
 
 import Sora, {
   type SoraConnection,
@@ -62,8 +62,9 @@ class SoraClient {
 
   private channelId: string
   private videoCodecType: VideoCodecType | undefined
-  private metadata: { access_token: string }
-  private options: ConnectionOptions
+  private metadata: { access_token: string } | undefined
+  private options: ConnectionOptions = {}
+  private secretKey: string
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
@@ -74,16 +75,14 @@ class SoraClient {
     videoCodecType: VideoCodecType | undefined,
     secretKey: string,
   ) {
-    this.sora = Sora.connection(signalingUrl, this.debug)
-
     this.channelId = channelId
     this.videoCodecType = videoCodecType
+    this.secretKey = secretKey
 
-    this.metadata = { access_token: secretKey }
-    this.options = {}
+    this.sora = Sora.connection(signalingUrl, this.debug)
 
-    if (videoCodecType !== undefined) {
-      this.options = { ...this.options, videoCodecType: videoCodecType }
+    if (this.videoCodecType !== undefined) {
+      this.options = { ...this.options, videoCodecType: this.videoCodecType }
     }
 
     this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options)
@@ -94,6 +93,10 @@ class SoraClient {
   }
 
   async connect(stream: MediaStream) {
+    const jwt = await generateJwt(this.channelId, this.secretKey)
+    this.metadata = { access_token: jwt }
+    this.connection.metadata = this.metadata
+
     await this.connection.connect(stream)
     const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
     if (localVideo) {
