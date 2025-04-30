@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawVideoBitRate = document.querySelector('#video-bit-rate') as HTMLInputElement
     const videoBitRate = Number.parseInt(rawVideoBitRate.value)
 
-    let simulcastEncodings: Record<string, unknown> | undefined
+    let simulcastEncodings: Array<Record<string, unknown>> | undefined
     const simulcastEncodingsElement = document.querySelector(
       '#simulcast-encodings',
     ) as HTMLTextAreaElement
