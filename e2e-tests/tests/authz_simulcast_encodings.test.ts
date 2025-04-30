@@ -8,6 +8,12 @@ test('authz simulcast encodings', async ({ page }) => {
 
   await page.fill('#channel-name', channelName)
 
+  const videoCodecType = 'VP8'
+  const videoBitRate = '1500'
+
+  await page.fill('#video-codec-type', videoCodecType)
+  await page.fill('#video-bit-rate', videoBitRate)
+
   await page.fill(
     '#simulcast-encodings',
     JSON.stringify([
@@ -36,7 +42,7 @@ test('authz simulcast encodings', async ({ page }) => {
   })
 
   const sendonlyVideoCodecStats = sendonlyStatsReportJson.find(
-    (stats) => stats.type === 'codec' && stats.mimeType === 'video/VP8',
+    (stats) => stats.type === 'codec' && stats.mimeType === `video/${videoCodecType}`,
   )
   expect(sendonlyVideoCodecStats).toBeDefined()
 
