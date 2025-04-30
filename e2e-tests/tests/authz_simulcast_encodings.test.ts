@@ -11,7 +11,7 @@ test('authz simulcast encodings', async ({ page }) => {
   const videoCodecType = 'VP8'
   const videoBitRate = '1500'
 
-  await page.fill('#video-codec-type', videoCodecType)
+  await page.selectOption('#video-codec-type', videoCodecType)
   await page.fill('#video-bit-rate', videoBitRate)
 
   await page.fill(
