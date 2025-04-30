@@ -4,6 +4,7 @@ import Sora, {
   type SignalingNotifyMessage,
   type VideoCodecType,
 } from 'sora-js-sdk'
+import { getFakeMedia } from '../src/fake'
 import { generateJwt } from '../src/misc'
 import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
@@ -47,9 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
       secretKey,
     )
 
-    const stream = await navigator.mediaDevices.getUserMedia({
+    const stream = getFakeMedia({
       audio: false,
-      video: { width: { exact: 960 }, height: { exact: 540 } },
+      video: { width: 960, height: 540 },
     })
     await sendonly.connect(stream)
   })
