@@ -4,8 +4,7 @@ import Sora, {
   type SignalingNotifyMessage,
   type VideoCodecType,
 } from 'sora-js-sdk'
-import { generateJwt } from '../src/misc'
-import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
+import { generateJwt, getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
 document.addEventListener('DOMContentLoaded', () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
