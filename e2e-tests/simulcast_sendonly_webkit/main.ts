@@ -4,7 +4,9 @@ import Sora, {
   type SignalingNotifyMessage,
   type VideoCodecType,
 } from 'sora-js-sdk'
-import { generateJwt, getChannelId, setSoraJsSdkVersion } from '../src/misc'
+import { getFakeMedia } from '../src/fake'
+import { generateJwt } from '../src/misc'
+import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
 document.addEventListener('DOMContentLoaded', () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
@@ -24,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawVideoBitRate = document.querySelector('#video-bit-rate') as HTMLInputElement
     const videoBitRate = Number.parseInt(rawVideoBitRate.value)
 
-    let simulcastEncodings: Record<string, unknown> | undefined
+    let simulcastEncodings: Array<Record<string, unknown>> | undefined
     const simulcastEncodingsElement = document.querySelector(
       '#simulcast-encodings',
     ) as HTMLTextAreaElement
@@ -46,9 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
       secretKey,
     )
 
-    const stream = await navigator.mediaDevices.getUserMedia({
+    const stream = getFakeMedia({
       audio: false,
-      video: { width: { exact: 960 }, height: { exact: 540 } },
+      video: { width: 960, height: 540 },
     })
     await sendonly.connect(stream)
   })

@@ -39,6 +39,7 @@ export default defineConfig({
         whip_simulcast: resolve(__dirname, 'whip_simulcast/index.html'),
         whep: resolve(__dirname, 'whep/index.html'),
         fake_sendonly: resolve(__dirname, 'fake_sendonly/index.html'),
+        simulcast_sendonly_webkit: resolve(__dirname, 'simulcast_sendonly_webkit/index.html'),
       },
     },
   },
