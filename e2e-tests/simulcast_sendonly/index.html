@@ -1,25 +1,28 @@
+<!DOCTYPE html>
 <html lang="ja">
 
 <head>
   <meta charset="utf-8">
   <link rel="icon" href="data:,">
-  <title>Simulcast test</title>
+  <title>Simulcast sendonly test</title>
 </head>
 
 <body>
   <div class="container">
-    <h1>Simulcast test</h1>
+    <h1>Simulcast sendonly test</h1>
     <div id="sora-js-sdk-version"></div>
     <label for="channel-name">チャンネル名:</label>
     <input type="text" id="channel-name" name="channel-name" value="simulcast"><br>
     <button id="connect">connect</button>
     <button id="disconnect">disconnect</button>
     <button id="get-stats">getStats</button><br />
-    <div>
-      <h2>sendonly</h2>
-      <div id="connection-id"></div>
-      <video id="local-video" autoplay="" playsinline="" controls="" style="border: 1px solid blue;"></video>
-    </div>
+
+    <div>simulcast_encodings:</div>
+    <textarea id="simulcast-encodings" style="width: 80%; max-width: 500px; height: 150px;">
+    </textarea>
+
+    <div id="connection-id"></div>
+    <video id="local-video" autoplay="" playsinline="" controls="" style="border: 1px solid blue;"></video>
 
     <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
     <div id="stats-report-json"></div>

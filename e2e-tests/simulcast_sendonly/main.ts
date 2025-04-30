@@ -1,10 +1,10 @@
-import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
-
 import Sora, {
   type SoraConnection,
   type ConnectionPublisher,
   type SignalingNotifyMessage,
 } from 'sora-js-sdk'
+import { generateJwt } from '../src/misc'
+import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
 document.addEventListener('DOMContentLoaded', () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
@@ -19,7 +19,24 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
 
-    sendonly = new SimulcastSendonlySoraClient(signalingUrl, channelId, secretKey)
+    let simulcastEncodings: Record<string, unknown> | undefined
+    const simulcastEncodingsElement = document.querySelector(
+      '#simulcast-encodings',
+    ) as HTMLTextAreaElement
+    if (simulcastEncodingsElement.value) {
+      try {
+        simulcastEncodings = JSON.parse(simulcastEncodingsElement.value)
+      } catch (error) {
+        throw new Error('Failed to parse simulcastEncodings')
+      }
+    }
+
+    sendonly = new SimulcastSendonlySoraClient(
+      signalingUrl,
+      channelId,
+      secretKey,
+      simulcastEncodings,
+    )
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -60,25 +77,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
 class SimulcastSendonlySoraClient {
   private debug = false
+
   private channelId: string
+  private secretKey: string
+  private simulcastEncodings: Record<string, unknown> | undefined
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(signalingUrl: string, channelId: string, secretKey: string) {
+  constructor(
+    signalingUrl: string,
+    channelId: string,
+    secretKey: string,
+    simulcastEncodings: Record<string, unknown> | undefined,
+  ) {
     this.channelId = channelId
+    this.simulcastEncodings = simulcastEncodings
+
+    this.secretKey = secretKey
 
     this.sora = Sora.connection(signalingUrl, this.debug)
-    this.connection = this.sora.sendonly(
-      this.channelId,
-      { access_token: secretKey },
-      { audio: false, video: true, videoCodecType: 'VP8', videoBitRate: 1500, simulcast: true },
-    )
+    this.connection = this.sora.sendonly(this.channelId, undefined, {
+      audio: false,
+      video: true,
+      videoCodecType: 'VP8',
+      videoBitRate: 1500,
+      simulcast: true,
+    })
 
     this.connection.on('notify', this.onnotify.bind(this))
   }
 
   async connect(stream: MediaStream) {
+    const privateClaims: Record<string, unknown> = {}
+    if (this.simulcastEncodings) {
+      privateClaims.simulcast_encodings = this.simulcastEncodings
+    }
+
+    const jwt = await generateJwt(this.channelId, this.secretKey, privateClaims)
+    this.connection.metadata = { access_token: jwt }
+
     await this.connection.connect(stream)
     const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
     if (localVideo) {
