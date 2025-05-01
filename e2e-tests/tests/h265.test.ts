@@ -3,7 +3,10 @@ import { expect, test } from '@playwright/test'
 
 test('H265', async ({ browser }) => {
   test.skip(
-    test.info().project.name.includes('Google Chrome') ||
+    (test.info().project.name !== 'Google Chrome Canary' &&
+      test.info().project.name !== 'Google Chrome Dev' &&
+      test.info().project.name !== 'Google Chrome Beta' &&
+      test.info().project.name !== 'Google Chrome') ||
       process.env.RUNNER_ENVIRONMENT !== 'self-hosted' ||
       process.platform !== 'darwin',
     'H265 は Self-hosted の macOS の Google Chrome でテストを行う',
