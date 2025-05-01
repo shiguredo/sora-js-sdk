@@ -178,6 +178,11 @@ test('WebKit', async ({ browser }) => {
 
 // WebKit では scaleResolutionDownTo が反映されないため、このテストは fail する
 test.fail('WebKit Authz simulcast_encodings ScaleResolutionDownTo', async ({ page }) => {
+  test.skip(
+    test.info().project.name !== 'WebKit' || process.platform !== 'darwin',
+    'WebKit かつ macOS でのみテストを行う',
+  )
+
   await page.goto('http://localhost:9000/simulcast_sendonly_webkit/')
 
   const channelName = randomUUID()
