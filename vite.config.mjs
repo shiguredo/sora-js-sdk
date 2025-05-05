@@ -20,7 +20,7 @@ export default defineConfig({
     minify: 'esbuild',
     target: 'es2022',
     emptyOutDir: true,
-    manifest: true,
+    manifest: false,
     outDir: resolve(__dirname, './dist'),
     lib: {
       entry: resolve(__dirname, 'src/sora.ts'),
