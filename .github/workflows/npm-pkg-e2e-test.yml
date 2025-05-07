@@ -34,7 +34,7 @@ jobs:
           # 2020.1.7 以前は E2E テストが通らない
           "2021.1.7",
         ]
-        node: ["18", "20", "22", "23"]
+        node: ["18", "20", "22", "24"]
         browser: 
             - name: "Google Chrome"
               type: "chrome"
