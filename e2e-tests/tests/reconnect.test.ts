@@ -32,13 +32,13 @@ test('sendonly_reconnect type:reconnect pages', async ({ page }) => {
   console.log(`connectionId=${connectionId}`)
 
   // レース対策
-  await page.waitForTimeout(5000)
+  await page.waitForTimeout(3000)
 
   // API で切断
   await page.click('#disconnect-api')
 
   // レース対策
-  await page.waitForTimeout(5000)
+  await page.waitForTimeout(3000)
 
   // #connection-id 要素の内容を取得
   await page.waitForSelector('#connection-id:not(:empty)')

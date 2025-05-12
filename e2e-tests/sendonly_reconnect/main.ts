@@ -166,13 +166,6 @@ class SoraClient {
     console.log('[disconnect] 切断を検知しました')
     console.log('[disconnect] connectionId', this.connectionId)
 
-    // 切断時に connectionId をクリアする
-    const connectionIdElement = document.querySelector('#connection-id')
-    if (connectionIdElement) {
-      console.log('[disconnect] clear connectionId', connectionIdElement)
-      connectionIdElement.textContent = ''
-    }
-
     this.connectionId = null
 
     if (this.autoReconnect && this.mediaStream) {
@@ -219,6 +212,13 @@ class SoraClient {
     })
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    // 切断 API を実行したタイミングで connectionId をクリアする
+    const connectionIdElement = document.querySelector('#connection-id')
+    if (connectionIdElement) {
+      console.log('[disconnect] clear connectionId', connectionIdElement)
+      connectionIdElement.textContent = ''
     }
   }
 
