@@ -9,6 +9,11 @@
 - FIX
   - バグ修正
 
+## temporary
+
+- ci.yaml の TypeScript のバージョンの next は type check が一時的に通らないのでコメントアウトしている
+  - <https://github.com/microsoft/TypeScript/issues/61687>
+
 ## develop
 
 - [CHANGE] レガシーストリーム `multistream: false` を廃止に伴い `multistream` オプションを削除する
