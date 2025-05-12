@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 // Sora API を利用するので要注意
-test.skip('sendonly_reconnect type:reconnect pages', async ({ page }) => {
+test('sendonly_reconnect type:reconnect pages', async ({ page }) => {
   test.skip(
     process.env.RUNNER_ENVIRONMENT === 'self-hosted',
     'Sora API を利用するので Tailscale が利用できない self-hosted では実行しない',

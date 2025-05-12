@@ -196,6 +196,13 @@ class SoraClient {
 
   // E2E テスト側で実行した方が良い気がする
   async apiDisconnect(): Promise<void> {
+    // 切断 API を実行したタイミングで connectionId をクリアする
+    const connectionIdElement = document.querySelector('#connection-id')
+    if (connectionIdElement) {
+      console.log('[disconnect] clear connectionId', connectionIdElement)
+      connectionIdElement.textContent = ''
+    }
+
     if (!this.apiUrl) {
       throw new Error('VITE_TEST_API_URL is not set')
     }
@@ -212,13 +219,6 @@ class SoraClient {
     })
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    // 切断 API を実行したタイミングで connectionId をクリアする
-    const connectionIdElement = document.querySelector('#connection-id')
-    if (connectionIdElement) {
-      console.log('[disconnect] clear connectionId', connectionIdElement)
-      connectionIdElement.textContent = ''
     }
   }
 
