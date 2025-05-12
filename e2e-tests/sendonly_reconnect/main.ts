@@ -166,9 +166,11 @@ class SoraClient {
     console.log('[disconnect] 切断を検知しました')
     console.log('[disconnect] connectionId', this.connectionId)
 
-    const reconnectConnectionIdElement = document.querySelector('#connection-id')
-    if (reconnectConnectionIdElement) {
-      reconnectConnectionIdElement.textContent = ''
+    // 切断時に connectionId をクリアする
+    const connectionIdElement = document.querySelector('#connection-id')
+    if (connectionIdElement) {
+      console.log('[disconnect] clear connectionId', connectionIdElement)
+      connectionIdElement.textContent = ''
     }
 
     this.connectionId = null

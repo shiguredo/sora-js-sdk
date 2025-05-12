@@ -26,21 +26,21 @@ test('sendonly_reconnect type:reconnect pages', async ({ page }) => {
 
   await page.click('#connect')
 
-  // #sendrecv1-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
+  // #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
   await page.waitForSelector('#connection-id:not(:empty)')
   const connectionId = await page.$eval('#connection-id', (el) => el.textContent)
   console.log(`connectionId=${connectionId}`)
 
   // レース対策
-  await page.waitForTimeout(3000)
+  await page.waitForTimeout(5000)
 
   // API で切断
   await page.click('#disconnect-api')
 
   // レース対策
-  await page.waitForTimeout(3000)
+  await page.waitForTimeout(5000)
 
-  // #reconnect-connection-id 要素の内容を取得
+  // #connection-id 要素の内容を取得
   await page.waitForSelector('#connection-id:not(:empty)')
   const reconnectConnectionId = await page.$eval('#connection-id', (el) => el.textContent)
   console.log(`reconnectConnectionId=${reconnectConnectionId}`)
