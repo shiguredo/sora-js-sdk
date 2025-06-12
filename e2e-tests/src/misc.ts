@@ -43,11 +43,11 @@ export const getChannelId = (
   return `${channelIdPrefix}${channelName}${channelIdSuffix}`
 }
 
-export const getVideoCodecType = (id = 'video-codec-type'): VideoCodecType => {
+export const getVideoCodecType = (id = 'video-codec-type'): VideoCodecType | undefined => {
   const videoCodecTypeElement = document.querySelector<HTMLSelectElement>(`#${id}`)
   const videoCodecType = videoCodecTypeElement?.value
   if (videoCodecType === '') {
-    throw new Error('videoCodecType is empty')
+    return undefined
   }
   return videoCodecType as VideoCodecType
 }

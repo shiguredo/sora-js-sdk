@@ -16,6 +16,9 @@
 
 ## develop
 
+
+## 2025.1.0
+
 - [CHANGE] レガシーストリーム `multistream: false` を廃止に伴い `multistream` オプションを削除する
   - @voluntas
 - [CHANGE] レガシーストリーム `multistream: false` を廃止する
