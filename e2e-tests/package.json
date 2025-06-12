@@ -1,0 +1,12 @@
+{
+  "name": "sora-js-sdk-e2e-tests",
+  "scripts": {
+    "lint": "biome lint .",
+    "fmt": "biome format --write .",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "jose": "6.0.11",
+    "sora-js-sdk": "workspace:*"
+  }
+}

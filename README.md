@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/sora-js-sdk.svg)](https://badge.fury.io/js/sora-js-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) をブラウザから扱うための SDK です。
+Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) / [Sora Cloud](https://sora-cloud.shiguredo.app/) をブラウザから扱うための SDK です。
 
 ## About Shiguredo's open source software
 
@@ -17,27 +17,44 @@ Please read <https://github.com/shiguredo/oss> before use.
 
 利用前に <https://github.com/shiguredo/oss> をお読みください。
 
+## 条件
+
+- WebRTC SFU Sora 2024.1.0 以降
+- TypeScript 5.1 以降
+
 ## 使い方
 
 使い方は [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/) を参照してください。
 
-- sora.min.js
-  - <https://www.jsdelivr.com/package/npm/sora-js-sdk>
+## サンプル
 
-## システム条件
+サンプルは [sora-js-sdk-examples](https://github.com/shiguredo/sora-js-sdk-examples) を参照してください。
 
-- WebRTC SFU Sora 2023.2.0 以降
-- TypeScript 5.6 以降
+## インストール
 
-## サンプル集
+### npm
 
 ```bash
-# .env.local を作成して適切な値を設定してください
-$ cp .env.template .env.local
-$ pnpm install
-$ pnpm run build
-$ pnpm run dev
+npm install sora-js-sdk
 ```
+
+### pnpm
+
+```bash
+pnpm add sora-js-sdk
+```
+
+### Node.js の条件
+
+- Sora JavaScript SDK 2024.2.x までは **Node.js 18.0 以降** を要求します
+- 次のリリース Sora JavaScript SDK 2025.1.0 以降は **Node.js 20.0 以降** を要求します
+
+> [!CAUTION]
+> Sora JavaScript SDK 2024.2.0 以降は [Compression Stream API](https://developer.mozilla.org/ja/docs/Web/API/Compression_Streams_API) を利用しているため、ブラウザの要件がありますのでご確認ください。
+>
+> - Chrome / Edge 80 以降
+> - Firefox 113 以降
+> - Safari 16.4 以降
 
 ## E2E (End to End) テスト
 
@@ -51,6 +68,29 @@ $ pnpm run build
 $ pnpm exec playwright install chromium --with-deps
 $ pnpm run e2e-test
 ```
+
+### E2E テストページ
+
+E2E テストで実行するページを Vite にて起動できます。
+
+```bash
+pnpm run e2e-dev
+```
+
+### npm に公開されている安定版のパッケージの E2E テスト
+
+以下のバージョンの npm に公開されている安定版のパッケージは、
+最新の Sora で E2E テストが通ることを確認しています。
+
+- 2024.2.2
+- 2024.1.2
+- 2023.2.0
+- 2023.1.0
+- 2022.3.3
+- 2022.2.0
+- 2022.1.0
+- 2021.2.3
+- 2021.1.7
 
 ## マルチトラックについて
 
@@ -68,7 +108,7 @@ $ pnpm run e2e-test
 Apache License 2.0
 
 ```text
-Copyright 2017-2024, Shiguredo Inc.
+Copyright 2017-2025, Shiguredo Inc.
 Copyright 2017-2022, Yuki Ito (Original Author)
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -103,20 +143,20 @@ limitations under the License.
 - [Sora JavaScript SDK](https://github.com/shiguredo/sora-javascript-sdk)
   - [Sora JavaScript SDK ドキュメント](https://sora-js-sdk.shiguredo.jp/)
 - [Sora iOS SDK](https://github.com/shiguredo/sora-ios-sdk)
+  - [Sora iOS SDK ドキュメント](https://sora-ios-sdk.shiguredo.jp/)
   - [Sora iOS SDK クイックスタート](https://github.com/shiguredo/sora-ios-sdk-quickstart)
   - [Sora iOS SDK サンプル集](https://github.com/shiguredo/sora-ios-sdk-samples)
-  - [Sora iOS SDK ドキュメント](https://sora-ios-sdk.shiguredo.jp/)
 - [Sora Android SDK](https://github.com/shiguredo/sora-android-sdk)
+  - [Sora Android SDK ドキュメント](https://sora-android-sdk.shiguredo.jp/)
   - [Sora Android SDK クイックスタート](https://github.com/shiguredo/sora-android-sdk-quickstart)
   - [Sora Android SDK サンプル集](https://github.com/shiguredo/sora-android-sdk-samples)
-  - [Sora Android SDK ドキュメント](https://sora-android-sdk.shiguredo.jp/)
 - [Sora Unity SDK](https://github.com/shiguredo/sora-unity-sdk)
-  - [Sora Unity SDK サンプル集](https://github.com/shiguredo/sora-unity-sdk-samples)
   - [Sora Unity SDK ドキュメント](https://sora-unity-sdk.shiguredo.jp/)
+  - [Sora Unity SDK サンプル集](https://github.com/shiguredo/sora-unity-sdk-samples)
 - [Sora Python SDK](https://github.com/shiguredo/sora-python-sdk)
   - [Sora Python SDK ドキュメント](https://sora-python-sdk.shiguredo.jp/)
+  - [Sora Python SDK サンプル集](https://github.com/shiguredo/sora-python-sdk-samples)
 - [Sora C++ SDK](https://github.com/shiguredo/sora-cpp-sdk)
-- [Sora C SDK](https://github.com/shiguredo/sora-c-sdk)
 
 ### クライアントツール
 

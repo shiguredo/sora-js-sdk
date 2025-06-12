@@ -1,0 +1,97 @@
+name: npm-publish
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: pnpm --version
+      - run: pnpm install
+      - run: pnpm run build
+      - run: pnpm run lint
+      - run: pnpm run check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sora-js-sdk-dist
+          path: dist/
+  
+  npm-publish-canary:
+    runs-on: ubuntu-24.04
+    needs: [build]
+    permissions:
+      contents: read
+      id-token: write
+    if: ${{ contains(github.ref, 'canary') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sora-js-sdk-dist
+          path: dist/
+
+      # pnpm publish は CI では正常に動作しない
+      # https://github.com/pnpm/pnpm/issues/4937
+      - run: npm publish --provenance --no-git-checks --tag canary
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 
+
+  npm-publish:
+    runs-on: ubuntu-24.04
+    needs: [build]
+    permissions:
+      contents: read
+      id-token: write
+    if: ${{ !contains(github.ref, 'canary') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sora-js-sdk-dist
+          path: dist/
+
+      # pnpm publish は CI では正常に動作しない
+      # https://github.com/pnpm/pnpm/issues/4937
+      - run: npm publish --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 
+
+
+  slack_notify_failed:
+    needs: [npm-publish-canary, npm-publish]
+    runs-on: ubuntu-24.04
+    if: failure()
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: sora-js-sdk
+          SLACK_COLOR: danger
+          SLACK_TITLE: Failed
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

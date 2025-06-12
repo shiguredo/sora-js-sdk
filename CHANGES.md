@@ -9,7 +9,115 @@
 - FIX
   - バグ修正
 
+## temporary
+
+- ci.yaml の TypeScript のバージョンの next は type check が一時的に通らないのでコメントアウトしている
+  - <https://github.com/microsoft/TypeScript/issues/61687>
+
 ## develop
+
+
+## 2025.1.0
+
+- [CHANGE] レガシーストリーム `multistream: false` を廃止に伴い `multistream` オプションを削除する
+  - @voluntas
+- [CHANGE] レガシーストリーム `multistream: false` を廃止する
+  - @voluntas
+- [ADD] `ConnectionOptions` に `skipIceCandidateEvent` を追加する
+  - デフォルトは false
+  - `onIceCandidate` をスキップする
+  - @voluntas
+- [UPDATE] pnpm 10 系に上げる
+  - @voluntas
+- [FIX] `signalingUrlCandidates` が `string[]` で長さが 1 の場合 `signalingUrlCandidates[0]` を利用して `string` と同じ処理にする
+  - @voluntas
+- [FIX] `signalingUrlCandidates` が `[]` の場合はエラーにする
+  - @voluntas
+
+### misc
+
+- [CHANGE] WHIP/WHEP の E2E テストは e2e-test-wish.yml にまとめる
+  - E2E_TEST_WISH=true でのみ動作するようにする
+  - @voluntas
+- [CHANGE] Chrome/Edge Canary の E2E テストは Nodejs 20 でのみ行うようにする
+  - Nodejs 20 が EoL が一番近い LTS であるため
+  - @voluntas
+- [CHANGE] Chrome/Edge Canary の E2E テストを e2e-test-canary.yml に移動する
+  - @voluntas
+- [UPDATE] `*.spec.ts` を `*.test.ts` に変更する
+  - @voluntas
+- [UPDATE] パッケージ E2E テストに 2024.2.2 / 2024.2.0 / 2021.1.7 を追加する
+  - @voluntas
+- [ADD] Node.js 24 をビルドとテストに追加する
+  - @voluntas
+- [ADD] 再接続の E2E テストを追加する
+  - @voluntas
+- [ADD] WebKit の E2E テストを追加する
+  - まずは sendrecv のテストのみ
+  - AV1 には対応していないためテストから外している
+  - H.264/H.265 は対応している
+  - self-hosted runner の macOS でテストを行っている
+  - @voluntas
+- [ADD] Firefox/WebKit で E2E テストを実現するため getFakeMedia を追加する
+  - @voluntas
+- [ADD] Playwright で Chrome / Edge をインストールして E2E テストできるようにする
+  - Chrome は stable / beta
+  - Edge は stable / beta / dev
+  - @voluntas
+- [ADD] Playwright で macOS 上に Chrome と Edge Canary のテストを追加する
+  - Playwright でのインストールだと Canary は利用できないため Brew でインストールしている
+  - @voluntas
+- [ADD] Chrome で H.265 の E2E テストを追加する
+  - e2e-test-h265.yml で独立させている
+  - self-hosted runner の macOS を利用して h265.test.ts のみをテストしている
+  - @voluntas
+- [ADD] simulcast_sendonly / simulcast_recvonly を使った simulcast_rid のテストを追加する
+  - @voluntas
+- [ADD] e2e-tests に `WHIP` サイマルキャストのテストを追加する
+  - @voluntas
+- [ADD] e2e-tests に `jose` を追加する
+  - @voluntas
+- [ADD] Node.js 23 をビルドとテストに追加する
+  - Node.js 24 LTS が出たら削除する
+  - @voluntas
+- [ADD] CI に TypeScript next のビルドとテストを追加する
+  - @voluntas
+- [ADD] E2E テストに `WHIP` と `WHEP` のテストを追加する
+  - @voluntas
+- [ADD] CI に TypeScript 5.1 から 5.7 までのビルドとテストを追加する
+  - @voluntas
+- [ADD] E2E テストに `"type": "close"` のテストを追加する
+  - @voluntas
+- [ADD] E2E テストに `"type": "switched"` のテストを追加する
+  - @voluntas
+- [ADD] .markdownlint.yaml ファイルを追加する
+  - @voluntas
+- [CHANGE] WHIP/WHEP 関連のテストは NPM パッケージの E2E テストではスキップするようにする
+  - @voluntas
+- [CHANGE] examples を削除する
+  - <https://github.com/shiguredo/sora-js-sdk-examples> へ移動
+  - @voluntas
+- [CHANGE] Node.js 18 をビルドとテストから落とす
+  - @voluntas
+- [CHANGE] examples を e2e-tests に変更する
+  - 環境変数の Prefix を TEST_ に切り替える
+  - @voluntas
+- [CHANGE] tsconfig.json の moduleResolution を Bundler に変更する
+  - @voluntas
+- [CHANGE] tsconfig.json の target と module を ES2022 に変更する
+  - @voluntas
+- [CHANGE] examples 以下専用の vite.config.mjs を用意する
+  - pnpm run dev は vite --config examples/vite.config.mjs を実行するようにする
+  - @voluntas
+- [CHANGE] tests/ 以下を vitest と playwright に分ける
+  - @voluntas
+- [CHANGE] pnpm workspace の packages を辞めて src に切り替える
+  - @voluntas
+- [CHANGE] canary リリース方法を `canary.py` に変更する
+  - `release_canary.sh` は削除
+  - @voluntas
+- [FIX] パッケージの E2E テストを修正する
+  - @voluntas
 
 ## 2024.2.2
 

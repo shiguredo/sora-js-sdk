@@ -1,0 +1,39 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <title>Sendrecv WebKit test</title>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Sendrecv WebKit test</h1>
+    <div id="sora-js-sdk-version"></div>
+    <label for="channel-name">チャンネル名:</label>
+    <input type="text" id="channel-name" name="channel-name" value="sendrecv"><br>
+    <label for="video-codec-type">ビデオコーデックを選択:</label>
+    <select id="video-codec-type">
+      <option value="" selected>未指定</option>
+      <option value="VP8">VP8</option>
+      <option value="VP9">VP9</option>
+      <option value="H264">H264</option>
+      <option value="H265">H265</option>
+    </select><br>
+    <button id="connect">connect</button>
+    <button id="disconnect">disconnect</button>
+    <button id="get-stats">getStats</button><br />
+    <div id="connection-id"></div>
+    <video id="local-video" autoplay="" playsinline="" controls="" muted=""
+      style="width: 320px; height: 240px; border: 1px solid black;"></video>
+    <div style="display: flex;">
+      <div id="remote-videos"></div>
+    </div>
+    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+    <div id="stats-report-json"></div>
+  </div>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+
+</html>
