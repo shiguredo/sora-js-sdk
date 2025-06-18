@@ -16,6 +16,11 @@
 
 ## develop
 
+### misc
+
+- [UPDATE] biome v2 にバージョンを上げる
+  - @voluntas
+
 
 ## 2025.1.0
 
