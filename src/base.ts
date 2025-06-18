@@ -1187,7 +1187,7 @@ export default class ConnectionBase {
         return await Promise.any(
           signalingUrlCandidates.map((signalingUrl) => testSignalingUrlCandidate(signalingUrl)),
         )
-      } catch (e) {
+      } catch (_e) {
         throw new ConnectError('Signaling failed. All signaling URL candidates failed to connect')
       }
     }
@@ -2170,7 +2170,7 @@ export default class ConnectionBase {
           return
         }
         const dataChannel = event.target as RTCDataChannel
-        let data: ArrayBuffer | undefined = undefined
+        let data: ArrayBuffer | undefined
         if (typeof event.data === 'string') {
           data = new TextEncoder().encode(event.data).buffer as ArrayBuffer
         } else if (event.data instanceof ArrayBuffer) {

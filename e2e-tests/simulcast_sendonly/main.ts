@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log(`simulcastEncodingsElement.value=${simulcastEncodingsElement.value}`)
       try {
         simulcastEncodings = JSON.parse(simulcastEncodingsElement.value)
-      } catch (error) {
+      } catch (_error) {
         throw new Error('Failed to parse simulcastEncodings')
       }
     }

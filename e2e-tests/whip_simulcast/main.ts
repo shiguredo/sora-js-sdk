@@ -1,6 +1,6 @@
 import { generateJwt, getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
 
-import Sora, { type VideoCodecType } from 'sora-js-sdk'
+import type { VideoCodecType } from 'sora-js-sdk'
 
 declare global {
   interface RTCRtpEncodingParameters {
@@ -107,7 +107,7 @@ class WhipSimulcastClient {
     this.secretKey = secretKey
   }
 
-  async connect(stream: MediaStream, channelId: string): Promise<void> {
+  async connect(stream: MediaStream, _channelId: string): Promise<void> {
     if (!stream) {
       throw new Error('Stream not found')
     }
@@ -115,7 +115,7 @@ class WhipSimulcastClient {
 
     this.pc = new RTCPeerConnection()
 
-    this.pc.onconnectionstatechange = (event) => {
+    this.pc.onconnectionstatechange = (_event) => {
       console.log('connectionState:', this.pc?.connectionState)
       const connectionState = this.pc?.connectionState
       const connectionStateElement = document.getElementById('connection-state') as HTMLDivElement
@@ -123,10 +123,10 @@ class WhipSimulcastClient {
         connectionStateElement.textContent = connectionState
       }
     }
-    this.pc.onicecandidate = (event) => {
+    this.pc.onicecandidate = (_event) => {
       console.log('iceConnectionState:', this.pc?.iceConnectionState)
     }
-    this.pc.onsignalingstatechange = (event) => {
+    this.pc.onsignalingstatechange = (_event) => {
       console.log('signalingState:', this.pc?.signalingState)
     }
 

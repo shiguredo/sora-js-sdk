@@ -1,6 +1,6 @@
 import { getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
 
-import Sora, { type VideoCodecType } from 'sora-js-sdk'
+import type { VideoCodecType } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const endpointUrl = import.meta.env.VITE_TEST_WHEP_ENDPOINT_URL
@@ -83,7 +83,7 @@ class WhepClient {
   async connect(): Promise<void> {
     this.pc = new RTCPeerConnection()
 
-    this.pc.onconnectionstatechange = (event) => {
+    this.pc.onconnectionstatechange = (_event) => {
       console.log('connectionState:', this.pc?.connectionState)
       const connectionState = this.pc?.connectionState
       const connectionStateElement = document.getElementById('connection-state') as HTMLDivElement
@@ -91,10 +91,10 @@ class WhepClient {
         connectionStateElement.textContent = connectionState
       }
     }
-    this.pc.onicecandidate = (event) => {
+    this.pc.onicecandidate = (_event) => {
       console.log('iceConnectionState:', this.pc?.iceConnectionState)
     }
-    this.pc.onsignalingstatechange = (event) => {
+    this.pc.onsignalingstatechange = (_event) => {
       console.log('signalingState:', this.pc?.signalingState)
     }
 

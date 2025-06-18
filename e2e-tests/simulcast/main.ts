@@ -200,7 +200,7 @@ class SimulcastRecvonlySoraClient {
     }
   }
 
-  private onremovetrack(event: MediaStreamTrackEvent) {
+  private onremovetrack(_event: MediaStreamTrackEvent) {
     const remoteVideo = document.querySelector<HTMLVideoElement>(`#remote-video-${this.rid}`)
     if (remoteVideo) {
       remoteVideo.srcObject = null
