@@ -18,6 +18,8 @@
 
 ### misc
 
+- [CHANGE] WHIP/WHEP の E2E テストを削除する
+  - @voluntas
 - [UPDATE] biome v2 にバージョンを上げる
   - @voluntas
 
