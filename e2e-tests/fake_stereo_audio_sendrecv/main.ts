@@ -2,6 +2,8 @@ import { getFakeMedia } from '../src/fake'
 import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
 import Sora, {
+  type ConnectionPublisher,
+  type SignalingEvent,
   type SignalingNotifyMessage,
   type SoraConnection,
 } from 'sora-js-sdk'
@@ -24,26 +26,29 @@ class RealtimeAudioAnalyzer {
   private animationId: number | null = null
   private channelCount: number
 
-  constructor(stream: MediaStream, private prefix: string) {
+  constructor(
+    stream: MediaStream,
+    private prefix: string,
+  ) {
     this.audioContext = new AudioContext()
     this.source = this.audioContext.createMediaStreamSource(stream)
     this.channelCount = this.source.channelCount
-    
+
     // チャンネル分離
     this.splitter = this.audioContext.createChannelSplitter(2)
     this.source.connect(this.splitter)
-    
+
     // 左チャンネルのアナライザー
     this.analyserLeft = this.audioContext.createAnalyser()
     this.analyserLeft.fftSize = 2048
     this.analyserLeft.smoothingTimeConstant = 0.8
     this.splitter.connect(this.analyserLeft, 0)
-    
+
     // 右チャンネルのアナライザー
     this.analyserRight = this.audioContext.createAnalyser()
     this.analyserRight.fftSize = 2048
     this.analyserRight.smoothingTimeConstant = 0.8
-    
+
     if (this.channelCount >= 2) {
       this.splitter.connect(this.analyserRight, 1)
     }
@@ -52,42 +57,43 @@ class RealtimeAudioAnalyzer {
   private detectDominantFrequency(analyser: AnalyserNode): number {
     const dataArray = new Float32Array(analyser.frequencyBinCount)
     analyser.getFloatFrequencyData(dataArray)
-    
+
     let maxValue = Number.NEGATIVE_INFINITY
     let maxIndex = 0
-    
+
     // 100Hz以上の周波数のみを対象にする（ノイズ除去）
-    const minIndex = Math.floor(100 * analyser.fftSize / this.audioContext.sampleRate)
-    
+    const minIndex = Math.floor((100 * analyser.fftSize) / this.audioContext.sampleRate)
+
     for (let i = minIndex; i < dataArray.length; i++) {
       if (dataArray[i] > maxValue) {
         maxValue = dataArray[i]
         maxIndex = i
       }
     }
-    
+
     return (maxIndex * this.audioContext.sampleRate) / analyser.fftSize
   }
 
   private updateDisplay(): void {
     const leftFreq = this.detectDominantFrequency(this.analyserLeft)
-    const rightFreq = this.channelCount >= 2 
-      ? this.detectDominantFrequency(this.analyserRight)
-      : leftFreq
-    
-    const isStereo = this.channelCount >= 2 && Math.abs(leftFreq - rightFreq) > 50
-    
+    const rightFreq =
+      this.channelCount >= 2 ? this.detectDominantFrequency(this.analyserRight) : leftFreq
+
+    // 片方のチャンネルが0Hzの場合はステレオと判定しない
+    const isStereo =
+      this.channelCount >= 2 && leftFreq > 0 && rightFreq > 0 && Math.abs(leftFreq - rightFreq) > 50
+
     // 表示更新
     const channelCountEl = document.querySelector(`#${this.prefix}-channel-count`)
     const leftFreqEl = document.querySelector(`#${this.prefix}-left-frequency`)
     const rightFreqEl = document.querySelector(`#${this.prefix}-right-frequency`)
     const isStereoEl = document.querySelector(`#${this.prefix}-is-stereo`)
-    
+
     if (channelCountEl) channelCountEl.textContent = this.channelCount.toString()
     if (leftFreqEl) leftFreqEl.textContent = leftFreq.toFixed(1)
     if (rightFreqEl) rightFreqEl.textContent = rightFreq.toFixed(1)
     if (isStereoEl) isStereoEl.textContent = isStereo ? 'Yes' : 'No'
-    
+
     // 次のフレーム
     this.animationId = requestAnimationFrame(() => this.updateDisplay())
   }
@@ -126,11 +132,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 接続1の設定を取得
     const useStereo1 = (document.querySelector('#use-stereo-1') as HTMLInputElement).checked
-    const forceStereoOutput1 = (document.querySelector('#force-stereo-output-1') as HTMLInputElement).checked
+    const forceStereoOutput1 = (
+      document.querySelector('#force-stereo-output-1') as HTMLInputElement
+    ).checked
 
     // 接続2の設定を取得
     const useStereo2 = (document.querySelector('#use-stereo-2') as HTMLInputElement).checked
-    const forceStereoOutput2 = (document.querySelector('#force-stereo-output-2') as HTMLInputElement).checked
+    const forceStereoOutput2 = (
+      document.querySelector('#force-stereo-output-2') as HTMLInputElement
+    ).checked
 
     // 接続1を作成
     soraClient1 = new SoraSendRecvClient(signalingUrl, channelId, secretKey, '1')
@@ -167,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await soraClient1.connect(stream1)
 
     // 少し待機してから接続2を開始
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000))
 
     // 接続2を作成
     soraClient2 = new SoraSendRecvClient(signalingUrl, channelId, secretKey, '2')
@@ -286,32 +296,56 @@ document.addEventListener('DOMContentLoaded', async () => {
       analysisDiv.dataset.analysis = JSON.stringify({
         connection1: {
           local: {
-            channelCount: Number.parseInt(document.querySelector('#conn1-local-channel-count')?.textContent || '0'),
-            leftFrequency: Number.parseFloat(document.querySelector('#conn1-local-left-frequency')?.textContent || '0'),
-            rightFrequency: Number.parseFloat(document.querySelector('#conn1-local-right-frequency')?.textContent || '0'),
-            isStereo: document.querySelector('#conn1-local-is-stereo')?.textContent === 'Yes'
+            channelCount: Number.parseInt(
+              document.querySelector('#conn1-local-channel-count')?.textContent || '0',
+            ),
+            leftFrequency: Number.parseFloat(
+              document.querySelector('#conn1-local-left-frequency')?.textContent || '0',
+            ),
+            rightFrequency: Number.parseFloat(
+              document.querySelector('#conn1-local-right-frequency')?.textContent || '0',
+            ),
+            isStereo: document.querySelector('#conn1-local-is-stereo')?.textContent === 'Yes',
           },
           remote: {
-            channelCount: Number.parseInt(document.querySelector('#conn1-remote-channel-count')?.textContent || '0'),
-            leftFrequency: Number.parseFloat(document.querySelector('#conn1-remote-left-frequency')?.textContent || '0'),
-            rightFrequency: Number.parseFloat(document.querySelector('#conn1-remote-right-frequency')?.textContent || '0'),
-            isStereo: document.querySelector('#conn1-remote-is-stereo')?.textContent === 'Yes'
-          }
+            channelCount: Number.parseInt(
+              document.querySelector('#conn1-remote-channel-count')?.textContent || '0',
+            ),
+            leftFrequency: Number.parseFloat(
+              document.querySelector('#conn1-remote-left-frequency')?.textContent || '0',
+            ),
+            rightFrequency: Number.parseFloat(
+              document.querySelector('#conn1-remote-right-frequency')?.textContent || '0',
+            ),
+            isStereo: document.querySelector('#conn1-remote-is-stereo')?.textContent === 'Yes',
+          },
         },
         connection2: {
           local: {
-            channelCount: Number.parseInt(document.querySelector('#conn2-local-channel-count')?.textContent || '0'),
-            leftFrequency: Number.parseFloat(document.querySelector('#conn2-local-left-frequency')?.textContent || '0'),
-            rightFrequency: Number.parseFloat(document.querySelector('#conn2-local-right-frequency')?.textContent || '0'),
-            isStereo: document.querySelector('#conn2-local-is-stereo')?.textContent === 'Yes'
+            channelCount: Number.parseInt(
+              document.querySelector('#conn2-local-channel-count')?.textContent || '0',
+            ),
+            leftFrequency: Number.parseFloat(
+              document.querySelector('#conn2-local-left-frequency')?.textContent || '0',
+            ),
+            rightFrequency: Number.parseFloat(
+              document.querySelector('#conn2-local-right-frequency')?.textContent || '0',
+            ),
+            isStereo: document.querySelector('#conn2-local-is-stereo')?.textContent === 'Yes',
           },
           remote: {
-            channelCount: Number.parseInt(document.querySelector('#conn2-remote-channel-count')?.textContent || '0'),
-            leftFrequency: Number.parseFloat(document.querySelector('#conn2-remote-left-frequency')?.textContent || '0'),
-            rightFrequency: Number.parseFloat(document.querySelector('#conn2-remote-right-frequency')?.textContent || '0'),
-            isStereo: document.querySelector('#conn2-remote-is-stereo')?.textContent === 'Yes'
-          }
-        }
+            channelCount: Number.parseInt(
+              document.querySelector('#conn2-remote-channel-count')?.textContent || '0',
+            ),
+            leftFrequency: Number.parseFloat(
+              document.querySelector('#conn2-remote-left-frequency')?.textContent || '0',
+            ),
+            rightFrequency: Number.parseFloat(
+              document.querySelector('#conn2-remote-right-frequency')?.textContent || '0',
+            ),
+            isStereo: document.querySelector('#conn2-remote-is-stereo')?.textContent === 'Yes',
+          },
+        },
       })
     }
   })
@@ -324,12 +358,17 @@ class SoraSendRecvClient {
   private options: object = {}
 
   private sora: SoraConnection
-  private connection: any
+  private connection: ConnectionPublisher
   private remoteStream: MediaStream | null = null
   private onStreamCallback: ((stream: MediaStream) => void) | null = null
   private connectionNumber: string
 
-  constructor(signalingUrl: string, channelId: string, secretKey: string, connectionNumber: string) {
+  constructor(
+    signalingUrl: string,
+    channelId: string,
+    secretKey: string,
+    connectionNumber: string,
+  ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.channelId = channelId
     this.connectionNumber = connectionNumber
@@ -340,21 +379,24 @@ class SoraSendRecvClient {
     this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options)
     this.connection.on('track', this.onTrack.bind(this))
     this.connection.on('notify', this.onNotify.bind(this))
-    
+
     // SDPデバッグ用
-    this.connection.on('signaling', (event: any) => {
+    this.connection.on('signaling', (event: SignalingEvent) => {
       if (event.type === 'answer') {
-        console.log(`Connection ${this.connectionNumber} Answer SDP (stereo check):`, event.sdp?.includes('stereo=1'))
+        console.log(
+          `Connection ${this.connectionNumber} Answer SDP (stereo check):`,
+          event.sdp?.includes('stereo=1'),
+        )
       }
     })
   }
-  
+
   setForceStereoOutput(forceStereo: boolean): void {
     if (forceStereo) {
       this.connection.options.forceStereoOutput = true
     }
   }
-  
+
   setOnStreamCallback(callback: (stream: MediaStream) => void): void {
     this.onStreamCallback = callback
   }
@@ -362,7 +404,9 @@ class SoraSendRecvClient {
   async connect(stream: MediaStream): Promise<void> {
     await this.connection.connect(stream)
 
-    const audioElement = document.querySelector<HTMLAudioElement>(`#local-audio-${this.connectionNumber}`)
+    const audioElement = document.querySelector<HTMLAudioElement>(
+      `#local-audio-${this.connectionNumber}`,
+    )
     if (audioElement !== null) {
       audioElement.srcObject = stream
     }
@@ -371,12 +415,16 @@ class SoraSendRecvClient {
   async disconnect(): Promise<void> {
     await this.connection.disconnect()
 
-    const localAudioElement = document.querySelector<HTMLAudioElement>(`#local-audio-${this.connectionNumber}`)
+    const localAudioElement = document.querySelector<HTMLAudioElement>(
+      `#local-audio-${this.connectionNumber}`,
+    )
     if (localAudioElement !== null) {
       localAudioElement.srcObject = null
     }
-    
-    const remoteAudioElement = document.querySelector<HTMLAudioElement>(`#remote-audio-${this.connectionNumber}`)
+
+    const remoteAudioElement = document.querySelector<HTMLAudioElement>(
+      `#remote-audio-${this.connectionNumber}`,
+    )
     if (remoteAudioElement !== null) {
       remoteAudioElement.srcObject = null
     }
@@ -391,11 +439,13 @@ class SoraSendRecvClient {
 
   private onTrack(event: RTCTrackEvent): void {
     this.remoteStream = event.streams[0]
-    const audioElement = document.querySelector<HTMLAudioElement>(`#remote-audio-${this.connectionNumber}`)
+    const audioElement = document.querySelector<HTMLAudioElement>(
+      `#remote-audio-${this.connectionNumber}`,
+    )
     if (audioElement !== null) {
       audioElement.srcObject = event.streams[0]
     }
-    
+
     // ストリームコールバックを実行
     if (this.onStreamCallback && event.streams[0]) {
       this.onStreamCallback(event.streams[0])

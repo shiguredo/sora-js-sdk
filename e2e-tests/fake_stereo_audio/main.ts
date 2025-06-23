@@ -26,26 +26,29 @@ class RealtimeAudioAnalyzer {
   private animationId: number | null = null
   private channelCount: number
 
-  constructor(stream: MediaStream, private prefix: string) {
+  constructor(
+    stream: MediaStream,
+    private prefix: string,
+  ) {
     this.audioContext = new AudioContext()
     this.source = this.audioContext.createMediaStreamSource(stream)
     this.channelCount = this.source.channelCount
-    
+
     // チャンネル分離
     this.splitter = this.audioContext.createChannelSplitter(2)
     this.source.connect(this.splitter)
-    
+
     // 左チャンネルのアナライザー
     this.analyserLeft = this.audioContext.createAnalyser()
     this.analyserLeft.fftSize = 2048
     this.analyserLeft.smoothingTimeConstant = 0.8
     this.splitter.connect(this.analyserLeft, 0)
-    
+
     // 右チャンネルのアナライザー
     this.analyserRight = this.audioContext.createAnalyser()
     this.analyserRight.fftSize = 2048
     this.analyserRight.smoothingTimeConstant = 0.8
-    
+
     if (this.channelCount >= 2) {
       this.splitter.connect(this.analyserRight, 1)
     }
@@ -54,42 +57,43 @@ class RealtimeAudioAnalyzer {
   private detectDominantFrequency(analyser: AnalyserNode): number {
     const dataArray = new Float32Array(analyser.frequencyBinCount)
     analyser.getFloatFrequencyData(dataArray)
-    
+
     let maxValue = Number.NEGATIVE_INFINITY
     let maxIndex = 0
-    
+
     // 100Hz以上の周波数のみを対象にする（ノイズ除去）
-    const minIndex = Math.floor(100 * analyser.fftSize / this.audioContext.sampleRate)
-    
+    const minIndex = Math.floor((100 * analyser.fftSize) / this.audioContext.sampleRate)
+
     for (let i = minIndex; i < dataArray.length; i++) {
       if (dataArray[i] > maxValue) {
         maxValue = dataArray[i]
         maxIndex = i
       }
     }
-    
+
     return (maxIndex * this.audioContext.sampleRate) / analyser.fftSize
   }
 
   private updateDisplay(): void {
     const leftFreq = this.detectDominantFrequency(this.analyserLeft)
-    const rightFreq = this.channelCount >= 2 
-      ? this.detectDominantFrequency(this.analyserRight)
-      : leftFreq
-    
-    const isStereo = this.channelCount >= 2 && Math.abs(leftFreq - rightFreq) > 50
-    
+    const rightFreq =
+      this.channelCount >= 2 ? this.detectDominantFrequency(this.analyserRight) : leftFreq
+
+    // 片方のチャンネルが0Hzの場合はステレオと判定しない
+    const isStereo =
+      this.channelCount >= 2 && leftFreq > 0 && rightFreq > 0 && Math.abs(leftFreq - rightFreq) > 50
+
     // 表示更新
     const channelCountEl = document.querySelector(`#${this.prefix}-channel-count`)
     const leftFreqEl = document.querySelector(`#${this.prefix}-left-frequency`)
     const rightFreqEl = document.querySelector(`#${this.prefix}-right-frequency`)
     const isStereoEl = document.querySelector(`#${this.prefix}-is-stereo`)
-    
+
     if (channelCountEl) channelCountEl.textContent = this.channelCount.toString()
     if (leftFreqEl) leftFreqEl.textContent = leftFreq.toFixed(1)
     if (rightFreqEl) rightFreqEl.textContent = rightFreq.toFixed(1)
     if (isStereoEl) isStereoEl.textContent = isStereo ? 'Yes' : 'No'
-    
+
     // 次のフレーム
     this.animationId = requestAnimationFrame(() => this.updateDisplay())
   }
@@ -126,11 +130,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 受信側を先に接続
     recvClient = new SoraRecvClient(signalingUrl, channelId, secretKey)
-    
+
     // forceStereoOutputを設定
-    const forceStereoOutput = (document.querySelector('#force-stereo-output') as HTMLInputElement).checked
+    const forceStereoOutput = (document.querySelector('#force-stereo-output') as HTMLInputElement)
+      .checked
     recvClient.setForceStereoOutput(forceStereoOutput)
-    
+
     // リモートストリーム受信時のコールバックを設定
     recvClient.setOnStreamCallback((stream: MediaStream) => {
       if (remoteAnalyzer) {
@@ -139,7 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       remoteAnalyzer = new RealtimeAudioAnalyzer(stream, 'remote')
       remoteAnalyzer.start()
     })
-    
+
     await recvClient.connect()
 
     // 送信側を接続
@@ -231,12 +236,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const localLeftFreq = document.querySelector('#local-left-frequency')?.textContent || '0'
       const localRightFreq = document.querySelector('#local-right-frequency')?.textContent || '0'
       const localIsStereo = document.querySelector('#local-is-stereo')?.textContent || 'No'
-      
+
       const remoteChannelCount = document.querySelector('#remote-channel-count')?.textContent || '0'
       const remoteLeftFreq = document.querySelector('#remote-left-frequency')?.textContent || '0'
       const remoteRightFreq = document.querySelector('#remote-right-frequency')?.textContent || '0'
       const remoteIsStereo = document.querySelector('#remote-is-stereo')?.textContent || 'No'
-      
+
       const analysisDiv = document.createElement('div')
       analysisDiv.id = 'audio-analysis'
       analysisDiv.dataset.analysis = JSON.stringify({
@@ -244,14 +249,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           channelCount: Number.parseInt(localChannelCount),
           leftFrequency: Number.parseFloat(localLeftFreq),
           rightFrequency: Number.parseFloat(localRightFreq),
-          isStereo: localIsStereo === 'Yes'
+          isStereo: localIsStereo === 'Yes',
         },
         remote: {
           channelCount: Number.parseInt(remoteChannelCount),
           leftFrequency: Number.parseFloat(remoteLeftFreq),
           rightFrequency: Number.parseFloat(remoteRightFreq),
-          isStereo: remoteIsStereo === 'Yes'
-        }
+          isStereo: remoteIsStereo === 'Yes',
+        },
       })
       statsDiv.appendChild(analysisDiv)
     }
@@ -276,7 +281,7 @@ class SoraSendClient {
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onNotify.bind(this))
-    
+
     // SDPデバッグ用
     this.connection.on('signaling', (event) => {
       if (event.type === 'answer') {
@@ -345,13 +350,13 @@ class SoraRecvClient {
     this.connection.on('track', this.onTrack.bind(this))
     this.connection.on('notify', this.onNotify.bind(this))
   }
-  
+
   setForceStereoOutput(forceStereo: boolean): void {
     if (forceStereo) {
       this.connection.options.forceStereoOutput = true
     }
   }
-  
+
   setOnStreamCallback(callback: (stream: MediaStream) => void): void {
     this.onStreamCallback = callback
   }
@@ -376,14 +381,13 @@ class SoraRecvClient {
     return this.connection.pc.getStats()
   }
 
-
   private onTrack(event: RTCTrackEvent): void {
     this.remoteStream = event.streams[0]
     const audioElement = document.querySelector<HTMLAudioElement>('#remote-audio')
     if (audioElement !== null) {
       audioElement.srcObject = event.streams[0]
     }
-    
+
     // ストリームコールバックを実行
     if (this.onStreamCallback && event.streams[0]) {
       this.onStreamCallback(event.streams[0])

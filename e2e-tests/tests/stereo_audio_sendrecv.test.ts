@@ -5,24 +5,24 @@ test.describe('Stereo Audio SendRecv Tests', () => {
   test.beforeEach(async ({ page }) => {
     // ページに移動してSora JS SDKのバージョンを確認
     await page.goto('http://localhost:9000/fake_stereo_audio_sendrecv/')
-    
+
     // Sora.version()を実行してバージョンを取得
     const version = await page.evaluate(() => {
       // @ts-ignore
       return window.Sora ? window.Sora.version() : null
     })
-    
+
     if (!version) {
       // バージョンが取得できない場合はスキップ
       test.skip(true, 'Sora JS SDK version not found')
       return
     }
-    
+
     // バージョンをパース（例: "2024.1.0" -> [2024, 1, 0]）
-    const versionParts = version.split('.').map((v: string) => parseInt(v, 10))
+    const versionParts = version.split('.').map((v: string) => Number.parseInt(v, 10))
     const majorVersion = versionParts[0] || 0
     const minorVersion = versionParts[1] || 0
-    
+
     // 2024.2以降でない場合はスキップ
     if (majorVersion < 2024 || (majorVersion === 2024 && minorVersion < 2)) {
       test.skip(true, `Sora JS SDK version ${version} is older than 2024.2`)
@@ -51,10 +51,10 @@ test.describe('Stereo Audio SendRecv Tests', () => {
     // 両方のconnection-idが表示されるまで待つ
     await page.waitForSelector('#connection-id-1:not(:empty)')
     await page.waitForSelector('#connection-id-2:not(:empty)')
-    
+
     const connectionId1 = await page.$eval('#connection-id-1', (el) => el.textContent)
     const connectionId2 = await page.$eval('#connection-id-2', (el) => el.textContent)
-    
+
     console.log(`connection-1 connectionId=${connectionId1}`)
     console.log(`connection-2 connectionId=${connectionId2}`)
 
@@ -175,10 +175,10 @@ test.describe('Stereo Audio SendRecv Tests', () => {
     // 両方のconnection-idが表示されるまで待つ
     await page.waitForSelector('#connection-id-1:not(:empty)')
     await page.waitForSelector('#connection-id-2:not(:empty)')
-    
+
     const connectionId1 = await page.$eval('#connection-id-1', (el) => el.textContent)
     const connectionId2 = await page.$eval('#connection-id-2', (el) => el.textContent)
-    
+
     console.log(`connection-1 connectionId=${connectionId1}`)
     console.log(`connection-2 connectionId=${connectionId2}`)
 
@@ -203,25 +203,45 @@ test.describe('Stereo Audio SendRecv Tests', () => {
     expect(analysisData.connection1.local.isStereo).toBe(false)
     expect(analysisData.connection1.local.leftFrequency).toBeGreaterThan(400)
     expect(analysisData.connection1.local.leftFrequency).toBeLessThan(480)
-    expect(Math.abs(analysisData.connection1.local.leftFrequency - analysisData.connection1.local.rightFrequency)).toBeLessThan(10)
+    expect(
+      Math.abs(
+        analysisData.connection1.local.leftFrequency -
+          analysisData.connection1.local.rightFrequency,
+      ),
+    ).toBeLessThan(10)
 
     // 接続1のリモート（接続2から受信）のモノラル検証（880Hz基準）
     expect(analysisData.connection1.remote.isStereo).toBe(false)
     expect(analysisData.connection1.remote.leftFrequency).toBeGreaterThan(840)
     expect(analysisData.connection1.remote.leftFrequency).toBeLessThan(920)
-    expect(Math.abs(analysisData.connection1.remote.leftFrequency - analysisData.connection1.remote.rightFrequency)).toBeLessThan(10)
+    expect(
+      Math.abs(
+        analysisData.connection1.remote.leftFrequency -
+          analysisData.connection1.remote.rightFrequency,
+      ),
+    ).toBeLessThan(10)
 
     // 接続2のローカル（送信側）のモノラル検証（880Hz基準）
     expect(analysisData.connection2.local.isStereo).toBe(false)
     expect(analysisData.connection2.local.leftFrequency).toBeGreaterThan(840)
     expect(analysisData.connection2.local.leftFrequency).toBeLessThan(920)
-    expect(Math.abs(analysisData.connection2.local.leftFrequency - analysisData.connection2.local.rightFrequency)).toBeLessThan(10)
+    expect(
+      Math.abs(
+        analysisData.connection2.local.leftFrequency -
+          analysisData.connection2.local.rightFrequency,
+      ),
+    ).toBeLessThan(10)
 
     // 接続2のリモート（接続1から受信）のモノラル検証（440Hz基準）
     expect(analysisData.connection2.remote.isStereo).toBe(false)
     expect(analysisData.connection2.remote.leftFrequency).toBeGreaterThan(400)
     expect(analysisData.connection2.remote.leftFrequency).toBeLessThan(480)
-    expect(Math.abs(analysisData.connection2.remote.leftFrequency - analysisData.connection2.remote.rightFrequency)).toBeLessThan(10)
+    expect(
+      Math.abs(
+        analysisData.connection2.remote.leftFrequency -
+          analysisData.connection2.remote.rightFrequency,
+      ),
+    ).toBeLessThan(10)
 
     await page.click('#disconnect')
     await page.close()
@@ -268,13 +288,13 @@ test.describe('Stereo Audio SendRecv Tests', () => {
 
     // 接続1のローカルはステレオ
     expect(analysisData.connection1.local.isStereo).toBe(true)
-    
+
     // 接続1のリモート（接続2から受信）はモノラル
     expect(analysisData.connection1.remote.isStereo).toBe(false)
-    
+
     // 接続2のローカルはモノラル
     expect(analysisData.connection2.local.isStereo).toBe(false)
-    
+
     // 接続2のリモート（接続1から受信）はステレオ
     expect(analysisData.connection2.remote.isStereo).toBe(true)
 
