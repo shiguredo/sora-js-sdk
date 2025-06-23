@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fake Stereo Audio SendRecv Test</title>
+  </head>
+
+  <body>
+    <header>
+      <h1>Fake Stereo Audio SendRecv Test</h1>
+    </header>
+
+    <div id="version"></div>
+
+    <main>
+      <div>
+        <button id="connect">connect</button>
+        <button id="disconnect">disconnect</button>
+        <button id="get-stats">Get Stats</button>
+      </div>
+
+      <div>
+        <label for="channel-name">Channel Name</label>
+        <input id="channel-name" type="text" value="sora-js-sdk-stereo-test" />
+      </div>
+
+      <h2>接続1の設定</h2>
+      <div>
+        <label>
+          <input id="use-stereo-1" type="checkbox" checked />
+          Use Stereo Audio (Fake Generator) - 接続1
+        </label>
+      </div>
+
+      <div>
+        <label>
+          <input id="force-stereo-output-1" type="checkbox" checked />
+          Force Stereo Output (WebRTC) - 接続1
+        </label>
+      </div>
+
+      <div>
+        connection-id 1: <span id="connection-id-1"></span>
+      </div>
+
+      <h2>接続2の設定</h2>
+      <div>
+        <label>
+          <input id="use-stereo-2" type="checkbox" checked />
+          Use Stereo Audio (Fake Generator) - 接続2
+        </label>
+      </div>
+
+      <div>
+        <label>
+          <input id="force-stereo-output-2" type="checkbox" checked />
+          Force Stereo Output (WebRTC) - 接続2
+        </label>
+      </div>
+
+      <div>
+        connection-id 2: <span id="connection-id-2"></span>
+      </div>
+
+      <h2>接続1の音声</h2>
+      <div>
+        <h3>接続1のLocal Audio（自分が送信している音声）</h3>
+        <audio id="local-audio-1" autoplay muted controls style="width: 300px"></audio>
+      </div>
+
+      <div>
+        <h3>接続1のRemote Audio（接続2から受信した音声）</h3>
+        <audio id="remote-audio-1" autoplay controls style="width: 300px"></audio>
+      </div>
+
+      <div>
+        <h3>接続1 Local Audio Analysis</h3>
+        <div>Channel Count: <span id="conn1-local-channel-count">-</span></div>
+        <div>Left Channel Frequency: <span id="conn1-local-left-frequency">-</span> Hz</div>
+        <div>Right Channel Frequency: <span id="conn1-local-right-frequency">-</span> Hz</div>
+        <div>Is Stereo: <span id="conn1-local-is-stereo">-</span></div>
+      </div>
+
+      <div>
+        <h3>接続1 Remote Audio Analysis（接続2から受信）</h3>
+        <div>Channel Count: <span id="conn1-remote-channel-count">-</span></div>
+        <div>Left Channel Frequency: <span id="conn1-remote-left-frequency">-</span> Hz</div>
+        <div>Right Channel Frequency: <span id="conn1-remote-right-frequency">-</span> Hz</div>
+        <div>Is Stereo: <span id="conn1-remote-is-stereo">-</span></div>
+      </div>
+
+      <h2>接続2の音声</h2>
+      <div>
+        <h3>接続2のLocal Audio（自分が送信している音声）</h3>
+        <audio id="local-audio-2" autoplay muted controls style="width: 300px"></audio>
+      </div>
+
+      <div>
+        <h3>接続2のRemote Audio（接続1から受信した音声）</h3>
+        <audio id="remote-audio-2" autoplay controls style="width: 300px"></audio>
+      </div>
+
+      <div>
+        <h3>接続2 Local Audio Analysis</h3>
+        <div>Channel Count: <span id="conn2-local-channel-count">-</span></div>
+        <div>Left Channel Frequency: <span id="conn2-local-left-frequency">-</span> Hz</div>
+        <div>Right Channel Frequency: <span id="conn2-local-right-frequency">-</span> Hz</div>
+        <div>Is Stereo: <span id="conn2-local-is-stereo">-</span></div>
+      </div>
+
+      <div>
+        <h3>接続2 Remote Audio Analysis（接続1から受信）</h3>
+        <div>Channel Count: <span id="conn2-remote-channel-count">-</span></div>
+        <div>Left Channel Frequency: <span id="conn2-remote-left-frequency">-</span> Hz</div>
+        <div>Right Channel Frequency: <span id="conn2-remote-right-frequency">-</span> Hz</div>
+        <div>Is Stereo: <span id="conn2-remote-is-stereo">-</span></div>
+      </div>
+
+      <div id="stats-report-1"></div>
+      <div id="stats-report-2"></div>
+      <div id="audio-analysis"></div>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

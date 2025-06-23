@@ -37,6 +37,7 @@ export default defineConfig({
         data_channel_signaling_only: resolve(__dirname, 'data_channel_signaling_only/index.html'),
         fake_sendonly: resolve(__dirname, 'fake_sendonly/index.html'),
         fake_stereo_audio: resolve(__dirname, 'fake_stereo_audio/index.html'),
+        fake_stereo_audio_sendrecv: resolve(__dirname, 'fake_stereo_audio_sendrecv/index.html'),
         simulcast_sendonly_webkit: resolve(__dirname, 'simulcast_sendonly_webkit/index.html'),
       },
     },
