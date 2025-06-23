@@ -136,10 +136,76 @@ const createFakeVideoTrack = (
 const createFakeAudioTrack = (
   frequency = 440, // デフォルト周波数 A4 (440Hz)
   volume = 0.1, // デフォルト音量 (0.0 - 1.0)
+  stereo = false, // ステレオかモノラルか
 ): MediaStreamTrack => {
   // AudioContextを作成
   const audioCtx = new AudioContext()
 
+  if (stereo) {
+    // ステレオの場合: L/Rチャンネルに異なる周波数の音を設定
+    // 左チャンネル用のOscillator
+    const oscillatorLeft = audioCtx.createOscillator()
+    oscillatorLeft.type = 'sine'
+    oscillatorLeft.frequency.setValueAtTime(frequency, audioCtx.currentTime)
+
+    // 右チャンネル用のOscillator（周波数を少しずらす）
+    const oscillatorRight = audioCtx.createOscillator()
+    oscillatorRight.type = 'sine'
+    oscillatorRight.frequency.setValueAtTime(frequency * 1.5, audioCtx.currentTime) // 1.5倍の周波数
+
+    // 各チャンネル用のGainNode
+    const gainLeft = audioCtx.createGain()
+    gainLeft.gain.setValueAtTime(volume, audioCtx.currentTime)
+
+    const gainRight = audioCtx.createGain()
+    gainRight.gain.setValueAtTime(volume, audioCtx.currentTime)
+
+    // ChannelMergerNodeでステレオに結合
+    const merger = audioCtx.createChannelMerger(2)
+
+    // MediaStreamAudioDestinationNode（出力先）を作成
+    // channelCountを2に明示的に設定
+    const destination = audioCtx.createMediaStreamDestination()
+    destination.channelCount = 2
+    destination.channelCountMode = 'explicit'
+
+    // 接続: 左チャンネル -> merger の入力0
+    oscillatorLeft.connect(gainLeft)
+    gainLeft.connect(merger, 0, 0)
+
+    // 接続: 右チャンネル -> merger の入力1
+    oscillatorRight.connect(gainRight)
+    gainRight.connect(merger, 0, 1)
+
+    // merger -> destination
+    merger.connect(destination)
+
+    // Oscillatorを開始
+    oscillatorLeft.start()
+    oscillatorRight.start()
+
+    // MediaStreamからAudioTrackを取得
+    const [audioTrack] = destination.stream.getAudioTracks()
+
+    // デバッグ情報
+    console.log('Created stereo audio track:', {
+      channelCount: destination.channelCount,
+      leftFreq: frequency,
+      rightFreq: frequency * 1.5,
+    })
+
+    // トラックが停止されたらAudioContextを閉じる
+    audioTrack.addEventListener('ended', () => {
+      oscillatorLeft.stop()
+      oscillatorRight.stop()
+      audioCtx.close().then(() => {
+        console.log('AudioContext closed because track ended.')
+      })
+    })
+
+    return audioTrack
+  }
+  // モノラルの場合（既存の実装）
   // OscillatorNode（音源）を作成
   const oscillator = audioCtx.createOscillator()
   oscillator.type = 'sine' // サイン波（不快感の少ない波形）
@@ -180,6 +246,7 @@ interface FakeMediaTrackConstraints {
   frameRate?: number
   frequency?: number
   volume?: number
+  stereo?: boolean
 }
 
 interface FakeMediaStreamConstraints {
@@ -215,12 +282,16 @@ export const getFakeMedia = (constraints: FakeMediaStreamConstraints): MediaStre
 
   if (constraints.audio) {
     // デフォルトのオーディオ設定
-    let audioOptions = { frequency: 440, volume: 0.1 }
+    let audioOptions = { frequency: 440, volume: 0.1, stereo: false }
     // オブジェクトで設定が渡された場合はマージ
     if (typeof constraints.audio === 'object') {
       audioOptions = { ...audioOptions, ...constraints.audio }
     }
-    const audioTrack = createFakeAudioTrack(audioOptions.frequency, audioOptions.volume)
+    const audioTrack = createFakeAudioTrack(
+      audioOptions.frequency,
+      audioOptions.volume,
+      audioOptions.stereo,
+    )
     tracks.push(audioTrack)
   }
 

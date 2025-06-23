@@ -22,6 +22,11 @@
   - @voluntas
 - [UPDATE] biome v2 にバージョンを上げる
   - @voluntas
+- [ADD] ステレオ音声の E2E テストを追加する
+  - fake_stereo_audio のテストページを作成
+  - フェイクメディア生成機能にステレオサポートを追加
+  - リアルタイム音声解析機能を実装
+  - @voluntas
 
 
 ## 2025.1.0
