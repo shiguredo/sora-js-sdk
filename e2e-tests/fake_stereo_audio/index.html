@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fake Stereo Audio Test</title>
+  </head>
+
+  <body>
+    <header>
+      <h1>Fake Stereo Audio Test</h1>
+    </header>
+
+    <div id="version"></div>
+
+    <main>
+      <div>
+        <button id="connect">connect</button>
+        <button id="disconnect">disconnect</button>
+        <button id="get-stats">Get Stats</button>
+      </div>
+
+      <div>
+        <label for="channel-name">Channel Name</label>
+        <input id="channel-name" type="text" value="sora-js-sdk-stereo-test" />
+      </div>
+
+      <div>
+        <label>
+          <input id="use-stereo" type="checkbox" checked />
+          Use Stereo Audio (Fake Generator)
+        </label>
+      </div>
+
+      <div>
+        <label>
+          <input id="force-stereo-output" type="checkbox" checked />
+          Force Stereo Output (WebRTC)
+        </label>
+      </div>
+
+      <div>
+        sendonly connection-id: <span id="sendonly-connection-id"></span>
+      </div>
+      
+      <div>
+        recvonly connection-id: <span id="recvonly-connection-id"></span>
+      </div>
+
+      <div>
+        <h3>Local Audio</h3>
+        <audio id="local-audio" autoplay muted controls style="width: 300px"></audio>
+      </div>
+
+      <div>
+        <h3>Remote Audio</h3>
+        <audio id="remote-audio" autoplay controls style="width: 300px"></audio>
+      </div>
+
+      <div>
+        <h3>Local Audio Analysis (Realtime)</h3>
+        <div>Channel Count: <span id="local-channel-count">-</span></div>
+        <div>Left Channel Frequency: <span id="local-left-frequency">-</span> Hz</div>
+        <div>Right Channel Frequency: <span id="local-right-frequency">-</span> Hz</div>
+        <div>Is Stereo: <span id="local-is-stereo">-</span></div>
+      </div>
+
+      <div>
+        <h3>Remote Audio Analysis (Realtime)</h3>
+        <div>Channel Count: <span id="remote-channel-count">-</span></div>
+        <div>Left Channel Frequency: <span id="remote-left-frequency">-</span> Hz</div>
+        <div>Right Channel Frequency: <span id="remote-right-frequency">-</span> Hz</div>
+        <div>Is Stereo: <span id="remote-is-stereo">-</span></div>
+      </div>
+
+      <div id="stats-report"></div>
+      <div id="stats-report-json"></div>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
