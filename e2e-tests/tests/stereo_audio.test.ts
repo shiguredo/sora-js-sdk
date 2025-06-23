@@ -12,8 +12,6 @@ test.describe('Stereo Audio Tests', () => {
       return window.Sora ? window.Sora.version() : null
     })
 
-    console.log(version)
-
     if (!version) {
       // バージョンが取得できない場合はスキップ
       test.skip(true, 'Sora JS SDK version not found')
