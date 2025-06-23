@@ -8,6 +8,14 @@ import Sora, {
   type SoraConnection,
 } from 'sora-js-sdk'
 
+// Soraオブジェクトをwindowに公開（テスト用）
+declare global {
+  interface Window {
+    Sora: typeof Sora
+  }
+}
+window.Sora = Sora
+
 // リアルタイム音声解析クラス
 class RealtimeAudioAnalyzer {
   private audioContext: AudioContext
