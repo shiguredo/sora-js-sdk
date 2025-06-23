@@ -233,15 +233,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       analysisDiv.id = 'audio-analysis'
       analysisDiv.dataset.analysis = JSON.stringify({
         local: {
-          channelCount: parseInt(localChannelCount),
-          leftFrequency: parseFloat(localLeftFreq),
-          rightFrequency: parseFloat(localRightFreq),
+          channelCount: Number.parseInt(localChannelCount),
+          leftFrequency: Number.parseFloat(localLeftFreq),
+          rightFrequency: Number.parseFloat(localRightFreq),
           isStereo: localIsStereo === 'Yes'
         },
         remote: {
-          channelCount: parseInt(remoteChannelCount),
-          leftFrequency: parseFloat(remoteLeftFreq),
-          rightFrequency: parseFloat(remoteRightFreq),
+          channelCount: Number.parseInt(remoteChannelCount),
+          leftFrequency: Number.parseFloat(remoteLeftFreq),
+          rightFrequency: Number.parseFloat(remoteRightFreq),
           isStereo: remoteIsStereo === 'Yes'
         }
       })
