@@ -1,6 +1,6 @@
 {
-  "entryPoints": ["./packages/sdk/src/sora.ts"],
-  "tsconfig": "./packages/sdk/tsconfig.json",
+  "entryPoints": ["./src/sora.ts"],
+  "tsconfig": "./tsconfig.json",
   "disableSources": true,
   "excludePrivate": true,
   "excludeProtected": true,
