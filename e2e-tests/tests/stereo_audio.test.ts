@@ -18,14 +18,14 @@ test('stereo audio transmission test', async ({ browser }) => {
   await page.click('#connect')
 
   // 両方のconnection-idが表示されるまで待つ
-  await page.waitForSelector('#sendonly-connection-id:not(:empty)')
-  await page.waitForSelector('#recvonly-connection-id:not(:empty)')
-  
-  const sendonlyConnectionId = await page.$eval('#sendonly-connection-id', (el) => el.textContent)
-  const recvonlyConnectionId = await page.$eval('#recvonly-connection-id', (el) => el.textContent)
-  
-  console.log(`sendonly connectionId=${sendonlyConnectionId}`)
-  console.log(`recvonly connectionId=${recvonlyConnectionId}`)
+  await page.waitForSelector('#connection-id-1:not(:empty)')
+  await page.waitForSelector('#connection-id-2:not(:empty)')
+
+  const connectionId1 = await page.$eval('#connection-id-1', (el) => el.textContent)
+  const connectionId2 = await page.$eval('#connection-id-2', (el) => el.textContent)
+
+  console.log(`connection-id-1=${connectionId1}`)
+  console.log(`connection-id-2=${connectionId2}`)
 
   // レース対策
   await page.waitForTimeout(3000)
@@ -108,14 +108,14 @@ test('mono audio transmission test', async ({ browser }) => {
   await page.click('#connect')
 
   // 両方のconnection-idが表示されるまで待つ
-  await page.waitForSelector('#sendonly-connection-id:not(:empty)')
-  await page.waitForSelector('#recvonly-connection-id:not(:empty)')
-  
-  const sendonlyConnectionId = await page.$eval('#sendonly-connection-id', (el) => el.textContent)
-  const recvonlyConnectionId = await page.$eval('#recvonly-connection-id', (el) => el.textContent)
-  
-  console.log(`sendonly connectionId=${sendonlyConnectionId}`)
-  console.log(`recvonly connectionId=${recvonlyConnectionId}`)
+  await page.waitForSelector('#connection-id-1:not(:empty)')
+  await page.waitForSelector('#connection-id-2:not(:empty)')
+
+  const connectionId1 = await page.$eval('#connection-id-1', (el) => el.textContent)
+  const connectionId2 = await page.$eval('#connection-id-2', (el) => el.textContent)
+
+  console.log(`connection-id-1=${connectionId1}`)
+  console.log(`connection-id-2=${connectionId2}`)
 
   // レース対策
   await page.waitForTimeout(3000)
@@ -151,13 +151,17 @@ test('mono audio transmission test', async ({ browser }) => {
   expect(analysisData.local.isStereo).toBe(false)
   expect(analysisData.local.leftFrequency).toBeGreaterThan(400)
   expect(analysisData.local.leftFrequency).toBeLessThan(480)
-  expect(Math.abs(analysisData.local.leftFrequency - analysisData.local.rightFrequency)).toBeLessThan(10)
+  expect(
+    Math.abs(analysisData.local.leftFrequency - analysisData.local.rightFrequency),
+  ).toBeLessThan(10)
 
   // リモート（受信側）のモノラル検証
   expect(analysisData.remote.isStereo).toBe(false)
   expect(analysisData.remote.leftFrequency).toBeGreaterThan(400)
   expect(analysisData.remote.leftFrequency).toBeLessThan(480)
-  expect(Math.abs(analysisData.remote.leftFrequency - analysisData.remote.rightFrequency)).toBeLessThan(10)
+  expect(
+    Math.abs(analysisData.remote.leftFrequency - analysisData.remote.rightFrequency),
+  ).toBeLessThan(10)
 
   await page.click('#disconnect')
   await page.close()
