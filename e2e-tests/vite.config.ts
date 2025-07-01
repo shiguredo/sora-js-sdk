@@ -39,6 +39,7 @@ export default defineConfig({
         fake_stereo_audio: resolve(__dirname, 'fake_stereo_audio/index.html'),
         fake_stereo_audio_sendrecv: resolve(__dirname, 'fake_stereo_audio_sendrecv/index.html'),
         simulcast_sendonly_webkit: resolve(__dirname, 'simulcast_sendonly_webkit/index.html'),
+        rpc: resolve(__dirname, 'rpc/index.html'),
       },
     },
   },
