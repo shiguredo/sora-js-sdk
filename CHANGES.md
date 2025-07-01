@@ -16,8 +16,22 @@
 
 ## develop
 
+- [ADD] RPC 機能を追加する
+  - `rpc()` メソッドで JSON-RPC 2.0 形式で Sora の API を呼び出すことができる
+  - 並列実行をサポート
+  - `timeout` オプションでタイムアウト時間（ミリ秒）を指定可能
+  - `notification: true` オプションでレスポンスを待たない通知型リクエストが可能
+  - @voluntas
+- [ADD] `DATA_CHANNEL_LABEL_RPC` 定数を追加する
+  - @voluntas
+
 ### misc
 
+- [CHANGE] Node 18 でのテストを落とす
+
+  - Node 18 は EoL になったため
+  - Vite 7 が Node 18 をサポートしなくなったため
+  - @voluntas
 - [CHANGE] WHIP/WHEP の E2E テストを削除する
   - @voluntas
 - [UPDATE] biome v2 にバージョンを上げる
@@ -27,7 +41,6 @@
   - フェイクメディア生成機能にステレオサポートを追加
   - リアルタイム音声解析機能を実装
   - @voluntas
-
 
 ## 2025.1.0
 

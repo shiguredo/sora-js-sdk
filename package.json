@@ -21,7 +21,7 @@
     "e2e-test-webkit": "pnpm build && playwright test --project='WebKit'",
     "lint": "biome lint",
     "fmt": "biome format --write",
-    "check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "doc": "typedoc"
   },

@@ -30,7 +30,7 @@ jobs:
       - run: pnpm add -E -D typescript@${{ matrix.typescript }} -w
       - run: pnpm run build
       - run: pnpm run lint
-      - run: pnpm run check
+      - run: pnpm run typecheck
       - run: pnpm run test
   
   slack_notify_failed:

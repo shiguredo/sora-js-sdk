@@ -2,6 +2,7 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 
 // root が examples なので examples/dist にビルドされる
+// mjs なのは古い Node.js での import のため
 
 export default defineConfig({
   root: resolve(__dirname),
@@ -39,6 +40,7 @@ export default defineConfig({
         fake_stereo_audio: resolve(__dirname, 'fake_stereo_audio/index.html'),
         fake_stereo_audio_sendrecv: resolve(__dirname, 'fake_stereo_audio_sendrecv/index.html'),
         simulcast_sendonly_webkit: resolve(__dirname, 'simulcast_sendonly_webkit/index.html'),
+        rpc: resolve(__dirname, 'rpc/index.html'),
       },
     },
   },

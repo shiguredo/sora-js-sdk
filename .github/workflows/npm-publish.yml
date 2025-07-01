@@ -21,7 +21,7 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       - run: pnpm run lint
-      - run: pnpm run check
+      - run: pnpm run typecheck
       - uses: actions/upload-artifact@v4
         with:
           name: sora-js-sdk-dist
