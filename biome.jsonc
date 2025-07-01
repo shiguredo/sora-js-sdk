@@ -4,7 +4,6 @@
   "files": {
     "includes": [
       "**/src/**",
-      "**/examples/**",
       "**/tests/**",
       "**/e2e-tests/**",
       "**/*.config.mjs",

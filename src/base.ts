@@ -2446,26 +2446,64 @@ export default class ConnectionBase {
       throw new Error('RPC DataChannel is not available or not open')
     }
 
-    const id = ++this.rpcRequestIdCounter
-    const request: JSONRPCRequest = {
-      jsonrpc: '2.0',
-      id,
-      method,
-      params,
-    }
+    // notification の場合は id を含めない
+    const isNotification = options?.notification === true
+    const id = isNotification ? undefined : ++this.rpcRequestIdCounter
+    const request: JSONRPCRequest = isNotification
+      ? {
+          jsonrpc: '2.0',
+          method,
+          params,
+        }
+      : {
+          jsonrpc: '2.0',
+          id,
+          method,
+          params,
+        }
 
     return new Promise<T>((resolve, reject) => {
+      // notification の場合はレスポンスを待たずに即座に resolve
+      if (isNotification) {
+        const message = JSON.stringify(request)
+        const dataChannelSettings = this.signalingOfferMessageDataChannels.rpc
+
+        if (dataChannelSettings?.compress) {
+          compressMessage(new TextEncoder().encode(message))
+            .then((compressed) => {
+              rpcDataChannel.send(compressed)
+              // notification は送信完了後すぐに resolve
+              // T が void の場合、undefined は正しい返り値
+              resolve(undefined as T)
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        } else {
+          try {
+            rpcDataChannel.send(message)
+            // notification は送信完了後すぐに resolve
+            // T が void の場合、undefined は正しい返り値
+            resolve(undefined as T)
+          } catch (error) {
+            reject(error)
+          }
+        }
+        return
+      }
+
+      // 通常のリクエストの場合
       // タイムアウト設定
       let timeoutId: ReturnType<typeof setTimeout> | undefined
       if (options?.timeout) {
         timeoutId = setTimeout(() => {
-          this.rpcRequestPromises.delete(id)
+          this.rpcRequestPromises.delete(id as number)
           reject(new Error(`RPC request timeout: ${method}`))
         }, options.timeout)
       }
 
       // Promise を登録（タイムアウトをクリアする処理も含む）
-      this.rpcRequestPromises.set(id, {
+      this.rpcRequestPromises.set(id as number, {
         resolve: (value: unknown) => {
           if (timeoutId) clearTimeout(timeoutId)
           ;(resolve as (value: unknown) => void)(value)
@@ -2485,16 +2523,20 @@ export default class ConnectionBase {
             rpcDataChannel.send(compressed)
           })
           .catch((error) => {
-            this.rpcRequestPromises.delete(id)
-            if (timeoutId) clearTimeout(timeoutId)
+            if (!isNotification && id !== undefined) {
+              this.rpcRequestPromises.delete(id)
+              if (timeoutId) clearTimeout(timeoutId)
+            }
             reject(error)
           })
       } else {
         try {
           rpcDataChannel.send(message)
         } catch (error) {
-          this.rpcRequestPromises.delete(id)
-          if (timeoutId) clearTimeout(timeoutId)
+          if (!isNotification && id !== undefined) {
+            this.rpcRequestPromises.delete(id)
+            if (timeoutId) clearTimeout(timeoutId)
+          }
           reject(error)
         }
       }

@@ -18,7 +18,9 @@
 
 - [ADD] RPC 機能を追加する
   - `rpc()` メソッドで JSON-RPC 2.0 形式で Sora の API を呼び出すことができる
-  - 並列実行、タイムアウトをサポート
+  - 並列実行をサポート
+  - `timeout` オプションでタイムアウト時間（ミリ秒）を指定可能
+  - `notification: true` オプションでレスポンスを待たない通知型リクエストが可能
   - @voluntas
 - [ADD] `DATA_CHANNEL_LABEL_RPC` 定数を追加する
   - @voluntas

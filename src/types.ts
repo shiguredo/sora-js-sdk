@@ -506,4 +506,5 @@ export type JSONRPCResponse = JSONRPCSuccessResponse | JSONRPCErrorResponse
 // RPC options
 export type RPCOptions = {
   timeout?: number
+  notification?: boolean
 }
