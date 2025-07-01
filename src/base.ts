@@ -1,6 +1,7 @@
 import {
   DATA_CHANNEL_LABEL_NOTIFY,
   DATA_CHANNEL_LABEL_PUSH,
+  DATA_CHANNEL_LABEL_RPC,
   DATA_CHANNEL_LABEL_SIGNALING,
   DATA_CHANNEL_LABEL_STATS,
   SIGNALING_MESSAGE_TYPE_ANSWER,
@@ -12,10 +13,10 @@ import {
   SIGNALING_MESSAGE_TYPE_PING,
   SIGNALING_MESSAGE_TYPE_PONG,
   SIGNALING_MESSAGE_TYPE_PUSH,
-  SIGNALING_MESSAGE_TYPE_REDIRECT,
-  SIGNALING_MESSAGE_TYPE_REQ_STATS,
   SIGNALING_MESSAGE_TYPE_RE_ANSWER,
   SIGNALING_MESSAGE_TYPE_RE_OFFER,
+  SIGNALING_MESSAGE_TYPE_REDIRECT,
+  SIGNALING_MESSAGE_TYPE_REQ_STATS,
   SIGNALING_MESSAGE_TYPE_STATS,
   SIGNALING_MESSAGE_TYPE_SWITCHED,
   SIGNALING_MESSAGE_TYPE_UPDATE,
@@ -35,7 +36,10 @@ import type {
   ConnectionOptions,
   DataChannelConfiguration,
   DataChannelSignalingMessage,
+  JSONRPCRequest,
+  JSONRPCResponse,
   JSONType,
+  RPCOptions,
   SignalingCloseMessage,
   SignalingConnectMessage,
   SignalingNotifyMessage,
@@ -43,8 +47,8 @@ import type {
   SignalingOfferMessageDataChannel,
   SignalingPingMessage,
   SignalingPushMessage,
-  SignalingReOfferMessage,
   SignalingRedirectMessage,
+  SignalingReOfferMessage,
   SignalingReqStatsMessage,
   SignalingSwitchedMessage,
   SignalingUpdateMessage,
@@ -56,8 +60,8 @@ import type {
   WebSocketSignalingMessage,
 } from './types'
 import {
-  ConnectError,
   addStereoToFmtp,
+  ConnectError,
   compressMessage,
   createDataChannelData,
   createDataChannelEvent,
@@ -224,6 +228,17 @@ export default class ConnectionBase {
    * イベントコールバックのリスト
    */
   protected callbacks: Callbacks
+  /**
+   * RPC リクエストのプロミスを管理するマップ
+   */
+  private rpcRequestPromises: Map<
+    string | number,
+    { resolve: (value: unknown) => void; reject: (reason: unknown) => void }
+  > = new Map()
+  /**
+   * RPC リクエスト ID のカウンター
+   */
+  private rpcRequestIdCounter = 0
 
   constructor(
     signalingUrlCandidates: string | string[],
@@ -2186,6 +2201,21 @@ export default class ConnectionBase {
           this.callbacks.message(createDataChannelMessageEvent(dataChannel.label, data))
         }
       }
+    } else if (dataChannelEvent.channel.label === DATA_CHANNEL_LABEL_RPC) {
+      dataChannelEvent.channel.onmessage = async (event): Promise<void> => {
+        const channel = event.currentTarget as RTCDataChannel
+        const label = channel.label
+        const dataChannelSettings = this.signalingOfferMessageDataChannels[label]
+        if (!dataChannelSettings) {
+          console.warn(
+            `Received onmessage event for '${label}' DataChannel. But '${label}' DataChannel settings doesn't exist`,
+          )
+          return
+        }
+        const data = await parseDataChannelEventData(event.data, dataChannelSettings.compress)
+        const response = JSON.parse(data) as JSONRPCResponse
+        this.handleRPCResponse(response)
+      }
     }
   }
 
@@ -2396,5 +2426,104 @@ export default class ConnectionBase {
       result.push(messagingDataChannel)
     }
     return result
+  }
+
+  /**
+   * RPC DataChannel でリクエストを送信するメソッド
+   *
+   * @param method - RPC メソッド名
+   * @param params - RPC パラメーター
+   * @param options - RPC オプション
+   * @returns Promise<T> - レスポンスの result
+   */
+  async rpc<T = unknown>(
+    method: string,
+    params?: Record<string, unknown> | unknown[],
+    options?: RPCOptions,
+  ): Promise<T> {
+    const rpcDataChannel = this.soraDataChannels.rpc
+    if (!rpcDataChannel || rpcDataChannel.readyState !== 'open') {
+      throw new Error('RPC DataChannel is not available or not open')
+    }
+
+    const id = ++this.rpcRequestIdCounter
+    const request: JSONRPCRequest = {
+      jsonrpc: '2.0',
+      id,
+      method,
+      params,
+    }
+
+    return new Promise<T>((resolve, reject) => {
+      // タイムアウト設定
+      let timeoutId: ReturnType<typeof setTimeout> | undefined
+      if (options?.timeout) {
+        timeoutId = setTimeout(() => {
+          this.rpcRequestPromises.delete(id)
+          reject(new Error(`RPC request timeout: ${method}`))
+        }, options.timeout)
+      }
+
+      // Promise を登録（タイムアウトをクリアする処理も含む）
+      this.rpcRequestPromises.set(id, {
+        resolve: (value: unknown) => {
+          if (timeoutId) clearTimeout(timeoutId)
+          ;(resolve as (value: unknown) => void)(value)
+        },
+        reject: (reason: unknown) => {
+          if (timeoutId) clearTimeout(timeoutId)
+          reject(reason)
+        },
+      })
+
+      const message = JSON.stringify(request)
+      const dataChannelSettings = this.signalingOfferMessageDataChannels.rpc
+
+      if (dataChannelSettings?.compress) {
+        compressMessage(new TextEncoder().encode(message))
+          .then((compressed) => {
+            rpcDataChannel.send(compressed)
+          })
+          .catch((error) => {
+            this.rpcRequestPromises.delete(id)
+            if (timeoutId) clearTimeout(timeoutId)
+            reject(error)
+          })
+      } else {
+        try {
+          rpcDataChannel.send(message)
+        } catch (error) {
+          this.rpcRequestPromises.delete(id)
+          if (timeoutId) clearTimeout(timeoutId)
+          reject(error)
+        }
+      }
+    })
+  }
+
+  /**
+   * RPC レスポンスを処理するメソッド
+   *
+   * @param response - JSON-RPC レスポンス
+   */
+  private handleRPCResponse(response: JSONRPCResponse): void {
+    if (!response.id) {
+      console.warn('Received RPC response without id:', response)
+      return
+    }
+
+    const promise = this.rpcRequestPromises.get(response.id)
+    if (!promise) {
+      console.warn('No pending request found for RPC response id:', response.id)
+      return
+    }
+
+    this.rpcRequestPromises.delete(response.id)
+
+    if ('error' in response) {
+      promise.reject(response.error)
+    } else {
+      promise.resolve(response.result)
+    }
   }
 }

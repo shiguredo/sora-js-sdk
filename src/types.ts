@@ -5,9 +5,9 @@ import type {
   SIGNALING_MESSAGE_TYPE_OFFER,
   SIGNALING_MESSAGE_TYPE_PING,
   SIGNALING_MESSAGE_TYPE_PUSH,
+  SIGNALING_MESSAGE_TYPE_RE_OFFER,
   SIGNALING_MESSAGE_TYPE_REDIRECT,
   SIGNALING_MESSAGE_TYPE_REQ_STATS,
-  SIGNALING_MESSAGE_TYPE_RE_OFFER,
   SIGNALING_MESSAGE_TYPE_SWITCHED,
   SIGNALING_MESSAGE_TYPE_UPDATE,
   SIGNALING_ROLE_RECVONLY,
@@ -476,3 +476,34 @@ export type SoraAbendTitle =
   | 'INTERNAL-ERROR'
   | 'WEBSOCKET-ONCLOSE'
   | 'WEBSOCKET-ONERROR'
+
+// RPC 機能
+export interface JSONRPCRequest {
+  jsonrpc: '2.0'
+  id?: string | number
+  method: string
+  params?: Record<string, unknown> | unknown[]
+}
+
+export interface JSONRPCSuccessResponse {
+  jsonrpc: '2.0'
+  id: string | number
+  result: unknown
+}
+
+export interface JSONRPCErrorResponse {
+  jsonrpc: '2.0'
+  id: string | number
+  error: {
+    code: number
+    message: string
+    data?: unknown
+  }
+}
+
+export type JSONRPCResponse = JSONRPCSuccessResponse | JSONRPCErrorResponse
+
+// RPC options
+export type RPCOptions = {
+  timeout?: number
+}

@@ -16,6 +16,13 @@
 
 ## develop
 
+- [ADD] RPC 機能を追加する
+  - `rpc()` メソッドで JSON-RPC 2.0 形式で Sora の API を呼び出すことができる
+  - 並列実行、タイムアウトをサポート
+  - @voluntas
+- [ADD] `DATA_CHANNEL_LABEL_RPC` 定数を追加する
+  - @voluntas
+
 ### misc
 
 - [CHANGE] WHIP/WHEP の E2E テストを削除する
@@ -27,7 +34,6 @@
   - フェイクメディア生成機能にステレオサポートを追加
   - リアルタイム音声解析機能を実装
   - @voluntas
-
 
 ## 2025.1.0
 
