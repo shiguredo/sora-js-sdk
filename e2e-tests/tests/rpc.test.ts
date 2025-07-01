@@ -9,20 +9,6 @@ import { checkSoraVersion } from './helper'
  */
 test.describe('RPC test', () => {
   test('2つのページ間でRPCのpush通知が送信される', async ({ browser }) => {
-    // 最初のページでバージョンチェック
-    const versionCheckPage = await browser.newPage()
-    const versionCheck = await checkSoraVersion(versionCheckPage, {
-      majorVersion: 2025,
-      minorVersion: 2,
-      featureName: 'RPC',
-    })
-
-    await versionCheckPage.close()
-
-    if (!versionCheck.isSupported) {
-      test.skip(true, versionCheck.skipReason!)
-      return
-    }
     // 2つの独立したブラウザコンテキストを作成
     // 各コンテキストは独立したCookie、localStorage等を持つため、
     // 完全に独立した2人のユーザーをシミュレートできる
@@ -35,6 +21,18 @@ test.describe('RPC test', () => {
       // 両方のページでRPCテストページにアクセス
       await page1.goto('http://localhost:9000/rpc/')
       await page2.goto('http://localhost:9000/rpc/')
+      
+      // page1でバージョンチェック
+      const versionCheck = await checkSoraVersion(page1, {
+        majorVersion: 2025,
+        minorVersion: 2,
+        featureName: 'RPC',
+      })
+
+      if (!versionCheck.isSupported) {
+        test.skip(true, versionCheck.skipReason || 'Version not supported')
+        return
+      }
 
       // 両方のページで接続を確立
       await page1.click('#connect')
@@ -135,6 +133,12 @@ test.describe('RPC test', () => {
       expect(pushContent?.type).toBe('signaling_notify_metadata_ext')
 
       // 逆方向のテスト: page2からpage1へ
+      // push-resultをクリアする
+      await page1.evaluate(() => {
+        const pushResult = document.querySelector('#push-result')
+        if (pushResult) pushResult.innerHTML = ''
+      })
+      
       const pushPromise2 = page1.waitForSelector('#push-result p', { timeout: 10000 })
 
       await page2.fill('#rpc-input', 'test-value-from-page2')

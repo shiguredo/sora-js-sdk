@@ -62,11 +62,13 @@ export async function checkSoraVersion(
   page: Page,
   requirement: VersionRequirement,
 ): Promise<{ isSupported: boolean; skipReason?: string; version?: string }> {
-  await page.goto('http://localhost:9000/rpc/')
-
+  // sora-js-sdk-version要素が更新されるまで待つ
+  await page.waitForSelector('#sora-js-sdk-version:not(:empty)', { timeout: 5000 })
+  
+  // バージョンをDOM要素から取得
   const version = await page.evaluate(() => {
-    // @ts-ignore
-    return window.Sora ? window.Sora.version() : null
+    const versionElement = document.querySelector('#sora-js-sdk-version')
+    return versionElement ? versionElement.textContent : null
   })
 
   return checkVersionSupport(version, requirement)
