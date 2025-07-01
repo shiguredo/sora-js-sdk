@@ -27,6 +27,11 @@
 
 ### misc
 
+- [CHANGE] Node 18 でのテストを落とす
+
+  - Node 18 は EoL になったため
+  - Vite 7 が Node 18 をサポートしなくなったため
+  - @voluntas
 - [CHANGE] WHIP/WHEP の E2E テストを削除する
   - @voluntas
 - [UPDATE] biome v2 にバージョンを上げる

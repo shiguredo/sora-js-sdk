@@ -521,14 +521,14 @@ packages:
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
 
-  '@volar/language-core@2.4.15':
-    resolution: {integrity: sha512-3VHw+QZU0ZG9IuQmzT68IyN4hZNd9GchGPhbD9+pa8CVv7rnoOZwo7T8weIbrRmihqy3ATpdfXFnqRrfPVK6CA==}
+  '@volar/language-core@2.4.16':
+    resolution: {integrity: sha512-mcoAFkYVQV4iiLYjTlbolbsm9hhDLtz4D4wTG+rwzSCUbEnxEec+KBlneLMlfdVNjkVEh8lUUSsCGNEQR+hFdA==}
 
-  '@volar/source-map@2.4.15':
-    resolution: {integrity: sha512-CPbMWlUN6hVZJYGcU/GSoHu4EnCHiLaXI9n8c9la6RaI9W5JHX+NqG+GSQcB0JdC2FIBLdZJwGsfKyBB71VlTg==}
+  '@volar/source-map@2.4.16':
+    resolution: {integrity: sha512-4rBiAhOw4MfFTpkvweDnjbDkixpmWNgBws95rpu2oFdMprkTtqFEb8pUOxQ/ruru8/zXSYLwRNXNozznjW9Vtw==}
 
-  '@volar/typescript@2.4.15':
-    resolution: {integrity: sha512-2aZ8i0cqPGjXb4BhkMsPYDkkuc2ZQ6yOpqwAuNwUoncELqoy5fRgOQtLR9gB0g902iS0NAkvpIzs27geVyVdPg==}
+  '@volar/typescript@2.4.16':
+    resolution: {integrity: sha512-CrRuG20euPerYc4H0kvDWSSLTBo6qgSI1/0BjXL9ogjm5j6l0gIffvNzEvfmVjr8TAuoMPD0NxuEkteIapfZQQ==}
 
   '@vue/compiler-core@3.5.17':
     resolution: {integrity: sha512-Xe+AittLbAyV0pabcN7cP7/BenRBNcteM4aSDCtRvGw0d9OL+HG1u/XHLY/kt1q4fyMeZYXyIYrsHuPSiDPosA==}
@@ -1558,15 +1558,15 @@ snapshots:
       loupe: 3.1.4
       tinyrainbow: 2.0.0
 
-  '@volar/language-core@2.4.15':
+  '@volar/language-core@2.4.16':
     dependencies:
-      '@volar/source-map': 2.4.15
+      '@volar/source-map': 2.4.16
 
-  '@volar/source-map@2.4.15': {}
+  '@volar/source-map@2.4.16': {}
 
-  '@volar/typescript@2.4.15':
+  '@volar/typescript@2.4.16':
     dependencies:
-      '@volar/language-core': 2.4.15
+      '@volar/language-core': 2.4.16
       path-browserify: 1.0.1
       vscode-uri: 3.1.0
 
@@ -1590,7 +1590,7 @@ snapshots:
 
   '@vue/language-core@2.2.0(typescript@5.8.3)':
     dependencies:
-      '@volar/language-core': 2.4.15
+      '@volar/language-core': 2.4.16
       '@vue/compiler-dom': 3.5.17
       '@vue/compiler-vue2': 2.7.16
       '@vue/shared': 3.5.17
@@ -2100,7 +2100,7 @@ snapshots:
     dependencies:
       '@microsoft/api-extractor': 7.52.8(@types/node@24.0.8)
       '@rollup/pluginutils': 5.2.0(rollup@4.44.1)
-      '@volar/typescript': 2.4.15
+      '@volar/typescript': 2.4.16
       '@vue/language-core': 2.2.0(typescript@5.8.3)
       compare-versions: 6.1.1
       debug: 4.4.1
