@@ -2,6 +2,7 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 
 // root が examples なので examples/dist にビルドされる
+// mjs なのは古い Node.js での import のため
 
 export default defineConfig({
   root: resolve(__dirname),
