@@ -36,21 +36,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statsDiv = document.querySelector('#stats-report') as HTMLElement
     const statsReportJsonDiv = document.querySelector('#stats-report-json')
     if (statsDiv && statsReportJsonDiv) {
-      let statsHtml = ''
       const statsReportJson: Record<string, unknown>[] = []
+      // XSS対策: innerHTMLは使わない
+      statsDiv.textContent = ''
       for (const report of statsReport.values()) {
-        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
+        const h3 = document.createElement('h3')
+        h3.textContent = `Type: ${report.type}`
+        statsDiv.appendChild(h3)
+
+        const ul = document.createElement('ul')
         const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
         for (const [key, value] of Object.entries(report)) {
           if (key !== 'type' && key !== 'id') {
-            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
+            const li = document.createElement('li')
+            const strong = document.createElement('strong')
+            strong.textContent = `${key}:`
+            li.appendChild(strong)
+            li.appendChild(document.createTextNode(` ${value}`))
+            ul.appendChild(li)
             reportJson[key] = value
           }
         }
-        statsHtml += '</ul>'
+        statsDiv.appendChild(ul)
         statsReportJson.push(reportJson)
       }
-      statsDiv.innerHTML = statsHtml
       // データ属性としても保存（オプション）
       statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
     }
@@ -150,13 +159,20 @@ class SoraClient {
       //         "type": "signaling_notify_metadata_ext"
       //     }
       // }
-      pushResultDiv.innerHTML = `
-        <p>Action: ${event.data.action}</p> 
-        <p>Connection ID: ${event.data.connection_id}</p>
-        <p>Key: ${event.data.key}</p>
-        <p>Value: ${event.data.value}</p>
-        <p>Type: ${event.data.type}</p>
-      `
+      // XSS対策: innerHTMLではなくtextContentとDOM操作を使用
+      pushResultDiv.textContent = ''
+
+      const createParagraph = (text: string) => {
+        const p = document.createElement('p')
+        p.textContent = text
+        return p
+      }
+
+      pushResultDiv.appendChild(createParagraph(`Action: ${event.data.action}`))
+      pushResultDiv.appendChild(createParagraph(`Connection ID: ${event.data.connection_id}`))
+      pushResultDiv.appendChild(createParagraph(`Key: ${event.data.key}`))
+      pushResultDiv.appendChild(createParagraph(`Value: ${event.data.value}`))
+      pushResultDiv.appendChild(createParagraph(`Type: ${event.data.type}`))
     }
   }
 
@@ -231,16 +247,46 @@ class SoraClient {
           const reductionNum = Number.parseFloat(reduction)
           const worthCompressing = reductionNum > 10 // 10%以上削減できれば圧縮の価値あり
 
-          sizeInfoDiv.innerHTML = `
-            <strong>Message Size Analysis:</strong><br>
-            Original: ${originalSize} bytes<br>
-            Compressed: ${compressedSize} bytes (${compressionInfo})<br>
-            Reduction: ${reduction}%<br>
-            <strong>Recommendation:</strong> ${worthCompressing ? 'Compression beneficial' : 'Compression overhead may exceed benefit'}<br>
-            <br>
-            <strong>Actual RPC Message:</strong><br>
-            <pre style="font-size: 12px; overflow: auto;">${JSON.stringify(actualRpcMessage, null, 2)}</pre>
-          `
+          // XSS対策: innerHTMLではなくtextContentとDOM操作を使用
+          sizeInfoDiv.textContent = ''
+
+          const title = document.createElement('strong')
+          title.textContent = 'Message Size Analysis:'
+          sizeInfoDiv.appendChild(title)
+          sizeInfoDiv.appendChild(document.createElement('br'))
+
+          sizeInfoDiv.appendChild(document.createTextNode(`Original: ${originalSize} bytes`))
+          sizeInfoDiv.appendChild(document.createElement('br'))
+
+          sizeInfoDiv.appendChild(
+            document.createTextNode(`Compressed: ${compressedSize} bytes (${compressionInfo})`),
+          )
+          sizeInfoDiv.appendChild(document.createElement('br'))
+
+          sizeInfoDiv.appendChild(document.createTextNode(`Reduction: ${reduction}%`))
+          sizeInfoDiv.appendChild(document.createElement('br'))
+
+          const recTitle = document.createElement('strong')
+          recTitle.textContent = 'Recommendation:'
+          sizeInfoDiv.appendChild(recTitle)
+          sizeInfoDiv.appendChild(
+            document.createTextNode(
+              ` ${worthCompressing ? 'Compression beneficial' : 'Compression overhead may exceed benefit'}`,
+            ),
+          )
+          sizeInfoDiv.appendChild(document.createElement('br'))
+          sizeInfoDiv.appendChild(document.createElement('br'))
+
+          const msgTitle = document.createElement('strong')
+          msgTitle.textContent = 'Actual RPC Message:'
+          sizeInfoDiv.appendChild(msgTitle)
+          sizeInfoDiv.appendChild(document.createElement('br'))
+
+          const pre = document.createElement('pre')
+          pre.style.fontSize = '12px'
+          pre.style.overflow = 'auto'
+          pre.textContent = JSON.stringify(actualRpcMessage, null, 2)
+          sizeInfoDiv.appendChild(pre)
         }
 
         const rpcResultDiv = document.querySelector('#rpc-result')
