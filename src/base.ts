@@ -2549,7 +2549,7 @@ export default class ConnectionBase {
    * @param response - JSON-RPC レスポンス
    */
   private handleRPCResponse(response: JSONRPCResponse): void {
-    if (!response.id) {
+    if (response.id === undefined) {
       console.warn('Received RPC response without id:', response)
       return
     }
