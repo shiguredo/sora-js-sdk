@@ -1,33 +1,5 @@
 import { expect, test } from 'vitest'
-import { checkVersionSupport, isVersionGreaterThanOrEqual } from '../e2e-tests/tests/helper'
-
-test('isVersionGreaterThanOrEqual: メジャーバージョンが新しい場合はtrueを返す', () => {
-  expect(isVersionGreaterThanOrEqual('2025.1.0', '2024.1.0')).toBe(true)
-})
-
-test('isVersionGreaterThanOrEqual: メジャーバージョンが古い場合はfalseを返す', () => {
-  expect(isVersionGreaterThanOrEqual('2024.1.0', '2025.1.0')).toBe(false)
-})
-
-test('isVersionGreaterThanOrEqual: メジャーバージョンが同じでマイナーバージョンが新しい場合はtrueを返す', () => {
-  expect(isVersionGreaterThanOrEqual('2025.2.0', '2025.1.0')).toBe(true)
-})
-
-test('isVersionGreaterThanOrEqual: メジャーバージョンが同じでマイナーバージョンが古い場合はfalseを返す', () => {
-  expect(isVersionGreaterThanOrEqual('2025.1.0', '2025.2.0')).toBe(false)
-})
-
-test('isVersionGreaterThanOrEqual: 完全に同じバージョンの場合はtrueを返す', () => {
-  expect(isVersionGreaterThanOrEqual('2025.2.0', '2025.2.0')).toBe(true)
-})
-
-test('isVersionGreaterThanOrEqual: パッチバージョンが新しい場合はtrueを返す', () => {
-  expect(isVersionGreaterThanOrEqual('2025.2.1', '2025.2.0')).toBe(true)
-})
-
-test('isVersionGreaterThanOrEqual: プレリリースバージョンを正しく処理する', () => {
-  expect(isVersionGreaterThanOrEqual('2025.2.0-canary.1', '2025.2.0')).toBe(true)
-})
+import { checkVersionSupport } from '../e2e-tests/tests/helper'
 
 test('checkVersionSupport: バージョンがnullの場合はサポートされていないと判定する', () => {
   const result = checkVersionSupport(null, {

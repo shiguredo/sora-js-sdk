@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
-import { isVersionGreaterThanOrEqual } from './helper'
+import { checkSoraVersion } from './helper'
 
 // sora-js-sdk のバージョンが 2024.2.0 以降の場合のみ実行したい
 test('messaging pages', async ({ browser }) => {
@@ -12,17 +12,17 @@ test('messaging pages', async ({ browser }) => {
   await page1.goto('http://localhost:9000/messaging/')
   await page2.goto('http://localhost:9000/messaging/')
 
-  // sora js sdk のバージョンを取得する
-  await page1.waitForSelector('#sora-js-sdk-version')
-  const page1SoraJsSdkVersion = await page1.$eval('#sora-js-sdk-version', (el) => el.textContent)
-  if (page1SoraJsSdkVersion === null) {
-    throw new Error('page1SoraJsSdkVersion is null')
+  // sora js sdk のバージョンをチェック
+  const versionCheck = await checkSoraVersion(page1, {
+    majorVersion: 2024,
+    minorVersion: 2,
+    featureName: 'Messaging',
+  })
+  
+  if (!versionCheck.isSupported) {
+    test.skip(true, versionCheck.skipReason || 'Version not supported')
+    return
   }
-  // sora-js-sdk のバージョンが 2024.2.0 以上であるか確認して、2024.2.0 未満の場合はテストをスキップする
-  test.skip(
-    !isVersionGreaterThanOrEqual(page1SoraJsSdkVersion, '2024.2.0'),
-    'sora-js-sdk のバージョンが 2024.2.0 以上である必要があります',
-  )
 
   // チャンネル名を uuid 文字列にする
   const channelName = randomUUID()
