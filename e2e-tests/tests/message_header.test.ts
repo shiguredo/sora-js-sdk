@@ -3,9 +3,11 @@ import { expect, test } from '@playwright/test'
 import { checkSoraVersion } from './helper'
 
 test('messaging pages with header', async ({ browser }) => {
-  // 新しいページを2つ作成
-  const page1 = await browser.newPage()
-  const page2 = await browser.newPage()
+  // 2つの独立したブラウザコンテキストを作成
+  const context1 = await browser.newContext()
+  const context2 = await browser.newContext()
+  const page1 = await context1.newPage()
+  const page2 = await context2.newPage()
 
   // それぞれのページに対して操作を行う
   await page1.goto('http://localhost:9000/messaging/')
@@ -185,4 +187,6 @@ test('messaging pages with header', async ({ browser }) => {
 
   await page1.close()
   await page2.close()
+  await context1.close()
+  await context2.close()
 })

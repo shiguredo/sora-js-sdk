@@ -2,9 +2,11 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test('sendonly/recvonly pages', async ({ browser }) => {
-  // 新しいページを2つ作成
-  const sendonly = await browser.newPage()
-  const recvonly = await browser.newPage()
+  // 新しいコンテキストとページを2つ作成
+  const context1 = await browser.newContext()
+  const context2 = await browser.newContext()
+  const sendonly = await context1.newPage()
+  const recvonly = await context2.newPage()
 
   // それぞれのページに対して操作を行う
   await sendonly.goto('http://localhost:9000/sendonly/')
@@ -129,4 +131,6 @@ test('sendonly/recvonly pages', async ({ browser }) => {
 
   await sendonly.close()
   await recvonly.close()
+  await context1.close()
+  await context2.close()
 })

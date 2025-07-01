@@ -91,6 +91,12 @@ test.describe('RPC test', () => {
       )
       expect(hasRpcDataChannel2).toBe(true)
 
+      // page2のpush-resultをクリアする
+      await page2.evaluate(() => {
+        const pushResult = document.querySelector('#push-result')
+        if (pushResult) pushResult.innerHTML = ''
+      })
+      
       // page2でpush通知の受信を監視
       const pushPromise = page2.waitForSelector('#push-result p', { timeout: 10000 })
 
@@ -131,6 +137,9 @@ test.describe('RPC test', () => {
       expect(pushContent?.key).toBe('abc')
       expect(pushContent?.value).toBe('test-value-from-page1')
       expect(pushContent?.type).toBe('signaling_notify_metadata_ext')
+      
+      // RPCメッセージが完全に処理されるまで待機
+      await page1.waitForTimeout(500)
 
       // 逆方向のテスト: page2からpage1へ
       // push-resultをクリアする

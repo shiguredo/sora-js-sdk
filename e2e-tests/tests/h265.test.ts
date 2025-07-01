@@ -14,8 +14,10 @@ test('H265', async ({ browser }) => {
 
   console.log(`${browser.browserType().name()}: ${browser.version()}`)
 
-  const sendrecv1 = await browser.newPage()
-  const sendrecv2 = await browser.newPage()
+  const context1 = await browser.newContext()
+  const context2 = await browser.newContext()
+  const sendrecv1 = await context1.newPage()
+  const sendrecv2 = await context2.newPage()
 
   await sendrecv1.goto('http://localhost:9000/h265/')
   await sendrecv2.goto('http://localhost:9000/h265/')
@@ -132,4 +134,6 @@ test('H265', async ({ browser }) => {
 
   await sendrecv1.close()
   await sendrecv2.close()
+  await context1.close()
+  await context2.close()
 })

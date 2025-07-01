@@ -2,8 +2,10 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test('simulcast sendonly/recvonly pages', async ({ browser }) => {
-  const sendonly = await browser.newPage()
-  const recvonly = await browser.newPage()
+  const context1 = await browser.newContext()
+  const context2 = await browser.newContext()
+  const sendonly = await context1.newPage()
+  const recvonly = await context2.newPage()
 
   await sendonly.goto('http://localhost:9000/simulcast_sendonly/')
   await recvonly.goto('http://localhost:9000/simulcast_recvonly/')
@@ -107,4 +109,6 @@ test('simulcast sendonly/recvonly pages', async ({ browser }) => {
 
   await sendonly.close()
   await recvonly.close()
+  await context1.close()
+  await context2.close()
 })
