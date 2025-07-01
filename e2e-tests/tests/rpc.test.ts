@@ -1,7 +1,46 @@
 import { expect, test } from '@playwright/test'
 
+/**
+ * RPC機能のE2Eテスト
+ *
+ * 注意: このテストはSora JS SDK v2025.2.0-canary.0以降でのみ動作します。
+ * RPC機能はこのバージョンで初めて導入されました。
+ */
 test.describe('RPC test', () => {
   test('2つのページ間でRPCのpush通知が送信される', async ({ browser }) => {
+    // 最初のページでバージョンチェック
+    const versionCheckPage = await browser.newPage()
+    await versionCheckPage.goto('http://localhost:9000/rpc/')
+
+    // Sora.version()を実行してバージョンを取得
+    const version = await versionCheckPage.evaluate(() => {
+      // @ts-ignore
+      return window.Sora ? window.Sora.version() : null
+    })
+
+    await versionCheckPage.close()
+
+    if (!version) {
+      // バージョンが取得できない場合はスキップ
+      test.skip(true, 'Sora JS SDK version not found')
+      return
+    }
+
+    // バージョンをパース（例: "2025.2.0-canary.0" -> [2025, 2, 0]）
+    const versionMatch = version.match(/^(\d+)\.(\d+)\.(\d+)/)
+    if (!versionMatch) {
+      test.skip(true, `Cannot parse Sora JS SDK version: ${version}`)
+      return
+    }
+
+    const majorVersion = Number.parseInt(versionMatch[1], 10)
+    const minorVersion = Number.parseInt(versionMatch[2], 10)
+
+    // 2025.2以降でない場合はスキップ
+    if (majorVersion < 2025 || (majorVersion === 2025 && minorVersion < 2)) {
+      test.skip(true, `Sora JS SDK version ${version} is older than 2025.2 (RPC support required)`)
+      return
+    }
     // 2つの独立したブラウザコンテキストを作成
     // 各コンテキストは独立したCookie、localStorage等を持つため、
     // 完全に独立した2人のユーザーをシミュレートできる
