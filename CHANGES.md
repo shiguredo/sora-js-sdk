@@ -16,11 +16,12 @@
 
 ## develop
 
-- [ADD] RPC 機能を追加する
-  - `rpc()` メソッドで JSON-RPC 2.0 形式で Sora の API を呼び出すことができる
+- [ADD] JSON-RPC 2.0 形式でデータチャネル経由で Sora の API を呼び出すことができる RPC 機能を追加する
+  - `rpc()` メソッドを追加
+  - `timeout` オプションでタイムアウト時間（ミリ秒）を指定できる
+  - `notification: true` オプションでレスポンスを待たない通知型リクエストができる
   - 並列実行をサポート
-  - `timeout` オプションでタイムアウト時間（ミリ秒）を指定可能
-  - `notification: true` オプションでレスポンスを待たない通知型リクエストが可能
+  - この機能は 2025 年 12 月リリース予定の Sora 2025.2.0 以降で利用できるようになる予定です
   - @voluntas
 - [ADD] `DATA_CHANNEL_LABEL_RPC` 定数を追加する
   - @voluntas
