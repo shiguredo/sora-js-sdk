@@ -6,13 +6,15 @@ import Sora, {
   type SoraConnection,
   type VideoCodecType,
 } from 'sora-js-sdk'
-import { getChannelId, getVideoCodecType } from '../src/misc'
+import { getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
   const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
   const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+
+  setSoraJsSdkVersion()
 
   let client: SoraClient
 
