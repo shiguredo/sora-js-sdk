@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { checkSoraVersion } from './helper'
 
@@ -33,6 +34,12 @@ test.describe('RPC test', () => {
         test.skip(true, versionCheck.skipReason || 'Version not supported')
         return
       }
+
+      const channelName = randomUUID()
+
+      // チャンネル名を設定
+      await page1.fill('#channel-name', channelName)
+      await page2.fill('#channel-name', channelName)
 
       // 両方のページで接続を確立
       await page1.click('#connect')
