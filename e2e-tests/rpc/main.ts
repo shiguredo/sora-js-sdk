@@ -44,19 +44,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return
     }
 
-    const rpcResultDiv = document.querySelector('#rpc-result')
-
     try {
       const result = await client.sendRpc(rpcInput.value)
       console.log('RPC sent successfully', result)
-      if (rpcResultDiv) {
-        rpcResultDiv.textContent = 'RPC sent successfully'
-      }
     } catch (error) {
       console.error('RPC error:', error)
-      if (rpcResultDiv) {
-        rpcResultDiv.textContent = `Error: ${error}`
-      }
     }
   })
 
@@ -191,19 +183,12 @@ class SoraClient {
 
   private onpush(event: SignalingPushMessage): void {
     // https://sora-doc.shiguredo.jp/EXPERIMENTAL_API_SIGNALING_NOTIFY_METADATA_EXT#387c9c
-    const pushResultDiv = document.querySelector('#push-result')
+    const pushResultDiv = document.querySelector('#push-result') as HTMLElement
     if (pushResultDiv) {
-      // {
-      //     "type": "push",
-      //     "data": {
-      //         "action": "PutMetadataItem",
-      //         "connection_id": "0FQE5EA5YN3FS13P01QZ1JG8R0",
-      //         "key": "abc",
-      //         "value": "efg",
-      //         "type": "signaling_notify_metadata_ext"
-      //     }
-      // }
-      // XSS対策: innerHTMLではなくtextContentとDOM操作を使用
+      // JSONデータをdata属性に保存
+      pushResultDiv.dataset.pushData = JSON.stringify(event.data)
+
+      // 表示用のHTMLも更新
       pushResultDiv.textContent = ''
 
       const createParagraph = (text: string) => {
