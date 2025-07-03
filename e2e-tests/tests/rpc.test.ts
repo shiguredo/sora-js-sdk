@@ -64,14 +64,14 @@ test.describe('RPC test', () => {
           if (statsJson) {
             const stats = JSON.parse(statsJson)
             return stats.some(
-              (report: any) =>
+              (report: { type: string; label?: string; state?: string }) =>
                 report.type === 'data-channel' && report.label === 'rpc' && report.state === 'open',
             )
           }
         }
         return false
       },
-      { timeout: 10000 },
+      { timeout: 5000 },
     )
 
     await page2.waitForFunction(
@@ -85,14 +85,14 @@ test.describe('RPC test', () => {
           if (statsJson) {
             const stats = JSON.parse(statsJson)
             return stats.some(
-              (report: any) =>
+              (report: { type: string; label?: string; state?: string }) =>
                 report.type === 'data-channel' && report.label === 'rpc' && report.state === 'open',
             )
           }
         }
         return false
       },
-      { timeout: 10000 },
+      { timeout: 5000 },
     )
 
     // page1 で RPC を実行
