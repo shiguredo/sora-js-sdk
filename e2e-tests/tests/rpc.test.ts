@@ -2,27 +2,27 @@ import { expect, test } from '@playwright/test'
 import { checkSoraVersion } from './helper'
 
 /**
- * RPC機能のE2Eテスト
+ * RPC 機能の E2E テスト
  *
- * 注意: このテストはSora JS SDK v2025.2.0-canary.0以降でのみ動作します。
- * RPC機能はこのバージョンで初めて導入されました。
+ * 注意: このテストは Sora JS SDK v2025.2.0-canary.0 以降でのみ動作します。
+ * RPC 機能はこのバージョンで初めて導入されました。
  */
 test.describe('RPC test', () => {
-  test('2つのページ間でRPCのpush通知が送信される', async ({ browser }) => {
-    // 2つの独立したブラウザコンテキストを作成
-    // 各コンテキストは独立したCookie、localStorage等を持つため、
-    // 完全に独立した2人のユーザーをシミュレートできる
+  test('2 つのページ間で RPC の push 通知が送信される', async ({ browser }) => {
+    // 2 つの独立したブラウザコンテキストを作成
+    // 各コンテキストは独立した Cookie、localStorage 等を持つため、
+    // 完全に独立した 2 人のユーザーをシミュレートできる
     const context1 = await browser.newContext()
     const context2 = await browser.newContext()
     const page1 = await context1.newPage()
     const page2 = await context2.newPage()
 
     try {
-      // 両方のページでRPCテストページにアクセス
+      // 両方のページで RPC テストページにアクセス
       await page1.goto('http://localhost:9000/rpc/')
       await page2.goto('http://localhost:9000/rpc/')
 
-      // page1でバージョンチェック
+      // page1 でバージョンチェック
       const versionCheck = await checkSoraVersion(page1, {
         majorVersion: 2025,
         minorVersion: 2,
@@ -38,18 +38,15 @@ test.describe('RPC test', () => {
       await page1.click('#connect')
       await page2.click('#connect')
 
-      // 接続が確立されるまで待機（connection-idが表示されるまで）
-      await page1.waitForSelector('#connection-id:not(:empty)', { timeout: 10000 })
-      await page2.waitForSelector('#connection-id:not(:empty)', { timeout: 10000 })
+      // 接続が確立されるまで待機（connection-id が表示されるまで）
+      await page1.waitForSelector('#connection-id:not(:empty)', { timeout: 5000 })
+      await page2.waitForSelector('#connection-id:not(:empty)', { timeout: 5000 })
 
       // リモートビデオが表示されるまで待機（お互いのビデオが見えていることを確認）
-      await page1.waitForSelector('#remote-videos video', { timeout: 10000 })
-      await page2.waitForSelector('#remote-videos video', { timeout: 10000 })
+      await page1.waitForSelector('#remote-videos video', { timeout: 5000 })
+      await page2.waitForSelector('#remote-videos video', { timeout: 5000 })
 
-      // 接続が安定するまで少し待機
-      await page1.waitForTimeout(1000)
-
-      // RPCデータチャネルが確立されるまで待機
+      // RPC データチャネルが確立されるまで待機
       await page1.waitForFunction(
         async () => {
           const getStatsButton = document.querySelector('#get-stats') as HTMLButtonElement
@@ -96,11 +93,11 @@ test.describe('RPC test', () => {
         { timeout: 10000 },
       )
 
-      // page1でRPCを実行
+      // page1 で RPC を実行
       await page1.fill('#rpc-input', 'test-value-from-page1')
       await page1.click('#rpc-button')
 
-      // page1でRPCが正常に送信されたことを確認
+      // page1 で RPC が正常に送信されたことを確認
       await page1.waitForFunction(
         () => {
           const result = document.querySelector('#rpc-result')
@@ -109,7 +106,7 @@ test.describe('RPC test', () => {
         { timeout: 5000 },
       )
 
-      // page1自身でpush通知を受信し、内容を取得
+      // page1 自身で push 通知を受信し、内容を取得
       const pushContent1 = await page1
         .waitForFunction(
           () => {
@@ -131,7 +128,7 @@ test.describe('RPC test', () => {
             }
             return null
           },
-          { timeout: 10000 },
+          { timeout: 5000 },
         )
         .then((handle) => handle.jsonValue())
 
@@ -141,7 +138,7 @@ test.describe('RPC test', () => {
       expect(pushContent1?.value).toBe('test-value-from-page1')
       expect(pushContent1?.type).toBe('signaling_notify_metadata_ext')
 
-      // page2でもpush通知を受信し、内容を検証
+      // page2 でも push 通知を受信し、内容を検証
       const pushContent2 = await page2
         .waitForFunction(
           () => {
@@ -163,7 +160,7 @@ test.describe('RPC test', () => {
             }
             return null
           },
-          { timeout: 10000 },
+          { timeout: 5000 },
         )
         .then((handle) => handle.jsonValue())
 
@@ -173,8 +170,7 @@ test.describe('RPC test', () => {
       expect(pushContent2?.value).toBe('test-value-from-page1')
       expect(pushContent2?.type).toBe('signaling_notify_metadata_ext')
 
-      // 逆方向のテスト: page2からpage1へ
-      // 両方のページのpush-resultをクリアして、クリアされたことを確認
+      // 両方のページの push-result をクリアして、クリアされたことを確認
       await page1.evaluate(() => {
         const pushResult = document.querySelector('#push-result')
         if (pushResult) pushResult.innerHTML = ''
@@ -183,6 +179,8 @@ test.describe('RPC test', () => {
         const pushResult = document.querySelector('#push-result')
         if (pushResult) pushResult.innerHTML = ''
       })
+
+      // 逆方向のテスト: page2 から page1 へ
 
       // page2 で RPC を実行
       await page2.fill('#rpc-input', 'test-value-from-page2')
@@ -196,7 +194,7 @@ test.describe('RPC test', () => {
         { timeout: 5000 },
       )
 
-      // page2自身でもpush通知を受信し、内容を検証
+      // page2 自身でも push 通知を受信し、内容を検証
       const pushContentPage2 = await page2
         .waitForFunction(
           () => {
@@ -260,10 +258,10 @@ test.describe('RPC test', () => {
       expect(pushContentPage1?.value).toBe('test-value-from-page2')
       expect(pushContentPage1?.type).toBe('signaling_notify_metadata_ext')
 
-      // RPC送信後に統計情報を再取得して、メッセージが送受信されたことを確認
-      await page1.waitForTimeout(1000) // RPCが完了するまで待機
+      // page1 でも統計情報を再取得
       await page1.click('#get-stats')
-      await page1.waitForTimeout(500) // 統計情報が更新されるまで少し待機
+      // 統計情報が更新されるまで少し待機
+      await page1.waitForTimeout(500)
 
       const statsAfterRpc1 = await page1.evaluate(() => {
         const statsDiv = document.querySelector('#stats-report') as HTMLElement
@@ -275,14 +273,14 @@ test.describe('RPC test', () => {
         (report) => report.type === 'data-channel' && report.label === 'rpc',
       )
 
-      // page1では両方向でメッセージが送受信されているはず
+      // page1 では両方向でメッセージが送受信されているはず
       expect(rpcDataChannel1).toBeTruthy()
       expect(Number(rpcDataChannel1?.messagesSent || 0)).toBeGreaterThan(0)
       expect(Number(rpcDataChannel1?.bytesSent || 0)).toBeGreaterThan(0)
-      // RPCがnotificationモードの場合、レスポンスがないのでmessagesReceivedは0かもしれない
 
-      // page2でも統計情報を再取得
+      // page2 でも統計情報を再取得
       await page2.click('#get-stats')
+      // 統計情報が更新されるまで少し待機
       await page2.waitForTimeout(500)
 
       const statsAfterRpc2 = await page2.evaluate(() => {
@@ -295,11 +293,10 @@ test.describe('RPC test', () => {
         (report) => report.type === 'data-channel' && report.label === 'rpc',
       )
 
-      // page2でも両方向でメッセージが送受信されているはず
+      // page2 でも両方向でメッセージが送受信されているはず
       expect(rpcDataChannel2).toBeTruthy()
       expect(Number(rpcDataChannel2?.messagesSent || 0)).toBeGreaterThan(0)
       expect(Number(rpcDataChannel2?.bytesSent || 0)).toBeGreaterThan(0)
-      // page2はpage1からのRPCメッセージを受信していないはず（push通知は別の仕組み）
     } finally {
       // 両方のページで切断
       await page1.click('#disconnect')
