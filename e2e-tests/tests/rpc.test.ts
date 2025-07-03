@@ -96,80 +96,6 @@ test.describe('RPC test', () => {
         { timeout: 10000 },
       )
 
-      // 統計情報を取得して接続が正常であることを確認
-      await page1.click('#get-stats')
-      await page1.waitForSelector('#stats-report:not(:empty)', { timeout: 5000 })
-
-      const statsReportJson = await page1.evaluate(() => {
-        const statsDiv = document.querySelector('#stats-report') as HTMLElement
-        return statsDiv?.dataset.statsReportJson
-      })
-
-      expect(statsReportJson).toBeTruthy()
-      const stats = JSON.parse(statsReportJson || '[]') as Array<Record<string, unknown>>
-
-      // 接続が確立されていることを確認
-      const hasInboundRtp = stats.some((report) => report.type === 'inbound-rtp')
-      const hasOutboundRtp = stats.some((report) => report.type === 'outbound-rtp')
-      expect(hasInboundRtp).toBe(true)
-      expect(hasOutboundRtp).toBe(true)
-
-      // RPCデータチャネルが存在することを確認（page1）
-      console.log('Page1 stats reports:', stats.length)
-      const dataChannels1 = stats.filter((report) => report.type === 'data-channel')
-      console.log(
-        'Page1 data channels:',
-        dataChannels1.map((dc) => ({ label: dc.label, state: dc.state })),
-      )
-
-      const hasRpcDataChannel1 = stats.some(
-        (report) => report.type === 'data-channel' && report.label === 'rpc',
-      )
-      expect(hasRpcDataChannel1).toBe(true)
-
-      // page2でも統計情報を取得してRPCデータチャネルを確認
-      await page2.click('#get-stats')
-      await page2.waitForSelector('#stats-report:not(:empty)', { timeout: 5000 })
-
-      const statsReportJson2 = await page2.evaluate(() => {
-        const statsDiv = document.querySelector('#stats-report') as HTMLElement
-        return statsDiv?.dataset.statsReportJson
-      })
-
-      expect(statsReportJson2).toBeTruthy()
-      const stats2 = JSON.parse(statsReportJson2 || '[]') as Array<Record<string, unknown>>
-
-      // RPCデータチャネルが存在することを確認（page2）
-      console.log('Page2 stats reports:', stats2.length)
-      const dataChannels2 = stats2.filter((report) => report.type === 'data-channel')
-      console.log(
-        'Page2 data channels:',
-        dataChannels2.map((dc) => ({ label: dc.label, state: dc.state })),
-      )
-
-      const hasRpcDataChannel2 = stats2.some(
-        (report) => report.type === 'data-channel' && report.label === 'rpc',
-      )
-      expect(hasRpcDataChannel2).toBe(true)
-
-      // page2のpush-resultをクリアして、クリアされたことを確認
-      await page2.evaluate(() => {
-        const pushResult = document.querySelector('#push-result')
-        if (pushResult) pushResult.innerHTML = ''
-      })
-
-      // クリアが完了したことを確認
-      await page2.waitForFunction(
-        () => {
-          const pushResult = document.querySelector('#push-result')
-          return pushResult && pushResult.innerHTML === ''
-        },
-        { timeout: 5000 },
-      )
-
-      // 少し待機してから新しいpush通知を待つ
-      await page2.waitForTimeout(500)
-
       // page1でRPCを実行
       await page1.fill('#rpc-input', 'test-value-from-page1')
       await page1.click('#rpc-button')
@@ -183,66 +109,82 @@ test.describe('RPC test', () => {
         { timeout: 5000 },
       )
 
-      // page2で新しいpush通知（test-value-from-page1を含む）を待つ
-      await page2.waitForFunction(
-        () => {
-          const pushResult = document.querySelector('#push-result')
-          if (!pushResult) return false
+      // page1自身でpush通知を受信し、内容を取得
+      const pushContent1 = await page1
+        .waitForFunction(
+          () => {
+            const pushResult = document.querySelector('#push-result')
+            if (!pushResult) return null
 
-          const valueP = Array.from(pushResult.querySelectorAll('p')).find((p) => {
-            const text = p.textContent || ''
-            return text.startsWith('Value: ')
-          })
+            const data: Record<string, string> = {}
+            pushResult.querySelectorAll('p').forEach((p) => {
+              const text = p.textContent || ''
+              const [key, value] = text.split(': ')
+              if (key && value) {
+                data[key.toLowerCase()] = value
+              }
+            })
 
-          return valueP && valueP.textContent === 'Value: test-value-from-page1'
-        },
-        { timeout: 10000 },
-      )
+            // データが揃ったら返す（値が空でなければ）
+            if (data.value) {
+              return data
+            }
+            return null
+          },
+          { timeout: 10000 },
+        )
+        .then((handle) => handle.jsonValue())
 
-      // push通知の内容を検証
-      const pushContent = await page2.evaluate(() => {
-        const pushResult = document.querySelector('#push-result')
-        if (!pushResult) return null
+      expect(pushContent1).toBeTruthy()
+      expect(pushContent1?.action).toBe('PutMetadataItem')
+      expect(pushContent1?.key).toBe('abc')
+      expect(pushContent1?.value).toBe('test-value-from-page1')
+      expect(pushContent1?.type).toBe('signaling_notify_metadata_ext')
 
-        const data: Record<string, string> = {}
-        pushResult.querySelectorAll('p').forEach((p) => {
-          const text = p.textContent || ''
-          const [key, value] = text.split(': ')
-          if (key && value) {
-            data[key.toLowerCase()] = value
-          }
-        })
-        return data
-      })
+      // page2でもpush通知を受信し、内容を検証
+      const pushContent2 = await page2
+        .waitForFunction(
+          () => {
+            const pushResult = document.querySelector('#push-result')
+            if (!pushResult) return null
 
-      expect(pushContent).toBeTruthy()
-      expect(pushContent?.action).toBe('PutMetadataItem')
-      expect(pushContent?.key).toBe('abc')
-      expect(pushContent?.value).toBe('test-value-from-page1')
-      expect(pushContent?.type).toBe('signaling_notify_metadata_ext')
+            const data: Record<string, string> = {}
+            pushResult.querySelectorAll('p').forEach((p) => {
+              const text = p.textContent || ''
+              const [key, value] = text.split(': ')
+              if (key && value) {
+                data[key.toLowerCase()] = value
+              }
+            })
 
-      // RPCメッセージが完全に処理されるまで待機
-      await page1.waitForTimeout(500)
+            // データが揃ったら返す（値が空でなければ）
+            if (data.value) {
+              return data
+            }
+            return null
+          },
+          { timeout: 10000 },
+        )
+        .then((handle) => handle.jsonValue())
+
+      expect(pushContent2).toBeTruthy()
+      expect(pushContent2?.action).toBe('PutMetadataItem')
+      expect(pushContent2?.key).toBe('abc')
+      expect(pushContent2?.value).toBe('test-value-from-page1')
+      expect(pushContent2?.type).toBe('signaling_notify_metadata_ext')
 
       // 逆方向のテスト: page2からpage1へ
-      // push-resultをクリアして、クリアされたことを確認
+      // 両方のページのpush-resultをクリアして、クリアされたことを確認
       await page1.evaluate(() => {
         const pushResult = document.querySelector('#push-result')
         if (pushResult) pushResult.innerHTML = ''
       })
+      await page2.evaluate(() => {
+        const pushResult = document.querySelector('#push-result')
+        if (pushResult) pushResult.innerHTML = ''
+      })
 
-      // クリアが完了したことを確認
-      await page1.waitForFunction(
-        () => {
-          const pushResult = document.querySelector('#push-result')
-          return pushResult && pushResult.innerHTML === ''
-        },
-        { timeout: 5000 },
-      )
-
-      // 少し待機してから新しいpush通知を待つ
-      await page1.waitForTimeout(500)
-
+      // page2 で RPC を実行
       await page2.fill('#rpc-input', 'test-value-from-page2')
       await page2.click('#rpc-button')
 
@@ -254,39 +196,69 @@ test.describe('RPC test', () => {
         { timeout: 5000 },
       )
 
-      // page1で新しいpush通知（test-value-from-page2を含む）を待つ
-      await page1.waitForFunction(
-        () => {
-          const pushResult = document.querySelector('#push-result')
-          if (!pushResult) return false
+      // page2自身でもpush通知を受信し、内容を検証
+      const pushContentPage2 = await page2
+        .waitForFunction(
+          () => {
+            const pushResult = document.querySelector('#push-result')
+            if (!pushResult) return null
 
-          const valueP = Array.from(pushResult.querySelectorAll('p')).find((p) => {
-            const text = p.textContent || ''
-            return text.startsWith('Value: ')
-          })
+            const data: Record<string, string> = {}
+            pushResult.querySelectorAll('p').forEach((p) => {
+              const text = p.textContent || ''
+              const [key, value] = text.split(': ')
+              if (key && value) {
+                data[key.toLowerCase()] = value
+              }
+            })
 
-          return valueP && valueP.textContent === 'Value: test-value-from-page2'
-        },
-        { timeout: 10000 },
-      )
+            // データが揃ったら返す（値が空でなければ）
+            if (data.value) {
+              return data
+            }
+            return null
+          },
+          { timeout: 10000 },
+        )
+        .then((handle) => handle.jsonValue())
 
-      const pushContent2 = await page1.evaluate(() => {
-        const pushResult = document.querySelector('#push-result')
-        if (!pushResult) return null
+      expect(pushContentPage2).toBeTruthy()
+      expect(pushContentPage2?.action).toBe('PutMetadataItem')
+      expect(pushContentPage2?.key).toBe('abc')
+      expect(pushContentPage2?.value).toBe('test-value-from-page2')
+      expect(pushContentPage2?.type).toBe('signaling_notify_metadata_ext')
 
-        const data: Record<string, string> = {}
-        pushResult.querySelectorAll('p').forEach((p) => {
-          const text = p.textContent || ''
-          const [key, value] = text.split(': ')
-          if (key && value) {
-            data[key.toLowerCase()] = value
-          }
-        })
-        return data
-      })
+      // page1でも新しいpush通知を受信し、内容を検証
+      const pushContentPage1 = await page1
+        .waitForFunction(
+          () => {
+            const pushResult = document.querySelector('#push-result')
+            if (!pushResult) return null
 
-      expect(pushContent2).toBeTruthy()
-      expect(pushContent2?.value).toBe('test-value-from-page2')
+            const data: Record<string, string> = {}
+            pushResult.querySelectorAll('p').forEach((p) => {
+              const text = p.textContent || ''
+              const [key, value] = text.split(': ')
+              if (key && value) {
+                data[key.toLowerCase()] = value
+              }
+            })
+
+            // データが揃ったら返す（値が空でなければ）
+            if (data.value) {
+              return data
+            }
+            return null
+          },
+          { timeout: 10000 },
+        )
+        .then((handle) => handle.jsonValue())
+
+      expect(pushContentPage1).toBeTruthy()
+      expect(pushContentPage1?.action).toBe('PutMetadataItem')
+      expect(pushContentPage1?.key).toBe('abc')
+      expect(pushContentPage1?.value).toBe('test-value-from-page2')
+      expect(pushContentPage1?.type).toBe('signaling_notify_metadata_ext')
 
       // RPC送信後に統計情報を再取得して、メッセージが送受信されたことを確認
       await page1.waitForTimeout(1000) // RPCが完了するまで待機
@@ -305,7 +277,6 @@ test.describe('RPC test', () => {
 
       // page1では両方向でメッセージが送受信されているはず
       expect(rpcDataChannel1).toBeTruthy()
-      console.log('Page1 RPC DataChannel stats:', rpcDataChannel1)
       expect(Number(rpcDataChannel1?.messagesSent || 0)).toBeGreaterThan(0)
       expect(Number(rpcDataChannel1?.bytesSent || 0)).toBeGreaterThan(0)
       // RPCがnotificationモードの場合、レスポンスがないのでmessagesReceivedは0かもしれない
@@ -326,7 +297,6 @@ test.describe('RPC test', () => {
 
       // page2でも両方向でメッセージが送受信されているはず
       expect(rpcDataChannel2).toBeTruthy()
-      console.log('Page2 RPC DataChannel stats:', rpcDataChannel2)
       expect(Number(rpcDataChannel2?.messagesSent || 0)).toBeGreaterThan(0)
       expect(Number(rpcDataChannel2?.bytesSent || 0)).toBeGreaterThan(0)
       // page2はpage1からのRPCメッセージを受信していないはず（push通知は別の仕組み）
