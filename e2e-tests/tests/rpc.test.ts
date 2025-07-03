@@ -21,7 +21,7 @@ test.describe('RPC test', () => {
       // 両方のページでRPCテストページにアクセス
       await page1.goto('http://localhost:9000/rpc/')
       await page2.goto('http://localhost:9000/rpc/')
-      
+
       // page1でバージョンチェック
       const versionCheck = await checkSoraVersion(page1, {
         majorVersion: 2025,
@@ -49,6 +49,53 @@ test.describe('RPC test', () => {
       // 接続が安定するまで少し待機
       await page1.waitForTimeout(1000)
 
+      // RPCデータチャネルが確立されるまで待機
+      await page1.waitForFunction(
+        async () => {
+          const getStatsButton = document.querySelector('#get-stats') as HTMLButtonElement
+          if (getStatsButton) {
+            getStatsButton.click()
+            await new Promise((resolve) => setTimeout(resolve, 100))
+            const statsDiv = document.querySelector('#stats-report') as HTMLElement
+            const statsJson = statsDiv?.dataset.statsReportJson
+            if (statsJson) {
+              const stats = JSON.parse(statsJson)
+              return stats.some(
+                (report: any) =>
+                  report.type === 'data-channel' &&
+                  report.label === 'rpc' &&
+                  report.state === 'open',
+              )
+            }
+          }
+          return false
+        },
+        { timeout: 10000 },
+      )
+
+      await page2.waitForFunction(
+        async () => {
+          const getStatsButton = document.querySelector('#get-stats') as HTMLButtonElement
+          if (getStatsButton) {
+            getStatsButton.click()
+            await new Promise((resolve) => setTimeout(resolve, 100))
+            const statsDiv = document.querySelector('#stats-report') as HTMLElement
+            const statsJson = statsDiv?.dataset.statsReportJson
+            if (statsJson) {
+              const stats = JSON.parse(statsJson)
+              return stats.some(
+                (report: any) =>
+                  report.type === 'data-channel' &&
+                  report.label === 'rpc' &&
+                  report.state === 'open',
+              )
+            }
+          }
+          return false
+        },
+        { timeout: 10000 },
+      )
+
       // 統計情報を取得して接続が正常であることを確認
       await page1.click('#get-stats')
       await page1.waitForSelector('#stats-report:not(:empty)', { timeout: 5000 })
@@ -68,6 +115,13 @@ test.describe('RPC test', () => {
       expect(hasOutboundRtp).toBe(true)
 
       // RPCデータチャネルが存在することを確認（page1）
+      console.log('Page1 stats reports:', stats.length)
+      const dataChannels1 = stats.filter((report) => report.type === 'data-channel')
+      console.log(
+        'Page1 data channels:',
+        dataChannels1.map((dc) => ({ label: dc.label, state: dc.state })),
+      )
+
       const hasRpcDataChannel1 = stats.some(
         (report) => report.type === 'data-channel' && report.label === 'rpc',
       )
@@ -86,17 +140,36 @@ test.describe('RPC test', () => {
       const stats2 = JSON.parse(statsReportJson2 || '[]') as Array<Record<string, unknown>>
 
       // RPCデータチャネルが存在することを確認（page2）
+      console.log('Page2 stats reports:', stats2.length)
+      const dataChannels2 = stats2.filter((report) => report.type === 'data-channel')
+      console.log(
+        'Page2 data channels:',
+        dataChannels2.map((dc) => ({ label: dc.label, state: dc.state })),
+      )
+
       const hasRpcDataChannel2 = stats2.some(
         (report) => report.type === 'data-channel' && report.label === 'rpc',
       )
       expect(hasRpcDataChannel2).toBe(true)
 
-      // page2のpush-resultをクリアする
+      // page2のpush-resultをクリアして、クリアされたことを確認
       await page2.evaluate(() => {
         const pushResult = document.querySelector('#push-result')
         if (pushResult) pushResult.innerHTML = ''
       })
-      
+
+      // クリアが完了したことを確認
+      await page2.waitForFunction(
+        () => {
+          const pushResult = document.querySelector('#push-result')
+          return pushResult && pushResult.innerHTML === ''
+        },
+        { timeout: 5000 },
+      )
+
+      // 少し待機してから新しいpush通知を待つ
+      await page2.waitForTimeout(500)
+
       // page2でpush通知の受信を監視
       const pushPromise = page2.waitForSelector('#push-result p', { timeout: 10000 })
 
@@ -137,17 +210,29 @@ test.describe('RPC test', () => {
       expect(pushContent?.key).toBe('abc')
       expect(pushContent?.value).toBe('test-value-from-page1')
       expect(pushContent?.type).toBe('signaling_notify_metadata_ext')
-      
+
       // RPCメッセージが完全に処理されるまで待機
       await page1.waitForTimeout(500)
 
       // 逆方向のテスト: page2からpage1へ
-      // push-resultをクリアする
+      // push-resultをクリアして、クリアされたことを確認
       await page1.evaluate(() => {
         const pushResult = document.querySelector('#push-result')
         if (pushResult) pushResult.innerHTML = ''
       })
-      
+
+      // クリアが完了したことを確認
+      await page1.waitForFunction(
+        () => {
+          const pushResult = document.querySelector('#push-result')
+          return pushResult && pushResult.innerHTML === ''
+        },
+        { timeout: 5000 },
+      )
+
+      // 少し待機してから新しいpush通知を待つ
+      await page1.waitForTimeout(500)
+
       const pushPromise2 = page1.waitForSelector('#push-result p', { timeout: 10000 })
 
       await page2.fill('#rpc-input', 'test-value-from-page2')

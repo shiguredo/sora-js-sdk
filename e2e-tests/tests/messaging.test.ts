@@ -20,7 +20,7 @@ test('messaging pages', async ({ browser }) => {
     minorVersion: 2,
     featureName: 'Messaging',
   })
-  
+
   if (!versionCheck.isSupported) {
     test.skip(true, versionCheck.skipReason || 'Version not supported')
     return

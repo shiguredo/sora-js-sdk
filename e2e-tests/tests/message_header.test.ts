@@ -19,7 +19,7 @@ test('messaging pages with header', async ({ browser }) => {
     minorVersion: 2,
     featureName: 'Messaging with header',
   })
-  
+
   if (!versionCheck.isSupported) {
     test.skip(true, versionCheck.skipReason || 'Version not supported')
     return

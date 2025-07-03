@@ -50,7 +50,7 @@ export async function checkSoraVersion(
 ): Promise<{ isSupported: boolean; skipReason?: string; version?: string }> {
   // sora-js-sdk-version要素が更新されるまで待つ
   await page.waitForSelector('#sora-js-sdk-version:not(:empty)', { timeout: 5000 })
-  
+
   // バージョンをDOM要素から取得
   const version = await page.evaluate(() => {
     const versionElement = document.querySelector('#sora-js-sdk-version')
