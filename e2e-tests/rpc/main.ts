@@ -179,7 +179,11 @@ class SoraClient {
   private rpc(): void {
     const rpcButton = document.querySelector('#rpc-button') as HTMLButtonElement
     if (rpcButton) {
-      rpcButton.onclick = async () => {
+      // 既存のイベントリスナーを削除してから新しいものを追加
+      const newButton = rpcButton.cloneNode(true) as HTMLButtonElement
+      rpcButton.parentNode?.replaceChild(newButton, rpcButton)
+
+      newButton.addEventListener('click', async () => {
         const rpcInput = document.querySelector<HTMLInputElement>('#rpc-input')
         if (!rpcInput) {
           console.error('RPC input element not found')
@@ -297,7 +301,7 @@ class SoraClient {
             rpcResultDiv.textContent = `Error: ${error}`
           }
         }
-      }
+      })
     }
   }
 
