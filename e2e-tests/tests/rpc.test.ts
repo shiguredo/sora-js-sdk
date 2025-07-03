@@ -170,9 +170,6 @@ test.describe('RPC test', () => {
       // 少し待機してから新しいpush通知を待つ
       await page2.waitForTimeout(500)
 
-      // page2でpush通知の受信を監視
-      const pushPromise = page2.waitForSelector('#push-result p', { timeout: 10000 })
-
       // page1でRPCを実行
       await page1.fill('#rpc-input', 'test-value-from-page1')
       await page1.click('#rpc-button')
@@ -186,8 +183,21 @@ test.describe('RPC test', () => {
         { timeout: 5000 },
       )
 
-      // page2でpush通知を受信したことを確認
-      await pushPromise
+      // page2で新しいpush通知（test-value-from-page1を含む）を待つ
+      await page2.waitForFunction(
+        () => {
+          const pushResult = document.querySelector('#push-result')
+          if (!pushResult) return false
+
+          const valueP = Array.from(pushResult.querySelectorAll('p')).find((p) => {
+            const text = p.textContent || ''
+            return text.startsWith('Value: ')
+          })
+
+          return valueP && valueP.textContent === 'Value: test-value-from-page1'
+        },
+        { timeout: 10000 },
+      )
 
       // push通知の内容を検証
       const pushContent = await page2.evaluate(() => {
@@ -233,8 +243,6 @@ test.describe('RPC test', () => {
       // 少し待機してから新しいpush通知を待つ
       await page1.waitForTimeout(500)
 
-      const pushPromise2 = page1.waitForSelector('#push-result p', { timeout: 10000 })
-
       await page2.fill('#rpc-input', 'test-value-from-page2')
       await page2.click('#rpc-button')
 
@@ -246,7 +254,21 @@ test.describe('RPC test', () => {
         { timeout: 5000 },
       )
 
-      await pushPromise2
+      // page1で新しいpush通知（test-value-from-page2を含む）を待つ
+      await page1.waitForFunction(
+        () => {
+          const pushResult = document.querySelector('#push-result')
+          if (!pushResult) return false
+
+          const valueP = Array.from(pushResult.querySelectorAll('p')).find((p) => {
+            const text = p.textContent || ''
+            return text.startsWith('Value: ')
+          })
+
+          return valueP && valueP.textContent === 'Value: test-value-from-page2'
+        },
+        { timeout: 10000 },
+      )
 
       const pushContent2 = await page1.evaluate(() => {
         const pushResult = document.querySelector('#push-result')
