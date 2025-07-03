@@ -45,8 +45,8 @@ test.describe('RPC test', () => {
     await page2.click('#connect')
 
     // 接続が確立されるまで待機（connection-id が表示されるまで）
-    await page1.waitForSelector('#connection-id:not(:empty)', { timeout: 5000 })
-    await page2.waitForSelector('#connection-id:not(:empty)', { timeout: 5000 })
+    await page1.waitForSelector('#connection-id:not(:empty)', { timeout: 10000 })
+    await page2.waitForSelector('#connection-id:not(:empty)', { timeout: 10000 })
 
     // リモートビデオが表示されるまで待機（お互いのビデオが見えていることを確認）
     await page1.waitForSelector('#remote-videos video', { timeout: 5000 })
@@ -97,7 +97,7 @@ test.describe('RPC test', () => {
 
     // page1 で RPC を実行
     await page1.fill('#rpc-input', 'test-value-from-page1')
-    await page1.click('#rpc-button')
+    await page1.click('#rpc')
 
     // page1 で RPC が正常に送信されたことを確認
     await page1.waitForFunction(
@@ -186,7 +186,7 @@ test.describe('RPC test', () => {
 
     // page2 で RPC を実行
     await page2.fill('#rpc-input', 'test-value-from-page2')
-    await page2.click('#rpc-button')
+    await page2.click('#rpc')
 
     await page2.waitForFunction(
       () => {

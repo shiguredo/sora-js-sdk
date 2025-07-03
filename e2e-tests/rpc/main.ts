@@ -31,6 +31,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     await client.disconnect()
   })
 
+  // RPCボタンのイベントリスナーを最初から設定
+  document.querySelector('#rpc')?.addEventListener('click', async () => {
+    if (!client) {
+      console.error('Client not initialized')
+      return
+    }
+
+    const rpcInput = document.querySelector<HTMLInputElement>('#rpc-input')
+    if (!rpcInput) {
+      console.error('RPC input element not found')
+      return
+    }
+
+    const rpcResultDiv = document.querySelector('#rpc-result')
+
+    try {
+      const result = await client.sendRpc(rpcInput.value)
+      console.log('RPC sent successfully', result)
+      if (rpcResultDiv) {
+        rpcResultDiv.textContent = 'RPC sent successfully'
+      }
+    } catch (error) {
+      console.error('RPC error:', error)
+      if (rpcResultDiv) {
+        rpcResultDiv.textContent = `Error: ${error}`
+      }
+    }
+  })
+
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
     const statsReport = await client.getStats()
     const statsDiv = document.querySelector('#stats-report') as HTMLElement
@@ -106,9 +135,24 @@ class SoraClient {
     if (localVideo) {
       localVideo.srcObject = stream
     }
+  }
 
-    // 接続後にRPCボタンのイベントリスナーを設定
-    this.rpc()
+  isConnected(): boolean {
+    return this.connection.pc !== null && this.connection.pc.connectionState === 'connected'
+  }
+
+  async sendRpc(value: string): Promise<void> {
+    const rpcMethod = 'Sora_20201124.PutSignalingNotifyMetadataItem'
+    const rpcParams = {
+      key: 'abc',
+      value: value,
+      push: true,
+    }
+    const rpcOptions = {
+      notification: true,
+    }
+
+    return await this.connection.rpc(rpcMethod, rpcParams, rpcOptions)
   }
 
   async disconnect() {
@@ -173,135 +217,6 @@ class SoraClient {
       pushResultDiv.appendChild(createParagraph(`Key: ${event.data.key}`))
       pushResultDiv.appendChild(createParagraph(`Value: ${event.data.value}`))
       pushResultDiv.appendChild(createParagraph(`Type: ${event.data.type}`))
-    }
-  }
-
-  private rpc(): void {
-    const rpcButton = document.querySelector('#rpc-button') as HTMLButtonElement
-    if (rpcButton) {
-      // 既存のイベントリスナーを削除してから新しいものを追加
-      const newButton = rpcButton.cloneNode(true) as HTMLButtonElement
-      rpcButton.parentNode?.replaceChild(newButton, rpcButton)
-
-      newButton.addEventListener('click', async () => {
-        const rpcInput = document.querySelector<HTMLInputElement>('#rpc-input')
-        if (!rpcInput) {
-          console.error('RPC input element not found')
-          return
-        }
-
-        const rpcMethod = 'Sora_20201124.PutSignalingNotifyMetadataItem'
-        const rpcParams = {
-          key: 'abc',
-          value: rpcInput.value,
-          push: true,
-        }
-        const rpcOptions = {
-          notification: true,
-        }
-
-        // 実際に送信されるRPCメッセージの構造
-        const actualRpcMessage = {
-          id: crypto.randomUUID(), // 実際のRPCではIDが付与される
-          jsonrpc: '2.0',
-          method: rpcMethod,
-          params: rpcParams,
-        }
-
-        const messageString = JSON.stringify(actualRpcMessage)
-        const originalSize = new TextEncoder().encode(messageString).length
-
-        // CompressionStream APIを使用した実際の圧縮（サポートされている場合）
-        let compressedSize = originalSize
-        let compressionInfo = 'Compression not available'
-
-        if ('CompressionStream' in window) {
-          try {
-            const encoder = new TextEncoder()
-            const input = encoder.encode(messageString)
-
-            // gzip圧縮
-            const cs = new CompressionStream('gzip')
-            const writer = cs.writable.getWriter()
-            writer.write(input)
-            writer.close()
-
-            const compressed = []
-            const reader = cs.readable.getReader()
-            let result = await reader.read()
-            while (!result.done) {
-              compressed.push(...result.value)
-              result = await reader.read()
-            }
-
-            compressedSize = compressed.length
-            compressionInfo = 'gzip compressed'
-          } catch {
-            compressionInfo = 'Compression failed'
-          }
-        }
-
-        const sizeInfoDiv = document.querySelector('#rpc-size-info')
-        if (sizeInfoDiv) {
-          const reduction = ((1 - compressedSize / originalSize) * 100).toFixed(1)
-          const reductionNum = Number.parseFloat(reduction)
-          const worthCompressing = reductionNum > 10 // 10%以上削減できれば圧縮の価値あり
-
-          // XSS対策: innerHTMLではなくtextContentとDOM操作を使用
-          sizeInfoDiv.textContent = ''
-
-          const title = document.createElement('strong')
-          title.textContent = 'Message Size Analysis:'
-          sizeInfoDiv.appendChild(title)
-          sizeInfoDiv.appendChild(document.createElement('br'))
-
-          sizeInfoDiv.appendChild(document.createTextNode(`Original: ${originalSize} bytes`))
-          sizeInfoDiv.appendChild(document.createElement('br'))
-
-          sizeInfoDiv.appendChild(
-            document.createTextNode(`Compressed: ${compressedSize} bytes (${compressionInfo})`),
-          )
-          sizeInfoDiv.appendChild(document.createElement('br'))
-
-          sizeInfoDiv.appendChild(document.createTextNode(`Reduction: ${reduction}%`))
-          sizeInfoDiv.appendChild(document.createElement('br'))
-
-          const recTitle = document.createElement('strong')
-          recTitle.textContent = 'Recommendation:'
-          sizeInfoDiv.appendChild(recTitle)
-          sizeInfoDiv.appendChild(
-            document.createTextNode(
-              ` ${worthCompressing ? 'Compression beneficial' : 'Compression overhead may exceed benefit'}`,
-            ),
-          )
-          sizeInfoDiv.appendChild(document.createElement('br'))
-          sizeInfoDiv.appendChild(document.createElement('br'))
-
-          const msgTitle = document.createElement('strong')
-          msgTitle.textContent = 'Actual RPC Message:'
-          sizeInfoDiv.appendChild(msgTitle)
-          sizeInfoDiv.appendChild(document.createElement('br'))
-
-          const pre = document.createElement('pre')
-          pre.style.fontSize = '12px'
-          pre.style.overflow = 'auto'
-          pre.textContent = JSON.stringify(actualRpcMessage, null, 2)
-          sizeInfoDiv.appendChild(pre)
-        }
-
-        const rpcResultDiv = document.querySelector('#rpc-result')
-        try {
-          await this.connection.rpc(rpcMethod, rpcParams, rpcOptions)
-          if (rpcResultDiv) {
-            rpcResultDiv.textContent = 'RPC sent successfully'
-          }
-        } catch (error) {
-          console.error('RPC error:', error)
-          if (rpcResultDiv) {
-            rpcResultDiv.textContent = `Error: ${error}`
-          }
-        }
-      })
     }
   }
 
