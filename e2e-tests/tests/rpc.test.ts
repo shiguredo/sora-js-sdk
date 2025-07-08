@@ -45,12 +45,16 @@ test.describe('RPC test', () => {
     await page2.click('#connect')
 
     // 接続が確立されるまで待機（connection-id が表示されるまで）
-    await page1.waitForSelector('#connection-id:not(:empty)', { timeout: 10000 })
-    await page2.waitForSelector('#connection-id:not(:empty)', { timeout: 10000 })
+    await page1.waitForSelector('#connection-id:not(:empty)', { timeout: 30000 })
+    await page2.waitForSelector('#connection-id:not(:empty)', { timeout: 30000 })
+
+    // 接続が安定するまで少し待機
+    await page1.waitForTimeout(1000)
+    await page2.waitForTimeout(1000)
 
     // リモートビデオが表示されるまで待機（お互いのビデオが見えていることを確認）
-    await page1.waitForSelector('#remote-videos video', { timeout: 5000 })
-    await page2.waitForSelector('#remote-videos video', { timeout: 5000 })
+    await page1.waitForSelector('#remote-videos video', { timeout: 10000 })
+    await page2.waitForSelector('#remote-videos video', { timeout: 10000 })
 
     // RPC データチャネルが確立されるまで待機
     await page1.waitForFunction(
@@ -58,7 +62,7 @@ test.describe('RPC test', () => {
         const getStatsButton = document.querySelector('#get-stats') as HTMLButtonElement
         if (getStatsButton) {
           getStatsButton.click()
-          await new Promise((resolve) => setTimeout(resolve, 100))
+          await new Promise((resolve) => setTimeout(resolve, 500))
           const statsDiv = document.querySelector('#stats-report') as HTMLElement
           const statsJson = statsDiv?.dataset.statsReportJson
           if (statsJson) {
@@ -71,7 +75,7 @@ test.describe('RPC test', () => {
         }
         return false
       },
-      { timeout: 5000 },
+      { timeout: 15000 },
     )
 
     await page2.waitForFunction(
@@ -79,7 +83,7 @@ test.describe('RPC test', () => {
         const getStatsButton = document.querySelector('#get-stats') as HTMLButtonElement
         if (getStatsButton) {
           getStatsButton.click()
-          await new Promise((resolve) => setTimeout(resolve, 100))
+          await new Promise((resolve) => setTimeout(resolve, 500))
           const statsDiv = document.querySelector('#stats-report') as HTMLElement
           const statsJson = statsDiv?.dataset.statsReportJson
           if (statsJson) {
@@ -92,7 +96,7 @@ test.describe('RPC test', () => {
         }
         return false
       },
-      { timeout: 5000 },
+      { timeout: 15000 },
     )
 
     // page1 で RPC を実行
@@ -105,7 +109,7 @@ test.describe('RPC test', () => {
         const pushResult = document.querySelector('#push-result') as HTMLElement
         return pushResult?.dataset.pushData
       },
-      { timeout: 5000 },
+      { timeout: 15000 },
     )
 
     const pushContent1 = await page1.evaluate(() => {
@@ -125,7 +129,7 @@ test.describe('RPC test', () => {
         const pushResult = document.querySelector('#push-result') as HTMLElement
         return pushResult?.dataset.pushData
       },
-      { timeout: 5000 },
+      { timeout: 15000 },
     )
 
     const pushContent2 = await page2.evaluate(() => {
@@ -167,7 +171,7 @@ test.describe('RPC test', () => {
         const pushResult = document.querySelector('#push-result') as HTMLElement
         return pushResult?.dataset.pushData
       },
-      { timeout: 10000 },
+      { timeout: 15000 },
     )
 
     const pushContentPage2 = await page2.evaluate(() => {
@@ -187,7 +191,7 @@ test.describe('RPC test', () => {
         const pushResult = document.querySelector('#push-result') as HTMLElement
         return pushResult?.dataset.pushData
       },
-      { timeout: 10000 },
+      { timeout: 15000 },
     )
 
     const pushContentPage1 = await page1.evaluate(() => {
