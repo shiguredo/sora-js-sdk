@@ -1,0 +1,43 @@
+name: Claude Assistant
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_SORA_OSS_SONNET }}
+
+jobs:
+  claude-opus-response-voluntas:
+    if: github.event.comment.user.login == 'voluntas'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_VOLUNTAS }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          model: "claude-opus-4-20250514"
+          trigger_phrase: "!opus"
+          timeout_minutes: 15
+          disallowed_tools: "Bash(git:*)"
+          direct_prompt: "PR のレビューと分析のみ行ってください。コードの変更やコミットは一切行わないでください。"
+
+  claude-sonnet-response-others:
+    if: contains(fromJSON('["Hexa", "akko", "sile", "melpon", "tnamao", "torikizi", "miosakuma", "zztkm", "t-miya"]'), github.event.comment.user.login)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          model: "claude-sonnet-4-20250514"
+          trigger_phrase: "!sonnet"
+          timeout_minutes: 15
+          disallowed_tools: "Bash(git:*)"
+          direct_prompt: "PR のレビューと分析のみ行ってください。コードの変更やコミットは一切行わないでください。"
