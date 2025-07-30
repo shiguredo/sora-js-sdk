@@ -10,6 +10,7 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  actions: read
 
 env:
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_SORA_OSS_SONNET }}
@@ -30,8 +31,21 @@ jobs:
           timeout_minutes: 15
           disallowed_tools: "Bash(git:*)"
 
+  check-permission:
+    if: github.event.comment.user.login != 'voluntas'
+    runs-on: ubuntu-24.04
+    outputs:
+      has_permission: ${{ steps.check.outputs.has-permission }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        uses: shiguredo/github-actions/.github/actions/check-write-permission@main
+        with:
+          username: ${{ github.event.comment.user.login }}
+
   claude-sonnet-response-others:
-    if: contains(fromJSON('["Hexa", "akko", "sile", "melpon", "tnamao", "torikizi", "miosakuma", "zztkm", "t-miya"]'), github.event.comment.user.login)
+    needs: check-permission
+    if: needs.check-permission.outputs.has_permission == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
