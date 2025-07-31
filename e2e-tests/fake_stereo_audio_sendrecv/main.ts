@@ -359,7 +359,6 @@ class SoraSendRecvClient {
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
-  private remoteStream: MediaStream | null = null
   private onStreamCallback: ((stream: MediaStream) => void) | null = null
   private connectionNumber: string
 

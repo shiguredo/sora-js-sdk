@@ -336,7 +336,6 @@ class SoraRecvClient {
 
   private sora: SoraConnection
   private connection: ConnectionSubscriber
-  private remoteStream: MediaStream | null = null
   private onStreamCallback: ((stream: MediaStream) => void) | null = null
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
