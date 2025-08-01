@@ -46,6 +46,7 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
+      
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
@@ -54,6 +55,7 @@ jobs:
 
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
+      - run: npm install -g npm@latest
       - run: npm publish --no-git-checks --tag canary
 
   npm-publish:
@@ -79,6 +81,7 @@ jobs:
 
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
+      - run: npm install -g npm@latest
       - run: npm publish --no-git-checks
 
 
