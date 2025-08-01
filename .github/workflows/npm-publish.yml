@@ -5,6 +5,10 @@ on:
     tags:
       - '*'
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
     name: Build
@@ -50,9 +54,7 @@ jobs:
 
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
-      - run: npm publish --provenance --no-git-checks --tag canary
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 
+      - run: npm publish --no-git-checks --tag canary
 
   npm-publish:
     runs-on: ubuntu-24.04
@@ -77,9 +79,7 @@ jobs:
 
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
-      - run: npm publish --provenance --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 
+      - run: npm publish --no-git-checks
 
 
   slack_notify_failed:
