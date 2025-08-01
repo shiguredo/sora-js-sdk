@@ -2360,7 +2360,7 @@ export default class ConnectionBase {
       const compressedMessage = await compressMessage(message)
       dataChannel.send(compressedMessage)
     } else {
-      dataChannel.send(message)
+      dataChannel.send(new Uint8Array(message))
     }
   }
 

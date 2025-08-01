@@ -484,13 +484,13 @@ export async function parseDataChannelEventData(
 }
 
 export const compressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
-  const readableStream = new Blob([binaryMessage]).stream()
+  const readableStream = new Blob([new Uint8Array(binaryMessage)]).stream()
   const compressedStream = readableStream.pipeThrough(new CompressionStream('deflate'))
   return await new Response(compressedStream).arrayBuffer()
 }
 
 export const decompressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
-  const readableStream = new Blob([binaryMessage]).stream()
+  const readableStream = new Blob([new Uint8Array(binaryMessage)]).stream()
   const decompressedStream = readableStream.pipeThrough(new DecompressionStream('deflate'))
   return await new Response(decompressedStream).arrayBuffer()
 }
