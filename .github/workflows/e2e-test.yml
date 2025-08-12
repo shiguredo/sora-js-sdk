@@ -7,6 +7,7 @@ on:
       - develop
       - feature/*
     paths:
+      - playwright.config.ts
       - .github/workflows/e2e-test.yml
       - e2e-tests/**
   schedule:

@@ -6,6 +6,7 @@ on:
       - develop
       - feature/*
     paths:
+      - playwright.config.ts
       - .github/workflows/e2e-test-h265.yml
       - e2e-tests/**
   schedule:
