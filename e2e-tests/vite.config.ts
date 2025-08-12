@@ -24,7 +24,6 @@ export default defineConfig({
         sendrecv_webkit: resolve(__dirname, 'sendrecv_webkit/index.html'),
         sendonly: resolve(__dirname, 'sendonly/index.html'),
         recvonly: resolve(__dirname, 'recvonly/index.html'),
-        replace_track: resolve(__dirname, 'replace_track/index.html'),
         simulcast: resolve(__dirname, 'simulcast/index.html'),
         simulcast_sendonly: resolve(__dirname, 'simulcast_sendonly/index.html'),
         simulcast_recvonly: resolve(__dirname, 'simulcast_recvonly/index.html'),
