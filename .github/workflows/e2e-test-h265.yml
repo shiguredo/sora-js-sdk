@@ -5,10 +5,9 @@ on:
     branches:
       - develop
       - feature/*
-    paths-ignore:
-      - "**.md"
-      - "LICENSE"
-      - "NOTICE"
+    paths:
+      - .github/workflows/e2e-test-h265.yml
+      - e2e-tests/**
   schedule:
     # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
     - cron: "0 2 * * 1-5"
