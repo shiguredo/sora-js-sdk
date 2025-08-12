@@ -2,7 +2,13 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test.describe('Stereo Audio Tests', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, browser, browserName }) => {
+    // ブラウザ情報をログ出力
+    const browserVersion = browser.version()
+    const userAgent = await page.evaluate(() => navigator.userAgent)
+    console.log(`Browser: ${browserName} ${browserVersion}`)
+    console.log(`User Agent: ${userAgent}`)
+
     // ページに移動してSora JS SDKのバージョンを確認
     await page.goto('http://localhost:9000/fake_stereo_audio/')
 
