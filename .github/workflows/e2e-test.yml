@@ -17,11 +17,16 @@ on:
 jobs:
   e2e-test:
     strategy:
+      fail-fast: false
       matrix:
         node:
           - "20"
           - "22"
           - "24"
+        os:
+          - "ubuntu-24.04"
+          - "macos-15"
+          - "windows-2025"
         browser:
           - name: "Chromium"
             type: "chromium"
@@ -40,7 +45,7 @@ jobs:
       VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       VITE_TEST_API_URL: ${{ secrets.TEST_API_URL }}
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
