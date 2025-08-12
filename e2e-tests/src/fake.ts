@@ -138,46 +138,89 @@ const createFakeAudioTrack = (
   volume = 0.1, // デフォルト音量 (0.0 - 1.0)
   stereo = false, // ステレオかモノラルか
 ): MediaStreamTrack => {
-  // AudioContextを作成
-  const audioCtx = new AudioContext()
+  // ========== Chrome 140対策開始 ==========
+  // Chrome 140 (140.0.7339.5) で発生する問題:
+  // - 複数のAudioContextが連続で作成されると、ステレオ音源生成が失敗する
+  // - ChannelMergerの右チャンネル接続が無視され、左右が同じ音になる
+  // - 特に3番目以降のAudioContext作成時に頻発
+  //
+  // 対策内容:
+  // 1. sampleRateを明示的に48000Hzに固定（一貫性確保）
+  // 2. ダミーOscillatorで内部状態を初期化
+  // 3. 50ms待機で前のAudioContextの影響を回避
+  // 4. ノード作成順序の最適化（Destination→Merger→Oscillator）
+  // 5. channelCountMode='explicit'とchannelInterpretation='discrete'
+  // 6. トラック終了時の完全なクリーンアップ
+  //
+  // この対策はChrome 139では不要で、Chrome 141以降で修正される可能性があるため、
+  // 将来的にrevertできるようにまとめている
+
+  // AudioContextを作成（sampleRateを明示的に指定 - Chrome 140対策）
+  const audioCtx = new AudioContext({ sampleRate: 48000 })
+
+  // Chrome 140対策: AudioContextの初期化を確実にする
+  // 無音のOscillatorを一瞬作成して破棄（内部状態を安定化）
+  const dummyOsc = audioCtx.createOscillator()
+  const dummyGain = audioCtx.createGain()
+  dummyGain.gain.value = 0
+  dummyOsc.connect(dummyGain)
+  dummyGain.connect(audioCtx.destination)
+  dummyOsc.start()
+  dummyOsc.stop(audioCtx.currentTime + 0.001)
+
+  // Chrome 140追加対策: 少し待機してから本処理を開始
+  // 前のAudioContextの影響を避ける
+  const delay = 50 // 50ms待機
+  const startTime = performance.now()
+  while (performance.now() - startTime < delay) {
+    // ビジーウェイト（同期処理の制約内）
+  }
+  // ========== Chrome 140対策終了 ==========
 
   if (stereo) {
-    // ステレオの場合: L/Rチャンネルに異なる周波数の音を設定
-    // 左チャンネル用のOscillator
+    // ========== Chrome 140対策: ステレオ音源生成 ==========
+    // Chrome 140では、ノード作成と接続の順序が重要
+    // 1. Destinationを最初に作成（channelCount=2を確実に設定）
+    // 2. ChannelMergerを作成
+    // 3. 各チャンネルのOscillator/Gainを作成
+    // 4. 左チャンネル→右チャンネルの順で接続
+    // 5. 最後にmerger→destinationを接続
+
+    // 1. まずDestinationを作成して設定（Chrome 140対策: 最初に行うことが重要）
+    const destination = audioCtx.createMediaStreamDestination()
+    destination.channelCount = 2
+    destination.channelCountMode = 'explicit' // Chrome 140対策: 自動変換を防ぐ
+    destination.channelInterpretation = 'discrete' // Chrome 140対策: チャンネル間混合を防ぐ
+
+    // 2. ChannelMergerを作成（明示的に2チャンネル）
+    const merger = audioCtx.createChannelMerger(2)
+
+    // 3. 左チャンネル用のチェーンを作成
     const oscillatorLeft = audioCtx.createOscillator()
     oscillatorLeft.type = 'sine'
     oscillatorLeft.frequency.setValueAtTime(frequency, audioCtx.currentTime)
 
-    // 右チャンネル用のOscillator（周波数を少しずらす）
-    const oscillatorRight = audioCtx.createOscillator()
-    oscillatorRight.type = 'sine'
-    oscillatorRight.frequency.setValueAtTime(frequency * 1.5, audioCtx.currentTime) // 1.5倍の周波数
-
-    // 各チャンネル用のGainNode
     const gainLeft = audioCtx.createGain()
     gainLeft.gain.setValueAtTime(volume, audioCtx.currentTime)
+
+    // 4. 右チャンネル用のチェーンを作成
+    const oscillatorRight = audioCtx.createOscillator()
+    oscillatorRight.type = 'sine'
+    oscillatorRight.frequency.setValueAtTime(frequency * 1.5, audioCtx.currentTime)
 
     const gainRight = audioCtx.createGain()
     gainRight.gain.setValueAtTime(volume, audioCtx.currentTime)
 
-    // ChannelMergerNodeでステレオに結合
-    const merger = audioCtx.createChannelMerger(2)
-
-    // MediaStreamAudioDestinationNode（出力先）を作成
-    // channelCountを2に明示的に設定
-    const destination = audioCtx.createMediaStreamDestination()
-    destination.channelCount = 2
-    destination.channelCountMode = 'explicit'
-
-    // 接続: 左チャンネル -> merger の入力0
+    // 5. 接続を順番に行う（Chrome 140対策）
+    // まず左チャンネルを完全に接続
     oscillatorLeft.connect(gainLeft)
     gainLeft.connect(merger, 0, 0)
 
-    // 接続: 右チャンネル -> merger の入力1
+    // 次に右チャンネルを完全に接続
     oscillatorRight.connect(gainRight)
     gainRight.connect(merger, 0, 1)
 
-    // merger -> destination
+    // 最後にmergerをdestinationに接続
     merger.connect(destination)
 
     // Oscillatorを開始
@@ -194,31 +237,51 @@ const createFakeAudioTrack = (
       rightFreq: frequency * 1.5,
     })
 
-    // トラックが停止されたらAudioContextを閉じる
+    // トラックが停止されたら完全にクリーンアップ（Chrome 140対策）
     audioTrack.addEventListener('ended', () => {
-      oscillatorLeft.stop()
-      oscillatorRight.stop()
+      try {
+        // Oscillatorを停止
+        oscillatorLeft.stop()
+        oscillatorRight.stop()
+      } catch (e) {
+        // 既に停止している場合はエラーを無視
+      }
+
+      // 全ノードを明示的に切断
+      oscillatorLeft.disconnect()
+      oscillatorRight.disconnect()
+      gainLeft.disconnect()
+      gainRight.disconnect()
+      merger.disconnect()
+      destination.disconnect()
+
+      // AudioContextを閉じる
       audioCtx.close().then(() => {
-        console.log('AudioContext closed because track ended.')
+        console.log('Stereo AudioContext fully cleaned up.')
       })
     })
 
     return audioTrack
   }
-  // モノラルの場合（既存の実装）
-  // OscillatorNode（音源）を作成
+  // ========== Chrome 140対策: モノラル音源生成 ==========
+  // モノラルでも同様の対策を適用（将来の一貫性のため）
+
+  // 1. まずDestinationを作成して設定（Chrome 140対策: 最初に行うことが重要）
+  const destination = audioCtx.createMediaStreamDestination()
+  destination.channelCount = 1
+  destination.channelCountMode = 'explicit' // Chrome 140対策: 自動変換を防ぐ
+  destination.channelInterpretation = 'discrete' // Chrome 140対策: チャンネル間混合を防ぐ
+
+  // 2. OscillatorNode（音源）を作成
   const oscillator = audioCtx.createOscillator()
   oscillator.type = 'sine' // サイン波（不快感の少ない波形）
   oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime)
 
-  // GainNode（音量調整）を作成
+  // 3. GainNode（音量調整）を作成
   const gainNode = audioCtx.createGain()
   gainNode.gain.setValueAtTime(volume, audioCtx.currentTime)
 
-  // MediaStreamAudioDestinationNode（出力先）を作成
-  const destination = audioCtx.createMediaStreamDestination()
-
-  // ノードを接続: Oscillator -> Gain -> Destination
+  // 4. ノードを接続: Oscillator -> Gain -> Destination
   oscillator.connect(gainNode)
   gainNode.connect(destination)
 
@@ -228,11 +291,23 @@ const createFakeAudioTrack = (
   // MediaStreamからAudioTrackを取得
   const [audioTrack] = destination.stream.getAudioTracks()
 
-  // トラックが停止されたらAudioContextを閉じる
+  // トラックが停止されたら完全にクリーンアップ（Chrome 140対策）
   audioTrack.addEventListener('ended', () => {
-    oscillator.stop()
+    try {
+      // Oscillatorを停止
+      oscillator.stop()
+    } catch (e) {
+      // 既に停止している場合はエラーを無視
+    }
+
+    // 全ノードを明示的に切断
+    oscillator.disconnect()
+    gainNode.disconnect()
+    destination.disconnect()
+
+    // AudioContextを閉じる
     audioCtx.close().then(() => {
-      console.log('AudioContext closed because track ended.')
+      console.log('Mono AudioContext fully cleaned up.')
     })
   })
 
