@@ -298,6 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           local: {
             channelCount: Number.parseInt(
               document.querySelector('#conn1-local-channel-count')?.textContent || '0',
+              10,
             ),
             leftFrequency: Number.parseFloat(
               document.querySelector('#conn1-local-left-frequency')?.textContent || '0',
@@ -310,6 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           remote: {
             channelCount: Number.parseInt(
               document.querySelector('#conn1-remote-channel-count')?.textContent || '0',
+              10,
             ),
             leftFrequency: Number.parseFloat(
               document.querySelector('#conn1-remote-left-frequency')?.textContent || '0',
@@ -324,6 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           local: {
             channelCount: Number.parseInt(
               document.querySelector('#conn2-local-channel-count')?.textContent || '0',
+              10,
             ),
             leftFrequency: Number.parseFloat(
               document.querySelector('#conn2-local-left-frequency')?.textContent || '0',
@@ -336,6 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           remote: {
             channelCount: Number.parseInt(
               document.querySelector('#conn2-remote-channel-count')?.textContent || '0',
+              10,
             ),
             leftFrequency: Number.parseFloat(
               document.querySelector('#conn2-remote-left-frequency')?.textContent || '0',

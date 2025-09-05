@@ -220,7 +220,7 @@ export function createSignalingMessage(
     'videoAV1Params',
   ]
   const copyOptions = Object.assign({}, options)
-  ;(Object.keys(copyOptions) as (keyof ConnectionOptions)[]).filter((key) => {
+  ;(Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
     if (key === 'audio' && typeof copyOptions[key] === 'boolean') {
       return
     }
@@ -368,7 +368,7 @@ export function trace(clientId: string | null, title: string, value: unknown): v
         // 何もしない
       }
       if (keys && Array.isArray(keys)) {
-        keys.filter((key) => {
+        keys.forEach((key) => {
           console.group(key)
           dump((record as Record<string, unknown>)[key])
           console.groupEnd()
@@ -431,7 +431,7 @@ export function createDataChannelData(channel: RTCDataChannel): Record<string, u
     ordered: channel.ordered,
     protocol: channel.protocol,
     readyState: channel.readyState,
-    // @ts-ignore w3c 仕様には存在しない property
+    // @ts-expect-error w3c 仕様には存在しない property
     reliable: channel.reliable,
   }
 }

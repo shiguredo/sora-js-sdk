@@ -14,7 +14,7 @@ test.describe('Stereo Audio Tests', () => {
 
     // Sora.version()を実行してバージョンを取得
     const version = await page.evaluate(() => {
-      // @ts-ignore
+      // @ts-expect-error
       return window.Sora ? window.Sora.version() : null
     })
 

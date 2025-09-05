@@ -83,7 +83,7 @@ export default class ConnectionPublisher extends ConnectionBase {
       }
     }
     await this.setRemoteDescription(signalingMessage)
-    stream.getTracks().filter((track) => {
+    stream.getTracks().forEach((track) => {
       if (this.pc) {
         this.pc.addTrack(track, stream)
       }

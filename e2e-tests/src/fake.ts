@@ -243,7 +243,7 @@ const createFakeAudioTrack = (
         // Oscillatorを停止
         oscillatorLeft.stop()
         oscillatorRight.stop()
-      } catch (e) {
+      } catch (_e) {
         // 既に停止している場合はエラーを無視
       }
 
@@ -296,7 +296,7 @@ const createFakeAudioTrack = (
     try {
       // Oscillatorを停止
       oscillator.stop()
-    } catch (e) {
+    } catch (_e) {
       // 既に停止している場合はエラーを無視
     }
 
