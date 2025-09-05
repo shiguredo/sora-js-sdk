@@ -55,6 +55,10 @@ jobs:
           tags: tag:ci
           version: latest
           use-cache: 'true'
+          hostname: gha-${{ github.run_id }}-${{ github.run_number }}
+          timeout: 2m
+          retry: 5
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}

@@ -47,6 +47,9 @@ jobs:
           tags: tag:ci
           version: latest
           use-cache: 'true'
+          hostname: gha-${{ github.run_id }}-${{ github.run_number }}
+          timeout: 2m
+          retry: 5
       - uses: Homebrew/actions/setup-homebrew@master
       - run: brew install --cask ${{ matrix.browser.type}}
       - uses: actions/setup-node@v4
