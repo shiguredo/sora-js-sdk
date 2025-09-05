@@ -513,7 +513,7 @@ test('createSignalingMessage dataChannels: invalid value', () => {
   const options = {
     dataChannels: 'test',
   }
-  // @ts-ignore option で指定されている型以外を引数に指定する
+  // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     baseExpectedMessage,
   )
@@ -535,7 +535,7 @@ test('createSignalingMessage dataChannels: invalid array', () => {
     dataChannels: [{ label: 'test', direction: 'sendrecv' }, 'test'],
   }
   expect(() => {
-    // @ts-ignore option で指定されている型以外を引数に指定する
+    // @ts-expect-error option で指定されている型以外を引数に指定する
     createSignalingMessage(sdp, 'sendonly', channelId, null, options, false)
   }).toThrow(
     "Failed to parse options dataChannels. Options dataChannels element must be type 'object'",
@@ -548,7 +548,7 @@ test('createSignalingMessage dataChannels: invalid array(null in array)', () => 
     dataChannels: [{ label: 'test', direction: 'sendrecv' }, null],
   }
   expect(() => {
-    // @ts-ignore option で指定されている型以外を引数に指定する
+    // @ts-expect-error option で指定されている型以外を引数に指定する
     createSignalingMessage(sdp, 'sendonly', channelId, null, options, false)
   }).toThrow(
     "Failed to parse options dataChannels. Options dataChannels element must be type 'object'",
@@ -632,7 +632,7 @@ test('createSignalingMessage simulcastRid', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     simulcast_rid: options.simulcastRid,
   })
-  // @ts-ignore option で指定されている型以外を引数に指定する
+  // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     expectedMessage,
   )
@@ -643,7 +643,7 @@ test('createSignalingMessage simulcastRid: unknown string', () => {
   const options = {
     simulcastRid: '',
   }
-  // @ts-ignore option で指定されている型以外を引数に指定する
+  // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     baseExpectedMessage,
   )
@@ -682,7 +682,7 @@ test('createSignalingMessage spotlightFocusRid', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     spotlight_focus_rid: options.spotlightFocusRid,
   })
-  // @ts-ignore option で指定されている型以外を引数に指定する
+  // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     expectedMessage,
   )
@@ -693,7 +693,7 @@ test('createSignalingMessage spotlightFocusRid: unknown string', () => {
   const options = {
     spotlightFocusRid: '',
   }
-  // @ts-ignore option で指定されている型以外を引数に指定する
+  // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     baseExpectedMessage,
   )
@@ -709,7 +709,7 @@ test('createSignalingMessage spotlightUnfocusRid', () => {
   const expectedMessage = Object.assign({}, baseExpectedMessage, {
     spotlight_unfocus_rid: options.spotlightUnfocusRid,
   })
-  // @ts-ignore option で指定されている型以外を引数に指定する
+  // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     expectedMessage,
   )
@@ -720,7 +720,7 @@ test('createSignalingMessage spotlightFocusRid: unknown string', () => {
   const options = {
     spotlightUnfocusRid: '',
   }
-  // @ts-ignore option で指定されている型以外を引数に指定する
+  // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
     baseExpectedMessage,
   )

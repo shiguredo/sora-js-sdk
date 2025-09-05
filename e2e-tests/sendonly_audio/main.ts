@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 音声ビットレートの選択を取得
     const audioBitRateSelect = document.getElementById('audio-bit-rate') as HTMLSelectElement
     const selectedBitRate = audioBitRateSelect.value
-      ? Number.parseInt(audioBitRateSelect.value)
+      ? Number.parseInt(audioBitRateSelect.value, 10)
       : undefined
 
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix)

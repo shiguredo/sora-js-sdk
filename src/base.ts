@@ -1326,7 +1326,7 @@ export default class ConnectionBase {
     }
     this.trace('PEER CONNECTION CONFIG', config)
     this.writePeerConnectionTimelineLog('new-peerconnection', config)
-    // @ts-ignore Chrome の場合は第2引数に goog オプションを渡すことができる
+    // @ts-expect-error Chrome の場合は第2引数に goog オプションを渡すことができる
     this.pc = new window.RTCPeerConnection(config, this.constraints)
     this.pc.oniceconnectionstatechange = (_): void => {
       if (this.pc) {
@@ -1412,20 +1412,21 @@ export default class ConnectionBase {
     ) {
       const transceiver = this.pc.getTransceivers().find((t) => {
         if (t.mid === null) {
-          return
+          return false
         }
         if (t.sender.track === null) {
-          return
+          return false
         }
         if (t.currentDirection !== null && t.currentDirection !== SIGNALING_ROLE_SENDONLY) {
-          return
+          return false
         }
         if (this.mids.video !== '' && this.mids.video === t.mid) {
-          return t
+          return true
         }
         if (0 <= t.mid.indexOf('video')) {
-          return t
+          return true
         }
+        return false
       })
       if (transceiver) {
         await this.setSenderParameters(transceiver, this.encodings)

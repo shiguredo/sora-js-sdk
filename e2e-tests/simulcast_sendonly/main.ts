@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoCodecTypeElement = document.querySelector('#video-codec-type') as HTMLSelectElement
     const videoCodecType = videoCodecTypeElement.value as VideoCodecType
     const rawVideoBitRate = document.querySelector('#video-bit-rate') as HTMLInputElement
-    const videoBitRate = Number.parseInt(rawVideoBitRate.value)
+    const videoBitRate = Number.parseInt(rawVideoBitRate.value, 10)
 
     let simulcastEncodings: Record<string, unknown> | undefined
     const simulcastEncodingsElement = document.querySelector(

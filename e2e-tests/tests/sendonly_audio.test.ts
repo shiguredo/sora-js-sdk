@@ -72,7 +72,7 @@ test('sendonly audio pages', async ({ browser }) => {
   expect(sendonlyAudioOutboundRtp?.packetsSent).toBeGreaterThan(0)
 
   // 音声ビットレートの選択に基づいて期待値を設定し一致するかを確認する
-  const expectedBitRate = Number.parseInt(selectedBitRate) * 1000
+  const expectedBitRate = Number.parseInt(selectedBitRate, 10) * 1000
   expect(sendonlyAudioOutboundRtp?.targetBitrate).toEqual(expectedBitRate)
 
   await sendonly.click('#disconnect')
