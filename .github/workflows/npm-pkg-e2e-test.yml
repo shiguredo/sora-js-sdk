@@ -47,7 +47,7 @@ jobs:
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       NPM_PKG_E2E_TEST: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: tailscale/github-action@v3
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
