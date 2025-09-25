@@ -37,6 +37,8 @@
   - @voluntas
 - [UPDATE] biome v2 にバージョンを上げる
   - @voluntas
+- [UPDATE] actions/checkout と actions/download-artifact を v5 に上げる
+  - @miosakuma
 - [ADD] ステレオ音声の E2E テストを追加する
   - fake_stereo_audio のテストページを作成
   - フェイクメディア生成機能にステレオサポートを追加
