@@ -9,3 +9,20 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    allow:
+      - dependency-name: "actions/checkout"
+      - dependency-name: "actions/setup-node"
+      - dependency-name: "actions/upload-artifact"
+      - dependency-name: "actions/download-artifact"
+      - dependency-name: "actions/dependency-review-action"
+      - dependency-name: "anthropics/claude-code-action"
+      - dependency-name: "Homebrew/actions"
+      - dependency-name: "pnpm/action-setup"
+      - dependency-name: "tailscale/github-action"
+      - dependency-name: "github/codeql-action"
+      - dependency-name: "rtCamp/action-slack-notify"
+      - dependency-name: "shiguredo/github-actions"
