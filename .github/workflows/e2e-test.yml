@@ -69,7 +69,7 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
-      - run: pnpm exec playwright test e2e-tests/tests/spotlight_sendonly_recvonly.test.ts --repeat-each=50 --workers=10--project="${{ matrix.browser.name }}"
+      - run: pnpm exec playwright test e2e-tests/tests/spotlight_sendonly_recvonly.test.ts --repeat-each=50 --workers=10 --project="${{ matrix.browser.name }}"
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
