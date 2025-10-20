@@ -15,31 +15,32 @@ on:
 
 jobs:
   npm-pkg-e2e-test:
-    timeout-minutes: 20
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
         # メンテナンスはおてて
         sdk_version: [
-          # canary リリースを含める
-          "2025.1.0",
-          "2024.2.2",
-          "2024.1.2",
-          "2023.2.0",
-          "2023.1.0",
-          "2022.3.3",
-          "2022.2.0",
-          "2022.1.0",
-          "2021.2.3",
-          # 2020.1.7 以前は E2E テストが通らない
-          "2021.1.7",
-        ]
+            # canary リリースを含める
+            "2025.1.0",
+            "2024.2.2",
+            "2024.1.2",
+            "2023.2.0",
+            "2023.1.0",
+            "2022.3.3",
+            "2022.2.0",
+            "2022.1.0",
+            "2021.2.3",
+            # 2020.1.7 より前は E2E テストが通らない
+            "2021.1.7",
+          ]
         node: ["20", "22", "24"]
-        browser: 
-            - name: "Google Chrome"
-              type: "chrome"
-            - name: "Microsoft Edge"
-              type: "msedge"
+        browser:
+          - name: "Google Chrome"
+            type: "chrome"
+          - name: "Microsoft Edge"
+            type: "msedge"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
@@ -54,7 +55,7 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
           version: latest
-          use-cache: 'true'
+          use-cache: "true"
           hostname: gha-${{ github.run_id }}-${{ github.run_number }}
           timeout: 2m
           retry: 5
