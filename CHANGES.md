@@ -35,6 +35,8 @@
   - @voluntas
 - [CHANGE] WHIP/WHEP の E2E テストを削除する
   - @voluntas
+- [CHANGE] npm-pkg-e2e-test.yml の fail-fast を false にする
+  - @voluntas
 - [UPDATE] biome v2 にバージョンを上げる
   - @voluntas
 - [UPDATE] actions/checkout と actions/download-artifact を v5 に上げる
