@@ -3,7 +3,7 @@ name: npm-publish
 on:
   push:
     tags:
-      - '*'
+      - "*"
 
 permissions:
   id-token: write
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 20
       - uses: pnpm/action-setup@v4
         with:
           version: 10
@@ -30,7 +30,7 @@ jobs:
         with:
           name: sora-js-sdk-dist
           path: dist/
-  
+
   npm-publish-canary:
     runs-on: ubuntu-24.04
     needs: [build]
@@ -43,10 +43,9 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 20
           registry-url: https://registry.npmjs.org
 
-      
       - name: Download Artifact
         uses: actions/download-artifact@v5
         with:
@@ -70,7 +69,7 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 20
           registry-url: https://registry.npmjs.org
 
       - name: Download Artifact
@@ -83,7 +82,6 @@ jobs:
       # https://github.com/pnpm/pnpm/issues/4937
       - run: npm install -g npm@latest
       - run: npm publish --no-git-checks
-
 
   slack_notify_failed:
     needs: [npm-publish-canary, npm-publish]
