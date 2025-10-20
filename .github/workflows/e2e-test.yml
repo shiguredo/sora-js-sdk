@@ -22,9 +22,13 @@ jobs:
       fail-fast: false
       matrix:
         node:
+          # Node 26 LTS がリリースされたら 26 に更新する
           - "25"
+          # 30 Apr 2028 End of Life
           - "24"
+          # 30 Apr 2027 End of Life
           - "22"
+          # 30 Apr 2026 End of Life
           - "20"
         os:
           - "ubuntu-24.04"
