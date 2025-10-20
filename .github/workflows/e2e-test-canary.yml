@@ -21,11 +21,9 @@ jobs:
   e2e-test-canary:
     strategy:
       matrix:
-        # Nodejs のテストではないので 20 でのみ動作確認する
+        # Nodejs のテストではないので一番古い LTS である 20 でのみ動作確認する
         node:
           - "20"
-          # - "22"
-          # - "24"
         browser:
           - name: "Google Chrome Canary"
             type: "google-chrome@canary"
@@ -46,7 +44,7 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
           version: latest
-          use-cache: 'true'
+          use-cache: "true"
           hostname: gha-${{ github.run_id }}-${{ github.run_number }}
           timeout: 2m
           retry: 5
@@ -70,7 +68,6 @@ jobs:
       #     name: playwright-report
       #     path: playwright-report/
       #     retention-days: 30
-
 
   # slack_notify_succeeded:
   #   needs: [e2e-test]
