@@ -21,6 +21,7 @@ jobs:
     strategy:
       matrix:
         node:
+          # Nodejs のテストではないので一番古い LTS である 20 でのみ動作確認する
           - "20"
         browser:
           - name: "Google Chrome Canary"
@@ -62,7 +63,6 @@ jobs:
       #     name: playwright-report
       #     path: playwright-report/
       #     retention-days: 30
-
 
   # slack_notify_succeeded:
   #   needs: [e2e-test]
