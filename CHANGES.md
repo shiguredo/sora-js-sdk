@@ -43,6 +43,10 @@
   - @miosakuma
 - [UPDATE] tailscale/github-action を v4 に上げる
   - @torikizi
+- [ADD] TypeScript 5.9 のビルドとテストを追加する
+  - @voluntas
+- [ADD] Node 25 でのビルドとテストを追加する
+  - @voluntas
 - [ADD] ステレオ音声の E2E テストを追加する
   - fake_stereo_audio のテストページを作成
   - フェイクメディア生成機能にステレオサポートを追加
