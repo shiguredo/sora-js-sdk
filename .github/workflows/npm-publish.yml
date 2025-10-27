@@ -47,7 +47,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Download Artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: sora-js-sdk-dist
           path: dist/
@@ -73,7 +73,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Download Artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: sora-js-sdk-dist
           path: dist/
