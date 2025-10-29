@@ -1,6 +1,7 @@
 import Sora, {
   type ConnectionPublisher,
   type SignalingNotifyMessage,
+  type SignalingEvent,
   type SoraConnection,
   type VideoCodecType,
 } from 'sora-js-sdk'
@@ -122,6 +123,7 @@ class SimulcastSendonlySoraClient {
     })
 
     this.connection.on('notify', this.onnotify.bind(this))
+    this.connection.on('signaling', this.onsignaling.bind(this))
   }
 
   async connect(stream: MediaStream) {
@@ -164,6 +166,38 @@ class SimulcastSendonlySoraClient {
       if (localVideoConnectionId) {
         localVideoConnectionId.textContent = `${event.connection_id}`
         console.log('[simulcast_sendonly] SignalingNotify self-connectionId', event.connection_id)
+      }
+    }
+  }
+
+  private onsignaling(event: SignalingEvent): void {
+    const timestamp = new Date().toISOString()
+    console.log('[simulcast_sendonly] signaling', timestamp, event.type, event.transportType)
+
+    const signalingLogElement = document.querySelector('#signaling-log')
+    if (signalingLogElement) {
+      const logEntry = document.createElement('div')
+      logEntry.textContent = `${timestamp} - ${event.type} (${event.transportType})`
+      logEntry.dataset.signalingType = event.type
+      logEntry.dataset.signalingTransportType = event.transportType
+      logEntry.dataset.signalingTimestamp = timestamp
+      signalingLogElement.appendChild(logEntry)
+    }
+
+    if (this.connection.pc) {
+      const pcStateElement = document.querySelector('#pc-state')
+      if (pcStateElement) {
+        const stateInfo = {
+          connectionState: this.connection.pc.connectionState,
+          iceConnectionState: this.connection.pc.iceConnectionState,
+          iceGatheringState: this.connection.pc.iceGatheringState,
+          signalingState: this.connection.pc.signalingState,
+        }
+        pcStateElement.textContent = JSON.stringify(stateInfo, null, 2)
+        pcStateElement.setAttribute('data-connection-state', stateInfo.connectionState || '')
+        pcStateElement.setAttribute('data-ice-connection-state', stateInfo.iceConnectionState || '')
+        pcStateElement.setAttribute('data-ice-gathering-state', stateInfo.iceGatheringState || '')
+        pcStateElement.setAttribute('data-signaling-state', stateInfo.signalingState || '')
       }
     }
   }

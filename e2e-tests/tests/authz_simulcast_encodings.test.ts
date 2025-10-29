@@ -25,11 +25,40 @@ test('authz simulcast encodings', async ({ page }) => {
 
   await page.click('#connect')
 
+  // シグナリングイベントの確認（connection_id より前に確認できる）
+  await page.waitForSelector('[data-signaling-type="send-connect"]', { timeout: 5000 })
+  console.log('send-connect event detected')
+
+  await page.waitForSelector('[data-signaling-type="onmessage-offer"]', { timeout: 10000 })
+  console.log('onmessage-offer event detected')
+
+  await page.waitForSelector('[data-signaling-type="send-answer"]', { timeout: 5000 })
+  console.log('send-answer event detected')
+
+  await page.waitForTimeout(3000)
+
+  // PeerConnection の状態確認
+  const pcState = await page.locator('#pc-state')
+  const connectionState = await pcState.getAttribute('data-connection-state')
+  const iceConnectionState = await pcState.getAttribute('data-ice-connection-state')
+  const signalingState = await pcState.getAttribute('data-signaling-state')
+  console.log(
+    `PeerConnection state: connection=${connectionState}, ice=${iceConnectionState}, signaling=${signalingState}`,
+  )
+
+  // connectionState が connected になるのを待つ
+  await page.waitForFunction(
+    () => {
+      const el = document.querySelector('#pc-state')
+      return el?.getAttribute('data-connection-state') === 'connected'
+    },
+    { timeout: 15000 },
+  )
+  console.log('PeerConnection connected')
+
   await page.waitForSelector('#connection-id:not(:empty)')
   const connectionId = await page.$eval('#connection-id', (el) => el.textContent)
   console.log(`connectionId=${connectionId}`)
-
-  await page.waitForTimeout(3000)
 
   await page.click('#get-stats')
 
