@@ -162,6 +162,7 @@ class SimulcastSendonlySoraClient {
       const localVideoConnectionId = document.querySelector('#connection-id')
       if (localVideoConnectionId) {
         localVideoConnectionId.textContent = `${event.connection_id}`
+        console.log('[simulcast_sendonly] connectionId', event.connection_id)
       }
     }
   }
