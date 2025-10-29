@@ -1,7 +1,7 @@
 import Sora, {
-  type SoraConnection,
   type ConnectionPublisher,
   type SignalingNotifyMessage,
+  type SoraConnection,
   type VideoCodecType,
 } from 'sora-js-sdk'
 import { generateJwt, getChannelId, setSoraJsSdkVersion } from '../src/misc'
@@ -162,7 +162,7 @@ class SimulcastSendonlySoraClient {
       const localVideoConnectionId = document.querySelector('#connection-id')
       if (localVideoConnectionId) {
         localVideoConnectionId.textContent = `${event.connection_id}`
-        console.log('[simulcast_sendonly] connectionId', event.connection_id)
+        console.log('[simulcast_sendonly] SignalingNotify self-connectionId', event.connection_id)
       }
     }
   }

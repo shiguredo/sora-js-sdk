@@ -155,7 +155,7 @@ class SoraClient {
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
         this.connectionId = event.connection_id
-        console.log('[sendonly_reconnect] connectionId', this.connectionId)
+        console.log('[sendonly_reconnect] SignalingNotify self-connectionId', this.connectionId)
       }
     }
   }
