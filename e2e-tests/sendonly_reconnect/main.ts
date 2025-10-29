@@ -77,7 +77,7 @@ class SoraClient {
   private debug = false
   private channelId: string
   private metadata: { access_token: string } = { access_token: '' }
-  private options: object = {}
+  private options: object = { connectionTimeout: 15000 }
 
   private sora!: SoraConnection
   private connection!: ConnectionPublisher

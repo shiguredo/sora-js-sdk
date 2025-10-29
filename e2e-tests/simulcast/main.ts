@@ -99,7 +99,14 @@ class SimulcastSendonlySoraClient {
     this.connection = this.sora.sendonly(
       this.channelId,
       { access_token: secretKey },
-      { audio: false, video: true, videoCodecType: 'VP8', videoBitRate: 1500, simulcast: true },
+      {
+        connectionTimeout: 15000,
+        audio: false,
+        video: true,
+        videoCodecType: 'VP8',
+        videoBitRate: 1500,
+        simulcast: true,
+      },
     )
 
     this.connection.on('notify', this.onnotify.bind(this))
@@ -159,7 +166,7 @@ class SimulcastRecvonlySoraClient {
     this.connection = this.sora.recvonly(
       this.channelId,
       { access_token: secretKey },
-      { simulcastRid: this.rid, simulcast: true },
+      { connectionTimeout: 15000, simulcastRid: this.rid, simulcast: true },
     )
 
     this.connection.on('notify', this.onnotify.bind(this))

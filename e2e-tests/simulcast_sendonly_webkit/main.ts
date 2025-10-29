@@ -115,6 +115,7 @@ class SimulcastSendonlySoraClient {
 
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.connection = this.sora.sendonly(this.channelId, undefined, {
+      connectionTimeout: 15000,
       audio: false,
       video: true,
       videoCodecType: this.videoCodecType,

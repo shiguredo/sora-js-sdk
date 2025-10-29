@@ -47,6 +47,7 @@ class SoraClient {
     this.metadata = { access_token: secretKey }
 
     this.options = {
+      connectionTimeout: 15000,
       audio: true,
       video: true,
       simulcast: true,

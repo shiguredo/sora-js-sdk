@@ -75,7 +75,7 @@ class SimulcastRecvonlySoraClient {
     this.connection = this.sora.recvonly(
       this.channelId,
       { access_token: secretKey },
-      { simulcast: true },
+      { connectionTimeout: 15000, simulcast: true },
     )
 
     this.connection.on('notify', this.onnotify.bind(this))

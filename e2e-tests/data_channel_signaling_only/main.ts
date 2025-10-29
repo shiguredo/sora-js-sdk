@@ -78,6 +78,7 @@ class SoraClient {
   private channelId: string
   private metadata: { access_token: string }
   private options: ConnectionOptions = {
+    connectionTimeout: 15000,
     dataChannelSignaling: true,
     ignoreDisconnectWebSocket: true,
   }

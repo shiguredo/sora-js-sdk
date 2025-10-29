@@ -81,6 +81,7 @@ class SoraClient {
 
     this.sora = Sora.connection(signalingUrl, this.debug)
 
+    this.options = { connectionTimeout: 15000 }
     if (this.videoCodecType !== undefined) {
       this.options = { ...this.options, videoCodecType: this.videoCodecType }
     }

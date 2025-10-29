@@ -77,7 +77,7 @@ class SoraClient {
     this.channelId = channelId
 
     this.metadata = { access_token: secretKey }
-    this.options = {}
+    this.options = { connectionTimeout: 15000 }
 
     if (videoCodecType !== undefined) {
       this.options = { ...this.options, videoCodecType: videoCodecType }
