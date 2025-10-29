@@ -66,7 +66,7 @@ jobs:
           hostname: gha-${{ github.run_id }}-${{ github.run_number }}
           timeout: 2m
           retry: 5
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
