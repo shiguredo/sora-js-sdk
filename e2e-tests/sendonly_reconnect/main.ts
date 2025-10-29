@@ -1,11 +1,10 @@
-import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
-
 import Sora, {
-  type SignalingNotifyMessage,
-  type SignalingEvent,
   type ConnectionPublisher,
+  type SignalingEvent,
+  type SignalingNotifyMessage,
   type SoraConnection,
 } from 'sora-js-sdk'
+import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
@@ -156,20 +155,20 @@ class SoraClient {
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
         this.connectionId = event.connection_id
-        console.log('[connect] connectionId', this.connectionId)
+        console.log('[sendonly_reconnect] connectionId', this.connectionId)
       }
     }
   }
 
   // 切断イベントのハンドラ
   private async onDisconnect(): Promise<void> {
-    console.log('[disconnect] 切断を検知しました')
-    console.log('[disconnect] connectionId', this.connectionId)
+    console.log('[sendonly_reconnect] 切断を検知しました')
+    console.log('[sendonly_reconnect] connectionId', this.connectionId)
 
     this.connectionId = null
 
     if (this.autoReconnect && this.mediaStream) {
-      console.log('[reconnect] 再接続を試みています...')
+      console.log('[sendonly_reconnect] 再接続を試みています...')
       // 少し待機してから再接続
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
@@ -179,13 +178,13 @@ class SoraClient {
       try {
         // 保存したストリームで再接続
         await this.connection.connect(this.mediaStream)
-        console.log('[reconnect] 再接続に成功しました')
+        console.log('[sendonly_reconnect] 再接続に成功しました')
         const reconnectLogElement = document.querySelector('#reconnect-log')
         if (reconnectLogElement) {
           reconnectLogElement.textContent = 'Success'
         }
       } catch (error) {
-        console.error('[reconnect] 再接続に失敗しました', error)
+        console.error('[sendonly_reconnect] 再接続に失敗しました', error)
         const reconnectLogElement = document.querySelector('#reconnect-log')
         if (reconnectLogElement) {
           reconnectLogElement.textContent = 'Failed'
@@ -199,7 +198,7 @@ class SoraClient {
     // 切断 API を実行したタイミングで connectionId をクリアする
     const connectionIdElement = document.querySelector('#connection-id')
     if (connectionIdElement) {
-      console.log('[disconnect] clear connectionId', connectionIdElement)
+      console.log('[sendonly_reconnect] clear connectionId', connectionIdElement)
       connectionIdElement.textContent = ''
     }
 
@@ -225,7 +224,7 @@ class SoraClient {
   // E2E テスト用のコード
   private onSignaling(event: SignalingEvent): void {
     if (event.type === 'onmessage-switched') {
-      console.log('[signaling]', event.type, event.transportType)
+      console.log('[sendonly_reconnect]', event.type, event.transportType)
     }
   }
 }
