@@ -44,7 +44,7 @@ jobs:
       - run: pnpm exec playwright install webkit --with-deps
       - run: pnpm exec playwright test --project="WebKit" e2e-tests/tests/webkit.test.ts
         env:
-          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
+          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
       #   if: always()
       #   with:
