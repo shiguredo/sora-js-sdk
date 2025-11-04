@@ -171,8 +171,8 @@ limitations under the License.
 
 - [WebRTC Load Testing Tool Zakuro](https://github.com/shiguredo/zakuro)
   - Sora 専用負荷試験ツール
-- [WebRTC Stats Collector Kohaku](https://github.com/shiguredo/kohaku)
-  - Sora 専用統計収集ツール
+- [WebRTC Stats Analyzer Kohaku](https://github.com/shiguredo/kohaku)
+  - Sora 専用統計解析ツール
 - [Recording Composition Tool Hisui](https://github.com/shiguredo/hisui)
   - Sora 専用録画ファイル合成ツール
 - [Audio Streaming Gateway Suzu](https://github.com/shiguredo/suzu)
