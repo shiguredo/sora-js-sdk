@@ -1,5 +1,5 @@
 import Sora, {
-  type ConnectionBase,
+  type ConnectionPublisher,
   type ReconnectErrorEvent,
   type ReconnectedEvent,
   type ReconnectingEvent,
@@ -65,11 +65,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       let statsHtml = ''
       const statsReportJson: Record<string, unknown>[] = []
       for (const report of statsReport.values()) {
-        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
+        // outbound-rtp または inbound-rtp かつ video のみを表示
+        if (
+          (report.type !== 'outbound-rtp' && report.type !== 'inbound-rtp') ||
+          report.kind !== 'video'
+        ) {
+          continue
+        }
+        statsHtml += `<h3>Type: ${report.type} (video)</h3><ul>`
         const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
         for (const [key, value] of Object.entries(report)) {
           if (key !== 'type' && key !== 'id') {
-            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
+            // オブジェクトの場合は JSON.stringify で表示
+            const displayValue =
+              typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : value
+            statsHtml += `<li><strong>${key}:</strong> ${displayValue}</li>`
             reportJson[key] = value
           }
         }
@@ -77,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         statsReportJson.push(reportJson)
       }
       statsDiv.innerHTML = statsHtml
-      // データ属性としても保存（オプション）
+      // データ属性としても保存（テスト用）
       statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
     }
   })
@@ -106,8 +116,7 @@ class SoraClient {
   }
 
   private sora!: SoraConnection
-  public connection!: ConnectionBase
-  private mediaStream?: MediaStream
+  public connection: ConnectionPublisher
 
   private signalingUrl: string
   private secretKey: string
@@ -145,9 +154,7 @@ class SoraClient {
   }
 
   async connect(stream: MediaStream): Promise<void> {
-    // MediaStream を保存して再接続時に使用
-    this.mediaStream = stream
-    await (this.connection as any).connect(stream)
+    await this.connection.connect(stream)
 
     const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
     if (videoElement !== null) {
