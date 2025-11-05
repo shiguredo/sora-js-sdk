@@ -437,8 +437,12 @@ export type Callbacks = {
 export interface ReconnectingEvent extends Event {
   // 現在の試行回数 (1 から開始)
   readonly attempt: number
+  // 最大試行回数
+  readonly maxAttempts: number
   // 次の再接続までの待機時間 (ms)
   readonly delay: number
+  // 最後のエラー内容
+  readonly lastError?: string
 }
 
 // 再接続成功時に発火するイベント
