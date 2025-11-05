@@ -1,9 +1,4 @@
-import type {
-  AutoReconnectorCallbacks,
-  ReconnectErrorEvent,
-  ReconnectedEvent,
-  ReconnectingEvent,
-} from './types'
+import type { ReconnectErrorEvent, ReconnectedEvent, ReconnectingEvent } from './types'
 
 const DEFAULT_MAX_ATTEMPTS = 8
 const DEFAULT_RECONNECT_DELAY = 1000
@@ -13,7 +8,7 @@ const DEFAULT_MAX_DELAY = 30000
 // 自動再接続処理を管理するクラス
 export class AutoReconnector {
   // ConnectionBase から受け取るコールバック群
-  private readonly callbacks: AutoReconnectorCallbacks
+  private readonly callbacks: Callbacks
   // 最大試行回数
   private readonly maxAttempts: number
   // 初期遅延
@@ -36,7 +31,7 @@ export class AutoReconnector {
   private active = false
 
   constructor(
-    callbacks: AutoReconnectorCallbacks,
+    callbacks: Callbacks,
     options?: {
       maxAttempts?: number
       reconnectDelay?: number
@@ -150,4 +145,19 @@ export class AutoReconnector {
       lastError: this.lastError,
     } as ReconnectErrorEvent
   }
+}
+
+type Callbacks = {
+  // 再接続試行ごとに呼び出す
+  reconnect: (attempt: number) => Promise<void>
+  // 再接続を開始する際に通知する
+  fireReconnecting: (event: ReconnectingEvent) => void
+  // 再接続に成功した際に通知する
+  fireReconnected: (event: ReconnectedEvent) => void
+  // 再接続に失敗し、これ以上試行しない場合に通知する
+  fireReconnectError: (event: ReconnectErrorEvent) => void
+  // 再接続を続けてよいかどうか判定する。false の場合試行を終了する
+  shouldContinue: () => boolean
+  // MediaStream など再接続不可条件を検知した際に呼び出す
+  handleReconnectAbort: () => void
 }
