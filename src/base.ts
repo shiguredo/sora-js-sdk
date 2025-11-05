@@ -196,6 +196,26 @@ export default class ConnectionBase {
     [key in string]?: RTCDataChannel
   }
   /**
+   * 自動再接続を有効化するかどうか
+   */
+  private autoReconnect: boolean
+  /**
+   * 最大再接続試行回数
+   */
+  private maxReconnectAttempts: number
+  /**
+   * 再接続待機時間
+   */
+  private reconnectDelay: number
+  /**
+   * 再接続時の指数バックオフ係数
+   */
+  private reconnectBackoff: number
+  /**
+   * 再接続待機時間の上限
+   */
+  private maxReconnectDelay: number
+  /**
    * 初回シグナリング接続時のタイムアウトに使用するタイムアウト時間(デフォルト 60000ms)
    */
   private connectionTimeout: number
@@ -282,6 +302,16 @@ export default class ConnectionBase {
     if (typeof this.options.signalingCandidateTimeout === 'number') {
       this.signalingCandidateTimeout = this.options.signalingCandidateTimeout
     }
+    this.autoReconnect = this.options.autoReconnect === true
+    this.options.autoReconnect = this.autoReconnect
+    this.maxReconnectAttempts = this.normalizeReconnectAttempts(this.options.maxReconnectAttempts)
+    this.options.maxReconnectAttempts = this.maxReconnectAttempts
+    this.reconnectDelay = this.normalizeReconnectDelay(this.options.reconnectDelay)
+    this.options.reconnectDelay = this.reconnectDelay
+    this.reconnectBackoff = this.normalizeReconnectBackoff(this.options.reconnectBackoff)
+    this.options.reconnectBackoff = this.reconnectBackoff
+    this.maxReconnectDelay = this.normalizeMaxReconnectDelay(this.options.maxReconnectDelay)
+    this.options.maxReconnectDelay = this.maxReconnectDelay
     this.constraints = null
     this.debug = debug
     this.simulcast = false
@@ -828,6 +858,62 @@ export default class ConnectionBase {
     this.contactSignalingUrl = ''
     this.connectedSignalingUrl = ''
     this.clearConnectionTimeout()
+  }
+
+  private normalizeReconnectAttempts(value: unknown): number {
+    const defaultValue = 8
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return defaultValue
+    }
+    if (value < 1) {
+      return 1
+    }
+    if (value > 64) {
+      return 64
+    }
+    return Math.floor(value)
+  }
+
+  private normalizeReconnectDelay(value: unknown): number {
+    const defaultValue = 1000
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return defaultValue
+    }
+    if (value < 0) {
+      return 0
+    }
+    if (value > 300000) {
+      return 300000
+    }
+    return Math.floor(value)
+  }
+
+  private normalizeReconnectBackoff(value: unknown): number {
+    const defaultValue = 2.0
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return defaultValue
+    }
+    if (value < 1.0) {
+      return 1.0
+    }
+    if (value > 10.0) {
+      return 10.0
+    }
+    return value
+  }
+
+  private normalizeMaxReconnectDelay(value: unknown): number {
+    const defaultValue = 30000
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return defaultValue
+    }
+    if (value < 0) {
+      return 0
+    }
+    if (value > 300000) {
+      return 300000
+    }
+    return Math.floor(value)
   }
 
   /**
