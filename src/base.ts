@@ -1085,9 +1085,9 @@ export default class ConnectionBase {
   /**
    * 再接続時に PeerConnection を再構成する共通処理
    *
-  * @param signalingMessage - 再接続で受信した offer メッセージ
-  * @param stream - publisher ロールで再利用する送信 MediaStream
-  */
+   * @param signalingMessage - 再接続で受信した offer メッセージ
+   * @param stream - publisher ロールで再利用する送信 MediaStream
+   */
   private async reconnectPeerConnection(
     signalingMessage: SignalingOfferMessage,
     stream: MediaStream | null,

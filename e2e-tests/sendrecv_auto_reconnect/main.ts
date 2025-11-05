@@ -1,5 +1,5 @@
 import Sora, {
-  type ConnectionPublisher,
+  type ConnectionBase,
   type ReconnectErrorEvent,
   type ReconnectedEvent,
   type ReconnectingEvent,
@@ -7,12 +7,12 @@ import Sora, {
   type SignalingNotifyMessage,
   type SoraConnection,
 } from 'sora-js-sdk'
-import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
+import { setSoraJsSdkVersion } from '../src/misc'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
+  const _channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
+  const _channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
   const apiUrl = import.meta.env.VITE_TEST_API_URL
 
@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await client.disconnect()
     }
 
-    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+    // const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+    const channelId = 'sora'
 
     client = new SoraClient(signalingUrl, channelId, secretKey, apiUrl)
     // テスト用にグローバルに公開
@@ -97,20 +98,20 @@ class SoraClient {
   private options: object = {
     connectionTimeout: 15000,
     autoReconnect: true,
-    maxReconnectAttempts: 3,
+    maxReconnectAttempts: 10,
     reconnectDelay: 1000,
-    reconnectBackoff: 1.5,
+    reconnectBackoff: 2.0,
     maxReconnectDelay: 5000,
     dataChannelSignaling: false,
   }
 
   private sora!: SoraConnection
-  public connection!: ConnectionPublisher
+  public connection!: ConnectionBase
+  private mediaStream?: MediaStream
 
   private signalingUrl: string
   private secretKey: string
   private apiUrl: string
-  private mediaStream: MediaStream | null = null
 
   private connectionId: string | null = null
 
@@ -128,9 +129,11 @@ class SoraClient {
     // access_token を指定する metadata の生成
     this.metadata = { access_token: this.secretKey }
 
-    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
+    this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onNotify.bind(this))
     this.connection.on('disconnect', this.onDisconnect.bind(this))
+    this.connection.on('track', this.onTrack.bind(this))
+    this.connection.on('removetrack', this.onRemoveTrack.bind(this))
 
     // 自動再接続イベントのハンドラを追加
     this.connection.on('reconnecting', this.onReconnecting.bind(this))
@@ -144,7 +147,7 @@ class SoraClient {
   async connect(stream: MediaStream): Promise<void> {
     // MediaStream を保存して再接続時に使用
     this.mediaStream = stream
-    await this.connection.connect(stream)
+    await (this.connection as any).connect(stream)
 
     const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
     if (videoElement !== null) {
@@ -155,9 +158,16 @@ class SoraClient {
   async disconnect(): Promise<void> {
     await this.connection.disconnect()
 
-    const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
-    if (videoElement !== null) {
-      videoElement.srcObject = null
+    // ローカルビデオをクリア
+    const localVideoElement = document.querySelector<HTMLVideoElement>('#local-video')
+    if (localVideoElement !== null) {
+      localVideoElement.srcObject = null
+    }
+
+    // リモートビデオをすべてクリア
+    const remoteVideos = document.querySelector('#remote-videos')
+    if (remoteVideos) {
+      remoteVideos.innerHTML = ''
     }
   }
 
@@ -178,7 +188,7 @@ class SoraClient {
         connectionIdElement.textContent = event.connection_id
         this.connectionId = event.connection_id
         console.log(
-          '[sendonly_auto_reconnect] SignalingNotify self-connectionId',
+          '[sendrecv_auto_reconnect] SignalingNotify self-connectionId',
           this.connectionId,
         )
       }
@@ -187,8 +197,15 @@ class SoraClient {
 
   // 切断イベントのハンドラ
   private async onDisconnect(): Promise<void> {
-    console.log('[sendonly_auto_reconnect] 切断を検知しました')
-    console.log('[sendonly_auto_reconnect] connectionId', this.connectionId)
+    console.log('[sendrecv_auto_reconnect] 切断を検知しました')
+    console.log('[sendrecv_auto_reconnect] connectionId', this.connectionId)
+
+    // 切断時にリモートビデオをクリア
+    const remoteVideos = document.querySelector('#remote-videos')
+    if (remoteVideos) {
+      console.log('[sendrecv_auto_reconnect] Clearing remote videos on disconnect')
+      remoteVideos.innerHTML = ''
+    }
 
     // 自動再接続が有効な場合は SDK が自動的に再接続を処理する
     // ここでは手動での再接続処理は不要
@@ -199,7 +216,7 @@ class SoraClient {
   // 再接続開始時のハンドラ
   private onReconnecting(event: ReconnectingEvent): void {
     console.log(
-      `[sendonly_auto_reconnect] 再接続開始: 試行 ${event.attempt}回目, 遅延 ${event.delay}ms`,
+      `[sendrecv_auto_reconnect] 再接続開始: 試行 ${event.attempt}回目, 遅延 ${event.delay}ms`,
     )
 
     const statusElement = document.querySelector('#reconnect-status')
@@ -216,7 +233,7 @@ class SoraClient {
   // 再接続成功時のハンドラ
   private onReconnected(event: ReconnectedEvent): void {
     console.log(
-      `[sendonly_auto_reconnect] 再接続成功: 試行 ${event.attempt}回目, 総遅延 ${event.totalDelay}ms`,
+      `[sendrecv_auto_reconnect] 再接続成功: 試行 ${event.attempt}回目, 総遅延 ${event.totalDelay}ms`,
     )
 
     const statusElement = document.querySelector('#reconnect-status')
@@ -233,7 +250,7 @@ class SoraClient {
   // 再接続エラー時のハンドラ
   private onReconnectError(event: ReconnectErrorEvent): void {
     console.error(
-      `[sendonly_auto_reconnect] 再接続失敗: 試行 ${event.attempt}回目, エラー: ${event.lastError}`,
+      `[sendrecv_auto_reconnect] 再接続失敗: 試行 ${event.attempt}回目, エラー: ${event.lastError}`,
     )
 
     const statusElement = document.querySelector('#reconnect-status')
@@ -247,12 +264,67 @@ class SoraClient {
     }
   }
 
+  // track イベントのハンドラ
+  private onTrack(event: RTCTrackEvent): void {
+    console.log(
+      '[sendrecv_auto_reconnect] Track received:',
+      event.track.kind,
+      'id:',
+      event.track.id,
+    )
+
+    const stream = event.streams[0]
+    if (!stream) {
+      console.log('[sendrecv_auto_reconnect] No stream in track event')
+      return
+    }
+
+    console.log('[sendrecv_auto_reconnect] Stream ID:', stream.id)
+
+    const remoteVideoId = `remote-video-${stream.id}`
+    const remoteVideos = document.querySelector('#remote-videos')
+    if (remoteVideos) {
+      let remoteVideo = remoteVideos.querySelector<HTMLVideoElement>(`#${remoteVideoId}`)
+
+      if (!remoteVideo) {
+        console.log('[sendrecv_auto_reconnect] Creating new video element for stream:', stream.id)
+        remoteVideo = document.createElement('video')
+        remoteVideo.id = remoteVideoId
+        remoteVideo.style.border = '1px solid red'
+        remoteVideo.autoplay = true
+        remoteVideo.playsInline = true
+        remoteVideo.controls = true
+        remoteVideo.width = 320
+        remoteVideo.height = 240
+        remoteVideos.appendChild(remoteVideo)
+      } else {
+        console.log(
+          '[sendrecv_auto_reconnect] Updating existing video element for stream:',
+          stream.id,
+        )
+      }
+
+      // 常に srcObject を更新（再接続時の対応）
+      remoteVideo.srcObject = stream
+    }
+  }
+
+  // removetrack イベントのハンドラ
+  private onRemoveTrack(event: MediaStreamTrackEvent): void {
+    const target = event.target as MediaStream
+    const remoteVideo = document.querySelector(`#remote-video-${target.id}`)
+    if (remoteVideo) {
+      console.log('[sendrecv_auto_reconnect] Removing video:', target.id)
+      document.querySelector('#remote-videos')?.removeChild(remoteVideo)
+    }
+  }
+
   // E2E テスト側で実行した方が良い気がする
   async apiDisconnect(): Promise<void> {
     // 切断 API を実行したタイミングで connectionId をクリアする
     const connectionIdElement = document.querySelector('#connection-id')
     if (connectionIdElement) {
-      console.log('[sendonly_auto_reconnect] clear connectionId', connectionIdElement)
+      console.log('[sendrecv_auto_reconnect] clear connectionId', connectionIdElement)
       connectionIdElement.textContent = ''
     }
 
@@ -299,14 +371,14 @@ class SoraClient {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     console.log(
-      '[sendonly_auto_reconnect] WebSocket disconnected to simulate abnormal disconnection',
+      '[sendrecv_auto_reconnect] WebSocket disconnected to simulate abnormal disconnection',
     )
   }
 
   // E2E テスト用のコード
   private onSignaling(event: SignalingEvent): void {
     if (event.type === 'onmessage-switched') {
-      console.log('[sendonly_auto_reconnect]', event.type, event.transportType)
+      console.log('[sendrecv_auto_reconnect]', event.type, event.transportType)
     }
   }
 }

@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <link rel="icon" href="data:,">
-  <title>Sendonly Auto Reconnect test</title>
+  <title>Sendrecv Auto Reconnect test</title>
 </head>
 
 <body>
   <div class="container">
-    <h1>Sendonly Auto Reconnect test</h1>
+    <h1>Sendrecv Auto Reconnect test</h1>
     <div id="sora-js-sdk-version"></div>
     <label for="channel-name">チャンネル名:</label>
-    <input type="text" id="channel-name" name="channel-name" value="sendonly-auto-reconnect"><br>
+    <input type="text" id="channel-name" name="channel-name" value="sendrecv-auto-reconnect"><br>
     <button id="connect">connect</button>
     <button id="disconnect-api">disconnect-api</button>
     <button id="abnormal-disconnect-api">abnormal-disconnect-api</button>
@@ -20,6 +20,9 @@
     <div id="connection-id"></div>
     <video id="local-video" autoplay="" playsinline="" controls="" muted=""
       style="width: 320px; height: 240px; border: 1px solid black;"></video>
+    <div style="display: flex;">
+      <div id="remote-videos"></div>
+    </div>
 
     <div id="reconnect-status"></div>
     <div id="reconnect-attempt"></div>
