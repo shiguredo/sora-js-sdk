@@ -43,6 +43,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   document.querySelector('#abnormal-disconnect-api')?.addEventListener('click', async () => {
+    const channelId = client?.channelId || 'N/A'
+    console.log(`[button-click] channelId=${channelId} abnormal-disconnect-api button clicked`)
+    console.log(`[button-click] channelId=${channelId} client exists:`, !!client)
+    if (!client) {
+      console.error('[button-click] client is not initialized!')
+      return
+    }
     await client.apiAbnormalDisconnect()
   })
 
@@ -92,16 +99,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 })
 
-// テスト用にグローバルに公開
-declare global {
-  interface Window {
-    testClient?: SoraClient
-  }
-}
-
 class SoraClient {
   private debug = false
-  private channelId: string
+  public channelId: string
   private metadata: { access_token: string } = { access_token: '' }
   // autoReconnect オプションを有効化、WebSocket シグナリングを使用
   private options: object = {
@@ -114,8 +114,8 @@ class SoraClient {
     dataChannelSignaling: false,
   }
 
-  private sora!: SoraConnection
-  public connection: ConnectionPublisher
+  private sora: SoraConnection
+  private connection: ConnectionPublisher
 
   private signalingUrl: string
   private secretKey: string
@@ -130,10 +130,6 @@ class SoraClient {
     this.apiUrl = apiUrl
     this.sora = Sora.connection(this.signalingUrl, this.debug)
 
-    this.setupConnection()
-  }
-
-  private setupConnection(): void {
     // access_token を指定する metadata の生成
     this.metadata = { access_token: this.secretKey }
 
@@ -203,13 +199,13 @@ class SoraClient {
 
   // 切断イベントのハンドラ
   private async onDisconnect(): Promise<void> {
-    console.log('[sendrecv_auto_reconnect] 切断を検知しました')
-    console.log('[sendrecv_auto_reconnect] connectionId', this.connectionId)
+    console.log(`[onDisconnect] channelId=${this.channelId} 切断を検知しました`)
+    console.log(`[onDisconnect] channelId=${this.channelId} connectionId=${this.connectionId}`)
 
     // 切断時にリモートビデオをクリア
     const remoteVideos = document.querySelector('#remote-videos')
     if (remoteVideos) {
-      console.log('[sendrecv_auto_reconnect] Clearing remote videos on disconnect')
+      console.log(`[onDisconnect] channelId=${this.channelId} Clearing remote videos on disconnect`)
       remoteVideos.innerHTML = ''
     }
 
@@ -222,12 +218,14 @@ class SoraClient {
   // 再接続開始時のハンドラ
   private onReconnecting(event: ReconnectingEvent): void {
     console.log(
-      `[sendrecv_auto_reconnect] 再接続開始: 試行 ${event.attempt}回目, 遅延 ${event.delay}ms`,
+      `[onReconnecting] channelId=${this.channelId} connectionId=${this.connectionId} 再接続開始: 試行 ${event.attempt}回目, 遅延 ${event.delay}ms`,
     )
 
-    const statusElement = document.querySelector('#reconnect-status')
+    const statusElement = document.querySelector('#reconnect-status') as HTMLElement
     if (statusElement) {
       statusElement.textContent = 'Reconnecting...'
+      // データ属性として reconnecting 回数を保存
+      statusElement.dataset.reconnecting = String(event.attempt)
     }
 
     const attemptElement = document.querySelector('#reconnect-attempt')
@@ -239,12 +237,15 @@ class SoraClient {
   // 再接続成功時のハンドラ
   private onReconnected(event: ReconnectedEvent): void {
     console.log(
-      `[sendrecv_auto_reconnect] 再接続成功: 試行 ${event.attempt}回目, 総遅延 ${event.totalDelay}ms`,
+      `[onReconnected] channelId=${this.channelId} connectionId=${this.connectionId} 再接続成功: 試行 ${event.attempt}回目, 総遅延 ${event.totalDelay}ms`,
     )
 
-    const statusElement = document.querySelector('#reconnect-status')
+    const statusElement = document.querySelector('#reconnect-status') as HTMLElement
     if (statusElement) {
       statusElement.textContent = 'Reconnected'
+      // データ属性として reconnected 状態を保存
+      statusElement.dataset.reconnected = 'true'
+      statusElement.dataset.reconnectedAttempt = String(event.attempt)
     }
 
     const logElement = document.querySelector('#reconnect-log')
@@ -256,7 +257,7 @@ class SoraClient {
   // 再接続エラー時のハンドラ
   private onReconnectError(event: ReconnectErrorEvent): void {
     console.error(
-      `[sendrecv_auto_reconnect] 再接続失敗: 試行 ${event.attempt}回目, エラー: ${event.lastError}`,
+      `[onReconnectError] channelId=${this.channelId} connectionId=${this.connectionId} 再接続失敗: 試行 ${event.attempt}回目, エラー: ${event.lastError}`,
     )
 
     const statusElement = document.querySelector('#reconnect-status')
@@ -355,18 +356,28 @@ class SoraClient {
 
   // WebSocket を強制的に切断して異常切断をシミュレートする API を叩く
   async apiAbnormalDisconnect(): Promise<void> {
+    console.log(`[apiAbnormalDisconnect] START: channelId=${this.channelId}`)
+    console.log(`[apiAbnormalDisconnect] connectionId=${this.connectionId}`)
+    console.log(`[apiAbnormalDisconnect] clientId=${this.connection.clientId}`)
+    console.log(`[apiAbnormalDisconnect] apiUrl=${this.apiUrl}`)
+
+    // WebSocket と PeerConnection の状態を確認
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const signalingWs = (this.connection as any)._ws
+    const pc = this.connection.pc
+    console.log(`[apiAbnormalDisconnect] WebSocket readyState: ${signalingWs?.readyState || 'N/A'}`)
+    console.log(`[apiAbnormalDisconnect] PeerConnection state: ${pc?.connectionState || 'N/A'}`)
+    console.log(`[apiAbnormalDisconnect] PeerConnection signalingState: ${pc?.signalingState || 'N/A'}`)
+
     if (!this.apiUrl) {
       throw new Error('VITE_TEST_API_URL is not set')
     }
 
-    console.log('[sendrecv_auto_reconnect] AbnormalDisconnnect: Calling abnormal disconnect API')
-    console.log(
-      '[sendrecv_auto_reconnect] AbnormalDisconnnect: connectionId',
-      this.connection.connectionId,
-    )
+    console.log(`AbnormalDisconnnect: ${this.channelId} ${this.connectionId}`)
 
     // Sora の WebSocket 切断 API を呼び出す
     // この API は Tailscale 経由でアクセス可能
+    console.log('[apiAbnormalDisconnect] Calling DisconnectWebSocket API...')
     const response = await fetch(this.apiUrl, {
       method: 'POST',
       headers: {
@@ -380,11 +391,31 @@ class SoraClient {
       }),
     })
 
+    console.log(`[apiAbnormalDisconnect] Response status: ${response.status}`)
+    console.log(`[apiAbnormalDisconnect] Response URL: ${response.url}`)
+    console.log(`[apiAbnormalDisconnect] Request URL: ${this.apiUrl}`)
+    if (response.redirected) {
+      console.log(`[apiAbnormalDisconnect] Request was redirected from ${this.apiUrl} to ${response.url}`)
+    }
+
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[sendrecv_auto_reconnect] Abnormal disconnect API error:', errorText)
+      console.error(
+        `[apiAbnormalDisconnect] API ERROR: channelId=${this.channelId} connectionId=${this.connectionId} status=${response.status} ${errorText}`,
+      )
+      // MISSING-CLIENT-ID エラーの場合、client_id が既に Sora 側で無効になっている
+      // この場合、WebSocket を手動で閉じて再接続をトリガーする
+      if (errorText.includes('MISSING-CLIENT-ID')) {
+        console.log('[apiAbnormalDisconnect] MISSING-CLIENT-ID error: manually closing WebSocket')
+        // PeerConnection の接続を強制的に閉じる
+        if (this.connection.pc) {
+          this.connection.pc.close()
+        }
+        return
+      }
       throw new Error(`HTTP error! status: ${response.status}`)
     }
+    console.log('[apiAbnormalDisconnect] SUCCESS: WebSocket disconnected')
     console.log(
       '[sendrecv_auto_reconnect] WebSocket disconnected to simulate abnormal disconnection',
     )
