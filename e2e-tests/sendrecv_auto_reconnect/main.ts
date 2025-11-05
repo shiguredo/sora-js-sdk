@@ -7,12 +7,12 @@ import Sora, {
   type SignalingNotifyMessage,
   type SoraConnection,
 } from 'sora-js-sdk'
-import { setSoraJsSdkVersion } from '../src/misc'
+import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const _channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const _channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
+  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
+  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
   const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
   const apiUrl = import.meta.env.VITE_TEST_API_URL
 
@@ -25,8 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await client.disconnect()
     }
 
-    // const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
-    const channelId = 'sora'
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
 
     client = new SoraClient(signalingUrl, channelId, secretKey, apiUrl)
     // テスト用にグローバルに公開
