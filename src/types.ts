@@ -461,6 +461,21 @@ export interface ReconnectErrorEvent extends Event {
   readonly lastError?: string
 }
 
+export interface AutoReconnectorCallbacks {
+  // 再接続試行ごとに呼び出す
+  reconnect: (attempt: number) => Promise<void>
+  // 再接続を開始する際に通知する
+  fireReconnecting: (event: ReconnectingEvent) => void
+  // 再接続に成功した際に通知する
+  fireReconnected: (event: ReconnectedEvent) => void
+  // 再接続に失敗し、これ以上試行しない場合に通知する
+  fireReconnectError: (event: ReconnectErrorEvent) => void
+  // 再接続を続けてよいかどうか判定する。false の場合試行を終了する
+  shouldContinue: () => boolean
+  // MediaStream など再接続不可条件を検知した際に呼び出す
+  handleReconnectAbort: () => void
+}
+
 export type Browser = 'edge' | 'chrome' | 'safari' | 'opera' | 'firefox' | null
 
 export type TransportType = typeof TRANSPORT_TYPE_WEBSOCKET | typeof TRANSPORT_TYPE_DATACHANNEL
