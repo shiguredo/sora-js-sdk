@@ -307,6 +307,9 @@ export default class ConnectionBase {
       signaling: (): void => {},
       message: (): void => {},
       datachannel: (): void => {},
+      reconnecting: (): void => {},
+      reconnected: (): void => {},
+      reconnecterror: (): void => {},
     }
     this.authMetadata = null
     this.connectionTimeoutTimerId = 0
