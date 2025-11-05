@@ -57,13 +57,8 @@ test('sendrecv_auto_reconnect with abnormal disconnection API', async ({ browser
   // レース対策
   await page1.waitForTimeout(3000)
 
-  // Page1 側から Sora の異常切断 API を呼び出す
-  await page1.evaluate(() => {
-    if ((window as any).testClient) {
-      return (window as any).testClient.apiAbnormalDisconnect()
-    }
-    throw new Error('Client not available')
-  })
+  // Page1 側から abnormal disconnect ボタンを押す
+  await page1.click('#abnormal-disconnect-api')
 
   // Page1 の再接続中の状態を確認
   await page1.waitForSelector('#reconnect-status:has-text("Reconnecting...")', { timeout: 10000 })

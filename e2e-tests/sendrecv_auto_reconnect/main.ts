@@ -345,7 +345,7 @@ class SoraClient {
       },
       body: JSON.stringify({
         channel_id: this.channelId,
-        connection_id: this.connection.connectionId,
+        connection_id: this.connectionId,
       }),
     })
     if (!response.ok) {
@@ -358,6 +358,12 @@ class SoraClient {
     if (!this.apiUrl) {
       throw new Error('VITE_TEST_API_URL is not set')
     }
+
+    console.log('[sendrecv_auto_reconnect] AbnormalDisconnnect: Calling abnormal disconnect API')
+    console.log(
+      '[sendrecv_auto_reconnect] AbnormalDisconnnect: connectionId',
+      this.connection.connectionId,
+    )
 
     // Sora の WebSocket 切断 API を呼び出す
     // この API は Tailscale 経由でアクセス可能
@@ -373,7 +379,10 @@ class SoraClient {
         code: 1050,
       }),
     })
+
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error('[sendrecv_auto_reconnect] Abnormal disconnect API error:', errorText)
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     console.log(
