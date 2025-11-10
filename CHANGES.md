@@ -25,6 +25,9 @@
   - @voluntas
 - [ADD] `DATA_CHANNEL_LABEL_RPC` 定数を追加する
   - @voluntas
+- [ADD] `simulcastRequestRid` オプションを追加する
+  - `none` / `r0` / `r1` / `r2` / `auto` が指定できる
+  - @voluntas
 
 ### misc
 

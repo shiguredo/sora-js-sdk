@@ -633,9 +633,10 @@ test('createSignalingMessage simulcastRid', () => {
     simulcast_rid: options.simulcastRid,
   })
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    expectedMessage,
-  )
+  expect(createSignalingMessage(sdp, 'recvonly', channelId, undefined, options, false)).toEqual({
+    ...expectedMessage,
+    role: 'recvonly',
+  })
 })
 
 test('createSignalingMessage simulcastRid: unknown string', () => {
@@ -644,9 +645,39 @@ test('createSignalingMessage simulcastRid: unknown string', () => {
     simulcastRid: '',
   }
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(createSignalingMessage(sdp, 'sendonly', channelId, undefined, options, false)).toEqual(
-    baseExpectedMessage,
-  )
+  expect(createSignalingMessage(sdp, 'recvonly', channelId, undefined, options, false)).toEqual({
+    ...baseExpectedMessage,
+    role: 'recvonly',
+  })
+})
+
+/**
+ * simulcastRequestRid test
+ */
+test('createSignalingMessage simulcastRequestRid', () => {
+  const options = {
+    simulcastRequestRid: 'r0',
+  }
+  const expectedMessage = Object.assign({}, baseExpectedMessage, {
+    simulcast_request_rid: options.simulcastRequestRid,
+  })
+  // @ts-expect-error option で指定されている型以外を引数に指定する
+  expect(createSignalingMessage(sdp, 'recvonly', channelId, undefined, options, false)).toEqual({
+    ...expectedMessage,
+    role: 'recvonly',
+  })
+})
+
+test('createSignalingMessage simulcastRequestRid: unknown string', () => {
+  // "none", "r0", "r1", "r2", "auto" 以外の場合は追加されない
+  const options = {
+    simulcastRequestRid: '',
+  }
+  // @ts-expect-error option で指定されている型以外を引数に指定する
+  expect(createSignalingMessage(sdp, 'recvonly', channelId, undefined, options, false)).toEqual({
+    ...baseExpectedMessage,
+    role: 'recvonly',
+  })
 })
 
 /**
