@@ -28,6 +28,7 @@ export type JSONType =
   | { [prop: string]: JSONType | undefined }
 
 export type SimulcastRid = 'r0' | 'r1' | 'r2'
+export type SimulcastRequestRid = 'none' | SimulcastRid | 'auto'
 
 export type SpotlightFocusRid = 'none' | SimulcastRid
 
@@ -93,6 +94,7 @@ export type SignalingConnectMessage = {
   spotlight_number?: number
   simulcast?: Simulcast
   simulcast_rid?: SimulcastRid
+  simulcast_request_rid?: SimulcastRequestRid
   audio: SignalingAudio
   video: SignalingVideo
   sdp: string
@@ -380,6 +382,7 @@ export type ConnectionOptions = {
   spotlightUnfocusRid?: SpotlightFocusRid
   simulcast?: boolean
   simulcastRid?: SimulcastRid
+  simulcastRequestRid?: SimulcastRequestRid
   clientId?: string
   // @deprecated このオプションは非推奨です。将来のバージョンで削除される可能性があります。
   timeout?: number
