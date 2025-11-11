@@ -21,3 +21,5 @@ dist/
 
 # Claude Code
 /.claude/
+
+docs/*.md

@@ -405,6 +405,18 @@ export type ConnectionOptions = {
 
   // ICE 候補をスキップする
   skipIceCandidateEvent?: boolean
+
+  // 再接続設定
+  // 自動再接続を有効化 (デフォルト: false)
+  autoReconnect?: boolean
+  // 最大再接続試行回数 (デフォルト: 8)
+  maxReconnectAttempts?: number
+  // 初回再接続遅延時間 (ms) (デフォルト: 1000)
+  reconnectDelay?: number
+  // 指数バックオフ係数 (デフォルト: 2.0)
+  reconnectBackoff?: number
+  // 最大再接続遅延時間 (ms) (デフォルト: 30000)
+  maxReconnectDelay?: number
 }
 
 export type Callbacks = {
@@ -419,6 +431,37 @@ export type Callbacks = {
   signaling: (event: SignalingEvent) => void
   message: (event: DataChannelMessageEvent) => void
   datachannel: (event: DataChannelEvent) => void
+  reconnecting: (event: ReconnectingEvent) => void
+  reconnected: (event: ReconnectedEvent) => void
+  reconnecterror: (event: ReconnectErrorEvent) => void
+}
+
+// 再接続開始時に発火するイベント
+export interface ReconnectingEvent extends Event {
+  // 現在の試行回数 (1 から開始)
+  readonly attempt: number
+  // 最大試行回数
+  readonly maxAttempts: number
+  // 次の再接続までの待機時間 (ms)
+  readonly delay: number
+  // 最後のエラー内容
+  readonly lastError?: string
+}
+
+// 再接続成功時に発火するイベント
+export interface ReconnectedEvent extends Event {
+  // 現在の試行回数 (1 から開始)
+  readonly attempt: number
+  // 最初の切断から再接続成功までの実際の経過時間 (ms)
+  readonly totalDelay: number
+}
+
+// 再接続エラー時に発火するイベント
+export interface ReconnectErrorEvent extends Event {
+  // 現在の試行回数 (1 から開始)
+  readonly attempt: number
+  // 最後のエラー内容
+  readonly lastError?: string
 }
 
 export type Browser = 'edge' | 'chrome' | 'safari' | 'opera' | 'firefox' | null

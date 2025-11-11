@@ -39,6 +39,8 @@ import type {
   JSONRPCRequest,
   JSONRPCResponse,
   JSONType,
+  ReconnectErrorEvent,
+  ReconnectedEvent,
   RPCOptions,
   SignalingCloseMessage,
   SignalingConnectMessage,
@@ -75,6 +77,7 @@ import {
   parseDataChannelEventData,
   trace,
 } from './utils'
+import { AutoReconnector } from './reconnect'
 
 declare global {
   interface Algorithm {
@@ -196,6 +199,32 @@ export default class ConnectionBase {
     [key in string]?: RTCDataChannel
   }
   /**
+   * 自動再接続を有効化するかどうか
+   */
+  private autoReconnect: boolean
+  /**
+   * 最大再接続試行回数
+   */
+  private maxReconnectAttempts: number
+  /**
+   * 再接続待機時間
+   */
+  private reconnectDelay: number
+  /**
+   * 再接続時の指数バックオフ係数
+   */
+  private reconnectBackoff: number
+  /**
+   * 再接続待機時間の上限
+   */
+  private maxReconnectDelay: number
+  /**
+   * 再接続に利用するコンテキスト
+   */
+  private reconnectContext: {
+    stream: MediaStream | null
+  } | null
+  /**
    * 初回シグナリング接続時のタイムアウトに使用するタイムアウト時間(デフォルト 60000ms)
    */
   private connectionTimeout: number
@@ -224,6 +253,14 @@ export default class ConnectionBase {
   private signalingOfferMessageDataChannels: {
     [key in string]?: SignalingOfferMessageDataChannel
   }
+  /**
+   * 自動再接続の制御クラス
+   */
+  private autoReconnector: AutoReconnector | null
+  /**
+   * 再接続処理が進行中かどうか
+   */
+  private reconnecting = false
   /**
    * イベントコールバックのリスト
    */
@@ -282,6 +319,16 @@ export default class ConnectionBase {
     if (typeof this.options.signalingCandidateTimeout === 'number') {
       this.signalingCandidateTimeout = this.options.signalingCandidateTimeout
     }
+    this.autoReconnect = this.options.autoReconnect === true
+    this.options.autoReconnect = this.autoReconnect
+    this.maxReconnectAttempts = this.normalizeReconnectAttempts(this.options.maxReconnectAttempts)
+    this.options.maxReconnectAttempts = this.maxReconnectAttempts
+    this.reconnectDelay = this.normalizeReconnectDelay(this.options.reconnectDelay)
+    this.options.reconnectDelay = this.reconnectDelay
+    this.reconnectBackoff = this.normalizeReconnectBackoff(this.options.reconnectBackoff)
+    this.options.reconnectBackoff = this.reconnectBackoff
+    this.maxReconnectDelay = this.normalizeMaxReconnectDelay(this.options.maxReconnectDelay)
+    this.options.maxReconnectDelay = this.maxReconnectDelay
     this.constraints = null
     this.debug = debug
     this.simulcast = false
@@ -307,6 +354,9 @@ export default class ConnectionBase {
       signaling: (): void => {},
       message: (): void => {},
       datachannel: (): void => {},
+      reconnecting: (): void => {},
+      reconnected: (): void => {},
+      reconnecterror: (): void => {},
     }
     this.authMetadata = null
     this.connectionTimeoutTimerId = 0
@@ -321,6 +371,9 @@ export default class ConnectionBase {
     this.signalingOfferMessageDataChannels = {}
     this.connectedSignalingUrl = ''
     this.contactSignalingUrl = ''
+    this.autoReconnector = null
+    this.reconnecting = false
+    this.reconnectContext = null
   }
 
   /**
@@ -584,6 +637,7 @@ export default class ConnectionBase {
    */
   private abendPeerConnectionState(title: SoraAbendTitle): void {
     this.clearMonitorIceConnectionStateChange()
+    this.stopAutoReconnection()
     // callback を止める
     if (this.pc) {
       this.pc.ondatachannel = null
@@ -647,6 +701,7 @@ export default class ConnectionBase {
    */
   private shutdown(params?: Record<string, unknown>): void {
     this.clearMonitorIceConnectionStateChange()
+    this.stopAutoReconnection()
     // callback を止める
     if (this.pc) {
       this.pc.ondatachannel = null
@@ -695,6 +750,15 @@ export default class ConnectionBase {
    * @param params - 切断時の状況を入れる Record
    */
   private async abend(title: SoraAbendTitle, params?: Record<string, unknown>): Promise<void> {
+    if (this.reconnecting) {
+      this.trace('AUTO RECONNECT', {
+        action: 'ignore abend during reconnection',
+        title,
+        params,
+      })
+      return
+    }
+    const reconnectStream = this.stream
     this.clearMonitorIceConnectionStateChange()
     // callback を止める
     if (this.pc) {
@@ -794,7 +858,8 @@ export default class ConnectionBase {
     }
     const event = this.soraCloseEvent('abend', title, params)
     this.writeSoraTimelineLog('disconnect-abend', event)
-    this.callbacks.disconnect(this.soraCloseEvent('abend', title, params))
+    this.callbacks.disconnect(event)
+    this.startAutoReconnection(event, reconnectStream)
   }
 
   /**
@@ -825,6 +890,267 @@ export default class ConnectionBase {
     this.contactSignalingUrl = ''
     this.connectedSignalingUrl = ''
     this.clearConnectionTimeout()
+    this.autoReconnector = null
+    this.reconnecting = false
+    this.reconnectContext = null
+  }
+
+  private normalizeReconnectAttempts(value: unknown): number {
+    const defaultValue = 8
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return defaultValue
+    }
+    if (value < 1) {
+      return 1
+    }
+    if (value > 64) {
+      return 64
+    }
+    return Math.floor(value)
+  }
+
+  private normalizeReconnectDelay(value: unknown): number {
+    const defaultValue = 1000
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return defaultValue
+    }
+    if (value < 0) {
+      return 0
+    }
+    if (value > 300000) {
+      return 300000
+    }
+    return Math.floor(value)
+  }
+
+  private normalizeReconnectBackoff(value: unknown): number {
+    const defaultValue = 2.0
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return defaultValue
+    }
+    if (value < 1.0) {
+      return 1.0
+    }
+    if (value > 10.0) {
+      return 10.0
+    }
+    return value
+  }
+
+  private normalizeMaxReconnectDelay(value: unknown): number {
+    const defaultValue = 30000
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return defaultValue
+    }
+    if (value < 0) {
+      return 0
+    }
+    if (value > 300000) {
+      return 300000
+    }
+    return Math.floor(value)
+  }
+
+  private startAutoReconnection(disconnectEvent: SoraCloseEvent, stream: MediaStream | null): void {
+    if (!this.autoReconnect) {
+      return
+    }
+    if (this.reconnecting) {
+      return
+    }
+    const reconnector = this.createAutoReconnector()
+    const lastError = disconnectEvent.reason ?? disconnectEvent.title
+    if (lastError) {
+      reconnector.setLastError(lastError)
+    }
+    this.reconnectContext = {
+      stream,
+    }
+    this.autoReconnector = reconnector
+    this.reconnecting = true
+    this.autoReconnector.start()
+  }
+
+  private createAutoReconnector(): AutoReconnector {
+    return new AutoReconnector(
+      {
+        reconnect: (attempt) => this.tryAutoReconnect(attempt),
+        fireReconnecting: (event) => this.callbacks.reconnecting(event),
+        fireReconnected: (event) => this.handleAutoReconnected(event),
+        fireReconnectError: (event) => this.handleAutoReconnectError(event),
+        shouldContinue: () => this.shouldContinueAutoReconnection(),
+        handleReconnectAbort: () => this.handleAutoReconnectAbort(),
+      },
+      {
+        maxAttempts: this.maxReconnectAttempts,
+        reconnectDelay: this.reconnectDelay,
+        reconnectBackoff: this.reconnectBackoff,
+        maxReconnectDelay: this.maxReconnectDelay,
+      },
+    )
+  }
+
+  private async tryAutoReconnect(attempt: number): Promise<void> {
+    if (!this.reconnectContext) {
+      throw new Error('AUTO_RECONNECT_NO_CONTEXT')
+    }
+    const { stream } = this.reconnectContext
+    this.trace('AUTO RECONNECT', {
+      action: 'attempt start',
+      attempt,
+      role: this.role,
+      stream: stream ? stream.id : null,
+    })
+    const requiresStream =
+      this.role === SIGNALING_ROLE_SENDONLY || this.role === SIGNALING_ROLE_SENDRECV
+    if (requiresStream && !stream) {
+      this.trace('AUTO RECONNECT', {
+        action: 'abort due to missing stream',
+        attempt,
+      })
+      this.handleAutoReconnectAbort()
+      throw new Error('AUTO_RECONNECT_STREAM_UNAVAILABLE')
+    }
+    // シグナリングから再接続をやり直す
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)
+    const signalingMessage = await this.signaling(ws)
+    await this.connectPeerConnection(signalingMessage)
+    await this.reconnectPeerConnection(signalingMessage, stream ?? null)
+    this.monitorWebSocketEvent()
+    this.monitorPeerConnectionState()
+  }
+
+  private shouldContinueAutoReconnection(): boolean {
+    if (!this.autoReconnect) {
+      return false
+    }
+    if (!this.reconnecting) {
+      return false
+    }
+    if (!this.reconnectContext) {
+      this.trace('AUTO RECONNECT', {
+        action: 'abort due to missing context',
+      })
+      return false
+    }
+    const { stream } = this.reconnectContext
+    const requiresStream =
+      this.role === SIGNALING_ROLE_SENDONLY || this.role === SIGNALING_ROLE_SENDRECV
+    if (requiresStream && !stream) {
+      this.trace('AUTO RECONNECT', {
+        action: 'abort due to missing stream in context',
+      })
+      this.handleAutoReconnectAbort()
+      return false
+    }
+    if (requiresStream && stream) {
+      const tracks = stream.getTracks()
+      const endedTracks = tracks.filter((track) => track.readyState === 'ended')
+      if (!stream.active || endedTracks.length > 0) {
+        this.trace('AUTO RECONNECT', {
+          action: 'abort due to inactive stream',
+          active: stream.active,
+          endedTracks: endedTracks.length,
+        })
+        this.handleAutoReconnectAbort()
+        return false
+      }
+    }
+    return true
+  }
+
+  private handleAutoReconnected(event: ReconnectedEvent): void {
+    this.stopAutoReconnection()
+    this.callbacks.reconnected(event)
+  }
+
+  private handleAutoReconnectError(event: ReconnectErrorEvent): void {
+    this.stopAutoReconnection()
+    this.callbacks.reconnecterror(event)
+  }
+
+  private handleAutoReconnectAbort(): void {
+    this.stopAutoReconnection()
+  }
+
+  private stopAutoReconnection(): void {
+    if (this.autoReconnector) {
+      this.autoReconnector.stop()
+      this.autoReconnector = null
+    }
+    this.reconnecting = false
+    this.reconnectContext = null
+  }
+
+  /**
+   * 再接続時に PeerConnection を再構成する共通処理
+   *
+   * @param signalingMessage - 再接続で受信した offer メッセージ
+   * @param stream - publisher ロールで再利用する送信 MediaStream
+   */
+  private async reconnectPeerConnection(
+    signalingMessage: SignalingOfferMessage,
+    stream: MediaStream | null,
+  ): Promise<void> {
+    if (!this.pc) {
+      throw new Error('AUTO_RECONNECT_PEERCONNECTION_UNAVAILABLE')
+    }
+    // ontrack を再設定して remote stream の再登録に備える
+    this.pc.ontrack = async (event): Promise<void> => {
+      const remoteStream = event.streams[0]
+      if (!remoteStream) {
+        return
+      }
+      if (remoteStream.id === 'default') {
+        return
+      }
+      if (remoteStream.id === this.connectionId) {
+        return
+      }
+      const data = {
+        'stream.id': remoteStream.id,
+        id: event.track.id,
+        label: event.track.label,
+        enabled: event.track.enabled,
+        kind: event.track.kind,
+        muted: event.track.muted,
+        readyState: event.track.readyState,
+      }
+      this.writePeerConnectionTimelineLog('ontrack', data)
+      this.callbacks.track(event)
+      remoteStream.onremovetrack = (trackEvent): void => {
+        this.callbacks.removetrack(trackEvent)
+        if (trackEvent.target) {
+          const streamId = (trackEvent.target as MediaStream).id
+          const index = this.remoteConnectionIds.indexOf(streamId)
+          if (-1 < index) {
+            delete this.remoteConnectionIds[index]
+          }
+        }
+      }
+      if (-1 < this.remoteConnectionIds.indexOf(remoteStream.id)) {
+        return
+      }
+      this.remoteConnectionIds.push(remoteStream.id)
+    }
+    // 受信 SDP をセットして PeerConnection の状態を復元する
+    await this.setRemoteDescription(signalingMessage)
+    if (stream) {
+      // publisher の場合は送信トラックを再追加する
+      stream.getTracks().forEach((track) => {
+        if (this.pc) {
+          this.pc.addTrack(track, stream)
+        }
+      })
+      this.stream = stream
+    }
+    // Answer の生成と送信で再接続を完了させる
+    await this.createAnswer(signalingMessage)
+    this.sendAnswer()
+    if (!this.options.skipIceCandidateEvent) {
+      await this.onIceCandidate()
+    }
+    await this.waitChangeConnectionStateConnected()
   }
 
   /**
