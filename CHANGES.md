@@ -21,12 +21,15 @@
   - `timeout` オプションでタイムアウト時間（ミリ秒）を指定できる
   - `notification: true` オプションでレスポンスを待たない通知型リクエストができる
   - 並列実行をサポート
-  - この機能は 2025 年 12 月リリース予定の Sora 2025.2.0 から利用できるようになる予定です
   - @voluntas
 - [ADD] `DATA_CHANNEL_LABEL_RPC` 定数を追加する
   - @voluntas
-- [ADD] `simulcastRequestRid` オプションを追加する
-  - `none` / `r0` / `r1` / `r2` / `auto` が指定できる
+- [ADD] サイマルキャスト機能利用時に `sendrecv` または `recvonly` で環境に合った `rid` を自動で選択する `simulcastRidAuto` オプションを追加する
+  - デフォルトは未指定です
+  - @voluntas
+- [ADD] サイマルキャスト機能利用時に `sendrecv` または `recvonly` で初期の `rid` を指定できる `simulcastRequestRid` オプションを追加する
+  - デフォルトは未指定です
+  - `none` / `r0` / `r1` / `r2` が指定できる
   - @voluntas
 
 ### misc
