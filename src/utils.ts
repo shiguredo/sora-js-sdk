@@ -154,12 +154,15 @@ export function createSignalingMessage(
   if (options.simulcastRid !== undefined && 0 <= simulcastRids.indexOf(options.simulcastRid)) {
     message.simulcast_rid = options.simulcastRid
   }
-  const simulcastRequestRids = ['none', 'r0', 'r1', 'r2', 'auto']
+  const simulcastRequestRids = ['none', 'r0', 'r1', 'r2']
   if (
     options.simulcastRequestRid !== undefined &&
     0 <= simulcastRequestRids.indexOf(options.simulcastRequestRid)
   ) {
     message.simulcast_request_rid = options.simulcastRequestRid
+  }
+  if (typeof options.simulcastRidAuto === 'boolean') {
+    message.simulcast_rid_auto = options.simulcastRidAuto
   }
 
   if (typeof options.spotlight === 'boolean') {

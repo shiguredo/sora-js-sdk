@@ -681,6 +681,35 @@ test('createSignalingMessage simulcastRequestRid: unknown string', () => {
 })
 
 /**
+ * simulcastRidAuto test
+ */
+test('createSignalingMessage simulcastRidAuto: true', () => {
+  const options = {
+    simulcastRidAuto: true,
+  }
+  const expectedMessage = Object.assign({}, baseExpectedMessage, {
+    simulcast_rid_auto: options.simulcastRidAuto,
+  })
+  expect(createSignalingMessage(sdp, 'recvonly', channelId, undefined, options, false)).toEqual({
+    ...expectedMessage,
+    role: 'recvonly',
+  })
+})
+
+test('createSignalingMessage simulcastRidAuto: false', () => {
+  const options = {
+    simulcastRidAuto: false,
+  }
+  const expectedMessage = Object.assign({}, baseExpectedMessage, {
+    simulcast_rid_auto: options.simulcastRidAuto,
+  })
+  expect(createSignalingMessage(sdp, 'recvonly', channelId, undefined, options, false)).toEqual({
+    ...expectedMessage,
+    role: 'recvonly',
+  })
+})
+
+/**
  * spotlight test
  */
 test('createSignalingMessage spotlight: true', () => {
