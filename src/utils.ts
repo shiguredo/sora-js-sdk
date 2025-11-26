@@ -161,9 +161,6 @@ export function createSignalingMessage(
   ) {
     message.simulcast_request_rid = options.simulcastRequestRid
   }
-  if (typeof options.simulcastRidAuto === 'boolean') {
-    message.simulcast_rid_auto = options.simulcastRidAuto
-  }
 
   if (typeof options.spotlight === 'boolean') {
     message.spotlight = options.spotlight
