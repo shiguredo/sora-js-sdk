@@ -16,6 +16,8 @@
 
 ## develop
 
+- [ADD] type offer に含まれる `rpc_methods` を `rpcMethods` プロパティでアクセスできるようにする
+  - @voluntas
 - [ADD] JSON-RPC 2.0 形式でデータチャネル経由で Sora の API を呼び出すことができる RPC 機能を追加する
   - `rpc()` メソッドを追加
   - `timeout` オプションでタイムアウト時間（ミリ秒）を指定できる

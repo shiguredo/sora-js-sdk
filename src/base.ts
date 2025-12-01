@@ -166,6 +166,10 @@ export default class ConnectionBase {
    */
   encodings: RTCRtpEncodingParameters[]
   /**
+   * type offer に含まれる RPC メソッドのリスト
+   */
+  rpcMethods: string[]
+  /**
    * WS シグナリングで type offer メッセージを受信したシグナリング URL
    */
   connectedSignalingUrl: string
@@ -295,6 +299,7 @@ export default class ConnectionBase {
     this.ws = null
     this.pc = null
     this.encodings = []
+    this.rpcMethods = []
     this.callbacks = {
       disconnect: (): void => {},
       push: (): void => {},
@@ -814,6 +819,7 @@ export default class ConnectionBase {
     this.ws = null
     this.pc = null
     this.encodings = []
+    this.rpcMethods = []
     this.authMetadata = null
     this.soraDataChannels = {}
     this.mids = {
@@ -1875,6 +1881,9 @@ export default class ConnectionBase {
       for (const dc of message.data_channels) {
         this.signalingOfferMessageDataChannels[dc.label] = dc
       }
+    }
+    if (Array.isArray(message.rpc_methods)) {
+      this.rpcMethods = message.rpc_methods
     }
     this.trace('SIGNALING OFFER MESSAGE', message)
     this.trace('OFFER SDP', message.sdp)
