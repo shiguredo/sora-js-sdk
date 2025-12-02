@@ -42,7 +42,7 @@ jobs:
       labels: [self-hosted, macOS, ARM64, Apple-M2-Pro]
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: Homebrew/actions/setup-homebrew@master
       - run: brew install --cask ${{ matrix.browser.type}}
       - uses: actions/setup-node@v6
