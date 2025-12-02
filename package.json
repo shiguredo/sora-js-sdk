@@ -43,7 +43,6 @@
     "@playwright/test": "1.57.0",
     "@types/node": "24.10.1",
     "jsdom": "27.2.0",
-    "tslib": "2.8.1",
     "typedoc": "0.28.15",
     "typescript": "5.9.3",
     "vite": "7.2.6",
