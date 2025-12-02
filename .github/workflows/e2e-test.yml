@@ -65,6 +65,7 @@ jobs:
           ping: raspberrypi.tail095d0.ts.net
           # ping: ${{ secrets.TEST_TS_DOMAIN }}
           # use-cache: "false"
+          version: 1.90.9
       # - uses: actions/setup-node@v6
       #   with:
       #     node-version: ${{ matrix.node }}
