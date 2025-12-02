@@ -42,12 +42,12 @@ jobs:
           - name: "Google Chrome Beta"
             type: "chrome-beta"
           # Playwright での Edge の取得が不安定なため一時的にコメントアウトする
-          - name: "Microsoft Edge"
-            type: "msedge"
-          - name: "Microsoft Edge Beta"
-            type: "msedge-beta"
-          - name: "Microsoft Edge Dev"
-            type: "msedge-dev"
+          # - name: "Microsoft Edge"
+          #   type: "msedge"
+          # - name: "Microsoft Edge Beta"
+          #   type: "msedge-beta"
+          # - name: "Microsoft Edge Dev"
+          #   type: "msedge-dev"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
       VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
