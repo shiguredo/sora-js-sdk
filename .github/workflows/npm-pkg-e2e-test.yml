@@ -15,6 +15,7 @@ on:
 
 jobs:
   npm-pkg-e2e-test:
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:

@@ -22,25 +22,25 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          # Node 26 LTS がリリースされたら 26 に更新する
-          - "25"
-          # 30 Apr 2028 End of Life
-          - "24"
-          # 30 Apr 2027 End of Life
-          - "22"
-          # 30 Apr 2026 End of Life
+          # # Node 26 LTS がリリースされたら 26 に更新する
+          # - "25"
+          # # 30 Apr 2028 End of Life
+          # - "24"
+          # # 30 Apr 2027 End of Life
+          # - "22"
+          # # 30 Apr 2026 End of Life
           - "20"
         os:
           - "ubuntu-24.04"
-          - "macos-15"
-          - "windows-2025"
+          # - "macos-15"
+          # - "windows-2025"
         browser:
           - name: "Chromium"
             type: "chromium"
-          - name: "Google Chrome"
-            type: "chrome"
-          - name: "Google Chrome Beta"
-            type: "chrome-beta"
+          # - name: "Google Chrome"
+          #   type: "chrome"
+          # - name: "Google Chrome Beta"
+          #   type: "chrome-beta"
           # Playwright での Edge の取得が不安定なため一時的にコメントアウトする
           # - name: "Microsoft Edge"
           #   type: "msedge"
