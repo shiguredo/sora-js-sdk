@@ -62,8 +62,7 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: ${{ secrets.TS_TAGS }}
-          # ping: ${{ secrets.TEST_TS_DOMAIN }}
-          ping: g3-plus.tail095d0.ts.net
+          ping: ${{ secrets.TEST_TS_DOMAIN }}
           use-cache: "true"
           version: latest
       # - uses: actions/setup-node@v6
