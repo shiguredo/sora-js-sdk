@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
+
 import { expect, test } from '@playwright/test'
+
 test('sendonly audio pages', async ({ browser }) => {
   // 新しいページを作成
   const sendonly = await browser.newPage()
