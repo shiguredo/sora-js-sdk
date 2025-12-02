@@ -205,11 +205,25 @@ class SoraClient {
     }
 
     if (!this.apiUrl) {
+      console.log('[sendonly_reconnect] apiDisconnect error: VITE_TEST_API_URL is not set')
       if (statusElement) {
         statusElement.textContent = 'error'
       }
       throw new Error('VITE_TEST_API_URL is not set')
     }
+
+    console.log('[sendonly_reconnect] apiDisconnect start', {
+      apiUrl: this.apiUrl,
+      channelId: this.channelId,
+      connectionId: this.connection.connectionId,
+    })
+
+    // fetch にタイムアウトを設定する
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      console.log('[sendonly_reconnect] apiDisconnect timeout after 10000ms')
+      controller.abort()
+    }, 10000)
 
     try {
       const response = await fetch(this.apiUrl, {
@@ -222,6 +236,12 @@ class SoraClient {
           channel_id: this.channelId,
           connection_id: this.connection.connectionId,
         }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+      console.log('[sendonly_reconnect] apiDisconnect response', {
+        status: response.status,
+        ok: response.ok,
       })
       if (!response.ok) {
         if (statusElement) {
@@ -232,7 +252,10 @@ class SoraClient {
       if (statusElement) {
         statusElement.textContent = 'success'
       }
+      console.log('[sendonly_reconnect] apiDisconnect success')
     } catch (e) {
+      clearTimeout(timeoutId)
+      console.log('[sendonly_reconnect] apiDisconnect error', e)
       if (statusElement) {
         statusElement.textContent = 'error'
       }
