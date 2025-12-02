@@ -1,3 +1,11 @@
+/*
+RPC 機能は認証成功時に rpc_methods を払いだす必要がある。
+そのためテストサーバー側から JWT に rpc_methods を指定する仕組みを利用している。
+
+ただしこの機能は Sora にはなく、テストサーバー固有の機能であるため、
+このテストは通常の Sora では動作しない。
+*/
+
 import Sora, {
   type ConnectionOptions,
   type ConnectionPublisher,
@@ -6,7 +14,7 @@ import Sora, {
   type SoraConnection,
   type VideoCodecType,
 } from 'sora-js-sdk'
-import { getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
+import { generateJwt, getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
@@ -22,7 +30,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
     const videoCodecType = getVideoCodecType()
 
-    client = new SoraClient(signalingUrl, channelId, secretKey, videoCodecType)
+    // RPC 用のプライベートクレームを含む JWT を生成する
+    const privateClaims = {
+      rpc_methods: ['2025.2.0/PutSignalingNotifyMetadataItem'],
+    }
+    const accessToken = await generateJwt(channelId, secretKey, privateClaims)
+
+    client = new SoraClient(signalingUrl, channelId, accessToken, videoCodecType)
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true })
     await client.connect(stream)
@@ -100,13 +114,13 @@ class SoraClient {
   constructor(
     signalingUrl: string,
     channelId: string,
-    secretKey: string,
+    accessToken: string,
     videoCodecType: VideoCodecType | undefined,
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.channelId = channelId
 
-    this.metadata = { access_token: secretKey }
+    this.metadata = { access_token: accessToken }
     this.options = { connectionTimeout: 15000 }
 
     if (videoCodecType !== undefined) {
