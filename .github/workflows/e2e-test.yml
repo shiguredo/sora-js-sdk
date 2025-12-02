@@ -63,6 +63,7 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: ${{ secrets.TEST_TS_TAG }}
           ping: ${{ secrets.TEST_TS_DOMAIN }}
+          use-cache: "false"
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
