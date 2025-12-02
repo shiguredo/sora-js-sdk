@@ -136,6 +136,12 @@ class SimulcastSendonlySoraClient {
     this.connection.metadata = { access_token: jwt }
 
     await this.connection.connect(stream)
+
+    // PeerConnection の状態変化を監視して DOM を更新する
+    this.connection.pc?.addEventListener('connectionstatechange', () => {
+      this.updatePcState()
+    })
+
     const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
     if (localVideo) {
       localVideo.srcObject = stream
@@ -184,6 +190,10 @@ class SimulcastSendonlySoraClient {
       signalingLogElement.appendChild(logEntry)
     }
 
+    this.updatePcState()
+  }
+
+  private updatePcState(): void {
     if (this.connection.pc) {
       const pcStateElement = document.querySelector('#pc-state')
       if (pcStateElement) {
