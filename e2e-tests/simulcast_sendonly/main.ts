@@ -142,6 +142,9 @@ class SimulcastSendonlySoraClient {
       this.updatePcState()
     })
 
+    // 初期状態を DOM に反映する
+    this.updatePcState()
+
     const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
     if (localVideo) {
       localVideo.srcObject = stream

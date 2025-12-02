@@ -42,6 +42,12 @@ test('data_channel_signaling_only type:close pages', async ({ page }) => {
   // API で切断
   await page.click('#disconnect-api')
 
+  // API リクエストの完了を待つ
+  await page.waitForSelector('#api-disconnect-status:not(:empty)')
+  const apiDisconnectStatus = await page.$eval('#api-disconnect-status', (el) => el.textContent)
+  console.log(`apiDisconnectStatus=${apiDisconnectStatus}`)
+  expect(apiDisconnectStatus).toBe('success')
+
   // #signaling-close-type 要素に datachannel が設定されるまで待つ
   await page.waitForSelector('#signaling-close-type:not(:empty)')
   const signalingCloseType = await page.$eval('#signaling-close-type', (el) => el.textContent)

@@ -165,22 +165,41 @@ class SoraClient {
 
   // E2E テスト側で実行した方が良い気がする
   async apiDisconnect(): Promise<void> {
+    const statusElement = document.querySelector('#api-disconnect-status')
+
     if (!this.apiUrl) {
+      if (statusElement) {
+        statusElement.textContent = 'error'
+      }
       throw new Error('VITE_TEST_API_URL is not set')
     }
-    const response = await fetch(this.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Sora-Target': 'Sora_20151104.DisconnectConnection',
-      },
-      body: JSON.stringify({
-        channel_id: this.channelId,
-        connection_id: this.connection.connectionId,
-      }),
-    })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Sora-Target': 'Sora_20151104.DisconnectConnection',
+        },
+        body: JSON.stringify({
+          channel_id: this.channelId,
+          connection_id: this.connection.connectionId,
+        }),
+      })
+      if (!response.ok) {
+        if (statusElement) {
+          statusElement.textContent = 'error'
+        }
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      if (statusElement) {
+        statusElement.textContent = 'success'
+      }
+    } catch (e) {
+      if (statusElement) {
+        statusElement.textContent = 'error'
+      }
+      throw e
     }
   }
 }

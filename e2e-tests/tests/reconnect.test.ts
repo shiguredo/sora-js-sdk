@@ -37,10 +37,13 @@ test('sendonly_reconnect type:reconnect pages', async ({ page }) => {
   // API で切断
   await page.click('#disconnect-api')
 
-  // レース対策
-  await page.waitForTimeout(3000)
+  // API リクエストの完了を待つ
+  await page.waitForSelector('#api-disconnect-status:not(:empty)')
+  const apiDisconnectStatus = await page.$eval('#api-disconnect-status', (el) => el.textContent)
+  console.log(`apiDisconnectStatus=${apiDisconnectStatus}`)
+  expect(apiDisconnectStatus).toBe('success')
 
-  // #connection-id 要素の内容を取得
+  // #connection-id 要素の内容を取得（再接続後に設定される）
   await page.waitForSelector('#connection-id:not(:empty)')
   const reconnectConnectionId = await page.$eval('#connection-id', (el) => el.textContent)
   console.log(`reconnectConnectionId=${reconnectConnectionId}`)
