@@ -22,26 +22,26 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          # # Node 26 LTS がリリースされたら 26 に更新する
-          # - "25"
-          # # 30 Apr 2028 End of Life
-          # - "24"
-          # # 30 Apr 2027 End of Life
-          # - "22"
-          # # 30 Apr 2026 End of Life
+          # Node 26 LTS がリリースされたら 26 に更新する
+          - "25"
+          # 30 Apr 2028 End of Life
+          - "24"
+          # 30 Apr 2027 End of Life
+          - "22"
+          # 30 Apr 2026 End of Life
           - "20"
         os:
           - "ubuntu-24.04"
-          # - "macos-15"
-          # - "windows-2025"
+          - "macos-15"
+          - "windows-2025"
         browser:
           - name: "Chromium"
             type: "chromium"
-          # - name: "Google Chrome"
-          #   type: "chrome"
-          # - name: "Google Chrome Beta"
-          #   type: "chrome-beta"
-          # Playwright での Edge の取得が不安定なため一時的にコメントアウトする
+          - name: "Google Chrome"
+            type: "chrome"
+          - name: "Google Chrome Beta"
+            type: "chrome-beta"
+          ## Playwright での Edge の取得が不安定なため一時的にコメントアウトする
           # - name: "Microsoft Edge"
           #   type: "msedge"
           # - name: "Microsoft Edge Beta"
@@ -65,28 +65,29 @@ jobs:
           ping: ${{ secrets.TEST_TS_DOMAIN }}
           use-cache: "true"
           version: latest
-      # - uses: actions/setup-node@v6
-      #   with:
-      #     node-version: ${{ matrix.node }}
-      # - uses: pnpm/action-setup@v4
-      #   with:
-      #     version: 10
-      # - run: pnpm --version
-      # - run: pnpm install
-      # - run: pnpm run build
-      # - run: pnpm playwright install ${{ matrix.browser.type }} --with-deps
-      # - run: pnpm playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/type_close.test.ts
-      #   env:
-      #     VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
-      # - run: pnpm playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/reconnect.test.ts
-      #   env:
-      #     VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
-      # - uses: actions/upload-artifact@v4
-      #   if: always()
-      #   with:
-      #     name: playwright-report
-      #     path: playwright-report/
-      #     retention-days: 30
+          timeout: 5m
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: pnpm --version
+      - run: pnpm install
+      - run: pnpm run build
+      - run: pnpm playwright install ${{ matrix.browser.type }} --with-deps
+      - run: pnpm playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/type_close.test.ts
+        env:
+          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
+      - run: pnpm playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/reconnect.test.ts
+        env:
+          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
 
   # slack_notify_succeeded:
   #   needs: [e2e-test]
