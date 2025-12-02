@@ -9,11 +9,6 @@
 - FIX
   - バグ修正
 
-## temporary
-
-- ci.yaml の TypeScript のバージョンの next は type check が一時的に通らないのでコメントアウトしている
-  - <https://github.com/microsoft/TypeScript/issues/61687>
-
 ## develop
 
 - [ADD] `"type": "offer"` に含まれる `rpc_methods` を `rpcMethods` プロパティでアクセスできるようにする
