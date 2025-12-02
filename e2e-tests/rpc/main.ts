@@ -134,7 +134,7 @@ class SoraClient {
   }
 
   async sendRpc(value: string): Promise<void> {
-    const rpcMethod = 'Sora_20201124.PutSignalingNotifyMetadataItem'
+    const rpcMethod = '2025.2.0/PutSignalingNotifyMetadataItem'
     const rpcParams = {
       key: 'abc',
       value: value,
