@@ -24,6 +24,8 @@
 
 ### misc
 
+- [CHANGE] tslib を削除する
+  - @voluntas
 - [CHANGE] Node 18 でのテストを落とす
 
   - Node 18 は EoL になったため
