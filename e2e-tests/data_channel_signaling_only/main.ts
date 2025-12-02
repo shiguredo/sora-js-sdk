@@ -156,6 +156,10 @@ class SoraClient {
     }
     if (event.type === 'onmessage-close') {
       console.log('[signaling]', event.type, event.transportType)
+      const signalingCloseTypeElement = document.querySelector('#signaling-close-type')
+      if (signalingCloseTypeElement) {
+        signalingCloseTypeElement.textContent = event.transportType
+      }
     }
   }
 

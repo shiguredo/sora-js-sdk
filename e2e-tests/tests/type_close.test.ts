@@ -39,26 +39,13 @@ test('data_channel_signaling_only type:close pages', async ({ page }) => {
   )
   console.log(`dataChannelSignalingOnly connectionId=${dataChannelSignalingOnlyConnectionId}`)
 
-  // [signaling] onmessage-close datachannel を待つ Promise を先に作成する
-  const consolePromise = page.waitForEvent('console', {
-    predicate: (msg) => {
-      return msg.text().includes('[signaling]') && msg.text().includes('onmessage-close')
-    },
-    timeout: 10000,
-  })
-
   // API で切断
   await page.click('#disconnect-api')
 
-  // Console log の Promise が解決されるまで待機する
-  const msg = await consolePromise
-  // log [signaling] onmessage-close datachannel が出力されるので、args 0/1/2 をそれぞれチェックする
-  const value1 = await msg.args()[0].jsonValue()
-  expect(value1).toBe('[signaling]')
-  const value2 = await msg.args()[1].jsonValue()
-  expect(value2).toBe('onmessage-close')
-  const value3 = await msg.args()[2].jsonValue()
-  expect(value3).toBe('datachannel')
+  // #signaling-close-type 要素に datachannel が設定されるまで待つ
+  await page.waitForSelector('#signaling-close-type:not(:empty)')
+  const signalingCloseType = await page.$eval('#signaling-close-type', (el) => el.textContent)
+  expect(signalingCloseType).toBe('datachannel')
 
   await page.close()
 })
