@@ -157,6 +157,7 @@ export type SignalingOfferMessage = {
     audio?: string
     video?: string
   }
+  rpc_methods?: string[]
 }
 
 // @deprecated この型は非推奨です。将来のバージョンで削除される可能性があります。
