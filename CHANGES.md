@@ -17,16 +17,12 @@
 ## develop
 
 - [ADD] `"type": "offer"` に含まれる `rpc_methods` を `rpcMethods` プロパティでアクセスできるようにする
-  - @voluntas
-- [ADD] JSON-RPC 2.0 形式でデータチャネル経由で Sora の API を呼び出すことができる RPC 機能を追加する
-  - `rpc()` メソッドを追加
+- [ADD] RPC 機能を利用する ``rpc()` メソッドを追加する
   - `timeout` オプションでタイムアウト時間（ミリ秒）を指定できる
   - `notification: true` オプションでレスポンスを待たない通知型リクエストができる
   - 並列実行をサポート
   - @voluntas
-- [ADD] `DATA_CHANNEL_LABEL_RPC` 定数を追加する
-  - @voluntas
-- [ADD] サイマルキャスト機能利用時に `sendrecv` または `recvonly` で初期の `rid` を指定できる `simulcastRequestRid` オプションを追加する
+- [ADD] シグナリング時にサイマルキャスト機能利用時に `sendrecv` または `recvonly` で初期の `rid` を指定できる `simulcastRequestRid` オプションを追加する
   - デフォルトは未指定です
   - `none` / `r0` / `r1` / `r2` が指定できる
   - @voluntas
