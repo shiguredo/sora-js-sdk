@@ -189,8 +189,6 @@ class SimulcastSendonlySoraClient {
       logEntry.dataset.signalingTimestamp = timestamp
       signalingLogElement.appendChild(logEntry)
     }
-
-    this.updatePcState()
   }
 
   private updatePcState(): void {
