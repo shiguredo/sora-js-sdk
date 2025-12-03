@@ -42,12 +42,10 @@ jobs:
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
+          tags: ${{ secrets.TS_TAGS }}
+          ping: ${{ secrets.TEST_TS_DOMAIN }}
           version: latest
-          use-cache: "true"
-          hostname: gha-${{ github.run_id }}-${{ github.run_number }}
-          timeout: 2m
-          retry: 5
+          use-cache: true
       - uses: Homebrew/actions/setup-homebrew@master
       - run: brew install --cask ${{ matrix.browser.type}}
       - uses: actions/setup-node@v6
