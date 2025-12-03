@@ -61,12 +61,8 @@ jobs:
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          version: latest
-          use-cache: "true"
-          hostname: gha-${{ github.run_id }}-${{ github.run_number }}
-          timeout: 2m
-          retry: 5
+          tags: ${{ secrets.TS_TAGS }}
+          ping: ${{ secrets.TEST_TS_DOMAIN }}
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
