@@ -7,6 +7,14 @@ test('spotlight sendrecv x2', async ({ browser }) => {
   const sendrecv1 = await context1.newPage()
   const sendrecv2 = await context2.newPage()
 
+  // デバッグ用
+  sendrecv1.on('console', (msg) => {
+    console.log('sendrecv1', msg.type(), msg.text())
+  })
+  sendrecv2.on('console', (msg) => {
+    console.log('sendrecv2', msg.type(), msg.text())
+  })
+
   await sendrecv1.goto('http://localhost:9000/spotlight_sendrecv/')
   await sendrecv2.goto('http://localhost:9000/spotlight_sendrecv/')
 

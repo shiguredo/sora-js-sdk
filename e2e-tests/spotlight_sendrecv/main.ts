@@ -21,8 +21,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     sendrecv = new SoraClient(signalingUrl, channelId, secretKey)
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    await sendrecv.connect(stream)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+      await sendrecv.connect(stream)
+    } catch (error) {
+      console.error('[spotlight_sendrecv] connect error:', error)
+    }
   })
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
     await sendrecv.disconnect()
