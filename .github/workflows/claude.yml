@@ -18,7 +18,7 @@ env:
 
 jobs:
   claude-response:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6

@@ -24,10 +24,11 @@
 
 ### misc
 
+- [CHANGE] 負荷が低い job には ubuntu-slim を導入する
+  - @voluntas
 - [CHANGE] tslib を削除する
   - @voluntas
 - [CHANGE] Node 18 でのテストを落とす
-
   - Node 18 は EoL になったため
   - Vite 7 が Node 18 をサポートしなくなったため
   - @voluntas
