@@ -1,6 +1,6 @@
 {
   "name": "sora-js-sdk",
-  "version": "2025.2.0-canary.8",
+  "version": "2025.2.0-canary.9",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "main": "dist/sora.js",
   "module": "dist/sora.mjs",
@@ -47,7 +47,7 @@
     "typescript": "5.9.3",
     "vite": "7.2.6",
     "vite-plugin-dts": "4.5.4",
-    "vitest": "4.0.14"
+    "vitest": "4.0.15"
   },
   "engines": {
     "pnpm": ">=8",
