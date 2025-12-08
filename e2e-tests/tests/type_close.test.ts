@@ -39,8 +39,8 @@ test('data_channel_signaling_only type:close pages', async ({ page }) => {
   )
   console.log(`dataChannelSignalingOnly connectionId=${dataChannelSignalingOnlyConnectionId}`)
 
-  // type: switched が届くまで待つ
-  await page.waitForSelector('#switched-status:not(:empty)')
+  // type: switched が届くまで待つ (signaling コールバック経由)
+  await page.waitForSelector('#signaling-type-switched:not(:empty)')
 
   // API で切断
   await page.click('#disconnect-api')
