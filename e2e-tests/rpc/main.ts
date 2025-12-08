@@ -9,6 +9,7 @@ RPC 機能は認証成功時に rpc_methods を払いだす必要がある。
 import Sora, {
   type ConnectionPublisher,
   type ConnectionSubscriber,
+  type SignalingEvent,
   type SignalingNotifyMessage,
   type SimulcastRid,
   type SoraConnection,
@@ -230,6 +231,7 @@ class SimulcastRecvonlyClient {
     this.connection.on('notify', this.onnotify.bind(this))
     this.connection.on('track', this.ontrack.bind(this))
     this.connection.on('removetrack', this.onremovetrack.bind(this))
+    this.connection.on('signaling', this.onsignaling.bind(this))
   }
 
   async connect() {
@@ -325,6 +327,17 @@ class SimulcastRecvonlyClient {
     const remoteVideo = document.querySelector(`#remote-video-${target.id}`)
     if (remoteVideo) {
       document.querySelector('#remote-videos')?.removeChild(remoteVideo)
+    }
+  }
+
+  private onsignaling(event: SignalingEvent): void {
+    // type: onmessage-switched メッセージを受け取ったらフラグを立てる
+    if (event.type === 'onmessage-switched') {
+      const switchedElement = document.querySelector<HTMLElement>('#switched')
+      if (switchedElement) {
+        switchedElement.textContent = 'true'
+        switchedElement.dataset.switched = 'true'
+      }
     }
   }
 }

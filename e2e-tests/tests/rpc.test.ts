@@ -54,23 +54,8 @@ test.describe('RPC RequestSimulcastRid test', () => {
     // リモートビデオが表示されるまで待機
     await page.waitForSelector('#remote-videos video', { timeout: 15000 })
 
-    // RPC データチャネルが開くまで待機
-    await page.click('#get-stats')
-    await page.waitForFunction(
-      () => {
-        const statsDiv = document.querySelector('#stats-report') as HTMLElement
-        const statsJson = statsDiv?.dataset.statsReportJson
-        if (statsJson) {
-          const stats = JSON.parse(statsJson)
-          return stats.some(
-            (report: { type: string; label?: string; state?: string }) =>
-              report.type === 'data-channel' && report.label === 'rpc' && report.state === 'open',
-          )
-        }
-        return false
-      },
-      { timeout: 15000 },
-    )
+    // type: switched メッセージを受け取るまで待機
+    await page.waitForSelector('#switched[data-switched="true"]', { timeout: 15000 })
 
     // 安定するまで待機
     await page.waitForTimeout(3000)
