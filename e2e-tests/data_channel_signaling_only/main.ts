@@ -1,12 +1,13 @@
 import { setSoraJsSdkVersion } from '../src/misc'
 
 import Sora, {
-  type SignalingNotifyMessage,
-  type SignalingEvent,
-  type SignalingSwitchedMessage,
-  type ConnectionPublisher,
-  type SoraConnection,
   type ConnectionOptions,
+  type ConnectionPublisher,
+  type SignalingEvent,
+  type SignalingNotifyConnectionCreated,
+  type SignalingNotifyMessage,
+  type SignalingSwitchedMessage,
+  type SoraConnection,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -108,6 +109,7 @@ class SoraClient {
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onNotify.bind(this))
+    this.connection.on('connected', this.onConnected.bind(this))
     this.connection.on('switched', this.onSwitched.bind(this))
 
     // E2E テスト用のコード
@@ -148,6 +150,15 @@ class SoraClient {
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
       }
+    }
+  }
+
+  // connected コールバック
+  private onConnected(event: SignalingNotifyConnectionCreated): void {
+    console.log('[connected]', event)
+    const connectedStatusElement = document.querySelector('#connected-status')
+    if (connectedStatusElement) {
+      connectedStatusElement.textContent = 'connected'
     }
   }
 
