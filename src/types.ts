@@ -206,6 +206,7 @@ export type SignalingNotifyMessage =
   | SignalingNotifyConnectionCreated
   | SignalingNotifyConnectionUpdated
   | SignalingNotifyConnectionDestroyed
+  | SignalingNotifySimulcastSwitched
   | SignalingNotifySpotlightChanged
   | SignalingNotifySpotlightFocused
   | SignalingNotifySpotlightUnfocused
@@ -280,6 +281,20 @@ export type SignalingNotifyConnectionDestroyed = {
   channel_sendonly_connections: number
   channel_recvonly_connections: number
   turn_transport_type: 'udp' | 'tcp'
+}
+
+export type SignalingNotifySimulcastSwitched = {
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
+  event_type: 'simulcast.switched'
+  timestamp: string
+  sender_connection_id: string | null
+  priority: 'higher' | 'lower'
+  trigger: 'sender' | 'receiver'
+  rpc_rids: SimulcastRid[]
+  auto_rids: SimulcastRid[]
+  request_rid: SimulcastRid
+  current_rid: SimulcastRid
+  previous_rid: SimulcastRid
 }
 
 export type SignalingNotifySpotlightChanged = {
