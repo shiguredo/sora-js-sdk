@@ -11,6 +11,9 @@
 
 ## develop
 
+- [ADD] `Callbacks` に `switched` コールバックを追加する
+  - `type: switched` メッセージを受信したときに呼び出される
+  - @voluntas
 - [ADD] `"type": "offer"` に含まれる `rpc_methods` を `rpcMethods` プロパティでアクセスできるようにする
 - [ADD] RPC 機能を利用する ``rpc()` メソッドを追加する
   - `timeout` オプションでタイムアウト時間（ミリ秒）を指定できる

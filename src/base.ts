@@ -306,6 +306,7 @@ export default class ConnectionBase {
       track: (): void => {},
       removetrack: (): void => {},
       notify: (): void => {},
+      switched: (): void => {},
       log: (): void => {},
       timeout: (): void => {},
       timeline: (): void => {},
@@ -2003,6 +2004,7 @@ export default class ConnectionBase {
     for (const channel of this.datachannels) {
       this.callbacks.datachannel(createDataChannelEvent(channel))
     }
+    this.callbacks.switched(message)
   }
 
   /**

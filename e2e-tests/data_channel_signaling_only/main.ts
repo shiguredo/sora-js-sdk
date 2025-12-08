@@ -3,6 +3,7 @@ import { setSoraJsSdkVersion } from '../src/misc'
 import Sora, {
   type SignalingNotifyMessage,
   type SignalingEvent,
+  type SignalingSwitchedMessage,
   type ConnectionPublisher,
   type SoraConnection,
   type ConnectionOptions,
@@ -107,6 +108,7 @@ class SoraClient {
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onNotify.bind(this))
+    this.connection.on('switched', this.onSwitched.bind(this))
 
     // E2E テスト用のコード
     this.connection.on('signaling', this.onSignaling.bind(this))
@@ -149,15 +151,17 @@ class SoraClient {
     }
   }
 
+  // switched コールバック
+  private onSwitched(event: SignalingSwitchedMessage): void {
+    console.log('[switched]', event)
+    const switchedStatusElement = document.querySelector('#switched-status')
+    if (switchedStatusElement) {
+      switchedStatusElement.textContent = 'switched'
+    }
+  }
+
   // E2E テスト用のコード
   private onSignaling(event: SignalingEvent): void {
-    if (event.type === 'onmessage-switched') {
-      console.log('[signaling]', event.type, event.transportType)
-      const switchedStatusElement = document.querySelector('#switched-status')
-      if (switchedStatusElement) {
-        switchedStatusElement.textContent = event.transportType
-      }
-    }
     if (event.type === 'onmessage-close') {
       console.log('[signaling]', event.type, event.transportType)
       const signalingCloseTypeElement = document.querySelector('#signaling-close-type')
