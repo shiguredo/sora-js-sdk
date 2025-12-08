@@ -5,25 +5,18 @@ import { checkSoraVersion } from './helper'
 /**
  * RPC 機能の E2E テスト
  *
- * 注意: このテストは Sora JS SDK v2025.2.0-canary.0 以降でのみ動作します。
- * RPC 機能はこのバージョンで初めて導入されました。
+ * Simulcast sendonly/recvonly で 2025.2.0/RequestSimulcastRid を使って
+ * RID を切り替えるテスト
  */
-test.describe('RPC test', () => {
-  test('2 つのページ間で RPC の push 通知が送信される', async ({ browser }) => {
-    // 2 つの独立したブラウザコンテキストを作成
-    // 各コンテキストは独立した Cookie、localStorage 等を持つため、
-    // 完全に独立した 2 人のユーザーをシミュレートできる
-    const context1 = await browser.newContext()
-    const context2 = await browser.newContext()
-    const page1 = await context1.newPage()
-    const page2 = await context2.newPage()
+test.describe('RPC RequestSimulcastRid test', () => {
+  test('RPC で simulcast rid を切り替えられる', async ({ browser }) => {
+    const context = await browser.newContext()
+    const page = await context.newPage()
 
-    // 両方のページで RPC テストページにアクセス
-    await page1.goto('http://localhost:9000/rpc/')
-    await page2.goto('http://localhost:9000/rpc/')
+    await page.goto('http://localhost:9000/rpc/')
 
-    // page1 でバージョンチェック
-    const versionCheck = await checkSoraVersion(page1, {
+    // バージョンチェック
+    const versionCheck = await checkSoraVersion(page, {
       majorVersion: 2025,
       minorVersion: 2,
       featureName: 'RPC',
@@ -37,222 +30,141 @@ test.describe('RPC test', () => {
     const channelName = randomUUID()
 
     // チャンネル名を設定
-    await page1.fill('#channel-name', channelName)
-    await page2.fill('#channel-name', channelName)
+    await page.fill('#channel-name', channelName)
 
-    // 両方のページで接続を確立
-    await page1.click('#connect')
-    await page2.click('#connect')
+    // 接続 (sendonly と recvonly 両方)
+    await page.click('#connect')
 
-    // 接続が確立されるまで待機（connection-id が表示されるまで）
-    await page1.waitForSelector('#connection-id:not(:empty)', { timeout: 30000 })
-    await page2.waitForSelector('#connection-id:not(:empty)', { timeout: 30000 })
+    // sendonly の connection-id が表示されるまで待機
+    await page.waitForSelector('#sendonly-connection-id:not(:empty)', { timeout: 30000 })
 
-    // 接続が安定するまで少し待機
-    await page1.waitForTimeout(1000)
-    await page2.waitForTimeout(1000)
+    // recvonly の connection-id が表示されるまで待機
+    await page.waitForSelector('#recvonly-connection-id:not(:empty)', { timeout: 30000 })
 
-    // リモートビデオが表示されるまで待機（お互いのビデオが見えていることを確認）
-    await page1.waitForSelector('#remote-videos video', { timeout: 10000 })
-    await page2.waitForSelector('#remote-videos video', { timeout: 10000 })
+    // rpcMethods が表示されるまで待機
+    await page.waitForSelector('#rpc-methods:not(:empty)', { timeout: 15000 })
 
-    // RPC データチャネルが確立されるまで待機
-    await page1.waitForFunction(
-      async () => {
-        const getStatsButton = document.querySelector('#get-stats') as HTMLButtonElement
-        if (getStatsButton) {
-          getStatsButton.click()
-          await new Promise((resolve) => setTimeout(resolve, 500))
-          const statsDiv = document.querySelector('#stats-report') as HTMLElement
-          const statsJson = statsDiv?.dataset.statsReportJson
-          if (statsJson) {
-            const stats = JSON.parse(statsJson)
-            return stats.some(
-              (report: { type: string; label?: string; state?: string }) =>
-                report.type === 'data-channel' && report.label === 'rpc' && report.state === 'open',
-            )
-          }
+    // rpcMethods に 2025.2.0/RequestSimulcastRid が含まれていることを確認
+    const rpcMethods = await page.evaluate(() => {
+      const element = document.querySelector<HTMLElement>('#rpc-methods')
+      return element?.dataset.rpcMethods ? JSON.parse(element.dataset.rpcMethods) : []
+    })
+    expect(rpcMethods).toContain('2025.2.0/RequestSimulcastRid')
+
+    // リモートビデオが表示されるまで待機
+    await page.waitForSelector('#remote-videos video', { timeout: 15000 })
+
+    // RPC データチャネルが開くまで待機
+    await page.click('#get-stats')
+    await page.waitForFunction(
+      () => {
+        const statsDiv = document.querySelector('#stats-report') as HTMLElement
+        const statsJson = statsDiv?.dataset.statsReportJson
+        if (statsJson) {
+          const stats = JSON.parse(statsJson)
+          return stats.some(
+            (report: { type: string; label?: string; state?: string }) =>
+              report.type === 'data-channel' && report.label === 'rpc' && report.state === 'open',
+          )
         }
         return false
       },
       { timeout: 15000 },
     )
 
-    await page2.waitForFunction(
-      async () => {
-        const getStatsButton = document.querySelector('#get-stats') as HTMLButtonElement
-        if (getStatsButton) {
-          getStatsButton.click()
-          await new Promise((resolve) => setTimeout(resolve, 500))
-          const statsDiv = document.querySelector('#stats-report') as HTMLElement
-          const statsJson = statsDiv?.dataset.statsReportJson
-          if (statsJson) {
-            const stats = JSON.parse(statsJson)
-            return stats.some(
-              (report: { type: string; label?: string; state?: string }) =>
-                report.type === 'data-channel' && report.label === 'rpc' && report.state === 'open',
-            )
-          }
-        }
-        return false
-      },
-      { timeout: 15000 },
-    )
+    // 安定するまで待機
+    await page.waitForTimeout(3000)
 
-    // page1 で RPC を実行
-    await page1.fill('#rpc-input', 'test-value-from-page1')
-    await page1.click('#rpc')
-
-    // page1 自身で push 通知を受信し、内容を取得
-    await page1.waitForFunction(
-      () => {
-        const pushResult = document.querySelector('#push-result') as HTMLElement
-        return pushResult?.dataset.pushData
-      },
-      { timeout: 15000 },
-    )
-
-    const pushContent1 = await page1.evaluate(() => {
-      const pushResult = document.querySelector('#push-result') as HTMLElement
-      return JSON.parse(pushResult.dataset.pushData || '{}')
-    })
-
-    expect(pushContent1).toBeTruthy()
-    expect(pushContent1?.action).toBe('PutMetadataItem')
-    expect(pushContent1?.key).toBe('abc')
-    expect(pushContent1?.value).toBe('test-value-from-page1')
-    expect(pushContent1?.type).toBe('signaling_notify_metadata_ext')
-
-    // page2 でも push 通知を受信し、内容を検証
-    await page2.waitForFunction(
-      () => {
-        const pushResult = document.querySelector('#push-result') as HTMLElement
-        return pushResult?.dataset.pushData
-      },
-      { timeout: 15000 },
-    )
-
-    const pushContent2 = await page2.evaluate(() => {
-      const pushResult = document.querySelector('#push-result') as HTMLElement
-      return JSON.parse(pushResult.dataset.pushData || '{}')
-    })
-
-    expect(pushContent2).toBeTruthy()
-    expect(pushContent2?.action).toBe('PutMetadataItem')
-    expect(pushContent2?.key).toBe('abc')
-    expect(pushContent2?.value).toBe('test-value-from-page1')
-    expect(pushContent2?.type).toBe('signaling_notify_metadata_ext')
-
-    // 両方のページの push-result をクリアして、クリアされたことを確認
-    await page1.evaluate(() => {
-      const pushResult = document.querySelector('#push-result') as HTMLElement
-      if (pushResult) {
-        pushResult.innerHTML = ''
-        delete pushResult.dataset.pushData
+    // 初期解像度を取得 (r2 で開始)
+    const initialResolution = await page.evaluate(() => {
+      const element = document.querySelector<HTMLElement>('#video-resolution')
+      return {
+        width: Number(element?.dataset.width || 0),
+        height: Number(element?.dataset.height || 0),
       }
     })
-    await page2.evaluate(() => {
-      const pushResult = document.querySelector('#push-result') as HTMLElement
-      if (pushResult) {
-        pushResult.innerHTML = ''
-        delete pushResult.dataset.pushData
+    console.log(`Initial resolution (r2): ${initialResolution.width}x${initialResolution.height}`)
+
+    // r0 に切り替え (RPC 実行)
+    await page.click('input[name="rid"][value="r0"]')
+
+    // RPC ログにリクエストが記録されるまで待機
+    await page.waitForFunction(
+      () => {
+        const element = document.querySelector<HTMLElement>('#rpc-log')
+        return element?.textContent?.includes('Request: rid=r0')
+      },
+      { timeout: 15000 },
+    )
+
+    // simulcast.switched で current_rid が r0 に変わるまで待機
+    await page.waitForFunction(
+      () => {
+        const element = document.querySelector<HTMLElement>('#current-rid')
+        return element?.dataset.currentRid === 'r0'
+      },
+      { timeout: 15000 },
+    )
+
+    // 解像度が変わるまで待機
+    await page.waitForTimeout(3000)
+
+    // r0 の解像度を取得
+    const r0Resolution = await page.evaluate(() => {
+      const element = document.querySelector<HTMLElement>('#video-resolution')
+      return {
+        width: Number(element?.dataset.width || 0),
+        height: Number(element?.dataset.height || 0),
       }
     })
+    console.log(`r0 resolution: ${r0Resolution.width}x${r0Resolution.height}`)
 
-    // 逆方向のテスト: page2 から page1 へ
+    // r0 は最も低い解像度なので、初期解像度より小さいはず
+    expect(r0Resolution.width).toBeLessThan(initialResolution.width)
+    expect(r0Resolution.height).toBeLessThan(initialResolution.height)
 
-    // page2 で RPC を実行
-    await page2.fill('#rpc-input', 'test-value-from-page2')
-    await page2.click('#rpc')
+    // r2 に戻す
+    await page.click('input[name="rid"][value="r2"]')
 
-    // page2 自身でも push 通知を受信し、内容を検証
-    await page2.waitForFunction(
+    // simulcast.switched で current_rid が r2 に変わるまで待機
+    await page.waitForFunction(
       () => {
-        const pushResult = document.querySelector('#push-result') as HTMLElement
-        return pushResult?.dataset.pushData
+        const element = document.querySelector<HTMLElement>('#current-rid')
+        return element?.dataset.currentRid === 'r2'
       },
       { timeout: 15000 },
     )
 
-    const pushContentPage2 = await page2.evaluate(() => {
-      const pushResult = document.querySelector('#push-result') as HTMLElement
-      return JSON.parse(pushResult.dataset.pushData || '{}')
+    // 解像度が戻るまで待機
+    await page.waitForTimeout(3000)
+
+    // r2 の解像度を取得
+    const r2Resolution = await page.evaluate(() => {
+      const element = document.querySelector<HTMLElement>('#video-resolution')
+      return {
+        width: Number(element?.dataset.width || 0),
+        height: Number(element?.dataset.height || 0),
+      }
     })
+    console.log(`r2 resolution: ${r2Resolution.width}x${r2Resolution.height}`)
 
-    expect(pushContentPage2).toBeTruthy()
-    expect(pushContentPage2?.action).toBe('PutMetadataItem')
-    expect(pushContentPage2?.key).toBe('abc')
-    expect(pushContentPage2?.value).toBe('test-value-from-page2')
-    expect(pushContentPage2?.type).toBe('signaling_notify_metadata_ext')
+    // r2 は最も高い解像度なので、r0 より大きいはず
+    expect(r2Resolution.width).toBeGreaterThan(r0Resolution.width)
+    expect(r2Resolution.height).toBeGreaterThan(r0Resolution.height)
 
-    // page1でも新しいpush通知を受信し、内容を検証
-    await page1.waitForFunction(
-      () => {
-        const pushResult = document.querySelector('#push-result') as HTMLElement
-        return pushResult?.dataset.pushData
-      },
-      { timeout: 15000 },
-    )
-
-    const pushContentPage1 = await page1.evaluate(() => {
-      const pushResult = document.querySelector('#push-result') as HTMLElement
-      return JSON.parse(pushResult.dataset.pushData || '{}')
+    // RPC ログに Request と Response が記録されていることを確認
+    const rpcLogContent = await page.evaluate(() => {
+      const element = document.querySelector<HTMLElement>('#rpc-log')
+      return element?.textContent || ''
     })
+    expect(rpcLogContent).toContain('Request: rid=r0')
+    expect(rpcLogContent).toContain('Request: rid=r2')
 
-    expect(pushContentPage1).toBeTruthy()
-    expect(pushContentPage1?.action).toBe('PutMetadataItem')
-    expect(pushContentPage1?.key).toBe('abc')
-    expect(pushContentPage1?.value).toBe('test-value-from-page2')
-    expect(pushContentPage1?.type).toBe('signaling_notify_metadata_ext')
-
-    // page1 でも統計情報を再取得
-    await page1.click('#get-stats')
-    // 統計情報が更新されるまで少し待機
-    await page1.waitForTimeout(500)
-
-    const statsAfterRpc1 = await page1.evaluate(() => {
-      const statsDiv = document.querySelector('#stats-report') as HTMLElement
-      return statsDiv?.dataset.statsReportJson
-    })
-
-    const statsAfter1 = JSON.parse(statsAfterRpc1 || '[]') as Array<Record<string, unknown>>
-    const rpcDataChannel1 = statsAfter1.find(
-      (report) => report.type === 'data-channel' && report.label === 'rpc',
-    )
-
-    // page1 では両方向でメッセージが送受信されているはず
-    expect(rpcDataChannel1).toBeTruthy()
-    expect(Number(rpcDataChannel1?.messagesSent || 0)).toBeGreaterThan(0)
-    expect(Number(rpcDataChannel1?.bytesSent || 0)).toBeGreaterThan(0)
-
-    // page2 でも統計情報を再取得
-    await page2.click('#get-stats')
-    // 統計情報が更新されるまで少し待機
-    await page2.waitForTimeout(500)
-
-    const statsAfterRpc2 = await page2.evaluate(() => {
-      const statsDiv = document.querySelector('#stats-report') as HTMLElement
-      return statsDiv?.dataset.statsReportJson
-    })
-
-    const statsAfter2 = JSON.parse(statsAfterRpc2 || '[]') as Array<Record<string, unknown>>
-    const rpcDataChannel2 = statsAfter2.find(
-      (report) => report.type === 'data-channel' && report.label === 'rpc',
-    )
-
-    // page2 でも両方向でメッセージが送受信されているはず
-    expect(rpcDataChannel2).toBeTruthy()
-    expect(Number(rpcDataChannel2?.messagesSent || 0)).toBeGreaterThan(0)
-    expect(Number(rpcDataChannel2?.bytesSent || 0)).toBeGreaterThan(0)
-
-    // 両方のページで切断
-    await page1.click('#disconnect')
-    await page2.click('#disconnect')
+    // 切断
+    await page.click('#disconnect')
 
     // クリーンアップ
-    await page1.close()
-    await page2.close()
-    await context1.close()
-    await context2.close()
+    await page.close()
+    await context.close()
   })
 })

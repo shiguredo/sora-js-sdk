@@ -7,14 +7,25 @@ RPC 機能は認証成功時に rpc_methods を払いだす必要がある。
 */
 
 import Sora, {
-  type ConnectionOptions,
   type ConnectionPublisher,
+  type ConnectionSubscriber,
   type SignalingNotifyMessage,
-  type SignalingPushMessage,
+  type SimulcastRid,
   type SoraConnection,
-  type VideoCodecType,
 } from 'sora-js-sdk'
-import { generateJwt, getChannelId, getVideoCodecType, setSoraJsSdkVersion } from '../src/misc'
+import { generateJwt, getChannelId, setSoraJsSdkVersion } from '../src/misc'
+
+// RPC ログを追加する関数
+function addRpcLog(message: string): void {
+  const rpcLogElement = document.querySelector<HTMLElement>('#rpc-log')
+  if (rpcLogElement) {
+    const logEntry = document.createElement('div')
+    logEntry.textContent = message
+    rpcLogElement.appendChild(logEntry)
+    // 最新のログが見えるようにスクロール
+    rpcLogElement.scrollTop = rpcLogElement.scrollHeight
+  }
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
@@ -24,56 +35,95 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   setSoraJsSdkVersion()
 
-  let client: SoraClient
+  let sendonlyClient: SimulcastSendonlyClient
+  let recvonlyClient: SimulcastRecvonlyClient
 
   document.querySelector('#connect')?.addEventListener('click', async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
-    const videoCodecType = getVideoCodecType()
 
-    // RPC 用のプライベートクレームを含む JWT を生成する
+    // Sendonly を接続
+    const sendonlyAccessToken = await generateJwt(channelId, secretKey, {})
+    sendonlyClient = new SimulcastSendonlyClient(signalingUrl, channelId, sendonlyAccessToken)
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { width: { exact: 960 }, height: { exact: 540 } },
+    })
+    await sendonlyClient.connect(stream)
+
+    // Recvonly を接続 (RPC 用のプライベートクレームを含む JWT を生成する)
     const privateClaims = {
-      rpc_methods: ['2025.2.0/PutSignalingNotifyMetadataItem'],
+      rpc_methods: ['2025.2.0/RequestSimulcastRid'],
+      simulcast: true,
+      simulcast_request_rid: 'r2',
+      simulcast_rpc_rids: ['none', 'r0', 'r1', 'r2'],
     }
-    const accessToken = await generateJwt(channelId, secretKey, privateClaims)
+    const recvonlyAccessToken = await generateJwt(channelId, secretKey, privateClaims)
+    recvonlyClient = new SimulcastRecvonlyClient(signalingUrl, channelId, recvonlyAccessToken)
 
-    client = new SoraClient(signalingUrl, channelId, accessToken, videoCodecType)
+    await recvonlyClient.connect()
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-    await client.connect(stream)
+    // rpcMethods を表示
+    const rpcMethodsElement = document.querySelector<HTMLElement>('#rpc-methods')
+    if (rpcMethodsElement) {
+      const rpcMethods = recvonlyClient.getRpcMethods()
+      rpcMethodsElement.textContent = rpcMethods.join(', ')
+      rpcMethodsElement.dataset.rpcMethods = JSON.stringify(rpcMethods)
+    }
   })
+
   document.querySelector('#disconnect')?.addEventListener('click', async () => {
-    await client.disconnect()
+    if (sendonlyClient) {
+      await sendonlyClient.disconnect()
+    }
+    if (recvonlyClient) {
+      await recvonlyClient.disconnect()
+    }
+    // rpcMethods をクリア
+    const rpcMethodsElement = document.querySelector<HTMLElement>('#rpc-methods')
+    if (rpcMethodsElement) {
+      rpcMethodsElement.textContent = ''
+      delete rpcMethodsElement.dataset.rpcMethods
+    }
   })
 
-  // RPCボタンのイベントリスナーを最初から設定
-  document.querySelector('#rpc')?.addEventListener('click', async () => {
-    if (!client) {
-      console.error('Client not initialized')
-      return
-    }
+  // RPC で rid を変更するラジオボタンのイベントリスナー
+  document.querySelectorAll<HTMLInputElement>('input[name="rid"]').forEach((radio) => {
+    radio.addEventListener('change', async () => {
+      if (!recvonlyClient) {
+        console.error('Recvonly client not initialized')
+        return
+      }
 
-    const rpcInput = document.querySelector<HTMLInputElement>('#rpc-input')
-    if (!rpcInput) {
-      console.error('RPC input element not found')
-      return
-    }
+      const rid = radio.value as SimulcastRid
+      const timestamp = new Date().toISOString()
+      addRpcLog(`[${timestamp}] Request: rid=${rid}`)
 
-    try {
-      const result = await client.sendRpc(rpcInput.value)
-      console.log('RPC sent successfully', result)
-    } catch (error) {
-      console.error('RPC error:', error)
-    }
+      try {
+        const result = await recvonlyClient.requestSimulcastRid(rid)
+        const responseTimestamp = new Date().toISOString()
+        addRpcLog(`[${responseTimestamp}] Response: ${JSON.stringify(result)}`)
+        console.log('RequestSimulcastRid sent successfully', result)
+      } catch (error) {
+        const errorTimestamp = new Date().toISOString()
+        addRpcLog(`[${errorTimestamp}] Error: ${error}`)
+        console.error('RPC error:', error)
+      }
+    })
   })
 
   document.querySelector('#get-stats')?.addEventListener('click', async () => {
-    const statsReport = await client.getStats()
+    if (!recvonlyClient) {
+      console.error('Recvonly client not initialized')
+      return
+    }
+
+    const statsReport = await recvonlyClient.getStats()
     const statsDiv = document.querySelector('#stats-report') as HTMLElement
-    const statsReportJsonDiv = document.querySelector('#stats-report-json')
-    if (statsDiv && statsReportJsonDiv) {
+    if (statsDiv) {
       const statsReportJson: Record<string, unknown>[] = []
-      // XSS対策: innerHTMLは使わない
       statsDiv.textContent = ''
+
       for (const report of statsReport.values()) {
         const h3 = document.createElement('h3')
         h3.textContent = `Type: ${report.type}`
@@ -95,44 +145,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         statsDiv.appendChild(ul)
         statsReportJson.push(reportJson)
       }
-      // データ属性としても保存（オプション）
       statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
     }
   })
 })
 
-class SoraClient {
+// Simulcast Sendonly クライアント
+class SimulcastSendonlyClient {
   private debug = false
 
   private channelId: string
   private metadata: { access_token: string }
-  private options: ConnectionOptions
 
   private sora: SoraConnection
   private connection: ConnectionPublisher
 
-  constructor(
-    signalingUrl: string,
-    channelId: string,
-    accessToken: string,
-    videoCodecType: VideoCodecType | undefined,
-  ) {
+  constructor(signalingUrl: string, channelId: string, accessToken: string) {
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.channelId = channelId
-
     this.metadata = { access_token: accessToken }
-    this.options = { connectionTimeout: 15000 }
 
-    if (videoCodecType !== undefined) {
-      this.options = { ...this.options, videoCodecType: videoCodecType }
-    }
-
-    this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options)
+    this.connection = this.sora.sendonly(this.channelId, this.metadata, {
+      connectionTimeout: 15000,
+      audio: false,
+      video: true,
+      videoCodecType: 'VP8',
+      videoBitRate: 3000,
+      simulcast: true,
+    })
 
     this.connection.on('notify', this.onnotify.bind(this))
-    this.connection.on('track', this.ontrack.bind(this))
-    this.connection.on('removetrack', this.onremovetrack.bind(this))
-    this.connection.on('push', this.onpush.bind(this))
   }
 
   async connect(stream: MediaStream) {
@@ -143,37 +185,78 @@ class SoraClient {
     }
   }
 
-  isConnected(): boolean {
-    return this.connection.pc !== null && this.connection.pc.connectionState === 'connected'
-  }
-
-  async sendRpc(value: string): Promise<void> {
-    const rpcMethod = '2025.2.0/PutSignalingNotifyMetadataItem'
-    const rpcParams = {
-      key: 'abc',
-      value: value,
-      push: true,
-    }
-    const rpcOptions = {
-      notification: true,
-    }
-
-    return await this.connection.rpc(rpcMethod, rpcParams, rpcOptions)
-  }
-
   async disconnect() {
     await this.connection.disconnect()
-
-    // お掃除
     const localVideo = document.querySelector<HTMLVideoElement>('#local-video')
     if (localVideo) {
       localVideo.srcObject = null
     }
-    // お掃除
+  }
+
+  private onnotify(event: SignalingNotifyMessage): void {
+    if (
+      event.event_type === 'connection.created' &&
+      this.connection.connectionId === event.connection_id
+    ) {
+      const connectionIdElement = document.querySelector('#sendonly-connection-id')
+      if (connectionIdElement) {
+        connectionIdElement.textContent = event.connection_id
+      }
+    }
+  }
+}
+
+// Simulcast Recvonly クライアント (RPC 機能付き)
+class SimulcastRecvonlyClient {
+  private debug = false
+
+  private channelId: string
+  private metadata: { access_token: string }
+
+  private sora: SoraConnection
+  private connection: ConnectionSubscriber
+
+  constructor(signalingUrl: string, channelId: string, accessToken: string) {
+    this.sora = Sora.connection(signalingUrl, this.debug)
+    this.channelId = channelId
+    this.metadata = { access_token: accessToken }
+
+    this.connection = this.sora.recvonly(this.channelId, this.metadata, {
+      connectionTimeout: 15000,
+      simulcast: true,
+      simulcastRid: 'r2',
+    })
+
+    this.connection.on('notify', this.onnotify.bind(this))
+    this.connection.on('track', this.ontrack.bind(this))
+    this.connection.on('removetrack', this.onremovetrack.bind(this))
+  }
+
+  async connect() {
+    await this.connection.connect()
+  }
+
+  async disconnect() {
+    await this.connection.disconnect()
     const remoteVideos = document.querySelector('#remote-videos')
     if (remoteVideos) {
       remoteVideos.innerHTML = ''
     }
+  }
+
+  // type offer から取得した rpcMethods を返す
+  getRpcMethods(): string[] {
+    return this.connection.rpcMethods
+  }
+
+  // RPC で simulcast rid を変更する
+  async requestSimulcastRid(rid: SimulcastRid): Promise<unknown> {
+    const rpcMethod = '2025.2.0/RequestSimulcastRid'
+    const rpcParams = {
+      receiver_connection_id: this.connection.connectionId,
+      rid: rid,
+    }
+    return await this.connection.rpc(rpcMethod, rpcParams)
   }
 
   getStats(): Promise<RTCStatsReport> {
@@ -188,34 +271,26 @@ class SoraClient {
       event.event_type === 'connection.created' &&
       this.connection.connectionId === event.connection_id
     ) {
-      const connectionIdElement = document.querySelector('#connection-id')
+      const connectionIdElement = document.querySelector('#recvonly-connection-id')
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
       }
     }
-  }
 
-  private onpush(event: SignalingPushMessage): void {
-    // https://sora-doc.shiguredo.jp/EXPERIMENTAL_API_SIGNALING_NOTIFY_METADATA_EXT#387c9c
-    const pushResultDiv = document.querySelector('#push-result') as HTMLElement
-    if (pushResultDiv) {
-      // JSONデータをdata属性に保存
-      pushResultDiv.dataset.pushData = JSON.stringify(event.data)
-
-      // 表示用のHTMLも更新
-      pushResultDiv.textContent = ''
-
-      const createParagraph = (text: string) => {
-        const p = document.createElement('p')
-        p.textContent = text
-        return p
+    // simulcast.switched イベントで current_rid と rpc_rids を表示
+    if (event.event_type === 'simulcast.switched') {
+      const currentRidElement = document.querySelector<HTMLElement>('#current-rid')
+      if (currentRidElement) {
+        currentRidElement.textContent = event.current_rid
+        currentRidElement.dataset.currentRid = event.current_rid
       }
 
-      pushResultDiv.appendChild(createParagraph(`Action: ${event.data.action}`))
-      pushResultDiv.appendChild(createParagraph(`Connection ID: ${event.data.connection_id}`))
-      pushResultDiv.appendChild(createParagraph(`Key: ${event.data.key}`))
-      pushResultDiv.appendChild(createParagraph(`Value: ${event.data.value}`))
-      pushResultDiv.appendChild(createParagraph(`Type: ${event.data.type}`))
+      // rpc_rids を表示
+      const rpcRidsElement = document.querySelector<HTMLElement>('#rpc-rids')
+      if (rpcRidsElement && event.rpc_rids) {
+        rpcRidsElement.textContent = event.rpc_rids.join(', ')
+        rpcRidsElement.dataset.rpcRids = JSON.stringify(event.rpc_rids)
+      }
     }
   }
 
@@ -230,10 +305,18 @@ class SoraClient {
       remoteVideo.autoplay = true
       remoteVideo.playsInline = true
       remoteVideo.controls = true
-      remoteVideo.width = 320
-      remoteVideo.height = 240
       remoteVideo.srcObject = stream
       remoteVideos.appendChild(remoteVideo)
+
+      // 解像度を表示するための resize イベントリスナー
+      remoteVideo.addEventListener('resize', () => {
+        const resolutionElement = document.querySelector<HTMLElement>('#video-resolution')
+        if (resolutionElement) {
+          resolutionElement.textContent = `${remoteVideo.videoWidth}x${remoteVideo.videoHeight}`
+          resolutionElement.dataset.width = String(remoteVideo.videoWidth)
+          resolutionElement.dataset.height = String(remoteVideo.videoHeight)
+        }
+      })
     }
   }
 
