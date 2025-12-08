@@ -1,26 +1,15 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
-import { checkSoraVersion } from './helper'
 
-test('switched コールバックが呼び出されることを確認する', async ({ browser }) => {
+test('signaling コールバックで type: switched を受信することを確認する', async ({ browser }) => {
   const page = await browser.newPage()
 
   await page.goto('http://localhost:9000/data_channel_signaling_only/')
 
-  // バージョンチェック (switched コールバックは 2025.2.0 で追加)
-  const versionCheck = await checkSoraVersion(page, {
-    majorVersion: 2025,
-    minorVersion: 2,
-    featureName: 'switched callback',
-  })
-
-  if (!versionCheck.isSupported) {
-    test.skip(true, versionCheck.skipReason || 'Version not supported')
-    await page.close()
-    return
-  }
-
-  console.log(`sdkVersion=${versionCheck.version}`)
+  // SDK バージョンの表示
+  await page.waitForSelector('#sora-js-sdk-version')
+  const sdkVersion = await page.$eval('#sora-js-sdk-version', (el) => el.textContent)
+  console.log(`sdkVersion=${sdkVersion}`)
 
   const channelName = randomUUID()
   await page.fill('#channel-name', channelName)
@@ -33,10 +22,10 @@ test('switched コールバックが呼び出されることを確認する', as
   const connectionId = await page.$eval('#connection-id', (el) => el.textContent)
   console.log(`connectionId=${connectionId}`)
 
-  // switched コールバックが呼ばれて #switched-status が 'switched' になるまで待つ
-  await page.waitForSelector('#switched-status:not(:empty)')
-  const switchedStatus = await page.$eval('#switched-status', (el) => el.textContent)
-  expect(switchedStatus).toBe('switched')
+  // signaling コールバックで onmessage-switched を受信して #signaling-type-switched が設定されるまで待つ
+  await page.waitForSelector('#signaling-type-switched:not(:empty)')
+  const signalingTypeSwitched = await page.$eval('#signaling-type-switched', (el) => el.textContent)
+  expect(signalingTypeSwitched).toBe('websocket')
 
   await page.click('#disconnect')
 

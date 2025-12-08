@@ -162,6 +162,13 @@ class SoraClient {
 
   // E2E テスト用のコード
   private onSignaling(event: SignalingEvent): void {
+    if (event.type === 'onmessage-switched') {
+      console.log('[signaling]', event.type, event.transportType)
+      const signalingTypeSwitchedElement = document.querySelector('#signaling-type-switched')
+      if (signalingTypeSwitchedElement) {
+        signalingTypeSwitchedElement.textContent = event.transportType
+      }
+    }
     if (event.type === 'onmessage-close') {
       console.log('[signaling]', event.type, event.transportType)
       const signalingCloseTypeElement = document.querySelector('#signaling-close-type')
