@@ -429,6 +429,7 @@ export type Callbacks = {
   track: (event: RTCTrackEvent) => void
   removetrack: (event: MediaStreamTrackEvent) => void
   notify: (event: SignalingNotifyMessage, transportType: TransportType) => void
+  switched: (event: SignalingSwitchedMessage) => void
   log: (title: string, message: JSONType) => void
   timeout: () => void
   timeline: (event: TimelineEvent) => void
