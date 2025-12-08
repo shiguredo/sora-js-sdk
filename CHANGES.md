@@ -11,6 +11,12 @@
 
 ## develop
 
+- [ADD] `Callbacks` に `connected` コールバックを追加する
+  - RTCPeerConnection の `connectionState` が `connected` になり、かつ自分の `connection.created` notify を受信した時点で呼び出される
+  - 引数として `SignalingNotifyConnectionCreated` を受け取る
+  - 接続ごとに一度だけ発火する
+  - 注意: `connection.created` の通知を無効にしている場合はこのコールバックは発火しない
+  - @voluntas
 - [ADD] `Callbacks` に `switched` コールバックを追加する
   - `type: switched` メッセージを受信したときに呼び出される
   - @voluntas

@@ -42,6 +42,7 @@ import type {
   RPCOptions,
   SignalingCloseMessage,
   SignalingConnectMessage,
+  SignalingNotifyConnectionCreated,
   SignalingNotifyMessage,
   SignalingOfferMessage,
   SignalingOfferMessageDataChannel,
@@ -229,6 +230,14 @@ export default class ConnectionBase {
     [key in string]?: SignalingOfferMessageDataChannel
   }
   /**
+   * 自分の connection.created notify メッセージ
+   */
+  private selfConnectionCreatedMessage: SignalingNotifyConnectionCreated | null
+  /**
+   * connected コールバックを発火済みかどうかのフラグ
+   */
+  private connectedCallbackCalled: boolean
+  /**
    * イベントコールバックのリスト
    */
   protected callbacks: Callbacks
@@ -307,6 +316,7 @@ export default class ConnectionBase {
       removetrack: (): void => {},
       notify: (): void => {},
       switched: (): void => {},
+      connected: (): void => {},
       log: (): void => {},
       timeout: (): void => {},
       timeline: (): void => {},
@@ -325,6 +335,8 @@ export default class ConnectionBase {
     }
     this.signalingSwitched = false
     this.signalingOfferMessageDataChannels = {}
+    this.selfConnectionCreatedMessage = null
+    this.connectedCallbackCalled = false
     this.connectedSignalingUrl = ''
     this.contactSignalingUrl = ''
   }
@@ -340,7 +352,7 @@ export default class ConnectionBase {
    * });
    * ```
    *
-   * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, log, timeout, timeline, signaling, message, datachannel)
+   * @param kind - イベントの種類(disconnect, push, track, removetrack, notify, switched, connected, log, timeout, timeline, signaling, message, datachannel)
    * @param callback - コールバック関数
    *
    * @public
@@ -831,6 +843,8 @@ export default class ConnectionBase {
     this.signalingOfferMessageDataChannels = {}
     this.contactSignalingUrl = ''
     this.connectedSignalingUrl = ''
+    this.selfConnectionCreatedMessage = null
+    this.connectedCallbackCalled = false
     this.clearConnectionTimeout()
   }
 
@@ -1679,10 +1693,17 @@ export default class ConnectionBase {
           iceConnectionState: this.pc.iceConnectionState,
           iceGatheringState: this.pc.iceGatheringState,
         })
+        if (this.pc.connectionState === 'connected') {
+          this.triggerConnectedCallbackIfReady()
+        }
         if (this.pc.connectionState === 'failed') {
           this.abendPeerConnectionState('CONNECTION-STATE-FAILED')
         }
       }
+    }
+    // ハンドラ設定時に既に connected の場合も確認する
+    if (this.pc.connectionState === 'connected') {
+      this.triggerConnectedCallbackIfReady()
     }
   }
 
@@ -1972,6 +1993,25 @@ export default class ConnectionBase {
   }
 
   /**
+   * connected コールバックを発火するメソッド
+   *
+   * @remarks
+   * PeerConnection が connected であり、かつ自分の connection.created を受信済みの場合に発火する
+   * 一度発火したら再度発火しない
+   */
+  private triggerConnectedCallbackIfReady(): void {
+    if (
+      !this.connectedCallbackCalled &&
+      this.pc &&
+      this.pc.connectionState === 'connected' &&
+      this.selfConnectionCreatedMessage !== null
+    ) {
+      this.connectedCallbackCalled = true
+      this.callbacks.connected(this.selfConnectionCreatedMessage)
+    }
+  }
+
+  /**
    * シグナリングサーバーから受け取った type notify メッセージを処理をするメソッド
    *
    * @param message - type notify メッセージ
@@ -1980,6 +2020,15 @@ export default class ConnectionBase {
     message: SignalingNotifyMessage,
     transportType: TransportType,
   ): void {
+    // 自分の connection.created を検出
+    if (
+      message.event_type === 'connection.created' &&
+      'connection_id' in message &&
+      message.connection_id === this.connectionId
+    ) {
+      this.selfConnectionCreatedMessage = message as SignalingNotifyConnectionCreated
+      this.triggerConnectedCallbackIfReady()
+    }
     this.callbacks.notify(message, transportType)
   }
 
