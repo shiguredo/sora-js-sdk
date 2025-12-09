@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2025.1.0
+
+**リリース日**: 2025-12-09
+
 - [ADD] `Callbacks` に `connected` コールバックを追加する
   - RTCPeerConnection の `connectionState` が `connected` になり、かつ自分の `connection.created` notify を受信した時点で呼び出される
   - 引数として `SignalingNotifyConnectionCreated` を受け取る
