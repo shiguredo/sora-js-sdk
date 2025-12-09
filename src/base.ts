@@ -2492,10 +2492,17 @@ export default class ConnectionBase {
   /**
    * RPC DataChannel でリクエストを送信するメソッド
    *
+   * @example
+   * ```typescript
+   * const result = await connection.rpc('simulcast.change_sending_encodings', { rids: ['r0', 'r1'] });
+   * ```
+   *
    * @param method - RPC メソッド名
    * @param params - RPC パラメーター
    * @param options - RPC オプション
    * @returns Promise<T> - レスポンスの result
+   *
+   * @public
    */
   async rpc<T = unknown>(
     method: string,

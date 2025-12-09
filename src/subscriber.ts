@@ -9,7 +9,7 @@ export default class ConnectionSubscriber extends ConnectionBase {
    *
    * @example
    * ```typescript
-   * const recvonly = connection.sendrecv("sora");
+   * const recvonly = connection.recvonly("sora");
    * await recvonly.connect();
    * ```
    *
