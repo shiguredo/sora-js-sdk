@@ -1,0 +1,94 @@
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <title>RPC Simulcast test</title>
+  <style>
+    .rid-selector label {
+      display: inline-block;
+      padding: 15px 30px;
+      font-size: 20px;
+      margin-right: 10px;
+      cursor: pointer;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      background-color: #f5f5f5;
+    }
+    .rid-selector label:hover {
+      background-color: #e0e0e0;
+    }
+    .rid-selector input[type="radio"] {
+      transform: scale(1.8);
+      margin-right: 10px;
+    }
+    .rid-selector input[type="radio"]:checked + span {
+      font-weight: bold;
+    }
+    .rid-selector label:has(input:checked) {
+      border-color: #007bff;
+      background-color: #e7f1ff;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>RPC Simulcast test</h1>
+    <div id="sora-js-sdk-version"></div>
+    <label for="channel-name">チャンネル名:</label>
+    <input type="text" id="channel-name" name="channel-name" value="rpc-simulcast"><br>
+
+    <button id="connect">connect</button>
+    <button id="disconnect">disconnect</button>
+    <button id="get-stats">getStats</button>
+
+    <hr>
+    <h2>Sendonly (Simulcast VP8 540p)</h2>
+    <div id="sendonly-connection-id"></div>
+    <video id="local-video" autoplay="" playsinline="" controls="" muted=""
+      style="width: 480px; height: 270px; border: 1px solid black;"></video>
+
+    <hr>
+    <h2>Recvonly (Simulcast)</h2>
+    <div id="recvonly-connection-id"></div>
+    <div>
+      <strong>Switched:</strong>
+      <span id="switched"></span>
+    </div>
+    <div>
+      <strong>RPC Methods:</strong>
+      <span id="rpc-methods"></span>
+    </div>
+    <div>
+      <strong>Current RID:</strong>
+      <span id="current-rid"></span>
+    </div>
+    <div>
+      <strong>RPC RIDs:</strong>
+      <span id="rpc-rids"></span>
+    </div>
+    <div>
+      <strong>Resolution:</strong>
+      <span id="video-resolution"></span>
+    </div>
+    <div class="rid-selector" style="margin: 10px 0;">
+      <label><input type="radio" name="rid" value="r0"><span>r0</span></label>
+      <label><input type="radio" name="rid" value="r1"><span>r1</span></label>
+      <label><input type="radio" name="rid" value="r2" checked><span>r2</span></label>
+    </div>
+    <div id="remote-videos" style="width: 960px; height: 540px; border: 1px solid red; display: flex; align-items: center; justify-content: center;"></div>
+
+    <hr>
+    <h2>RPC Log</h2>
+    <div id="rpc-log" style="height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; font-family: monospace; font-size: 12px; background-color: #f9f9f9;"></div>
+
+    <hr>
+    <h2>Stats Report</h2>
+    <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+  </div>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+
+</html>

@@ -5,10 +5,10 @@ on:
     branches:
       - develop
       - feature/*
-    paths-ignore:
-      - "**.md"
-      - "LICENSE"
-      - "NOTICE"
+    paths:
+      - playwright.config.ts
+      - .github/workflows/e2e-test-h265.yml
+      - e2e-tests/**
   schedule:
     # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
     - cron: "0 2 * * 1-5"
@@ -21,6 +21,7 @@ jobs:
     strategy:
       matrix:
         node:
+          # Nodejs のテストではないので一番古い LTS である 20 でのみ動作確認する
           - "20"
         browser:
           - name: "Google Chrome Canary"
@@ -33,8 +34,6 @@ jobs:
             type: "google-chrome"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
-      VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
-      VITE_TEST_WHEP_ENDPOINT_URL: ${{ secrets.TEST_WHEP_ENDPOINT_URL }}
       VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       VITE_TEST_API_URL: ${{ secrets.TEST_API_URL }}
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
@@ -43,10 +42,10 @@ jobs:
       labels: [self-hosted, macOS, ARM64, Apple-M2-Pro]
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: Homebrew/actions/setup-homebrew@master
       - run: brew install --cask ${{ matrix.browser.type}}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
@@ -55,16 +54,15 @@ jobs:
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build
-      - run: pnpm exec playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/h265.test.ts
+      - run: pnpm playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/h265.test.ts
         env:
-          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
+          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
       #   if: always()
       #   with:
       #     name: playwright-report
       #     path: playwright-report/
       #     retention-days: 30
-
 
   # slack_notify_succeeded:
   #   needs: [e2e-test]

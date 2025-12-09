@@ -4,6 +4,7 @@
 [![GitHub tag](https://img.shields.io/github/tag/shiguredo/sora-js-sdk.svg)](https://github.com/shiguredo/sora-js-sdk)
 [![npm version](https://badge.fury.io/js/sora-js-sdk.svg)](https://badge.fury.io/js/sora-js-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.gg/shiguredo)
 
 Sora JavaScript SDK は[株式会社時雨堂](https://shiguredo.jp/)が開発、販売している [WebRTC SFU Sora](https://sora.shiguredo.jp) / [Sora Cloud](https://sora-cloud.shiguredo.app/) をブラウザから扱うための SDK です。
 
@@ -21,6 +22,7 @@ Please read <https://github.com/shiguredo/oss> before use.
 
 - WebRTC SFU Sora 2024.1.0 以降
 - TypeScript 5.1 以降
+- Node.js 20.19 以降
 
 ## 使い方
 
@@ -82,6 +84,8 @@ pnpm run e2e-dev
 以下のバージョンの npm に公開されている安定版のパッケージは、
 最新の Sora で E2E テストが通ることを確認しています。
 
+- 2025.2.0
+- 2025.1.0
 - 2024.2.2
 - 2024.1.2
 - 2023.2.0
@@ -168,8 +172,8 @@ limitations under the License.
 
 - [WebRTC Load Testing Tool Zakuro](https://github.com/shiguredo/zakuro)
   - Sora 専用負荷試験ツール
-- [WebRTC Stats Collector Kohaku](https://github.com/shiguredo/kohaku)
-  - Sora 専用統計収集ツール
+- [WebRTC Stats Analyzer Kohaku](https://github.com/shiguredo/kohaku)
+  - Sora 専用統計解析ツール
 - [Recording Composition Tool Hisui](https://github.com/shiguredo/hisui)
   - Sora 専用録画ファイル合成ツール
 - [Audio Streaming Gateway Suzu](https://github.com/shiguredo/suzu)

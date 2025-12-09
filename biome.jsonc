@@ -1,29 +1,38 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "files": {
-    "include": [
-      "src/**",
-      "examples/**",
-      "tests/**",
-      "e2e-tests/**",
-      "*.config.mjs",
-      "package.json",
-      "biome.jsonc"
+    "includes": [
+      "**/src/**",
+      "**/tests/**",
+      "**/e2e-tests/**",
+      "**/*.config.mjs",
+      "**/package.json",
+      "**/biome.jsonc"
     ]
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "style": {
+        "noParameterAssign": "error",
+        "useAsConstAssertion": "error",
+        "useDefaultParameterLast": "error",
+        "useEnumInitializers": "error",
+        "useSelfClosingElements": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useNumberNamespace": "error",
+        "noInferrableTypes": "error",
+        "noUselessElse": "error"
+      }
     }
   },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
-    "ignore": [],
+    "includes": ["**"],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100

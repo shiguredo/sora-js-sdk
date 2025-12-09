@@ -6,22 +6,32 @@ on:
     branches:
       - develop
       - feature/*
-    paths-ignore:
-      - "**.md"
-      - "LICENSE"
-      - "NOTICE"
+    paths:
+      - playwright.config.ts
+      - .github/workflows/e2e-test.yml
+      - e2e-tests/**
   schedule:
-    # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
-    - cron: "0 2 * * 1-5"
+    # UTC 時間で平日 1-7 時 (JST で 10:00-16:00) に 30 分ごとに実行
+    - cron: "0,30 1-7 * * 1-5"
 
 jobs:
   e2e-test:
     strategy:
+      fail-fast: false
       matrix:
         node:
-          - "20"
-          - "22"
+          # Node 26 LTS がリリースされたら 26 に更新する
+          - "25"
+          # 30 Apr 2028 End of Life
           - "24"
+          # 30 Apr 2027 End of Life
+          - "22"
+          # 30 Apr 2026 End of Life
+          - "20"
+        os:
+          - "ubuntu-24.04"
+          - "macos-15"
+          - "windows-2025"
         browser:
           - name: "Chromium"
             type: "chromium"
@@ -29,31 +39,31 @@ jobs:
             type: "chrome"
           - name: "Google Chrome Beta"
             type: "chrome-beta"
-          - name: "Microsoft Edge"
-            type: "msedge"
-          - name: "Microsoft Edge Beta"
-            type: "msedge-beta"
-          - name: "Microsoft Edge Dev"
-            type: "msedge-dev"
+          # Playwright での Edge の取得が不安定なため一時的にコメントアウトする
+          # - name: "Microsoft Edge"
+          #   type: "msedge"
+          # - name: "Microsoft Edge Beta"
+          #   type: "msedge-beta"
+          # - name: "Microsoft Edge Dev"
+          #   type: "msedge-dev"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
-      VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
-      VITE_TEST_WHEP_ENDPOINT_URL: ${{ secrets.TEST_WHEP_ENDPOINT_URL }}
       VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       VITE_TEST_API_URL: ${{ secrets.TEST_API_URL }}
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: tailscale/github-action@v3
+      - uses: actions/checkout@v6
+      - uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
+          tags: ${{ secrets.TS_TAGS }}
+          ping: ${{ secrets.TEST_TS_DOMAIN }}
           version: latest
-          use-cache: 'true'
-      - uses: actions/setup-node@v4
+          use-cache: true
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
@@ -62,17 +72,16 @@ jobs:
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build
-      - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
-      - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
+      - run: pnpm playwright install ${{ matrix.browser.type }} --with-deps
+      - run: pnpm playwright test --project="${{ matrix.browser.name }}"
         env:
-          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}
+          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
       #   if: always()
       #   with:
       #     name: playwright-report
       #     path: playwright-report/
       #     retention-days: 30
-
 
   # slack_notify_succeeded:
   #   needs: [e2e-test]

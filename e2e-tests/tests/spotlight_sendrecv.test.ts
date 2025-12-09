@@ -2,8 +2,18 @@ import { randomUUID } from 'node:crypto'
 import { test } from '@playwright/test'
 
 test('spotlight sendrecv x2', async ({ browser }) => {
-  const sendrecv1 = await browser.newPage()
-  const sendrecv2 = await browser.newPage()
+  const context1 = await browser.newContext()
+  const context2 = await browser.newContext()
+  const sendrecv1 = await context1.newPage()
+  const sendrecv2 = await context2.newPage()
+
+  // デバッグ用
+  sendrecv1.on('console', (msg) => {
+    console.log('sendrecv1', msg.type(), msg.text())
+  })
+  sendrecv2.on('console', (msg) => {
+    console.log('sendrecv2', msg.type(), msg.text())
+  })
 
   await sendrecv1.goto('http://localhost:9000/spotlight_sendrecv/')
   await sendrecv2.goto('http://localhost:9000/spotlight_sendrecv/')
@@ -37,4 +47,9 @@ test('spotlight sendrecv x2', async ({ browser }) => {
 
   await sendrecv1.click('#disconnect')
   await sendrecv2.click('#disconnect')
+
+  await sendrecv1.close()
+  await sendrecv2.close()
+  await context1.close()
+  await context2.close()
 })

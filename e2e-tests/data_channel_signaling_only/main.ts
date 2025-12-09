@@ -1,11 +1,13 @@
 import { setSoraJsSdkVersion } from '../src/misc'
 
 import Sora, {
-  type SignalingNotifyMessage,
-  type SignalingEvent,
-  type ConnectionPublisher,
-  type SoraConnection,
   type ConnectionOptions,
+  type ConnectionPublisher,
+  type SignalingEvent,
+  type SignalingNotifyConnectionCreated,
+  type SignalingNotifyMessage,
+  type SignalingSwitchedMessage,
+  type SoraConnection,
 } from 'sora-js-sdk'
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -78,6 +80,7 @@ class SoraClient {
   private channelId: string
   private metadata: { access_token: string }
   private options: ConnectionOptions = {
+    connectionTimeout: 15000,
     dataChannelSignaling: true,
     ignoreDisconnectWebSocket: true,
   }
@@ -106,6 +109,8 @@ class SoraClient {
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
     this.connection.on('notify', this.onNotify.bind(this))
+    this.connection.on('connected', this.onConnected.bind(this))
+    this.connection.on('switched', this.onSwitched.bind(this))
 
     // E2E テスト用のコード
     this.connection.on('signaling', this.onSignaling.bind(this))
@@ -148,34 +153,102 @@ class SoraClient {
     }
   }
 
+  // connected コールバック
+  private onConnected(event: SignalingNotifyConnectionCreated): void {
+    console.log('[connected]', event)
+    const connectedStatusElement = document.querySelector('#connected-status')
+    if (connectedStatusElement) {
+      connectedStatusElement.textContent = 'connected'
+    }
+  }
+
+  // switched コールバック
+  private onSwitched(event: SignalingSwitchedMessage): void {
+    console.log('[switched]', event)
+    const switchedStatusElement = document.querySelector('#switched-status')
+    if (switchedStatusElement) {
+      switchedStatusElement.textContent = 'switched'
+    }
+  }
+
   // E2E テスト用のコード
   private onSignaling(event: SignalingEvent): void {
     if (event.type === 'onmessage-switched') {
       console.log('[signaling]', event.type, event.transportType)
+      const signalingTypeSwitchedElement = document.querySelector('#signaling-type-switched')
+      if (signalingTypeSwitchedElement) {
+        signalingTypeSwitchedElement.textContent = event.transportType
+      }
     }
     if (event.type === 'onmessage-close') {
       console.log('[signaling]', event.type, event.transportType)
+      const signalingCloseTypeElement = document.querySelector('#signaling-close-type')
+      if (signalingCloseTypeElement) {
+        signalingCloseTypeElement.textContent = event.transportType
+      }
     }
   }
 
   // E2E テスト側で実行した方が良い気がする
   async apiDisconnect(): Promise<void> {
+    const statusElement = document.querySelector('#api-disconnect-status')
+
     if (!this.apiUrl) {
+      console.log('[data_channel_signaling_only] apiDisconnect error: VITE_TEST_API_URL is not set')
+      if (statusElement) {
+        statusElement.textContent = 'error'
+      }
       throw new Error('VITE_TEST_API_URL is not set')
     }
-    const response = await fetch(this.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Sora-Target': 'Sora_20151104.DisconnectConnection',
-      },
-      body: JSON.stringify({
-        channel_id: this.channelId,
-        connection_id: this.connection.connectionId,
-      }),
+
+    console.log('[data_channel_signaling_only] apiDisconnect start', {
+      apiUrl: this.apiUrl,
+      channelId: this.channelId,
+      connectionId: this.connection.connectionId,
     })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+
+    // fetch にタイムアウトを設定する
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      console.log('[data_channel_signaling_only] apiDisconnect timeout after 10000ms')
+      controller.abort()
+    }, 10000)
+
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Sora-Target': 'Sora_20151104.DisconnectConnection',
+        },
+        body: JSON.stringify({
+          channel_id: this.channelId,
+          connection_id: this.connection.connectionId,
+        }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+      console.log('[data_channel_signaling_only] apiDisconnect response', {
+        status: response.status,
+        ok: response.ok,
+      })
+      if (!response.ok) {
+        if (statusElement) {
+          statusElement.textContent = 'error'
+        }
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      if (statusElement) {
+        statusElement.textContent = 'success'
+      }
+      console.log('[data_channel_signaling_only] apiDisconnect success')
+    } catch (e) {
+      clearTimeout(timeoutId)
+      console.log('[data_channel_signaling_only] apiDisconnect error', e)
+      if (statusElement) {
+        statusElement.textContent = 'error'
+      }
+      throw e
     }
   }
 }

@@ -37,3 +37,5 @@ export const DATA_CHANNEL_LABEL_SIGNALING = 'signaling' as const
 export const DATA_CHANNEL_LABEL_PUSH = 'push' as const
 export const DATA_CHANNEL_LABEL_NOTIFY = 'notify' as const
 export const DATA_CHANNEL_LABEL_STATS = 'stats' as const
+// データチャネルオプションラベル
+export const DATA_CHANNEL_LABEL_RPC = 'rpc' as const

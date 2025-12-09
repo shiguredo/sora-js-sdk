@@ -2,8 +2,10 @@ import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 test('sendrecv x2', async ({ browser }) => {
-  const sendrecv1 = await browser.newPage()
-  const sendrecv2 = await browser.newPage()
+  const context1 = await browser.newContext()
+  const context2 = await browser.newContext()
+  const sendrecv1 = await context1.newPage()
+  const sendrecv2 = await context2.newPage()
 
   await sendrecv1.goto('http://localhost:9000/sendrecv/')
   await sendrecv2.goto('http://localhost:9000/sendrecv/')
@@ -169,4 +171,6 @@ test('sendrecv x2', async ({ browser }) => {
 
   await sendrecv1.close()
   await sendrecv2.close()
+  await context1.close()
+  await context2.close()
 })

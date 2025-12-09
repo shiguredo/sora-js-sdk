@@ -3,17 +3,21 @@ name: npm-publish
 on:
   push:
     tags:
-      - '*'
+      - "*"
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 20
       - uses: pnpm/action-setup@v4
         with:
           version: 10
@@ -21,66 +25,63 @@ jobs:
       - run: pnpm install
       - run: pnpm run build
       - run: pnpm run lint
-      - run: pnpm run check
-      - uses: actions/upload-artifact@v4
+      - run: pnpm run typecheck
+      - uses: actions/upload-artifact@v5
         with:
           name: sora-js-sdk-dist
           path: dist/
-  
+
   npm-publish-canary:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     needs: [build]
     permissions:
       contents: read
       id-token: write
     if: ${{ contains(github.ref, 'canary') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 20
           registry-url: https://registry.npmjs.org
 
       - name: Download Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: sora-js-sdk-dist
           path: dist/
 
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
-      - run: npm publish --provenance --no-git-checks --tag canary
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 
+      - run: npm install -g npm@latest
+      - run: npm publish --no-git-checks --tag canary
 
   npm-publish:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     needs: [build]
     permissions:
       contents: read
       id-token: write
     if: ${{ !contains(github.ref, 'canary') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 20
           registry-url: https://registry.npmjs.org
 
       - name: Download Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: sora-js-sdk-dist
           path: dist/
 
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
-      - run: npm publish --provenance --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 
-
+      - run: npm install -g npm@latest
+      - run: npm publish --no-git-checks
 
   slack_notify_failed:
     needs: [npm-publish-canary, npm-publish]

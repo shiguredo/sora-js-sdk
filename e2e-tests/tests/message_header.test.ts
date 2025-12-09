@@ -1,27 +1,29 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
-import { isVersionGreaterThanOrEqual } from './helper'
+import { checkSoraVersion } from './helper'
 
 test('messaging pages with header', async ({ browser }) => {
-  // 新しいページを2つ作成
-  const page1 = await browser.newPage()
-  const page2 = await browser.newPage()
+  // 2つの独立したブラウザコンテキストを作成
+  const context1 = await browser.newContext()
+  const context2 = await browser.newContext()
+  const page1 = await context1.newPage()
+  const page2 = await context2.newPage()
 
   // それぞれのページに対して操作を行う
   await page1.goto('http://localhost:9000/messaging/')
   await page2.goto('http://localhost:9000/messaging/')
 
-  // sora js sdk のバージョンを取得する
-  await page1.waitForSelector('#sora-js-sdk-version')
-  const page1SoraJsSdkVersion = await page1.$eval('#sora-js-sdk-version', (el) => el.textContent)
-  if (page1SoraJsSdkVersion === null) {
-    throw new Error('page1SoraJsSdkVersion is null')
+  // sora js sdk のバージョンをチェック
+  const versionCheck = await checkSoraVersion(page1, {
+    majorVersion: 2024,
+    minorVersion: 2,
+    featureName: 'Messaging with header',
+  })
+
+  if (!versionCheck.isSupported) {
+    test.skip(true, versionCheck.skipReason || 'Version not supported')
+    return
   }
-  // sora-js-sdk のバージョンが 2024.2.0 以上であるか確認して、2024.2.0 未満の場合はテストをスキップする
-  test.skip(
-    !isVersionGreaterThanOrEqual(page1SoraJsSdkVersion, '2024.2.0'),
-    'sora-js-sdk のバージョンが 2024.2.0 以上である必要があります',
-  )
 
   // チャンネル名を uuid 文字列にする
   const channelName = randomUUID()
@@ -185,4 +187,6 @@ test('messaging pages with header', async ({ browser }) => {
 
   await page1.close()
   await page2.close()
+  await context1.close()
+  await context2.close()
 })

@@ -32,19 +32,19 @@ export default defineConfig({
     // Chrome
     {
       name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+      use: { ...devices['Desktop Chrome'], channel: 'chrome', userAgent: undefined },
     },
     {
       name: 'Google Chrome Beta',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome-beta' },
+      use: { ...devices['Desktop Chrome'], channel: 'chrome-beta', userAgent: undefined },
     },
     {
       name: 'Google Chrome Dev',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome-dev' },
+      use: { ...devices['Desktop Chrome'], channel: 'chrome-dev', userAgent: undefined },
     },
     {
       name: 'Google Chrome Canary',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome-canary' },
+      use: { ...devices['Desktop Chrome'], channel: 'chrome-canary', userAgent: undefined },
     },
 
     // Edge

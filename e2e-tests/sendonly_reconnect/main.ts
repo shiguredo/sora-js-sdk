@@ -1,11 +1,10 @@
-import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
-
 import Sora, {
-  type SignalingNotifyMessage,
-  type SignalingEvent,
   type ConnectionPublisher,
+  type SignalingEvent,
+  type SignalingNotifyMessage,
   type SoraConnection,
 } from 'sora-js-sdk'
+import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
 
 document.addEventListener('DOMContentLoaded', async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
@@ -78,7 +77,7 @@ class SoraClient {
   private debug = false
   private channelId: string
   private metadata: { access_token: string } = { access_token: '' }
-  private options: object = {}
+  private options: object = { connectionTimeout: 15000 }
 
   private sora!: SoraConnection
   private connection!: ConnectionPublisher
@@ -156,20 +155,20 @@ class SoraClient {
       if (connectionIdElement) {
         connectionIdElement.textContent = event.connection_id
         this.connectionId = event.connection_id
-        console.log('[connect] connectionId', this.connectionId)
+        console.log('[sendonly_reconnect] SignalingNotify self-connectionId', this.connectionId)
       }
     }
   }
 
   // 切断イベントのハンドラ
   private async onDisconnect(): Promise<void> {
-    console.log('[disconnect] 切断を検知しました')
-    console.log('[disconnect] connectionId', this.connectionId)
+    console.log('[sendonly_reconnect] 切断を検知しました')
+    console.log('[sendonly_reconnect] connectionId', this.connectionId)
 
     this.connectionId = null
 
     if (this.autoReconnect && this.mediaStream) {
-      console.log('[reconnect] 再接続を試みています...')
+      console.log('[sendonly_reconnect] 再接続を試みています...')
       // 少し待機してから再接続
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
@@ -179,13 +178,13 @@ class SoraClient {
       try {
         // 保存したストリームで再接続
         await this.connection.connect(this.mediaStream)
-        console.log('[reconnect] 再接続に成功しました')
+        console.log('[sendonly_reconnect] 再接続に成功しました')
         const reconnectLogElement = document.querySelector('#reconnect-log')
         if (reconnectLogElement) {
           reconnectLogElement.textContent = 'Success'
         }
       } catch (error) {
-        console.error('[reconnect] 再接続に失敗しました', error)
+        console.error('[sendonly_reconnect] 再接続に失敗しました', error)
         const reconnectLogElement = document.querySelector('#reconnect-log')
         if (reconnectLogElement) {
           reconnectLogElement.textContent = 'Failed'
@@ -196,36 +195,78 @@ class SoraClient {
 
   // E2E テスト側で実行した方が良い気がする
   async apiDisconnect(): Promise<void> {
+    const statusElement = document.querySelector('#api-disconnect-status')
+
     // 切断 API を実行したタイミングで connectionId をクリアする
     const connectionIdElement = document.querySelector('#connection-id')
     if (connectionIdElement) {
-      console.log('[disconnect] clear connectionId', connectionIdElement)
+      console.log('[sendonly_reconnect] clear connectionId', connectionIdElement)
       connectionIdElement.textContent = ''
     }
 
     if (!this.apiUrl) {
+      console.log('[sendonly_reconnect] apiDisconnect error: VITE_TEST_API_URL is not set')
+      if (statusElement) {
+        statusElement.textContent = 'error'
+      }
       throw new Error('VITE_TEST_API_URL is not set')
     }
-    const response = await fetch(this.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Sora-Target': 'Sora_20151104.DisconnectConnection',
-      },
-      body: JSON.stringify({
-        channel_id: this.channelId,
-        connection_id: this.connection.connectionId,
-      }),
+
+    console.log('[sendonly_reconnect] apiDisconnect start', {
+      apiUrl: this.apiUrl,
+      channelId: this.channelId,
+      connectionId: this.connection.connectionId,
     })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+
+    // fetch にタイムアウトを設定する
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      console.log('[sendonly_reconnect] apiDisconnect timeout after 10000ms')
+      controller.abort()
+    }, 10000)
+
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Sora-Target': 'Sora_20151104.DisconnectConnection',
+        },
+        body: JSON.stringify({
+          channel_id: this.channelId,
+          connection_id: this.connection.connectionId,
+        }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+      console.log('[sendonly_reconnect] apiDisconnect response', {
+        status: response.status,
+        ok: response.ok,
+      })
+      if (!response.ok) {
+        if (statusElement) {
+          statusElement.textContent = 'error'
+        }
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      if (statusElement) {
+        statusElement.textContent = 'success'
+      }
+      console.log('[sendonly_reconnect] apiDisconnect success')
+    } catch (e) {
+      clearTimeout(timeoutId)
+      console.log('[sendonly_reconnect] apiDisconnect error', e)
+      if (statusElement) {
+        statusElement.textContent = 'error'
+      }
+      throw e
     }
   }
 
   // E2E テスト用のコード
   private onSignaling(event: SignalingEvent): void {
     if (event.type === 'onmessage-switched') {
-      console.log('[signaling]', event.type, event.transportType)
+      console.log('[sendonly_reconnect]', event.type, event.transportType)
     }
   }
 }

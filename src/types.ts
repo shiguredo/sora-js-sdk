@@ -5,9 +5,9 @@ import type {
   SIGNALING_MESSAGE_TYPE_OFFER,
   SIGNALING_MESSAGE_TYPE_PING,
   SIGNALING_MESSAGE_TYPE_PUSH,
+  SIGNALING_MESSAGE_TYPE_RE_OFFER,
   SIGNALING_MESSAGE_TYPE_REDIRECT,
   SIGNALING_MESSAGE_TYPE_REQ_STATS,
-  SIGNALING_MESSAGE_TYPE_RE_OFFER,
   SIGNALING_MESSAGE_TYPE_SWITCHED,
   SIGNALING_MESSAGE_TYPE_UPDATE,
   SIGNALING_ROLE_RECVONLY,
@@ -28,6 +28,7 @@ export type JSONType =
   | { [prop: string]: JSONType | undefined }
 
 export type SimulcastRid = 'r0' | 'r1' | 'r2'
+export type SimulcastRequestRid = 'none' | SimulcastRid
 
 export type SpotlightFocusRid = 'none' | SimulcastRid
 
@@ -93,6 +94,7 @@ export type SignalingConnectMessage = {
   spotlight_number?: number
   simulcast?: Simulcast
   simulcast_rid?: SimulcastRid
+  simulcast_request_rid?: SimulcastRequestRid
   audio: SignalingAudio
   video: SignalingVideo
   sdp: string
@@ -155,6 +157,7 @@ export type SignalingOfferMessage = {
     audio?: string
     video?: string
   }
+  rpc_methods?: string[]
 }
 
 // @deprecated この型は非推奨です。将来のバージョンで削除される可能性があります。
@@ -203,6 +206,7 @@ export type SignalingNotifyMessage =
   | SignalingNotifyConnectionCreated
   | SignalingNotifyConnectionUpdated
   | SignalingNotifyConnectionDestroyed
+  | SignalingNotifySimulcastSwitched
   | SignalingNotifySpotlightChanged
   | SignalingNotifySpotlightFocused
   | SignalingNotifySpotlightUnfocused
@@ -277,6 +281,20 @@ export type SignalingNotifyConnectionDestroyed = {
   channel_sendonly_connections: number
   channel_recvonly_connections: number
   turn_transport_type: 'udp' | 'tcp'
+}
+
+export type SignalingNotifySimulcastSwitched = {
+  type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY
+  event_type: 'simulcast.switched'
+  timestamp: string
+  sender_connection_id: string | null
+  priority: 'higher' | 'lower'
+  trigger: 'sender' | 'receiver'
+  rpc_rids: SimulcastRid[]
+  auto_rids: SimulcastRid[]
+  request_rid: SimulcastRid
+  current_rid: SimulcastRid
+  previous_rid: SimulcastRid
 }
 
 export type SignalingNotifySpotlightChanged = {
@@ -355,6 +373,9 @@ export type ForwardingFilter = {
   priority?: number
 }
 
+/**
+ * Sora への接続オプション
+ */
 export type ConnectionOptions = {
   audio?: boolean
   audioCodecType?: AudioCodecType
@@ -380,6 +401,7 @@ export type ConnectionOptions = {
   spotlightUnfocusRid?: SpotlightFocusRid
   simulcast?: boolean
   simulcastRid?: SimulcastRid
+  simulcastRequestRid?: SimulcastRequestRid
   clientId?: string
   // @deprecated このオプションは非推奨です。将来のバージョンで削除される可能性があります。
   timeout?: number
@@ -404,12 +426,17 @@ export type ConnectionOptions = {
   skipIceCandidateEvent?: boolean
 }
 
+/**
+ * 各種イベントを受け取るコールバック関数群
+ */
 export type Callbacks = {
   disconnect: (event: SoraCloseEvent) => void
   push: (event: SignalingPushMessage, transportType: TransportType) => void
   track: (event: RTCTrackEvent) => void
   removetrack: (event: MediaStreamTrackEvent) => void
   notify: (event: SignalingNotifyMessage, transportType: TransportType) => void
+  switched: (event: SignalingSwitchedMessage) => void
+  connected: (event: SignalingNotifyConnectionCreated) => void
   log: (title: string, message: JSONType) => void
   timeout: () => void
   timeline: (event: TimelineEvent) => void
@@ -476,3 +503,37 @@ export type SoraAbendTitle =
   | 'INTERNAL-ERROR'
   | 'WEBSOCKET-ONCLOSE'
   | 'WEBSOCKET-ONERROR'
+
+// RPC 機能
+export interface JSONRPCRequest {
+  jsonrpc: '2.0'
+  id?: string | number
+  method: string
+  params?: Record<string, unknown> | unknown[]
+}
+
+export interface JSONRPCSuccessResponse {
+  jsonrpc: '2.0'
+  id: string | number
+  result: unknown
+}
+
+export interface JSONRPCErrorResponse {
+  jsonrpc: '2.0'
+  id: string | number
+  error: {
+    code: number
+    message: string
+    data?: unknown
+  }
+}
+
+export type JSONRPCResponse = JSONRPCSuccessResponse | JSONRPCErrorResponse
+
+/**
+ * RPC メソッド呼び出し時のオプション
+ */
+export type RPCOptions = {
+  timeout?: number
+  notification?: boolean
+}

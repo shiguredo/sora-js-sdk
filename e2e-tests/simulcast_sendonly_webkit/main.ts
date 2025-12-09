@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoCodecTypeElement = document.querySelector('#video-codec-type') as HTMLSelectElement
     const videoCodecType = videoCodecTypeElement.value as VideoCodecType
     const rawVideoBitRate = document.querySelector('#video-bit-rate') as HTMLInputElement
-    const videoBitRate = Number.parseInt(rawVideoBitRate.value)
+    const videoBitRate = Number.parseInt(rawVideoBitRate.value, 10)
 
     let simulcastEncodings: Array<Record<string, unknown>> | undefined
     const simulcastEncodingsElement = document.querySelector(
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log(`simulcastEncodingsElement.value=${simulcastEncodingsElement.value}`)
       try {
         simulcastEncodings = JSON.parse(simulcastEncodingsElement.value)
-      } catch (error) {
+      } catch (_error) {
         throw new Error('Failed to parse simulcastEncodings')
       }
     }
@@ -115,6 +115,7 @@ class SimulcastSendonlySoraClient {
 
     this.sora = Sora.connection(signalingUrl, this.debug)
     this.connection = this.sora.sendonly(this.channelId, undefined, {
+      connectionTimeout: 15000,
       audio: false,
       video: true,
       videoCodecType: this.videoCodecType,

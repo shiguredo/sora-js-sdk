@@ -3,3 +3,4 @@ packages:
 onlyBuiltDependencies:
   - '@biomejs/biome'
   - esbuild
+minimumReleaseAge: 2880

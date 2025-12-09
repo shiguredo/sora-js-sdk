@@ -15,49 +15,54 @@ on:
 
 jobs:
   npm-pkg-e2e-test:
-    timeout-minutes: 20
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
         # メンテナンスはおてて
-        sdk_version: [
+        sdk_version:
           # canary リリースを含める
-          "2025.1.0-canary.4",
-          "2024.2.2",
-          "2024.1.2",
-          "2023.2.0",
-          "2023.1.0",
-          "2022.3.3",
-          "2022.2.0",
-          "2022.1.0",
-          "2021.2.3",
-          # 2020.1.7 以前は E2E テストが通らない
-          "2021.1.7",
-        ]
-        node: ["18", "20", "22", "24"]
-        browser: 
-            - name: "Google Chrome"
-              type: "chrome"
-            - name: "Microsoft Edge"
-              type: "msedge"
+          - "2025.1.0"
+          - "2024.2.2"
+          - "2024.1.2"
+          - "2023.2.0"
+          - "2023.1.0"
+          - "2022.3.3"
+          - "2022.2.0"
+          - "2022.1.0"
+          - "2021.2.3"
+          # 2020.1.7 より前は E2E テストが通らない
+          - "2021.1.7"
+        node:
+          # 30 Apr 2028 End of Life
+          - "24"
+          # 30 Apr 2027 End of Life
+          - "22"
+          # 30 Apr 2026 End of Life
+          - "20"
+        browser:
+          - name: "Google Chrome"
+            type: "chrome"
+          - name: "Microsoft Edge"
+            type: "msedge"
     env:
       VITE_TEST_SIGNALING_URL: ${{ secrets.TEST_SIGNALING_URL }}
-      VITE_TEST_WHIP_ENDPOINT_URL: ${{ secrets.TEST_WHIP_ENDPOINT_URL }}
-      VITE_TEST_WHEP_ENDPOINT_URL: ${{ secrets.TEST_WHEP_ENDPOINT_URL }}
       VITE_TEST_CHANNEL_ID_PREFIX: ${{ secrets.TEST_CHANNEL_ID_PREFIX }}
       VITE_TEST_API_URL: ${{ secrets.TEST_API_URL }}
       VITE_TEST_SECRET_KEY: ${{ secrets.TEST_SECRET_KEY }}
       NPM_PKG_E2E_TEST: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: tailscale/github-action@v3
+      - uses: actions/checkout@v6
+      - uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
+          tags: ${{ secrets.TS_TAGS }}
+          ping: ${{ secrets.TEST_TS_DOMAIN }}
           version: latest
-          use-cache: 'true'
-      - uses: actions/setup-node@v4
+          use-cache: true
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
@@ -69,10 +74,10 @@ jobs:
       - run: pnpm add -E sora-js-sdk@${{ matrix.sdk_version }}
         working-directory: ./e2e-tests
       # pnpm run build しない
-      - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
-      - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
+      - run: pnpm playwright install ${{ matrix.browser.type }} --with-deps
+      - run: pnpm playwright test --project="${{ matrix.browser.name }}"
         env:
-          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ matrix.node }}_${{ matrix.sdk_version }}
+          VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
       #   if: always()
       #   with:

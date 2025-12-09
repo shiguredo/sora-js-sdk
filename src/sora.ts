@@ -11,15 +11,30 @@ import type {
   DataChannelDirection,
   DataChannelEvent,
   DataChannelMessageEvent,
+  DataChannelSignalingMessage,
   ForwardingFilter,
   ForwardingFilterAction,
   ForwardingFilterRule,
   ForwardingFilterRuleField,
   ForwardingFilterRuleKindValue,
   ForwardingFilterRuleOperator,
+  ForwardingFilterRuleValue,
+  JSONRPCErrorResponse,
+  JSONRPCRequest,
+  JSONRPCResponse,
+  JSONRPCSuccessResponse,
   JSONType,
+  MessagingHeaderField,
+  MessagingHeaderFieldType,
   Role,
+  RPCOptions,
+  SignalingAudio,
+  SignalingCloseMessage,
+  SignalingConnectDataChannel,
+  SignalingConnectMessage,
   SignalingEvent,
+  SignalingMessageDirection,
+  SignalingMessageEvent,
   SignalingNotifyConnectionCreated,
   SignalingNotifyConnectionDestroyed,
   SignalingNotifyConnectionUpdated,
@@ -29,8 +44,18 @@ import type {
   SignalingNotifySpotlightChanged,
   SignalingNotifySpotlightFocused,
   SignalingNotifySpotlightUnfocused,
+  SignalingOfferMessage,
+  SignalingOfferMessageDataChannel,
+  SignalingPingMessage,
   SignalingPushMessage,
+  SignalingRedirectMessage,
+  SignalingReOfferMessage,
+  SignalingReqStatsMessage,
+  SignalingSwitchedMessage,
+  SignalingUpdateMessage,
+  SignalingVideo,
   Simulcast,
+  SimulcastRequestRid,
   SimulcastRid,
   SoraAbendTitle,
   SoraCloseEvent,
@@ -41,6 +66,7 @@ import type {
   TimelineEventLogType,
   TransportType,
   VideoCodecType,
+  WebSocketSignalingMessage,
 } from './types'
 
 /**
@@ -160,6 +186,27 @@ class SoraConnection {
     )
   }
 
+  /**
+   * メッセージングのみで接続するための Connection インスタンスを生成するメソッド
+   *
+   * @remarks
+   * このメソッドは音声・映像を使用せず、DataChannel メッセージングのみを行う接続を作成します
+   *
+   * @example
+   * ```typescript
+   * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+   * const messaging = connection.messaging("sora");
+   * ```
+   *
+   * @param channelId - チャネルID
+   * @param metadata - メタデータ
+   * @param options - コネクションオプション
+   *
+   * @returns
+   * メッセージングのみで接続する Connection オブジェクトを返します
+   *
+   * @public
+   */
   messaging(
     channelId: string,
     metadata: JSONType = null,
@@ -233,23 +280,38 @@ export type {
   AudioCodecType,
   Callbacks,
   ConnectionBase,
+  ConnectionMessaging,
   ConnectionOptions,
   ConnectionPublisher,
   ConnectionSubscriber,
-  ConnectionMessaging,
   DataChannelConfiguration,
   DataChannelDirection,
   DataChannelEvent,
   DataChannelMessageEvent,
+  DataChannelSignalingMessage,
   ForwardingFilter,
   ForwardingFilterAction,
   ForwardingFilterRule,
   ForwardingFilterRuleField,
   ForwardingFilterRuleKindValue,
   ForwardingFilterRuleOperator,
+  ForwardingFilterRuleValue,
+  JSONRPCErrorResponse,
+  JSONRPCRequest,
+  JSONRPCResponse,
+  JSONRPCSuccessResponse,
   JSONType,
+  MessagingHeaderField,
+  MessagingHeaderFieldType,
   Role,
+  RPCOptions,
+  SignalingAudio,
+  SignalingCloseMessage,
+  SignalingConnectDataChannel,
+  SignalingConnectMessage,
   SignalingEvent,
+  SignalingMessageDirection,
+  SignalingMessageEvent,
   SignalingNotifyConnectionCreated,
   SignalingNotifyConnectionDestroyed,
   SignalingNotifyConnectionUpdated,
@@ -259,8 +321,18 @@ export type {
   SignalingNotifySpotlightChanged,
   SignalingNotifySpotlightFocused,
   SignalingNotifySpotlightUnfocused,
+  SignalingOfferMessage,
+  SignalingOfferMessageDataChannel,
+  SignalingPingMessage,
   SignalingPushMessage,
+  SignalingRedirectMessage,
+  SignalingReOfferMessage,
+  SignalingReqStatsMessage,
+  SignalingSwitchedMessage,
+  SignalingUpdateMessage,
+  SignalingVideo,
   Simulcast,
+  SimulcastRequestRid,
   SimulcastRid,
   SoraAbendTitle,
   SoraCloseEvent,
@@ -272,4 +344,5 @@ export type {
   TimelineEventLogType,
   TransportType,
   VideoCodecType,
+  WebSocketSignalingMessage,
 }

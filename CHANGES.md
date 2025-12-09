@@ -9,13 +9,89 @@
 - FIX
   - バグ修正
 
-## temporary
-
-- ci.yaml の TypeScript のバージョンの next は type check が一時的に通らないのでコメントアウトしている
-  - <https://github.com/microsoft/TypeScript/issues/61687>
-
 ## develop
 
+## 2025.2.0
+
+**リリース日**: 2025-12-09
+
+- [ADD] `Callbacks` に `connected` コールバックを追加する
+  - RTCPeerConnection の `connectionState` が `connected` になり、かつ自分の `connection.created` notify を受信した時点で呼び出される
+  - 引数として `SignalingNotifyConnectionCreated` を受け取る
+  - 接続ごとに一度だけ発火する
+  - 注意: `connection.created` の通知を無効にしている場合はこのコールバックは発火しない
+  - @voluntas
+- [ADD] `Callbacks` に `switched` コールバックを追加する
+  - `type: switched` メッセージを受信したときに呼び出される
+  - @voluntas
+- [ADD] `"type": "offer"` に含まれる `rpc_methods` を `rpcMethods` プロパティでアクセスできるようにする
+- [ADD] RPC 機能を利用する `rpc()` メソッドを追加する
+  - `timeout` オプションでタイムアウト時間（ミリ秒）を指定できる
+  - `notification: true` オプションでレスポンスを待たない通知型リクエストができる
+  - 並列実行をサポート
+  - @voluntas
+- [ADD] シグナリング時にサイマルキャスト機能利用時に `sendrecv` または `recvonly` で初期の `rid` を指定できる `simulcastRequestRid` オプションを追加する
+  - デフォルトは未指定です
+  - `none` / `r0` / `r1` / `r2` が指定できる
+  - @voluntas
+- [ADD] `types.ts` で定義されている型を漏れなく export する
+  - `DataChannelSignalingMessage`
+  - `ForwardingFilterRuleValue`
+  - `JSONRPCErrorResponse`
+  - `JSONRPCRequest`
+  - `JSONRPCResponse`
+  - `JSONRPCSuccessResponse`
+  - `MessagingHeaderField`
+  - `MessagingHeaderFieldType`
+  - `RPCOptions`
+  - `SignalingAudio`
+  - `SignalingCloseMessage`
+  - `SignalingConnectDataChannel`
+  - `SignalingConnectMessage`
+  - `SignalingMessageDirection`
+  - `SignalingMessageEvent`
+  - `SignalingOfferMessage`
+  - `SignalingOfferMessageDataChannel`
+  - `SignalingPingMessage`
+  - `SignalingRedirectMessage`
+  - `SignalingReOfferMessage`
+  - `SignalingReqStatsMessage`
+  - `SignalingSwitchedMessage`
+  - `SignalingUpdateMessage`
+  - `SignalingVideo`
+  - `SimulcastRequestRid`
+  - `WebSocketSignalingMessage`
+  - @voluntas
+
+### misc
+
+- [CHANGE] 負荷が低い job には ubuntu-slim を導入する
+  - @voluntas
+- [CHANGE] tslib を削除する
+  - @voluntas
+- [CHANGE] Node 18 でのテストを落とす
+  - Node 18 は EoL になったため
+  - Vite 7 が Node 18 をサポートしなくなったため
+  - @voluntas
+- [CHANGE] WHIP/WHEP の E2E テストを削除する
+  - @voluntas
+- [CHANGE] npm-pkg-e2e-test.yml の fail-fast を false にする
+  - @voluntas
+- [UPDATE] biome v2 にバージョンを上げる
+  - @voluntas
+- [UPDATE] actions/checkout と actions/download-artifact を v5 に上げる
+  - @miosakuma
+- [UPDATE] tailscale/github-action を v4 に上げる
+  - @torikizi
+- [ADD] TypeScript 5.9 のビルドとテストを追加する
+  - @voluntas
+- [ADD] Node 25 でのビルドとテストを追加する
+  - @voluntas
+- [ADD] ステレオ音声の E2E テストを追加する
+  - fake_stereo_audio のテストページを作成
+  - フェイクメディア生成機能にステレオサポートを追加
+  - リアルタイム音声解析機能を実装
+  - @voluntas
 
 ## 2025.1.0
 

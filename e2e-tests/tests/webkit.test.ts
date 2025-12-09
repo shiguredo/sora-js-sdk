@@ -7,8 +7,10 @@ test('WebKit', async ({ browser }) => {
     'WebKit かつ macOS でのみテストを行う',
   )
 
-  const sendrecv1 = await browser.newPage()
-  const sendrecv2 = await browser.newPage()
+  const context1 = await browser.newContext()
+  const context2 = await browser.newContext()
+  const sendrecv1 = await context1.newPage()
+  const sendrecv2 = await context2.newPage()
 
   await sendrecv1.goto('http://localhost:9000/sendrecv_webkit/')
   await sendrecv2.goto('http://localhost:9000/sendrecv_webkit/')
@@ -174,6 +176,8 @@ test('WebKit', async ({ browser }) => {
 
   await sendrecv1.close()
   await sendrecv2.close()
+  await context1.close()
+  await context2.close()
 })
 
 // WebKit では scaleResolutionDownTo が反映されないため、このテストは fail する

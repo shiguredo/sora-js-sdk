@@ -154,6 +154,14 @@ export function createSignalingMessage(
   if (options.simulcastRid !== undefined && 0 <= simulcastRids.indexOf(options.simulcastRid)) {
     message.simulcast_rid = options.simulcastRid
   }
+  const simulcastRequestRids = ['none', 'r0', 'r1', 'r2']
+  if (
+    options.simulcastRequestRid !== undefined &&
+    0 <= simulcastRequestRids.indexOf(options.simulcastRequestRid)
+  ) {
+    message.simulcast_request_rid = options.simulcastRequestRid
+  }
+
   if (typeof options.spotlight === 'boolean') {
     message.spotlight = options.spotlight
   }
@@ -220,7 +228,7 @@ export function createSignalingMessage(
     'videoAV1Params',
   ]
   const copyOptions = Object.assign({}, options)
-  ;(Object.keys(copyOptions) as (keyof ConnectionOptions)[]).filter((key) => {
+  ;(Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
     if (key === 'audio' && typeof copyOptions[key] === 'boolean') {
       return
     }
@@ -368,7 +376,7 @@ export function trace(clientId: string | null, title: string, value: unknown): v
         // 何もしない
       }
       if (keys && Array.isArray(keys)) {
-        keys.filter((key) => {
+        keys.forEach((key) => {
           console.group(key)
           dump((record as Record<string, unknown>)[key])
           console.groupEnd()
@@ -431,7 +439,7 @@ export function createDataChannelData(channel: RTCDataChannel): Record<string, u
     ordered: channel.ordered,
     protocol: channel.protocol,
     readyState: channel.readyState,
-    // @ts-ignore w3c 仕様には存在しない property
+    // @ts-expect-error w3c 仕様には存在しない property
     reliable: channel.reliable,
   }
 }
@@ -484,13 +492,13 @@ export async function parseDataChannelEventData(
 }
 
 export const compressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
-  const readableStream = new Blob([binaryMessage]).stream()
+  const readableStream = new Blob([new Uint8Array(binaryMessage)]).stream()
   const compressedStream = readableStream.pipeThrough(new CompressionStream('deflate'))
   return await new Response(compressedStream).arrayBuffer()
 }
 
 export const decompressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
-  const readableStream = new Blob([binaryMessage]).stream()
+  const readableStream = new Blob([new Uint8Array(binaryMessage)]).stream()
   const decompressedStream = readableStream.pipeThrough(new DecompressionStream('deflate'))
   return await new Response(decompressedStream).arrayBuffer()
 }
