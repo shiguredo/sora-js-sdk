@@ -47,8 +47,8 @@ importers:
 
 packages:
 
-  '@acemir/cssom@0.9.26':
-    resolution: {integrity: sha512-UMFbL3EnWH/eTvl21dz9s7Td4wYDMtxz/56zD8sL9IZGYyi48RxmdgPMiyT7R6Vn3rjMTwYZ42bqKa7ex74GEQ==}
+  '@acemir/cssom@0.9.27':
+    resolution: {integrity: sha512-Ja8SQ/4mec5WZABC1F9XB1juJlkdHVZ4F1dftBmXagtZnbmspW+tuzd4bo35eRrc48iAEtk1yTUzBveOsa/MZA==}
 
   '@asamuzakjp/css-color@4.1.0':
     resolution: {integrity: sha512-9xiBAtLn4aNsa4mDnpovJvBn72tNEIACyvlqaNJ+ADemR+yeMJWnBudOi2qGDviJa7SwcDOU/TRh5dnET7qk0w==}
@@ -1208,7 +1208,7 @@ packages:
 
 snapshots:
 
-  '@acemir/cssom@0.9.26': {}
+  '@acemir/cssom@0.9.27': {}
 
   '@asamuzakjp/css-color@4.1.0':
     dependencies:
@@ -1863,7 +1863,7 @@ snapshots:
 
   jsdom@27.2.0:
     dependencies:
-      '@acemir/cssom': 0.9.26
+      '@acemir/cssom': 0.9.27
       '@asamuzakjp/dom-selector': 6.7.6
       cssstyle: 5.3.3
       data-urls: 6.0.0
