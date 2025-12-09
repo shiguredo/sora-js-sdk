@@ -373,6 +373,9 @@ export type ForwardingFilter = {
   priority?: number
 }
 
+/**
+ * Sora への接続オプション
+ */
 export type ConnectionOptions = {
   audio?: boolean
   audioCodecType?: AudioCodecType
@@ -423,6 +426,9 @@ export type ConnectionOptions = {
   skipIceCandidateEvent?: boolean
 }
 
+/**
+ * 各種イベントを受け取るコールバック関数群
+ */
 export type Callbacks = {
   disconnect: (event: SoraCloseEvent) => void
   push: (event: SignalingPushMessage, transportType: TransportType) => void
@@ -524,7 +530,9 @@ export interface JSONRPCErrorResponse {
 
 export type JSONRPCResponse = JSONRPCSuccessResponse | JSONRPCErrorResponse
 
-// RPC options
+/**
+ * RPC メソッド呼び出し時のオプション
+ */
 export type RPCOptions = {
   timeout?: number
   notification?: boolean

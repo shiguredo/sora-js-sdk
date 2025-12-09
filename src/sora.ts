@@ -186,6 +186,27 @@ class SoraConnection {
     )
   }
 
+  /**
+   * メッセージングのみで接続するための Connection インスタンスを生成するメソッド
+   *
+   * @remarks
+   * このメソッドは音声・映像を使用せず、DataChannel メッセージングのみを行う接続を作成します
+   *
+   * @example
+   * ```typescript
+   * const connection = Sora.connection('ws://192.0.2.100:5000/signaling', true);
+   * const messaging = connection.messaging("sora");
+   * ```
+   *
+   * @param channelId - チャネルID
+   * @param metadata - メタデータ
+   * @param options - コネクションオプション
+   *
+   * @returns
+   * メッセージングのみで接続する Connection オブジェクトを返します
+   *
+   * @public
+   */
   messaging(
     channelId: string,
     metadata: JSONType = null,
