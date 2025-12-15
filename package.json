@@ -45,7 +45,7 @@
     "jsdom": "27.2.0",
     "typedoc": "0.28.15",
     "typescript": "5.9.3",
-    "vite": "7.2.6",
+    "vite": "7.2.7",
     "vite-plugin-dts": "4.5.4",
     "vitest": "4.0.15"
   },
