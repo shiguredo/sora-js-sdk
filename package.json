@@ -39,7 +39,7 @@
     "dist"
   ],
   "devDependencies": {
-    "@biomejs/biome": "2.3.8",
+    "@biomejs/biome": "2.3.10",
     "@playwright/test": "1.57.0",
     "@types/node": "24.10.1",
     "jsdom": "27.2.0",
