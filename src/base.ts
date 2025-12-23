@@ -2494,7 +2494,7 @@ export default class ConnectionBase {
    *
    * @example
    * ```typescript
-   * const result = await connection.rpc('simulcast.change_sending_encodings', { rids: ['r0', 'r1'] });
+   * const result = await connection.rpc('2025.2.0/RequestSimulcastRid', { rid: 'r0' });
    * ```
    *
    * @param method - RPC メソッド名
