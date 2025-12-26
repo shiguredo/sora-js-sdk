@@ -18,6 +18,8 @@
 
 - [CHANGE] Biome から oxc に移行する
   - @voluntas
+- [CHANGE] E2E テストの環境変数の Prefix を `TEST_` に切り替える
+  - @voluntas
 
 ## 2025.2.0
 
