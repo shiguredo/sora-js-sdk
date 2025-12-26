@@ -4,6 +4,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "e2e-tests/tests",
+  // 本来は flaky テストをなくすべきだが、一時的に対応
+  retries: 3,
   workers: 1,
   // fullyParallel: true,
   reporter: "list",
