@@ -2,6 +2,19 @@
   "name": "sora-js-sdk",
   "version": "2025.2.0",
   "description": "WebRTC SFU Sora JavaScript SDK",
+  "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
+  "license": "Apache-2.0",
+  "author": "Shiguredo Inc.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/sora-js-sdk.git"
+  },
+  "files": [
+    "dist"
+  ],
   "main": "dist/sora.js",
   "module": "dist/sora.mjs",
   "exports": {
@@ -19,30 +32,19 @@
     "e2e-test-chrome": "pnpm build && playwright test --project='Google Chrome*'",
     "e2e-test-edge": "pnpm build && playwright test --project='Microsoft Edge*'",
     "e2e-test-webkit": "pnpm build && playwright test --project='WebKit'",
-    "lint": "biome lint",
-    "fmt": "biome format --write",
+    "fmt": "oxfmt --write .",
+    "lint": "oxlint --type-aware",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "doc": "typedoc"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shiguredo/sora-js-sdk.git"
-  },
-  "author": "Shiguredo Inc.",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://discord.gg/shiguredo"
-  },
-  "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
-    "@biomejs/biome": "2.3.8",
     "@playwright/test": "1.57.0",
     "@types/node": "24.10.1",
     "jsdom": "27.2.0",
+    "oxfmt": "0.20.0",
+    "oxlint": "1.35.0",
+    "oxlint-tsgolint": "0.10.0",
     "typedoc": "0.28.15",
     "typescript": "5.9.3",
     "vite": "7.2.6",
@@ -50,7 +52,7 @@
     "vitest": "4.0.15"
   },
   "engines": {
-    "pnpm": ">=8",
-    "node": ">=20"
+    "node": ">=20",
+    "pnpm": ">=8"
   }
 }

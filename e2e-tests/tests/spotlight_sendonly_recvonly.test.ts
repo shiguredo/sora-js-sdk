@@ -1,43 +1,43 @@
-import { test } from '@playwright/test'
+import { test } from "@playwright/test";
 
-test('spotlight sendonly/recvonly pages', async ({ browser }) => {
+test("spotlight sendonly/recvonly pages", async ({ browser }) => {
   // 新しいコンテキストとページを2つ作成
-  const context1 = await browser.newContext()
-  const context2 = await browser.newContext()
-  const sendonly = await context1.newPage()
-  const recvonly = await context2.newPage()
+  const context1 = await browser.newContext();
+  const context2 = await browser.newContext();
+  const sendonly = await context1.newPage();
+  const recvonly = await context2.newPage();
 
   // それぞれのページに対して操作を行う
-  await sendonly.goto('http://localhost:9000/spotlight_sendonly/')
-  await recvonly.goto('http://localhost:9000/spotlight_recvonly/')
+  await sendonly.goto("http://localhost:9000/spotlight_sendonly/");
+  await recvonly.goto("http://localhost:9000/spotlight_recvonly/");
 
-  const channelName = crypto.randomUUID()
+  const channelName = crypto.randomUUID();
 
-  await sendonly.fill('#channel-name', channelName)
-  await recvonly.fill('#channel-name', channelName)
+  await sendonly.fill("#channel-name", channelName);
+  await recvonly.fill("#channel-name", channelName);
 
-  await sendonly.click('#connect')
-  await recvonly.click('#connect')
+  await sendonly.click("#connect");
+  await recvonly.click("#connect");
 
   // #sendonly-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
-  await sendonly.waitForSelector('#connection-id:not(:empty)')
+  await sendonly.waitForSelector("#connection-id:not(:empty)");
 
   // #sendonly-connection-id 要素の内容を取得
-  const sendonlyConnectionId = await sendonly.$eval('#connection-id', (el) => el.textContent)
-  console.log(`sendonly connectionId=${sendonlyConnectionId}`)
+  const sendonlyConnectionId = await sendonly.$eval("#connection-id", (el) => el.textContent);
+  console.log(`sendonly connectionId=${sendonlyConnectionId}`);
 
   // #recvonly-connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
-  await recvonly.waitForSelector('#connection-id:not(:empty)')
+  await recvonly.waitForSelector("#connection-id:not(:empty)");
 
   // #recvonly-connection-id 要素の内容を取得
-  const recvonlyConnectionId = await recvonly.$eval('#connection-id', (el) => el.textContent)
-  console.log(`recvonly connectionId=${recvonlyConnectionId}`)
+  const recvonlyConnectionId = await recvonly.$eval("#connection-id", (el) => el.textContent);
+  console.log(`recvonly connectionId=${recvonlyConnectionId}`);
 
-  await sendonly.click('#disconnect')
-  await recvonly.click('#disconnect')
+  await sendonly.click("#disconnect");
+  await recvonly.click("#disconnect");
 
-  await sendonly.close()
-  await recvonly.close()
-  await context1.close()
-  await context2.close()
-})
+  await sendonly.close();
+  await recvonly.close();
+  await context1.close();
+  await context2.close();
+});

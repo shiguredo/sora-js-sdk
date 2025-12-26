@@ -1,4 +1,4 @@
-import ConnectionBase from './base'
+import ConnectionBase from "./base";
 
 /**
  * Role が "sendonly" または "sendrecv" の場合に Sora との WebRTC 接続を扱うクラス
@@ -22,15 +22,15 @@ export default class ConnectionPublisher extends ConnectionBase {
     // options.multistream が明示的に false を指定した時だけレガシーストリームにする
     await Promise.race([
       this.multiStream(stream).finally(() => {
-        this.clearConnectionTimeout()
-        this.clearMonitorSignalingWebSocketEvent()
+        this.clearConnectionTimeout();
+        this.clearMonitorSignalingWebSocketEvent();
       }),
       this.setConnectionTimeout(),
       this.monitorSignalingWebSocketEvent(),
-    ])
-    this.monitorWebSocketEvent()
-    this.monitorPeerConnectionState()
-    return stream
+    ]);
+    this.monitorWebSocketEvent();
+    this.monitorPeerConnectionState();
+    return stream;
   }
 
   /**
@@ -39,62 +39,62 @@ export default class ConnectionPublisher extends ConnectionBase {
    * @param stream - メディアストリーム
    */
   private async multiStream(stream: MediaStream): Promise<MediaStream> {
-    await this.disconnect()
-    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)
-    const signalingMessage = await this.signaling(ws)
-    await this.connectPeerConnection(signalingMessage)
+    await this.disconnect();
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
+    await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
       this.pc.ontrack = async (event): Promise<void> => {
-        const stream = event.streams[0]
+        const stream = event.streams[0];
         if (!stream) {
-          return
+          return;
         }
         const data = {
-          'stream.id': stream.id,
+          "stream.id": stream.id,
           id: event.track.id,
           label: event.track.label,
           enabled: event.track.enabled,
           kind: event.track.kind,
           muted: event.track.muted,
           readyState: event.track.readyState,
-        }
-        this.writePeerConnectionTimelineLog('ontrack', data)
-        if (stream.id === 'default') {
-          return
+        };
+        this.writePeerConnectionTimelineLog("ontrack", data);
+        if (stream.id === "default") {
+          return;
         }
         if (stream.id === this.connectionId) {
-          return
+          return;
         }
-        this.callbacks.track(event)
+        this.callbacks.track(event);
         stream.onremovetrack = (event): void => {
-          this.callbacks.removetrack(event)
+          this.callbacks.removetrack(event);
           if (event.target) {
-            const streamId = (event.target as MediaStream).id
-            const index = this.remoteConnectionIds.indexOf(streamId)
+            const streamId = (event.target as MediaStream).id;
+            const index = this.remoteConnectionIds.indexOf(streamId);
             if (-1 < index) {
-              delete this.remoteConnectionIds[index]
+              this.remoteConnectionIds.splice(index, 1);
             }
           }
-        }
+        };
         if (-1 < this.remoteConnectionIds.indexOf(stream.id)) {
-          return
+          return;
         }
-        this.remoteConnectionIds.push(stream.id)
-      }
+        this.remoteConnectionIds.push(stream.id);
+      };
     }
-    await this.setRemoteDescription(signalingMessage)
+    await this.setRemoteDescription(signalingMessage);
     stream.getTracks().forEach((track) => {
       if (this.pc) {
-        this.pc.addTrack(track, stream)
+        this.pc.addTrack(track, stream);
       }
-    })
-    this.stream = stream
-    await this.createAnswer(signalingMessage)
-    this.sendAnswer()
+    });
+    this.stream = stream;
+    await this.createAnswer(signalingMessage);
+    this.sendAnswer();
     if (!this.options.skipIceCandidateEvent) {
-      await this.onIceCandidate()
+      await this.onIceCandidate();
     }
-    await this.waitChangeConnectionStateConnected()
-    return stream
+    await this.waitChangeConnectionStateConnected();
+    return stream;
   }
 }

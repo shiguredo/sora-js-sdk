@@ -1,35 +1,35 @@
 // --- 定数の定義 ---
-const MIN_FPS = 1
-const MAX_FPS = 60
-const BASE_WIDTH = 640 // 基準解像度（幅）
-const BASE_HEIGHT = 480 // 基準解像度（高さ）
-const BASE_INFO_FONT_SIZE = 28
-const BASE_MAIN_FONT_SIZE = 100
-const BASE_LINE_WIDTH = 3
-const BASE_SHADOW_BLUR = 10
-const BASE_SHADOW_OFFSET = 5
+const MIN_FPS = 1;
+const MAX_FPS = 60;
+const BASE_WIDTH = 640; // 基準解像度（幅）
+const BASE_HEIGHT = 480; // 基準解像度（高さ）
+const BASE_INFO_FONT_SIZE = 28;
+const BASE_MAIN_FONT_SIZE = 100;
+const BASE_LINE_WIDTH = 3;
+const BASE_SHADOW_BLUR = 10;
+const BASE_SHADOW_OFFSET = 5;
 // --- 定数の定義ここまで ---
 
 // 解像度に基づいて値をスケーリングする関数
 const scaleValue = (baseValue: number, currentWidth: number, currentHeight: number): number => {
-  const ratio = Math.min(currentWidth / BASE_WIDTH, currentHeight / BASE_HEIGHT)
-  return Math.max(1, Math.floor(baseValue * ratio)) // 最小値1を保証
-}
+  const ratio = Math.min(currentWidth / BASE_WIDTH, currentHeight / BASE_HEIGHT);
+  return Math.max(1, Math.floor(baseValue * ratio)); // 最小値1を保証
+};
 
 // 背景色とそれに対するコントラスト色を生成する関数
 const generateColors = (): { bgColor: string; contrastColor: string } => {
   // 中程度の明るさの背景色を生成 (0.3 - 0.7 の範囲)
-  const r = Math.floor(Math.random() * 256 * 0.4 + 0.3 * 256)
-  const g = Math.floor(Math.random() * 256 * 0.4 + 0.3 * 256)
-  const b = Math.floor(Math.random() * 256 * 0.4 + 0.3 * 256)
-  const bgColor = `rgb(${r}, ${g}, ${b})`
+  const r = Math.floor(Math.random() * 256 * 0.4 + 0.3 * 256);
+  const g = Math.floor(Math.random() * 256 * 0.4 + 0.3 * 256);
+  const b = Math.floor(Math.random() * 256 * 0.4 + 0.3 * 256);
+  const bgColor = `rgb(${r}, ${g}, ${b})`;
 
   // 輝度を計算 (YIQ方式)
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000
-  const contrastColor = brightness > 128 ? '#000000' : '#ffffff' // 輝度に基づいて黒か白を選択
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  const contrastColor = brightness > 128 ? "#000000" : "#ffffff"; // 輝度に基づいて黒か白を選択
 
-  return { bgColor, contrastColor }
-}
+  return { bgColor, contrastColor };
+};
 
 const createFakeVideoTrack = (
   width = 320, // デフォルト幅 320px
@@ -37,101 +37,101 @@ const createFakeVideoTrack = (
   frameRate = 30, // デフォルトフレームレート 30fps
 ): MediaStreamTrack => {
   // フレームレートを制限
-  const fps = Math.max(MIN_FPS, Math.min(MAX_FPS, frameRate))
+  const fps = Math.max(MIN_FPS, Math.min(MAX_FPS, frameRate));
 
   // キャンバス要素を作成
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
 
   // キャンバスのコンテキストを取得
-  const ctx = canvas.getContext('2d')
+  const ctx = canvas.getContext("2d");
   if (!ctx) {
-    throw new Error('Failed to get canvas context')
+    throw new Error("Failed to get canvas context");
   }
 
   // 開始時間とフレームカウンター
-  const startTime = Date.now()
-  let frameCount = 0
-  let animationFrameId: number
+  const startTime = Date.now();
+  let frameCount = 0;
+  let animationFrameId: number;
 
   // 色を決定
-  const { bgColor, contrastColor } = generateColors()
+  const { bgColor, contrastColor } = generateColors();
 
   // 解像度に応じたサイズを計算
-  const infoFontSize = scaleValue(BASE_INFO_FONT_SIZE, width, height)
-  const mainFontSize = scaleValue(BASE_MAIN_FONT_SIZE, width, height)
-  const lineWidth = scaleValue(BASE_LINE_WIDTH, width, height)
-  const shadowBlur = scaleValue(BASE_SHADOW_BLUR, width, height)
-  const shadowOffset = scaleValue(BASE_SHADOW_OFFSET, width, height)
+  const infoFontSize = scaleValue(BASE_INFO_FONT_SIZE, width, height);
+  const mainFontSize = scaleValue(BASE_MAIN_FONT_SIZE, width, height);
+  const lineWidth = scaleValue(BASE_LINE_WIDTH, width, height);
+  const shadowBlur = scaleValue(BASE_SHADOW_BLUR, width, height);
+  const shadowOffset = scaleValue(BASE_SHADOW_OFFSET, width, height);
 
   // キャンバスを更新する関数 (requestAnimationFrameを使用)
   const updateCanvas = (): void => {
-    frameCount++
-    const elapsedTime = Date.now() - startTime
+    frameCount++;
+    const elapsedTime = Date.now() - startTime;
 
     // 1. 背景を描画
-    ctx.fillStyle = bgColor
-    ctx.fillRect(0, 0, width, height)
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, width, height);
 
     // 2. 情報テキストを描画 (左上)
-    ctx.font = `${infoFontSize}px Arial`
-    ctx.fillStyle = contrastColor
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'top'
-    const infoTextYOffset = infoFontSize + 10 // 少し下にずらす
-    ctx.fillText(`Frame: ${frameCount}`, 10, 10)
-    ctx.fillText(`Size: ${width}x${height}`, 10, 10 + infoTextYOffset)
-    ctx.fillText(`FPS: ${fps}`, 10, 10 + infoTextYOffset * 2)
+    ctx.font = `${infoFontSize}px Arial`;
+    ctx.fillStyle = contrastColor;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    const infoTextYOffset = infoFontSize + 10; // 少し下にずらす
+    ctx.fillText(`Frame: ${frameCount}`, 10, 10);
+    ctx.fillText(`Size: ${width}x${height}`, 10, 10 + infoTextYOffset);
+    ctx.fillText(`FPS: ${fps}`, 10, 10 + infoTextYOffset * 2);
 
     // 3. メインテキスト（経過時間）を描画 (中央)
-    const timeText = `${elapsedTime}`
-    ctx.font = `bold ${mainFontSize}px Arial`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle' // 垂直方向も中央揃えに
+    const timeText = `${elapsedTime}`;
+    ctx.font = `bold ${mainFontSize}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle"; // 垂直方向も中央揃えに
 
-    const textX = width / 2
-    const textY = height / 2
+    const textX = width / 2;
+    const textY = height / 2;
 
     // 3a. テキストの影
     ctx.shadowColor =
-      contrastColor === '#000000' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'
-    ctx.shadowBlur = shadowBlur
-    ctx.shadowOffsetX = shadowOffset
-    ctx.shadowOffsetY = shadowOffset
+      contrastColor === "#000000" ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)";
+    ctx.shadowBlur = shadowBlur;
+    ctx.shadowOffsetX = shadowOffset;
+    ctx.shadowOffsetY = shadowOffset;
 
     // 3b. テキスト本体を描画
-    ctx.fillStyle = contrastColor
-    ctx.fillText(timeText, textX, textY)
+    ctx.fillStyle = contrastColor;
+    ctx.fillText(timeText, textX, textY);
 
     // 3c. テキストの縁取り
-    ctx.shadowColor = 'transparent' // 縁取りには影をつけない
-    ctx.shadowBlur = 0
-    ctx.shadowOffsetX = 0
-    ctx.shadowOffsetY = 0
-    ctx.strokeStyle = contrastColor === '#000000' ? '#ffffff' : '#000000' // 逆の色で縁取り
-    ctx.lineWidth = lineWidth
-    ctx.strokeText(timeText, textX, textY)
+    ctx.shadowColor = "transparent"; // 縁取りには影をつけない
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.strokeStyle = contrastColor === "#000000" ? "#ffffff" : "#000000"; // 逆の色で縁取り
+    ctx.lineWidth = lineWidth;
+    ctx.strokeText(timeText, textX, textY);
 
     // 次のフレームをリクエスト
-    animationFrameId = requestAnimationFrame(updateCanvas)
-  }
+    animationFrameId = requestAnimationFrame(updateCanvas);
+  };
 
   // 最初のフレームを描画開始
-  updateCanvas()
+  updateCanvas();
 
   // キャンバスからメディアストリームを取得
-  const stream = canvas.captureStream(fps)
-  const [videoTrack] = stream.getVideoTracks()
+  const stream = canvas.captureStream(fps);
+  const [videoTrack] = stream.getVideoTracks();
 
   // トラックが停止されたらアニメーションも停止する
-  videoTrack.addEventListener('ended', () => {
-    cancelAnimationFrame(animationFrameId)
-    console.log('Animation stopped because track ended.')
-  })
+  videoTrack.addEventListener("ended", () => {
+    cancelAnimationFrame(animationFrameId);
+    console.log("Animation stopped because track ended.");
+  });
 
-  return videoTrack
-}
+  return videoTrack;
+};
 
 const createFakeAudioTrack = (
   frequency = 440, // デフォルト周波数 A4 (440Hz)
@@ -139,119 +139,119 @@ const createFakeAudioTrack = (
   stereo = false, // ステレオかモノラルか
 ): MediaStreamTrack => {
   // AudioContextを作成
-  const audioCtx = new AudioContext()
+  const audioCtx = new AudioContext();
 
   if (stereo) {
     // ステレオの場合: L/Rチャンネルに異なる周波数の音を設定
     // 左チャンネル用のOscillator
-    const oscillatorLeft = audioCtx.createOscillator()
-    oscillatorLeft.type = 'sine'
-    oscillatorLeft.frequency.setValueAtTime(frequency, audioCtx.currentTime)
+    const oscillatorLeft = audioCtx.createOscillator();
+    oscillatorLeft.type = "sine";
+    oscillatorLeft.frequency.setValueAtTime(frequency, audioCtx.currentTime);
 
     // 右チャンネル用のOscillator（周波数を少しずらす）
-    const oscillatorRight = audioCtx.createOscillator()
-    oscillatorRight.type = 'sine'
-    oscillatorRight.frequency.setValueAtTime(frequency * 1.5, audioCtx.currentTime) // 1.5倍の周波数
+    const oscillatorRight = audioCtx.createOscillator();
+    oscillatorRight.type = "sine";
+    oscillatorRight.frequency.setValueAtTime(frequency * 1.5, audioCtx.currentTime); // 1.5倍の周波数
 
     // 各チャンネル用のGainNode
-    const gainLeft = audioCtx.createGain()
-    gainLeft.gain.setValueAtTime(volume, audioCtx.currentTime)
+    const gainLeft = audioCtx.createGain();
+    gainLeft.gain.setValueAtTime(volume, audioCtx.currentTime);
 
-    const gainRight = audioCtx.createGain()
-    gainRight.gain.setValueAtTime(volume, audioCtx.currentTime)
+    const gainRight = audioCtx.createGain();
+    gainRight.gain.setValueAtTime(volume, audioCtx.currentTime);
 
     // ChannelMergerNodeでステレオに結合
-    const merger = audioCtx.createChannelMerger(2)
+    const merger = audioCtx.createChannelMerger(2);
 
     // MediaStreamAudioDestinationNode（出力先）を作成
     // channelCountを2に明示的に設定
-    const destination = audioCtx.createMediaStreamDestination()
-    destination.channelCount = 2
-    destination.channelCountMode = 'explicit'
+    const destination = audioCtx.createMediaStreamDestination();
+    destination.channelCount = 2;
+    destination.channelCountMode = "explicit";
 
     // 接続: 左チャンネル -> merger の入力0
-    oscillatorLeft.connect(gainLeft)
-    gainLeft.connect(merger, 0, 0)
+    oscillatorLeft.connect(gainLeft);
+    gainLeft.connect(merger, 0, 0);
 
     // 接続: 右チャンネル -> merger の入力1
-    oscillatorRight.connect(gainRight)
-    gainRight.connect(merger, 0, 1)
+    oscillatorRight.connect(gainRight);
+    gainRight.connect(merger, 0, 1);
 
     // merger -> destination
-    merger.connect(destination)
+    merger.connect(destination);
 
     // Oscillatorを開始
-    oscillatorLeft.start()
-    oscillatorRight.start()
+    oscillatorLeft.start();
+    oscillatorRight.start();
 
     // MediaStreamからAudioTrackを取得
-    const [audioTrack] = destination.stream.getAudioTracks()
+    const [audioTrack] = destination.stream.getAudioTracks();
 
     // デバッグ情報
-    console.log('Created stereo audio track:', {
+    console.log("Created stereo audio track:", {
       channelCount: destination.channelCount,
       leftFreq: frequency,
       rightFreq: frequency * 1.5,
-    })
+    });
 
     // トラックが停止されたらAudioContextを閉じる
-    audioTrack.addEventListener('ended', () => {
-      oscillatorLeft.stop()
-      oscillatorRight.stop()
-      audioCtx.close().then(() => {
-        console.log('AudioContext closed because track ended.')
-      })
-    })
+    audioTrack.addEventListener("ended", () => {
+      oscillatorLeft.stop();
+      oscillatorRight.stop();
+      void audioCtx.close().then(() => {
+        console.log("AudioContext closed because track ended.");
+      });
+    });
 
-    return audioTrack
+    return audioTrack;
   }
   // モノラルの場合（既存の実装）
   // OscillatorNode（音源）を作成
-  const oscillator = audioCtx.createOscillator()
-  oscillator.type = 'sine' // サイン波（不快感の少ない波形）
-  oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime)
+  const oscillator = audioCtx.createOscillator();
+  oscillator.type = "sine"; // サイン波（不快感の少ない波形）
+  oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
 
   // GainNode（音量調整）を作成
-  const gainNode = audioCtx.createGain()
-  gainNode.gain.setValueAtTime(volume, audioCtx.currentTime)
+  const gainNode = audioCtx.createGain();
+  gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
 
   // MediaStreamAudioDestinationNode（出力先）を作成
-  const destination = audioCtx.createMediaStreamDestination()
+  const destination = audioCtx.createMediaStreamDestination();
 
   // ノードを接続: Oscillator -> Gain -> Destination
-  oscillator.connect(gainNode)
-  gainNode.connect(destination)
+  oscillator.connect(gainNode);
+  gainNode.connect(destination);
 
   // Oscillatorを開始
-  oscillator.start()
+  oscillator.start();
 
   // MediaStreamからAudioTrackを取得
-  const [audioTrack] = destination.stream.getAudioTracks()
+  const [audioTrack] = destination.stream.getAudioTracks();
 
   // トラックが停止されたらAudioContextを閉じる
-  audioTrack.addEventListener('ended', () => {
-    oscillator.stop()
-    audioCtx.close().then(() => {
-      console.log('AudioContext closed because track ended.')
-    })
-  })
+  audioTrack.addEventListener("ended", () => {
+    oscillator.stop();
+    void audioCtx.close().then(() => {
+      console.log("AudioContext closed because track ended.");
+    });
+  });
 
-  return audioTrack
-}
+  return audioTrack;
+};
 
 // --- getFakeMedia のための型定義 ---
 interface FakeMediaTrackConstraints {
-  width?: number
-  height?: number
-  frameRate?: number
-  frequency?: number
-  volume?: number
-  stereo?: boolean
+  width?: number;
+  height?: number;
+  frameRate?: number;
+  frequency?: number;
+  volume?: number;
+  stereo?: boolean;
 }
 
 interface FakeMediaStreamConstraints {
-  video?: boolean | FakeMediaTrackConstraints
-  audio?: boolean | FakeMediaTrackConstraints
+  video?: boolean | FakeMediaTrackConstraints;
+  audio?: boolean | FakeMediaTrackConstraints;
 }
 
 /**
@@ -263,43 +263,43 @@ interface FakeMediaStreamConstraints {
  * @returns 指定されたトラックを含む MediaStream。要求されたトラックがない場合は空の MediaStream を返します。
  */
 export const getFakeMedia = (constraints: FakeMediaStreamConstraints): MediaStream => {
-  const tracks: MediaStreamTrack[] = []
+  const tracks: MediaStreamTrack[] = [];
 
   if (constraints.video) {
     // デフォルトのビデオ設定
-    let videoOptions = { width: 320, height: 240, frameRate: 30 }
+    let videoOptions = { width: 320, height: 240, frameRate: 30 };
     // オブジェクトで設定が渡された場合はマージ
-    if (typeof constraints.video === 'object') {
-      videoOptions = { ...videoOptions, ...constraints.video }
+    if (typeof constraints.video === "object") {
+      videoOptions = { ...videoOptions, ...constraints.video };
     }
     const videoTrack = createFakeVideoTrack(
       videoOptions.width,
       videoOptions.height,
       videoOptions.frameRate,
-    )
-    tracks.push(videoTrack)
+    );
+    tracks.push(videoTrack);
   }
 
   if (constraints.audio) {
     // デフォルトのオーディオ設定
-    let audioOptions = { frequency: 440, volume: 0.1, stereo: false }
+    let audioOptions = { frequency: 440, volume: 0.1, stereo: false };
     // オブジェクトで設定が渡された場合はマージ
-    if (typeof constraints.audio === 'object') {
-      audioOptions = { ...audioOptions, ...constraints.audio }
+    if (typeof constraints.audio === "object") {
+      audioOptions = { ...audioOptions, ...constraints.audio };
     }
     const audioTrack = createFakeAudioTrack(
       audioOptions.frequency,
       audioOptions.volume,
       audioOptions.stereo,
-    )
-    tracks.push(audioTrack)
+    );
+    tracks.push(audioTrack);
   }
 
   // 要求されたトラックがない場合、警告を出力（エラーをスローする代わりに）
   if (tracks.length === 0) {
-    console.warn('getFakeMedia called with no tracks requested.')
+    console.warn("getFakeMedia called with no tracks requested.");
   }
 
   // 生成されたトラックで MediaStream を作成して返す
-  return new MediaStream(tracks)
-}
+  return new MediaStream(tracks);
+};

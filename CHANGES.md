@@ -14,6 +14,11 @@
 - [FIX] rpc メソッドのサンプルコードで、実際に存在しない RPC メソッド名が使われていたのを修正する
   - @sile
 
+### misc
+
+- [CHANGE] Biome から oxc に移行する
+  - @voluntas
+
 ## 2025.2.0
 
 **リリース日**: 2025-12-09
@@ -179,7 +184,7 @@
 - [CHANGE] Node.js 18 をビルドとテストから落とす
   - @voluntas
 - [CHANGE] examples を e2e-tests に変更する
-  - 環境変数の Prefix を TEST_ に切り替える
+  - 環境変数の Prefix を TEST\_ に切り替える
   - @voluntas
 - [CHANGE] tsconfig.json の moduleResolution を Bundler に変更する
   - @voluntas
@@ -860,7 +865,6 @@
 - [UPDATE] Firefox の Media Panel addon の Media-Webrtc が動作するよう RTCPeerConnection の変数格納を削除する
   - @yuitowest
 - [ADD] ConnectionOptions の新しいプロパティに型を追加する
-
   - @exKAZUu
 
 - [FIX] setDirection を direction に変更する

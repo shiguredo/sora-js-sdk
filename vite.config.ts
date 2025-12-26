@@ -1,7 +1,7 @@
-import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
-import dts from 'vite-plugin-dts'
-import pkg from './package.json'
+import { resolve } from "node:path";
+import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
+import pkg from "./package.json";
 
 const banner = `/**
  * ${pkg.name}
@@ -10,23 +10,23 @@ const banner = `/**
  * @author: ${pkg.author}
  * @license: ${pkg.license}
  **/
-`
+`;
 export default defineConfig({
   define: {
     __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
   },
   root: process.cwd(),
   build: {
-    minify: 'esbuild',
-    target: 'es2022',
+    minify: "esbuild",
+    target: "es2022",
     emptyOutDir: true,
     manifest: false,
-    outDir: resolve(__dirname, './dist'),
+    outDir: resolve(__dirname, "./dist"),
     lib: {
-      entry: resolve(__dirname, 'src/sora.ts'),
-      name: 'WebRTC SFU Sora JavaScript SDK',
-      formats: ['es'],
-      fileName: 'sora',
+      entry: resolve(__dirname, "src/sora.ts"),
+      name: "WebRTC SFU Sora JavaScript SDK",
+      formats: ["es"],
+      fileName: "sora",
     },
     rollupOptions: {
       output: {
@@ -34,10 +34,10 @@ export default defineConfig({
       },
     },
   },
-  envDir: resolve(__dirname, './'),
+  envDir: resolve(__dirname, "./"),
   plugins: [
     dts({
-      include: ['src/**/*'],
+      include: ["src/**/*"],
     }),
   ],
-})
+});
