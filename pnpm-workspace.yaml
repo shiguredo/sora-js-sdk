@@ -1,5 +1,3 @@
 packages:
   - e2e-tests
-onlyBuiltDependencies:
-  - esbuild
 minimumReleaseAge: 2880
