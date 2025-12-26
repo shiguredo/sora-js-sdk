@@ -26,7 +26,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm run lint
       - run: pnpm run typecheck
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: sora-js-sdk-dist
           path: dist/
@@ -47,7 +47,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Download Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: sora-js-sdk-dist
           path: dist/
@@ -73,7 +73,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Download Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: sora-js-sdk-dist
           path: dist/
