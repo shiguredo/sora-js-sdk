@@ -15,7 +15,6 @@ export default class ConnectionSubscriber extends ConnectionBase {
    *
    * @public
    */
-  // biome-ignore lint/suspicious/noConfusingVoidType: stream が <MediaStream | void> なのでどうしようもない
   async connect(): Promise<MediaStream | void> {
     await Promise.race([
       this.multiStream().finally(() => {

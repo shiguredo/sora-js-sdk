@@ -1,6 +1,5 @@
 packages:
   - e2e-tests
 onlyBuiltDependencies:
-  - "@biomejs/biome"
   - esbuild
 minimumReleaseAge: 2880
