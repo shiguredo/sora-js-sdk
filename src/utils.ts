@@ -401,7 +401,7 @@ export function trace(clientId: string | null, title: string, value: unknown): v
     dump(value);
     console.groupEnd();
   } else {
-    console.log(`${prefix} ${title}\n`, value);
+    console.log("%s %s\n", prefix, title, value);
   }
 }
 
