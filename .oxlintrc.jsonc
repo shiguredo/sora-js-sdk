@@ -646,14 +646,6 @@
   },
   "overrides": [
     {
-      // devtools は console.log とトップレベル await を許可
-      "files": ["devtools/**/*.ts"],
-      "rules": {
-        "no-console": "off",
-        "unicorn/prefer-top-level-await": "off",
-      },
-    },
-    {
       // テストファイルは型安全性を緩和
       "files": ["**/*.test.ts", "**/*.prop.ts"],
       "rules": {
@@ -668,5 +660,5 @@
       },
     },
   ],
-  "ignorePatterns": ["dist/**", "devtools/dist/**", "node_modules/**"],
+  "ignorePatterns": ["dist/**", "node_modules/**"],
 }
