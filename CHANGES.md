@@ -35,6 +35,7 @@
   - `type: switched` メッセージを受信したときに呼び出される
   - @voluntas
 - [ADD] `"type": "offer"` に含まれる `rpc_methods` を `rpcMethods` プロパティでアクセスできるようにする
+  - @voluntas
 - [ADD] RPC 機能を利用する `rpc()` メソッドを追加する
   - `timeout` オプションでタイムアウト時間（ミリ秒）を指定できる
   - `notification: true` オプションでレスポンスを待たない通知型リクエストができる
