@@ -33,7 +33,7 @@
       <div>
         <textarea
           id="simulcast-encodings"
-          style="width: 80%; max-width: 500px; height: 150px;"
+          style="width: 80%; max-width: 500px; height: 150px"
         ></textarea>
       </div>
       <button id="connect">connect</button>
@@ -46,22 +46,36 @@
         autoplay=""
         playsinline=""
         controls=""
-        style="border: 1px solid blue;"
+        style="border: 1px solid blue"
       ></video>
 
       <h2>Signaling Log</h2>
       <div
         id="signaling-log"
-        style="border: 1px solid gray; padding: 10px; margin: 10px 0; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;"
+        style="
+          border: 1px solid gray;
+          padding: 10px;
+          margin: 10px 0;
+          max-height: 300px;
+          overflow-y: auto;
+          font-family: monospace;
+          font-size: 12px;
+        "
       ></div>
 
       <h2>PeerConnection State</h2>
       <pre
         id="pc-state"
-        style="border: 1px solid gray; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px;"
+        style="
+          border: 1px solid gray;
+          padding: 10px;
+          margin: 10px 0;
+          font-family: monospace;
+          font-size: 12px;
+        "
       ></pre>
 
-      <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+      <div id="stats-report" style="white-space: pre-wrap; font-family: monospace"></div>
       <div id="stats-report-json"></div>
     </div>
 

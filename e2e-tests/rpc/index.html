@@ -51,7 +51,7 @@
         playsinline=""
         controls=""
         muted=""
-        style="width: 480px; height: 270px; border: 1px solid black;"
+        style="width: 480px; height: 270px; border: 1px solid black"
       ></video>
 
       <hr />
@@ -77,26 +77,41 @@
         <strong>Resolution:</strong>
         <span id="video-resolution"></span>
       </div>
-      <div class="rid-selector" style="margin: 10px 0;">
+      <div class="rid-selector" style="margin: 10px 0">
         <label><input type="radio" name="rid" value="r0" /><span>r0</span></label>
         <label><input type="radio" name="rid" value="r1" /><span>r1</span></label>
         <label><input type="radio" name="rid" value="r2" checked /><span>r2</span></label>
       </div>
       <div
         id="remote-videos"
-        style="width: 960px; height: 540px; border: 1px solid red; display: flex; align-items: center; justify-content: center;"
+        style="
+          width: 960px;
+          height: 540px;
+          border: 1px solid red;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        "
       ></div>
 
       <hr />
       <h2>RPC Log</h2>
       <div
         id="rpc-log"
-        style="height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; font-family: monospace; font-size: 12px; background-color: #f9f9f9;"
+        style="
+          height: 150px;
+          overflow-y: auto;
+          border: 1px solid #ccc;
+          padding: 10px;
+          font-family: monospace;
+          font-size: 12px;
+          background-color: #f9f9f9;
+        "
       ></div>
 
       <hr />
       <h2>Stats Report</h2>
-      <div id="stats-report" style="white-space: pre-wrap; font-family: monospace;"></div>
+      <div id="stats-report" style="white-space: pre-wrap; font-family: monospace"></div>
     </div>
 
     <script type="module" src="./main.ts"></script>
