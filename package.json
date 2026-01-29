@@ -39,17 +39,17 @@
     "doc": "typedoc"
   },
   "devDependencies": {
-    "@playwright/test": "1.57.0",
-    "@types/node": "25.0.6",
+    "@playwright/test": "1.58.0",
+    "@types/node": "25.0.10",
     "jsdom": "27.4.0",
-    "oxfmt": "0.23.0",
-    "oxlint": "1.38.0",
-    "oxlint-tsgolint": "0.11.0",
-    "typedoc": "0.28.15",
+    "oxfmt": "0.27.0",
+    "oxlint": "1.42.0",
+    "oxlint-tsgolint": "0.11.2",
+    "typedoc": "0.28.16",
     "typescript": "5.9.3",
     "vite": "npm:rolldown-vite@^7.3.1",
     "vite-plugin-dts": "4.5.4",
-    "vitest": "4.0.16"
+    "vitest": "4.0.18"
   },
   "engines": {
     "node": ">=20",
