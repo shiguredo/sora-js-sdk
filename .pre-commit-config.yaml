@@ -1,0 +1,30 @@
+repos:
+  - repo: local
+    hooks:
+      - id: fmt
+        name: pnpm fmt
+        entry: pnpm run fmt
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: test
+        name: pnpm test
+        entry: pnpm run test
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: lint
+        name: pnpm lint
+        entry: pnpm run lint
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: typecheck
+        name: pnpm typecheck
+        entry: pnpm run typecheck
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
