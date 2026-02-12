@@ -22,6 +22,7 @@ jobs:
           - "20"
         typescript:
           - "next"
+          - "beta"
           - "5.9"
           - "5.8"
           - "5.7"
