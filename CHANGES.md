@@ -20,6 +20,8 @@
   - @voluntas
 - [CHANGE] E2E テストの環境変数の Prefix を `TEST_` に切り替える
   - @voluntas
+- [CHANGE] Slack 通知を rtCamp/action-slack-notify から shiguredo/github-actions の slack-notify に切り替える
+  - @voluntas
 
 ## 2025.2.0
 
