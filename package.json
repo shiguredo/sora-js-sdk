@@ -43,7 +43,7 @@
     "@types/node": "25.2.3",
     "jsdom": "28.0.0",
     "oxfmt": "0.32.0",
-    "oxlint": "1.47.0",
+    "oxlint": "1.48.0",
     "oxlint-tsgolint": "0.12.2",
     "typedoc": "0.28.17",
     "typescript": "5.9.3",
