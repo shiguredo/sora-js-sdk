@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
-    "@types/node": "25.3.3",
+    "@types/node": "25.3.5",
     "jsdom": "28.1.0",
     "oxfmt": "0.36.0",
     "oxlint": "1.51.0",
