@@ -2257,7 +2257,7 @@ export default class ConnectionBase {
         const dataChannel = event.target as RTCDataChannel;
         let data: ArrayBuffer | undefined;
         if (typeof event.data === "string") {
-          data = new TextEncoder().encode(event.data).buffer;
+          data = new Uint8Array(new TextEncoder().encode(event.data)).buffer;
         } else if (event.data instanceof ArrayBuffer) {
           data = event.data;
         } else {
