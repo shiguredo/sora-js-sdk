@@ -13,7 +13,10 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-slim
+    # TypeScript の beta と next は不安定なため失敗しても全体を止めない
+    continue-on-error: ${{ matrix.typescript == 'next' || matrix.typescript == 'beta' }}
     strategy:
+      fail-fast: false
       matrix:
         node:
           - "25"
