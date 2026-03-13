@@ -1,14 +1,7 @@
 import { setSoraJsSdkVersion } from "../src/misc";
 
-import Sora, {
-  type ConnectionOptions,
-  type ConnectionPublisher,
-  type SignalingEvent,
-  type SignalingNotifyConnectionCreated,
-  type SignalingNotifyMessage,
-  type SignalingSwitchedMessage,
-  type SoraConnection,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { ConnectionOptions, ConnectionPublisher, SignalingEvent, SignalingNotifyConnectionCreated, SignalingNotifyMessage, SignalingSwitchedMessage, SoraConnection } from 'sora-js-sdk';
 
 document.addEventListener("DOMContentLoaded", async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -23,8 +16,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.querySelector("#connect")?.addEventListener("click", async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
       audio: true,
+      video: true,
     });
 
     // channelName
@@ -54,11 +47,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     const statsReport = await client.getStats();
-    const statsDiv = document.querySelector("#stats-report") as HTMLElement;
+    const statsDiv = document.querySelector("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";
-      const statsReportJson: Record<string, unknown>[] = [];
+      const statsReportJson: Array<Record<string, unknown>> = [];
       for (const report of statsReport.values()) {
         statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
         const reportJson: Record<string, unknown> = {
@@ -86,7 +79,7 @@ class SoraClient {
   private channelId: string;
   private metadata: { access_token: string };
   private options: ConnectionOptions = {
-    connectionTimeout: 15000,
+    connectionTimeout: 15_000,
     dataChannelSignaling: true,
     ignoreDisconnectWebSocket: true,
   };
@@ -140,9 +133,9 @@ class SoraClient {
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+   async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error("PeerConnection is not ready"));
+      throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
   }
@@ -220,25 +213,25 @@ class SoraClient {
     const timeoutId = setTimeout(() => {
       console.log("[data_channel_signaling_only] apiDisconnect timeout after 10000ms");
       controller.abort();
-    }, 10000);
+    }, 10_000);
 
     try {
       const response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Sora-Target": "Sora_20151104.DisconnectConnection",
-        },
         body: JSON.stringify({
           channel_id: this.channelId,
           connection_id: this.connection.connectionId,
         }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-Sora-Target": "Sora_20151104.DisconnectConnection",
+        },
+        method: "POST",
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
       console.log("[data_channel_signaling_only] apiDisconnect response", {
-        status: response.status,
         ok: response.ok,
+        status: response.status,
       });
       if (!response.ok) {
         if (statusElement) {
@@ -250,13 +243,13 @@ class SoraClient {
         statusElement.textContent = "success";
       }
       console.log("[data_channel_signaling_only] apiDisconnect success");
-    } catch (e) {
+    } catch (error) {
       clearTimeout(timeoutId);
-      console.log("[data_channel_signaling_only] apiDisconnect error", e);
+      console.log("[data_channel_signaling_only] apiDisconnect error", error);
       if (statusElement) {
         statusElement.textContent = "error";
       }
-      throw e;
+      throw error;
     }
   }
 }

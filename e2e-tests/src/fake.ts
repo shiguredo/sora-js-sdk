@@ -267,7 +267,7 @@ export const getFakeMedia = (constraints: FakeMediaStreamConstraints): MediaStre
 
   if (constraints.video) {
     // デフォルトのビデオ設定
-    let videoOptions = { width: 320, height: 240, frameRate: 30 };
+    let videoOptions = { frameRate: 30, height: 240, width: 320 };
     // オブジェクトで設定が渡された場合はマージ
     if (typeof constraints.video === "object") {
       videoOptions = { ...videoOptions, ...constraints.video };
@@ -282,7 +282,7 @@ export const getFakeMedia = (constraints: FakeMediaStreamConstraints): MediaStre
 
   if (constraints.audio) {
     // デフォルトのオーディオ設定
-    let audioOptions = { frequency: 440, volume: 0.1, stereo: false };
+    let audioOptions = { frequency: 440, stereo: false, volume: 0.1 };
     // オブジェクトで設定が渡された場合はマージ
     if (typeof constraints.audio === "object") {
       audioOptions = { ...audioOptions, ...constraints.audio };

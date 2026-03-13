@@ -17,9 +17,9 @@ test("authz simulcast encodings", async ({ page }) => {
   await page.fill(
     "#simulcast-encodings",
     JSON.stringify([
-      { rid: "r0", active: true, scalabilityMode: "L1T1" },
-      { rid: "r1", active: false },
-      { rid: "r2", active: false },
+      { active: true, rid: "r0", scalabilityMode: "L1T1" },
+      { active: false, rid: "r1" },
+      { active: false, rid: "r2" },
     ]),
   );
 
@@ -32,7 +32,7 @@ test("authz simulcast encodings", async ({ page }) => {
   console.log("send-connect event detected");
 
   await page.waitForSelector('[data-signaling-type="onmessage-offer"]', {
-    timeout: 10000,
+    timeout: 10_000,
   });
   console.log("onmessage-offer event detected");
 
@@ -56,9 +56,9 @@ test("authz simulcast encodings", async ({ page }) => {
   await page.waitForFunction(
     () => {
       const el = document.querySelector("#pc-state");
-      return el?.getAttribute("data-connection-state") === "connected";
+      return el.dataset.connectionState === "connected";
     },
-    { timeout: 15000 },
+    { timeout: 15_000 },
   );
   console.log("PeerConnection connected");
 
@@ -71,9 +71,9 @@ test("authz simulcast encodings", async ({ page }) => {
   await page.click("#disconnect");
 
   // simulcast sendonly 統計情報
-  const sendonlyStatsReportJson: Record<string, unknown>[] = await page.evaluate(() => {
+  const sendonlyStatsReportJson: Array<Record<string, unknown>> = await page.evaluate(() => {
     const statsReportDiv = document.querySelector<HTMLDivElement>("#stats-report");
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const sendonlyVideoCodecStats = sendonlyStatsReportJson.find(

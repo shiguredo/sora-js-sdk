@@ -16,16 +16,16 @@ test("sendonly audio pages", async ({ browser }) => {
   // select 要素から直接オプションを取得してランダムに選択する
   // 音声コーデック
   const selectedAudioCodec = await sendonly.evaluate(() => {
-    const select = document.querySelector("#audio-codec-type") as HTMLSelectElement;
-    const options = Array.from(select.options);
+    const select = document.querySelector("#audio-codec-type")!;
+    const options = [...select.options];
     const randomOption = options[Math.floor(Math.random() * options.length)];
     select.value = randomOption.value;
     return randomOption.value;
   });
   // 音声ビットレート
   const selectedBitRate = await sendonly.evaluate(() => {
-    const select = document.querySelector("#audio-bit-rate") as HTMLSelectElement;
-    const options = Array.from(select.options).filter((option) => option.value !== ""); // 未指定を除外
+    const select = document.querySelector("#audio-bit-rate")!;
+    const options = [...select.options].filter((option) => option.value !== ""); // 未指定を除外
     const randomOption = options[Math.floor(Math.random() * options.length)];
     select.value = randomOption.value;
     return randomOption.value;
@@ -52,9 +52,9 @@ test("sendonly audio pages", async ({ browser }) => {
   await sendonly.waitForSelector("#stats-report");
 
   // データセットから統計情報を取得
-  const sendonlyStatsReportJson: Record<string, unknown>[] = await sendonly.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const sendonlyStatsReportJson: Array<Record<string, unknown>> = await sendonly.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   // 音声コーデックを確認する : 今は指定してもしなくても OPUS のみ

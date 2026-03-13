@@ -13,10 +13,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     await page.goto("http://localhost:9000/fake_stereo_audio_sendrecv/");
 
     // Sora.version()を実行してバージョンを取得
-    const version = await page.evaluate(() => {
-      // @ts-expect-error
-      return window.Sora ? window.Sora.version() : null;
-    });
+    const version = await page.evaluate(() => window.Sora ? window.Sora.version() : null);
 
     if (!version) {
       // バージョンが取得できない場合はスキップ
@@ -74,15 +71,15 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     await page.waitForSelector("#stats-report-2");
 
     // 接続1の統計情報を取得
-    const stats1Json: Record<string, unknown>[] = await page.evaluate(() => {
-      const statsDiv = document.querySelector("#stats-report-1") as HTMLDivElement;
-      return statsDiv ? JSON.parse(statsDiv.dataset.statsReportJson || "[]") : [];
+    const stats1Json: Array<Record<string, unknown>> = await page.evaluate(() => {
+      const statsDiv = document.querySelector("#stats-report-1")!;
+      return statsDiv ? JSON.parse(statsDiv.dataset.statsReportJson ?? "[]") : [];
     });
 
     // 接続2の統計情報を取得
-    const stats2Json: Record<string, unknown>[] = await page.evaluate(() => {
-      const statsDiv = document.querySelector("#stats-report-2") as HTMLDivElement;
-      return statsDiv ? JSON.parse(statsDiv.dataset.statsReportJson || "[]") : [];
+    const stats2Json: Array<Record<string, unknown>> = await page.evaluate(() => {
+      const statsDiv = document.querySelector("#stats-report-2")!;
+      return statsDiv ? JSON.parse(statsDiv.dataset.statsReportJson ?? "[]") : [];
     });
 
     // 接続1：音声が正常に送受信できているかを確認
@@ -117,8 +114,8 @@ test.describe("Stereo Audio SendRecv Tests", () => {
 
     // 音声分析結果を取得
     const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector("#audio-analysis") as HTMLDivElement;
-      return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis || "{}") : {};
+      const analysisDiv = document.querySelector("#audio-analysis")!;
+      return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
     });
 
     console.log("Stereo sendrecv test - Audio analysis:", analysisData);
@@ -199,8 +196,8 @@ test.describe("Stereo Audio SendRecv Tests", () => {
 
     // 音声分析結果を取得
     const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector("#audio-analysis") as HTMLDivElement;
-      return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis || "{}") : {};
+      const analysisDiv = document.querySelector("#audio-analysis")!;
+      return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
     });
 
     console.log("Mono sendrecv test - Audio analysis:", analysisData);
@@ -286,8 +283,8 @@ test.describe("Stereo Audio SendRecv Tests", () => {
 
     // 音声分析結果を取得
     const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector("#audio-analysis") as HTMLDivElement;
-      return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis || "{}") : {};
+      const analysisDiv = document.querySelector("#audio-analysis")!;
+      return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
     });
 
     console.log("Mixed stereo/mono test - Audio analysis:", analysisData);

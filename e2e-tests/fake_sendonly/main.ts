@@ -1,12 +1,8 @@
 import { getFakeMedia } from "../src/fake";
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora, {
-  type SignalingNotifyMessage,
-  type SignalingEvent,
-  type ConnectionPublisher,
-  type SoraConnection,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { SignalingNotifyMessage, SignalingEvent, ConnectionPublisher, SoraConnection } from 'sora-js-sdk';
 
 document.addEventListener("DOMContentLoaded", async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -27,8 +23,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     client = new SoraClient(signalingUrl, channelId, secretKey);
 
-    const useFakeAudio = (document.querySelector("#use-fake-audio") as HTMLInputElement).checked;
-    const useFakeVideo = (document.querySelector("#use-fake-video") as HTMLInputElement).checked;
+    const useFakeAudio = (document.querySelector("#use-fake-audio")!).checked;
+    const useFakeVideo = (document.querySelector("#use-fake-video")!).checked;
 
     const stream = getFakeMedia({
       audio: useFakeAudio,
@@ -50,11 +46,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const statsReport = await client.getStats();
-    const statsDiv = document.querySelector("#stats-report") as HTMLElement;
+    const statsDiv = document.querySelector("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";
-      const statsReportJson: Record<string, unknown>[] = [];
+      const statsReportJson: Array<Record<string, unknown>> = [];
       for (const report of statsReport.values()) {
         statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
         const reportJson: Record<string, unknown> = {
@@ -81,7 +77,7 @@ class SoraClient {
   private debug = false;
   private channelId: string;
   private metadata: { access_token: string };
-  private options: object = { connectionTimeout: 15000 };
+  private options: object = { connectionTimeout: 15_000 };
 
   private sora: SoraConnection;
   private connection: ConnectionPublisher;
@@ -119,9 +115,9 @@ class SoraClient {
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+   async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error("PeerConnection is not ready"));
+      throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
   }

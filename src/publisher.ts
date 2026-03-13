@@ -44,19 +44,19 @@ export default class ConnectionPublisher extends ConnectionBase {
     const signalingMessage = await this.signaling(ws);
     await this.connectPeerConnection(signalingMessage);
     if (this.pc) {
-      this.pc.ontrack = async (event): Promise<void> => {
+      this.pc.ontrack = (event): void => {
         const stream = event.streams[0];
         if (!stream) {
           return;
         }
         const data = {
-          "stream.id": stream.id,
-          id: event.track.id,
-          label: event.track.label,
           enabled: event.track.enabled,
+          id: event.track.id,
           kind: event.track.kind,
+          label: event.track.label,
           muted: event.track.muted,
           readyState: event.track.readyState,
+          "stream.id": stream.id,
         };
         this.writePeerConnectionTimelineLog("ontrack", data);
         if (stream.id === "default") {
@@ -71,23 +71,23 @@ export default class ConnectionPublisher extends ConnectionBase {
           if (event.target) {
             const streamId = (event.target as MediaStream).id;
             const index = this.remoteConnectionIds.indexOf(streamId);
-            if (-1 < index) {
+            if (index !== -1) {
               this.remoteConnectionIds.splice(index, 1);
             }
           }
         };
-        if (-1 < this.remoteConnectionIds.indexOf(stream.id)) {
+        if (this.remoteConnectionIds.includes(stream.id)) {
           return;
         }
         this.remoteConnectionIds.push(stream.id);
       };
     }
     await this.setRemoteDescription(signalingMessage);
-    stream.getTracks().forEach((track) => {
+    for (const track of stream.getTracks()) {
       if (this.pc) {
         this.pc.addTrack(track, stream);
       }
-    });
+    }
     this.stream = stream;
     await this.createAnswer(signalingMessage);
     this.sendAnswer();

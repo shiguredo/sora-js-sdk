@@ -80,9 +80,9 @@ test("H265", async ({ browser }) => {
   await sendrecv2.waitForSelector("#stats-report");
 
   // データセットから統計情報を取得
-  const sendrecv1StatsReportJson: Record<string, unknown>[] = await sendrecv1.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const sendrecv1StatsReportJson: Array<Record<string, unknown>> = await sendrecv1.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const sendrecv1VideoCodecStats = sendrecv1StatsReportJson.find(
@@ -105,9 +105,9 @@ test("H265", async ({ browser }) => {
   expect(sendrecv1VideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0);
 
   // データセットから統計情報を取得
-  const sendrecv2StatsReportJson: Record<string, unknown>[] = await sendrecv2.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const sendrecv2StatsReportJson: Array<Record<string, unknown>> = await sendrecv2.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const sendrecv2VideoCodecStats = sendrecv2StatsReportJson.find(

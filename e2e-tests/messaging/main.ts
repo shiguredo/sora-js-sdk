@@ -1,12 +1,7 @@
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora, {
-  type SoraConnection,
-  type ConnectionMessaging,
-  type SignalingNotifyMessage,
-  type DataChannelMessageEvent,
-  type DataChannelEvent,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { SoraConnection, ConnectionMessaging, SignalingNotifyMessage, DataChannelMessageEvent, DataChannelEvent } from 'sora-js-sdk';
 
 document.addEventListener("DOMContentLoaded", async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -22,9 +17,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
     client = new SoraClient(signalingUrl, channelId, secretKey);
-    const checkCompress = document.getElementById("check-compress") as HTMLInputElement;
+    const checkCompress = document.querySelector("#check-compress")!;
     const compress = checkCompress.checked;
-    const checkHeader = document.getElementById("check-header") as HTMLInputElement;
+    const checkHeader = document.querySelector("#check-header")!;
     const header = checkHeader.checked;
 
     await client.connect(compress, header);
@@ -41,11 +36,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     const statsReport = await client.getStats();
-    const statsDiv = document.querySelector("#stats-report") as HTMLElement;
+    const statsDiv = document.querySelector("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";
-      const statsReportJson: Record<string, unknown>[] = [];
+      const statsReportJson: Array<Record<string, unknown>> = [];
       for (const report of statsReport.values()) {
         statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
         const reportJson: Record<string, unknown> = {
@@ -84,13 +79,13 @@ class SoraClient {
     this.metadata = { access_token: secretKey };
 
     this.options = {
-      connectionTimeout: 15000,
+      connectionTimeout: 15_000,
       dataChannelSignaling: true,
       dataChannels: [
         {
-          label: "#example",
-          direction: "sendrecv",
           compress: true,
+          direction: "sendrecv",
+          label: "#example",
         },
       ],
     };
@@ -149,9 +144,9 @@ class SoraClient {
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+   async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error("PeerConnection is not ready"));
+      throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
   }
@@ -185,12 +180,12 @@ class SoraClient {
     openDataChannel.textContent = new TextDecoder().decode(
       new TextEncoder().encode(event.datachannel.label),
     );
-    document.querySelector("#messaging")?.appendChild(openDataChannel);
+    document.querySelector("#messaging")?.append(openDataChannel);
   }
 
   private onmessage(event: DataChannelMessageEvent) {
     const message = document.createElement("li");
     message.textContent = new TextDecoder().decode(event.data);
-    document.querySelector("#received-messages")?.appendChild(message);
+    document.querySelector("#received-messages")?.append(message);
   }
 }

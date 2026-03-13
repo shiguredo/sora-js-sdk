@@ -12,10 +12,6 @@ const banner = `/**
  **/
 `;
 export default defineConfig({
-  define: {
-    __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
-  },
-  root: process.cwd(),
   build: {
     minify: "esbuild",
     target: "es2022",
@@ -34,10 +30,14 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
+  },
   envDir: resolve(__dirname, "./"),
   plugins: [
     dts({
       include: ["src/**/*"],
     }),
   ],
+  root: process.cwd(),
 });

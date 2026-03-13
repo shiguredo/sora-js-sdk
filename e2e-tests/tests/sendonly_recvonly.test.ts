@@ -54,9 +54,9 @@ test("sendonly/recvonly pages", async ({ browser }) => {
   // 統計情報が表示されるまで待機
   await sendonly.waitForSelector("#stats-report");
   // データセットから統計情報を取得
-  const sendonlyStatsReportJson: Record<string, unknown>[] = await sendonly.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const sendonlyStatsReportJson: Array<Record<string, unknown>> = await sendonly.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   // 'Get Stats' ボタンをクリックして統計情報を取得
@@ -65,9 +65,9 @@ test("sendonly/recvonly pages", async ({ browser }) => {
   // 統計情報が表示されるまで待機
   await recvonly.waitForSelector("#stats-report");
   // データセットから統計情報を取得
-  const recvonlyStatsReportJson: Record<string, unknown>[] = await recvonly.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const recvonlyStatsReportJson: Array<Record<string, unknown>> = await recvonly.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   // sendonly audio codec

@@ -1,11 +1,7 @@
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora, {
-  type SoraConnection,
-  type SignalingNotifyMessage,
-  type ConnectionSubscriber,
-  type SimulcastRid,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { SoraConnection, SignalingNotifyMessage, ConnectionSubscriber, SimulcastRid } from 'sora-js-sdk';
 
 document.addEventListener("DOMContentLoaded", () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -35,11 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     const statsReport = await recvonly.getStats();
-    const statsDiv = document.querySelector("#stats-report") as HTMLElement;
+    const statsDiv = document.querySelector("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";
-      const statsReportJson: Record<string, unknown>[] = [];
+      const statsReportJson: Array<Record<string, unknown>> = [];
       for (const report of statsReport.values()) {
         statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
         const reportJson: Record<string, unknown> = {
@@ -78,7 +74,7 @@ class SimulcastRecvonlySoraClient {
     this.connection = this.sora.recvonly(
       this.channelId,
       { access_token: secretKey },
-      { connectionTimeout: 15000, simulcast: true },
+      { connectionTimeout: 15_000, simulcast: true },
     );
 
     this.connection.on("notify", this.onnotify.bind(this));
@@ -103,9 +99,9 @@ class SimulcastRecvonlySoraClient {
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+   async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error("PeerConnection is not ready"));
+      throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
   }
@@ -117,7 +113,7 @@ class SimulcastRecvonlySoraClient {
     ) {
       const localVideoConnectionId = document.querySelector("#connection-id");
       if (localVideoConnectionId) {
-        localVideoConnectionId.textContent = `${event.connection_id}`;
+        localVideoConnectionId.textContent = event.connection_id;
       }
     }
   }
@@ -133,7 +129,7 @@ class SimulcastRecvonlySoraClient {
       videoElement.playsInline = true;
       videoElement.controls = true;
       videoElement.srcObject = stream;
-      remoteVideos.appendChild(videoElement);
+      remoteVideos.append(videoElement);
     }
   }
 

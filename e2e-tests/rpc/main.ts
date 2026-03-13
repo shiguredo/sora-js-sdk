@@ -6,14 +6,8 @@ RPC 機能は認証成功時に rpc_methods を払いだす必要がある。
 このテストは通常の Sora では動作しない。
 */
 
-import Sora, {
-  type ConnectionPublisher,
-  type ConnectionSubscriber,
-  type SignalingEvent,
-  type SignalingNotifyMessage,
-  type SimulcastRid,
-  type SoraConnection,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { ConnectionPublisher, ConnectionSubscriber, SignalingEvent, SignalingNotifyMessage, SimulcastRid, SoraConnection } from 'sora-js-sdk';
 import { generateJwt, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 // RPC ログを追加する関数
@@ -22,7 +16,7 @@ function addRpcLog(message: string): void {
   if (rpcLogElement) {
     const logEntry = document.createElement("div");
     logEntry.textContent = message;
-    rpcLogElement.appendChild(logEntry);
+    rpcLogElement.append(logEntry);
     // 最新のログが見えるようにスクロール
     rpcLogElement.scrollTop = rpcLogElement.scrollHeight;
   }
@@ -48,7 +42,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { width: { exact: 960 }, height: { exact: 540 } },
+      video: { height: { exact: 540 }, width: { exact: 960 } },
     });
     await sendonlyClient.connect(stream);
 
@@ -89,29 +83,31 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // RPC で rid を変更するラジオボタンのイベントリスナー
-  document.querySelectorAll<HTMLInputElement>('input[name="rid"]').forEach((radio) => {
-    radio.addEventListener("change", async () => {
-      if (!recvonlyClient) {
-        console.error("Recvonly client not initialized");
-        return;
-      }
+  const handleRidChange = async (radio: HTMLInputElement) => {
+    if (!recvonlyClient) {
+      console.error("Recvonly client not initialized");
+      return;
+    }
 
-      const rid = radio.value as SimulcastRid;
-      const timestamp = new Date().toISOString();
-      addRpcLog(`[${timestamp}] Request: rid=${rid}`);
+    const rid = radio.value as SimulcastRid;
+    const timestamp = new Date().toISOString();
+    addRpcLog(`[${timestamp}] Request: rid=${rid}`);
 
-      try {
-        const result = await recvonlyClient.requestSimulcastRid(rid);
-        const responseTimestamp = new Date().toISOString();
-        addRpcLog(`[${responseTimestamp}] Response: ${JSON.stringify(result)}`);
-        console.log("RequestSimulcastRid sent successfully", result);
-      } catch (error) {
-        const errorTimestamp = new Date().toISOString();
-        addRpcLog(`[${errorTimestamp}] Error: ${String(error)}`);
-        console.error("RPC error:", error);
-      }
-    });
-  });
+    try {
+      const result = await recvonlyClient.requestSimulcastRid(rid);
+      const responseTimestamp = new Date().toISOString();
+      addRpcLog(`[${responseTimestamp}] Response: ${JSON.stringify(result)}`);
+      console.log("RequestSimulcastRid sent successfully", result);
+    } catch (error) {
+      const errorTimestamp = new Date().toISOString();
+      addRpcLog(`[${errorTimestamp}] Error: ${String(error)}`);
+      console.error("RPC error:", error);
+    }
+  };
+
+  for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="rid"]')) {
+    radio.addEventListener("change", async () => handleRidChange(radio));
+  }
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     if (!recvonlyClient) {
@@ -120,15 +116,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const statsReport = await recvonlyClient.getStats();
-    const statsDiv = document.querySelector("#stats-report") as HTMLElement;
+    const statsDiv = document.querySelector("#stats-report")!;
     if (statsDiv) {
-      const statsReportJson: Record<string, unknown>[] = [];
+      const statsReportJson: Array<Record<string, unknown>> = [];
       statsDiv.textContent = "";
 
       for (const report of statsReport.values()) {
         const h3 = document.createElement("h3");
         h3.textContent = `Type: ${report.type}`;
-        statsDiv.appendChild(h3);
+        statsDiv.append(h3);
 
         const ul = document.createElement("ul");
         const reportJson: Record<string, unknown> = {
@@ -140,13 +136,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             const li = document.createElement("li");
             const strong = document.createElement("strong");
             strong.textContent = `${key}:`;
-            li.appendChild(strong);
-            li.appendChild(document.createTextNode(` ${String(value)}`));
-            ul.appendChild(li);
+            li.append(strong);
+            li.append(document.createTextNode(` ${String(value)}`));
+            ul.append(li);
             reportJson[key] = value;
           }
         }
-        statsDiv.appendChild(ul);
+        statsDiv.append(ul);
         statsReportJson.push(reportJson);
       }
       statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson);
@@ -170,12 +166,12 @@ class SimulcastSendonlyClient {
     this.metadata = { access_token: accessToken };
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, {
-      connectionTimeout: 15000,
       audio: false,
-      video: true,
-      videoCodecType: "VP8",
-      videoBitRate: 3000,
+      connectionTimeout: 15_000,
       simulcast: true,
+      video: true,
+      videoBitRate: 3000,
+      videoCodecType: "VP8",
     });
 
     this.connection.on("notify", this.onnotify.bind(this));
@@ -226,7 +222,7 @@ class SimulcastRecvonlyClient {
     this.metadata = { access_token: accessToken };
 
     this.connection = this.sora.recvonly(this.channelId, this.metadata, {
-      connectionTimeout: 15000,
+      connectionTimeout: 15_000,
       simulcast: true,
       simulcastRid: "r2",
     });
@@ -261,12 +257,12 @@ class SimulcastRecvonlyClient {
       receiver_connection_id: this.connection.connectionId,
       rid: rid,
     };
-    return await this.connection.rpc(rpcMethod, rpcParams);
+    return  this.connection.rpc(rpcMethod, rpcParams);
   }
 
-  getStats(): Promise<RTCStatsReport> {
+   async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error("PeerConnection is not ready"));
+      throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
   }
@@ -311,7 +307,7 @@ class SimulcastRecvonlyClient {
       remoteVideo.playsInline = true;
       remoteVideo.controls = true;
       remoteVideo.srcObject = stream;
-      remoteVideos.appendChild(remoteVideo);
+      remoteVideos.append(remoteVideo);
 
       // 解像度を表示するための resize イベントリスナー
       remoteVideo.addEventListener("resize", () => {
@@ -329,7 +325,7 @@ class SimulcastRecvonlyClient {
     const target = event.target as MediaStream;
     const remoteVideo = document.querySelector(`#remote-video-${target.id}`);
     if (remoteVideo) {
-      document.querySelector("#remote-videos")?.removeChild(remoteVideo);
+      remoteVideo.remove();
     }
   }
 

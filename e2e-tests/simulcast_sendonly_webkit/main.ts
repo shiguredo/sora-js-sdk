@@ -1,12 +1,7 @@
-import Sora, {
-  type SoraConnection,
-  type ConnectionPublisher,
-  type SignalingNotifyMessage,
-  type VideoCodecType,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { SoraConnection, ConnectionPublisher, SignalingNotifyMessage, VideoCodecType } from 'sora-js-sdk';
 import { getFakeMedia } from "../src/fake";
-import { generateJwt } from "../src/misc";
-import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
+import { generateJwt, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 document.addEventListener("DOMContentLoaded", () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -21,15 +16,15 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#connect")?.addEventListener("click", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
-    const videoCodecTypeElement = document.querySelector("#video-codec-type") as HTMLSelectElement;
+    const videoCodecTypeElement = document.querySelector("#video-codec-type")!;
     const videoCodecType = videoCodecTypeElement.value as VideoCodecType;
-    const rawVideoBitRate = document.querySelector("#video-bit-rate") as HTMLInputElement;
+    const rawVideoBitRate = document.querySelector("#video-bit-rate")!;
     const videoBitRate = Number.parseInt(rawVideoBitRate.value, 10);
 
     let simulcastEncodings: Array<Record<string, unknown>> | undefined;
     const simulcastEncodingsElement = document.querySelector(
       "#simulcast-encodings",
-    ) as HTMLTextAreaElement;
+    )!;
     if (simulcastEncodingsElement.value !== "") {
       console.log(`simulcastEncodingsElement.value=${simulcastEncodingsElement.value}`);
       try {
@@ -50,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const stream = getFakeMedia({
       audio: false,
-      video: { width: 960, height: 540 },
+      video: { height: 540, width: 960 },
     });
     await sendonly.connect(stream);
   });
@@ -61,11 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     const statsReport = await sendonly.getStats();
-    const statsDiv = document.querySelector("#stats-report") as HTMLElement;
+    const statsDiv = document.querySelector("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";
-      const statsReportJson: Record<string, unknown>[] = [];
+      const statsReportJson: Array<Record<string, unknown>> = [];
       for (const report of statsReport.values()) {
         statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
         const reportJson: Record<string, unknown> = {
@@ -118,12 +113,12 @@ class SimulcastSendonlySoraClient {
 
     this.sora = Sora.connection(signalingUrl, this.debug);
     this.connection = this.sora.sendonly(this.channelId, undefined, {
-      connectionTimeout: 15000,
       audio: false,
-      video: true,
-      videoCodecType: this.videoCodecType,
-      videoBitRate: this.videoBitRate,
+      connectionTimeout: 15_000,
       simulcast: true,
+      video: true,
+      videoBitRate: this.videoBitRate,
+      videoCodecType: this.videoCodecType,
     });
 
     this.connection.on("notify", this.onnotify.bind(this));
@@ -153,9 +148,9 @@ class SimulcastSendonlySoraClient {
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+   async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error("PeerConnection is not ready"));
+      throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
   }
@@ -167,7 +162,7 @@ class SimulcastSendonlySoraClient {
     ) {
       const localVideoConnectionId = document.querySelector("#connection-id");
       if (localVideoConnectionId) {
-        localVideoConnectionId.textContent = `${event.connection_id}`;
+        localVideoConnectionId.textContent = event.connection_id;
       }
     }
   }

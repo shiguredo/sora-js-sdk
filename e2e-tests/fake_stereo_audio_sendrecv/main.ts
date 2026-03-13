@@ -1,12 +1,8 @@
 import { getFakeMedia } from "../src/fake";
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora, {
-  type ConnectionPublisher,
-  type SignalingEvent,
-  type SignalingNotifyMessage,
-  type SoraConnection,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { ConnectionPublisher, SignalingEvent, SignalingNotifyMessage, SoraConnection } from 'sora-js-sdk';
 
 // Soraオブジェクトをwindowに公開（テスト用）
 declare global {
@@ -92,13 +88,13 @@ class RealtimeAudioAnalyzer {
     const rightFreqEl = document.querySelector(`#${this.prefix}-right-frequency`);
     const isStereoEl = document.querySelector(`#${this.prefix}-is-stereo`);
 
-    if (channelCountEl) channelCountEl.textContent = this.channelCount.toString();
-    if (leftFreqEl) leftFreqEl.textContent = leftFreq.toFixed(1);
-    if (rightFreqEl) rightFreqEl.textContent = rightFreq.toFixed(1);
-    if (isStereoEl) isStereoEl.textContent = isStereo ? "Yes" : "No";
+    if (channelCountEl) {channelCountEl.textContent = this.channelCount.toString();}
+    if (leftFreqEl) {leftFreqEl.textContent = leftFreq.toFixed(1);}
+    if (rightFreqEl) {rightFreqEl.textContent = rightFreq.toFixed(1);}
+    if (isStereoEl) {isStereoEl.textContent = isStereo ? "Yes" : "No";}
 
     // 次のフレーム
-    this.animationId = requestAnimationFrame(() => this.updateDisplay());
+    this.animationId = requestAnimationFrame(() =>{  this.updateDisplay(); });
   }
 
   start(): void {
@@ -134,15 +130,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
     // 接続1の設定を取得
-    const useStereo1 = (document.querySelector("#use-stereo-1") as HTMLInputElement).checked;
+    const useStereo1 = (document.querySelector("#use-stereo-1")!).checked;
     const forceStereoOutput1 = (
-      document.querySelector("#force-stereo-output-1") as HTMLInputElement
+      document.querySelector("#force-stereo-output-1")!
     ).checked;
 
     // 接続2の設定を取得
-    const useStereo2 = (document.querySelector("#use-stereo-2") as HTMLInputElement).checked;
+    const useStereo2 = (document.querySelector("#use-stereo-2")!).checked;
     const forceStereoOutput2 = (
-      document.querySelector("#force-stereo-output-2") as HTMLInputElement
+      document.querySelector("#force-stereo-output-2")!
     ).checked;
 
     // 接続1を作成
@@ -155,8 +151,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const stream1 = getFakeMedia({
       audio: {
         frequency: 440,
-        volume: 0.1,
         stereo: useStereo1,
+        volume: 0.1,
       },
     });
 
@@ -192,8 +188,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const stream2 = getFakeMedia({
       audio: {
         frequency: 880,
-        volume: 0.1,
         stereo: useStereo2,
+        volume: 0.1,
       },
     });
 
@@ -251,10 +247,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 接続1の統計情報を取得
     const statsReport1 = await soraClient1.getStats();
-    const statsDiv1 = document.querySelector("#stats-report-1") as HTMLElement;
+    const statsDiv1 = document.querySelector("#stats-report-1")!;
     if (statsDiv1) {
       let statsHtml = "<h3>接続1の統計情報</h3>";
-      const statsReportJson1: Record<string, unknown>[] = [];
+      const statsReportJson1: Array<Record<string, unknown>> = [];
       for (const report of statsReport1.values()) {
         statsHtml += `<h4>Type: ${report.type}</h4><ul>`;
         const reportJson: Record<string, unknown> = {
@@ -276,10 +272,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 接続2の統計情報を取得
     const statsReport2 = await soraClient2.getStats();
-    const statsDiv2 = document.querySelector("#stats-report-2") as HTMLElement;
+    const statsDiv2 = document.querySelector("#stats-report-2")!;
     if (statsDiv2) {
       let statsHtml = "<h3>接続2の統計情報</h3>";
-      const statsReportJson2: Record<string, unknown>[] = [];
+      const statsReportJson2: Array<Record<string, unknown>> = [];
       for (const report of statsReport2.values()) {
         statsHtml += `<h4>Type: ${report.type}</h4><ul>`;
         const reportJson: Record<string, unknown> = {
@@ -300,63 +296,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // テスト用の音声解析データを保存
-    const analysisDiv = document.querySelector("#audio-analysis") as HTMLElement;
+    const analysisDiv = document.querySelector("#audio-analysis")!;
     if (analysisDiv) {
       analysisDiv.dataset.analysis = JSON.stringify({
         connection1: {
           local: {
             channelCount: Number.parseInt(
-              document.querySelector("#conn1-local-channel-count")?.textContent || "0",
+              document.querySelector("#conn1-local-channel-count")?.textContent ?? "0",
               10,
             ),
+            isStereo: document.querySelector("#conn1-local-is-stereo")?.textContent === "Yes",
             leftFrequency: Number.parseFloat(
-              document.querySelector("#conn1-local-left-frequency")?.textContent || "0",
+              document.querySelector("#conn1-local-left-frequency")?.textContent ?? "0",
             ),
             rightFrequency: Number.parseFloat(
-              document.querySelector("#conn1-local-right-frequency")?.textContent || "0",
+              document.querySelector("#conn1-local-right-frequency")?.textContent ?? "0",
             ),
-            isStereo: document.querySelector("#conn1-local-is-stereo")?.textContent === "Yes",
           },
           remote: {
             channelCount: Number.parseInt(
-              document.querySelector("#conn1-remote-channel-count")?.textContent || "0",
+              document.querySelector("#conn1-remote-channel-count")?.textContent ?? "0",
               10,
             ),
+            isStereo: document.querySelector("#conn1-remote-is-stereo")?.textContent === "Yes",
             leftFrequency: Number.parseFloat(
-              document.querySelector("#conn1-remote-left-frequency")?.textContent || "0",
+              document.querySelector("#conn1-remote-left-frequency")?.textContent ?? "0",
             ),
             rightFrequency: Number.parseFloat(
-              document.querySelector("#conn1-remote-right-frequency")?.textContent || "0",
+              document.querySelector("#conn1-remote-right-frequency")?.textContent ?? "0",
             ),
-            isStereo: document.querySelector("#conn1-remote-is-stereo")?.textContent === "Yes",
           },
         },
         connection2: {
           local: {
             channelCount: Number.parseInt(
-              document.querySelector("#conn2-local-channel-count")?.textContent || "0",
+              document.querySelector("#conn2-local-channel-count")?.textContent ?? "0",
               10,
             ),
+            isStereo: document.querySelector("#conn2-local-is-stereo")?.textContent === "Yes",
             leftFrequency: Number.parseFloat(
-              document.querySelector("#conn2-local-left-frequency")?.textContent || "0",
+              document.querySelector("#conn2-local-left-frequency")?.textContent ?? "0",
             ),
             rightFrequency: Number.parseFloat(
-              document.querySelector("#conn2-local-right-frequency")?.textContent || "0",
+              document.querySelector("#conn2-local-right-frequency")?.textContent ?? "0",
             ),
-            isStereo: document.querySelector("#conn2-local-is-stereo")?.textContent === "Yes",
           },
           remote: {
             channelCount: Number.parseInt(
-              document.querySelector("#conn2-remote-channel-count")?.textContent || "0",
+              document.querySelector("#conn2-remote-channel-count")?.textContent ?? "0",
               10,
             ),
+            isStereo: document.querySelector("#conn2-remote-is-stereo")?.textContent === "Yes",
             leftFrequency: Number.parseFloat(
-              document.querySelector("#conn2-remote-left-frequency")?.textContent || "0",
+              document.querySelector("#conn2-remote-left-frequency")?.textContent ?? "0",
             ),
             rightFrequency: Number.parseFloat(
-              document.querySelector("#conn2-remote-right-frequency")?.textContent || "0",
+              document.querySelector("#conn2-remote-right-frequency")?.textContent ?? "0",
             ),
-            isStereo: document.querySelector("#conn2-remote-is-stereo")?.textContent === "Yes",
           },
         },
       });
@@ -368,7 +364,7 @@ class SoraSendRecvClient {
   private debug = false;
   private channelId: string;
   private metadata: { access_token: string };
-  private options: object = { connectionTimeout: 15000 };
+  private options: object = { connectionTimeout: 15_000 };
 
   private sora: SoraConnection;
   private connection: ConnectionPublisher;
@@ -442,9 +438,9 @@ class SoraSendRecvClient {
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+   async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error("PeerConnection is not ready"));
+      throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
   }

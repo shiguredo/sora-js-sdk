@@ -49,9 +49,9 @@ test("simulcast sendonly/recvonly pages", async ({ browser }) => {
   await recvonly.waitForSelector("#stats-report");
 
   // sendonly 統計情報
-  const sendonlyStatsReportJson: Record<string, unknown>[] = await sendonly.evaluate(() => {
+  const sendonlyStatsReportJson: Array<Record<string, unknown>> = await sendonly.evaluate(() => {
     const statsReportDiv = document.querySelector<HTMLDivElement>("#stats-report");
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const sendonlyVideoCodecStats = sendonlyStatsReportJson.find(
@@ -84,9 +84,9 @@ test("simulcast sendonly/recvonly pages", async ({ browser }) => {
   expect(sendonlyVideoR2OutboundRtpStats?.scalabilityMode).toEqual("L1T1");
 
   // recvonly の統計情報を取得
-  const recvonlyStatsReportJson: Record<string, unknown>[] = await recvonly.evaluate(() => {
+  const recvonlyStatsReportJson: Array<Record<string, unknown>> = await recvonly.evaluate(() => {
     const statsReportDiv = document.querySelector<HTMLDivElement>("#stats-report");
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const recvonlyVideoInboundRtpStats = recvonlyStatsReportJson.find(

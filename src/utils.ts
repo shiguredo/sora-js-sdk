@@ -18,19 +18,19 @@ import type {
 
 function browser(): Browser {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
-  if (ua.indexOf("edge") !== -1) {
+  if (ua.includes("edge")) {
     return "edge";
   }
-  if (ua.indexOf("chrome") !== -1 && ua.indexOf("edge") === -1) {
+  if (ua.includes("chrome") && !ua.includes("edge")) {
     return "chrome";
   }
-  if (ua.indexOf("safari") !== -1 && ua.indexOf("chrome") === -1) {
+  if (ua.includes("safari") && !ua.includes("chrome")) {
     return "safari";
   }
-  if (ua.indexOf("opera") !== -1) {
+  if (ua.includes("opera")) {
     return "opera";
   }
-  if (ua.indexOf("firefox") !== -1) {
+  if (ua.includes("firefox")) {
     return "firefox";
   }
   return null;
@@ -53,9 +53,9 @@ function enabledSimulcast(): boolean {
   if (!capabilities) {
     return false;
   }
-  const headerExtensions = capabilities.headerExtensions.map((h) => h.uri);
+  const headerExtensions = new Set(capabilities.headerExtensions.map((h) => h.uri));
   const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTENSIONS.every((h) =>
-    headerExtensions.includes(h),
+    headerExtensions.has(h),
   );
   return hasAllRequiredHeaderExtensions;
 }
@@ -135,29 +135,29 @@ export function createSignalingMessage(
     throw new Error("channelId can not be null or undefined");
   }
   const message: SignalingConnectMessage = {
-    type: "connect",
-    sora_client: `Sora JavaScript SDK ${__SORA_JS_SDK_VERSION__}`,
+    audio: true,
+    channel_id: channelId,
     environment: window.navigator.userAgent,
     role: role,
-    channel_id: channelId,
     sdp: offerSDP,
-    audio: true,
+    sora_client: `Sora JavaScript SDK ${__SORA_JS_SDK_VERSION__}`,
+    type: "connect",
     video: true,
   };
-  if (redirect === true) {
+  if (redirect) {
     message.redirect = true;
   }
   if (typeof options.simulcast === "boolean") {
     message.simulcast = options.simulcast;
   }
   const simulcastRids = ["r0", "r1", "r2"];
-  if (options.simulcastRid !== undefined && 0 <= simulcastRids.indexOf(options.simulcastRid)) {
+  if (options.simulcastRid !== undefined && simulcastRids.includes(options.simulcastRid)) {
     message.simulcast_rid = options.simulcastRid;
   }
   const simulcastRequestRids = ["none", "r0", "r1", "r2"];
   if (
     options.simulcastRequestRid !== undefined &&
-    0 <= simulcastRequestRids.indexOf(options.simulcastRequestRid)
+    simulcastRequestRids.includes(options.simulcastRequestRid) 
   ) {
     message.simulcast_request_rid = options.simulcastRequestRid;
   }
@@ -171,13 +171,13 @@ export function createSignalingMessage(
   const spotlightFocusRids = ["none", "r0", "r1", "r2"];
   if (
     options.spotlightFocusRid !== undefined &&
-    0 <= spotlightFocusRids.indexOf(options.spotlightFocusRid)
+    spotlightFocusRids.includes(options.spotlightFocusRid) 
   ) {
     message.spotlight_focus_rid = options.spotlightFocusRid;
   }
   if (
     options.spotlightUnfocusRid !== undefined &&
-    0 <= spotlightFocusRids.indexOf(options.spotlightUnfocusRid)
+    spotlightFocusRids.includes(options.spotlightUnfocusRid) 
   ) {
     message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
   }
@@ -227,32 +227,30 @@ export function createSignalingMessage(
     "videoH265Params",
     "videoAV1Params",
   ];
-  const copyOptions = Object.assign({}, options);
-  (Object.keys(copyOptions) as (keyof ConnectionOptions)[]).forEach((key) => {
+  const copyOptions = { ...options};
+  for (const key of Object.keys(copyOptions) as Array<keyof ConnectionOptions>) {
     if (key === "audio" && typeof copyOptions[key] === "boolean") {
-      return;
+      continue;
     }
     if (key === "video" && typeof copyOptions[key] === "boolean") {
-      return;
+      continue;
     }
-    if (0 <= audioPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
-      return;
+    if (audioPropertyKeys.includes(key) && copyOptions[key] !== null) {
+      continue;
     }
-    if (0 <= audioOpusParamsPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
-      return;
+    if (audioOpusParamsPropertyKeys.includes(key) && copyOptions[key] !== null) {
+      continue;
     }
-    if (0 <= videoPropertyKeys.indexOf(key) && copyOptions[key] !== null) {
-      return;
+    if (videoPropertyKeys.includes(key) && copyOptions[key] !== null) {
+      continue;
     }
     delete copyOptions[key];
-  });
+  }
 
   if (copyOptions.audio !== undefined) {
     message.audio = copyOptions.audio;
   }
-  const hasAudioProperty = Object.keys(copyOptions).some((key) => {
-    return 0 <= audioPropertyKeys.indexOf(key);
-  });
+  const hasAudioProperty = Object.keys(copyOptions).some((key) => audioPropertyKeys.includes(key));
   if (message.audio && hasAudioProperty) {
     message.audio = {};
     if ("audioCodecType" in copyOptions) {
@@ -262,9 +260,7 @@ export function createSignalingMessage(
       message.audio.bit_rate = copyOptions.audioBitRate;
     }
   }
-  const hasAudioOpusParamsProperty = Object.keys(copyOptions).some((key) => {
-    return 0 <= audioOpusParamsPropertyKeys.indexOf(key);
-  });
+  const hasAudioOpusParamsProperty = Object.keys(copyOptions).some((key) => audioOpusParamsPropertyKeys.includes(key));
   if (message.audio && hasAudioOpusParamsProperty) {
     if (typeof message.audio !== "object") {
       message.audio = {};
@@ -299,9 +295,7 @@ export function createSignalingMessage(
   if (copyOptions.video !== undefined) {
     message.video = copyOptions.video;
   }
-  const hasVideoProperty = Object.keys(copyOptions).some((key) => {
-    return 0 <= videoPropertyKeys.indexOf(key);
-  });
+  const hasVideoProperty = Object.keys(copyOptions).some((key) => videoPropertyKeys.includes(key));
   if (message.video && hasVideoProperty) {
     message.video = {};
     if ("videoCodecType" in copyOptions) {
@@ -328,7 +322,7 @@ export function createSignalingMessage(
     throw new Error("Simulcast can not be used with this browser");
   }
 
-  if (Array.isArray(options.dataChannels) && 0 < options.dataChannels.length) {
+  if (Array.isArray(options.dataChannels) && options.dataChannels.length > 0) {
     message.data_channels = parseDataChannelConfigurations(options.dataChannels);
   }
 
@@ -367,24 +361,29 @@ export function getSignalingNotifyData(
 }
 
 export function trace(clientId: string | null, title: string, value: unknown): void {
-  const dump = (record: unknown) => {
+  const dump = (record: unknown): void => {
     if (record && typeof record === "object") {
       let keys = null;
       try {
-        keys = Object.keys(JSON.parse(JSON.stringify(record)));
+        keys = Object.keys(structuredClone(record) as Record<string, unknown>);
       } catch {
         // 何もしない
       }
       if (keys && Array.isArray(keys)) {
-        keys.forEach((key) => {
+        for (const key of keys) {
+          // SDK のトレースログ出力のため console を使用する
+          // eslint-disable-next-line no-console
           console.group(key);
           dump((record as Record<string, unknown>)[key]);
+          // eslint-disable-next-line no-console
           console.groupEnd();
-        });
+        }
       } else {
+        // eslint-disable-next-line no-console
         console.info(record);
       }
     } else {
+      // eslint-disable-next-line no-console
       console.info(record);
     }
   };
@@ -396,11 +395,16 @@ export function trace(clientId: string | null, title: string, value: unknown): v
     prefix = `${prefix}[${clientId}]`;
   }
 
+  // SDK のトレースログ出力のため console を使用する
+  // eslint-disable-next-line no-console
   if (console.info !== undefined && console.group !== undefined) {
+    // eslint-disable-next-line no-console
     console.group(`${prefix} ${title}`);
     dump(value);
+    // eslint-disable-next-line no-console
     console.groupEnd();
   } else {
+    // eslint-disable-next-line no-console
     console.log("%s %s\n", prefix, title, value);
   }
 }
@@ -418,7 +422,7 @@ export function createSignalingEvent(
   const event = new Event(eventType) as SignalingEvent;
   // data をコピーする
   try {
-    event.data = JSON.parse(JSON.stringify(data)) as unknown;
+    event.data = structuredClone(data);
   } catch {
     event.data = data;
   }
@@ -454,7 +458,7 @@ export function createTimelineEvent(
   const event = new Event(eventType) as TimelineEvent;
   // data をコピーする
   try {
-    event.data = JSON.parse(JSON.stringify(data)) as unknown;
+    event.data = structuredClone(data);
   } catch {
     event.data = data;
   }
@@ -494,13 +498,13 @@ export async function parseDataChannelEventData(
 export const compressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
   const readableStream = new Blob([new Uint8Array(binaryMessage)]).stream();
   const compressedStream = readableStream.pipeThrough(new CompressionStream("deflate"));
-  return await new Response(compressedStream).arrayBuffer();
+  return  new Response(compressedStream).arrayBuffer();
 };
 
 export const decompressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
   const readableStream = new Blob([new Uint8Array(binaryMessage)]).stream();
   const decompressedStream = readableStream.pipeThrough(new DecompressionStream("deflate"));
-  return await new Response(decompressedStream).arrayBuffer();
+  return  new Response(decompressedStream).arrayBuffer();
 };
 
 export function addStereoToFmtp(sdp: string): string {
@@ -523,9 +527,7 @@ export function addStereoToFmtp(sdp: string): string {
     }
   }
 
-  const mediaDescriptions = mediaDescriptionsList.map((mediaDescription) => {
-    return mediaDescription.join("\n");
-  });
+  const mediaDescriptions = mediaDescriptionsList.map((mediaDescription) => mediaDescription.join("\n"));
 
   const newMediaDescriptions = mediaDescriptions.map((mediaDescription) => {
     if (!isAudio(mediaDescription)) {
@@ -559,11 +561,11 @@ function isAudio(mediaDescription: string): boolean {
 }
 
 function isSetupActive(mediaDescription: string): boolean {
-  return /a=setup:active/.test(mediaDescription);
+  return mediaDescription.includes('a=setup:active');
 }
 
 function isRecvOnly(mediaDescription: string): boolean {
-  return /a=recvonly/.test(mediaDescription);
+  return mediaDescription.includes('a=recvonly');
 }
 
 function isOpus(mediaDescription: string): boolean {

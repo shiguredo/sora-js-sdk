@@ -1,10 +1,7 @@
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora, {
-  type SignalingNotifyMessage,
-  type ConnectionPublisher,
-  type SoraConnection,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { SignalingNotifyMessage, ConnectionPublisher, SoraConnection } from 'sora-js-sdk';
 
 document.addEventListener("DOMContentLoaded", async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -22,8 +19,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     client = new SoraClient(signalingUrl, channelId, secretKey);
 
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
       audio: true,
+      video: true,
     });
     await client.connect(stream);
   });
@@ -51,7 +48,7 @@ class SoraClient {
     this.metadata = { access_token: secretKey };
 
     this.options = {
-      connectionTimeout: 15000,
+      connectionTimeout: 15_000,
       simulcast: true,
       spotlight: true,
     };

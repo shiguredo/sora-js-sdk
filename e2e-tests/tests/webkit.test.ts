@@ -26,8 +26,8 @@ test("WebKit", async ({ browser }) => {
 
   // sendrecv1 のビデオコーデックをランダムに選択
   await sendrecv1.evaluate(() => {
-    const videoCodecTypeSelect = document.getElementById("video-codec-type") as HTMLSelectElement;
-    const options = Array.from(videoCodecTypeSelect.options).filter(
+    const videoCodecTypeSelect = document.querySelector("#video-codec-type")!;
+    const options = [...videoCodecTypeSelect.options].filter(
       (option) => option.value !== "",
     );
     const randomIndex = Math.floor(Math.random() * options.length);
@@ -36,8 +36,8 @@ test("WebKit", async ({ browser }) => {
 
   // sendrecv2 のビデオコーデックをランダムに選択
   await sendrecv2.evaluate(() => {
-    const videoCodecTypeSelect = document.getElementById("video-codec-type") as HTMLSelectElement;
-    const options = Array.from(videoCodecTypeSelect.options).filter(
+    const videoCodecTypeSelect = document.querySelector("#video-codec-type")!;
+    const options = [...videoCodecTypeSelect.options].filter(
       (option) => option.value !== "",
     );
     const randomIndex = Math.floor(Math.random() * options.length);
@@ -88,9 +88,9 @@ test("WebKit", async ({ browser }) => {
   await sendrecv2.waitForSelector("#stats-report");
 
   // データセットから統計情報を取得
-  const sendrecv1StatsReportJson: Record<string, unknown>[] = await sendrecv1.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const sendrecv1StatsReportJson: Array<Record<string, unknown>> = await sendrecv1.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const sendrecv1AudioCodecStats = sendrecv1StatsReportJson.find(
@@ -132,9 +132,9 @@ test("WebKit", async ({ browser }) => {
   expect(sendrecv1VideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0);
 
   // データセットから統計情報を取得
-  const sendrecv2StatsReportJson: Record<string, unknown>[] = await sendrecv2.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const sendrecv2StatsReportJson: Array<Record<string, unknown>> = await sendrecv2.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const sendrecv2AudioCodecStats = sendrecv2StatsReportJson.find(
@@ -201,18 +201,18 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
     "#simulcast-encodings",
     JSON.stringify([
       {
-        rid: "r0",
         active: true,
-        scaleResolutionDownTo: { width: 960, height: 540 },
+        rid: "r0",
         scalabilityMode: "L1T1",
+        scaleResolutionDownTo: { width: 960, height: 540 },
       },
       {
-        rid: "r1",
         active: true,
-        scaleResolutionDownTo: { width: 960, height: 540 },
+        rid: "r1",
         scalabilityMode: "L1T1",
+        scaleResolutionDownTo: { width: 960, height: 540 },
       },
-      { rid: "r2", active: false },
+      { active: false, rid: "r2" },
     ]),
   );
 
@@ -229,9 +229,9 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
   await page.click("#disconnect");
 
   // simulcast sendonly 統計情報
-  const sendonlyStatsReportJson: Record<string, unknown>[] = await page.evaluate(() => {
+  const sendonlyStatsReportJson: Array<Record<string, unknown>> = await page.evaluate(() => {
     const statsReportDiv = document.querySelector<HTMLDivElement>("#stats-report");
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const sendonlyVideoCodecStats = sendonlyStatsReportJson.find(

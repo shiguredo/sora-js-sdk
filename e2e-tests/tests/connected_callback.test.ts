@@ -9,13 +9,13 @@ test("connected コールバックが呼び出されることを確認する", a
 
   // バージョンチェック (connected コールバックは 2025.2.0 で追加)
   const versionCheck = await checkSoraVersion(page, {
+    featureName: "connected callback",
     majorVersion: 2025,
     minorVersion: 2,
-    featureName: "connected callback",
   });
 
   if (!versionCheck.isSupported) {
-    test.skip(true, versionCheck.skipReason || "Version not supported");
+    test.skip(true, versionCheck.skipReason ?? "Version not supported");
     await page.close();
     return;
   }

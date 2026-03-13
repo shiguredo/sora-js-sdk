@@ -9,13 +9,13 @@ test("switched コールバックが呼び出されることを確認する", as
 
   // バージョンチェック (switched コールバックは 2025.2.0 で追加)
   const versionCheck = await checkSoraVersion(page, {
+    featureName: "switched callback",
     majorVersion: 2025,
     minorVersion: 2,
-    featureName: "switched callback",
   });
 
   if (!versionCheck.isSupported) {
-    test.skip(true, versionCheck.skipReason || "Version not supported");
+    test.skip(true, versionCheck.skipReason ?? "Version not supported");
     await page.close();
     return;
   }

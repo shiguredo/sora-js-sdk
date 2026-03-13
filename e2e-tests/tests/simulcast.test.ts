@@ -44,9 +44,9 @@ test("simulcast sendonly/recvonly pages", async ({ page }) => {
   // 統計情報が表示されるまで待機
   await page.waitForSelector("#stats-report");
   // データセットから統計情報を取得
-  const sendonlyStatsReportJson: Record<string, unknown>[] = await page.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const sendonlyStatsReportJson: Array<Record<string, unknown>> = await page.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   // sendonly stats report

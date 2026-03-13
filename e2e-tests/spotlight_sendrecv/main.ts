@@ -1,10 +1,7 @@
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora, {
-  type SoraConnection,
-  type ConnectionPublisher,
-  type SignalingNotifyMessage,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { SoraConnection, ConnectionPublisher, SignalingNotifyMessage } from 'sora-js-sdk';
 
 document.addEventListener("DOMContentLoaded", async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -54,12 +51,12 @@ class SoraClient {
     this.metadata = { access_token: secretKey };
 
     this.options = {
-      connectionTimeout: 15000,
       audio: true,
-      video: true,
+      connectionTimeout: 15_000,
       simulcast: true,
       spotlight: true,
       spotlightNumber: 1,
+      video: true,
     };
 
     this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options);
@@ -118,7 +115,7 @@ class SoraClient {
       remoteVideo.width = 160;
       remoteVideo.height = 120;
       remoteVideo.srcObject = stream;
-      remoteVideos.appendChild(remoteVideo);
+      remoteVideos.append(remoteVideo);
     }
   }
 
@@ -126,7 +123,7 @@ class SoraClient {
     const target = event.target as MediaStream;
     const remoteVideo = document.querySelector(`#remote-video-${target.id}`);
     if (remoteVideo) {
-      document.querySelector<HTMLDivElement>("#remote-videos")?.removeChild(remoteVideo);
+      remoteVideo.remove();
     }
   }
 }

@@ -1,10 +1,5 @@
-import Sora, {
-  type ConnectionPublisher,
-  type SignalingNotifyMessage,
-  type SignalingEvent,
-  type SoraConnection,
-  type VideoCodecType,
-} from "sora-js-sdk";
+import Sora from 'sora-js-sdk';
+import type { ConnectionPublisher, SignalingNotifyMessage, SignalingEvent, SoraConnection, VideoCodecType } from 'sora-js-sdk';
 import { generateJwt, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -20,15 +15,15 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#connect")?.addEventListener("click", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
-    const videoCodecTypeElement = document.querySelector("#video-codec-type") as HTMLSelectElement;
+    const videoCodecTypeElement = document.querySelector("#video-codec-type")!;
     const videoCodecType = videoCodecTypeElement.value as VideoCodecType;
-    const rawVideoBitRate = document.querySelector("#video-bit-rate") as HTMLInputElement;
+    const rawVideoBitRate = document.querySelector("#video-bit-rate")!;
     const videoBitRate = Number.parseInt(rawVideoBitRate.value, 10);
 
     let simulcastEncodings: Record<string, unknown> | undefined;
     const simulcastEncodingsElement = document.querySelector(
       "#simulcast-encodings",
-    ) as HTMLTextAreaElement;
+    )!;
     if (simulcastEncodingsElement.value !== "") {
       console.log(`simulcastEncodingsElement.value=${simulcastEncodingsElement.value}`);
       try {
@@ -49,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { width: { exact: 960 }, height: { exact: 540 } },
+      video: { height: { exact: 540 }, width: { exact: 960 } },
     });
     await sendonly.connect(stream);
   });
@@ -60,11 +55,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     const statsReport = await sendonly.getStats();
-    const statsDiv = document.querySelector("#stats-report") as HTMLElement;
+    const statsDiv = document.querySelector("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";
-      const statsReportJson: Record<string, unknown>[] = [];
+      const statsReportJson: Array<Record<string, unknown>> = [];
       for (const report of statsReport.values()) {
         statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
         const reportJson: Record<string, unknown> = {
@@ -117,12 +112,12 @@ class SimulcastSendonlySoraClient {
 
     this.sora = Sora.connection(signalingUrl, this.debug);
     this.connection = this.sora.sendonly(this.channelId, undefined, {
-      connectionTimeout: 15000,
       audio: false,
-      video: true,
-      videoCodecType: this.videoCodecType,
-      videoBitRate: this.videoBitRate,
+      connectionTimeout: 15_000,
       simulcast: true,
+      video: true,
+      videoBitRate: this.videoBitRate,
+      videoCodecType: this.videoCodecType,
     });
 
     this.connection.on("notify", this.onnotify.bind(this));
@@ -162,9 +157,9 @@ class SimulcastSendonlySoraClient {
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+   async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error("PeerConnection is not ready"));
+      throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
   }
@@ -176,7 +171,7 @@ class SimulcastSendonlySoraClient {
     ) {
       const localVideoConnectionId = document.querySelector("#connection-id");
       if (localVideoConnectionId) {
-        localVideoConnectionId.textContent = `${event.connection_id}`;
+        localVideoConnectionId.textContent = event.connection_id;
         console.log("[simulcast_sendonly] SignalingNotify self-connectionId", event.connection_id);
       }
     }
@@ -193,7 +188,7 @@ class SimulcastSendonlySoraClient {
       logEntry.dataset.signalingType = event.type;
       logEntry.dataset.signalingTransportType = event.transportType;
       logEntry.dataset.signalingTimestamp = timestamp;
-      signalingLogElement.appendChild(logEntry);
+      signalingLogElement.append(logEntry);
     }
   }
 
@@ -208,13 +203,10 @@ class SimulcastSendonlySoraClient {
           signalingState: this.connection.pc.signalingState,
         };
         pcStateElement.textContent = JSON.stringify(stateInfo, null, 2);
-        pcStateElement.setAttribute("data-connection-state", stateInfo.connectionState || "");
-        pcStateElement.setAttribute(
-          "data-ice-connection-state",
-          stateInfo.iceConnectionState || "",
-        );
-        pcStateElement.setAttribute("data-ice-gathering-state", stateInfo.iceGatheringState || "");
-        pcStateElement.setAttribute("data-signaling-state", stateInfo.signalingState || "");
+        pcStateElement.dataset.connectionState = stateInfo.connectionState || "";
+        pcStateElement.dataset.iceConnectionState = stateInfo.iceConnectionState || "";
+        pcStateElement.dataset.iceGatheringState = stateInfo.iceGatheringState || "";
+        pcStateElement.dataset.signalingState = stateInfo.signalingState || "";
       }
     }
   }

@@ -17,13 +17,13 @@ test.describe("RPC RequestSimulcastRid test", () => {
 
     // バージョンチェック
     const versionCheck = await checkSoraVersion(page, {
+      featureName: "RPC",
       majorVersion: 2025,
       minorVersion: 2,
-      featureName: "RPC",
     });
 
     if (!versionCheck.isSupported) {
-      test.skip(true, versionCheck.skipReason || "Version not supported");
+      test.skip(true, versionCheck.skipReason ?? "Version not supported");
       return;
     }
 
@@ -37,16 +37,16 @@ test.describe("RPC RequestSimulcastRid test", () => {
 
     // sendonly の connection-id が表示されるまで待機
     await page.waitForSelector("#sendonly-connection-id:not(:empty)", {
-      timeout: 30000,
+      timeout: 30_000,
     });
 
     // recvonly の connection-id が表示されるまで待機
     await page.waitForSelector("#recvonly-connection-id:not(:empty)", {
-      timeout: 30000,
+      timeout: 30_000,
     });
 
     // rpcMethods が表示されるまで待機
-    await page.waitForSelector("#rpc-methods:not(:empty)", { timeout: 15000 });
+    await page.waitForSelector("#rpc-methods:not(:empty)", { timeout: 15_000 });
 
     // rpcMethods に 2025.2.0/RequestSimulcastRid が含まれていることを確認
     const rpcMethods = await page.evaluate(() => {
@@ -56,11 +56,11 @@ test.describe("RPC RequestSimulcastRid test", () => {
     expect(rpcMethods).toContain("2025.2.0/RequestSimulcastRid");
 
     // リモートビデオが表示されるまで待機
-    await page.waitForSelector("#remote-videos video", { timeout: 15000 });
+    await page.waitForSelector("#remote-videos video", { timeout: 15_000 });
 
     // type: switched メッセージを受け取るまで待機
     await page.waitForSelector('#switched[data-switched="true"]', {
-      timeout: 15000,
+      timeout: 15_000,
     });
 
     // 安定するまで待機
@@ -70,8 +70,8 @@ test.describe("RPC RequestSimulcastRid test", () => {
     const initialResolution = await page.evaluate(() => {
       const element = document.querySelector<HTMLElement>("#video-resolution");
       return {
-        width: Number(element?.dataset.width || 0),
-        height: Number(element?.dataset.height || 0),
+        height: Number(element?.dataset.height ?? 0),
+        width: Number(element?.dataset.width ?? 0),
       };
     });
     console.log(`Initial resolution (r2): ${initialResolution.width}x${initialResolution.height}`);
@@ -85,7 +85,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
         const element = document.querySelector<HTMLElement>("#rpc-log");
         return element?.textContent?.includes("Request: rid=r0");
       },
-      { timeout: 15000 },
+      { timeout: 15_000 },
     );
 
     // simulcast.switched で current_rid が r0 に変わるまで待機
@@ -94,7 +94,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
         const element = document.querySelector<HTMLElement>("#current-rid");
         return element?.dataset.currentRid === "r0";
       },
-      { timeout: 15000 },
+      { timeout: 15_000 },
     );
 
     // 解像度が変わるまで待機
@@ -104,8 +104,8 @@ test.describe("RPC RequestSimulcastRid test", () => {
     const r0Resolution = await page.evaluate(() => {
       const element = document.querySelector<HTMLElement>("#video-resolution");
       return {
-        width: Number(element?.dataset.width || 0),
-        height: Number(element?.dataset.height || 0),
+        height: Number(element?.dataset.height ?? 0),
+        width: Number(element?.dataset.width ?? 0),
       };
     });
     console.log(`r0 resolution: ${r0Resolution.width}x${r0Resolution.height}`);
@@ -123,7 +123,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
         const element = document.querySelector<HTMLElement>("#current-rid");
         return element?.dataset.currentRid === "r2";
       },
-      { timeout: 15000 },
+      { timeout: 15_000 },
     );
 
     // 解像度が戻るまで待機
@@ -133,8 +133,8 @@ test.describe("RPC RequestSimulcastRid test", () => {
     const r2Resolution = await page.evaluate(() => {
       const element = document.querySelector<HTMLElement>("#video-resolution");
       return {
-        width: Number(element?.dataset.width || 0),
-        height: Number(element?.dataset.height || 0),
+        height: Number(element?.dataset.height ?? 0),
+        width: Number(element?.dataset.width ?? 0),
       };
     });
     console.log(`r2 resolution: ${r2Resolution.width}x${r2Resolution.height}`);
@@ -146,7 +146,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
     // RPC ログに Request と Response が記録されていることを確認
     const rpcLogContent = await page.evaluate(() => {
       const element = document.querySelector<HTMLElement>("#rpc-log");
-      return element?.textContent || "";
+      return element?.textContent ?? "";
     });
     expect(rpcLogContent).toContain("Request: rid=r0");
     expect(rpcLogContent).toContain("Request: rid=r2");

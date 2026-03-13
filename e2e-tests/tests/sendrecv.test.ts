@@ -21,8 +21,8 @@ test("sendrecv x2", async ({ browser }) => {
 
   // sendrecv1 のビデオコーデックをランダムに選択
   await sendrecv1.evaluate(() => {
-    const videoCodecTypeSelect = document.getElementById("video-codec-type") as HTMLSelectElement;
-    const options = Array.from(videoCodecTypeSelect.options).filter(
+    const videoCodecTypeSelect = document.querySelector("#video-codec-type")!;
+    const options = [...videoCodecTypeSelect.options].filter(
       (option) => option.value !== "",
     );
     const randomIndex = Math.floor(Math.random() * options.length);
@@ -31,8 +31,8 @@ test("sendrecv x2", async ({ browser }) => {
 
   // sendrecv2 のビデオコーデックをランダムに選択
   await sendrecv2.evaluate(() => {
-    const videoCodecTypeSelect = document.getElementById("video-codec-type") as HTMLSelectElement;
-    const options = Array.from(videoCodecTypeSelect.options).filter(
+    const videoCodecTypeSelect = document.querySelector("#video-codec-type")!;
+    const options = [...videoCodecTypeSelect.options].filter(
       (option) => option.value !== "",
     );
     const randomIndex = Math.floor(Math.random() * options.length);
@@ -83,9 +83,9 @@ test("sendrecv x2", async ({ browser }) => {
   await sendrecv2.waitForSelector("#stats-report");
 
   // データセットから統計情報を取得
-  const sendrecv1StatsReportJson: Record<string, unknown>[] = await sendrecv1.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const sendrecv1StatsReportJson: Array<Record<string, unknown>> = await sendrecv1.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const sendrecv1AudioCodecStats = sendrecv1StatsReportJson.find(
@@ -127,9 +127,9 @@ test("sendrecv x2", async ({ browser }) => {
   expect(sendrecv1VideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0);
 
   // データセットから統計情報を取得
-  const sendrecv2StatsReportJson: Record<string, unknown>[] = await sendrecv2.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report") as HTMLDivElement;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson || "[]") : [];
+  const sendrecv2StatsReportJson: Array<Record<string, unknown>> = await sendrecv2.evaluate(() => {
+    const statsReportDiv = document.querySelector("#stats-report")!;
+    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
   const sendrecv2AudioCodecStats = sendrecv2StatsReportJson.find(

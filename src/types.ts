@@ -5,9 +5,9 @@ import type {
   SIGNALING_MESSAGE_TYPE_OFFER,
   SIGNALING_MESSAGE_TYPE_PING,
   SIGNALING_MESSAGE_TYPE_PUSH,
-  SIGNALING_MESSAGE_TYPE_RE_OFFER,
   SIGNALING_MESSAGE_TYPE_REDIRECT,
   SIGNALING_MESSAGE_TYPE_REQ_STATS,
+  SIGNALING_MESSAGE_TYPE_RE_OFFER,
   SIGNALING_MESSAGE_TYPE_SWITCHED,
   SIGNALING_MESSAGE_TYPE_UPDATE,
   SIGNALING_ROLE_RECVONLY,
@@ -71,7 +71,7 @@ export type Role =
   | typeof SIGNALING_ROLE_SENDONLY
   | typeof SIGNALING_ROLE_RECVONLY;
 
-export type SignalingConnectDataChannel = {
+export interface SignalingConnectDataChannel {
   label?: string;
   direction?: DataChannelDirection;
   compress?: boolean;
@@ -80,9 +80,9 @@ export type SignalingConnectDataChannel = {
   protocol?: string;
   ordered?: boolean;
   header?: MessagingHeaderField[];
-};
+}
 
-export type SignalingConnectMessage = {
+export interface SignalingConnectMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_CONNECT;
   role: Role;
   channel_id: string;
@@ -110,7 +110,7 @@ export type SignalingConnectMessage = {
   forwarding_filters?: ForwardingFilter[];
   // @deprecated このオプションは非推奨です。将来のバージョンで削除される可能性があります。
   forwarding_filter?: ForwardingFilter;
-};
+}
 
 export type WebSocketSignalingMessage =
   | SignalingConnectMessage
@@ -125,14 +125,14 @@ export type WebSocketSignalingMessage =
 
 export type DataChannelSignalingMessage = SignalingReOfferMessage | SignalingCloseMessage;
 
-export type SignalingOfferMessageDataChannel = {
+export interface SignalingOfferMessageDataChannel {
   label: string;
   direction: DataChannelDirection;
   compress: boolean;
   header?: MessagingHeaderField[];
-};
+}
 
-export type SignalingOfferMessage = {
+export interface SignalingOfferMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_OFFER;
   sdp: string;
 
@@ -158,49 +158,49 @@ export type SignalingOfferMessage = {
     video?: string;
   };
   rpc_methods?: string[];
-};
+}
 
 // @deprecated この型は非推奨です。将来のバージョンで削除される可能性があります。
-export type SignalingUpdateMessage = {
+export interface SignalingUpdateMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_UPDATE;
   sdp: string;
-};
+}
 
-export type SignalingReOfferMessage = {
+export interface SignalingReOfferMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_RE_OFFER;
   sdp: string;
-};
+}
 
-export type SignalingPingMessage = {
+export interface SignalingPingMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_PING;
   stats: boolean;
-};
+}
 
-export type SignalingPushMessage = {
+export interface SignalingPushMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_PUSH;
   data: Record<string, unknown>;
-};
+}
 
-export type SignalingReqStatsMessage = {
+export interface SignalingReqStatsMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_REQ_STATS;
-};
+}
 
-export type SignalingSwitchedMessage = {
+export interface SignalingSwitchedMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_SWITCHED;
   ignore_disconnect_websocket: boolean;
-};
+}
 
-export type SignalingRedirectMessage = {
+export interface SignalingRedirectMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_REDIRECT;
   location: string;
-};
+}
 
 // DataChannel シグナリングでのみ利用される
-export type SignalingCloseMessage = {
+export interface SignalingCloseMessage {
   type: typeof SIGNALING_MESSAGE_TYPE_CLOSE;
   code: number;
   reason: string;
-};
+}
 
 export type SignalingNotifyMessage =
   | SignalingNotifyConnectionCreated
@@ -212,15 +212,15 @@ export type SignalingNotifyMessage =
   | SignalingNotifySpotlightUnfocused
   | SignalingNotifyNetworkStatus;
 
-export type SignalingNotifyMetadata = {
+export interface SignalingNotifyMetadata {
   client_id?: string;
   connection_id?: string;
   authn_metadata?: JSONType;
   authz_metadata?: JSONType;
   metadata?: JSONType;
-};
+}
 
-export type SignalingNotifyConnectionCreated = {
+export interface SignalingNotifyConnectionCreated {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY;
   event_type: "connection.created";
   role: Role;
@@ -242,9 +242,9 @@ export type SignalingNotifyConnectionCreated = {
   channel_sendonly_connections: number;
   channel_recvonly_connections: number;
   turn_transport_type: "udp" | "tcp";
-};
+}
 
-export type SignalingNotifyConnectionUpdated = {
+export interface SignalingNotifyConnectionUpdated {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY;
   event_type: "connection.updated";
   role: Role;
@@ -260,9 +260,9 @@ export type SignalingNotifyConnectionUpdated = {
   channel_sendonly_connections: number;
   channel_recvonly_connections: number;
   turn_transport_type: "udp" | "tcp";
-};
+}
 
-export type SignalingNotifyConnectionDestroyed = {
+export interface SignalingNotifyConnectionDestroyed {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY;
   event_type: "connection.destroyed";
   role: Role;
@@ -281,9 +281,9 @@ export type SignalingNotifyConnectionDestroyed = {
   channel_sendonly_connections: number;
   channel_recvonly_connections: number;
   turn_transport_type: "udp" | "tcp";
-};
+}
 
-export type SignalingNotifySimulcastSwitched = {
+export interface SignalingNotifySimulcastSwitched {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY;
   event_type: "simulcast.switched";
   timestamp: string;
@@ -295,9 +295,9 @@ export type SignalingNotifySimulcastSwitched = {
   request_rid: SimulcastRid;
   current_rid: SimulcastRid;
   previous_rid: SimulcastRid;
-};
+}
 
-export type SignalingNotifySpotlightChanged = {
+export interface SignalingNotifySpotlightChanged {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY;
   event_type: "spotlight.changed";
   client_id: string | null;
@@ -306,9 +306,9 @@ export type SignalingNotifySpotlightChanged = {
   fixed?: boolean;
   audio: boolean;
   video: boolean;
-};
+}
 
-export type SignalingNotifySpotlightFocused = {
+export interface SignalingNotifySpotlightFocused {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY;
   event_type: "spotlight.focused";
   client_id: string | null;
@@ -316,9 +316,9 @@ export type SignalingNotifySpotlightFocused = {
   audio: boolean;
   video: boolean;
   fixed: boolean;
-};
+}
 
-export type SignalingNotifySpotlightUnfocused = {
+export interface SignalingNotifySpotlightUnfocused {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY;
   event_type: "spotlight.unfocused";
   client_id: string | null;
@@ -326,23 +326,23 @@ export type SignalingNotifySpotlightUnfocused = {
   audio: boolean;
   video: boolean;
   fixed: boolean;
-};
+}
 
-export type SignalingNotifyNetworkStatus = {
+export interface SignalingNotifyNetworkStatus {
   type: typeof SIGNALING_MESSAGE_TYPE_NOTIFY;
   event_type: "network.status";
   unstable_level: 0 | 1 | 2 | 3;
-};
+}
 
 export type DataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
 
 export type MessagingHeaderFieldType = "sender_connection_id";
-export type MessagingHeaderField = {
+export interface MessagingHeaderField {
   type: MessagingHeaderFieldType;
   length?: number;
-};
+}
 
-export type DataChannelConfiguration = {
+export interface DataChannelConfiguration {
   label: string;
   direction: DataChannelDirection;
   compress?: boolean;
@@ -351,32 +351,32 @@ export type DataChannelConfiguration = {
   protocol?: string;
   ordered?: boolean;
   header?: MessagingHeaderField[];
-};
+}
 
 export type ForwardingFilterRuleField = "connection_id" | "client_id" | "kind";
 export type ForwardingFilterRuleOperator = "is_in" | "is_not_in";
 export type ForwardingFilterRuleKindValue = "audio" | "video";
 export type ForwardingFilterRuleValue = string;
-export type ForwardingFilterRule = {
+export interface ForwardingFilterRule {
   field: ForwardingFilterRuleField;
   operator: ForwardingFilterRuleOperator;
   values: [ForwardingFilterRuleValue];
-};
+}
 export type ForwardingFilterAction = "block" | "allow";
 
-export type ForwardingFilter = {
+export interface ForwardingFilter {
   version?: string;
   metadata?: JSONType;
   action?: ForwardingFilterAction;
   rules: [[ForwardingFilterRule]];
   name?: string;
   priority?: number;
-};
+}
 
 /**
  * Sora への接続オプション
  */
-export type ConnectionOptions = {
+export interface ConnectionOptions {
   audio?: boolean;
   audioCodecType?: AudioCodecType;
   audioBitRate?: number;
@@ -424,12 +424,12 @@ export type ConnectionOptions = {
 
   // ICE 候補をスキップする
   skipIceCandidateEvent?: boolean;
-};
+}
 
 /**
  * 各種イベントを受け取るコールバック関数群
  */
-export type Callbacks = {
+export interface Callbacks {
   disconnect: (event: SoraCloseEvent) => void;
   push: (event: SignalingPushMessage, transportType: TransportType) => void;
   track: (event: RTCTrackEvent) => void;
@@ -443,7 +443,7 @@ export type Callbacks = {
   signaling: (event: SignalingEvent) => void;
   message: (event: DataChannelMessageEvent) => void;
   datachannel: (event: DataChannelEvent) => void;
-};
+}
 
 export type Browser = "edge" | "chrome" | "safari" | "opera" | "firefox" | null;
 
@@ -489,11 +489,11 @@ export interface SoraCloseEvent extends Event {
 
 export type SoraCloseEventType = "normal" | "abend";
 
-export type SoraCloseEventInitDict = {
+export interface SoraCloseEventInitDict {
   code?: number;
   reason?: string;
   params?: Record<string, unknown>;
-};
+}
 
 export type SoraAbendTitle =
   | "CONNECTION-STATE-FAILED"
@@ -533,7 +533,7 @@ export type JSONRPCResponse = JSONRPCSuccessResponse | JSONRPCErrorResponse;
 /**
  * RPC メソッド呼び出し時のオプション
  */
-export type RPCOptions = {
+export interface RPCOptions {
   timeout?: number;
   notification?: boolean;
-};
+}

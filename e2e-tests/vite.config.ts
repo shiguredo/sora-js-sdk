@@ -5,17 +5,6 @@ import { defineConfig } from "vite";
 // mjs なのは古い Node.js での import のため
 
 export default defineConfig({
-  root: resolve(__dirname),
-  resolve: {
-    // NPM_PKG_E2E_TEST が true の時は alias を無効化する
-    // これは .github/workflows/npm-pkg-e2e-test.yml で、
-    // E2E テストで複数のバージョンの npm の sora-js-sdk をインストールして利用するため
-    alias: process.env.NPM_PKG_E2E_TEST
-      ? {}
-      : {
-          "sora-js-sdk": resolve(__dirname, "../dist/sora.mjs"),
-        },
-  },
   build: {
     rollupOptions: {
       input: {
@@ -42,4 +31,15 @@ export default defineConfig({
     },
   },
   envDir: resolve(__dirname, ".."),
+  resolve: {
+    // NPM_PKG_E2E_TEST が true の時は alias を無効化する
+    // これは .github/workflows/npm-pkg-e2e-test.yml で、
+    // E2E テストで複数のバージョンの npm の sora-js-sdk をインストールして利用するため
+    alias: process.env.NPM_PKG_E2E_TEST
+      ? {}
+      : {
+          "sora-js-sdk": resolve(__dirname, "../dist/sora.mjs"),
+        },
+  },
+  root: resolve(__dirname),
 });
