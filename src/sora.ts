@@ -255,7 +255,8 @@ export default {
    * @public
    *
    */
-  connection: (signalingUrlCandidates: string | string[], debug = false): SoraConnection => new SoraConnection(signalingUrlCandidates, debug),
+  connection: (signalingUrlCandidates: string | string[], debug = false): SoraConnection =>
+    new SoraConnection(signalingUrlCandidates, debug),
   /**
    * SDK のバージョンを返すメソッド
    *

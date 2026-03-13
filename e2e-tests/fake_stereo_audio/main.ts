@@ -1,8 +1,13 @@
 import { getFakeMedia } from "../src/fake";
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora from 'sora-js-sdk';
-import type { SignalingNotifyMessage, ConnectionPublisher, ConnectionSubscriber, SoraConnection } from 'sora-js-sdk';
+import Sora from "sora-js-sdk";
+import type {
+  SignalingNotifyMessage,
+  ConnectionPublisher,
+  ConnectionSubscriber,
+  SoraConnection,
+} from "sora-js-sdk";
 
 // Soraオブジェクトをwindowに公開（テスト用）
 declare global {
@@ -88,13 +93,23 @@ class RealtimeAudioAnalyzer {
     const rightFreqEl = document.querySelector(`#${this.prefix}-right-frequency`);
     const isStereoEl = document.querySelector(`#${this.prefix}-is-stereo`);
 
-    if (channelCountEl) {channelCountEl.textContent = this.channelCount.toString();}
-    if (leftFreqEl) {leftFreqEl.textContent = leftFreq.toFixed(1);}
-    if (rightFreqEl) {rightFreqEl.textContent = rightFreq.toFixed(1);}
-    if (isStereoEl) {isStereoEl.textContent = isStereo ? "Yes" : "No";}
+    if (channelCountEl) {
+      channelCountEl.textContent = this.channelCount.toString();
+    }
+    if (leftFreqEl) {
+      leftFreqEl.textContent = leftFreq.toFixed(1);
+    }
+    if (rightFreqEl) {
+      rightFreqEl.textContent = rightFreq.toFixed(1);
+    }
+    if (isStereoEl) {
+      isStereoEl.textContent = isStereo ? "Yes" : "No";
+    }
 
     // 次のフレーム
-    this.animationId = requestAnimationFrame(() =>{  this.updateDisplay(); });
+    this.animationId = requestAnimationFrame(() => {
+      this.updateDisplay();
+    });
   }
 
   start(): void {
@@ -131,8 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     recvClient = new SoraRecvClient(signalingUrl, channelId, secretKey);
 
     // forceStereoOutputを設定
-    const forceStereoOutput = (document.querySelector("#force-stereo-output")!)
-      .checked;
+    const forceStereoOutput = document.querySelector("#force-stereo-output")!.checked;
     recvClient.setForceStereoOutput(forceStereoOutput);
 
     // リモートストリーム受信時のコールバックを設定
@@ -149,7 +163,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 送信側を接続
     sendClient = new SoraSendClient(signalingUrl, channelId, secretKey);
 
-    const useStereo = (document.querySelector("#use-stereo")!).checked;
+    const useStereo = document.querySelector("#use-stereo")!.checked;
 
     const stream = getFakeMedia({
       audio: {
@@ -314,7 +328,7 @@ class SoraSendClient {
     }
   }
 
-   async getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
       throw new Error("PeerConnection is not ready");
     }
@@ -379,7 +393,7 @@ class SoraRecvClient {
     }
   }
 
-   async getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
       throw new Error("PeerConnection is not ready");
     }

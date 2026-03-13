@@ -13,7 +13,7 @@ test.describe("Stereo Audio Tests", () => {
     await page.goto("http://localhost:9000/fake_stereo_audio/");
 
     // Sora.version()を実行してバージョンを取得
-    const version = await page.evaluate(() => window.Sora ? window.Sora.version() : null);
+    const version = await page.evaluate(() => (window.Sora ? window.Sora.version() : null));
 
     if (!version) {
       // バージョンが取得できない場合はスキップ
@@ -80,9 +80,7 @@ test.describe("Stereo Audio Tests", () => {
 
     // 受信側の統計情報を取得
     const recvStatsReportJson: Array<Record<string, unknown>> = await page.evaluate(() => {
-      const recvStatsDiv = document.querySelector(
-        "[data-recv-stats-report-json]",
-      )!;
+      const recvStatsDiv = document.querySelector("[data-recv-stats-report-json]")!;
       return recvStatsDiv ? JSON.parse(recvStatsDiv.dataset.recvStatsReportJson ?? "[]") : [];
     });
 

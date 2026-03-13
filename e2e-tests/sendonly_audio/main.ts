@@ -1,7 +1,7 @@
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora from 'sora-js-sdk';
-import type { SignalingNotifyMessage, ConnectionPublisher, SoraConnection } from 'sora-js-sdk';
+import Sora from "sora-js-sdk";
+import type { SignalingNotifyMessage, ConnectionPublisher, SoraConnection } from "sora-js-sdk";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -118,7 +118,7 @@ class SoraClient {
     }
   }
 
-   async getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
       throw new Error("PeerConnection is not ready");
     }

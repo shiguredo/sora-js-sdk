@@ -157,7 +157,7 @@ export function createSignalingMessage(
   const simulcastRequestRids = ["none", "r0", "r1", "r2"];
   if (
     options.simulcastRequestRid !== undefined &&
-    simulcastRequestRids.includes(options.simulcastRequestRid) 
+    simulcastRequestRids.includes(options.simulcastRequestRid)
   ) {
     message.simulcast_request_rid = options.simulcastRequestRid;
   }
@@ -171,13 +171,13 @@ export function createSignalingMessage(
   const spotlightFocusRids = ["none", "r0", "r1", "r2"];
   if (
     options.spotlightFocusRid !== undefined &&
-    spotlightFocusRids.includes(options.spotlightFocusRid) 
+    spotlightFocusRids.includes(options.spotlightFocusRid)
   ) {
     message.spotlight_focus_rid = options.spotlightFocusRid;
   }
   if (
     options.spotlightUnfocusRid !== undefined &&
-    spotlightFocusRids.includes(options.spotlightUnfocusRid) 
+    spotlightFocusRids.includes(options.spotlightUnfocusRid)
   ) {
     message.spotlight_unfocus_rid = options.spotlightUnfocusRid;
   }
@@ -227,7 +227,7 @@ export function createSignalingMessage(
     "videoH265Params",
     "videoAV1Params",
   ];
-  const copyOptions = { ...options};
+  const copyOptions = { ...options };
   for (const key of Object.keys(copyOptions) as Array<keyof ConnectionOptions>) {
     if (key === "audio" && typeof copyOptions[key] === "boolean") {
       continue;
@@ -260,7 +260,9 @@ export function createSignalingMessage(
       message.audio.bit_rate = copyOptions.audioBitRate;
     }
   }
-  const hasAudioOpusParamsProperty = Object.keys(copyOptions).some((key) => audioOpusParamsPropertyKeys.includes(key));
+  const hasAudioOpusParamsProperty = Object.keys(copyOptions).some((key) =>
+    audioOpusParamsPropertyKeys.includes(key),
+  );
   if (message.audio && hasAudioOpusParamsProperty) {
     if (typeof message.audio !== "object") {
       message.audio = {};
@@ -498,13 +500,13 @@ export async function parseDataChannelEventData(
 export const compressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
   const readableStream = new Blob([new Uint8Array(binaryMessage)]).stream();
   const compressedStream = readableStream.pipeThrough(new CompressionStream("deflate"));
-  return  new Response(compressedStream).arrayBuffer();
+  return new Response(compressedStream).arrayBuffer();
 };
 
 export const decompressMessage = async (binaryMessage: Uint8Array): Promise<ArrayBuffer> => {
   const readableStream = new Blob([new Uint8Array(binaryMessage)]).stream();
   const decompressedStream = readableStream.pipeThrough(new DecompressionStream("deflate"));
-  return  new Response(decompressedStream).arrayBuffer();
+  return new Response(decompressedStream).arrayBuffer();
 };
 
 export function addStereoToFmtp(sdp: string): string {
@@ -527,7 +529,9 @@ export function addStereoToFmtp(sdp: string): string {
     }
   }
 
-  const mediaDescriptions = mediaDescriptionsList.map((mediaDescription) => mediaDescription.join("\n"));
+  const mediaDescriptions = mediaDescriptionsList.map((mediaDescription) =>
+    mediaDescription.join("\n"),
+  );
 
   const newMediaDescriptions = mediaDescriptions.map((mediaDescription) => {
     if (!isAudio(mediaDescription)) {
@@ -561,11 +565,11 @@ function isAudio(mediaDescription: string): boolean {
 }
 
 function isSetupActive(mediaDescription: string): boolean {
-  return mediaDescription.includes('a=setup:active');
+  return mediaDescription.includes("a=setup:active");
 }
 
 function isRecvOnly(mediaDescription: string): boolean {
-  return mediaDescription.includes('a=recvonly');
+  return mediaDescription.includes("a=recvonly");
 }
 
 function isOpus(mediaDescription: string): boolean {

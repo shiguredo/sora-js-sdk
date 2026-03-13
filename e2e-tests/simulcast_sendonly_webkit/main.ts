@@ -1,5 +1,10 @@
-import Sora from 'sora-js-sdk';
-import type { SoraConnection, ConnectionPublisher, SignalingNotifyMessage, VideoCodecType } from 'sora-js-sdk';
+import Sora from "sora-js-sdk";
+import type {
+  SoraConnection,
+  ConnectionPublisher,
+  SignalingNotifyMessage,
+  VideoCodecType,
+} from "sora-js-sdk";
 import { getFakeMedia } from "../src/fake";
 import { generateJwt, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
@@ -22,9 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const videoBitRate = Number.parseInt(rawVideoBitRate.value, 10);
 
     let simulcastEncodings: Array<Record<string, unknown>> | undefined;
-    const simulcastEncodingsElement = document.querySelector(
-      "#simulcast-encodings",
-    )!;
+    const simulcastEncodingsElement = document.querySelector("#simulcast-encodings")!;
     if (simulcastEncodingsElement.value !== "") {
       console.log(`simulcastEncodingsElement.value=${simulcastEncodingsElement.value}`);
       try {
@@ -148,7 +151,7 @@ class SimulcastSendonlySoraClient {
     }
   }
 
-   async getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
       throw new Error("PeerConnection is not ready");
     }

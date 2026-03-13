@@ -22,9 +22,7 @@ test("sendrecv x2", async ({ browser }) => {
   // sendrecv1 のビデオコーデックをランダムに選択
   await sendrecv1.evaluate(() => {
     const videoCodecTypeSelect = document.querySelector("#video-codec-type")!;
-    const options = [...videoCodecTypeSelect.options].filter(
-      (option) => option.value !== "",
-    );
+    const options = [...videoCodecTypeSelect.options].filter((option) => option.value !== "");
     const randomIndex = Math.floor(Math.random() * options.length);
     videoCodecTypeSelect.value = options[randomIndex].value;
   });
@@ -32,9 +30,7 @@ test("sendrecv x2", async ({ browser }) => {
   // sendrecv2 のビデオコーデックをランダムに選択
   await sendrecv2.evaluate(() => {
     const videoCodecTypeSelect = document.querySelector("#video-codec-type")!;
-    const options = [...videoCodecTypeSelect.options].filter(
-      (option) => option.value !== "",
-    );
+    const options = [...videoCodecTypeSelect.options].filter((option) => option.value !== "");
     const randomIndex = Math.floor(Math.random() * options.length);
     videoCodecTypeSelect.value = options[randomIndex].value;
   });

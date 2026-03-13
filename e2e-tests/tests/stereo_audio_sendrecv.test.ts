@@ -13,7 +13,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     await page.goto("http://localhost:9000/fake_stereo_audio_sendrecv/");
 
     // Sora.version()を実行してバージョンを取得
-    const version = await page.evaluate(() => window.Sora ? window.Sora.version() : null);
+    const version = await page.evaluate(() => (window.Sora ? window.Sora.version() : null));
 
     if (!version) {
       // バージョンが取得できない場合はスキップ

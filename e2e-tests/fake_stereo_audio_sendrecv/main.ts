@@ -1,8 +1,13 @@
 import { getFakeMedia } from "../src/fake";
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora from 'sora-js-sdk';
-import type { ConnectionPublisher, SignalingEvent, SignalingNotifyMessage, SoraConnection } from 'sora-js-sdk';
+import Sora from "sora-js-sdk";
+import type {
+  ConnectionPublisher,
+  SignalingEvent,
+  SignalingNotifyMessage,
+  SoraConnection,
+} from "sora-js-sdk";
 
 // Soraオブジェクトをwindowに公開（テスト用）
 declare global {
@@ -88,13 +93,23 @@ class RealtimeAudioAnalyzer {
     const rightFreqEl = document.querySelector(`#${this.prefix}-right-frequency`);
     const isStereoEl = document.querySelector(`#${this.prefix}-is-stereo`);
 
-    if (channelCountEl) {channelCountEl.textContent = this.channelCount.toString();}
-    if (leftFreqEl) {leftFreqEl.textContent = leftFreq.toFixed(1);}
-    if (rightFreqEl) {rightFreqEl.textContent = rightFreq.toFixed(1);}
-    if (isStereoEl) {isStereoEl.textContent = isStereo ? "Yes" : "No";}
+    if (channelCountEl) {
+      channelCountEl.textContent = this.channelCount.toString();
+    }
+    if (leftFreqEl) {
+      leftFreqEl.textContent = leftFreq.toFixed(1);
+    }
+    if (rightFreqEl) {
+      rightFreqEl.textContent = rightFreq.toFixed(1);
+    }
+    if (isStereoEl) {
+      isStereoEl.textContent = isStereo ? "Yes" : "No";
+    }
 
     // 次のフレーム
-    this.animationId = requestAnimationFrame(() =>{  this.updateDisplay(); });
+    this.animationId = requestAnimationFrame(() => {
+      this.updateDisplay();
+    });
   }
 
   start(): void {
@@ -130,16 +145,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
     // 接続1の設定を取得
-    const useStereo1 = (document.querySelector("#use-stereo-1")!).checked;
-    const forceStereoOutput1 = (
-      document.querySelector("#force-stereo-output-1")!
-    ).checked;
+    const useStereo1 = document.querySelector("#use-stereo-1")!.checked;
+    const forceStereoOutput1 = document.querySelector("#force-stereo-output-1")!.checked;
 
     // 接続2の設定を取得
-    const useStereo2 = (document.querySelector("#use-stereo-2")!).checked;
-    const forceStereoOutput2 = (
-      document.querySelector("#force-stereo-output-2")!
-    ).checked;
+    const useStereo2 = document.querySelector("#use-stereo-2")!.checked;
+    const forceStereoOutput2 = document.querySelector("#force-stereo-output-2")!.checked;
 
     // 接続1を作成
     soraClient1 = new SoraSendRecvClient(signalingUrl, channelId, secretKey, "1");
@@ -438,7 +449,7 @@ class SoraSendRecvClient {
     }
   }
 
-   async getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
       throw new Error("PeerConnection is not ready");
     }

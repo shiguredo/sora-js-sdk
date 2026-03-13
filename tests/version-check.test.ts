@@ -1,4 +1,3 @@
-
 import { checkVersionSupport } from "../e2e-tests/tests/helper";
 
 test("checkVersionSupport: バージョンがnullの場合はサポートされていないと判定する", () => {

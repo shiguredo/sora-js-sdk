@@ -1,5 +1,10 @@
-import Sora from 'sora-js-sdk';
-import type { ConnectionPublisher, SignalingEvent, SignalingNotifyMessage, SoraConnection } from 'sora-js-sdk';
+import Sora from "sora-js-sdk";
+import type {
+  ConnectionPublisher,
+  SignalingEvent,
+  SignalingNotifyMessage,
+  SoraConnection,
+} from "sora-js-sdk";
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -138,7 +143,7 @@ class SoraClient {
     this.autoReconnect = value;
   }
 
-   async getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
       throw new Error("PeerConnection is not ready");
     }

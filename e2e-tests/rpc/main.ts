@@ -6,8 +6,15 @@ RPC 機能は認証成功時に rpc_methods を払いだす必要がある。
 このテストは通常の Sora では動作しない。
 */
 
-import Sora from 'sora-js-sdk';
-import type { ConnectionPublisher, ConnectionSubscriber, SignalingEvent, SignalingNotifyMessage, SimulcastRid, SoraConnection } from 'sora-js-sdk';
+import Sora from "sora-js-sdk";
+import type {
+  ConnectionPublisher,
+  ConnectionSubscriber,
+  SignalingEvent,
+  SignalingNotifyMessage,
+  SimulcastRid,
+  SoraConnection,
+} from "sora-js-sdk";
 import { generateJwt, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 // RPC ログを追加する関数
@@ -257,10 +264,10 @@ class SimulcastRecvonlyClient {
       receiver_connection_id: this.connection.connectionId,
       rid: rid,
     };
-    return  this.connection.rpc(rpcMethod, rpcParams);
+    return this.connection.rpc(rpcMethod, rpcParams);
   }
 
-   async getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
       throw new Error("PeerConnection is not ready");
     }

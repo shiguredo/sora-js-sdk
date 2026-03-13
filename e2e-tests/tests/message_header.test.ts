@@ -118,7 +118,9 @@ test("messaging pages with header", async ({ browser }) => {
     page1DataChannelStats.find((stats) => stats.label === "stats" && stats.state === "open"),
   ).toBeDefined();
 
-  const page1ExampleStats = page1DataChannelStats.find((stats) => stats.label === "#example" && stats.state === "open");
+  const page1ExampleStats = page1DataChannelStats.find(
+    (stats) => stats.label === "#example" && stats.state === "open",
+  );
   // ここで undefined ではないことを確認してる
   expect(page1ExampleStats).toBeDefined();
   expect(page1ExampleStats?.messagesSent).toBeGreaterThan(0);
@@ -154,7 +156,9 @@ test("messaging pages with header", async ({ browser }) => {
     page2DataChannelStats.find((stats) => stats.label === "stats" && stats.state === "open"),
   ).toBeDefined();
 
-  const page2ExampleStats = page2DataChannelStats.find((stats) => stats.label === "#example" && stats.state === "open");
+  const page2ExampleStats = page2DataChannelStats.find(
+    (stats) => stats.label === "#example" && stats.state === "open",
+  );
   // ここで undefined ではないことを確認してる
   expect(page2ExampleStats).toBeDefined();
   expect(page2ExampleStats?.bytesReceived).toBeGreaterThan(0);

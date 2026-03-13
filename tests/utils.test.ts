@@ -7,7 +7,7 @@ const channelId = "7N3fsMHob";
 const metadata = "PG9A6RXgYqiqWKOVO";
 const clientId = "clientId";
 const sdp = "v=0...";
-const {userAgent} = window.navigator;
+const { userAgent } = window.navigator;
 const soraClient = `Sora JavaScript SDK ${__SORA_JS_SDK_VERSION__}`;
 const audioCodecType: AudioCodecType = "OPUS";
 const videoCodecType: VideoCodecType = "VP9";
@@ -32,21 +32,21 @@ test("createSignalingMessage simple sendonly", () => {
 });
 
 test("createSignalingMessage simple recvonly", () => {
-  const expectedMessage = { ...baseExpectedMessage, role: "recvonly",};
+  const expectedMessage = { ...baseExpectedMessage, role: "recvonly" };
   expect(createSignalingMessage(sdp, "recvonly", channelId, undefined, {}, false)).toEqual(
     expectedMessage,
   );
 });
 
 test("createSignalingMessage simple sendrecv", () => {
-  const expectedMessage = { ...baseExpectedMessage, role: "sendrecv",};
+  const expectedMessage = { ...baseExpectedMessage, role: "sendrecv" };
   expect(createSignalingMessage(sdp, "sendrecv", channelId, undefined, {}, false)).toEqual(
     expectedMessage,
   );
 });
 
 test("createSignalingMessage sendrecv and undefined multistream", () => {
-  const expectedMessage = { ...baseExpectedMessage, role: "sendrecv",};
+  const expectedMessage = { ...baseExpectedMessage, role: "sendrecv" };
   expect(createSignalingMessage(sdp, "sendrecv", channelId, undefined, {}, false)).toEqual(
     expectedMessage,
   );
@@ -77,14 +77,14 @@ test("createSignalingMessage channelId: undefined", () => {
  * metadata test
  */
 test("createSignalingMessage metadata", () => {
-  const expectedMessage = { ...baseExpectedMessage, metadata: metadata,};
+  const expectedMessage = { ...baseExpectedMessage, metadata: metadata };
   expect(createSignalingMessage(sdp, "sendonly", channelId, metadata, {}, false)).toEqual(
     expectedMessage,
   );
 });
 
 test("createSignalingMessage metadata: null", () => {
-  const expectedMessage = { ...baseExpectedMessage, metadata: null,};
+  const expectedMessage = { ...baseExpectedMessage, metadata: null };
   expect(createSignalingMessage(sdp, "sendonly", channelId, null, {}, false)).toEqual(
     expectedMessage,
   );
@@ -101,7 +101,7 @@ test("createSignalingMessage metadata: undefined", () => {
  */
 test("createSignalingMessage clientId", () => {
   const options = { clientId: clientId };
-  const expectedMessage = { ...baseExpectedMessage, client_id: options.clientId,};
+  const expectedMessage = { ...baseExpectedMessage, client_id: options.clientId };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -109,7 +109,7 @@ test("createSignalingMessage clientId", () => {
 
 test("createSignalingMessage clientId: empty string", () => {
   const options = { clientId: "" };
-  const expectedMessage = { ...baseExpectedMessage, client_id: options.clientId,};
+  const expectedMessage = { ...baseExpectedMessage, client_id: options.clientId };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -128,7 +128,7 @@ test("createSignalingMessage clientId: undefined", () => {
 
 test("createSignalingMessage undefined multistream", () => {
   const options = {};
-  const expectedMessage = { ...baseExpectedMessage, };
+  const expectedMessage = { ...baseExpectedMessage };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -143,7 +143,7 @@ test("createSignalingMessage audio: false", () => {
     audioBitRate: 100,
     audioCodecType: audioCodecType,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: false,};
+  const expectedMessage = { ...baseExpectedMessage, audio: false };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -172,10 +172,13 @@ test("createSignalingMessage audio parameters", () => {
     audioBitRate: 100,
     audioCodecType: audioCodecType,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio: {
       codec_type: options.audioCodecType,
       bit_rate: options.audioBitRate,
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -185,11 +188,14 @@ test("createSignalingMessage audioOpusParamsChannels", () => {
   const options = {
     audioOpusParamsChannels: 2,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio: {
       opus_params: {
         channels: options.audioOpusParamsChannels,
       },
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -199,11 +205,14 @@ test("createSignalingMessage audioOpusParamsMaxplaybackrate", () => {
   const options = {
     audioOpusParamsMaxplaybackrate: 48_000,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio: {
       opus_params: {
         maxplaybackrate: options.audioOpusParamsMaxplaybackrate,
       },
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -213,11 +222,14 @@ test("createSignalingMessage audioOpusParamsStereo", () => {
   const options = {
     audioOpusParamsStereo: true,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio: {
       opus_params: {
         stereo: options.audioOpusParamsStereo,
       },
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -227,11 +239,14 @@ test("createSignalingMessage audioOpusParamsSpropStereo", () => {
   const options = {
     audioOpusParamsSpropStereo: true,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio: {
       opus_params: {
         sprop_stereo: options.audioOpusParamsSpropStereo,
       },
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -241,11 +256,14 @@ test("createSignalingMessage audioOpusParamsMinptime", () => {
   const options = {
     audioOpusParamsMinptime: 10,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio: {
       opus_params: {
         minptime: options.audioOpusParamsMinptime,
       },
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -255,11 +273,14 @@ test("createSignalingMessage audioOpusParamsPtime", () => {
   const options = {
     audioOpusParamsPtime: 20,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio: {
       opus_params: {
         ptime: options.audioOpusParamsPtime,
       },
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -269,11 +290,14 @@ test("createSignalingMessage audioOpusParamsUseinbandfec", () => {
   const options = {
     audioOpusParamsUseinbandfec: true,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio: {
       opus_params: {
         useinbandfec: options.audioOpusParamsUseinbandfec,
       },
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -283,11 +307,14 @@ test("createSignalingMessage audioOpusParamsUsedtx", () => {
   const options = {
     audioOpusParamsUsedtx: false,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio: {
       opus_params: {
         usedtx: options.audioOpusParamsUsedtx,
       },
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -302,7 +329,7 @@ test("createSignalingMessage video: false", () => {
     videoBitRate: 100,
     videoCodecType: videoCodecType,
   };
-  const expectedMessage = { ...baseExpectedMessage, video: false,};
+  const expectedMessage = { ...baseExpectedMessage, video: false };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -312,7 +339,7 @@ test("createSignalingMessage video: true", () => {
   const options = {
     video: true,
   };
-  const expectedMessage = { ...baseExpectedMessage, video: true,};
+  const expectedMessage = { ...baseExpectedMessage, video: true };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -322,7 +349,7 @@ test("createSignalingMessage video: undefined", () => {
   const options = {
     video: undefined,
   };
-  const expectedMessage = { ...baseExpectedMessage, video: true,};
+  const expectedMessage = { ...baseExpectedMessage, video: true };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -333,10 +360,13 @@ test("createSignalingMessage video parameters", () => {
     videoBitRate: 100,
     videoCodecType: videoCodecType,
   };
-  const expectedMessage = { ...baseExpectedMessage, video: {
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    video: {
       codec_type: options.videoCodecType,
       bit_rate: options.videoBitRate,
-    },};
+    },
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -349,7 +379,10 @@ test("createSignalingMessage signalingMetadata", () => {
   const options = {
     signalingNotifyMetadata: "signalingNotifyMetadata",
   };
-  const expectedMessage = { ...baseExpectedMessage, signaling_notify_metadata: options.signalingNotifyMetadata,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    signaling_notify_metadata: options.signalingNotifyMetadata,
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -359,7 +392,10 @@ test("createSignalingMessage signalingMetadata: empty string", () => {
   const options = {
     signalingNotifyMetadata: "",
   };
-  const expectedMessage = { ...baseExpectedMessage, signaling_notify_metadata: options.signalingNotifyMetadata,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    signaling_notify_metadata: options.signalingNotifyMetadata,
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -369,7 +405,10 @@ test("createSignalingMessage signalingMetadata: object", () => {
   const options = {
     signalingNotifyMetadata: { key: "value" },
   };
-  const expectedMessage = { ...baseExpectedMessage, signaling_notify_metadata: options.signalingNotifyMetadata,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    signaling_notify_metadata: options.signalingNotifyMetadata,
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -379,7 +418,10 @@ test("createSignalingMessage signalingMetadata: null", () => {
   const options = {
     signalingNotifyMetadata: null,
   };
-  const expectedMessage = { ...baseExpectedMessage, signaling_notify_metadata: options.signalingNotifyMetadata,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    signaling_notify_metadata: options.signalingNotifyMetadata,
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -392,7 +434,10 @@ test("createSignalingMessage dataChannelSignaling: true", () => {
   const options = {
     dataChannelSignaling: true,
   };
-  const expectedMessage = { ...baseExpectedMessage, data_channel_signaling: options.dataChannelSignaling,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    data_channel_signaling: options.dataChannelSignaling,
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -402,7 +447,10 @@ test("createSignalingMessage dataChannelSignaling: false", () => {
   const options = {
     dataChannelSignaling: false,
   };
-  const expectedMessage = { ...baseExpectedMessage, data_channel_signaling: options.dataChannelSignaling,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    data_channel_signaling: options.dataChannelSignaling,
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -424,7 +472,10 @@ test("createSignalingMessage ignoreDisconnectWebSocket: true", () => {
   const options = {
     ignoreDisconnectWebSocket: true,
   };
-  const expectedMessage = { ...baseExpectedMessage, ignore_disconnect_websocket: options.ignoreDisconnectWebSocket,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    ignore_disconnect_websocket: options.ignoreDisconnectWebSocket,
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -434,7 +485,10 @@ test("createSignalingMessage ignoreDisconnectWebSocket: false", () => {
   const options = {
     ignoreDisconnectWebSocket: false,
   };
-  const expectedMessage = { ...baseExpectedMessage, ignore_disconnect_websocket: options.ignoreDisconnectWebSocket,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    ignore_disconnect_websocket: options.ignoreDisconnectWebSocket,
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -453,7 +507,7 @@ test("createSignalingMessage ignoreDisconnectWebSocket: undefined", () => {
  * redirect test
  */
 test("createSignalingMessage redirect: true", () => {
-  const expectedMessage = { ...baseExpectedMessage, redirect: true,};
+  const expectedMessage = { ...baseExpectedMessage, redirect: true };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, {}, true)).toEqual(
     expectedMessage,
   );
@@ -531,7 +585,9 @@ test("createSignalingMessage dataChannels", () => {
       },
     ],
   };
-  const expectedMessage = { ...baseExpectedMessage, data_channels: [
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    data_channels: [
       { label: "test", direction: "sendrecv" },
       {
         label: "test2",
@@ -542,7 +598,8 @@ test("createSignalingMessage dataChannels", () => {
         protocol: "protocol",
         compress: false,
       },
-    ],};
+    ],
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -555,7 +612,7 @@ test("createSignalingMessage bundleId", () => {
   const options = {
     bundleId: "bundleId",
   };
-  const expectedMessage = { ...baseExpectedMessage, bundle_id: options.bundleId,};
+  const expectedMessage = { ...baseExpectedMessage, bundle_id: options.bundleId };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -565,7 +622,7 @@ test("createSignalingMessage bundleId: empty string", () => {
   const options = {
     bundleId: "",
   };
-  const expectedMessage = { ...baseExpectedMessage, bundle_id: options.bundleId,};
+  const expectedMessage = { ...baseExpectedMessage, bundle_id: options.bundleId };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -587,7 +644,7 @@ test("createSignalingMessage simulcastRid", () => {
   const options = {
     simulcastRid: "r0",
   };
-  const expectedMessage = { ...baseExpectedMessage, simulcast_rid: options.simulcastRid,};
+  const expectedMessage = { ...baseExpectedMessage, simulcast_rid: options.simulcastRid };
   // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false)).toEqual({
     ...expectedMessage,
@@ -614,7 +671,10 @@ test("createSignalingMessage simulcastRequestRid", () => {
   const options = {
     simulcastRequestRid: "r0",
   };
-  const expectedMessage = { ...baseExpectedMessage, simulcast_request_rid: options.simulcastRequestRid,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    simulcast_request_rid: options.simulcastRequestRid,
+  };
   // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false)).toEqual({
     ...expectedMessage,
@@ -641,7 +701,7 @@ test("createSignalingMessage spotlight: true", () => {
   const options = {
     spotlight: true,
   };
-  const expectedMessage = { ...baseExpectedMessage, spotlight: options.spotlight,};
+  const expectedMessage = { ...baseExpectedMessage, spotlight: options.spotlight };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -651,7 +711,7 @@ test("createSignalingMessage spotlight: false", () => {
   const options = {
     spotlight: false,
   };
-  const expectedMessage = { ...baseExpectedMessage, spotlight: options.spotlight,};
+  const expectedMessage = { ...baseExpectedMessage, spotlight: options.spotlight };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -664,7 +724,10 @@ test("createSignalingMessage spotlightFocusRid", () => {
   const options = {
     spotlightFocusRid: "r0",
   };
-  const expectedMessage = { ...baseExpectedMessage, spotlight_focus_rid: options.spotlightFocusRid,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    spotlight_focus_rid: options.spotlightFocusRid,
+  };
   // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
@@ -689,7 +752,10 @@ test("createSignalingMessage spotlightUnfocusRid", () => {
   const options = {
     spotlightUnfocusRid: "r0",
   };
-  const expectedMessage = { ...baseExpectedMessage, spotlight_unfocus_rid: options.spotlightUnfocusRid,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    spotlight_unfocus_rid: options.spotlightUnfocusRid,
+  };
   // @ts-expect-error option で指定されている型以外を引数に指定する
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
@@ -714,7 +780,7 @@ test("createSignalingMessage spotlightNumber", () => {
   const options = {
     spotlightNumber: 5,
   };
-  const expectedMessage = { ...baseExpectedMessage, spotlight_number: options.spotlightNumber,};
+  const expectedMessage = { ...baseExpectedMessage, spotlight_number: options.spotlightNumber };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -724,7 +790,7 @@ test("createSignalingMessage spotlightNumber: 0", () => {
   const options = {
     spotlightNumber: 0,
   };
-  const expectedMessage = { ...baseExpectedMessage, spotlight_number: options.spotlightNumber,};
+  const expectedMessage = { ...baseExpectedMessage, spotlight_number: options.spotlightNumber };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
@@ -752,7 +818,10 @@ test("createSignalingMessage audioStreamingLanguageCode: ja-JP", () => {
   const options = {
     audioStreamingLanguageCode: "ja-JP",
   };
-  const expectedMessage = { ...baseExpectedMessage, audio_streaming_language_code: options.audioStreamingLanguageCode,};
+  const expectedMessage = {
+    ...baseExpectedMessage,
+    audio_streaming_language_code: options.audioStreamingLanguageCode,
+  };
   expect(createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false)).toEqual(
     expectedMessage,
   );
