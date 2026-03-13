@@ -207,10 +207,10 @@ class SimulcastSendonlySoraClient {
           signalingState: this.connection.pc.signalingState,
         };
         pcStateElement.textContent = JSON.stringify(stateInfo, null, 2);
-        pcStateElement.dataset.connectionState = stateInfo.connectionState || "";
-        pcStateElement.dataset.iceConnectionState = stateInfo.iceConnectionState || "";
-        pcStateElement.dataset.iceGatheringState = stateInfo.iceGatheringState || "";
-        pcStateElement.dataset.signalingState = stateInfo.signalingState || "";
+        pcStateElement.dataset.connectionState = stateInfo.connectionState ?? "";
+        pcStateElement.dataset.iceConnectionState = stateInfo.iceConnectionState ?? "";
+        pcStateElement.dataset.iceGatheringState = stateInfo.iceGatheringState ?? "";
+        pcStateElement.dataset.signalingState = stateInfo.signalingState ?? "";
       }
     }
   }
