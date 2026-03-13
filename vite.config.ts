@@ -13,7 +13,7 @@ const banner = `/**
 `;
 export default defineConfig({
   build: {
-    minify: "esbuild",
+    minify: true,
     target: "es2022",
     emptyOutDir: true,
     manifest: false,
@@ -24,7 +24,7 @@ export default defineConfig({
       formats: ["es"],
       fileName: "sora",
     },
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         banner: banner,
       },

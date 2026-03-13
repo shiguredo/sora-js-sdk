@@ -6,7 +6,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         index: resolve(__dirname, "index.html"),
         sendrecv: resolve(__dirname, "sendrecv/index.html"),
