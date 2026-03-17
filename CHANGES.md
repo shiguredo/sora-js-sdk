@@ -13,9 +13,13 @@
 
 - [FIX] rpc メソッドのサンプルコードで、実際に存在しない RPC メソッド名が使われていたのを修正する
   - @sile
+- [CHANGE] Node 20 のサポートを終了する
+  - @voluntas
 
 ### misc
 
+- [CHANGE] Vite+ に切り替える
+  - @voluntas
 - [CHANGE] Biome から oxc に移行する
   - @voluntas
 - [CHANGE] E2E テストの環境変数の Prefix を `TEST_` に切り替える
