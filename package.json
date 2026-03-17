@@ -15,6 +15,7 @@
   "files": [
     "dist"
   ],
+  "type": "module",
   "main": "dist/sora.js",
   "module": "dist/sora.mjs",
   "exports": {
@@ -25,34 +26,32 @@
     }
   },
   "scripts": {
-    "build": "vite build",
-    "watch": "vite build --watch",
-    "e2e-dev": "vite --config e2e-tests/vite.config.ts",
+    "build": "vp build",
+    "watch": "vp build --watch",
+    "e2e-dev": "vp dev --config e2e-tests/vite.config.ts",
     "e2e-test": "pnpm build && playwright test --project='chromium'",
     "e2e-test-chrome": "pnpm build && playwright test --project='Google Chrome*'",
     "e2e-test-edge": "pnpm build && playwright test --project='Microsoft Edge*'",
     "e2e-test-webkit": "pnpm build && playwright test --project='WebKit'",
-    "fmt": "oxfmt --write .",
-    "lint": "oxlint --type-aware",
+    "fmt": "vp fmt",
+    "lint": "vp lint --type-aware",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vp test run",
     "doc": "typedoc"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
     "@types/node": "25.5.0",
     "jsdom": "28.1.0",
-    "oxfmt": "0.40.0",
-    "oxlint": "1.55.0",
-    "oxlint-tsgolint": "0.16.0",
     "typedoc": "0.28.17",
     "typescript": "5.9.3",
-    "vite": "8.0.0",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.11",
     "vite-plugin-dts": "4.5.4",
-    "vitest": "4.1.0"
+    "vite-plus": "0.1.11",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.11"
   },
   "engines": {
-    "node": ">=20",
-    "pnpm": ">=8"
+    "node": ">=24",
+    "pnpm": ">=10"
   }
 }

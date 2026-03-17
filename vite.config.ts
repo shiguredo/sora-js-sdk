@@ -1,7 +1,10 @@
-import { resolve } from "node:path";
-import { defineConfig } from "vite";
+import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vite-plus";
 import dts from "vite-plugin-dts";
-import pkg from "./package.json";
+import pkg from "./package.json" with { type: "json" };
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const banner = `/**
  * ${pkg.name}
@@ -17,9 +20,9 @@ export default defineConfig({
     target: "es2022",
     emptyOutDir: true,
     manifest: false,
-    outDir: resolve(__dirname, "./dist"),
+    outDir: path.resolve(__dirname, "./dist"),
     lib: {
-      entry: resolve(__dirname, "src/sora.ts"),
+      entry: path.resolve(__dirname, "src/sora.ts"),
       name: "WebRTC SFU Sora JavaScript SDK",
       formats: ["es"],
       fileName: "sora",
@@ -33,11 +36,17 @@ export default defineConfig({
   define: {
     __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
   },
-  envDir: resolve(__dirname, "./"),
+  envDir: path.resolve(__dirname, "./"),
   plugins: [
     dts({
       include: ["src/**/*"],
     }),
   ],
   root: process.cwd(),
+  lint: {
+    ignorePatterns: ["dist/**"],
+  },
+  fmt: {
+    ignorePatterns: ["dist/**", "devtools/dist/**"],
+  },
 });
