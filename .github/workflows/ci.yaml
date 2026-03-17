@@ -19,7 +19,6 @@ jobs:
           - "25"
           - "24"
           - "22"
-          - "20"
         typescript:
           - "next"
           - "beta"
