@@ -26,8 +26,6 @@ jobs:
           - "24"
           # 30 Apr 2027 End of Life
           - "22"
-          # 30 Apr 2026 End of Life
-          - "20"
         os:
           - "ubuntu-24.04"
           - "macos-15"

@@ -41,5 +41,11 @@ export default defineConfig({
           "sora-js-sdk": resolve(__dirname, "../dist/sora.mjs"),
         },
   },
+  // vite-plus の dev サーバーで dependency scan が失敗すると
+  // resolve.alias が機能しなくなるため、dependency scan をスキップする
+  optimizeDeps: {
+    noDiscovery: true,
+    include: [],
+  },
   root: resolve(__dirname),
 });

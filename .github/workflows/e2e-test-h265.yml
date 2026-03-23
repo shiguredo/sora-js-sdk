@@ -21,8 +21,8 @@ jobs:
     strategy:
       matrix:
         node:
-          # Nodejs のテストではないので一番古い LTS である 20 でのみ動作確認する
-          - "20"
+          # Nodejs のテストではないので一番古い LTS である 22 でのみ動作確認する
+          - "22"
         browser:
           - name: "Google Chrome Canary"
             type: "google-chrome@canary"
