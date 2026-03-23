@@ -31,21 +31,17 @@ export default defineConfig({
     },
   },
   envDir: resolve(__dirname, ".."),
-  resolve: {
-    // NPM_PKG_E2E_TEST が true の時は alias を無効化する
-    // これは .github/workflows/npm-pkg-e2e-test.yml で、
-    // E2E テストで複数のバージョンの npm の sora-js-sdk をインストールして利用するため
-    alias: process.env.NPM_PKG_E2E_TEST
-      ? {}
-      : {
-          "sora-js-sdk": resolve(__dirname, "../dist/sora.mjs"),
-        },
-  },
-  // vite-plus の dev サーバーで dependency scan が失敗すると
-  // resolve.alias が機能しなくなるため、dependency scan をスキップする
-  optimizeDeps: {
-    noDiscovery: true,
-    include: [],
-  },
+  plugins: [
+    // vp dev 経由だと resolve.alias が機能しないため plugin で解決する
+    // NPM_PKG_E2E_TEST が true の時は npm の sora-js-sdk を使うため無効化する
+    !process.env.NPM_PKG_E2E_TEST && {
+      name: "sora-js-sdk-resolve",
+      resolveId(id: string) {
+        if (id === "sora-js-sdk") {
+          return resolve(__dirname, "../dist/sora.mjs");
+        }
+      },
+    },
+  ],
   root: resolve(__dirname),
 });
