@@ -38,7 +38,7 @@ export default defineConfig({
     alias: process.env.NPM_PKG_E2E_TEST
       ? {}
       : {
-          "sora-js-sdk": resolve(__dirname, "../dist/sora.mjs"),
+          "sora-js-sdk": resolve(__dirname, "../dist/sora.js"),
         },
   },
   root: resolve(__dirname),
