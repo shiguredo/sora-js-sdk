@@ -45,13 +45,14 @@
     "jsdom": "29.0.1",
     "typedoc": "0.28.18",
     "typescript": "6.0.2",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.13",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.14",
     "vite-plugin-dts": "4.5.4",
-    "vite-plus": "0.1.13",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.13"
+    "vite-plus": "0.1.14",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.14"
   },
   "engines": {
     "node": ">=22",
     "pnpm": ">=10"
-  }
+  },
+  "packageManager": "pnpm@10.32.1"
 }
