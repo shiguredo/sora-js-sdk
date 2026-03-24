@@ -11,10 +11,12 @@
 
 ## develop
 
-- [FIX] rpc メソッドのサンプルコードで、実際に存在しない RPC メソッド名が使われていたのを修正する
-  - @sile
+- [UPDATE] TypeScript 6.0 へ対応する
+  - @voluntas
 - [CHANGE] Node 20 のサポートを終了する
   - @voluntas
+- [FIX] rpc メソッドのサンプルコードで、実際に存在しない RPC メソッド名が使われていたのを修正する
+  - @sile
 
 ### misc
 
