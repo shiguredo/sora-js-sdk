@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
-    "@types/node": "25.5.0",
+    "@types/node": "25.5.2",
     "jsdom": "29.0.1",
     "typedoc": "0.28.18",
     "typescript": "6.0.2",
