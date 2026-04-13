@@ -42,7 +42,7 @@
   "devDependencies": {
     "@playwright/test": "1.58.2",
     "@types/node": "25.5.0",
-    "jsdom": "29.0.1",
+    "jsdom": "29.0.2",
     "typedoc": "0.28.18",
     "typescript": "6.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.1.14",
