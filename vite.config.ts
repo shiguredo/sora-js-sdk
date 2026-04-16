@@ -45,6 +45,9 @@ export default defineConfig({
   root: process.cwd(),
   lint: {
     ignorePatterns: ["dist/**"],
+    options: {
+      typeAware: true,
+    },
   },
   fmt: {
     ignorePatterns: ["dist/**", "devtools/dist/**"],

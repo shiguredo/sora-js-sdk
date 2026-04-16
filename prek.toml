@@ -17,5 +17,6 @@ hooks = [
 repo = "local"
 hooks = [
   { id = "check", name = "vp check", entry = "vp check", language = "system", pass_filenames = false, priority = 0 },
-  { id = "test", name = "vp test", entry = "vp test run", language = "system", pass_filenames = false, priority = 10 },
+  { id = "typecheck", name = "tsc --noEmit", entry = "pnpm exec tsc --noEmit", language = "system", pass_filenames = false, priority = 10 },
+  { id = "test", name = "vp test", entry = "vp test run", language = "system", pass_filenames = false, priority = 20 },
 ]
