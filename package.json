@@ -43,7 +43,7 @@
     "@playwright/test": "1.58.2",
     "@types/node": "25.5.0",
     "jsdom": "29.0.1",
-    "typedoc": "0.28.18",
+    "typedoc": "0.28.19",
     "typescript": "6.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.1.14",
     "vite-plugin-dts": "4.5.4",
