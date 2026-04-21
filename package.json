@@ -40,15 +40,15 @@
     "doc": "typedoc"
   },
   "devDependencies": {
-    "@playwright/test": "1.58.2",
-    "@types/node": "25.5.0",
-    "jsdom": "29.0.1",
-    "typedoc": "0.28.18",
-    "typescript": "6.0.2",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.14",
+    "@playwright/test": "1.59.1",
+    "@types/node": "25.6.0",
+    "jsdom": "29.0.2",
+    "typedoc": "0.28.19",
+    "typescript": "6.0.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.18",
     "vite-plugin-dts": "4.5.4",
-    "vite-plus": "0.1.14",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.14"
+    "vite-plus": "0.1.18",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.18"
   },
   "engines": {
     "node": ">=22",
