@@ -4,6 +4,7 @@
 
 default_stages = ["pre-commit"]
 
+# prek 組み込みフック (オフラインで動作する Rust ネイティブ実装)
 [[repos]]
 repo = "builtin"
 hooks = [
@@ -11,12 +12,40 @@ hooks = [
   { id = "end-of-file-fixer" },
   { id = "check-yaml" },
   { id = "check-toml" },
+  # マージコンフリクトマーカーが残ったコミットを防ぐ
+  { id = "check-merge-conflict" },
+  # 秘密鍵の誤コミットを防ぐ
+  { id = "detect-private-key" },
 ]
 
+# プロジェクト固有のローカルフック
+# priority が小さいほど先に実行される。同じ priority なら並列実行される
 [[repos]]
 repo = "local"
-hooks = [
-  { id = "check", name = "vp check", entry = "vp check", language = "system", pass_filenames = false, priority = 0 },
-  { id = "typecheck", name = "tsc --noEmit", entry = "pnpm exec tsc --noEmit", language = "system", pass_filenames = false, priority = 10 },
-  { id = "test", name = "vp test", entry = "vp test run", language = "system", pass_filenames = false, priority = 20 },
-]
+
+# vp check: フォーマット (oxfmt) と lint (oxlint type-aware) をまとめて実行
+[[repos.hooks]]
+id = "check"
+name = "vp check"
+entry = "vp check"
+language = "system"
+pass_filenames = false
+priority = 0
+
+# tsc --noEmit: TypeScript の型チェック
+[[repos.hooks]]
+id = "typecheck"
+name = "tsc --noEmit"
+entry = "pnpm exec tsc --noEmit"
+language = "system"
+pass_filenames = false
+priority = 10
+
+# vp test run: vitest によるユニットテスト
+[[repos.hooks]]
+id = "test"
+name = "vp test"
+entry = "vp test run"
+language = "system"
+pass_filenames = false
+priority = 20
