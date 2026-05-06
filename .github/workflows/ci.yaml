@@ -50,7 +50,7 @@ jobs:
   slack_notify:
     needs: [ci]
     runs-on: ubuntu-slim
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && github.actor != 'dependabot[bot]' }}
     permissions:
       actions: read
     steps:
