@@ -32,15 +32,16 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: ${{ matrix.node }}
+          run-install: false
       - uses: pnpm/action-setup@v6
-      - run: pnpm --version
-      - run: pnpm install
-      - run: pnpm run build
-      - run: pnpm playwright install webkit --with-deps
-      - run: pnpm playwright test --project="WebKit" e2e-tests/tests/webkit.test.ts
+      - run: vp --version
+      - run: vp install
+      - run: vp run build
+      - run: vp exec playwright install webkit --with-deps
+      - run: vp exec playwright test --project="WebKit" e2e-tests/tests/webkit.test.ts
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
