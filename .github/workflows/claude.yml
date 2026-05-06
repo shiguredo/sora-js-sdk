@@ -14,7 +14,6 @@ permissions:
 
 env:
   CLAUDE_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_SORA_OSS_SONNET }}
-  CLAUDE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_VOLUNTAS }}
 
 jobs:
   claude-response:
@@ -25,5 +24,5 @@ jobs:
       - uses: shiguredo/github-actions/.github/actions/claude-code-action@main
         with:
           api_key: ${{ env.CLAUDE_API_KEY }}
-          oauth_user: voluntas
-          oauth_token: ${{ env.CLAUDE_OAUTH_TOKEN }}
+          oauth_users: '{"voluntas": "${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_VOLUNTAS
+            }}", "sile": "${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_SILE }}"}'
