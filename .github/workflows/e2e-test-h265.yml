@@ -48,11 +48,12 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build
-      - run: pnpm playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/h265.test.ts
+      - run: pnpm playwright test --project="${{ matrix.browser.name }}"
+          e2e-tests/tests/h265.test.ts
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
       # - uses: actions/upload-artifact@v4

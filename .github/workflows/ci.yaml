@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           run-install: false
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
       - run: vp --version
       - run: vp install
       - run: vp add -E -D typescript@${{ matrix.typescript }} -w
