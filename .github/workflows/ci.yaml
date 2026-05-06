@@ -41,7 +41,7 @@ jobs:
       - uses: pnpm/action-setup@v5
       - run: vp --version
       - run: vp install
-      - run: vp pm add -E -D typescript@${{ matrix.typescript }} -w
+      - run: vp add -E -D typescript@${{ matrix.typescript }} -w
       - run: vp run build
       - run: vp run lint
       - run: vp run typecheck
