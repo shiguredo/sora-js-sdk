@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         node:
-          - "25"
+          - "26"
           - "24"
           - "22"
         typescript:
@@ -34,17 +34,18 @@ jobs:
           - "5.1"
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: ${{ matrix.node }}
+          run-install: false
       - uses: pnpm/action-setup@v5
-      - run: pnpm --version
-      - run: pnpm install
-      - run: pnpm add -E -D typescript@${{ matrix.typescript }} -w
-      - run: pnpm run build
-      - run: pnpm run lint
-      - run: pnpm run typecheck
-      - run: pnpm run test
+      - run: vp --version
+      - run: vp install
+      - run: vp pm add -E -D typescript@${{ matrix.typescript }} -w
+      - run: vp run build
+      - run: vp run lint
+      - run: vp run typecheck
+      - run: vp run test
 
   slack_notify:
     needs: [ci]
