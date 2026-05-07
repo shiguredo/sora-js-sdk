@@ -61,7 +61,7 @@ jobs:
           ping: ${{ secrets.TEST_TS_DOMAIN }}
           version: latest
           use-cache: true
-      - uses: voidzero-dev/setup-vp@v1
+      - uses: voidzero-dev/setup-vp@v1.8.0
         with:
           node-version: ${{ matrix.node }}
           run-install: false

@@ -48,7 +48,7 @@ jobs:
           use-cache: true
       - uses: Homebrew/actions/setup-homebrew@master
       - run: brew install --cask ${{ matrix.browser.type}}
-      - uses: voidzero-dev/setup-vp@v1
+      - uses: voidzero-dev/setup-vp@v1.8.0
         with:
           node-version: ${{ matrix.node }}
           run-install: false
