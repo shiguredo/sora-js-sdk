@@ -34,11 +34,10 @@ jobs:
           - "5.1"
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-          cache: pnpm
+      - uses: pnpm/action-setup@v6
       - run: pnpm install --frozen-lockfile
       - run: pnpm add -E -D typescript@${{ matrix.typescript }} -w
       - run: pnpm run build

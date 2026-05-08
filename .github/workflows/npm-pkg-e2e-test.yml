@@ -61,11 +61,10 @@ jobs:
           ping: ${{ secrets.TEST_TS_DOMAIN }}
           version: latest
           use-cache: true
-      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-          cache: pnpm
+      - uses: pnpm/action-setup@v6
       # sora-js-sdk を npm からインストールする
       - run: pnpm install --frozen-lockfile
       - run: pnpm add -E sora-js-sdk@${{ matrix.sdk_version }}
