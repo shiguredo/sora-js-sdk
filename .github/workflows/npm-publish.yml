@@ -15,16 +15,15 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v6
-      - uses: voidzero-dev/setup-vp@v1.8.0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
-          run-install: false
-      - uses: pnpm/action-setup@v6
-      - run: vp --version
-      - run: vp install
-      - run: vp run build
-      - run: vp run lint
-      - run: vp run typecheck
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm run lint
+      - run: pnpm run typecheck
       - uses: actions/upload-artifact@v7
         with:
           name: sora-js-sdk-dist
@@ -40,10 +39,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: voidzero-dev/setup-vp@v1.8.0
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
-          run-install: false
           registry-url: https://registry.npmjs.org
 
       - name: Download Artifact
@@ -67,10 +65,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: voidzero-dev/setup-vp@v1.8.0
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
-          run-install: false
           registry-url: https://registry.npmjs.org
 
       - name: Download Artifact

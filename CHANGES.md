@@ -20,11 +20,6 @@
 
 ### misc
 
-- [CHANGE] GitHub Actions のワークフローを pnpm から Vite+ に切り替える
-  - actions/setup-node を voidzero-dev/setup-vp に置き換える
-  - pnpm/action-setup は維持する (Vite+ は pnpm を内蔵していないため)
-  - dependabot.yml に voidzero-dev/setup-vp を追加し actions/setup-node を削除する
-  - @voluntas
 - [CHANGE] Vite+ に切り替える
   - @voluntas
 - [CHANGE] Biome から oxc に移行する

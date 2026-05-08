@@ -61,19 +61,18 @@ jobs:
           ping: ${{ secrets.TEST_TS_DOMAIN }}
           version: latest
           use-cache: true
-      - uses: voidzero-dev/setup-vp@v1.8.0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-          run-install: false
-      - uses: pnpm/action-setup@v6
+          cache: pnpm
       # sora-js-sdk を npm からインストールする
-      - run: vp --version
-      - run: vp install
-      - run: vp add -E sora-js-sdk@${{ matrix.sdk_version }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm add -E sora-js-sdk@${{ matrix.sdk_version }}
         working-directory: ./e2e-tests
-      # vp run build しない
-      - run: vp exec playwright install ${{ matrix.browser.type }} --with-deps
-      - run: vp exec playwright test --project="${{ matrix.browser.name }}"
+      # build しない
+      - run: pnpm exec playwright install ${{ matrix.browser.type }} --with-deps
+      - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
       # - uses: actions/upload-artifact@v4
