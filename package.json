@@ -47,7 +47,7 @@
     "typescript": "6.0.3",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.1.20",
     "vite-plugin-dts": "5.0.0",
-    "vite-plus": "0.1.20",
+    "vite-plus": "0.1.21",
     "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.20"
   },
   "engines": {
