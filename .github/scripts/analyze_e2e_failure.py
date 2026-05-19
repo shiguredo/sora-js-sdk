@@ -188,7 +188,11 @@ def build_user_message(context: dict[str, Any]) -> str:
 
 
 def call_anthropic(api_key: str, model: str, user_message: str) -> dict[str, Any]:
-    """Messages API を呼び、prefill で JSON を強制取得する。"""
+    """Messages API を呼び、レスポンスから JSON を抽出して返す。
+
+    claude-sonnet-4-6 は assistant message prefill をサポートしないため、
+    レスポンス本文から最初の `{` 〜 最後の `}` までを抽出して JSON としてパースする。
+    """
     client = Anthropic(api_key=api_key)
     response = client.messages.create(
         model=model,
@@ -196,23 +200,16 @@ def call_anthropic(api_key: str, model: str, user_message: str) -> dict[str, Any
         system=SYSTEM_PROMPT,
         messages=[
             {"role": "user", "content": user_message},
-            {"role": "assistant", "content": "{"},
         ],
     )
 
-    # prefill した `{` を補って完全な JSON にする
     body = response.content[0].text
-    raw = "{" + body
-    # まれに ```json などで包まれた場合のフォールバック
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        # 最初の { から最後の } までを切り出して再試行
-        start = raw.find("{")
-        end = raw.rfind("}")
-        if start != -1 and end != -1 and end > start:
-            return json.loads(raw[start : end + 1])
-        raise
+    # コードフェンスやチャット応答の前後を吸収して JSON を抽出する
+    start = body.find("{")
+    end = body.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError(f"no JSON object found in response: {body!r}")
+    return json.loads(body[start : end + 1])
 
 
 def main() -> int:
