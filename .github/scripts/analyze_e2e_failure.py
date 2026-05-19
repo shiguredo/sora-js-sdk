@@ -1,7 +1,7 @@
 # /// script
-# requires-python = ">=3.13"
+# requires-python = ">=3.14"
 # dependencies = [
-#   "anthropic>=0.50.0",
+#   "anthropic>=0.103.0",
 # ]
 # ///
 """e2e-test の失敗を Anthropic Messages API で解析し、JSON を stdout に出力する。
