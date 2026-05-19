@@ -9,26 +9,106 @@
 入力は環境変数経由で受け取る。出力は stdout に JSON 1 オブジェクト。
 """
 
-from __future__ import annotations
-
 import json
 import os
 import subprocess
 import sys
-from typing import Any
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Final, Literal, TypedDict, cast
 
 from anthropic import Anthropic
+from anthropic.types import TextBlock
 
-LOG_TAIL_LINES = 100
-HISTORY_LIMIT = 20
-DEFAULT_MODEL = "claude-sonnet-4-6"
-MAX_TOKENS = 2048
+LOG_TAIL_LINES: Final = 100
+HISTORY_LIMIT: Final = 20
+DEFAULT_MODEL: Final = "claude-sonnet-4-6"
+MAX_TOKENS: Final = 2048
 # matrix が大きいときに全セルのログを送ると prompt が肥大化するため、
 # 失敗ジョブのうち最初の N 件だけログを取得し、残りはジョブ名だけ列挙する
-MAX_LOG_JOBS = 5
+MAX_LOG_JOBS: Final = 5
 # 外部呼び出しが暴走しないようにそれぞれの上限を設ける (実測は API ~14s, gh 各 ~1s)
-ANTHROPIC_TIMEOUT_SEC = 60.0
-SUBPROCESS_TIMEOUT_SEC = 30
+ANTHROPIC_TIMEOUT_SEC: Final = 60.0
+SUBPROCESS_TIMEOUT_SEC: Final = 30
+
+JobConclusion = Literal["failure", "cancelled"]
+
+type JsonDict = dict[str, object]
+
+
+def _as_object_dict(value: object) -> JsonDict | None:
+    """JSON 由来の dict を JsonDict として扱う。"""
+    if not isinstance(value, dict):
+        return None
+    return cast(JsonDict, value)
+
+
+class FailureCategory(StrEnum):
+    FLAKY = "flaky"
+    EXTERNAL_DEPENDENCY = "external_dependency"
+    CODE_ISSUE = "code_issue"
+    INFRASTRUCTURE = "infrastructure"
+    CANCELLED = "cancelled"
+    UNKNOWN = "unknown"
+
+
+class Confidence(StrEnum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class FailedStep(TypedDict):
+    name: str
+    conclusion: str | None
+    number: int | None
+
+
+class FailedJob(TypedDict):
+    id: int
+    name: str
+    conclusion: JobConclusion
+    started_at: str | None
+    completed_at: str | None
+    failed_steps: list[FailedStep]
+
+
+class RunHistoryEntry(TypedDict):
+    databaseId: int
+    conclusion: str | None
+    status: str
+    createdAt: str
+    headSha: str
+    event: str
+
+
+class AnalysisResult(TypedDict):
+    category: str
+    confidence: str
+    summary: str
+    evidence: str
+    suggested_action: str
+    affected_matrix: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class RunMeta:
+    run_id: str
+    workflow: str
+    branch: str
+    event: str
+    sha: str
+    e2e_test_result: str
+
+
+@dataclass(frozen=True, slots=True)
+class AnalysisContext:
+    meta: RunMeta
+    failed_jobs: list[FailedJob]
+    history: list[RunHistoryEntry]
+    recent_changes: str
+    logs: dict[str, str]
+
 
 SYSTEM_PROMPT = """\
 あなたは GitHub Actions の e2e-test の失敗を解析する。
@@ -70,6 +150,8 @@ SYSTEM_PROMPT = """\
 - 推測でカテゴリを決めないこと。証拠が薄ければ confidence: low か category: unknown。
 """
 
+_ANALYSIS_REQUIRED_KEYS = frozenset(AnalysisResult.__annotations__)
+
 
 def env(name: str, default: str | None = None) -> str:
     """環境変数を取得する。未設定なら default、それも無ければ KeyError。"""
@@ -82,12 +164,56 @@ def env(name: str, default: str | None = None) -> str:
 def run(*args: str, check: bool = True) -> str:
     """subprocess.run のラッパー。stdout を str で返す。"""
     result = subprocess.run(
-        args, capture_output=True, text=True, check=check, timeout=SUBPROCESS_TIMEOUT_SEC
+        args,
+        capture_output=True,
+        text=True,
+        check=check,
+        timeout=SUBPROCESS_TIMEOUT_SEC,
     )
     return result.stdout
 
 
-def collect_jobs(repo: str, run_id: str) -> list[dict[str, Any]]:
+def _parse_failed_job(job: JsonDict) -> FailedJob | None:
+    conclusion = job.get("conclusion")
+    if conclusion not in ("failure", "cancelled"):
+        return None
+    job_id = job.get("id")
+    if not isinstance(job_id, int):
+        return None
+    name = job.get("name")
+    if not isinstance(name, str):
+        return None
+
+    steps = job.get("steps", [])
+    failed_steps: list[FailedStep] = []
+    if isinstance(steps, list):
+        for step_raw in steps:
+            step = _as_object_dict(step_raw)
+            if step is None:
+                continue
+            step_conclusion = step.get("conclusion")
+            if step_conclusion not in ("failure", "cancelled"):
+                continue
+            step_name = step.get("name")
+            step_number = step.get("number")
+            failed_steps.append(
+                {
+                    "name": str(step_name) if step_name is not None else "",
+                    "conclusion": str(step_conclusion) if step_conclusion else None,
+                    "number": step_number if isinstance(step_number, int) else None,
+                }
+            )
+    return {
+        "id": job_id,
+        "name": name,
+        "conclusion": cast(JobConclusion, conclusion),
+        "started_at": str(job["started_at"]) if job.get("started_at") else None,
+        "completed_at": str(job["completed_at"]) if job.get("completed_at") else None,
+        "failed_steps": failed_steps,
+    }
+
+
+def collect_jobs(repo: str, run_id: str) -> list[FailedJob]:
     """対象 run の失敗・キャンセルしたジョブ一覧を返す。"""
     raw = run(
         "gh",
@@ -97,30 +223,16 @@ def collect_jobs(repo: str, run_id: str) -> list[dict[str, Any]]:
         "--jq",
         ".jobs[]",
     )
-    failed: list[dict[str, Any]] = []
+    failed: list[FailedJob] = []
     for line in raw.splitlines():
         if not line.strip():
             continue
-        job = json.loads(line)
-        if job.get("conclusion") in ("failure", "cancelled"):
-            failed.append(
-                {
-                    "id": job["id"],
-                    "name": job["name"],
-                    "conclusion": job["conclusion"],
-                    "started_at": job.get("started_at"),
-                    "completed_at": job.get("completed_at"),
-                    "failed_steps": [
-                        {
-                            "name": s["name"],
-                            "conclusion": s.get("conclusion"),
-                            "number": s.get("number"),
-                        }
-                        for s in job.get("steps", [])
-                        if s.get("conclusion") in ("failure", "cancelled")
-                    ],
-                }
-            )
+        job = _as_object_dict(json.loads(line))
+        if job is None:
+            continue
+        parsed = _parse_failed_job(job)
+        if parsed is not None:
+            failed.append(parsed)
     return failed
 
 
@@ -136,7 +248,7 @@ def collect_log_tail(repo: str, job_id: int) -> str:
     return "\n".join(lines[-LOG_TAIL_LINES:])
 
 
-def collect_history(repo: str, workflow: str, branch: str) -> list[dict[str, Any]]:
+def collect_history(repo: str, workflow: str, branch: str) -> list[RunHistoryEntry]:
     """直近 N 回の同 workflow / 同 branch の実行履歴を返す。"""
     raw = run(
         "gh",
@@ -153,7 +265,7 @@ def collect_history(repo: str, workflow: str, branch: str) -> list[dict[str, Any
         "--json",
         "databaseId,conclusion,status,createdAt,headSha,event",
     )
-    return json.loads(raw)
+    return cast(list[RunHistoryEntry], json.loads(raw))
 
 
 def collect_recent_changes() -> str:
@@ -170,34 +282,79 @@ def collect_recent_changes() -> str:
             "e2e-tests/",
             "playwright.config.ts",
         )
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+    # PEP 758: except 句の括弧は省略可能
+    except subprocess.CalledProcessError, subprocess.TimeoutExpired:
         return ""
 
 
-def build_user_message(context: dict[str, Any]) -> str:
+def build_user_message(context: AnalysisContext) -> str:
     """Claude に渡す user message を組み立てる。"""
-    parts: list[str] = []
-
-    parts.append("# meta")
-    parts.append(json.dumps(context["meta"], indent=2, ensure_ascii=False))
-
-    parts.append("\n# failed_jobs")
-    parts.append(json.dumps(context["failed_jobs"], indent=2, ensure_ascii=False))
-
-    parts.append(f"\n# history (直近 {HISTORY_LIMIT} 回)")
-    parts.append(json.dumps(context["history"], indent=2, ensure_ascii=False))
-
-    parts.append("\n# recent_changes (直近 5 コミットの e2e-tests/ 配下)")
-    parts.append(context["recent_changes"] or "(変更なし)")
-
-    parts.append("\n# logs (各失敗ジョブのログ末尾)")
-    for name, log in context["logs"].items():
+    meta = {
+        "run_id": context.meta.run_id,
+        "workflow": context.meta.workflow,
+        "branch": context.meta.branch,
+        "event": context.meta.event,
+        "sha": context.meta.sha,
+        "e2e_test_result": context.meta.e2e_test_result,
+    }
+    parts = [
+        "# meta",
+        json.dumps(meta, indent=2, ensure_ascii=False),
+        "\n# failed_jobs",
+        json.dumps(context.failed_jobs, indent=2, ensure_ascii=False),
+        f"\n# history (直近 {HISTORY_LIMIT} 回)",
+        json.dumps(context.history, indent=2, ensure_ascii=False),
+        "\n# recent_changes (直近 5 コミットの e2e-tests/ 配下)",
+        context.recent_changes or "(変更なし)",
+        "\n# logs (各失敗ジョブのログ末尾)",
+    ]
+    for name, log in context.logs.items():
         parts.append(f"\n--- {name} ---\n{log}")
-
     return "\n".join(parts)
 
 
-def call_anthropic(api_key: str, model: str, user_message: str) -> dict[str, Any]:
+def _extract_json_object(body: str) -> dict[str, object]:
+    """レスポンス本文から最初の JSON オブジェクトを抽出する。"""
+    start = body.find("{")
+    end = body.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError(f"no JSON object found in response: {body!r}")
+    parsed = json.loads(body[start : end + 1])
+    if not isinstance(parsed, dict):
+        raise ValueError(f"expected JSON object, got {type(parsed).__name__}")
+    return parsed
+
+
+def _coerce_analysis(raw: dict[str, object]) -> AnalysisResult:
+    """API 応答を AnalysisResult に正規化する。未知の category は unknown に落とす。"""
+    missing = _ANALYSIS_REQUIRED_KEYS - raw.keys()
+    if missing:
+        raise ValueError(f"analysis missing keys: {sorted(missing)}")
+
+    category = str(raw["category"])
+    if category not in FailureCategory:
+        category = FailureCategory.UNKNOWN
+
+    confidence = str(raw["confidence"])
+    if confidence not in Confidence:
+        confidence = Confidence.LOW
+
+    affected = raw["affected_matrix"]
+    if not isinstance(affected, list):
+        raise ValueError("affected_matrix must be a list")
+    affected_matrix = [str(item) for item in affected]
+
+    return {
+        "category": category,
+        "confidence": confidence,
+        "summary": str(raw["summary"]),
+        "evidence": str(raw["evidence"]),
+        "suggested_action": str(raw["suggested_action"]),
+        "affected_matrix": affected_matrix,
+    }
+
+
+def call_anthropic(api_key: str, model: str, user_message: str) -> AnalysisResult:
     """Messages API を呼び、レスポンスから JSON を抽出して返す。
 
     claude-sonnet-4-6 は assistant message prefill をサポートしないため、
@@ -208,18 +365,13 @@ def call_anthropic(api_key: str, model: str, user_message: str) -> dict[str, Any
         model=model,
         max_tokens=MAX_TOKENS,
         system=SYSTEM_PROMPT,
-        messages=[
-            {"role": "user", "content": user_message},
-        ],
+        messages=[{"role": "user", "content": user_message}],
     )
 
-    body = response.content[0].text
-    # コードフェンスやチャット応答の前後を吸収して JSON を抽出する
-    start = body.find("{")
-    end = body.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError(f"no JSON object found in response: {body!r}")
-    return json.loads(body[start : end + 1])
+    block = response.content[0]
+    if not isinstance(block, TextBlock):
+        raise ValueError(f"unexpected content block type: {type(block).__name__}")
+    return _coerce_analysis(_extract_json_object(block.text))
 
 
 def main() -> int:
@@ -241,23 +393,21 @@ def main() -> int:
             logs[job["name"]] = collect_log_tail(repo, job["id"])
         else:
             logs[job["name"]] = "(log omitted; same failure pattern expected)"
-    history = collect_history(repo, workflow, branch)
-    recent_changes = collect_recent_changes()
 
-    context = {
-        "meta": {
-            "run_id": run_id,
-            "workflow": workflow,
-            "branch": branch,
-            "event": event_name,
-            "sha": sha,
-            "e2e_test_result": e2e_result,
-        },
-        "failed_jobs": failed_jobs,
-        "history": history,
-        "recent_changes": recent_changes,
-        "logs": logs,
-    }
+    context = AnalysisContext(
+        meta=RunMeta(
+            run_id=run_id,
+            workflow=workflow,
+            branch=branch,
+            event=event_name,
+            sha=sha,
+            e2e_test_result=e2e_result,
+        ),
+        failed_jobs=failed_jobs,
+        history=collect_history(repo, workflow, branch),
+        recent_changes=collect_recent_changes(),
+        logs=logs,
+    )
 
     user_message = build_user_message(context)
     print(f"=== user_message length: {len(user_message)} chars ===", file=sys.stderr)
