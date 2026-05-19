@@ -19,10 +19,13 @@ from typing import Any
 
 from anthropic import Anthropic
 
-LOG_TAIL_LINES = 300
+LOG_TAIL_LINES = 100
 HISTORY_LIMIT = 20
 DEFAULT_MODEL = "claude-sonnet-4-6"
 MAX_TOKENS = 2048
+# matrix が大きいときに全セルのログを送ると prompt が肥大化するため、
+# 失敗ジョブのうち最初の N 件だけログを取得し、残りはジョブ名だけ列挙する
+MAX_LOG_JOBS = 5
 
 SYSTEM_PROMPT = """\
 あなたは GitHub Actions の e2e-test の失敗を解析する。
@@ -224,7 +227,13 @@ def main() -> int:
     model = env("ANTHROPIC_MODEL", DEFAULT_MODEL)
 
     failed_jobs = collect_jobs(repo, run_id)
-    logs = {job["name"]: collect_log_tail(repo, job["id"]) for job in failed_jobs}
+    # 大量の matrix セル失敗時に prompt が肥大化するのを防ぐため、ログは先頭 MAX_LOG_JOBS 件だけ取得する
+    logs: dict[str, str] = {}
+    for i, job in enumerate(failed_jobs):
+        if i < MAX_LOG_JOBS:
+            logs[job["name"]] = collect_log_tail(repo, job["id"])
+        else:
+            logs[job["name"]] = "(log omitted; same failure pattern expected)"
     history = collect_history(repo, workflow, branch)
     recent_changes = collect_recent_changes()
 
