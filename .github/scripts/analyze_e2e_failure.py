@@ -26,6 +26,9 @@ MAX_TOKENS = 2048
 # matrix が大きいときに全セルのログを送ると prompt が肥大化するため、
 # 失敗ジョブのうち最初の N 件だけログを取得し、残りはジョブ名だけ列挙する
 MAX_LOG_JOBS = 5
+# 外部呼び出しが暴走しないようにそれぞれの上限を設ける (実測は API ~14s, gh 各 ~1s)
+ANTHROPIC_TIMEOUT_SEC = 60.0
+SUBPROCESS_TIMEOUT_SEC = 30
 
 SYSTEM_PROMPT = """\
 あなたは GitHub Actions の e2e-test の失敗を解析する。
@@ -78,7 +81,9 @@ def env(name: str, default: str | None = None) -> str:
 
 def run(*args: str, check: bool = True) -> str:
     """subprocess.run のラッパー。stdout を str で返す。"""
-    result = subprocess.run(args, capture_output=True, text=True, check=check)
+    result = subprocess.run(
+        args, capture_output=True, text=True, check=check, timeout=SUBPROCESS_TIMEOUT_SEC
+    )
     return result.stdout
 
 
@@ -120,11 +125,13 @@ def collect_jobs(repo: str, run_id: str) -> list[dict[str, Any]]:
 
 
 def collect_log_tail(repo: str, job_id: int) -> str:
-    """ジョブのログ末尾を返す。取得失敗時は (log fetch failed) を返す。"""
+    """ジョブのログ末尾を返す。取得失敗・タイムアウト時は理由付きで返す。"""
     try:
         log = run("gh", "api", f"repos/{repo}/actions/jobs/{job_id}/logs")
     except subprocess.CalledProcessError:
         return "(log fetch failed)"
+    except subprocess.TimeoutExpired:
+        return f"(log fetch timed out after {SUBPROCESS_TIMEOUT_SEC}s)"
     lines = log.splitlines()
     return "\n".join(lines[-LOG_TAIL_LINES:])
 
@@ -163,7 +170,7 @@ def collect_recent_changes() -> str:
             "e2e-tests/",
             "playwright.config.ts",
         )
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return ""
 
 
@@ -196,7 +203,7 @@ def call_anthropic(api_key: str, model: str, user_message: str) -> dict[str, Any
     claude-sonnet-4-6 は assistant message prefill をサポートしないため、
     レスポンス本文から最初の `{` 〜 最後の `}` までを抽出して JSON としてパースする。
     """
-    client = Anthropic(api_key=api_key)
+    client = Anthropic(api_key=api_key, timeout=ANTHROPIC_TIMEOUT_SEC)
     response = client.messages.create(
         model=model,
         max_tokens=MAX_TOKENS,

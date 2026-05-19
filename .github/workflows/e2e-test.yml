@@ -100,6 +100,9 @@ jobs:
   analyze_and_notify_failure:
     needs: [e2e-test]
     runs-on: ubuntu-latest
+    # 解析の暴走・API ハング・gh CLI ハングなどから守るための hard ceiling
+    # (実測値は約 25 秒なので 5 分は十分な余裕がある)
+    timeout-minutes: 5
     if: ${{ always() && (needs.e2e-test.result == 'failure' || needs.e2e-test.result == 'cancelled') }}
     permissions:
       actions: read
@@ -121,6 +124,7 @@ jobs:
         if: ${{ env.ANTHROPIC_API_KEY != '' }}
         id: analyze
         continue-on-error: true
+        timeout-minutes: 3
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_RUN_ID: ${{ github.run_id }}
