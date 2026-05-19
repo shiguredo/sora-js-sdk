@@ -42,20 +42,20 @@ jobs:
       labels: [self-hosted, macOS, ARM64, Apple-M2-Pro]
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
-      - uses: Homebrew/actions/setup-homebrew@master
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: Homebrew/actions/setup-homebrew@8eb7f2efa6ab636da09aef605b497fd5b8a7587d # master
       - run: brew install --cask ${{ matrix.browser.type}}
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - run: pnpm exec playwright test --project="${{ matrix.browser.name }}"
           e2e-tests/tests/h265.test.ts
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
-      # - uses: actions/upload-artifact@v4
+      # - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       #   if: always()
       #   with:
       #     name: playwright-report
@@ -70,7 +70,7 @@ jobs:
       actions: read
     steps:
       - name: Slack Notification
-        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        uses: shiguredo/github-actions/.github/actions/slack-notify@145407fb88527b7068762db72480c1f55715e0b1 # main
         with:
           status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}

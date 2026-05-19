@@ -28,6 +28,5 @@ updates:
       - dependency-name: "Homebrew/actions"
       - dependency-name: "pnpm/action-setup"
       - dependency-name: "tailscale/github-action"
-      - dependency-name: "github/codeql-action"
       - dependency-name: "rtCamp/action-slack-notify"
       - dependency-name: "shiguredo/github-actions"
