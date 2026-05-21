@@ -28,6 +28,8 @@
   - @voluntas
 - [CHANGE] Slack 通知を rtCamp/action-slack-notify から shiguredo/github-actions の slack-notify に切り替える
   - @voluntas
+- [ADD] e2e-test の失敗・キャンセル時に Anthropic API で解析した結果を Slack に通知する
+  - @voluntas
 
 ## 2025.2.0
 
