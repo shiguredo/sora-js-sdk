@@ -7,49 +7,105 @@
 
 ## 目的
 
-1 回目の `connect()` が race で敗者になった後、ユーザーがすぐに 2 回目 `connect()` を呼ぶと、`initializeConnection` で `clearMonitorSignalingWebSocketEvent` が呼ばれないため 1 回目の interval が孤児化する。2 回目で `this.monitorSignalingWebSocketEventTimerId` が上書きされ、孤児化した 1 回目 interval が新 ws のハンドラを破壊する。
+1 回目の `connect()` が `Promise.race` で敗者になった後 (= `setConnectionTimeout` 経由のタイムアウトや `monitorSignalingWebSocketEvent` 経由の ws onclose / onerror で reject)、ユーザーが直後に 2 回目の `connect()` を呼ぶと、`initializeConnection` (`src/base.ts:820-848`) 内で `clearMonitorSignalingWebSocketEvent` が呼ばれていないため、1 回目の `monitorSignalingWebSocketEvent` (`src/base.ts:1592-1617`) で起動した `setInterval` が走り続ける。2 回目の `monitorSignalingWebSocketEvent` が `this.monitorSignalingWebSocketEventTimerId` を上書きしても、1 回目の interval は別 timer ID として残り、新 ws (= 2 回目の connect で作られた WebSocket) の `onclose` / `onerror` ハンドラを `this.ws` チェック後に上書きする (`src/base.ts:1599-1614`) ため、新 ws のハンドラ構成が破壊される。
 
-既存の C-5（`abend` 経路の leak）とは別経路の致命的問題。
+合わせて `setConnectionTimeout` (`src/base.ts:1712-1734`) も冒頭で前回の `connectionTimeoutTimerId` を clear せず、`monitorSignalingWebSocketEvent` も冒頭で前回 timer を clear しない。`initializeConnection` 経由で全 timer を確実にクリアする経路を整備し、`setConnectionTimeout` / `monitorSignalingWebSocketEvent` の冒頭でも防御的にクリアする。
 
 ## 優先度根拠
 
-High。ユーザーが「失敗 → リトライ」を実装した場合に高確率で発火する。リトライした 2 回目の `connect()` が誤った abend 処理で失敗するため、リトライ機能そのものが壊れる。
+High。アプリ側で「`connect()` 失敗 → 即リトライ」を実装した場合に高確率で発火する。`finally` (`src/publisher.ts:23-30` / `src/subscriber.ts:19-26` / `src/messaging.ts:22-29`) で `clearConnectionTimeout` と `clearMonitorSignalingWebSocketEvent` を呼んでいるため、`multiStream` の `Promise.race` 結果が確定した後は clear される設計だが、リトライまでの間に `monitorSignalingWebSocketEvent` の `setInterval` が 100ms 周期で動いており、`finally` が実行されるタイミングと 2 回目 `connect()` の `initializeConnection` 実行タイミングがミリ秒オーダーでレースする。`finally` 後に 2 回目が始まれば実害はないが、`finally` 前に 2 回目が走り始めると 1 回目 interval が新 ws を踏む。
 
 ## 現状
 
-`src/base.ts:1592-1617` の `monitorSignalingWebSocketEvent` と `publisher.ts:23-30` / `subscriber.ts:19-26` / `messaging.ts:22-29` の `Promise.race` 構造。
+`initializeConnection` (`src/base.ts:820-848`)
 
-`initializeConnection` (`:820-848`) には `clearMonitorSignalingWebSocketEvent` の呼び出しが存在しない。`setConnectionTimeout` (`:1712-1734`) も冒頭で前回 timerId を clear しない。
+```ts
+private initializeConnection(): void {
+  // ... 各種状態の初期化 ...
+  this.clearConnectionTimeout();
+}
+```
 
-## 設計方針
+末尾 (`src/base.ts:847`) で `clearConnectionTimeout` のみ呼んでいる。`clearMonitorSignalingWebSocketEvent` (`src/base.ts:1746-1748`) と `clearMonitorIceConnectionStateChange` (`src/base.ts:1753-1755`) は呼ばれていない。
 
-`initializeConnection` 内で `clearMonitorSignalingWebSocketEvent` と `clearConnectionTimeout` を必ず呼ぶ。`setConnectionTimeout` / `monitorSignalingWebSocketEvent` の冒頭で前回タイマーを明示的にクリアする二重防御。
+`monitorSignalingWebSocketEvent` (`src/base.ts:1592-1617`)
+
+```ts
+protected async monitorSignalingWebSocketEvent(): Promise<void> {
+  return new Promise((_resolve, reject) => {
+    this.monitorSignalingWebSocketEventTimerId = setInterval(() => {
+      if (!this.ws) {
+        return;
+      }
+      this.clearMonitorSignalingWebSocketEvent();
+      this.ws.onclose = (event): void => { /* ... */ };
+      this.ws.onerror = (_): void => { /* ... */ };
+    }, 100);
+  });
+}
+```
+
+冒頭で前回 `monitorSignalingWebSocketEventTimerId` を clear せず、いきなり `setInterval` で上書きする。1 回目の interval が `this.ws !== null` を観測するタイミングで `this.ws.onclose` / `this.ws.onerror` を上書きし、自分自身を `clearMonitorSignalingWebSocketEvent` でクリアして `Promise` の `reject` を握ったまま終了する。問題は `this.ws` が 2 回目 connect で作られた新 ws を指している場合で、1 回目の interval が新 ws のハンドラを破壊する。
+
+`setConnectionTimeout` (`src/base.ts:1712-1734`) も冒頭で前回の `connectionTimeoutTimerId` を clear しない。連続呼び出しで前回タイマーが孤児化する経路は同型。
+
+`clearMonitorSignalingWebSocketEvent` 内部は `clearInterval(this.monitorSignalingWebSocketEventTimerId)` (`src/base.ts:1747`) で、`setInterval` の戻り値型と整合 (issue 0006 で問題視した `clearMonitorIceConnectionStateChange` の `clearInterval` 誤用とは異なる。こちらは正しい)。
 
 ## 完了条件
 
-- `connect()` を連続で 2 回呼んでも interval / timeout が孤児化しない
-- 2 回目の `connect()` が 1 回目の interval に状態を破壊されない
+- `initializeConnection` (`src/base.ts:820-848`) 末尾に `this.clearMonitorSignalingWebSocketEvent()` と `this.clearMonitorIceConnectionStateChange()` を追加する。`this.clearConnectionTimeout()` は既存
+- `setConnectionTimeout` (`src/base.ts:1712-1734`) の `new Promise` ブロック冒頭で `this.clearConnectionTimeout()` を呼ぶ
+- `monitorSignalingWebSocketEvent` (`src/base.ts:1592-1617`) の `new Promise` ブロック冒頭で `this.clearMonitorSignalingWebSocketEvent()` を呼ぶ
+- 修正後、`connect()` を連続で 2 回呼んでも 1 回目の interval が 2 回目の ws ハンドラを破壊しない。E2E は `e2e-tests/sendrecv/main.ts` に「`signalingUrlCandidates` を全て不正 URL で構成して `connect()` を必ず失敗させ、直後に正しい URL でリトライする」シナリオを仕込み、新規テスト `e2e-tests/tests/connect_retry.test.ts` で 10 回連続でリトライを行う。2 回目の `connect()` が成功すること、リトライ中に `callbacks.disconnect` が誤発火しないこと、最終的に `connection.pc.connectionState === "connected"` になることを assert する。`callbacks.disconnect` 回数と `connectionState` を hidden DOM (例: `#unintended-disconnect-count` / `#connection-state`) に出して検証する
+- CHANGES.md `## develop` に次のエントリを追記する
+  ```
+  - [FIX] connect() の連続リトライで monitorSignalingWebSocketEvent / setConnectionTimeout のタイマーが孤児化していたのを修正する
+    - @voluntas
+  ```
+- 4 系統 (`disconnect` / `abend` / `abendPeerConnectionState` / `shutdown`) の冪等化リファクタは issue 0002 完了条件で先行採番される別 issue で扱うため、本 issue とはマージ順の競合はない (本 issue は `initializeConnection` 末尾への追加と `setConnectionTimeout` / `monitorSignalingWebSocketEvent` 冒頭への追加のみで関数本体を再構成しない)
 
 ## 解決方法
 
-`initializeConnection` の末尾付近に:
+`src/base.ts:820-848` の `initializeConnection` 末尾を次の通り変更する。
 
 ```ts
-this.clearConnectionTimeout();
-this.clearMonitorSignalingWebSocketEvent();
-this.clearMonitorIceConnectionStateChange();
+private initializeConnection(): void {
+  this.simulcast = false;
+  this.spotlight = false;
+  // ... 既存の状態初期化 ...
+  this.connectedCallbackCalled = false;
+  this.clearConnectionTimeout();
+  this.clearMonitorSignalingWebSocketEvent();
+  this.clearMonitorIceConnectionStateChange();
+}
 ```
 
-`setConnectionTimeout` 冒頭:
+`src/base.ts:1712-1734` の `setConnectionTimeout` を次の通り変更する。
 
 ```ts
-this.clearConnectionTimeout();
+protected async setConnectionTimeout(): Promise<void> {
+  this.clearConnectionTimeout();
+  return new Promise((_resolve, reject) => {
+    if (this.connectionTimeout > 0) {
+      this.connectionTimeoutTimerId = setTimeout(() => {
+        // ... 既存処理 ...
+      }, this.connectionTimeout);
+    }
+  });
+}
 ```
 
-`monitorSignalingWebSocketEvent` 冒頭:
+`src/base.ts:1592-1617` の `monitorSignalingWebSocketEvent` を次の通り変更する。
 
 ```ts
-this.clearMonitorSignalingWebSocketEvent();
+protected async monitorSignalingWebSocketEvent(): Promise<void> {
+  this.clearMonitorSignalingWebSocketEvent();
+  return new Promise((_resolve, reject) => {
+    this.monitorSignalingWebSocketEventTimerId = setInterval(() => {
+      // ... 既存処理 ...
+    }, 100);
+  });
+}
 ```
 
-C-5（issue 別件で対応）とまとめて 1 ブランチで進めるのが効率的。
+冒頭の `clear` 呼び出しは `initializeConnection` での一括クリアと二重防御になる。`initializeConnection` 単独で十分という考え方もあるが、`setConnectionTimeout` / `monitorSignalingWebSocketEvent` を直接呼ぶ将来のコードパスを増やしても安全にするために 2 段構えにする。
