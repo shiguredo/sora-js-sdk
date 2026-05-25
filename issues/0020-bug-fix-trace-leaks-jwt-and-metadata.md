@@ -19,6 +19,19 @@ High。セキュリティ。`debug: true` 環境で DevTools を開くだけで 
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+flowchart TD
+    A[signaling message] --> B[ConnectionBase.trace]
+    B --> C[callbacks.log raw]
+    B --> D{debug === true?}
+    D -->|Yes| E[utils.trace → console raw]
+    D -->|No| F[console 出力なし]
+    C --> G[JWT / metadata 平文露出]
+    E --> G
+```
+
 ```ts
 // src/base.ts:1763-1768
 protected trace(title: string, message: unknown): void {

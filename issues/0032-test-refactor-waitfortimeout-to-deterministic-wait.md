@@ -15,6 +15,19 @@ Medium。0027 は flaky **検出** インフラ (retries 削減 + JSON reporter)
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+flowchart TD
+    A[テスト操作] --> B{待機方式}
+    B -->|waitForTimeout 現行| C[固定 ms sleep]
+    C --> D{条件未成立}
+    D -->|時間切れでも続行| E[flaky / false green]
+    B -->|決定的 wait 修正後| F[waitForFunction / expect.poll]
+    F --> G[条件成立まで待機]
+    G --> H[retry 削減後も安定]
+```
+
 着手時に次で対象を網羅する:
 
 ```bash

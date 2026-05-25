@@ -15,6 +15,21 @@ Medium。Sora 現行仕様では port=0 は transceiver 解放のみとされ (`
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+flowchart TD
+    A[processOfferSdp 入力] --> B{isFirefox?}
+    B -->|No| Z[そのまま返却]
+    B -->|Yes| C["/^m=(audio|video) 0 / 一括置換 (現行)"]
+    C --> D[rejected 表明も port=9 に書き換え (バグ)]
+    D --> Z
+
+    E[修正後: mid 限定] --> F{port === 0 かつ<br/>previousPort > 0?}
+    F -->|Yes audio/video| G[port 9 に書き換え]
+    F -->|No| H[書き換えなし]
+```
+
 ```ts
 private processOfferSdp(offerSdp: string): string {
   let sdp = offerSdp;

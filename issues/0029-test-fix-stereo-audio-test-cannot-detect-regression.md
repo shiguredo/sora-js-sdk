@@ -19,6 +19,20 @@ High。`src/base.ts:1469-1477` の Chrome / Edge 向け `addStereoToFmtp` ハッ
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+flowchart TD
+    A[stereo audio E2E] --> B[WebAudio analyser 判定]
+    B --> C{左右周波数差 > 50Hz?}
+    C -->|Yes| D[pass 現行]
+    D --> E[SDK stereo ネゴ未検証]
+    F[修正後 assert] --> G[SDP stereo=1]
+    F --> H[getStats opus channels]
+    G --> I[ネゴ回帰を検知可能]
+    H --> I
+```
+
 ### 誤判定しうる analyser ロジック
 
 `e2e-tests/fake_stereo_audio/main.ts:36` — `this.channelCount = this.source.channelCount` は WebAudio ノードのデフォルト (通常 `2`) で、受信ストリームの channel 数を反映しない。

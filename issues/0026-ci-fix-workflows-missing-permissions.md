@@ -19,6 +19,18 @@ High。GitHub Security Best Practice として CI workflow への最小権限明
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+flowchart TD
+    A[e2e workflow 実行] --> B{permissions 宣言}
+    B -->|なし 現行 5 本| C["GITHUB_TOKEN 暗黙 write 可能"]
+    C --> D[サードパーティ action 経由の write リスク]
+    B -->|contents: read 修正後| E[最小権限]
+    F[npm-publish 現行] --> G["id-token: write 全 job 継承"]
+    G --> H[publish 以外も OIDC 可能 (過剰)]
+```
+
 `permissions:` 宣言済み:
 
 - `.github/workflows/ci.yaml:10-11` — `contents: read`

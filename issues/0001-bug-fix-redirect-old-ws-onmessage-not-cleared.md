@@ -25,6 +25,24 @@ connect 後も ping / update / re-offer / switched / redirect は **`signaling()
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+sequenceDiagram
+    participant OldWS as 旧 WebSocket
+    participant SDK as ConnectionBase
+    participant NewWS as 新 WebSocket
+
+    OldWS->>SDK: onmessage (redirect / switched)
+    SDK->>SDK: onclose / onerror = null
+    Note over SDK,OldWS: onmessage 未解除 (バグ)
+    SDK->>OldWS: close()
+    SDK->>SDK: this.ws = null
+    SDK->>NewWS: await getSignalingWebSocket + signaling()
+    OldWS-->>SDK: 遅延メッセージ (onmessage 生存)
+    Note over SDK: connectionId 等が新接続の値を上書き
+```
+
 根因は `signaling()` が引数 `ws` に載せる `ws.onmessage` が `async` クロージャ (`src/base.ts:1270-1309`) であること (redirect 到達時点では `this.ws === ws`)。redirect 処理は `await` で譲るため、旧 ws へ届いた 2 件目以降の MessageEvent が同じハンドラを再入する。**本修正の遮断メカニズムは `onmessage = null` によるハンドラ解除**であり、`ws.close()` だけでは close 完了前にキューに入ったイベントの dispatch は止まらない。
 
 `abendPeerConnectionState` / `abend` / `disconnect` では `ws.close()` の前に `onmessage = null` と `onerror = null` が行われている (`src/base.ts:622-623`, `733-734`, `1071-1072`)。`close()` の呼び方は経路ごとに異なる (`abendPeerConnectionState` は handler 解除後に直接 `close()`、`abend` / `disconnect` は `disconnectWebSocket` 経由)。redirect / switched だけ `onmessage` 解除が抜けている。

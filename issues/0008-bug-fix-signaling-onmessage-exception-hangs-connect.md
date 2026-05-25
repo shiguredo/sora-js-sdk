@@ -17,6 +17,22 @@ High。`type: offer` 受信前に非 string の WebSocket frame、不正 JSON、
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+stateDiagram-v2
+    [*] --> Unsettled: connect / signaling 開始
+    Unsettled --> Settled: offer / redirect resolve
+    Unsettled --> Hung: pre-offer onmessage 例外
+    Hung --> Hung: connectionTimeout 待ち (バグ)
+    Settled --> Settled: post-offer onmessage 例外 (unhandled rejection)
+
+    note right of Hung
+        例外が signaling() Promise
+        の reject に届かない
+    end note
+```
+
 `src/base.ts:1270-1309`
 
 ```ts

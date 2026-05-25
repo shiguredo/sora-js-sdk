@@ -17,6 +17,23 @@ Medium。0002 単体では `disconnect()` 経路のみ改善される。0006 適
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> ShutdownA: abend() / disconnect() 等 1 本目
+    Idle --> ShutdownB: 並列 2 本目 (再入ガードなし)
+    ShutdownA --> Done: cleanup + callbacks.disconnect
+    ShutdownB --> Done: cleanup + callbacks.disconnect
+    Done --> [*]
+
+    note right of Idle
+        0006 適用後は ICE failed
+        二重発火もここに該当
+    end note
+```
+
 0002 完了条件で issue 0030 として切り出済み。0006 / 0008 / 0009 / 0011 が本 issue を参照している。
 
 各系統の `callbacks.disconnect()` 発火箇所 (着手時):
@@ -48,6 +65,24 @@ Medium。0002 単体では `disconnect()` 経路のみ改善される。0006 適
 - ユーザーが意図的に 1 回目完了後に再度 `disconnect()` を呼ぶ契約 → issue 0005
 
 ## 設計方針
+
+### 状態遷移 (修正後)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> ShuttingDown: runShutdownOnce 1 本目
+    ShuttingDown --> ShuttingDown: 並列呼び出し (同一 Promise 返却)
+    ShuttingDown --> Idle: finally (フラグ解除)
+
+    note right of ShuttingDown
+        disconnect / abend /
+        abendPeerConnectionState /
+        shutdown が集約
+        callbacks.disconnect は 1 回のみ
+        event 優先度: abend > normal
+    end note
+```
 
 ### 共通ヘルパー `runShutdownOnce`
 

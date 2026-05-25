@@ -17,6 +17,21 @@ Medium。`compressMessage` は `CompressionStream("deflate")` を使い、メモ
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+flowchart TD
+    A[abend 開始] --> B{compress === true?}
+    B -->|No| E[DC close / ws・pc cleanup]
+    B -->|Yes| C[compressMessage]
+    C -->|成功| D[send disconnect]
+    C -->|失敗 throw| F[795 行以降スキップ (バグ)]
+    D --> E
+    E --> G[initializeConnection]
+    G --> H[callbacks.disconnect]
+    F --> I[リソース dangling / callback 不発]
+```
+
 `src/base.ts:757` の `await compressMessage(binaryMessage)` のみ未捕捉。内側の `send()` (760-774 行) は try/catch 済み (Firefox 対策)。compress throw 時は 795 行以降がすべてスキップされる。
 
 呼び出し側 (`src/base.ts:1642, 1650, 2155`) は try/catch なし。compress reject 時は unhandled rejection も発生する。

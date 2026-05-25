@@ -19,6 +19,18 @@ High。同一 `opts` で `sendrecv()` と `messaging()` を生成する公式パ
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+flowchart LR
+    opts["opts (呼び出し側)"]
+    sr["sendrecv.options"]
+    msg["messaging()"]
+    opts -->|同一参照| sr
+    msg -->|"options.audio = false 等<br/>直接 mutate"| opts
+    msg -->|同一参照経由| sr
+```
+
 ```ts
 // src/sora.ts:210-227
 messaging(..., options: ConnectionOptions = { audio: false, video: false }) {

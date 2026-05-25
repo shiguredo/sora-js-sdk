@@ -21,6 +21,23 @@ High。リリース判定の根拠そのものが崩れうる。flaky 吸収は 
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+flowchart TD
+    A[E2E テスト 1 回目] --> B{pass?}
+    B -->|No retries=3| C[retry 最大 3 回]
+    C --> D{いずれか pass?}
+    D -->|Yes| E[job success]
+    E --> F[Slack 不通知]
+    E --> G[develop マージ / npm publish 継続]
+    D -->|No| H[job failure]
+    B -->|Yes| E
+
+    I[retries=1 + flaky 検出 修正後] --> J{flaky > 0?}
+    J -->|Yes| K[job fail]
+```
+
 `playwright.config.ts:5-12`
 
 ```ts

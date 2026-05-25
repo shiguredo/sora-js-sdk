@@ -17,6 +17,22 @@ Low。`pc` が close 済みなら sender も無効化されており、`sender.r
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant SDK as removeAudioTrack
+
+    App->>SDK: removeAudioTrack()
+    SDK->>SDK: track.enabled = false
+    Note over SDK: 100ms setTimeout 開始
+    App->>SDK: disconnect() / abend()
+    SDK->>SDK: this.pc = null
+    Note over SDK: 100ms 経過
+    SDK->>SDK: pc === null → 無言 resolve (バグ)
+```
+
 `src/base.ts:414-438`
 
 ```ts

@@ -35,6 +35,20 @@ High。経路 B は接続済み (または connect 試行中に `this.ws` 代入
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+flowchart TD
+    A[disconnectWebSocket 呼び出し] --> B{this.ws 存在?}
+    B -->|No| C["経路 A: resolve(null)"]
+    B -->|Yes| D{readyState === OPEN?}
+    D -->|Yes| E[onclose 待ち → event 生成]
+    D -->|No| F["経路 B: resolve(null) (バグ)"]
+    C --> G[callback 不発 (意図)]
+    F --> H[callback 不発 (バグ)]
+    E --> I[callbacks.disconnect 1 回]
+```
+
 `src/base.ts:1086-1094`
 
 ```ts

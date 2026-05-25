@@ -17,6 +17,23 @@ High。`signalingSwitched === true` の DataChannel signaling 構成では、Pee
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Disconnecting: disconnect() 1 本目
+    Disconnecting --> Disconnecting: disconnect() 2 本目 (再入)
+    Disconnecting --> Done: cleanup 完了
+    Done --> [*]
+
+    note right of Disconnecting
+        再入ガードなしでは
+        callbacks.disconnect が
+        複数回発火する
+    end note
+```
+
 `src/base.ts:2144-2149`
 
 ```ts
@@ -31,6 +48,19 @@ dataChannelEvent.channel.onclose = async (event): Promise<void> => {
 `disconnect()` (`src/base.ts:1053-1104`) は再入ガードを持たない。
 
 ### 再入が成立する経路
+
+```mermaid
+sequenceDiagram
+    participant DC1 as DataChannel onclose
+    participant DC2 as 別 DC onclose
+    participant SDK as disconnect()
+
+    DC1->>SDK: disconnect() 1 周目
+    SDK->>SDK: await disconnectWebSocket (onclose 待ち)
+    DC2->>SDK: disconnect() 2 周目 (再入)
+    SDK->>SDK: ws.onclose resolver 上書き
+    Note over SDK: 1 周目は timeout 側に落ちうる
+```
 
 **A. 明示的な並列 `disconnect()` (本 issue の E2E 主対象)**
 

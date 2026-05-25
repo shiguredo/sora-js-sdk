@@ -19,6 +19,26 @@ High。Wi-Fi / 5G 切り替え等で `iceConnectionState` が `disconnected` の
 
 ## 現状
 
+### 状態遷移
+
+```mermaid
+stateDiagram-v2
+    [*] --> connected
+    connected --> disconnected: ネットワーク変動
+    disconnected --> connected: 復旧
+    disconnected --> failed: ブラウザ依存
+    disconnected --> AbendTimeout: 10 秒滞留 (0006 修正後)
+    failed --> AbendFailed: abendPeerConnectionState
+    AbendTimeout --> [*]
+    AbendFailed --> [*]
+
+    note right of disconnected
+        現行: connectionState !== undefined
+        ガード内のみタイマー起動
+        → 対応ブラウザではデッドコード
+    end note
+```
+
 `src/base.ts:1664-1687` — `connectionState === undefined` ガード内にのみ `clearTimeout` / `iceConnectionState === "failed"` / `disconnected` 10 秒タイマーがある。現行ブラウザではすべてデッドコード。
 
 `onconnectionstatechange` (`src/base.ts:1688-1702`) は `connected` / `failed` のみ。
