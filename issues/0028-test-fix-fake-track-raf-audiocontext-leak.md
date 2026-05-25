@@ -1,152 +1,119 @@
 # `e2e-tests/src/fake.ts` の RAF / AudioContext が `track.stop()` で cleanup されない
 
-- Priority: High
+- Priority: Medium
 - Created: 2026-05-21
 - Model: Opus 4.7
 - Branch: feature/fix-fake-track-cleanup
 
+## 必要性
+
+**必要。** `createFakeVideoTrack` / `createFakeAudioTrack` は `ended` イベントでのみ RAF / AudioContext を cleanup するが、W3C Media Capture and Streams 仕様では `MediaStreamTrack.stop()` は `ended` イベントを dispatch しない。`track.stop()` だけでは cleanup ハンドラが走らず、同一 page 内で connect / disconnect を繰り返すと RAF / AudioContext が蓄積しうる。
+
 ## 目的
 
-`e2e-tests/src/fake.ts` の `createFakeVideoTrack` (`:34-134`) と `createFakeAudioTrack` (`:136-237` 周辺) は、`videoTrack.addEventListener("ended", ...)` (`:128-131`)・`audioTrack.addEventListener("ended", ...)` (`:197-202, :231-236`) で `cancelAnimationFrame` / `audioCtx.close()` を呼ぶ仕組みになっている。しかし W3C MediaStream Capture 仕様 §4.4.1 では `MediaStreamTrack.stop()` は `ended` イベントを発火しない (`ended` はデバイス切断などの外的要因でのみ発火する)。E2E テスト内で `track.stop()` を明示的に呼んでも `ended` ハンドラが走らず、`requestAnimationFrame` ループと `AudioContext` が残ったまま次のテストに移る。Chromium の `AudioContext` 同時生成数上限 (実装依存だが概ね 6-12 程度) に到達すると、フェイク音源が無音化し stereo audio E2E などが SDK のバグではなく fake 側の枯渇で誤陽性 fail する。
-
-`getFakeMedia` の戻り値に明示の `cleanup()` 関数を生やし、各テストの `afterEach` で必ず呼ぶ形に変える。
+`getFakeMedia` の戻り値に明示的 `cleanup()` を追加し、disconnect 後または page teardown 前に呼び出してリソースを解放する。
 
 ## 優先度根拠
 
-High。E2E テスト結果がフェイクメディアの枯渇で偽陽性 fail する → issue 0027 の `retries: 3` で隠蔽される → リリース判定の信頼性が失われる、という連鎖の起点。0027 で retries を下げる修正と並行して本 issue を進めないと、本 issue の修正前は SDK のバグでないテスト failure が頻発する可能性がある。
+Medium。現行 E2E は `browser.newPage()` → `page.close()` でページごと破棄するケースが多く、CI では再現しにくい。同一 page 内で connect / disconnect を繰り返すテストや将来の long-running E2E では顕在化しうる。0027 完了後に fake 枯渇由来 fail が増えた場合は High に引き上げる。
 
 ## 現状
 
-`e2e-tests/src/fake.ts:128-131`
+`e2e-tests/src/fake.ts`:
 
-```ts
-videoTrack.addEventListener("ended", () => {
-  cancelAnimationFrame(animationFrameId);
-  console.log("Animation stopped because track ended.");
-});
-```
+- `:128-131` — video: `ended` ハンドラのみで `cancelAnimationFrame`
+- `:197-204` — stereo audio: `ended` ハンドラのみで oscillator stop + `audioCtx.close()`
+- `:231-237` — mono audio: 同上
+- `:298-301` — `getFakeMedia({})` は `console.warn` のみ (空 MediaStream を返す)
 
-`createFakeAudioTrack` 内 (`:197-202` および `:231-236`) も同様に `ended` ハンドラで `audioCtx.close()` を呼ぶ実装になっている。
+`getFakeMedia` 呼び出し元 (着手時 grep):
 
-W3C MediaStream Capture §4.4.1.2 `stop()` algorithm: `track.stop()` は `[[ReadyState]]` を `"ended"` に遷移させるが `ended` event は dispatch しない。`ended` event は §4.4.4.4 で「ソース側からの停止 (デバイス切断、外的終了)」でのみ発火と規定されている。E2E テストから明示的に `track.stop()` を呼んでも上記 cleanup ハンドラは走らない。
+| ファイル                                       | 用途                    |
+| ---------------------------------------------- | ----------------------- |
+| `e2e-tests/fake_stereo_audio/main.ts`          | stereo / mono audio E2E |
+| `e2e-tests/fake_stereo_audio_sendrecv/main.ts` | sendrecv stereo E2E     |
+| `e2e-tests/fake_sendonly/main.ts`              | sendonly E2E            |
+| `e2e-tests/sendrecv_webkit/main.ts`            | WebKit sendrecv E2E     |
+| `e2e-tests/simulcast_sendonly_webkit/main.ts`  | simulcast WebKit E2E    |
 
-`getFakeMedia` (`e2e-tests/src/fake.ts:265-305`) は単に `MediaStream` を返すのみで、cleanup の手立てを呼び出し側に渡していない。`e2e-tests/tests/` 配下のテストファイル (`stereo_audio.test.ts`、`stereo_audio_sendrecv.test.ts`、`sendrecv.test.ts` 等) は `getFakeMedia(...)` を main.ts 経由で間接呼び出ししているが、`afterEach` で明示的に cleanup を行っていない。
+`createFakeVideoTrack` / `createFakeAudioTrack` は export されていない (内部関数)。公開 API 変更は `getFakeMedia` の戻り値型のみ。
 
-`getFakeMedia({})` (constraints に何も指定なし) の経路 (`:298-301`) は `console.warn` を出して空 MediaStream を返す。テスト誤用を見逃す経路で、本 issue でついでに throw に変える。
+## 再現手順 (限定的)
 
-## 完了条件
+1. Playwright または DevTools で `fake_stereo_audio` 等を開き、**同一 `page` 内**で `#connect` → `#disconnect` を 10 回以上繰り返す (`page.close()` しない)
+2. 各 disconnect 後に Memory プロファイラで `AudioContext` / `OscillatorNode` が残ることを確認する
+3. 現行 `stereo_audio.test.ts` はテスト末尾で `page.close()` するため CI では再現しにくい
 
-- `createFakeVideoTrack` (`e2e-tests/src/fake.ts:34-134`) の戻り値型を `{ track: MediaStreamTrack; cleanup: () => void }` に変更する。`cleanup()` 内で `cancelAnimationFrame(animationFrameId)` と `videoTrack.stop()` を呼ぶ。`addEventListener("ended", ...)` は残しておく (外的 ended ケースの保険)
-- `createFakeAudioTrack` (`e2e-tests/src/fake.ts:136-237` 周辺) も同じ形に変更する。`cleanup()` 内で `await audioCtx.close()` (および必要なら `track.stop()`) を呼ぶ
-- `getFakeMedia` (`e2e-tests/src/fake.ts:265-305`) の戻り値型を `{ stream: MediaStream; cleanup: () => Promise<void> }` に変更する。`cleanup()` で video / audio それぞれの cleanup を逐次呼ぶ (`Promise.all` でも可)
-- `getFakeMedia({})` (`:298-301`) の警告経路を `throw new Error("getFakeMedia called with no tracks requested")` に変更する
-- 上記変更に伴い、`e2e-tests/tests/` 配下で `getFakeMedia` を間接利用する全テストファイルで `afterEach` を追加して `cleanup()` を呼ぶ。`grep -rln "getFakeMedia" e2e-tests/` で該当ファイルを網羅的に確認する。テスト本体ではなく `e2e-tests/data_channel_signaling_only/main.ts` 等の example ページ内で `getFakeMedia` を呼んでいる場合は、example 側に `cleanup` を `window` 経由で露出して Playwright から呼べるようにする
-- CHANGES.md `## develop` の `### misc` セクションに次のエントリを追記する
+## 設計方針
 
-  ```
-  ### misc
+### fake.ts
 
-  - [FIX] e2e-tests の fake track が track.stop() で cleanup されず RAF / AudioContext が残っていたのを明示 cleanup() で解放するようにする
-    - @voluntas
-  ```
-
-- 本 issue は issue 0027 (`retries` 削減と flaky 検出) と並行して進める。0027 が先にマージされると本 issue 修正前は fake 枯渇による誤陽性 fail が顕在化する。0028 が先にマージされても 0027 の retry 削減効果が出るまで隠蔽は続く。両 issue を同時期にマージするのが望ましい
-- `e2e-tests/src/fake.ts` の Public API シグネチャが変わるため、`e2e-tests/src/` を import する全箇所の追従が必要。型エラーが出るので `vp check` で検出する
-
-## 解決方法
-
-`e2e-tests/src/fake.ts:34-134` (`createFakeVideoTrack`) を次の通り書き換える。
-
-```ts
-const createFakeVideoTrack = (
-  width = 320,
-  height = 240,
-  fps = 30,
-): { track: MediaStreamTrack; cleanup: () => void } => {
-  // (canvas / ctx 取得、updateCanvas 関数定義、最初のフレーム描画、stream 取得は既存)
-  const [videoTrack] = stream.getVideoTracks();
-  const cleanup = (): void => {
-    cancelAnimationFrame(animationFrameId);
-    videoTrack.stop();
-  };
-  // 外的 ended イベント (デバイス切断等) の保険として addEventListener も残す
-  videoTrack.addEventListener("ended", () => {
-    cancelAnimationFrame(animationFrameId);
-  });
-  return { track: videoTrack, cleanup };
-};
-```
-
-`createFakeAudioTrack` (`:136-237` 周辺) も同じパターンで `{ track, cleanup }` を返す。`cleanup` 内で `audioCtx.close()` を `void` ハンドラから呼び出す (`await` は型上 sync な cleanup で扱えないため `audioCtx.close().catch(() => {})` で発火だけする、もしくは `cleanup` を `() => Promise<void>` にする。本 issue では非同期版に統一する)。
-
-```ts
-const createFakeAudioTrack = (
-  frequency = 440,
-  volume = 0.1,
-  stereo = false,
-): { track: MediaStreamTrack; cleanup: () => Promise<void> } => {
-  // (audioCtx 作成、oscillator / gain 接続、destination から track 取得は既存)
-  const cleanup = async (): Promise<void> => {
-    audioTrack.stop();
-    await audioCtx.close();
-  };
-  audioTrack.addEventListener("ended", () => {
-    void audioCtx.close();
-  });
-  return { track: audioTrack, cleanup };
-};
-```
-
-`getFakeMedia` (`:265-305`) を次の通り書き換える。
+- `createFakeVideoTrack` / `createFakeAudioTrack` は内部で cleanup 関数を生成し、戻り値を `{ track, cleanup }` に変更する
+- `getFakeMedia` は `{ stream, cleanup }` を返し、生成した全 track の cleanup を順に呼ぶ
+- `cleanup()` は idempotent (2 回呼んでも安全)
+- `getFakeMedia({})` (video / audio 両方 false / 未指定) は `throw new Error("getFakeMedia called with no tracks requested.")` に変更する
+- 既存 `ended` ハンドラは残してよい (ended 経路でも cleanup されるように cleanup 本体を共通化)
 
 ```ts
 export const getFakeMedia = (
   constraints: FakeMediaStreamConstraints,
-): { stream: MediaStream; cleanup: () => Promise<void> } => {
-  const tracks: MediaStreamTrack[] = [];
-  const cleanups: Array<() => void | Promise<void>> = [];
-
-  if (constraints.video) {
-    let videoOptions = { frameRate: 30, height: 240, width: 320 };
-    if (typeof constraints.video === "object") {
-      videoOptions = { ...videoOptions, ...constraints.video };
-    }
-    const { track, cleanup } = createFakeVideoTrack(
-      videoOptions.width,
-      videoOptions.height,
-      videoOptions.frameRate,
-    );
-    tracks.push(track);
-    cleanups.push(cleanup);
-  }
-
-  if (constraints.audio) {
-    let audioOptions = { frequency: 440, stereo: false, volume: 0.1 };
-    if (typeof constraints.audio === "object") {
-      audioOptions = { ...audioOptions, ...constraints.audio };
-    }
-    const { track, cleanup } = createFakeAudioTrack(
-      audioOptions.frequency,
-      audioOptions.volume,
-      audioOptions.stereo,
-    );
-    tracks.push(track);
-    cleanups.push(cleanup);
-  }
-
+): { stream: MediaStream; cleanup: () => void } => {
+  const cleanups: Array<() => void> = [];
+  // track 生成時に cleanups に push
   if (tracks.length === 0) {
-    throw new Error("getFakeMedia called with no tracks requested");
+    throw new Error("getFakeMedia called with no tracks requested.");
   }
-
   return {
     stream: new MediaStream(tracks),
-    cleanup: async () => {
-      for (const c of cleanups) {
-        await c();
-      }
+    cleanup: () => {
+      for (const fn of cleanups) fn();
     },
   };
 };
 ```
 
-`e2e-tests/` 配下の `getFakeMedia` 呼び出し側 (example page main.ts / テストファイル) でも戻り値型の変更に追従する。main.ts 内では `cleanup` を `window` 経由で露出する (例: `(window as any).fakeMediaCleanup = cleanup`) ことで Playwright のテストから `await page.evaluate(() => (window as any).fakeMediaCleanup())` で呼べるようにする。各テストの `afterEach` で必ず cleanup を呼ぶ。
+### 呼び出し側 (5 ファイル)
+
+```ts
+const { stream, cleanup } = getFakeMedia({ audio: { stereo: true } });
+// ...
+await sendClient.disconnect();
+cleanup(); // disconnect 後、または connect 前の古い stream 破棄時
+```
+
+各 fixture の `#disconnect` ハンドラ内、または connect 前の stream 差し替え時に `cleanup()` を呼ぶ。video track を使う fixture も同様。
+
+## 完了条件
+
+### コード変更
+
+- [ ] `e2e-tests/src/fake.ts` に上記 API を実装する
+- [ ] 呼び出し元 5 ファイルを `{ stream, cleanup }` 分解に更新し、disconnect 後 (または stream 差し替え前) に `cleanup()` を呼ぶ
+- [ ] `getFakeMedia({})` が throw する (空 constraints を渡している呼び出しが無いことを grep で確認)
+
+### 検証
+
+- [ ] `pnpm test` が通る
+- [ ] `pnpm run lint` / `pnpm run typecheck` が通る (e2e-tests TS 変更)
+- [ ] ローカル: `pnpm exec playwright test --project="Chromium" e2e-tests/tests/stereo_audio.test.ts` が通る
+- [ ] CI: e2e-test workflow が green であること
+
+### 変更履歴
+
+- [ ] `CHANGES.md` `## develop` の `### misc` に追記する
+
+  ```
+  - [FIX] e2e-tests の fake media 生成で track.stop() 後も RAF / AudioContext が残らないよう cleanup() を追加する
+    - @voluntas
+  ```
+
+## スコープ外
+
+- SDK 本体 (`src/`) の変更
+- stereo ネゴ検証 (issue 0029)
+- Playwright retries / flaky 検出 (issue 0027)
+- `MediaStreamTrack.stop()` 仕様変更の議論
+
+## マージ順
+
+**0027 とは独立。** 0027 → 0028 → 0029 を推奨する (0027 で flaky が surface 化してから cleanup 修正の方が regression 検知しやすい)。0028 単体でもマージ可能。

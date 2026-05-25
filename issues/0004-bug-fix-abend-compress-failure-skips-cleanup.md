@@ -7,78 +7,47 @@
 
 ## 目的
 
-`abend()` (`src/base.ts:716-815`) で DataChannel 経由の `type: disconnect` メッセージを送る前に `await compressMessage(binaryMessage)` (`src/base.ts:757`) を呼ぶが、この `await` が try/catch されておらず、`compressMessage` (`src/utils.ts:500-`) が throw すると `abend` の関数スコープを同期的に抜けて後続の `disconnectWebSocket(title)` (`src/base.ts:803`) / `maybeClosePeerConnection()` (`src/base.ts:804`) / `initializeConnection()` (`src/base.ts:805`) / `writeSoraTimelineLog("disconnect-abend", event)` (`src/base.ts:813`) / `callbacks.disconnect(...)` (`src/base.ts:809, 814`) がいずれも実行されない。`compressMessage` 失敗を try/catch して `abend` 内のクリーンアップに必ず到達させる。
+`abend()` (`src/base.ts:716-815`) で DataChannel 経由の `type: disconnect` を送る前に `await compressMessage(binaryMessage)` (`src/base.ts:757`) を呼ぶが、この `await` が try/catch されておらず、`compressMessage` (`src/utils.ts:500-504`) が throw / reject すると `abend` の Promise が reject され、後続の DataChannel close ループ (`src/base.ts:795-802`)、`disconnectWebSocket` / `maybeClosePeerConnection` / `initializeConnection` (`src/base.ts:803-805`)、`callbacks.disconnect` (`src/base.ts:809, 814`) に到達しない。`compressMessage` 失敗を局所 try/catch して `abend` 内のクリーンアップに必ず到達させる。
+
+**本 issue のスコープ:** `abend()` 内の compress 経路のみ。`await disconnectWebSocket` (803 行) の reject、`disconnectWebSocket` 内 `ws.send` (891 行) の同期 throw 等は別 issue (0034 等)。`abendPeerConnectionState()` は Sora へ disconnect を送らない別経路。
 
 ## 優先度根拠
 
-Medium。`compressMessage` は `new CompressionStream("deflate")` (`src/utils.ts:502`) を使う実装で、ブラウザのメモリ不足や `CompressionStream` 未対応ブラウザ・極端に巨大な入力以外で失敗する経路はほぼ無く、本番での再現報告も無い。ただし発生した場合は Sora 側にゾンビコネクションが残り、アプリ側で `callbacks.disconnect` も呼ばれず、再接続時のセッション数上限事故を誘発しうる。再現の難しさを踏まえ Medium とする。
+Medium。`compressMessage` は `CompressionStream("deflate")` を使い、メモリ不足・未対応環境・巨大入力以外では失敗しにくい。本番再現報告も無い。発生時は SDK 内部状態が残り `callbacks.disconnect` も呼ばれず、再接続時のセッション数上限事故を誘発しうる。`signaling?.compress === true` かつ signaling DC 存在時 (`src/base.ts:750-755`) に限定される。
 
 ## 現状
 
-`src/base.ts:755-775` の `abend` 内、圧縮ありの DataChannel 送信ブロック:
+`src/base.ts:757` の `await compressMessage(binaryMessage)` のみ未捕捉。内側の `send()` (760-774 行) は try/catch 済み (Firefox 対策)。compress throw 時は 795 行以降がすべてスキップされる。
+
+呼び出し側 (`src/base.ts:1642, 1650, 2155`) は try/catch なし。compress reject 時は unhandled rejection も発生する。
+
+同型パターン 4 箇所は issue 0034 で扱う: `disconnectDataChannel` (`:978`)、`sendSignalingMessage` (`:2308`)、`sendStatsMessage` (`:2337`)、public `sendMessage` (`:2428`)。`sendRpcMessage` 系 (`.catch` 付き) は対象外。
+
+### 再現条件 (コードパス)
+
+- 前提: `this.soraDataChannels.signaling` 存在、`signalingOfferMessageDataChannels.signaling?.compress === true`
+- トリガ: `abend()` 経路 (WS 異常 close / onerror、DC onerror 等) で 757 行の `compressMessage` が reject
+- 結果: 795-814 行未到達、`initializeConnection` 不実行、`callbacks.disconnect` 不発
+- 検証: モック禁止のため人工失敗テストは追加しない。コードレビュー + 手動確認 (DevTools で `CompressionStream` 非対応環境等) で担保
+
+## 設計方針
+
+`abend` 全体を try/finally で包まず、`compress === true` ブロックのみ局所 try/catch。catch 時はログを残し send をスキップして 795 行以降へ進む。
+
+**非圧縮 fallback は意図的に行わない** (DC 圧縮 disconnect は Sora に届かない)。ただし **`signalingSwitched === false` かつ ws が OPEN の場合**、803 行 `disconnectWebSocket` 経由で **非圧縮 JSON の disconnect が ws.send される** (`src/base.ts:891-892`)。0004 は DC 側 fallback をしないだけで ws 経路は残る。
+
+try 範囲は `binaryMessage` 生成から `send()` まで含める (0034 `disconnectDataChannel` と揃える)。813-814 行の event 二重生成は issue 0030 で扱う。本 issue では触らない。
+
+**0007 との対比:** 0007 (`sendAnswer`) は cleanup 後 rethrow。0004 (`abend`) は log して cleanup 継続 (throw しない)。文脈が異なり矛盾しない。
+
+**hang は対象外:** `compressMessage` が reject / throw しないまま完了しない場合は本 fix 対象外。
 
 ```ts
 if (this.signalingOfferMessageDataChannels.signaling?.compress === true) {
-  const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
-  const compressedMessage = await compressMessage(binaryMessage);
-  if (this.soraDataChannels.signaling.readyState === "open") {
-    // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-    try {
-      this.soraDataChannels.signaling.send(compressedMessage);
-      this.writeDataChannelSignalingLog(
-        "send-disconnect",
-        this.soraDataChannels.signaling,
-        message,
-      );
-    } catch (error) {
-      const errorMessage = (error as Error).message;
-      this.writeDataChannelSignalingLog(
-        "failed-to-send-disconnect",
-        this.soraDataChannels.signaling,
-        errorMessage,
-      );
-    }
-  }
-}
-```
-
-内側の `send()` は try/catch で守られている (Firefox 対策のコメント付き) のに対し、外側の `await compressMessage(...)` (757 行) は守られていない。`compressMessage` が throw すると同じ `abend` 関数内の以降のコード (圧縮なし経路 776-793、DataChannel close ループ 795-802、`disconnectWebSocket` / `maybeClosePeerConnection` / `initializeConnection` / `callbacks.disconnect` 803-814) がすべて実行されないまま `abend` の Promise が reject される。呼び出し側 (`src/base.ts:1642, 1650, 2155` で `await this.abend(...)` する箇所はいずれも try/catch を持たない) には unhandled rejection が伝播するだけで、SDK 側の終了処理は走らない。
-
-呼び出し側の修正で握り潰すのではなく、`abend` 内で `compressMessage` 失敗を局所的に catch して以降のクリーンアップに必ず到達させる。
-
-同型のパターン (`await compressMessage(...)` を try/catch なしで呼ぶ箇所) は本 issue の対象外として、別 issue で扱う。
-
-- `disconnectDataChannel` (`src/base.ts:978`)
-- `sendSignalingMessage` 系 (`src/base.ts:2308`)
-- `sendStatsMessage` 系 (`src/base.ts:2337`)
-- public API の `sendMessage` (`src/base.ts:2428`)
-
-`sendRpcMessage` 系 (`src/base.ts:2545, 2605`) は `.catch(...)` 付きで呼ばれているため対象外。
-
-## 完了条件
-
-- `src/base.ts:757` の `await compressMessage(binaryMessage)` が try/catch で囲まれている
-- catch 時に `writeSoraTimelineLog("abend-failed-to-compress", { reason: String(error) })` 相当のログが残る
-- catch を抜けた後も `abend` 内の `for (const key of Object.keys(this.soraDataChannels)) { ... }` (`src/base.ts:795-802`)、`disconnectWebSocket(title)` (`src/base.ts:803`)、`maybeClosePeerConnection()` (`src/base.ts:804`)、`initializeConnection()` (`src/base.ts:805`)、`callbacks.disconnect(...)` (`src/base.ts:809, 814`) のすべてに到達する
-- `compressMessage` の人工失敗は `CompressionStream` を制御できないため再現が困難。テストは追加せず、コードレビューで局所 try/catch の到達性を担保する。CLAUDE.md「モックやスタブは絶対に利用しないこと」の規約上、`compressMessage` をスタブ化したユニットテストは追加しない
-- CHANGES.md `## develop` に次のエントリを追記する
-  ```
-  - [FIX] abend() で compressMessage が失敗したときに後続のクリーンアップと disconnect 通知が実行されないのを修正する
-    - @voluntas
-  ```
-- 同型バグ 4 件 (`disconnectDataChannel` `:978`、`sendSignalingMessage` `:2308`、`sendStatsMessage` `:2337`、public `sendMessage` `:2428`) は本 issue 着手前に `issues/SEQUENCE` から 4 連番採番して issue 雛形 (タイトル・優先度・目的のみ) を `issues/` 配下に先に作成し、`issues/SEQUENCE` を +4 更新する。雛形作成は別ブランチ・別 PR
-
-## 解決方法
-
-`src/base.ts:755-775` の圧縮ありブロックを次の通り書き換える。外側の `await compressMessage` を try で囲み、失敗時はタイムラインにログを残して内側の `send()` ブロックをスキップして次の処理に進む形にする。
-
-```ts
-if (this.signalingOfferMessageDataChannels.signaling?.compress === true) {
-  const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
   try {
+    const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
     const compressedMessage = await compressMessage(binaryMessage);
     if (this.soraDataChannels.signaling.readyState === "open") {
-      // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
       try {
         this.soraDataChannels.signaling.send(compressedMessage);
         this.writeDataChannelSignalingLog(
@@ -96,9 +65,47 @@ if (this.signalingOfferMessageDataChannels.signaling?.compress === true) {
       }
     }
   } catch (error) {
-    this.writeSoraTimelineLog("abend-failed-to-compress", { reason: String(error) });
+    const errorMessage = (error as Error).message;
+    this.writeDataChannelSignalingLog(
+      "failed-to-compress-disconnect",
+      this.soraDataChannels.signaling,
+      errorMessage,
+    );
   }
 }
 ```
 
-`abend` 全体を `try { ... } finally { ... }` で包むリファクタは本 issue では行わない。最小修正に絞ることで他 5 箇所への影響を切り離す。
+compress 失敗ログは `failed-to-compress-disconnect`。0034 水平展開時は `failed-to-compress-*` プレフィックスを踏襲する (その他 send 失敗の error 文字列化は 0034 で `String(error)` 等に統一可能)。
+
+**関連 issue:**
+
+- 0034: 0004 パターンの水平展開。0004 単独マージ後も `disconnectDataChannel` 等は未修正のまま
+- 0030: 813-814 二重 event + `runShutdownOnce` 統合。**0030 完了条件に 0004 の compress try/catch 移植要件を追記すること** (0030 マージ時にリグレッション防止)
+- 0009: 同一 `abend()` を編集 (719-724 行)。0004 先行推奨
+
+**変更対象:** `src/base.ts` の `abend()` compress 分岐のみ
+
+## 完了条件
+
+- `abend()` の `compress === true` 分岐 (`binaryMessage` 生成〜 `send()` まで) に局所 try/catch が入っている
+- catch 後も DataChannel close ループ / ws・pc cleanup / `callbacks.disconnect` (795-814 行相当) に到達する
+- ローカルで `pnpm test` および既存 `pnpm e2e-test` が通ること
+- CHANGES.md `## develop` に次を追記する
+
+  ```
+  - [FIX] abend() で compressMessage が失敗したときに後続のクリーンアップと disconnect 通知が実行されないのを修正する
+    - @voluntas
+  ```
+
+**マージ順 (0004 関連チェーン):**
+
+```
+0004 → 0006 → (0011) → 0021 → 0009 → 0007 → 0001 → 0008 → 0034 → 0031 → 0002 → 0030
+```
+
+- **0021** は 0007 / 0008 / 0012 の前提 (`ConnectError` constructor)
+- **0009 → 0007** を優先 (0007 issue 本文と一致。0009 未マージのまま 0007 だけ入れると Trickle ICE race が残る)
+- **0011** は 0006 直後 (0006 issue 参照)
+- **0034** までを 1 セットとして扱う (0004 単独では `disconnectDataChannel` 等の同型問題は残る)
+- **0030** マージ時は compress try/catch を `runShutdownOnce` 内へ移植
+- 0034 / 0030 の短いチェーンは本チェーンの部分列

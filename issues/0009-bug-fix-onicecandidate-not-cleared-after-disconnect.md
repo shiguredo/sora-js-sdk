@@ -7,7 +7,7 @@
 
 ## 目的
 
-`disconnect()` (`src/base.ts:1056-1061`)、`abend()` (`src/base.ts:719-724`)、`abendPeerConnectionState()` (`src/base.ts:608-613`)、`signalingTerminate()` (`src/base.ts:582-598`) のいずれの切断系メソッドも `this.pc.onicecandidate` を null 化していない。切断処理の最中または完了後にローカル PeerConnection が Trickle ICE candidate を発火すると、`onIceCandidate` (`src/base.ts:1520-1558`) 内で `await this.sendSignalingMessage(message)` (`src/base.ts:1553`) が走り、`sendSignalingMessage` (`src/base.ts:2301-2322`) が CLOSING / CLOSED の WebSocket に対して `this.ws.send(JSON.stringify(message))` (`src/base.ts:2319`) を試みて `InvalidStateError` を同期 throw する。`onicecandidate` は async ハンドラなので throw は unhandled rejection になり、アプリ全体のグローバルエラーハンドラを叩く。本 issue では切断系メソッドで `pc.onicecandidate = null` を必ず呼ぶようにし、遅延発火経路自体を塞ぐ。
+`disconnect()` (`src/base.ts:1056-1061`)、`abend()` (`src/base.ts:719-724`)、`abendPeerConnectionState()` (`src/base.ts:608-613`)、`shutdown()` (`src/base.ts:668-676`)、`signalingTerminate()` (`src/base.ts:582-598`) のいずれの切断系メソッドも `this.pc.onicecandidate` を null 化していない。切断処理の最中または完了後にローカル PeerConnection が Trickle ICE candidate を発火すると、`onIceCandidate` (`src/base.ts:1520-1558`) 内で `await this.sendSignalingMessage(message)` (`src/base.ts:1553`) が走り、`sendSignalingMessage` (`src/base.ts:2301-2322`) が CLOSING / CLOSED の WebSocket に対して `this.ws.send(JSON.stringify(message))` (`src/base.ts:2319`) を試みて `InvalidStateError` を同期 throw する。`onicecandidate` は async ハンドラなので throw は unhandled rejection になり、アプリ全体のグローバルエラーハンドラを叩く。本 issue では切断系メソッドで `pc.onicecandidate = null` を必ず呼ぶようにし、遅延発火経路自体を塞ぐ。
 
 ## 優先度根拠
 
@@ -63,24 +63,15 @@ private async sendSignalingMessage(message: {
 - `disconnect()` (`src/base.ts:1056-1061`): `ondatachannel` / `oniceconnectionstatechange` / `onicegatheringstatechange` / `onconnectionstatechange` の 4 つを null 化。`onicecandidate` は null 化しない
 - `abend()` (`src/base.ts:719-724`): 同上
 - `abendPeerConnectionState()` (`src/base.ts:608-613`): 同上
+- `shutdown()` (`src/base.ts:671-676`): 同上 (4 ハンドラ null 化済みだが `onicecandidate` は未解除)
+
 - `signalingTerminate()` (`src/base.ts:582-598`): pc ハンドラを一切 null 化しない
 
-`sendSignalingMessage` の readyState チェック欠落は issue 0004 で先行採番される `sendSignalingMessage` の ws.send / DataChannel.send / compressMessage 同期例外を扱う同型バグ雛形 (`sendAnswer` の `ws.send` 同期例外、`sendSignalingMessage` の `ws.send` / `DataChannel.send` 同期例外、`compressMessage` 失敗等) で扱う。本 issue では発火源である `onicecandidate` ハンドラ自体を切断時に解除することで、`sendSignalingMessage` 側の修正に依存せず unhandled rejection を即時止める。
+`sendSignalingMessage` の readyState チェック欠落は issue 0034 で扱う。
 
-## 完了条件
+## 設計方針
 
-- `disconnect()` (`src/base.ts:1056-1061`)、`abend()` (`src/base.ts:719-724`)、`abendPeerConnectionState()` (`src/base.ts:608-613`)、`signalingTerminate()` (`src/base.ts:582-598`) の pc ハンドラ解除ブロックに `this.pc.onicecandidate = null;` を追加する
-- `signalingTerminate()` は元から pc ハンドラを null 化していないため、`if (this.pc) { this.pc.onicecandidate = null; this.pc.ondatachannel = null; this.pc.oniceconnectionstatechange = null; this.pc.onicegatheringstatechange = null; this.pc.onconnectionstatechange = null; }` のブロックを新規追加する。これにより `signalingTerminate` 経由の解除も他経路と同じハンドラ集合をカバーする
-- 修正後、unhandled rejection は発生しなくなる。E2E は `e2e-tests/sendrecv/main.ts` で `window.addEventListener("unhandledrejection", ...)` をフックして hidden DOM (例: `#unhandled-rejection-count`) に件数を出し、新規テスト `e2e-tests/tests/disconnect_unhandled_rejection.test.ts` で `connect()` の Promise が resolve した直後に `disconnect()` を呼ぶ (= ICE gathering がまだ完了していない可能性が高いタイミングで切断) パターンを 10 回繰り返した後に `#unhandled-rejection-count` が `0` であることを assert する。`getUserMedia` 完了後に `connect()` resolve 直後の即 `disconnect()` で ICE gathering 途中の Trickle ICE 通知が走るレースを狙う
-- CHANGES.md `## develop` に次のエントリを追記する
-  ```
-  - [FIX] 切断時に pc.onicecandidate が解除されず遅延発火する Trickle ICE 通知が ws.send を呼んで unhandled rejection を起こしていたのを修正する
-    - @voluntas
-  ```
-- `sendSignalingMessage` の readyState チェック欠落は issue 0004 で先行採番される `sendSignalingMessage` の ws.send / DataChannel.send / compressMessage 同期例外を扱う同型バグ雛形で扱う。本 issue とは別ブランチ・別 PR で処理する
-- 切断系 4 メソッドの pc ハンドラ解除を `detachPeerConnectionHandlers()` のような共通ユーティリティに集約するリファクタは、issue 0002 の完了条件で先行採番される「4 系統統一の大規模リファクタ」issue で扱う。本 issue は重複した null 化コードをそのまま 4 箇所に追加することを許容する
-
-## 解決方法
+`disconnect()`、`abend()`、`abendPeerConnectionState()`、`shutdown()` (`src/base.ts:668-676`)、`signalingTerminate()` の **5 経路** で `pc.onicecandidate = null` を追加する。`pc.close()` より前に null 化する。
 
 `disconnect()` (`src/base.ts:1056-1061`) の `if (this.pc)` ブロックを次の通り書き換える。
 
@@ -94,7 +85,7 @@ if (this.pc) {
 }
 ```
 
-`abend()` (`src/base.ts:719-724`)、`abendPeerConnectionState()` (`src/base.ts:608-613`) も同様に末尾に `this.pc.onicecandidate = null;` を追加する。
+`abend()` (`src/base.ts:719-724`)、`abendPeerConnectionState()` (`src/base.ts:608-613`)、`shutdown()` (`src/base.ts:668-676`) も同様に `this.pc.onicecandidate = null;` を追加する。
 
 `signalingTerminate()` (`src/base.ts:582-598`) は元来 pc ハンドラを解除していないため、`signalingTerminate` の冒頭または既存処理の適切な位置に次のブロックを追加する。位置の判断は実装者が行う。
 
@@ -108,4 +99,20 @@ if (this.pc) {
 }
 ```
 
-`sendSignalingMessage` の修正は本 issue では行わない (issue 0007 雛形)。
+`sendSignalingMessage` の修正は本 issue では行わない (issue 0034 で扱う)。
+
+**設計限界:** `onicecandidate = null` は 2 件目以降の dispatch を止める。既に in-flight の `await sendSignalingMessage` は完走しうる (0034 で send 側 catch)。
+
+## 完了条件
+
+- `disconnect()`、`abend()`、`abendPeerConnectionState()`、`shutdown()`、`signalingTerminate()` の 5 経路に `this.pc.onicecandidate = null;` を追加する
+- 修正後、新規 handler 経由の unhandled rejection は発生しなくなる (in-flight 完走分は 0034 まで残りうる)
+- ローカルで `pnpm test` および既存 `pnpm e2e-test` が通ること
+- E2E: `e2e-tests/sendrecv/main.ts` で `window.addEventListener("unhandledrejection", ...)` をフックして hidden DOM (例: `#unhandled-rejection-count`) に件数を出し、新規テスト `e2e-tests/tests/disconnect_unhandled_rejection.test.ts` で `connect()` resolve 直後に `disconnect()` を 10 回繰り返し `#unhandled-rejection-count === "0"` を assert (ICE 完了済み環境では再現しない可能性あり)
+- CHANGES.md `## develop` に次のエントリを追記する
+  ```
+  - [FIX] 切断時に pc.onicecandidate が解除されず遅延発火する Trickle ICE 通知が ws.send を呼んで unhandled rejection を起こしていたのを修正する
+    - @voluntas
+  ```
+- 0034 は send 側 catch。0009 は発火源停止。**0034 で 0009 を代替可能という意味ではない**
+- マージ順: **0009** → 0001 → 0008 → 0007 → 0034 → 0030 (0004 チェーン参照)

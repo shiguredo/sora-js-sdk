@@ -7,15 +7,13 @@
 
 ## 目的
 
-`createSignalingMessage` (`src/utils.ts`) は `options.clientId` / `options.bundleId` の `undefined` チェックしか行わず (`src/utils.ts:196-201`)、空文字 `""` がそのまま `client_id: ""` / `bundle_id: ""` として Sora に送信される。Sora 側は空文字を有効値として受け付けず、`invalid-client-id` などで接続拒否する。`createSignalingMessage` の段階で空文字を検出して `Error` を throw し、開発者に誤りを早期に伝える。
+`createSignalingMessage` (`src/utils.ts:196-201`) は `options.clientId` / `options.bundleId` の `undefined` チェックのみで、空文字 `""` が `client_id: ""` / `bundle_id: ""` として Sora に送信される。Sora は空文字を拒否する (`invalid-client-id` 等)。`createSignalingMessage` で空文字を検出して `Error` を throw する。
 
 ## 優先度根拠
 
-High。React の `useState<string>("")` 初期値、フォーム入力の trim 漏れ、未入力プレースホルダの誤伝搬で容易に踏みうる。エンドユーザーから見ると「接続が失敗する」現象しか観測できず、空文字が原因と特定するのに時間がかかる。SDK の他オプション検証 (`src/utils.ts:132, 135, 324` の `throw new Error(...)`) と同じパターンで揃える。issue 0016 (forwardingFilter 両方指定検出) と方針を合わせ、ランタイム throw で早期失敗させる。
+High。React `useState("")` 初期値、trim 漏れ、未入力プレースホルダの誤伝搬で容易に踏みうる。エンドユーザーからは「接続失敗」のみ観測でき、原因特定に時間がかかる。issue 0016 と同じランタイム throw 方針。
 
 ## 現状
-
-`src/utils.ts:196-201`
 
 ```ts
 if (options.clientId !== undefined) {
@@ -26,28 +24,11 @@ if (options.bundleId !== undefined) {
 }
 ```
 
-`undefined` チェックのみで、空文字 `""` は素通りする。
+`tests/utils.test.ts:110-116` / `:621-628` は空文字を正常系として expect している (修正必須)。
 
-Sora の `client_id` / `bundle_id` 仕様は空文字を許容しない (Sora 側で `invalid-client-id` を返す)。空文字を「指定なし」として `undefined` と同じく扱うのではなく、開発者の意図しない空文字流入を早期に検出するため throw する。
+## 設計方針
 
-`metadata` / `signalingNotifyMetadata` などの他オプションは `JSONType | undefined` で空文字単独になるパスがほぼないため、本 issue ではスコープ外とする。文字列型として明示的に定義されている `clientId` / `bundleId` のみ検証する。
-
-## 完了条件
-
-- `createSignalingMessage` (`src/utils.ts`) で `options.clientId === ""` を検出した場合、`throw new Error("clientId must not be empty string")` を実行する
-- 同じく `options.bundleId === ""` を検出した場合、`throw new Error("bundleId must not be empty string")` を実行する
-- 検証は両方の if ブロックの直前 (もしくは内部) に置き、`undefined` ケースと文字列値ケースの正常系には影響しない
-- 単体テストを `tests/utils.test.ts` に追加し、`clientId: ""` / `bundleId: ""` での `createSignalingMessage` が throw することを assert する。`clientId: "foo"` / `bundleId: "bar"` / `clientId: undefined` のケースは throw しないことも assert する
-- CHANGES.md `## develop` に次のエントリを追記する
-  ```
-  - [FIX] createSignalingMessage で clientId / bundleId に空文字が指定された場合に Error を投げるようにする
-    - @voluntas
-  ```
-- 本 issue は issue 0016 (forwardingFilter 両方指定検出) と同じ `createSignalingMessage` を編集するため、マージ順を 0016 → 0017 とする。issue 0016 で追加した throw 検証の直後に本 issue の検証を並べる形にする
-
-## 解決方法
-
-`src/utils.ts:196-201` を次の通り書き換える。
+各 if ブロック内で空文字を検出して throw。`undefined` は従来通りフィールド省略。
 
 ```ts
 if (options.clientId !== undefined) {
@@ -64,20 +45,34 @@ if (options.bundleId !== undefined) {
 }
 ```
 
-`tests/utils.test.ts` に次のテストを追加する。
+issue 0016 の両方指定検証の直後に本検証を配置する (マージ順 0016 → 0017)。
 
-```ts
-test("clientId に空文字を指定した場合に Error を投げる", () => {
-  expect(() =>
-    createSignalingMessage("sdp", "sendrecv", "channel", null, { clientId: "" }, false),
-  ).toThrow("clientId must not be empty string");
-});
+**変更対象:** `src/utils.ts` の `createSignalingMessage`、`tests/utils.test.ts`
 
-test("bundleId に空文字を指定した場合に Error を投げる", () => {
-  expect(() =>
-    createSignalingMessage("sdp", "sendrecv", "channel", null, { bundleId: "" }, false),
-  ).toThrow("bundleId must not be empty string");
-});
+**スコープ外:**
+
+- `metadata` / `signalingNotifyMetadata` 等の空文字検証
+- 空文字を `undefined` 同等として黙認する挙動
+
+## 完了条件
+
+- `clientId: ""` / `bundleId: ""` 指定時に上記 `Error` を throw
+- `undefined` / 非空文字列の正常系は変更なし
+- `tests/utils.test.ts`:
+  - 新規 throw テスト 2 件追加
+  - 既存 `createSignalingMessage clientId: empty string` (`:110-116`) と `bundleId: empty string` (`:621-628`) を throw 期待に差し替え
+- ローカルで `pnpm test` が通ること
+- CHANGES.md `## develop` に追記:
+
+  ```
+  - [FIX] createSignalingMessage で clientId / bundleId に空文字が指定された場合に Error を投げるようにする
+    - @voluntas
+  ```
+
+**マージ順:**
+
+```
+0016 → 0017
 ```
 
-`createSignalingMessage` の引数シグネチャは `src/utils.ts:60` 付近で確認する。
+- **0016 未マージで 0017 単独マージすると** `createSignalingMessage` でコンフリクトしやすい

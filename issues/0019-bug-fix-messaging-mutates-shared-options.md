@@ -7,105 +7,68 @@
 
 ## 目的
 
-`Sora.connection().messaging()` (`src/sora.ts:210-227`) は引数 `options` に対して `options.audio = false; options.video = false; options.dataChannelSignaling = true;` で **呼び出し側のオブジェクトそのものを破壊** する (`src/sora.ts:215-217`)。さらに `ConnectionBase` constructor が `this.options = options` (`src/base.ts:266`) で浅コピーすらしていないため、同一 `opts` を `sendrecv()` と `messaging()` の両方に渡すと、後から呼んだ `messaging()` が先に作った `sendrecv()` (の `this.options`) まで書き換える。
+`Sora.connection().messaging()` (`src/sora.ts:210-227`) が引数 `options` をその場で mutate し、`ConnectionBase` constructor (`src/base.ts:266`) が浅い参照のまま `this.options = options` と保持するため、同一 `opts` を `sendrecv()` と `messaging()` に渡すと後者が前者の `this.options` まで書き換える。spread copy と constructor 側 shallow copy で外部参照を切り離す。
 
-`messaging()` 内で `options` を spread copy してから書き換えるようにし、`ConnectionBase` constructor でも `this.options = { ...options }` で浅コピーを取って外部参照を切り離す。
+## 必要性
+
+**必要** (確信度: 高)。`src/sora.ts:215-217` の直接代入と `src/base.ts:266` の参照保持が現行コードに残存。`sendrecv` / `sendonly` / `recvonly` は mutate しないが、`ConnectionBase` の参照保持だけでも内部 mutate (`this.options.skipIceCandidateEvent ??= false` 等) が呼び出し側へ漏れる。
 
 ## 優先度根拠
 
-High。SDK の公式パターン (`Sora.connection(url).sendrecv("ch", null, opts)` と `Sora.connection(url).messaging("ch", null, opts)` を同じ `opts` で生成する) で破壊される。SDK 利用者は「不変オブジェクトを渡したつもり」が壊されるため、原因特定が極めて困難。
+High。同一 `opts` で `sendrecv()` と `messaging()` を生成する公式パターンで再現する。利用者は不変オブジェクトを渡したつもりが壊され、原因特定が困難。
 
 ## 現状
 
-`src/sora.ts:210-227`
-
 ```ts
-messaging(
-  channelId: string,
-  metadata: JSONType = null,
-  options: ConnectionOptions = { audio: false, video: false },
-): ConnectionMessaging {
+// src/sora.ts:210-227
+messaging(..., options: ConnectionOptions = { audio: false, video: false }) {
   options.audio = false;
   options.video = false;
   options.dataChannelSignaling = true;
-  return new ConnectionMessaging(
-    this.signalingUrlCandidates,
-    "sendonly",
-    channelId,
-    metadata,
-    options,
-    this.debug,
-  );
+  return new ConnectionMessaging(..., options, ...);
 }
+
+// src/base.ts:266
+this.options = options;
 ```
 
-`options.audio` / `options.video` / `options.dataChannelSignaling` の代入は引数オブジェクトに直接書き込む。呼び出し側が `const opts = { ...baseOptions }` で渡したとしても、`baseOptions` 自体ではなくとも `opts` は呼び出し側に残っており、`opts.audio` / `opts.video` / `opts.dataChannelSignaling` が書き換わる。
-
-`sendrecv` (`src/sora.ts:110-123`)、`sendonly` (`src/sora.ts:142-155`)、`recvonly` (`src/sora.ts:174-187`) は `options` を mutate しないが、`ConnectionMessaging` も含めて `ConnectionBase` constructor が `this.options = options` (`src/base.ts:266`) で参照保持しているため、
-
-- `const opts = { audio: true, video: true };`
-- `connection.sendrecv("ch", null, opts);` → `ConnectionPublisher.this.options === opts`
-- `connection.messaging("ch", null, opts);` → `messaging()` で `opts.audio = false` etc → 既存の `ConnectionPublisher.this.options` も書き換わる
-
-という連鎖が起きる。`sendrecv` 側だけ見ても、呼び出し後にアプリ側で `opts.someProp = "x"` を変更すれば `ConnectionPublisher.this.options` にも影響する。
-
-deep clone は不要。`options` の値型 (`ConnectionOptions`) はネスト構造を持つプロパティ (`audioOpusParams*` 系、`forwardingFilter` / `forwardingFilters` の object 配列) もあるが、本 issue が解決したいのは「`messaging` の audio/video/dataChannelSignaling フラグ上書きが呼び出し側まで届く」現象と「`this.options` が外部参照を保持する」現象で、いずれも shallow copy で防げる。ネスト構造の deep mutation を SDK 内で起こすケースは現状コードを `grep` した範囲では確認できない。
-
-## 完了条件
-
-- `src/sora.ts:215-217` の `options.audio = false; options.video = false; options.dataChannelSignaling = true;` を、`options` を spread した新オブジェクト (`merged`) に対する代入に置き換える
-- `ConnectionMessaging` のコンストラクタ呼び出し (`src/sora.ts:218-226`) には `merged` を渡す
-- `src/base.ts:266` の `this.options = options;` を `this.options = { ...options };` に変更する
-- `sendrecv` / `sendonly` / `recvonly` は呼び出し側 mutation を起こさないが、`ConnectionBase` 側の shallow copy で外部参照は切り離される
-- 単体テストを `tests/utils.test.ts` (もしくは `tests/sora.test.ts` を新規作成) に追加し、次を assert する
-  - `const opts = { audio: true, video: true };` を `connection.messaging("ch", null, opts)` に渡した後、`opts.audio === true` / `opts.video === true` / `opts.dataChannelSignaling === undefined` のまま (= 呼び出し側オブジェクトが破壊されていない)
-  - 同じ `opts` を `connection.sendrecv("ch", null, opts)` と `connection.messaging("ch", null, opts)` に渡した後、`sendrecv` 側で取得できる SDK 内 options (グローバルからアクセスできる経路がないなら hidden DOM 経由などのテストフックを足すか、`connection.messaging` を呼んだ後の `opts` 自体が破壊されていないことのみ assert する)
-- CHANGES.md `## develop` に次のエントリを追記する
-  ```
-  - [FIX] messaging() が呼び出し側の options を破壊しないように修正する
-  - [FIX] ConnectionBase で options を shallow copy して外部参照を切り離す
-    - @voluntas
-  ```
-  (担当者行は両エントリに対して 1 行で足りる)
-- 本 issue は SDK の他 issue とのマージ衝突はない。`src/sora.ts:215-217` および `src/base.ts:266` は他 issue で触られていない
-
-## 解決方法
-
-`src/sora.ts:210-227` を次の通り書き換える。
+再現:
 
 ```ts
-messaging(
-  channelId: string,
-  metadata: JSONType = null,
-  options: ConnectionOptions = { audio: false, video: false },
-): ConnectionMessaging {
-  const merged: ConnectionOptions = {
-    ...options,
-    audio: false,
-    video: false,
-    dataChannelSignaling: true,
-  };
-  return new ConnectionMessaging(
-    this.signalingUrlCandidates,
-    // messaging は role sendonly として扱う
-    "sendonly",
-    channelId,
-    metadata,
-    merged,
-    this.debug,
-  );
-}
+const opts = { audio: true, video: true };
+const sendrecv = connection.sendrecv("ch", null, opts);
+connection.messaging("ch2", null, opts);
+// opts と sendrecv.options の両方が { audio: false, video: false, dataChannelSignaling: true }
 ```
 
-`src/base.ts:266` を次の通り書き換える。
+## 設計方針
+
+### 1. `messaging()` (`src/sora.ts:210-227`)
+
+```ts
+const merged: ConnectionOptions = {
+  ...options,
+  audio: false,
+  video: false,
+  dataChannelSignaling: true,
+};
+return new ConnectionMessaging(..., merged, ...);
+```
+
+### 2. `ConnectionBase` constructor (`src/base.ts:266`)
 
 ```ts
 this.options = { ...options };
 ```
 
-`tests/utils.test.ts` または新規 `tests/sora.test.ts` に次のテストを追加する。
+以降の `this.options.skipIceCandidateEvent ??= false` 等はコピー側のみ変更する。ネストオブジェクト (`forwardingFilters`, `dataChannels` 等) は共有参照のまま — deep clone は不要。
+
+### 3. テスト (`tests/sora.test.ts` 新規)
 
 ```ts
+import Sora from "../src/sora";
+import type { ConnectionOptions } from "../src/types";
+
 test("messaging() が呼び出し側の options を破壊しない", () => {
   const opts: ConnectionOptions = { audio: true, video: true };
   const connection = Sora.connection("ws://example.invalid/signaling");
@@ -114,6 +77,42 @@ test("messaging() が呼び出し側の options を破壊しない", () => {
   expect(opts.video).toBe(true);
   expect(opts.dataChannelSignaling).toBeUndefined();
 });
+
+test("ConnectionBase が options を shallow copy し sendrecv 後の messaging 破壊が伝播しない", () => {
+  const opts: ConnectionOptions = { audio: true, video: true };
+  const connection = Sora.connection("ws://example.invalid/signaling");
+  const sendrecv = connection.sendrecv("ch", null, opts);
+  connection.messaging("ch2", null, opts);
+  expect(sendrecv.options.audio).toBe(true);
+  expect(sendrecv.options.video).toBe(true);
+  expect(sendrecv.options.dataChannelSignaling).toBeUndefined();
+});
 ```
 
-`Sora.connection` の URL は実際の接続に使われないため `ws://example.invalid/...` でよい (テストは options 破壊の有無のみを見る)。
+`ConnectionBase.options` は public フィールド (`src/base.ts:124`)。
+
+### 4. CHANGES.md
+
+```
+- [FIX] messaging() が呼び出し側の options を破壊しないように修正する
+- [FIX] ConnectionBase で options を shallow copy して外部参照を切り離す
+  - @voluntas
+```
+
+## スコープ外
+
+- `sendrecv` / `sendonly` / `recvonly` の変更 (mutate していない)
+- `options` の deep clone
+- ネストプロパティの防御的コピー
+
+## マージ順
+
+他 issue との依存なし。単独マージ可。0004 チェーン (`0004 → 0006 → 0021 → 0009 → 0007`) とは独立。
+
+## 完了条件
+
+- `src/sora.ts:215-217` を spread copy パターンに置き換える
+- `src/base.ts:266` を `this.options = { ...options };` に変更する
+- `tests/sora.test.ts` (新規) で上記 2 テストを追加する
+- ローカルで `pnpm test` が通ること
+- CHANGES.md `## develop` に `[FIX]` エントリ 2 件を追記する

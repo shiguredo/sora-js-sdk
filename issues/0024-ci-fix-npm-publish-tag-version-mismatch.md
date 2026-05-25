@@ -5,13 +5,17 @@
 - Model: Opus 4.7
 - Branch: feature/fix-npm-publish-tag-validation
 
+## 必要性
+
+**必要。** 現行 workflow は任意タグ (`tags: "*"`) で publish が走り、`package.json` の `version` とタグ名の照合もない。canary 判定も `contains(github.ref, 'canary')` という部分文字列マッチのため、`feature-canary-foo` のような誤タグで canary 経路に入る可能性がある。npm publish は取り消しが困難（同名 version の再 push 不可、72 時間以降の unpublish 不可）なため、構造的ガードが必須。
+
 ## 目的
 
-`.github/workflows/npm-publish.yml:3-6` の `on.push.tags: "*"` は任意のタグで publish を発火させる。`package.json` の `version` フィールドとタグ名の整合性検証ジョブもない。canary 判定は `contains(github.ref, 'canary')` (`:37, :63`) という緩い文字列マッチで、`v2025.2.1-canary-test` や `feature-canary-foo` のような任意文字列にもマッチして canary 経路に乗る (もしくは外す) 可能性がある。リリース担当者の誤タグ操作で過去版が latest に再 publish されると npm 規約上取り返しがつかない (同名同 version の再 push は禁止、unpublish も 72 時間以降は不可) ため、構造的に誤 publish を防ぐ。
+`.github/workflows/npm-publish.yml` の publish トリガと canary 分岐を本リポジトリのリリース命名規約に合わせて厳格化し、タグ名と `package.json` の `version` 不一致時は publish 前に fail させる。
 
 ## 優先度根拠
 
-High。npm の publish は副作用が大きく、外部依存を持つ全ユーザーに即座に影響する。リリース運用者の誤操作で過去版が latest に再 publish された場合、`npm unpublish` の 72 時間制限を過ぎると永久に履歴が残る。間違った dist を latest に置くと SDK 利用者の本番影響が出る。
+High。npm publish は外部依存を持つ全ユーザーに即座に影響する。リリース担当者の誤タグ操作で意図しない version が npm に載る、または canary / latest の経路を誤る事故が起きうる。
 
 ## 現状
 
@@ -24,34 +28,27 @@ on:
       - "*"
 ```
 
-`:37` `if: ${{ contains(github.ref, 'canary') }}`、`:63` `if: ${{ !contains(github.ref, 'canary') }}`。`github.ref` は `refs/tags/<tag-name>` 形式 (例: `refs/tags/2025.2.1-canary.0`)、`github.ref_name` はタグ名のみ (例: `2025.2.1-canary.0`)。`contains(github.ref, 'canary')` は ref 文字列内に `canary` が含まれるかを見るため、`refs/tags/feature-canary-foo` などタグ名以外の文字列にも引っかかる可能性がある (実際には `refs/tags/` 以下しか入らないが、タグ名自体に `canary` を含めれば canary 経路に乗る) 。
+canary 分岐 (`.github/workflows/npm-publish.yml:37`, `:63`):
 
-`package.json` の `version` フィールドとタグ名の照合は全く無い。`v2025.2.0` というタグを誤って `2025.1.9` の commit に打って push すると、`package.json: 2025.1.9` のまま `npm publish` が走り、`2025.1.9` のコードが `2025.2.0` のメタデータとして npm に上がる事故が起きうる (実際は `npm publish` 自体は `package.json.version` を使うため `2025.1.9` として publish されるが、タグと publish された version が不一致になる)。
+```yaml
+if: ${{ contains(github.ref, 'canary') }}
+if: ${{ !contains(github.ref, 'canary') }}
+```
 
-GitHub Actions の filter pattern (`on.push.tags`) は POSIX BRE の `[0-9]+` のような繰り返し量子化はサポートしない。サポートされるのは glob (`*` `**` `?` `[]` `!`) のみ。したがってタグ名の厳密な正規表現一致は workflow filter では実現できず、別途 verify ジョブでスクリプトベースのチェックを行うのが現実的。
+- `github.ref` は `refs/tags/<tag-name>` 形式。タグ名に `canary` が含まれれば canary 扱いになる
+- `package.json` の `version` とタグ名 (`github.ref_name`) の照合は無い
+- 既存タグは `v` プレフィックス無し (`2025.2.0`, `2025.2.0-canary.0`, `2026.1.0-canary.0` 等。`git tag -l` 参照)
+- GitHub Actions の `on.push.tags` filter は glob のみ (POSIX BRE の繰り返し量子化は不可)。厳密な形式検証は workflow filter だけでは不十分で、別ジョブでのスクリプト検証が必要
 
-## 完了条件
+## 設計方針
 
-- `.github/workflows/npm-publish.yml:3-6` の `tags: "*"` を、本リポジトリのリリース命名規約 (`YYYY.x.y` および `YYYY.x.y-canary.N`) に近い glob に絞る。GitHub Actions filter pattern の制約を考慮し、`tags: "[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*"` と `tags: "[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*-canary.[0-9]*"` の 2 つで列挙する。`v` プレフィックスは sora-js-sdk の既存タグでは使われていない (CHANGES.md の `## 2025.2.0` 記法と整合) ため glob にも含めない
-- `build` ジョブの前に `verify-version` ジョブを新設し、`jq -r .version package.json` と `${{ github.ref_name }}` を比較して一致しなければ exit 1 する。`npm-publish-canary` / `npm-publish` の両ジョブはこの `verify-version` を `needs:` に加える
-- canary 判定の `contains(github.ref, 'canary')` を `contains(github.ref_name, '-canary.')` に変更する。`-canary.<N>` パターンに完全一致しないと canary 扱いされない (`feature-canary-foo` や `-canary-test` のような変則タグは弾かれる)
-- `npm-publish` ジョブ (非 canary) も同様に `!contains(github.ref_name, '-canary.')` に揃え、`github.ref` ではなく `github.ref_name` を見るように統一する
-- 動作確認: 実機 publish は失敗時の影響が大きいため、PR 上で `pull_request` トリガを一時的に追加してテスト実行することはせず、コードレビューで `verify-version` の挙動を `act` または手動 dry-run で確認する
-- CHANGES.md `## develop` の `### misc` セクションに次のエントリを追記する
+1. `on.push.tags` を本リポジトリの命名規約に近い glob 2 つに列挙する
+2. `build` の前に `verify-version` ジョブを新設し、`package.json` の `version` と `github.ref_name` を完全一致比較する
+3. canary 判定を `contains(github.ref_name, '-canary.')` に統一する
+4. Slack 通知は issue 0023 (closed) のとおり `status: ${{ job.status }}` のまま変更不要
+5. トップレベル `permissions` は本 issue では触らない (0026 で `contents: read` のみへ縮小)
 
-  ```
-  ### misc
-
-  - [FIX] npm-publish workflow のタグトリガを厳格化し package.json の version とタグ名の一致を verify-version ジョブで検証する
-    - @voluntas
-  ```
-
-- 本 issue は issue 0023 (slack_notify の status 修正) と同じ `npm-publish.yml` を編集するため、マージ順は 0023 → 0024 を推奨する。0023 が `slack_notify` ジョブ内の 1 行を変えるだけなので、0024 でジョブ構造を追加 (`verify-version` 追加、`needs` の更新) してもコンフリクト解消は容易
-- 本 issue ではプロビナンス (`npm publish --provenance --access public`) は扱わない。別 issue として `issues/SEQUENCE` から採番して雛形を作成し、`SEQUENCE` を +1 する
-
-## 解決方法
-
-`.github/workflows/npm-publish.yml` を次の通り書き換える。
+`.github/workflows/npm-publish.yml` の変更後イメージ:
 
 ```yaml
 name: npm-publish
@@ -74,8 +71,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Verify tag matches package.json version
         run: |
-          PKG_VERSION=$(jq -r .version package.json)
-          TAG_NAME=${GITHUB_REF_NAME}
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_NAME="${{ github.ref_name }}"
           if [ "$PKG_VERSION" != "$TAG_NAME" ]; then
             echo "Tag (${TAG_NAME}) does not match package.json version (${PKG_VERSION})"
             exit 1
@@ -109,18 +106,6 @@ jobs:
     if: ${{ contains(github.ref_name, '-canary.') }}
     steps:
       # 既存ステップ (artifact download → npm publish --tag canary) は変更なし
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org
-      - name: Download Artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sora-js-sdk-dist
-          path: dist/
-      - run: npm install -g npm@latest
-      - run: npm publish --no-git-checks --tag canary
 
   npm-publish:
     runs-on: ubuntu-slim
@@ -131,21 +116,8 @@ jobs:
     if: ${{ !contains(github.ref_name, '-canary.') }}
     steps:
       # 既存ステップ (artifact download → npm publish) は変更なし
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org
-      - name: Download Artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: sora-js-sdk-dist
-          path: dist/
-      - run: npm install -g npm@latest
-      - run: npm publish --no-git-checks
 
   slack_notify:
-    # 0023 で status を needs.*.result に変更する想定
     needs: [npm-publish-canary, npm-publish]
     runs-on: ubuntu-slim
     if: ${{ !cancelled() }}
@@ -155,10 +127,50 @@ jobs:
       - name: Slack Notification
         uses: shiguredo/github-actions/.github/actions/slack-notify@main
         with:
-          status: ${{ contains(needs.*.result, 'failure') && 'failure' || 'success' }}
+          status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           slack_channel: sora-js-sdk
           notify_mode: failure_and_fixed
 ```
 
-`verify-version` ジョブの失敗で `build` 以降のジョブはすべて skip される。canary タグ (`2025.2.1-canary.0` 等) は `verify-version` を通った上で `npm-publish-canary` のみ走る。non-canary タグは `npm-publish` のみ走る。
+`verify-version` 失敗時は `build` 以降が skip される。canary タグ (`2025.2.0-canary.0` 等) は `verify-version` 通過後 `npm-publish-canary` のみ、non-canary は `npm-publish` のみ走る。
+
+## 完了条件
+
+### コード変更
+
+- [ ] `on.push.tags` を `"*"` から上記 glob 2 つへ変更する
+- [ ] `verify-version` ジョブを追加し、`node -p "require('./package.json').version"` と `${{ github.ref_name }}` を比較、不一致なら exit 1 する
+- [ ] `build` に `needs: [verify-version]` を追加する
+- [ ] canary 判定を `contains(github.ref_name, '-canary.')` / `!contains(github.ref_name, '-canary.')` に変更する (`github.ref` 参照をやめる)
+- [ ] 既存の publish ステップ (`npm publish --no-git-checks` / `--tag canary`) は変更しない
+
+### 検証
+
+- [ ] `pnpm run lint` / `pnpm run typecheck` が通る (workflow 内 `build` ジョブと同等)
+- [ ] 本 issue は workflow のみの変更のため `pnpm test` の追加実行は不要 (SDK ソース無変更)
+- [ ] 実機 publish は影響が大きいため PR 上での tag push テストは行わない。レビューで以下を確認する
+  - glob が既存タグ形式 (`2025.2.0`, `2025.2.0-canary.0`) にマッチすること
+  - `verify-version` スクリプトが tag / version 不一致で exit 1 すること (ローカルで `TAG_NAME=2025.2.0 node -p ...` 等で dry-run 可)
+- [ ] CI: PR マージ後、次回の canary tag push で workflow が意図通り動くこと (本 issue 単体では tag push トリガは発火しない)
+
+### 変更履歴
+
+- [ ] `CHANGES.md` `## develop` の `### misc` に追記する
+
+  ```
+  - [FIX] npm-publish workflow のタグトリガを厳格化し package.json の version とタグ名の一致を verify-version ジョブで検証する
+    - @voluntas
+  ```
+
+## スコープ外
+
+- `shiguredo/github-actions` の SHA 固定 (issue 0025)
+- workflow `permissions` の最小権限化 (issue 0026)
+- `npm publish --provenance` 追加 (issue 0033)
+- Slack notify の `status: ${{ job.status }}` 変更 (issue 0023 で対応不要と判定済み)
+- タグ命名規約そのものの変更 (`canary.py` 等)
+
+## マージ順
+
+**0024 を最初にマージする。** 0025 / 0026 が同じ `npm-publish.yml` を編集するため、0024 → 0025 → 0026 の順を推奨する。

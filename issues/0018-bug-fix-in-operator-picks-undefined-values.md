@@ -1,4 +1,4 @@
-# `in` 演算子で `undefined` 値のプロパティを拾い `undefined` を Sora に送信する
+# `in` 演算子で `undefined` 値のプロパティを拾い message に不正値を積む
 
 - Priority: High
 - Created: 2026-05-21
@@ -7,59 +7,29 @@
 
 ## 目的
 
-`createSignalingMessage` (`src/utils.ts`) は `spotlightNumber` (`src/utils.ts:168-170`)、`audioCodecType` (`:256-258`)、`audioBitRate` (`:259-261` 周辺)、`videoCodecType` / `videoBitRate` 等の判定に `"X" in options` / `"X" in copyOptions` を使う。`in` 演算子はキー存在のみで判定し、値が `undefined` でも `true` を返す。動的にオプションを組み立てるアプリで `{ ...base, spotlightNumber: someValueOrUndefined }` を渡すと、`message.spotlight_number = undefined` が代入される。`JSON.stringify` で省略されるため WebSocket 送信時は消えるが、ロジック上は不正で、`copyOptions` の `delete` 条件 (`src/utils.ts:230-247`) でも `undefined` をフィルタしていないため `audioCodecType: undefined` などが残ってしまう。
+`createSignalingMessage` (`src/utils.ts:123-336`) の一部判定が `"X" in options` / `"X" in copyOptions` と `copyOptions[key] !== null` に依存しており、値が `undefined` でもキーが存在すれば message へ積まれる。`{ spotlightNumber: undefined }` 等は `JSON.stringify` 時に省略されるが、ロジック上は不正で、Sora 側の解釈次第では接続拒否 (`invalid-spotlight-number` 等) につながる。SDK 側で `undefined` を message に載せないよう型ガードに置き換える。
 
-すべての `in` 演算子と `!== null` 比較を `!== undefined && !== null` または `typeof X === "number"` / `typeof X === "string"` 等の型ガードに置き換える。
+## 必要性
+
+**必要** (確信度: 高)。`src/utils.ts:168-170`, `:238-247`, `:256-319` に未修正の `in` / `!== null` パターンが残存。`tests/utils.test.ts:799-806` の `spotlightNumber: undefined` テストは `toEqual` だけでは `{ spotlight_number: undefined }` が `{}` と等価扱いされ pass しており、回帰検知不能。
 
 ## 優先度根拠
 
-High。React の `useState` 経由でオプションを管理するアプリ、もしくはオプション組み立て関数で「指定なし」を `undefined` で表現するパターンは一般的で、本問題は頻発する。Sora 側で `null` / `undefined` を「指定なし」と扱うか「不正値」と扱うかは項目依存で、最悪のケースで `invalid-spotlight-number` などの接続拒否が発生する。本 SDK 側で `undefined` を message に積まないことが防御線となる。
+High。React `useState` や `{ ...base, key: maybeUndefined }` で `undefined` キーが混ざるパターンは一般的で、本問題は頻発する。
 
 ## 現状
 
-問題箇所一覧 (`src/utils.ts`):
+| 箇所                   | 問題                                                                    |
+| ---------------------- | ----------------------------------------------------------------------- |
+| `src/utils.ts:168-170` | `"spotlightNumber" in options` → `undefined` も拾う                     |
+| `src/utils.ts:238-247` | delete 条件が `!== null` のみ → `undefined` キーが `copyOptions` に残る |
+| `src/utils.ts:256-319` | `"X" in copyOptions` → 残った `undefined` を message に代入             |
 
-- `:168-170` `"spotlightNumber" in options`: `undefined` 値も真
-- `:230-247` `copyOptions` の delete ループ: `audioPropertyKeys.includes(key) && copyOptions[key] !== null` で `null` のみ delete し `undefined` を見逃す。同じ条件が `audioOpusParamsPropertyKeys` / `videoPropertyKeys` でも `null` のみ
-- `:256-258` `"audioCodecType" in copyOptions`: `copyOptions` に `audioCodecType: undefined` が残っていれば真
-- `:259-261` 周辺 `"audioBitRate" in copyOptions`: 同上
-- `videoCodecType` / `videoBitRate` / `videoVP9Params` 等の同パターン
+他オプション (`simulcast`, `clientId`, `metadata` 等) は既に `typeof` / `!== undefined` ガード済み。本 issue の対象外。
 
-`in` 演算子の挙動 (ECMAScript §13.10): プロパティが存在すれば値に関わらず `true` を返す。`{ x: undefined }` でも `"x" in obj` は `true`。
+## 設計方針
 
-`copyOptions` のロジック (`:230-247`) は次の意図:
-
-```ts
-for (const key of Object.keys(copyOptions)) {
-  if (key === "audio" && typeof copyOptions[key] === "boolean") continue;
-  if (key === "video" && typeof copyOptions[key] === "boolean") continue;
-  if (audioPropertyKeys.includes(key) && copyOptions[key] !== null) continue;
-  if (audioOpusParamsPropertyKeys.includes(key) && copyOptions[key] !== null) continue;
-  if (videoPropertyKeys.includes(key) && copyOptions[key] !== null) continue;
-  delete copyOptions[key];
-}
-```
-
-「audio/video 関連オプションのうち値が `null` でないものだけ保持、それ以外は削除」だが、`undefined` 値は `!== null` で `true` を返すため `copyOptions` に残ってしまう。後続の `"audioCodecType" in copyOptions` 判定で true となり、`message.audio.codec_type = undefined` が代入される。
-
-## 完了条件
-
-- `src/utils.ts:168-170` の `"spotlightNumber" in options` を `typeof options.spotlightNumber === "number"` に変更
-- `src/utils.ts:230-247` の `copyOptions` delete ループで `audioPropertyKeys` / `audioOpusParamsPropertyKeys` / `videoPropertyKeys` の条件を `copyOptions[key] !== null && copyOptions[key] !== undefined` に変更
-- `src/utils.ts:256-258` の `"audioCodecType" in copyOptions` を `typeof copyOptions.audioCodecType === "string"` 相当に変更
-- `src/utils.ts:259-261` 周辺の `"audioBitRate" in copyOptions` を `typeof copyOptions.audioBitRate === "number"` に変更
-- `videoCodecType` / `videoBitRate` / `videoVP9Params` / `videoH264Params` / `videoH265Params` / `videoAV1Params` および `audioOpusParams*` 系もすべて型ガードに変更
-- 単体テストを `tests/utils.test.ts` に追加し、各 `XxxBitRate: undefined` / `XxxCodecType: undefined` / `spotlightNumber: undefined` を含む `options` で `createSignalingMessage` を呼んだ結果の message に該当プロパティが含まれないことを assert する
-- CHANGES.md `## develop` に次のエントリを追記する
-  ```
-  - [FIX] createSignalingMessage の各オプション判定で in 演算子が undefined 値を拾っていたのを型ガードに置き換える
-    - @voluntas
-  ```
-- 本 issue は issue 0016 / 0017 と同じ `createSignalingMessage` を編集するため、マージ順を 0016 → 0017 → 0018 とする。0016 / 0017 で追加する throw 検証と、本 issue で変更する型ガードはコード上隣接するが意味的には独立しているため、コンフリクト解消は機械的に行える
-
-## 解決方法
-
-`src/utils.ts:168-170` を次の通り書き換える。
+### 1. `spotlightNumber`
 
 ```ts
 if (typeof options.spotlightNumber === "number") {
@@ -67,59 +37,30 @@ if (typeof options.spotlightNumber === "number") {
 }
 ```
 
-`src/utils.ts:230-247` の `copyOptions` delete ループを次の通り書き換える。
+### 2. `copyOptions` delete ループ (`:238-247`)
 
-```ts
-const copyOptions = { ...options };
-for (const key of Object.keys(copyOptions) as Array<keyof ConnectionOptions>) {
-  if (key === "audio" && typeof copyOptions[key] === "boolean") {
-    continue;
-  }
-  if (key === "video" && typeof copyOptions[key] === "boolean") {
-    continue;
-  }
-  if (
-    audioPropertyKeys.includes(key) &&
-    copyOptions[key] !== null &&
-    copyOptions[key] !== undefined
-  ) {
-    continue;
-  }
-  if (
-    audioOpusParamsPropertyKeys.includes(key) &&
-    copyOptions[key] !== null &&
-    copyOptions[key] !== undefined
-  ) {
-    continue;
-  }
-  if (
-    videoPropertyKeys.includes(key) &&
-    copyOptions[key] !== null &&
-    copyOptions[key] !== undefined
-  ) {
-    continue;
-  }
-  delete copyOptions[key];
-}
-```
+`!== null` を `!= null` に変更し、`undefined` と `null` を両方除外する。
 
-`src/utils.ts:256-258` 以降の `"X" in copyOptions` パターンを型ガードに置き換える。
+### 3. audio / video パラメータ (`:256-319`)
+
+`"X" in copyOptions` を `ConnectionOptions` (`src/types.ts:379-427`) に合わせた型ガードに置き換える。
+
+| プロパティ                                                                                                                                     | ガード                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `audioCodecType`, `videoCodecType`                                                                                                             | `typeof ... === "string"`                                                  |
+| `audioBitRate`, `videoBitRate`, `audioOpusParamsChannels`, `audioOpusParamsMaxplaybackrate`, `audioOpusParamsMinptime`, `audioOpusParamsPtime` | `typeof ... === "number"`                                                  |
+| `audioOpusParamsStereo`, `audioOpusParamsSpropStereo`, `audioOpusParamsUseinbandfec`, `audioOpusParamsUsedtx`                                  | `typeof ... === "boolean"`                                                 |
+| `videoVP9Params`, `videoH264Params`, `videoH265Params`, `videoAV1Params`                                                                       | `... != null && typeof ... === "object"` (`typeof null === "object"` 対策) |
+
+例:
 
 ```ts
 if (typeof copyOptions.audioCodecType === "string") {
   message.audio.codec_type = copyOptions.audioCodecType;
 }
-if (typeof copyOptions.audioBitRate === "number") {
-  message.audio.bit_rate = copyOptions.audioBitRate;
-}
-// audioOpusParamsChannels, audioOpusParamsMaxplaybackrate, audioOpusParamsMinptime, audioOpusParamsPtime は number
-// audioOpusParamsStereo, audioOpusParamsSpropStereo, audioOpusParamsUseinbandfec, audioOpusParamsUsedtx は boolean
-// videoCodecType は string、videoBitRate は number、videoVP9Params / videoH264Params / videoH265Params / videoAV1Params は object
 ```
 
-各オプションの値型は `types.ts` の `ConnectionOptions` 定義を確認した上で適切な `typeof` ガードを選ぶ。
-
-`tests/utils.test.ts` に次のテストを追加する。
+### 4. テスト (`tests/utils.test.ts`)
 
 ```ts
 test("undefined 値のオプションは message に含めない", () => {
@@ -138,7 +79,38 @@ test("undefined 値のオプションは message に含めない", () => {
     false,
   );
   expect("spotlight_number" in message).toBe(false);
-  expect(message.audio).toBe(undefined);
-  expect(message.video).toBe(undefined);
+  expect(message.audio).toBe(true); // デフォルト値
+  expect(typeof message.audio).toBe("boolean");
+  expect(message.video).toBe(true);
 });
 ```
+
+既存 `spotlightNumber: undefined` テスト (`:799-806`) は上記と同様、`in` / 型ベース assert に差し替える。
+
+### 5. CHANGES.md
+
+```
+- [FIX] createSignalingMessage の各オプション判定で in 演算子が undefined 値を拾っていたのを型ガードに置き換える
+  - @voluntas
+```
+
+## スコープ外
+
+- issue 0016 (`forwardingFilter` / `forwardingFilters` 排他) / 0017 (`clientId` / `bundleId` 空文字) — 同一関数だが別 issue
+- `null` 値の Sora 側意味論 — 型ガードで message へ載らないようにするのみ
+- `createSignalingMessage` 以外の `in` 演算子
+
+## マージ順
+
+```
+0016 → 0017 → 0018
+```
+
+同一関数 `createSignalingMessage` を編集するため **0016 / 0017 を先にマージ**する。0004 チェーン (`0004 → 0006 → 0021 → 0009 → 0007`) とは独立。
+
+## 完了条件
+
+- 上記 3 箇所すべてを型ガード / `!= null` に置き換える
+- `tests/utils.test.ts` に undefined オプションの回帰テストを追加し、既存 `toEqual` のみの assert を修正する
+- ローカルで `pnpm test` が通ること
+- CHANGES.md `## develop` に `[FIX]` エントリを追記する

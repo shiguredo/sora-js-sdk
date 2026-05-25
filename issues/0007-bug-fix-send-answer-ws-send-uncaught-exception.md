@@ -33,64 +33,31 @@ protected sendAnswer(): void {
 
 `ws.send` は `readyState !== 1` 時に `InvalidStateError` を同期 throw する。`sendAnswer` は `void` 同期メソッドで、呼び出し元 `multiStream` (例: `src/publisher.ts` の `multiStream` 内 `this.sendAnswer();`) でも try/catch されていない。同期 throw は `multiStream` が返す Promise の reject となり、`Promise.race` の prevent / `finally` 経由で `clearConnectionTimeout` / `clearMonitorSignalingWebSocketEvent` は呼ばれるが、`signalingTerminate` は呼ばれず `this.ws` / `this.pc` / `this.soraDataChannels` が初期化されないまま残る。
 
-`sendUpdateAnswer` (`src/base.ts:1916-1924`) と `sendReAnswer` (`src/base.ts:1929-1937`) は async メソッドで、`this.ws.send` を直接呼ばず `this.sendSignalingMessage(...)` (`src/base.ts:2301-2322`) を介する。`sendSignalingMessage` の内部にも `this.soraDataChannels.signaling.send` と `this.ws.send` の try/catch 漏れがあるが、これは issue 0004 の完了条件で先行採番される `sendSignalingMessage` の `compressMessage` 失敗を扱う同型バグ雛形に統合して扱うため、本 issue の対象外とする。同様に `sendStatsMessage` (`src/base.ts:2329-2343`)、public API `sendMessage` (`src/base.ts:2428` 周辺) も本 issue の対象外。
+`sendUpdateAnswer` (`src/base.ts:1916-1924`) と `sendReAnswer` (`src/base.ts:1929-1937`) は async メソッドで、`this.ws.send` を直接呼ばず `this.sendSignalingMessage(...)` (`src/base.ts:2301-2322`) を介する。`sendSignalingMessage` の内部にも `this.soraDataChannels.signaling.send` と `this.ws.send` の try/catch 漏れがあるが、これは issue 0034 (`issues/0034-bug-fix-signaling-send-sync-exceptions.md`) でまとめて扱うため、本 issue の対象外とする。同様に `sendStatsMessage` (`src/base.ts:2329-2343`)、public API `sendMessage` (`src/base.ts:2428` 周辺) も本 issue の対象外。
 
 `signalingTerminate` (`src/base.ts:582-598`) は冪等な作りになっており、内部の `ws.close()` / `pc.close()` / `dataChannel.close()` はすべて null/falsy ガード付きで二重呼び出しに安全。`initializeConnection` (`src/base.ts:820-848`) も冪等。
 
+## 設計方針
+
+`ws.readyState !== 1` を `try` 前に明示チェックし、`ws.send` 同期 throw 時はいずれも `signalingTerminate()` で内部状態を初期化してから `ConnectError` を throw する。`sendSignalingMessage` 系の修正は issue 0034 に委ね、本 issue は `sendAnswer` のみに限定する。
+
+実装 (`src/base.ts:1507-1515`): `readyState !== WebSocket.OPEN` 早期検出 + `ws.send` try/catch (早期チェックと send の間に close されるレースがあるため try/catch も必須)。catch / 早期検出時は `signalingTerminate()` 後 `ConnectError` (`reason: "WS_SEND_INVALID_STATE"` / `"WS_SEND_FAILED"`) を throw。`ConnectError` は `src/utils.ts:414-417` で定義。
+
+0009 未マージ時、`signalingTerminate` は `onicecandidate` を解除しない。0007 単体では `sendAnswer` 失敗時点で handler 未登録のため直撃しにくいが、0009 と同 PR または **0009 先行マージを推奨**。
+
+**`signalingTerminate` 後の `ws.onclose` 再入:** `signaling()` が付けた `onclose` は offer resolve 後も生きる。`signalingTerminate()` → `ws.close()` で `onclose` が再度 `signalingTerminate()` を呼ぶ (冪等だが timeline ログ二重化しうる)。
+
+**`ConnectError.reason`:** 早期 `readyState !== WebSocket.OPEN` 検出 → `"WS_SEND_INVALID_STATE"`。`ws.send` catch → `"WS_SEND_FAILED"`。
+
 ## 完了条件
 
-- `sendAnswer` (`src/base.ts:1507-1515`) が `this.ws.send` を try/catch で囲み、catch 時に `signalingTerminate()` を呼んでから例外を再 throw する
-- catch 時の throw は `Error` ではなく `ConnectError` を使い、`reason: "WS_SEND_INVALID_STATE"` 相当のフィールドを設定する。SDK が他経路で投げる `ConnectError` と統一する
-- `this.ws.readyState !== 1` の早期検出を `try` の前に挿入し、`ws.send` を呼ばずに `signalingTerminate()` + throw する経路を持つ。`readyState` が `CLOSING` / `CLOSED` で `ws.send` が同期 throw する仕様だが、明示することで実装意図を読み取りやすくする
-- 既存ログ呼び出し `this.trace("ANSWER SDP", ...)` (`src/base.ts:1509`) と `this.writeWebSocketSignalingLog("send-answer", message)` (`src/base.ts:1513`) を保持する。失敗経路では `this.writeWebSocketSignalingLog("failed-to-send-answer", { reason: errorMessage })` 相当のログを残す
-- 検証は実機 Sora で `ws.readyState !== 1` を狙って起こすのが難しい (TCP RST タイミング依存) ため、コードレビューで try/catch の到達性を担保する。手動検証手順を `e2e-tests/sendrecv/README.md` (もしくは新規 README) に「`signalingNotifyMetadata` 周りの認証エラーで Sora が close frame を返してきた直後に `sendAnswer` が走る場合」のような再現条件として残す
+- 上記設計方針どおり `sendAnswer` を修正する
+- ローカルで `pnpm test` および既存 `pnpm e2e-test` が通ること
+- 失敗経路では `writeWebSocketSignalingLog("failed-to-send-answer", ...)` を残す
+- 手動検証手順を `e2e-tests/sendrecv/README.md`（新規可）に残す (TCP RST タイミング依存のため E2E 自動化はスコープ外)
 - CHANGES.md `## develop` に次のエントリを追記する
   ```
   - [FIX] sendAnswer の ws.send が同期 throw したときに内部状態がクリーンアップされなかったのを修正する
     - @voluntas
   ```
-- 本 issue は issue 0002 (`disconnect()` 冪等化) および issue 0011 (`monitorSignalingWebSocketEvent` の interval 孤児化) と並行で進められる。`signalingTerminate` 内部のタイマークリーンアップは issue 0011 で強化する別件のため、本 issue は `sendAnswer` の例外伝播パス整備のみに集中する
-
-## 解決方法
-
-`src/base.ts:1507-1515` の `sendAnswer` を次の通り書き換える。
-
-```ts
-protected sendAnswer(): void {
-  if (this.pc && this.ws && this.pc.localDescription) {
-    this.trace("ANSWER SDP", this.pc.localDescription.sdp);
-    const { sdp } = this.pc.localDescription;
-    const message = { sdp, type: SIGNALING_MESSAGE_TYPE_ANSWER };
-    if (this.ws.readyState !== 1) {
-      const error = new ConnectError(
-        "Signaling failed. WebSocket is not open when sending answer.",
-      );
-      error.reason = "WS_SEND_INVALID_STATE";
-      this.writeWebSocketSignalingLog("failed-to-send-answer", {
-        reason: error.reason,
-      });
-      this.signalingTerminate();
-      throw error;
-    }
-    try {
-      this.ws.send(JSON.stringify(message));
-      this.writeWebSocketSignalingLog("send-answer", message);
-    } catch (e) {
-      const errorMessage = (e as Error).message;
-      this.writeWebSocketSignalingLog("failed-to-send-answer", {
-        reason: errorMessage,
-      });
-      this.signalingTerminate();
-      const error = new ConnectError(
-        `Signaling failed. ws.send failed: ${errorMessage}`,
-      );
-      error.reason = "WS_SEND_FAILED";
-      throw error;
-    }
-  }
-}
-```
-
-`ConnectError` は `src/utils.ts:414-417` で定義されており `code?: number` / `reason?: string` を持つ。`error.reason = "WS_SEND_INVALID_STATE"` / `"WS_SEND_FAILED"` の代入は既存シグネチャと整合する。
-
-`sendUpdateAnswer` / `sendReAnswer` / `sendSignalingMessage` / `sendStatsMessage` / public `sendMessage` の修正は本 issue では行わない。issue 0004 で先行採番される同型バグ雛形 (`sendSignalingMessage` の `compressMessage` 失敗、ws.send / DC.send 同期 throw を含む) で扱う。
+- マージ順: **0021** → **0009** → **0001** → **0008** → **0007** → **0034** (0004 チェーン参照)

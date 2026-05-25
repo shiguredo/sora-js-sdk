@@ -45,20 +45,9 @@ declare global {
 
 このグローバル拡張は `Algorithm` 型 (WebCrypto 全 API で共有) に `namedCurve: string` を必須プロパティとして注入する。本来 `namedCurve` を持つのは `EcKeyGenParams` / `EcKeyImportParams` / `EcKeyAlgorithm` などの EC 系サブ型のみで、`Algorithm` 自体には存在しない。プロジェクト内の他コードや依存ライブラリの WebCrypto 利用に型エラーを潜在的に持ち込む。WebCrypto 標準 (TypeScript の `lib.dom.d.ts` 標準) に `EcKeyGenParams` が定義済みなので、それを使えば globaltype 汚染は不要。
 
-## 完了条件
+## 設計方針
 
-- `connectPeerConnection` (`src/base.ts:1343-1351`) で `generateCertificate` 呼び出しを try/catch で囲み、catch 時は `config.certificates` を設定せずに次の `new RTCPeerConnection(config, this.constraints)` に進む。`this.trace("GENERATE-CERTIFICATE-FAILED", String(e))` でログを残す
-- `src/base.ts:80-84` の `declare global { interface Algorithm { namedCurve: string; } }` を削除する
-- `generateCertificate` の引数型を `EcKeyGenParams` に明示する (`{ name: "ECDSA", namedCurve: "P-256" } satisfies EcKeyGenParams`)。`EcKeyGenParams` は TypeScript の `lib.dom.d.ts` に標準定義済みなので import 不要
-- 検証は FIPS モード Chromium での再現が難しいため、コードレビューで try/catch の到達性を担保する。手動検証手順を `e2e-tests/README.md` (既存) に「`window.RTCPeerConnection.generateCertificate` を一時的にエラー throw に差し替えて `connect()` が成立することを DevTools console で確認する手順」として追記する
-- CHANGES.md `## develop` に次のエントリを追記する
-  ```
-  - [FIX] generateCertificate が失敗した環境 (FIPS モード等) でも接続できるようにフォールバックする
-    - @voluntas
-  ```
-- `Algorithm` グローバル拡張削除に伴う型エラーが SDK の他コードで出ないことを `vp check` で確認する。事前調査として `src/` 配下を `grep namedCurve` した結果、`namedCurve` を使うのは `src/base.ts:82, 1348` の 2 箇所のみで、削除後の影響は本 issue の編集範囲に閉じる
-
-## 解決方法
+`generateCertificate` 失敗時は `config.certificates` を設定せずブラウザデフォルトの証明書生成にフォールバックする (WebRTC 仕様上 `certificates` 省略は許容)。型汚染の `declare global { interface Algorithm }` は削除し、引数型を `EcKeyGenParams` (`satisfies`) で明示する。
 
 `src/base.ts:1343-1351` の `if (window.RTCPeerConnection.generateCertificate !== undefined)` ブロックを次の通り書き換える。
 
@@ -73,9 +62,11 @@ if (window.RTCPeerConnection.generateCertificate !== undefined) {
     config = { certificates: [certificate], ...config };
   } catch (e) {
     this.trace("GENERATE-CERTIFICATE-FAILED", String(e));
+    this.writePeerConnectionTimelineLog("generate-certificate-failed", { reason: String(e) });
   }
-}
 ```
+
+**限界**: FIPS 環境で `new RTCPeerConnection(config)` 自体も ECDSA 内部利用で失敗しうる。本 issue は `generateCertificate` 失敗時のフォールバックのみ。
 
 `src/base.ts:80-84` を削除する。
 
@@ -88,3 +79,17 @@ declare global {
 ```
 
 `generateCertificate` の引数で `satisfies EcKeyGenParams` を使う狙いは「`name` / `namedCurve` のプロパティ名タイポを TypeScript で検出する」「`Algorithm` グローバル拡張を削除しても `namedCurve` プロパティが許容される根拠を型で示す」の 2 点。`NamedCurve` は `lib.dom.d.ts` 上では `string` エイリアスのため、カーブ名文字列自体のタイポは検出できない。
+
+## 完了条件
+
+- `connectPeerConnection` (`src/base.ts:1343-1351`) で `generateCertificate` 呼び出しを try/catch で囲み、catch 時は `config.certificates` を設定せずに次の `new RTCPeerConnection(config, this.constraints)` に進む。`this.trace("GENERATE-CERTIFICATE-FAILED", String(e))` と `writePeerConnectionTimelineLog("generate-certificate-failed", { reason: String(e) })` でログを残す
+- ローカルで `pnpm test` および既存 `pnpm e2e-test` が通ること
+- `src/base.ts:80-84` の `declare global { interface Algorithm { namedCurve: string; } }` を削除する
+- `generateCertificate` の引数型を `EcKeyGenParams` に明示する (`{ name: "ECDSA", namedCurve: "P-256" } satisfies EcKeyGenParams`)。`EcKeyGenParams` は TypeScript の `lib.dom.d.ts` に標準定義済みなので import 不要
+- 検証は FIPS モード Chromium での再現が難しいため、コードレビューで try/catch の到達性を担保する。手動検証手順を `e2e-tests/README.md` (既存) に「`window.RTCPeerConnection.generateCertificate` を一時的にエラー throw に差し替えて `connect()` が成立することを DevTools console で確認する手順」として追記する
+- CHANGES.md `## develop` に次のエントリを追記する
+  ```
+  - [FIX] generateCertificate が失敗した環境 (FIPS モード等) でも接続できるようにフォールバックする
+    - @voluntas
+  ```
+- `Algorithm` グローバル拡張削除に伴う型エラーが SDK の他コードで出ないことを `vp check` で確認する。事前調査として `src/` 配下を `grep namedCurve` した結果、`namedCurve` を使うのは `src/base.ts:82, 1348` の 2 箇所のみで、削除後の影響は本 issue の編集範囲に閉じる

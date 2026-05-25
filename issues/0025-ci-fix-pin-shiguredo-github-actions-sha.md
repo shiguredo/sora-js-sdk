@@ -5,69 +5,106 @@
 - Model: Opus 4.7
 - Branch: feature/fix-pin-shiguredo-github-actions
 
+## 必要性
+
+**必要。** 本リポジトリの workflow は外部 action を `<sha> # <version>` 形式で固定しているが、`slack-notify@main` のみ ref 固定されていない。`shiguredo/github-actions` の `main` が改変された場合、`secrets.SLACK_WEBHOOK` 流出や workflow 改竄の経路が成立する。コミット `3d3e593b` で意図的に `@main` へ戻した経緯はあるが、供給網リスク低減のため SHA pinning ポリシーへ再統一する。
+
 ## 目的
 
-`.github/workflows/` 配下の workflow は外部 action (例: `actions/checkout`、`actions/setup-node`、`actions/upload-artifact`、`pnpm/action-setup`、`actions/download-artifact`) をすべて `<sha> # <version>` 形式で SHA 固定しているが、`shiguredo/github-actions/.github/actions/slack-notify@main` のみ `@main` で参照している。`shiguredo/github-actions` リポジトリの `main` が改変・侵害された瞬間、本リポジトリの全 workflow で改変済み slack-notify が実行され、`secrets.SLACK_WEBHOOK` の流出やリリースタイミング・成果物の改竄経路が成立する。Dependabot で更新検知できる形に `<sha>` で固定する。
+`.github/workflows/` 配下 7 workflow の `slack-notify@main` を commit SHA 固定に変更し、Dependabot による更新検知を可能にする。`with:` ブロック (`status: ${{ job.status }}` 等) は変更しない。
 
 ## 優先度根拠
 
-High。SHA pinning ポリシーから外れているのは現状の workflow 群で `slack-notify@main` だけ。SLACK_WEBHOOK が secret として渡され、Webhook URL を握れば本プロジェクトの全 Slack 通知に任意メッセージを送れる。さらに npm-publish のタイミングを観測すれば、リリース直後のサプライチェーン攻撃 (バージョンタグ確認 → 攻撃者が同タグ commit に切り替え → 等) の窓を作れる。`shiguredo/github-actions` は自社管理リポジトリだが、社内アカウント侵害 / リポジトリ書き込み権限漏れの 1 経路で同じ事故が起きる。
-
-直近の git log (`b77d51c3 e2e-test の runner を windows-2025-vs2026 に切り替え playwright test ステップに 15 分の timeout を設定する`、`3d3e593b shiguredo/github-actions の slack-notify を @main に戻し upload-artifact コメントを v7.0.1 に更新する`、`65a6f96a GitHub Actions をコミット SHA で固定し CodeQL ワークフローを削除する`) を見ると、本リポジトリは 65a6f96a で全 action を SHA 固定したが、3d3e593b で `shiguredo/github-actions` だけ `@main` に戻した経緯がある。意図的な巻き戻しと思われるが、本 issue でポリシーに揃え直す。
+High。SHA pinning ポリシーから外れているのは現状 `slack-notify@main` のみ。SLACK_WEBHOOK は secret として全 workflow に渡される。npm-publish のタイミング観測と組み合わさるとサプライチェーン攻撃の窓になる。
 
 ## 現状
 
-該当箇所は 7 つ:
+該当箇所 7 つ (`dependency-review.yml` は slack-notify 未使用):
 
-- `.github/workflows/ci.yaml:56`
-- `.github/workflows/npm-publish.yml:91`
-- `.github/workflows/e2e-test.yml:90`
-- `.github/workflows/e2e-test-canary.yml:75`
-- `.github/workflows/e2e-test-h265.yml:73`
-- `.github/workflows/e2e-test-webkit.yml:60`
-- `.github/workflows/npm-pkg-e2e-test.yml:92`
+| ファイル                                 | 行 (着手時) |
+| ---------------------------------------- | ----------- |
+| `.github/workflows/ci.yaml`              | 56          |
+| `.github/workflows/npm-publish.yml`      | 91          |
+| `.github/workflows/e2e-test.yml`         | 90          |
+| `.github/workflows/e2e-test-canary.yml`  | 75          |
+| `.github/workflows/e2e-test-h265.yml`    | 73          |
+| `.github/workflows/e2e-test-webkit.yml`  | 60          |
+| `.github/workflows/npm-pkg-e2e-test.yml` | 92          |
 
-すべて `uses: shiguredo/github-actions/.github/actions/slack-notify@main`。
+すべて:
 
-`.github/dependabot.yml:32` で `shiguredo/github-actions` は `github-actions` エコシステムの監視対象に既に含まれている。SHA pinning に戻れば Dependabot から自動更新 PR が来る。
+```yaml
+uses: shiguredo/github-actions/.github/actions/slack-notify@main
+```
 
-## 完了条件
+`.github/dependabot.yml:32` で `shiguredo/github-actions` は `github-actions` エコシステムの監視対象に含まれている。
 
-- 上記 7 箇所すべてで `@main` を `@<commit-sha> # <tag-name-or-date>` の SHA pinning 形式に変更する。SHA は本 issue 着手時の `shiguredo/github-actions` の `main` 最新コミット (もしくは安定タグの commit) を採用する
-- `# <tag-name-or-date>` のコメントは本リポジトリの既存 workflow の慣習 (例: `actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2`) に揃える。`shiguredo/github-actions` に release タグがあればそれ、無ければ日付 (`# 2026-05-21`) を入れる
-- `.github/dependabot.yml:32` で `shiguredo/github-actions` が監視対象に含まれていることを確認する (既存の確認のみ、変更不要)
-- 動作確認は SHA 固定後の workflow が CI 等で正常に動くことを通常の PR トリガで確認する。`shiguredo/github-actions` の `slack-notify` Composite Action の `action.yml` シグネチャが安定していることが前提なので、SHA 固定対象の commit が現行 `@main` と同じ Composite Action を提供していることを目視で確認する
-- CHANGES.md `## develop` の `### misc` セクションに次のエントリを追記する
+## 設計方針
 
-  ```
-  ### misc
+### 1. 固定する SHA の取得
 
-  - [FIX] shiguredo/github-actions の slack-notify を SHA で固定して供給網リスクを下げる
-    - @voluntas
-  ```
-
-- 本 issue は issue 0023 / 0024 と同じ workflow ファイル群を編集するため、マージ順は 0023 → 0024 → 0025 を推奨する。0023 が `status` 値、0024 が npm-publish.yml の構造変更、0025 が `uses:` 行の SHA pinning でそれぞれ別行を編集するためコンフリクトは少ないが、`npm-publish.yml:91` は 0023 と同行近辺なので注意
-
-## 解決方法
-
-`shiguredo/github-actions` の `main` 最新 commit SHA を取得する。
+着手時点の `shiguredo/github-actions` `main` 最新 commit を採用する。
 
 ```bash
 gh api repos/shiguredo/github-actions/commits/main --jq .sha
 ```
 
-取得した SHA (例: `abcdef0123456789abcdef0123456789abcdef01`) と、対応する release タグまたは取得日付を組み合わせて、7 箇所を一括置換する。
+2026-05-25 時点の参考値: `145407fb88527b7068762db72480c1f55715e0b1` (2026-05-06, "slack_webhook が空のときは通知をスキップする")。**実装時は必ず最新 SHA を再取得すること。**
+
+### 2. 置換形式
+
+本リポジトリの既存慣習 (`actions/checkout@... # v6.0.2`) に合わせる。release タグが無ければ日付コメントを使う。
 
 ```yaml
 # 変更前
 uses: shiguredo/github-actions/.github/actions/slack-notify@main
 
-# 変更後 (SHA とコメントは取得値に合わせる)
-uses: shiguredo/github-actions/.github/actions/slack-notify@abcdef0123456789abcdef0123456789abcdef01 # 2026-05-21
+# 変更後 (SHA / コメントは取得値に合わせる)
+uses: shiguredo/github-actions/.github/actions/slack-notify@145407fb88527b7068762db72480c1f55715e0b1 # 2026-05-06
 ```
 
-`grep -rl "shiguredo/github-actions/.github/actions/slack-notify@main" .github/workflows/` で 7 ファイル全てに確実に変更が入ったことを確認する。
+### 3. 変更確認
 
-Dependabot は SHA pinning + コメント付き action を検出して、`shiguredo/github-actions` の `main` 更新検知時に自動で PR を作成する設定が既に効いている (`.github/dependabot.yml:32` の `shiguredo/github-actions` 設定)。
+```bash
+grep -rl "shiguredo/github-actions/.github/actions/slack-notify@main" .github/workflows/
+```
 
-`shiguredo/github-actions` に release タグを切る作業は本リポジトリの範囲外。`shiguredo/github-actions` 側でリリース運用を整える issue は別途扱う。本 issue では `main` の最新 commit SHA で固定するだけに留める。
+上記が 0 件になること。
+
+### 4. 固定対象 commit の目視確認
+
+固定する commit の `.github/actions/slack-notify/action.yml` が、現行 `@main` と同一の input シグネチャ (`status`, `slack_webhook`, `slack_channel`, `notify_mode` 等) を持つことを確認する。
+
+## 完了条件
+
+### コード変更
+
+- [ ] 上記 7 箇所すべてで `@main` を `@<commit-sha> # <tag-or-date>` に変更する
+- [ ] `with:` ブロックは一切変更しない
+- [ ] `.github/dependabot.yml` は変更不要 (確認のみ)
+
+### 検証
+
+- [ ] `pnpm test` は SDK ソース無変更のため追加実行不要
+- [ ] PR マージ後、次回 CI / E2E workflow 実行で `slack_notify` ジョブが正常終了すること
+- [ ] Dependabot が `shiguredo/github-actions` 更新 PR を作成できる設定であること (`.github/dependabot.yml:32`)
+
+### 変更履歴
+
+- [ ] `CHANGES.md` `## develop` の `### misc` に追記する
+
+  ```
+  - [FIX] shiguredo/github-actions の slack-notify を SHA で固定して供給網リスクを下げる
+    - @voluntas
+  ```
+
+## スコープ外
+
+- `npm-publish.yml` のタグ検証 (issue 0024)
+- workflow `permissions` 追加 (issue 0026)
+- `shiguredo/github-actions` 側の release タグ運用整備
+- slack-notify の `status: ${{ job.status }}` → `needs.*.result` 変更 (issue 0023 で不要)
+
+## マージ順
+
+**0024 の後、0026 の前。** 0024 → 0025 → 0026 を推奨する。
