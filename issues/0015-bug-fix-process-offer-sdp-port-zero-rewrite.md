@@ -22,7 +22,7 @@ flowchart TD
     A[processOfferSdp 入力] --> B{isFirefox?}
     B -->|No| Z[そのまま返却]
     B -->|Yes| C["/^m=(audio|video) 0 / 一括置換 (現行)"]
-    C --> D[rejected 表明も port=9 に書き換え (バグ)]
+    C --> D["rejected 表明も port=9 に書き換え (バグ)"]
     D --> Z
 
     E[修正後: mid 限定] --> F{port === 0 かつ<br/>previousPort > 0?}

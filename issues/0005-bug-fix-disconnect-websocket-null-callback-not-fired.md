@@ -44,8 +44,8 @@ flowchart TD
     B -->|Yes| D{readyState === OPEN?}
     D -->|Yes| E[onclose 待ち → event 生成]
     D -->|No| F["経路 B: resolve(null) (バグ)"]
-    C --> G[callback 不発 (意図)]
-    F --> H[callback 不発 (バグ)]
+    C --> G["callback 不発 (意図)"]
+    F --> H["callback 不発 (バグ)"]
     E --> I[callbacks.disconnect 1 回]
 ```
 

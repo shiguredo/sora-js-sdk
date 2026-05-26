@@ -25,7 +25,7 @@ flowchart TD
     B -->|No| E[DC close / ws・pc cleanup]
     B -->|Yes| C[compressMessage]
     C -->|成功| D[send disconnect]
-    C -->|失敗 throw| F[795 行以降スキップ (バグ)]
+    C -->|失敗 throw| F["795 行以降スキップ (バグ)"]
     D --> E
     E --> G[initializeConnection]
     G --> H[callbacks.disconnect]

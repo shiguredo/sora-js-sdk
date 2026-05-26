@@ -21,7 +21,7 @@ High。旧 API から新 API への移行期に両方セットすると Sora 拒
 flowchart TD
     A[createSignalingMessage] --> B{forwardingFilter 指定?}
     B -->|Yes| C{forwardingFilters も指定?}
-    C -->|Yes 現行| D[両方 message に積む (バグ)]
+    C -->|Yes 現行| D["両方 message に積む (バグ)"]
     C -->|No| E[forwarding_filter のみ]
     B -->|No| F{forwardingFilters 指定?}
     F -->|Yes| G[forwarding_filters のみ]

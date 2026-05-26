@@ -28,7 +28,7 @@ flowchart TD
     C --> D[サードパーティ action 経由の write リスク]
     B -->|contents: read 修正後| E[最小権限]
     F[npm-publish 現行] --> G["id-token: write 全 job 継承"]
-    G --> H[publish 以外も OIDC 可能 (過剰)]
+    G --> H["publish 以外も OIDC 可能 (過剰)"]
 ```
 
 `permissions:` 宣言済み:

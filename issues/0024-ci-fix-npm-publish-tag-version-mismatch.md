@@ -32,7 +32,7 @@ flowchart TD
     G --> H{ref_name に -canary. ?}
     H -->|Yes| I["npm publish --tag canary"]
     H -->|No| J["npm publish --tag latest"]
-    C --> K[誤タグでも publish 可能 (バグ)]
+    C --> K["誤タグでも publish 可能 (バグ)"]
 ```
 
 `.github/workflows/npm-publish.yml:3-6`

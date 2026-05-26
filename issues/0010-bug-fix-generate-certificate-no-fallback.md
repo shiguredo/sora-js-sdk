@@ -25,7 +25,7 @@ flowchart TD
     B -->|No| E["new RTCPeerConnection(config)"]
     B -->|Yes| C[await generateCertificate]
     C -->|成功| D["config.certificates 設定"]
-    C -->|失敗 throw 現行| F[connect() reject (バグ)]
+    C -->|失敗 throw 現行| F["connect() reject (バグ)"]
     D --> E
     C -->|失敗 catch 修正後| E
 ```
