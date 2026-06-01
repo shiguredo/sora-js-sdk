@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-01
+- Completed: 2026-06-01
 - Model: Opus 4.8
 - Branch: feature/change-e2e-node-26
 
@@ -44,5 +45,9 @@ node:
 
 ## 解決方法
 
-1. `e2e-test.yml` のマトリクスの `- "25"` を `- "26"` に変更し、直上の TODO コメントを End of Life コメントに置き換える。
-2. `CHANGES.md` の `## develop` の `### misc` に `[UPDATE]` エントリを追記する (CI のテスト対象の更新であり、ライブラリ利用者の機能には影響しないため misc が妥当)。
+1. `e2e-test.yml` のマトリクスの `- "25"` を `- "26"` に変更し、直上の TODO コメントを `# 30 Apr 2029 End of Life` に置き換えて他の Node バージョンと形式を揃えた。
+2. `CHANGES.md` の `## develop` の `### misc` に `[UPDATE]` エントリを追記した (CI のテスト対象の更新であり、ライブラリ利用者の機能には影響しないため misc が妥当)。
+
+### 検証結果
+
+`feature/change-e2e-node-26` への push で e2e-test ワークフローが自動起動 (run 26738187799) し、Node 26 の全 9 ジョブ (ubuntu-24.04 / macos-15 / windows-2025-vs2026 × Chromium / Google Chrome / Google Chrome Beta) が 3-6 分で成功した。run 全体も success。
