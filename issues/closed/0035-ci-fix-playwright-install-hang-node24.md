@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-06-01
+- Completed: 2026-06-01
 - Model: Opus 4.8
 - Branch: feature/fix-playwright-install-hang-node24
 
@@ -66,6 +67,9 @@ sequenceDiagram
 
 ## 解決方法
 
-1. `package.json:43` の `"@playwright/test": "1.59.1"` を `"@playwright/test": "1.60.0"` に変更する。
-2. `pnpm install` を実行して `pnpm-lock.yaml` を更新する。
-3. `CHANGES.md` の `## develop` の `### misc` に `[FIX]` エントリを追記する (CI/開発依存の更新であり、ライブラリ利用者の機能には影響しないため misc が妥当)。
+1. `package.json` の `"@playwright/test": "1.59.1"` を `"@playwright/test": "1.60.0"` に変更した。`pnpm install` で `pnpm-lock.yaml` を更新し、`playwright` / `playwright-core` も 1.60.0 系に揃えた。
+2. `CHANGES.md` の `## develop` の `### misc` に `[FIX]` エントリを追記した (CI/開発依存の更新であり、ライブラリ利用者の機能には影響しないため misc が妥当)。
+
+### 検証結果
+
+e2e-test ワークフローを `feature/fix-playwright-install-hang-node24` で手動起動 (run 26737741680) し、Node 24 の全 9 ジョブ (ubuntu-24.04 / macos-15 / windows-2025-vs2026 × Chromium / Google Chrome / Google Chrome Beta) が 3-6 分で成功した。修正前は install ステップが約 18 分ハングして 20 分のタイムアウトでキャンセルされていたため、ハングが解消されたことを確認した。Node 22 / 25 のジョブも引き続き成功している。
