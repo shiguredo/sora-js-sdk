@@ -28,6 +28,8 @@
   - @voluntas
 - [CHANGE] Slack 通知を rtCamp/action-slack-notify から shiguredo/github-actions の slack-notify に切り替える
   - @voluntas
+- [FIX] Node 24 で `playwright install` がハングする問題を修正するため Playwright を 1.60.0 に更新する
+  - @voluntas
 
 ## 2025.2.0
 
