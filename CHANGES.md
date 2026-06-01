@@ -30,6 +30,8 @@
   - @voluntas
 - [FIX] Node 24 で `playwright install` がハングする問題を修正するため Playwright を 1.60.0 に更新する
   - @voluntas
+- [UPDATE] e2e テストの Node バージョンを 25 から 26 (LTS) に切り替える
+  - @voluntas
 
 ## 2025.2.0
 
