@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  playwright-core@1.60.0: 08b0fcaf0bc4289c6aa6fd1618987f63f7ff74ff6978e9d69fd4793228a8e339
+
 importers:
 
   .:
@@ -1746,11 +1749,11 @@ snapshots:
       exsolve: 1.0.8
       pathe: 2.0.3
 
-  playwright-core@1.60.0: {}
+  playwright-core@1.60.0(patch_hash=08b0fcaf0bc4289c6aa6fd1618987f63f7ff74ff6978e9d69fd4793228a8e339): {}
 
   playwright@1.60.0:
     dependencies:
-      playwright-core: 1.60.0
+      playwright-core: 1.60.0(patch_hash=08b0fcaf0bc4289c6aa6fd1618987f63f7ff74ff6978e9d69fd4793228a8e339)
     optionalDependencies:
       fsevents: 2.3.2
 

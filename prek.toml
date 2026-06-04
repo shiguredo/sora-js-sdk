@@ -8,8 +8,10 @@ default_stages = ["pre-commit"]
 [[repos]]
 repo = "builtin"
 hooks = [
-  { id = "trailing-whitespace" },
-  { id = "end-of-file-fixer" },
+  # patches/ の pnpm パッチはコンテキスト行の行頭スペースや末尾改行が
+  # 変更されると corrupt patch になり適用できなくなるため除外する
+  { id = "trailing-whitespace", exclude = "^patches/" },
+  { id = "end-of-file-fixer", exclude = "^patches/" },
   { id = "check-yaml" },
   { id = "check-toml" },
   # マージコンフリクトマーカーが残ったコミットを防ぐ
