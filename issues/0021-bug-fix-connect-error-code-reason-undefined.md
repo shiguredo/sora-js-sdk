@@ -2,8 +2,9 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Polished: 2026-06-02
 - Model: Opus 4.7
-- Branch: feature/fix-connect-error-constructor
+- Branch: feature/change-connect-error-constructor
 
 ## 目的
 
@@ -15,7 +16,7 @@
 
 ## 優先度根拠
 
-High。`if (error instanceof ConnectError) { switch (error.code) { ... } }` で分類できない。モニタリングでも `error.name === "Error"` のまま集約される。
+High。`ConnectError` は公開エントリ `src/sora.ts` から export されていない (利用者は `instanceof ConnectError` は書けない) が、`connect()` の reject として届く Error の実行時 `name` が `"Error"` のままで、利用者の `error.name` 判定やモニタリングで `"Error"` に集約され `ConnectError` を識別できない。`code` / `reason` の分類は現状 SDK 内に消費側コードが無く (`switch (error.code)` 等は未実装)、0007 / 0008 / 0012 が導入する `reason` 分類のための前提整備でもある。
 
 ## 現状
 
@@ -60,12 +61,13 @@ export class ConnectError extends Error {
     this.name = "ConnectError";
     this.code = code;
     this.reason = reason;
-    Object.setPrototypeOf(this, ConnectError.prototype);
   }
 }
 ```
 
-`ConnectError` の配置 (`utils.ts`) は変更しない (issue 0022 と合意)。
+`Object.setPrototypeOf(this, ConnectError.prototype)` は付けない (tsconfig の `target` は ES2022 で、ネイティブ class 継承により `instanceof` は正しく動く。`errors.ts` の既存エラークラスも `setPrototypeOf` を使っておらず統一する)。`ConnectError` の配置 (`utils.ts`) は変更しない (issue 0022 と合意)。
+
+**`reason` の用途:** 本 issue の 3 箇所では `reason` に CloseEvent の生文字列 (`event.reason`) を入れる。一方 0007 / 0008 / 0012 は同じ `reason` フィールドに SDK 内部のエラー分類コード (大文字スネーク、例 `WS_SEND_FAILED`) を入れる。`reason: string` は両用途を許容する (型は変えない)。この二義性は本 issue の設計で許容する前提とする。
 
 ### 2. `src/base.ts` 後付け代入 3 箇所
 
@@ -113,13 +115,13 @@ test("ConnectError は constructor で code / reason / name を設定する", ()
 
 ## マージ順
 
-0004 関連チェーン (`issues/0004-bug-fix-abend-compress-failure-skips-cleanup.md`):
+リポジトリ全体の正本チェーンは issue 0004 を参照。該当区間は:
 
 ```
-0004 → 0006 → (0011) → 0021 → 0009 → 0007 → …
+… → 0006 → (0011) → 0021 → 0009 → 0001 → 0008 → 0007 → 0034 → …
 ```
 
-**0021 は 0006 の後・0009 / 0007 の前**にマージする。0007 / 0008 / 0012 は 0021 完了後に `ConnectError` constructor 形式へ移行する。
+**0021 は 0006 の後・0009 / 0001 / 0008 / 0007 の前**にマージする。0007 / 0008 / 0012 は 0021 完了後に `ConnectError` constructor 形式へ移行する。
 
 ## 完了条件
 

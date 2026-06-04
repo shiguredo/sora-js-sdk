@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Polished: 2026-06-02
 - Model: Opus 4.7
 - Branch: feature/fix-messaging-mutates-shared-options
 
@@ -11,7 +12,7 @@
 
 ## 必要性
 
-**必要** (確信度: 高)。`src/sora.ts:215-217` の直接代入と `src/base.ts:266` の参照保持が現行コードに残存。`sendrecv` / `sendonly` / `recvonly` は mutate しないが、`ConnectionBase` の参照保持だけでも内部 mutate (`this.options.skipIceCandidateEvent ??= false` 等) が呼び出し側へ漏れる。
+**必要** (確信度: 高)。`src/sora.ts:215-217` の直接代入と `src/base.ts:266` の参照保持が現行コードに残存。`sendrecv` / `sendonly` / `recvonly` は options を mutate しないが、`ConnectionBase` の参照保持だけでも内部 mutate (`this.options.skipIceCandidateEvent ??= false`、`src/base.ts:271`。`this.options` を書き換えるのはこの 1 箇所のみ。timeout 等は read のみ) が呼び出し側 opts へ漏れる。
 
 ## 優先度根拠
 
@@ -73,7 +74,9 @@ return new ConnectionMessaging(..., merged, ...);
 this.options = { ...options };
 ```
 
-以降の `this.options.skipIceCandidateEvent ??= false` 等はコピー側のみ変更する。ネストオブジェクト (`forwardingFilters`, `dataChannels` 等) は共有参照のまま — deep clone は不要。
+以降の `this.options.skipIceCandidateEvent ??= false` はコピー側のみ変更する。ネストオブジェクト (`forwardingFilters`, `dataChannels` 等) は共有参照のまま — constructor 以降の SDK 内部処理はトップレベルプロパティ (`skipIceCandidateEvent`) しか mutate せずネストは書き換えないため deep clone は不要。
+
+**後方互換:** 修正後は `connection.sendrecv(...).options` が呼び出し側に渡した `opts` と別参照になる。参照同一性に依存したコード (接続後に元の `opts` を mutate して内部反映を期待する等) は影響を受けるが、それは元々この破壊バグに依存した使い方であり `[FIX]` として妥当。
 
 ### 3. テスト (`tests/sora.test.ts` 新規)
 
@@ -90,23 +93,26 @@ test("messaging() が呼び出し側の options を破壊しない", () => {
   expect(opts.dataChannelSignaling).toBeUndefined();
 });
 
-test("ConnectionBase が options を shallow copy し sendrecv 後の messaging 破壊が伝播しない", () => {
+test("ConnectionBase が内部 mutate (skipIceCandidateEvent) を呼び出し側 options に漏らさない", () => {
+  // constructor の shallow copy を弁別するテスト。
+  // messaging 修正だけでは opts が mutate されないため、この検証が無いと
+  // base.ts の shallow copy 修正の有無をテストで区別できない。
   const opts: ConnectionOptions = { audio: true, video: true };
   const connection = Sora.connection("ws://example.invalid/signaling");
-  const sendrecv = connection.sendrecv("ch", null, opts);
-  connection.messaging("ch2", null, opts);
-  expect(sendrecv.options.audio).toBe(true);
-  expect(sendrecv.options.video).toBe(true);
-  expect(sendrecv.options.dataChannelSignaling).toBeUndefined();
+  connection.sendrecv("ch", null, opts);
+  // constructor が this.options.skipIceCandidateEvent ??= false するが、
+  // shallow copy していれば呼び出し側 opts には漏れない。
+  expect(opts.skipIceCandidateEvent).toBeUndefined();
 });
 ```
 
-`ConnectionBase.options` は public フィールド (`src/base.ts:124`)。
+`ConnectionBase.options` は public フィールド (`src/base.ts:124`)。なお `sendrecv` 後の `sendrecv.options` 破壊伝播は messaging 修正で opts が mutate されなくなることで防げるが、上記 3 本目は base.ts の shallow copy 修正のみが防げる経路 (内部 `??=` 漏れ) を弁別する。
 
 ### 4. CHANGES.md
 
 ```
 - [FIX] messaging() が呼び出し側の options を破壊しないように修正する
+  - @voluntas
 - [FIX] ConnectionBase で options を shallow copy して外部参照を切り離す
   - @voluntas
 ```
@@ -119,7 +125,7 @@ test("ConnectionBase が options を shallow copy し sendrecv 後の messaging 
 
 ## マージ順
 
-他 issue との依存なし。単独マージ可。0004 チェーン (`0004 → 0006 → 0021 → 0009 → 0007`) とは独立。
+他 issue との依存なし。単独マージ可。
 
 ## 完了条件
 

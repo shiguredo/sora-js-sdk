@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Polished: 2026-06-02
 - Model: Opus 4.7
 - Branch: feature/fix-workflows-permissions
 
@@ -27,8 +28,8 @@ flowchart TD
     B -->|なし 現行 5 本| C["GITHUB_TOKEN 暗黙 write 可能"]
     C --> D[サードパーティ action 経由の write リスク]
     B -->|contents: read 修正後| E[最小権限]
-    F[npm-publish 現行] --> G["id-token: write 全 job 継承"]
-    G --> H["publish 以外も OIDC 可能 (過剰)"]
+    F[npm-publish 現行] --> G["id-token: write をジョブレベル未宣言の build が継承"]
+    G --> H["publish 以外 (build) も OIDC 可能 (過剰)"]
 ```
 
 `permissions:` 宣言済み:
@@ -45,7 +46,9 @@ flowchart TD
 - `.github/workflows/e2e-test-webkit.yml`
 - `.github/workflows/npm-pkg-e2e-test.yml`
 
-各 workflow の `slack_notify` ジョブはジョブレベルで `permissions: actions: read` を既に宣言している (例: `.github/workflows/e2e-test.yml:86-87`)。`slack_notify` 自体は変更不要。
+各 workflow の `slack_notify` ジョブはジョブレベルで `permissions: actions: read` を既に宣言している (例: `.github/workflows/e2e-test.yml:86-87`)。
+
+**`slack_notify` を変更不要とする根拠 (重要):** GitHub Actions ではジョブレベル `permissions:` はトップレベルを**マージせず完全に置換**する。よってトップレベルに `contents: read` を足しても `slack_notify` は `actions: read` のみ (`contents` は none) のまま。slack-notify action は内部で `gh api repos/.../commits/{sha}` を呼ぶが、本リポジトリは **public** のためコミット情報は公開データで `contents: read` 無しでも取得でき、通知は成立する。したがって `slack_notify` は現状維持でよい。将来リポジトリを private 化した場合は `slack_notify` に `contents: read` の追記が必要になる。
 
 `npm-publish.yml:8-10` (現行):
 
@@ -93,7 +96,7 @@ permissions:
   id-token: write
 ```
 
-0024 マージ後の `verify-version` / `build` / `slack_notify` はトップレベル `contents: read` の継承のみで足りる。
+ジョブレベル `permissions:` を持たない `build` はトップレベル `contents: read` を継承する (checkout と artifact アップロードに十分)。`slack_notify` (ジョブレベル `actions: read`) と 0024 が追加する `verify-version` (ジョブレベル `contents: read`) はジョブレベル宣言で自足し、トップレベルを継承しない (置換)。
 
 ## 完了条件
 
@@ -128,4 +131,4 @@ permissions:
 
 ## マージ順
 
-**0024 / 0025 の後。** 0024 → 0025 → 0026 を推奨する。0027 とは独立だが、0027 が e2e workflow に step を追加するため 0026 完了後の方がコンフリクトが少ない。
+**0024 / 0025 の後。** 0024 → 0025 → 0026 を推奨する。0027 は `playwright.config.ts` のみ変更し E2E workflow を触らないため、本 issue とはコンフリクトせず順序の制約もない。

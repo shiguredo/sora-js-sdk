@@ -2,12 +2,15 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Polished: 2026-06-02
 - Model: Opus 4.7
 - Branch: feature/fix-pin-shiguredo-github-actions
 
 ## 必要性
 
-**必要。** 本リポジトリの workflow は外部 action を `<sha> # <version>` 形式で固定しているが、`slack-notify@main` のみ ref 固定されていない。`shiguredo/github-actions` の `main` が改変された場合、`secrets.SLACK_WEBHOOK` 流出や workflow 改竄の経路が成立する。コミット `3d3e593b` で意図的に `@main` へ戻した経緯はあるが、供給網リスク低減のため SHA pinning ポリシーへ再統一する。
+**必要。** 本リポジトリの workflow は外部 action を `<sha> # <version>` 形式で固定しているが、`slack-notify@main` のみ ref 固定されていない。`shiguredo/github-actions` の `main` が改変された場合、`secrets.SLACK_WEBHOOK` 流出や workflow 改竄の経路が成立する。コミット `65a6f96a` で一度 SHA 固定 (`# main` コメント) したが、直後の `3d3e593b` で `@main` へ戻された (コミットメッセージに理由の記載なし)。
+
+**着手前確認:** `3d3e593b` で `@main` に戻した理由を確認すること (SHA 固定で参照先が壊れた等の運用上の理由があれば再発する)。なお現 `main` HEAD (`145407fb`、約 1 ヶ月不変) への固定は挙動等価で、`# main` コメント + Dependabot 週次更新により上流修正の追従も維持されるため、供給網リスク低減の効果は失わない。
 
 ## 目的
 
@@ -19,7 +22,7 @@ High。SHA pinning ポリシーから外れているのは現状 `slack-notify@m
 
 ## 現状
 
-該当箇所 7 つ (`dependency-review.yml` は slack-notify 未使用):
+該当箇所 7 つ (`dependency-review.yml` は slack-notify 未使用)。行番号は着手前基準で、0024 が `npm-publish.yml` に `verify-version` ジョブを挿入すると同ファイルの行はずれる。実装時は §3 の grep で特定すること:
 
 | ファイル                                 | 行 (着手時) |
 | ---------------------------------------- | ----------- |
@@ -53,14 +56,14 @@ gh api repos/shiguredo/github-actions/commits/main --jq .sha
 
 ### 2. 置換形式
 
-本リポジトリの既存慣習 (`actions/checkout@... # v6.0.2`) に合わせる。release タグが無ければ日付コメントを使う。
+コメントは **`# main`** とする (日付コメントにしない)。Dependabot は SHA 固定された action のコメントにあるブランチ名/タグを見て追跡対象を判定し SHA 更新 PR を出す。`shiguredo/github-actions` には tag / release が無く (`gh api repos/shiguredo/github-actions/tags` / `.../releases` が空)、追跡できるのは `main` ブランチのみ。日付コメントだと Dependabot が追跡対象を判定できず更新 PR を出せないため目的 (更新検知) を達成できない。元の SHA 固定 (`65a6f96a`) も `# main` を使っていた (`git show 65a6f96a` 参照)。
 
 ```yaml
 # 変更前
 uses: shiguredo/github-actions/.github/actions/slack-notify@main
 
-# 変更後 (SHA / コメントは取得値に合わせる)
-uses: shiguredo/github-actions/.github/actions/slack-notify@145407fb88527b7068762db72480c1f55715e0b1 # 2026-05-06
+# 変更後 (SHA は着手時の main 最新を取得して差し替える)
+uses: shiguredo/github-actions/.github/actions/slack-notify@145407fb88527b7068762db72480c1f55715e0b1 # main
 ```
 
 ### 3. 変更確認
@@ -79,7 +82,7 @@ grep -rl "shiguredo/github-actions/.github/actions/slack-notify@main" .github/wo
 
 ### コード変更
 
-- [ ] 上記 7 箇所すべてで `@main` を `@<commit-sha> # <tag-or-date>` に変更する
+- [ ] 上記 7 箇所すべてで `@main` を `@<commit-sha> # main` に変更する (日付コメントにしない。§2 参照)
 - [ ] `with:` ブロックは一切変更しない
 - [ ] `.github/dependabot.yml` は変更不要 (確認のみ)
 

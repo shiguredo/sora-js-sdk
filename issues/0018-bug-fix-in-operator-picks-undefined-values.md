@@ -2,20 +2,22 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Polished: 2026-06-02
 - Model: Opus 4.7
 - Branch: feature/fix-in-operator-undefined-values
 
 ## 目的
 
-`createSignalingMessage` (`src/utils.ts:123-336`) の一部判定が `"X" in options` / `"X" in copyOptions` と `copyOptions[key] !== null` に依存しており、値が `undefined` でもキーが存在すれば message へ積まれる。`{ spotlightNumber: undefined }` 等は `JSON.stringify` 時に省略されるが、ロジック上は不正で、Sora 側の解釈次第では接続拒否 (`invalid-spotlight-number` 等) につながる。SDK 側で `undefined` を message に載せないよう型ガードに置き換える。
+`createSignalingMessage` (`src/utils.ts:123-336`) の一部判定が `"X" in options` / `"X" in copyOptions` と `copyOptions[key] !== null` に依存しており、値が `undefined` でもキーが存在すれば積まれる。実害は経路で異なる:
 
-## 必要性
+- **spotlightNumber (168-170):** `message.spotlight_number = undefined` が代入される。`JSON.stringify` で省略されるため送信内容上は無害だが、ロジック上不正。
+- **audio / video パラメータ (238-319):** `audioBitRate: undefined` 等があると delete ループ (`!== null`) で undefined キーが残り、`hasAudioProperty` (`src/utils.ts:253`、`Object.keys(copyOptions).some(...)`) が `true` になって `message.audio = {}` に置換される (`src/utils.ts:254-255`)。本来 `audio: true` (boolean) で送るべきところが空オブジェクト `{}` に化け、**送信内容が実際に変わる**。これが主たる実害。
 
-**必要** (確信度: 高)。`src/utils.ts:168-170`, `:238-247`, `:256-319` に未修正の `in` / `!== null` パターンが残存。`tests/utils.test.ts:799-806` の `spotlightNumber: undefined` テストは `toEqual` だけでは `{ spotlight_number: undefined }` が `{}` と等価扱いされ pass しており、回帰検知不能。
+`undefined` を message に載せず `message.audio`/`message.video` の boolean デフォルトを保つよう型ガード / delete 条件を直す。
 
 ## 優先度根拠
 
-High。React `useState` や `{ ...base, key: maybeUndefined }` で `undefined` キーが混ざるパターンは一般的で、本問題は頻発する。
+High。React `useState` や `{ ...base, key: maybeUndefined }` で `undefined` キーが混ざるパターンは一般的で頻発する。`src/utils.ts:168-170`, `:238-247`, `:256-319` に未修正の `in` / `!== null` パターンが残存。`tests/utils.test.ts:799-806` の `spotlightNumber: undefined` テストは `toEqual` が `undefined` プロパティを無視するため pass し回帰検知できない。
 
 ## 現状
 
@@ -42,7 +44,11 @@ flowchart TD
 
 ## 設計方針
 
-### 1. `spotlightNumber`
+3 つの修正は独立した経路を直す。(1) は delete ループの外、(2) が audio/video の主たる修正、(3) は (2) を前提とした二次防御という関係を踏まえること。
+
+### 1. `spotlightNumber` (`:168-170`) — delete ループの外、唯一ここでのみ修正が効く
+
+`spotlightNumber` は `options` を直接見ており `copyOptions` の delete ループを経由しないため、型ガードが本質的修正:
 
 ```ts
 if (typeof options.spotlightNumber === "number") {
@@ -50,13 +56,13 @@ if (typeof options.spotlightNumber === "number") {
 }
 ```
 
-### 2. `copyOptions` delete ループ (`:238-247`)
+### 2. `copyOptions` delete ループ (`:238-247`) — audio/video の主たる修正
 
-`!== null` を `!= null` に変更し、`undefined` と `null` を両方除外する。
+各 `continue` 条件 `copyOptions[key] !== null` を `copyOptions[key] != null` に変える (`continue` は「キーを残す」、`delete` は「キーを消す」動作。現行は `undefined !== null` が真でキーを残してしまう)。これにより `undefined` キーが削除され、`hasAudioProperty` / `hasAudioOpusParamsProperty` / `hasVideoProperty` (`:253`, `:263`, `:300` 付近の `Object.keys(copyOptions).some(...)`) が `false` になり、`message.audio` / `message.video` が boolean デフォルトのまま保たれる。**audio/video の `{}` 化はこの (2) で解消する。** なお `null` 値は現行 `!== null` でも既に削除されており、`!= null` で新たに除外されるのは `undefined` のみ。
 
-### 3. audio / video パラメータ (`:256-319`)
+### 3. audio / video パラメータ (`:256-319`) — 二次防御 / 型安全化
 
-`"X" in copyOptions` を `ConnectionOptions` (`src/types.ts:379-427`) に合わせた型ガードに置き換える。
+(2) により `undefined` キーは削除されるため 256-319 の `in` 判定は `undefined` を見なくなる。それでも `"X" in copyOptions` を `ConnectionOptions` (`src/types.ts:379-427`) に合わせた型ガードに置き換えるのは、`in` が値の型を絞れない (TS 上 `undefined` 代入になりうる) のを解消する型安全化と、(2) が将来 `!== null` に戻された場合の多層防御のため。
 
 | プロパティ                                                                                                                                     | ガード                                                                     |
 | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -75,6 +81,8 @@ if (typeof copyOptions.audioCodecType === "string") {
 
 ### 4. テスト (`tests/utils.test.ts`)
 
+`message.audio` / `message.video` が boolean デフォルト `true` を保つことを assert する (この成立は (2) の delete ループ修正に依存する。`toEqual` は `undefined` プロパティを無視するため `"X" in message` または `toStrictEqual` で検査する):
+
 ```ts
 test("undefined 値のオプションは message に含めない", () => {
   const message = createSignalingMessage(
@@ -92,13 +100,12 @@ test("undefined 値のオプションは message に含めない", () => {
     false,
   );
   expect("spotlight_number" in message).toBe(false);
-  expect(message.audio).toBe(true); // デフォルト値
-  expect(typeof message.audio).toBe("boolean");
+  expect(message.audio).toBe(true); // (2) 適用後、audio 系 undefined が除外され boolean デフォルトが残る
   expect(message.video).toBe(true);
 });
 ```
 
-既存 `spotlightNumber: undefined` テスト (`:799-806`) は上記と同様、`in` / 型ベース assert に差し替える。
+既存 `spotlightNumber: undefined` テスト (`:799-806`) は `toEqual` のままだと `undefined` を見逃すため、`expect("spotlight_number" in message).toBe(false)` を加えるか `toStrictEqual` に変える。同型の偽陰性 (`toEqual` のみ) を持つ他の `undefined` テストがあれば併せて見直す。
 
 ### 5. CHANGES.md
 
