@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-06
 - Model: Opus 4.7
 - Branch: feature/fix-pin-shiguredo-github-actions
 
@@ -52,7 +52,7 @@ uses: shiguredo/github-actions/.github/actions/slack-notify@main
 gh api repos/shiguredo/github-actions/commits/main --jq .sha
 ```
 
-2026-05-25 時点の参考値: `145407fb88527b7068762db72480c1f55715e0b1` (2026-05-06, "slack_webhook が空のときは通知をスキップする")。**実装時は必ず最新 SHA を再取得すること。**
+2026-06-06 時点の `main` HEAD: `145407fb88527b7068762db72480c1f55715e0b1` (2026-05-06, "slack_webhook が空のときは通知をスキップする")。約 1 ヶ月不変。**実装時は必ず最新 SHA を再取得すること。**
 
 ### 2. 置換形式
 
