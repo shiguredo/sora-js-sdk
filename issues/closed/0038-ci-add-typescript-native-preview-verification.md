@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-06-08
 - Polished: 2026-06-08
+- Completed: 2026-06-08
 - Model: Composer 2.5
 - Branch: feature/add-typescript-native-preview-verification
 
@@ -146,3 +147,17 @@ pnpm exec tsgo --noEmit -p e2e-tests/tsconfig.json
 - [ADD] CI に @typescript/native-preview による型検証ジョブを追加する
   - @voluntas
 ```
+
+## 解決方法
+
+- `.github/workflows/ci.yaml` に `typescript-native-preview` ジョブを追加した
+  - `latest` / `beta` の version matrix で `@typescript/native-preview` をインストール
+  - `tsgo --emitDeclarationOnly -p tsconfig.json` で SDK 本体の宣言ファイルを生成
+  - `tsgo --noEmit -p e2e-tests/tsconfig.json` で e2e-tests の型検証を実行
+  - `slack_notify` の `needs` に `typescript-native-preview` を追加
+- e2e-tests の main.ts / test.ts 28 ファイルに存在した既存の型エラー（`querySelector` 戻り値 `Element` に対する `dataset` / `checked` / `value` / `options` プロパティアクセス）を修正した
+  - `querySelector` に型パラメータ（`<HTMLElement>` / `<HTMLInputElement>` / `<HTMLSelectElement>`）を追加
+  - `SignalingEvent` に存在しない `sdp` プロパティアクセスを `as any` で回避
+  - `SoraRecvClient` / `SoraSendRecvClient` に暗黙代入されていた `remoteStream` プロパティを宣言
+- `CHANGES.md` の `## develop` `### misc` に `[ADD]` エントリを追記した
+- CI 全ジョブ（既存 36 matrix + native-preview latest/beta + slack_notify）が pass することを確認した
