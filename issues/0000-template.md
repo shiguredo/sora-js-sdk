@@ -5,6 +5,8 @@
 - Completed: {YYYY-MM-DD} (例: 2024-07-01)
 - Model: {モデル名} {モデルバージョン} (例: Opus 4.7 / GPT 5.5 / Composer 2.5)
 - Branch: {Git-Flow のブランチ名} (例: feature/xxx-yyy)
+- Polished: {YYYY-MM-DD} (例: 2024-07-15)
+- Reporter: @{ユーザー名} (任意。フィードバック / バグ報告由来の issue のみ、複数なら `@a, @b` のようにカンマ区切り)
 
 ## 目的
 
@@ -17,18 +19,6 @@
 ## 現状
 
 現状の構成を明確にすること (例: 現在の実装の問題点、現状のパフォーマンスなど)
-
-状態遷移・レース条件・分岐経路が issue 理解の要点になる場合は、次のような mermaid 図を **現状** セクション直下に置くこと。
-
-- `stateDiagram-v2`: 接続状態・ICE 状態・settled フラグ等のライフサイクル
-- `sequenceDiagram`: 並列呼び出し・タイマー孤児化・ハンドラ競合の時系列
-- `flowchart TD`: 経路分岐 (path A / path B 等)
-
-```mermaid
-stateDiagram-v2
-    [*] --> Example
-    Example --> [*]
-```
 
 ## 設計方針
 
