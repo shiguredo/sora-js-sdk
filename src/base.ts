@@ -757,38 +757,25 @@ export default class ConnectionBase {
         type: SIGNALING_MESSAGE_TYPE_DISCONNECT,
       };
       if (this.signalingOfferMessageDataChannels.signaling?.compress === true) {
-        // compressMessage が throw すると後続の DataChannel close ループ、
-        // disconnectWebSocket、maybeClosePeerConnection、callbacks.disconnect に
-        // 到達しなくなるため、compress 全体を try/catch で保護する
-        // 非圧縮 fallback は意図的に行わない (ws 経路が残るため)
-        try {
-          const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
-          const compressedMessage = await compressMessage(binaryMessage);
-          if (this.soraDataChannels.signaling.readyState === "open") {
-            // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-            try {
-              this.soraDataChannels.signaling.send(compressedMessage);
-              this.writeDataChannelSignalingLog(
-                "send-disconnect",
-                this.soraDataChannels.signaling,
-                message,
-              );
-            } catch (error) {
-              const errorMessage = (error as Error).message;
-              this.writeDataChannelSignalingLog(
-                "failed-to-send-disconnect",
-                this.soraDataChannels.signaling,
-                errorMessage,
-              );
-            }
+        const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+        const compressedMessage = await compressMessage(binaryMessage);
+        if (this.soraDataChannels.signaling.readyState === "open") {
+          // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+          try {
+            this.soraDataChannels.signaling.send(compressedMessage);
+            this.writeDataChannelSignalingLog(
+              "send-disconnect",
+              this.soraDataChannels.signaling,
+              message,
+            );
+          } catch (error) {
+            const errorMessage = (error as Error).message;
+            this.writeDataChannelSignalingLog(
+              "failed-to-send-disconnect",
+              this.soraDataChannels.signaling,
+              errorMessage,
+            );
           }
-        } catch (error) {
-          const errorMessage = (error as Error).message;
-          this.writeDataChannelSignalingLog(
-            "failed-to-compress-disconnect",
-            this.soraDataChannels.signaling,
-            errorMessage,
-          );
         }
       } else if (this.soraDataChannels.signaling.readyState === "open") {
         // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
