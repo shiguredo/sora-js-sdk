@@ -1,5 +1,3 @@
-/// <reference types="vite/client" />
-
 interface ImportMetaEnv {
   VITE_TEST_SIGNALING_URL: string;
   VITE_TEST_API_URL: string;

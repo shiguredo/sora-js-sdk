@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { defineConfig } from "vite";
+import { defineConfig } from "vite-plus";
 
 // root が examples なので examples/dist にビルドされる
 // mjs なのは古い Node.js での import のため
