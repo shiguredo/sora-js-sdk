@@ -74,13 +74,13 @@ test.describe("Stereo Audio Tests", () => {
 
     // 送信側の統計情報を取得
     const sendStatsReportJson: Array<Record<string, unknown>> = await page.evaluate(() => {
-      const statsReportDiv = document.querySelector("#stats-report")!;
+      const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
       return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
     });
 
     // 受信側の統計情報を取得
     const recvStatsReportJson: Array<Record<string, unknown>> = await page.evaluate(() => {
-      const recvStatsDiv = document.querySelector("[data-recv-stats-report-json]")!;
+      const recvStatsDiv = document.querySelector<HTMLElement>("[data-recv-stats-report-json]")!;
       return recvStatsDiv ? JSON.parse(recvStatsDiv.dataset.recvStatsReportJson ?? "[]") : [];
     });
 
@@ -102,7 +102,7 @@ test.describe("Stereo Audio Tests", () => {
 
     // 音声分析結果を取得
     const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector("#audio-analysis")!;
+      const analysisDiv = document.querySelector<HTMLElement>("#audio-analysis")!;
       return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
     });
 
@@ -170,7 +170,7 @@ test.describe("Stereo Audio Tests", () => {
 
     // 送信側の統計情報を取得
     const sendStatsReportJson: Array<Record<string, unknown>> = await page.evaluate(() => {
-      const statsReportDiv = document.querySelector("#stats-report")!;
+      const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
       return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
     });
 
@@ -184,7 +184,7 @@ test.describe("Stereo Audio Tests", () => {
 
     // 音声分析結果を取得
     const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector("#audio-analysis")!;
+      const analysisDiv = document.querySelector<HTMLElement>("#audio-analysis")!;
       return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
     });
 

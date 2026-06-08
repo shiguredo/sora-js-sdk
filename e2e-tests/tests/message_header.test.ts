@@ -93,7 +93,7 @@ test("messaging pages with header", async ({ browser }) => {
   await page1.waitForSelector("#stats-report");
   // データセットから統計情報を取得
   const page1StatsReportJson: Array<Record<string, unknown>> = await page1.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
@@ -131,7 +131,7 @@ test("messaging pages with header", async ({ browser }) => {
   await page2.waitForSelector("#stats-report");
   // データセットから統計情報を取得
   const page2StatsReportJson: Array<Record<string, unknown>> = await page2.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 

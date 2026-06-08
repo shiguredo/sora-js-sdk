@@ -36,6 +36,8 @@
   - @voluntas
 - [CHANGE] Slack 通知を rtCamp/action-slack-notify から shiguredo/github-actions の slack-notify に切り替える
   - @voluntas
+- [ADD] CI に @typescript/native-preview による型検証ジョブを追加する
+  - @voluntas
 - [UPDATE] e2e テストの Node バージョンを 22 / 24 / 26 に更新する
   - Node 25 を Node 26 (LTS) に置き換える
   - @voluntas

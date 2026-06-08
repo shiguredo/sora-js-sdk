@@ -28,8 +28,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     client = new SoraClient(signalingUrl, channelId, secretKey);
 
-    const useFakeAudio = document.querySelector("#use-fake-audio")!.checked;
-    const useFakeVideo = document.querySelector("#use-fake-video")!.checked;
+    const useFakeAudio = document.querySelector<HTMLInputElement>("#use-fake-audio")!.checked;
+    const useFakeVideo = document.querySelector<HTMLInputElement>("#use-fake-video")!.checked;
 
     const stream = getFakeMedia({
       audio: useFakeAudio,
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const statsReport = await client.getStats();
-    const statsDiv = document.querySelector("#stats-report")!;
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";

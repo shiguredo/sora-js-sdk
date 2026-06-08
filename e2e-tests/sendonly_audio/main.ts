@@ -15,11 +15,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.querySelector("#connect")?.addEventListener("click", async () => {
     // 音声コーデックの選択を取得
-    const audioCodecType = document.querySelector("#audio-codec-type")!;
+    const audioCodecType = document.querySelector<HTMLSelectElement>("#audio-codec-type")!;
     const selectedCodecType = audioCodecType.value === "OPUS" ? audioCodecType.value : undefined;
 
     // 音声ビットレートの選択を取得
-    const audioBitRateSelect = document.querySelector("#audio-bit-rate")!;
+    const audioBitRateSelect = document.querySelector<HTMLSelectElement>("#audio-bit-rate")!;
     const selectedBitRate = audioBitRateSelect.value
       ? Number.parseInt(audioBitRateSelect.value, 10)
       : undefined;
@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     const statsReport = await client.getStats();
-    const statsDiv = document.querySelector("#stats-report")!;
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";

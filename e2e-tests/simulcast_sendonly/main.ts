@@ -21,13 +21,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#connect")?.addEventListener("click", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
-    const videoCodecTypeElement = document.querySelector("#video-codec-type")!;
+    const videoCodecTypeElement = document.querySelector<HTMLSelectElement>("#video-codec-type")!;
     const videoCodecType = videoCodecTypeElement.value as VideoCodecType;
-    const rawVideoBitRate = document.querySelector("#video-bit-rate")!;
+    const rawVideoBitRate = document.querySelector<HTMLInputElement>("#video-bit-rate")!;
     const videoBitRate = Number.parseInt(rawVideoBitRate.value, 10);
 
     let simulcastEncodings: Record<string, unknown> | undefined;
-    const simulcastEncodingsElement = document.querySelector("#simulcast-encodings")!;
+    const simulcastEncodingsElement =
+      document.querySelector<HTMLInputElement>("#simulcast-encodings")!;
     if (simulcastEncodingsElement.value !== "") {
       console.log(`simulcastEncodingsElement.value=${simulcastEncodingsElement.value}`);
       try {
@@ -59,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     const statsReport = await sendonly.getStats();
-    const statsDiv = document.querySelector("#stats-report")!;
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";
@@ -198,7 +199,7 @@ class SimulcastSendonlySoraClient {
 
   private updatePcState(): void {
     if (this.connection.pc) {
-      const pcStateElement = document.querySelector("#pc-state");
+      const pcStateElement = document.querySelector<HTMLElement>("#pc-state");
       if (pcStateElement) {
         const stateInfo = {
           connectionState: this.connection.pc.connectionState,

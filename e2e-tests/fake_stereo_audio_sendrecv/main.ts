@@ -2,12 +2,7 @@ import { getFakeMedia } from "../src/fake";
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 import Sora from "sora-js-sdk";
-import type {
-  ConnectionPublisher,
-  SignalingEvent,
-  SignalingNotifyMessage,
-  SoraConnection,
-} from "sora-js-sdk";
+import type { ConnectionPublisher, SignalingNotifyMessage, SoraConnection } from "sora-js-sdk";
 
 // Soraオブジェクトをwindowに公開（テスト用）
 declare global {
@@ -145,12 +140,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
     // 接続1の設定を取得
-    const useStereo1 = document.querySelector("#use-stereo-1")!.checked;
-    const forceStereoOutput1 = document.querySelector("#force-stereo-output-1")!.checked;
+    const useStereo1 = document.querySelector<HTMLInputElement>("#use-stereo-1")!.checked;
+    const forceStereoOutput1 =
+      document.querySelector<HTMLInputElement>("#force-stereo-output-1")!.checked;
 
     // 接続2の設定を取得
-    const useStereo2 = document.querySelector("#use-stereo-2")!.checked;
-    const forceStereoOutput2 = document.querySelector("#force-stereo-output-2")!.checked;
+    const useStereo2 = document.querySelector<HTMLInputElement>("#use-stereo-2")!.checked;
+    const forceStereoOutput2 =
+      document.querySelector<HTMLInputElement>("#force-stereo-output-2")!.checked;
 
     // 接続1を作成
     soraClient1 = new SoraSendRecvClient(signalingUrl, channelId, secretKey, "1");
@@ -258,7 +255,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 接続1の統計情報を取得
     const statsReport1 = await soraClient1.getStats();
-    const statsDiv1 = document.querySelector("#stats-report-1")!;
+    const statsDiv1 = document.querySelector<HTMLElement>("#stats-report-1")!;
     if (statsDiv1) {
       let statsHtml = "<h3>接続1の統計情報</h3>";
       const statsReportJson1: Array<Record<string, unknown>> = [];
@@ -283,7 +280,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 接続2の統計情報を取得
     const statsReport2 = await soraClient2.getStats();
-    const statsDiv2 = document.querySelector("#stats-report-2")!;
+    const statsDiv2 = document.querySelector<HTMLElement>("#stats-report-2")!;
     if (statsDiv2) {
       let statsHtml = "<h3>接続2の統計情報</h3>";
       const statsReportJson2: Array<Record<string, unknown>> = [];
@@ -307,7 +304,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // テスト用の音声解析データを保存
-    const analysisDiv = document.querySelector("#audio-analysis")!;
+    const analysisDiv = document.querySelector<HTMLElement>("#audio-analysis")!;
     if (analysisDiv) {
       analysisDiv.dataset.analysis = JSON.stringify({
         connection1: {
@@ -380,6 +377,7 @@ class SoraSendRecvClient {
   private sora: SoraConnection;
   private connection: ConnectionPublisher;
   private onStreamCallback: ((stream: MediaStream) => void) | null = null;
+  private remoteStream: MediaStream | null = null;
   private connectionNumber: string;
 
   constructor(
@@ -400,11 +398,11 @@ class SoraSendRecvClient {
     this.connection.on("notify", this.onNotify.bind(this));
 
     // SDPデバッグ用
-    this.connection.on("signaling", (event: SignalingEvent) => {
+    this.connection.on("signaling", (event) => {
       if (event.type === "answer") {
         console.log(
           `Connection ${this.connectionNumber} Answer SDP (stereo check):`,
-          event.sdp?.includes("stereo=1"),
+          (event as any).sdp?.includes("stereo=1"),
         );
       }
     });

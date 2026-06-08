@@ -23,9 +23,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
     client = new SoraClient(signalingUrl, channelId, secretKey);
-    const checkCompress = document.querySelector("#check-compress")!;
+    const checkCompress = document.querySelector<HTMLInputElement>("#check-compress")!;
     const compress = checkCompress.checked;
-    const checkHeader = document.querySelector("#check-header")!;
+    const checkHeader = document.querySelector<HTMLInputElement>("#check-header")!;
     const header = checkHeader.checked;
 
     await client.connect(compress, header);
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     const statsReport = await client.getStats();
-    const statsDiv = document.querySelector("#stats-report")!;
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";

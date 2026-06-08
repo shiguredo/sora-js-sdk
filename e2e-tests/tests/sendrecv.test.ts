@@ -21,7 +21,7 @@ test("sendrecv x2", async ({ browser }) => {
 
   // sendrecv1 のビデオコーデックをランダムに選択
   await sendrecv1.evaluate(() => {
-    const videoCodecTypeSelect = document.querySelector("#video-codec-type")!;
+    const videoCodecTypeSelect = document.querySelector<HTMLSelectElement>("#video-codec-type")!;
     const options = [...videoCodecTypeSelect.options].filter((option) => option.value !== "");
     const randomIndex = Math.floor(Math.random() * options.length);
     videoCodecTypeSelect.value = options[randomIndex].value;
@@ -29,7 +29,7 @@ test("sendrecv x2", async ({ browser }) => {
 
   // sendrecv2 のビデオコーデックをランダムに選択
   await sendrecv2.evaluate(() => {
-    const videoCodecTypeSelect = document.querySelector("#video-codec-type")!;
+    const videoCodecTypeSelect = document.querySelector<HTMLSelectElement>("#video-codec-type")!;
     const options = [...videoCodecTypeSelect.options].filter((option) => option.value !== "");
     const randomIndex = Math.floor(Math.random() * options.length);
     videoCodecTypeSelect.value = options[randomIndex].value;
@@ -80,7 +80,7 @@ test("sendrecv x2", async ({ browser }) => {
 
   // データセットから統計情報を取得
   const sendrecv1StatsReportJson: Array<Record<string, unknown>> = await sendrecv1.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
@@ -124,7 +124,7 @@ test("sendrecv x2", async ({ browser }) => {
 
   // データセットから統計情報を取得
   const sendrecv2StatsReportJson: Array<Record<string, unknown>> = await sendrecv2.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 

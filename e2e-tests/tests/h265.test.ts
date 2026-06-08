@@ -81,7 +81,7 @@ test("H265", async ({ browser }) => {
 
   // データセットから統計情報を取得
   const sendrecv1StatsReportJson: Array<Record<string, unknown>> = await sendrecv1.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
@@ -106,7 +106,7 @@ test("H265", async ({ browser }) => {
 
   // データセットから統計情報を取得
   const sendrecv2StatsReportJson: Array<Record<string, unknown>> = await sendrecv2.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
