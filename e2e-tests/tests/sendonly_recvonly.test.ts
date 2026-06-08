@@ -55,7 +55,7 @@ test("sendonly/recvonly pages", async ({ browser }) => {
   await sendonly.waitForSelector("#stats-report");
   // データセットから統計情報を取得
   const sendonlyStatsReportJson: Array<Record<string, unknown>> = await sendonly.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
@@ -66,7 +66,7 @@ test("sendonly/recvonly pages", async ({ browser }) => {
   await recvonly.waitForSelector("#stats-report");
   // データセットから統計情報を取得
   const recvonlyStatsReportJson: Array<Record<string, unknown>> = await recvonly.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 

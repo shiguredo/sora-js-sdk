@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const statsReport = await recvonlyClient.getStats();
-    const statsDiv = document.querySelector("#stats-report")!;
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
     if (statsDiv) {
       const statsReportJson: Array<Record<string, unknown>> = [];
       statsDiv.textContent = "";

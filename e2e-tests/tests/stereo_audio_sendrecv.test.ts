@@ -72,13 +72,13 @@ test.describe("Stereo Audio SendRecv Tests", () => {
 
     // 接続1の統計情報を取得
     const stats1Json: Array<Record<string, unknown>> = await page.evaluate(() => {
-      const statsDiv = document.querySelector("#stats-report-1")!;
+      const statsDiv = document.querySelector<HTMLElement>("#stats-report-1")!;
       return statsDiv ? JSON.parse(statsDiv.dataset.statsReportJson ?? "[]") : [];
     });
 
     // 接続2の統計情報を取得
     const stats2Json: Array<Record<string, unknown>> = await page.evaluate(() => {
-      const statsDiv = document.querySelector("#stats-report-2")!;
+      const statsDiv = document.querySelector<HTMLElement>("#stats-report-2")!;
       return statsDiv ? JSON.parse(statsDiv.dataset.statsReportJson ?? "[]") : [];
     });
 
@@ -114,7 +114,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
 
     // 音声分析結果を取得
     const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector("#audio-analysis")!;
+      const analysisDiv = document.querySelector<HTMLElement>("#audio-analysis")!;
       return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
     });
 
@@ -196,7 +196,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
 
     // 音声分析結果を取得
     const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector("#audio-analysis")!;
+      const analysisDiv = document.querySelector<HTMLElement>("#audio-analysis")!;
       return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
     });
 
@@ -283,7 +283,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
 
     // 音声分析結果を取得
     const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector("#audio-analysis")!;
+      const analysisDiv = document.querySelector<HTMLElement>("#audio-analysis")!;
       return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
     });
 

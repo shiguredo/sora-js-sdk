@@ -55,7 +55,7 @@ test("authz simulcast encodings", async ({ page }) => {
   // connectionState が connected になるのを待つ
   await page.waitForFunction(
     () => {
-      const el = document.querySelector("#pc-state");
+      const el = document.querySelector("#pc-state") as HTMLElement;
       return el.dataset.connectionState === "connected";
     },
     { timeout: 15_000 },

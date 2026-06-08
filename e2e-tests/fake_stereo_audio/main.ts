@@ -146,7 +146,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     recvClient = new SoraRecvClient(signalingUrl, channelId, secretKey);
 
     // forceStereoOutputを設定
-    const forceStereoOutput = document.querySelector("#force-stereo-output")!.checked;
+    const forceStereoOutput =
+      document.querySelector<HTMLInputElement>("#force-stereo-output")!.checked;
     recvClient.setForceStereoOutput(forceStereoOutput);
 
     // リモートストリーム受信時のコールバックを設定
@@ -163,7 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 送信側を接続
     sendClient = new SoraSendClient(signalingUrl, channelId, secretKey);
 
-    const useStereo = document.querySelector("#use-stereo")!.checked;
+    const useStereo = document.querySelector<HTMLInputElement>("#use-stereo")!.checked;
 
     const stream = getFakeMedia({
       audio: {
@@ -206,7 +207,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const statsReport = await sendClient.getStats();
-    const statsDiv = document.querySelector("#stats-report")!;
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
       let statsHtml = "";
@@ -305,7 +306,7 @@ class SoraSendClient {
     // SDPデバッグ用
     this.connection.on("signaling", (event) => {
       if (event.type === "answer") {
-        console.log("Answer SDP (stereo check):", event.sdp?.includes("stereo=1"));
+        console.log("Answer SDP (stereo check):", (event as any).sdp?.includes("stereo=1"));
       }
     });
   }
@@ -357,6 +358,7 @@ class SoraRecvClient {
   private sora: SoraConnection;
   private connection: ConnectionSubscriber;
   private onStreamCallback: ((stream: MediaStream) => void) | null = null;
+  private remoteStream: MediaStream | null = null;
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug);

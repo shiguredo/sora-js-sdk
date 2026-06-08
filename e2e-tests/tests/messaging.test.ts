@@ -35,14 +35,14 @@ test("messaging pages", async ({ browser }) => {
 
   // Compress のTrue/Falseをランダムで設定する
   const selectedCompress1 = await page1.evaluate(() => {
-    const checkCompress = document.querySelector("#check-compress")!;
+    const checkCompress = document.querySelector<HTMLInputElement>("#check-compress")!;
     const getRandomBoolean = (): boolean => Math.random() >= 0.5;
     const randomCompress: boolean = getRandomBoolean();
     checkCompress.checked = randomCompress;
     return randomCompress;
   });
   const selectedCompress2 = await page2.evaluate(() => {
-    const checkCompress = document.querySelector("#check-compress")!;
+    const checkCompress = document.querySelector<HTMLInputElement>("#check-compress")!;
     const getRandomBoolean = (): boolean => Math.random() >= 0.5;
     const randomCompress: boolean = getRandomBoolean();
     checkCompress.checked = randomCompress;
@@ -110,7 +110,7 @@ test("messaging pages", async ({ browser }) => {
   await page1.waitForSelector("#stats-report");
   // データセットから統計情報を取得
   const page1StatsReportJson: Array<Record<string, unknown>> = await page1.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
@@ -148,7 +148,7 @@ test("messaging pages", async ({ browser }) => {
   await page2.waitForSelector("#stats-report");
   // データセットから統計情報を取得
   const page2StatsReportJson: Array<Record<string, unknown>> = await page2.evaluate(() => {
-    const statsReportDiv = document.querySelector("#stats-report")!;
+    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
     return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
   });
 
