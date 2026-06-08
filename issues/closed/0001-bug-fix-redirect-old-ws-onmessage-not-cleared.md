@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Polished: 2026-06-08
+- Completed: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-ws-onmessage-leak-on-handover
 
@@ -135,3 +136,12 @@ if (message.ignore_disconnect_websocket) {
 **検証の限界:** このバグの回帰は既存テストでは検出できない。redirect 向け Playwright テストはリポジトリに無く、`tests/` は WebSocket ライフサイクル未カバー（モック禁止）。既存 `e2e-tests/tests/type_switched.test.ts` / `switched_callback.test.ts` は修正後も通ること（switched 処理経路を含むため）。修正の正しさはコードレビューと既存 E2E スモーク通過で担保する。redirect の自動テストが困難な理由は、2 ノード以上の Sora クラスタが必要であり、redirect の再現に非決定性があるためである。手動検証手順は `e2e-tests/redirect/README.md` に残すことを推奨する（完了条件外）。
 
 **補足 — `contactSignalingUrl`:** 現状、redirect 後も `contactSignalingUrl` は入口 URL のままである (`src/base.ts:1330-1332`: `redirect` フラグが true の場合は `this.contactSignalingUrl = ws.url` がスキップされる) 。これは仕様であり本 issue の修正対象外だが、手動検証時に注意すること。
+
+## 解決方法
+
+`src/base.ts` の 2 箇所に `onmessage` / `onerror` の null 化を追加した:
+
+1. `signalingOnMessageTypeRedirect` (2067-2072): `this.ws.onclose = null;` の直後に `this.ws.onmessage = null;` を追加
+2. `signalingOnMessageTypeSwitched` (2045-2052) の `ignore_disconnect_websocket: true` 経路: `this.ws.onclose = null;` の直後に `this.ws.onmessage = null;` と `this.ws.onerror = null;` を追加
+
+handler 解除順序は `onclose → onmessage → onerror → close()` で統一した。既存 `pnpm test` (2 files, 72 tests) が通過することを確認した。CHANGES.md `## develop` に FIX エントリを 2 件追記した。
