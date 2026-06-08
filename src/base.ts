@@ -2135,7 +2135,10 @@ export default class ConnectionBase {
     dataChannel.bufferedAmountLowThreshold = 65_536;
     // TODO: blob を変更できるようにする
     dataChannel.binaryType = "arraybuffer";
-    // 同名 label の既存 DC がある場合はハンドラを解除する。閉じ済みでなければ close も行う
+    // 再ネゴシエーション時に同名 label の DataChannel が再作成されることがあり、
+    // ブラウザが別インスタンスとして ondatachannel に配送する場合がある。
+    // 旧インスタンスの onclose / onerror ハンドラが生存していると、
+    // 意図しない disconnect() / abend() が発火するため事前に解除する。
     const existing = this.soraDataChannels[dataChannel.label];
     if (existing && existing !== dataChannel) {
       existing.onerror = null;
