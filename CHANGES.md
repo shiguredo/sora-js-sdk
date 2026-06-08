@@ -11,9 +11,9 @@
 
 ## develop
 
-- [UPDATE] TypeScript 6.0 へ対応する
-  - @voluntas
 - [CHANGE] Node 20 のサポートを終了する
+  - @voluntas
+- [UPDATE] TypeScript 6.0 へ対応する
   - @voluntas
 - [FIX] rpc メソッドのサンプルコードで、実際に存在しない RPC メソッド名が使われていたのを修正する
   - @sile
@@ -34,11 +34,12 @@
   - @voluntas
 - [CHANGE] Slack 通知を rtCamp/action-slack-notify から shiguredo/github-actions の slack-notify に切り替える
   - @voluntas
+- [UPDATE] e2e テストの Node バージョンを 22 / 24 / 26 に更新する
+  - Node 25 を Node 26 (LTS) に置き換える
+  - @voluntas
 - [FIX] Node 24 で `playwright install` がハングする問題を修正するため Playwright を 1.60.0 に更新する
   - @voluntas
 - [FIX] macOS の Google Chrome stable インストールが 302 リダイレクトを追従できず失敗するため playwright-core にパッチを当てて `curl` に `-L` を追加する
-  - @voluntas
-- [UPDATE] e2e テストの Node バージョンを 25 から 26 (LTS) に切り替える
   - @voluntas
 
 ## 2025.2.0

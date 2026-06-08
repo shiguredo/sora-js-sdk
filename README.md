@@ -47,8 +47,9 @@ pnpm add sora-js-sdk
 
 ### Node.js の条件
 
+- Sora JavaScript SDK 2026.1.0 以降は **Node.js 22.0 以降** を要求します
+- Sora JavaScript SDK 2025.1.0 以降は **Node.js 20.0 以降** を要求します
 - Sora JavaScript SDK 2024.2.x までは **Node.js 18.0 以降** を要求します
-- 次のリリース Sora JavaScript SDK 2025.1.0 以降は **Node.js 20.0 以降** を要求します
 
 > [!CAUTION]
 > Sora JavaScript SDK 2024.2.0 以降は [Compression Stream API](https://developer.mozilla.org/ja/docs/Web/API/Compression_Streams_API) を利用しているため、ブラウザの要件がありますのでご確認ください。
@@ -83,6 +84,7 @@ pnpm run e2e-dev
 以下のバージョンの npm に公開されている安定版のパッケージは、
 最新の Sora で E2E テストが通ることを確認しています。
 
+- 2026.1.0
 - 2025.2.0
 - 2025.1.0
 - 2024.2.2
