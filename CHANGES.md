@@ -21,6 +21,8 @@
   - @voluntas
 - [FIX] type: switched (ignore_disconnect_websocket) 経路で旧 WebSocket の onmessage / onerror ハンドラが解除されていなかったのを修正する
   - @voluntas
+- [FIX] disconnect() が並列実行されたとき callbacks.disconnect() が複数回発火しないように冪等化する
+  - @voluntas
 
 ### misc
 

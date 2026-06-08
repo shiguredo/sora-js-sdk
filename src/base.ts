@@ -211,6 +211,10 @@ export default class ConnectionBase {
    */
   private disconnectWaitTimeout: number;
   /**
+   * disconnect() の並列実行を防ぐための Promise
+   */
+  private disconnectingPromise: Promise<void> | null = null;
+  /**
    * audio / video の msid
    */
   private mids: {
@@ -1051,56 +1055,66 @@ export default class ConnectionBase {
    * @public
    */
   async disconnect(): Promise<void> {
-    this.clearMonitorIceConnectionStateChange();
-    // callback を止める
-    if (this.pc) {
-      this.pc.ondatachannel = null;
-      this.pc.oniceconnectionstatechange = null;
-      this.pc.onicegatheringstatechange = null;
-      this.pc.onconnectionstatechange = null;
+    if (this.disconnectingPromise) {
+      return this.disconnectingPromise;
     }
-    // WebSocket の監視を止める
-    if (this.ws) {
-      // onclose はログを吐く専用に残す
-      this.ws.onclose = (event): void => {
-        this.writeWebSocketTimelineLog("onclose", {
-          code: event.code,
-          reason: event.reason,
-        });
-      };
-      this.ws.onmessage = null;
-      this.ws.onerror = null;
-    }
+    this.disconnectingPromise = (async (): Promise<void> => {
+      try {
+        this.clearMonitorIceConnectionStateChange();
+        // callback を止める
+        if (this.pc) {
+          this.pc.ondatachannel = null;
+          this.pc.oniceconnectionstatechange = null;
+          this.pc.onicegatheringstatechange = null;
+          this.pc.onconnectionstatechange = null;
+        }
+        // WebSocket の監視を止める
+        if (this.ws) {
+          // onclose はログを吐く専用に残す
+          this.ws.onclose = (event): void => {
+            this.writeWebSocketTimelineLog("onclose", {
+              code: event.code,
+              reason: event.reason,
+            });
+          };
+          this.ws.onmessage = null;
+          this.ws.onerror = null;
+        }
 
-    let event = null;
-    if (this.signalingSwitched) {
-      const result = await this.disconnectDataChannel();
-      if (result.code === 4999) {
-        // DataChannel の切断処理がエラーの場合は event を abend に差し替える
-        event = this.soraCloseEvent("abend", result.reason);
+        let event = null;
+        if (this.signalingSwitched) {
+          const result = await this.disconnectDataChannel();
+          if (result.code === 4999) {
+            // DataChannel の切断処理がエラーの場合は event を abend に差し替える
+            event = this.soraCloseEvent("abend", result.reason);
+          }
+          event = this.soraCloseEvent("normal", "DISCONNECT", result);
+          // もう切断されている可能性が高いが一応止める
+          await this.disconnectWebSocket("NO-ERROR");
+          this.maybeClosePeerConnection();
+        } else {
+          const reason = await this.disconnectWebSocket("NO-ERROR");
+          this.maybeClosePeerConnection();
+          // switched にはなっていないが dataChannel が存在する場合の掃除
+          this.forceCloseDataChannels();
+          if (reason !== null) {
+            event = this.soraCloseEvent("normal", "DISCONNECT", reason);
+          }
+        }
+        this.initializeConnection();
+        if (event) {
+          if (event.type === "abend") {
+            this.writeSoraTimelineLog("disconnect-abend", event);
+          } else if (event.type === "normal") {
+            this.writeSoraTimelineLog("disconnect-normal", event);
+          }
+          this.callbacks.disconnect(event);
+        }
+      } finally {
+        this.disconnectingPromise = null;
       }
-      event = this.soraCloseEvent("normal", "DISCONNECT", result);
-      // もう切断されている可能性が高いが一応止める
-      await this.disconnectWebSocket("NO-ERROR");
-      this.maybeClosePeerConnection();
-    } else {
-      const reason = await this.disconnectWebSocket("NO-ERROR");
-      this.maybeClosePeerConnection();
-      // switched にはなっていないが dataChannel が存在する場合の掃除
-      this.forceCloseDataChannels();
-      if (reason !== null) {
-        event = this.soraCloseEvent("normal", "DISCONNECT", reason);
-      }
-    }
-    this.initializeConnection();
-    if (event) {
-      if (event.type === "abend") {
-        this.writeSoraTimelineLog("disconnect-abend", event);
-      } else if (event.type === "normal") {
-        this.writeSoraTimelineLog("disconnect-normal", event);
-      }
-      this.callbacks.disconnect(event);
-    }
+    })();
+    return this.disconnectingPromise;
   }
 
   /**
