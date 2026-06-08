@@ -17,6 +17,10 @@
   - @voluntas
 - [FIX] rpc メソッドのサンプルコードで、実際に存在しない RPC メソッド名が使われていたのを修正する
   - @sile
+- [FIX] type: redirect 受信時に旧 WebSocket の onmessage ハンドラが解除されていなかったのを修正する
+  - @voluntas
+- [FIX] type: switched (ignore_disconnect_websocket) 経路で旧 WebSocket の onmessage / onerror ハンドラが解除されていなかったのを修正する
+  - @voluntas
 
 ### misc
 

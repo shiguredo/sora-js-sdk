@@ -2045,6 +2045,8 @@ export default class ConnectionBase {
     if (message.ignore_disconnect_websocket) {
       if (this.ws) {
         this.ws.onclose = null;
+        this.ws.onmessage = null;
+        this.ws.onerror = null;
         this.ws.close();
         this.ws = null;
       }
@@ -2066,6 +2068,7 @@ export default class ConnectionBase {
   ): Promise<SignalingOfferMessage> {
     if (this.ws) {
       this.ws.onclose = null;
+      this.ws.onmessage = null;
       this.ws.onerror = null;
       this.ws.close();
       this.ws = null;
