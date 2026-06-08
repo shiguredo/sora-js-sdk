@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import {
+  findCodecStats,
+  findInboundRtpStats,
+  findOutboundRtpStats,
+  getStatsReportJson,
+} from "./helper";
 
 test("sendonly/recvonly pages", async ({ browser }) => {
   // 新しいコンテキストとページを2つ作成
@@ -54,10 +60,7 @@ test("sendonly/recvonly pages", async ({ browser }) => {
   // 統計情報が表示されるまで待機
   await sendonly.waitForSelector("#stats-report");
   // データセットから統計情報を取得
-  const sendonlyStatsReportJson: Array<Record<string, unknown>> = await sendonly.evaluate(() => {
-    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
-  });
+  const sendonlyStatsReportJson = await getStatsReportJson(sendonly);
 
   // 'Get Stats' ボタンをクリックして統計情報を取得
   await recvonly.click("#get-stats");
@@ -65,63 +68,44 @@ test("sendonly/recvonly pages", async ({ browser }) => {
   // 統計情報が表示されるまで待機
   await recvonly.waitForSelector("#stats-report");
   // データセットから統計情報を取得
-  const recvonlyStatsReportJson: Array<Record<string, unknown>> = await recvonly.evaluate(() => {
-    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
-  });
+  const recvonlyStatsReportJson = await getStatsReportJson(recvonly);
 
   // sendonly audio codec
-  const sendonlyAudioCodecStats = sendonlyStatsReportJson.find(
-    (report) => report.type === "codec" && report.mimeType === "audio/opus",
-  );
+  const sendonlyAudioCodecStats = findCodecStats(sendonlyStatsReportJson, "audio/opus");
   expect(sendonlyAudioCodecStats).toBeDefined();
 
   // sendonly audio outbound-rtp
-  const sendonlyAudioOutboundRtp = sendonlyStatsReportJson.find(
-    (report) => report.type === "outbound-rtp" && report.kind === "audio",
-  );
+  const sendonlyAudioOutboundRtp = findOutboundRtpStats(sendonlyStatsReportJson, "audio");
   expect(sendonlyAudioOutboundRtp).toBeDefined();
   expect(sendonlyAudioOutboundRtp?.bytesSent).toBeGreaterThan(0);
   expect(sendonlyAudioOutboundRtp?.packetsSent).toBeGreaterThan(0);
 
   // sendonly video codec
-  const sendonlyVideoCodecStats = sendonlyStatsReportJson.find(
-    (stats) => stats.type === "codec" && stats.mimeType === "video/VP9",
-  );
+  const sendonlyVideoCodecStats = findCodecStats(sendonlyStatsReportJson, "video/VP9");
   expect(sendonlyVideoCodecStats).toBeDefined();
 
   // sendonly video outbound-rtp
-  const sendonlyVideoOutboundRtpStats = sendonlyStatsReportJson.find(
-    (stats) => stats.type === "outbound-rtp" && stats.kind === "video",
-  );
+  const sendonlyVideoOutboundRtpStats = findOutboundRtpStats(sendonlyStatsReportJson, "video");
   expect(sendonlyVideoOutboundRtpStats).toBeDefined();
   expect(sendonlyVideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0);
   expect(sendonlyVideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0);
 
   // recvonly audio codec
-  const recvonlyAudioCodecStats = recvonlyStatsReportJson.find(
-    (stats) => stats.type === "codec" && stats.mimeType === "audio/opus",
-  );
+  const recvonlyAudioCodecStats = findCodecStats(recvonlyStatsReportJson, "audio/opus");
   expect(recvonlyAudioCodecStats).toBeDefined();
 
   // recvonly audio inbound-rtp
-  const recvonlyAudioInboundRtpStats = recvonlyStatsReportJson.find(
-    (stats) => stats.type === "inbound-rtp" && stats.kind === "audio",
-  );
+  const recvonlyAudioInboundRtpStats = findInboundRtpStats(recvonlyStatsReportJson, "audio");
   expect(recvonlyAudioInboundRtpStats).toBeDefined();
   expect(recvonlyAudioInboundRtpStats?.bytesReceived).toBeGreaterThan(0);
   expect(recvonlyAudioInboundRtpStats?.packetsReceived).toBeGreaterThan(0);
 
   // recvonly video codec
-  const recvonlyVideoCodecStats = recvonlyStatsReportJson.find(
-    (stats) => stats.type === "codec" && stats.mimeType === "video/VP9",
-  );
+  const recvonlyVideoCodecStats = findCodecStats(recvonlyStatsReportJson, "video/VP9");
   expect(recvonlyVideoCodecStats).toBeDefined();
 
   // recvonly video inbound-rtp
-  const recvonlyVideoInboundRtpStats = recvonlyStatsReportJson.find(
-    (stats) => stats.type === "inbound-rtp" && stats.kind === "video",
-  );
+  const recvonlyVideoInboundRtpStats = findInboundRtpStats(recvonlyStatsReportJson, "video");
   expect(recvonlyVideoInboundRtpStats).toBeDefined();
   expect(recvonlyVideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0);
   expect(recvonlyVideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0);

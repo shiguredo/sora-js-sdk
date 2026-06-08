@@ -6,7 +6,7 @@ test("checkVersionSupport: バージョンがnullの場合はサポートされ�
     majorVersion: 2025,
     minorVersion: 2,
   });
-  expect(result.isSupported).toBeFalsy();
+  expect(result.isSupported).toBe(false);
   expect(result.skipReason).toBe("Sora JS SDK version not found");
 });
 
@@ -16,7 +16,7 @@ test("checkVersionSupport: バージョンがパースできない場合はサ�
     majorVersion: 2025,
     minorVersion: 2,
   });
-  expect(result.isSupported).toBeFalsy();
+  expect(result.isSupported).toBe(false);
   expect(result.skipReason).toBe("Cannot parse Sora JS SDK version: invalid-version");
 });
 
@@ -26,7 +26,7 @@ test("checkVersionSupport: メジャーバージョンが古い場合はサポ�
     majorVersion: 2025,
     minorVersion: 2,
   });
-  expect(result.isSupported).toBeFalsy();
+  expect(result.isSupported).toBe(false);
   expect(result.skipReason).toBe(
     "Sora JS SDK version 2024.3.0 is older than 2025.2 (Test Feature support required)",
   );
@@ -39,7 +39,7 @@ test("checkVersionSupport: メジャーバージョンが同じでマイナー�
     majorVersion: 2025,
     minorVersion: 2,
   });
-  expect(result.isSupported).toBeFalsy();
+  expect(result.isSupported).toBe(false);
   expect(result.skipReason).toBe(
     "Sora JS SDK version 2025.1.0 is older than 2025.2 (Test Feature support required)",
   );
@@ -51,7 +51,7 @@ test("checkVersionSupport: 要求バージョン以上の場合はサポート�
     majorVersion: 2025,
     minorVersion: 2,
   });
-  expect(result.isSupported).toBeTruthy();
+  expect(result.isSupported).toBe(true);
   expect(result.version).toBe("2025.2.0");
   expect(result.skipReason).toBeUndefined();
 });
@@ -62,7 +62,7 @@ test("checkVersionSupport: 要求バージョンより新しい場合はサポ�
     majorVersion: 2025,
     minorVersion: 2,
   });
-  expect(result.isSupported).toBeTruthy();
+  expect(result.isSupported).toBe(true);
   expect(result.version).toBe("2025.3.0");
 });
 
@@ -72,6 +72,6 @@ test("checkVersionSupport: プレリリースバージョンを正しく処理�
     majorVersion: 2025,
     minorVersion: 2,
   });
-  expect(result.isSupported).toBeTruthy();
+  expect(result.isSupported).toBe(true);
   expect(result.version).toBe("2025.2.0-canary.0");
 });

@@ -90,11 +90,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 class SimulcastSendonlySoraClient {
-  private debug = false;
-  private channelId: string;
+  private readonly debug = false;
+  private readonly channelId: string;
 
-  private sora: SoraConnection;
-  private connection: ConnectionPublisher;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug);
@@ -153,13 +153,13 @@ class SimulcastSendonlySoraClient {
 }
 
 class SimulcastRecvonlySoraClient {
-  private debug = false;
+  private readonly debug = false;
 
-  private channelId: string;
-  private rid: SimulcastRid;
+  private readonly channelId: string;
+  private readonly rid: SimulcastRid;
 
-  private sora: SoraConnection;
-  private connection: ConnectionSubscriber;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionSubscriber;
 
   constructor(signalingUrl: string, channelId: string, rid: SimulcastRid, secretKey: string) {
     this.channelId = channelId;

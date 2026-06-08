@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { checkSoraVersion } from "./helper";
+import {
+  checkSoraVersion,
+  unsupportedVersionSkipReason,
+  filterDataChannelStats,
+  findDataChannelStats,
+  getStatsReportJson,
+} from "./helper";
 
 test("messaging pages with header", async ({ browser }) => {
   // 2つの独立したブラウザコンテキストを作成
@@ -20,10 +26,7 @@ test("messaging pages with header", async ({ browser }) => {
     minorVersion: 2,
   });
 
-  if (!versionCheck.isSupported) {
-    test.skip(true, versionCheck.skipReason ?? "Version not supported");
-    return;
-  }
+  test.skip(!versionCheck.isSupported, unsupportedVersionSkipReason(versionCheck.skipReason));
 
   // チャンネル名を uuid 文字列にする
   const channelName = randomUUID();
@@ -92,35 +95,17 @@ test("messaging pages with header", async ({ browser }) => {
   // 統計情報が表示されるまで待機
   await page1.waitForSelector("#stats-report");
   // データセットから統計情報を取得
-  const page1StatsReportJson: Array<Record<string, unknown>> = await page1.evaluate(() => {
-    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
-  });
+  const page1StatsReportJson = await getStatsReportJson(page1);
 
   // page1 stats report
-  const page1DataChannelStats = page1StatsReportJson.filter(
-    (report) => report.type === "data-channel",
-  );
+  const page1DataChannelStats = filterDataChannelStats(page1StatsReportJson);
 
-  expect(
-    page1DataChannelStats.find((stats) => stats.label === "signaling" && stats.state === "open"),
-  ).toBeDefined();
+  expect(findDataChannelStats(page1DataChannelStats, "signaling", "open")).toBeDefined();
+  expect(findDataChannelStats(page1DataChannelStats, "push", "open")).toBeDefined();
+  expect(findDataChannelStats(page1DataChannelStats, "notify", "open")).toBeDefined();
+  expect(findDataChannelStats(page1DataChannelStats, "stats", "open")).toBeDefined();
 
-  expect(
-    page1DataChannelStats.find((stats) => stats.label === "push" && stats.state === "open"),
-  ).toBeDefined();
-
-  expect(
-    page1DataChannelStats.find((stats) => stats.label === "notify" && stats.state === "open"),
-  ).toBeDefined();
-
-  expect(
-    page1DataChannelStats.find((stats) => stats.label === "stats" && stats.state === "open"),
-  ).toBeDefined();
-
-  const page1ExampleStats = page1DataChannelStats.find(
-    (stats) => stats.label === "#example" && stats.state === "open",
-  );
+  const page1ExampleStats = findDataChannelStats(page1DataChannelStats, "#example", "open");
   // ここで undefined ではないことを確認してる
   expect(page1ExampleStats).toBeDefined();
   expect(page1ExampleStats?.messagesSent).toBeGreaterThan(0);
@@ -130,35 +115,17 @@ test("messaging pages with header", async ({ browser }) => {
   // 統計情報が表示されるまで待機
   await page2.waitForSelector("#stats-report");
   // データセットから統計情報を取得
-  const page2StatsReportJson: Array<Record<string, unknown>> = await page2.evaluate(() => {
-    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
-  });
+  const page2StatsReportJson = await getStatsReportJson(page2);
 
   // page2 stats report
-  const page2DataChannelStats = page2StatsReportJson.filter(
-    (report) => report.type === "data-channel",
-  );
+  const page2DataChannelStats = filterDataChannelStats(page2StatsReportJson);
 
-  expect(
-    page2DataChannelStats.find((stats) => stats.label === "signaling" && stats.state === "open"),
-  ).toBeDefined();
+  expect(findDataChannelStats(page2DataChannelStats, "signaling", "open")).toBeDefined();
+  expect(findDataChannelStats(page2DataChannelStats, "push", "open")).toBeDefined();
+  expect(findDataChannelStats(page2DataChannelStats, "notify", "open")).toBeDefined();
+  expect(findDataChannelStats(page2DataChannelStats, "stats", "open")).toBeDefined();
 
-  expect(
-    page2DataChannelStats.find((stats) => stats.label === "push" && stats.state === "open"),
-  ).toBeDefined();
-
-  expect(
-    page2DataChannelStats.find((stats) => stats.label === "notify" && stats.state === "open"),
-  ).toBeDefined();
-
-  expect(
-    page2DataChannelStats.find((stats) => stats.label === "stats" && stats.state === "open"),
-  ).toBeDefined();
-
-  const page2ExampleStats = page2DataChannelStats.find(
-    (stats) => stats.label === "#example" && stats.state === "open",
-  );
+  const page2ExampleStats = findDataChannelStats(page2DataChannelStats, "#example", "open");
   // ここで undefined ではないことを確認してる
   expect(page2ExampleStats).toBeDefined();
   expect(page2ExampleStats?.bytesReceived).toBeGreaterThan(0);

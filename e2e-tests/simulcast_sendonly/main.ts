@@ -88,17 +88,17 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 class SimulcastSendonlySoraClient {
-  private debug = false;
+  private readonly debug = false;
 
-  private channelId: string;
-  private videoCodecType: VideoCodecType;
-  private videoBitRate: number;
-  private simulcastEncodings: Record<string, unknown> | undefined;
+  private readonly channelId: string;
+  private readonly videoCodecType: VideoCodecType;
+  private readonly videoBitRate: number;
+  private readonly simulcastEncodings: Record<string, unknown> | undefined;
 
-  private secretKey: string;
+  private readonly secretKey: string;
 
-  private sora: SoraConnection;
-  private connection: ConnectionPublisher;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
 
   constructor(
     signalingUrl: string,

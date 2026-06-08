@@ -78,18 +78,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 class SoraClient {
-  private debug = false;
-  private channelId: string;
+  private readonly debug = false;
+  private readonly channelId: string;
   private metadata: { access_token: string } = { access_token: "" };
-  private options: object = { connectionTimeout: 15_000 };
+  private readonly options: object = { connectionTimeout: 15_000 };
 
-  private sora!: SoraConnection;
+  private readonly sora!: SoraConnection;
   private connection!: ConnectionPublisher;
 
   private mediaStream: MediaStream | null = null;
-  private signalingUrl: string;
-  private secretKey: string;
-  private apiUrl: string;
+  private readonly signalingUrl: string;
+  private readonly secretKey: string;
+  private readonly apiUrl: string;
   private autoReconnect = true;
 
   private connectionId: string | null = null;

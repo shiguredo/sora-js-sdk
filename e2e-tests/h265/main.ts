@@ -65,16 +65,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 class SoraClient {
-  private debug = false;
+  private readonly debug = false;
 
-  private channelId: string;
-  private videoCodecType: VideoCodecType | undefined;
+  private readonly channelId: string;
+  private readonly videoCodecType: VideoCodecType | undefined;
   private metadata: { access_token: string } | undefined;
-  private options: ConnectionOptions = {};
-  private secretKey: string;
+  private readonly options: ConnectionOptions = {};
+  private readonly secretKey: string;
 
-  private sora: SoraConnection;
-  private connection: ConnectionPublisher;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
 
   constructor(
     signalingUrl: string,

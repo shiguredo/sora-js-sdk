@@ -1,14 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import {
+  findInboundRtpStats,
+  findOutboundRtpStats,
+  findVideoCodecStats,
+  getStatsReportJson,
+  shouldSkipH265Test,
+} from "./helper";
 
 test("H265", async ({ browser }) => {
   test.skip(
-    (test.info().project.name !== "Google Chrome Canary" &&
-      test.info().project.name !== "Google Chrome Dev" &&
-      test.info().project.name !== "Google Chrome Beta" &&
-      test.info().project.name !== "Google Chrome") ||
-      process.env.RUNNER_ENVIRONMENT !== "self-hosted" ||
-      process.platform !== "darwin",
+    shouldSkipH265Test(test.info().project.name),
     "H265 は Self-hosted の macOS の Google Chrome でテストを行う",
   );
 
@@ -80,51 +82,32 @@ test("H265", async ({ browser }) => {
   await sendrecv2.waitForSelector("#stats-report");
 
   // データセットから統計情報を取得
-  const sendrecv1StatsReportJson: Array<Record<string, unknown>> = await sendrecv1.evaluate(() => {
-    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
-  });
+  const sendrecv1StatsReportJson = await getStatsReportJson(sendrecv1);
 
-  const sendrecv1VideoCodecStats = sendrecv1StatsReportJson.find(
-    (stats) => stats.type === "codec" && stats.mimeType === `video/${videoCodecType}`,
-  );
+  const sendrecv1VideoCodecStats = findVideoCodecStats(sendrecv1StatsReportJson, videoCodecType);
   expect(sendrecv1VideoCodecStats).toBeDefined();
 
-  const sendrecv1VideoOutboundRtpStats = sendrecv1StatsReportJson.find(
-    (stats) => stats.type === "outbound-rtp" && stats.kind === "video",
-  );
+  const sendrecv1VideoOutboundRtpStats = findOutboundRtpStats(sendrecv1StatsReportJson, "video");
   expect(sendrecv1VideoOutboundRtpStats).toBeDefined();
   expect(sendrecv1VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0);
   expect(sendrecv1VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0);
 
-  const sendrecv1VideoInboundRtpStats = sendrecv1StatsReportJson.find(
-    (stats) => stats.type === "inbound-rtp" && stats.kind === "video",
-  );
+  const sendrecv1VideoInboundRtpStats = findInboundRtpStats(sendrecv1StatsReportJson, "video");
   expect(sendrecv1VideoInboundRtpStats).toBeDefined();
   expect(sendrecv1VideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0);
   expect(sendrecv1VideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0);
 
-  // データセットから統計情報を取得
-  const sendrecv2StatsReportJson: Array<Record<string, unknown>> = await sendrecv2.evaluate(() => {
-    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
-  });
+  const sendrecv2StatsReportJson = await getStatsReportJson(sendrecv2);
 
-  const sendrecv2VideoCodecStats = sendrecv2StatsReportJson.find(
-    (stats) => stats.type === "codec" && stats.mimeType === `video/${videoCodecType}`,
-  );
+  const sendrecv2VideoCodecStats = findVideoCodecStats(sendrecv2StatsReportJson, videoCodecType);
   expect(sendrecv2VideoCodecStats).toBeDefined();
 
-  const sendrecv2VideoOutboundRtpStats = sendrecv2StatsReportJson.find(
-    (stats) => stats.type === "outbound-rtp" && stats.kind === "video",
-  );
+  const sendrecv2VideoOutboundRtpStats = findOutboundRtpStats(sendrecv2StatsReportJson, "video");
   expect(sendrecv2VideoOutboundRtpStats).toBeDefined();
   expect(sendrecv2VideoOutboundRtpStats?.bytesSent).toBeGreaterThan(0);
   expect(sendrecv2VideoOutboundRtpStats?.packetsSent).toBeGreaterThan(0);
 
-  const sendrecv2VideoInboundRtpStats = sendrecv2StatsReportJson.find(
-    (stats) => stats.type === "inbound-rtp" && stats.kind === "video",
-  );
+  const sendrecv2VideoInboundRtpStats = findInboundRtpStats(sendrecv2StatsReportJson, "video");
   expect(sendrecv2VideoInboundRtpStats).toBeDefined();
   expect(sendrecv2VideoInboundRtpStats?.bytesReceived).toBeGreaterThan(0);
   expect(sendrecv2VideoInboundRtpStats?.packetsReceived).toBeGreaterThan(0);
