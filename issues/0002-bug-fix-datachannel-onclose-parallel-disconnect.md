@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-disconnect-reentrancy
 
@@ -16,24 +16,7 @@ High。`signalingSwitched === true` の DataChannel signaling 構成では、Pee
 
 ## 現状
 
-### 状態遷移
-
-```mermaid
-stateDiagram-v2
-    [*] --> Idle
-    Idle --> Disconnecting: disconnect() 1 本目
-    Disconnecting --> Disconnecting: disconnect() 2 本目 (再入)
-    Disconnecting --> Done: cleanup 完了
-    Done --> [*]
-
-    note right of Disconnecting
-        再入ガードなしでは
-        callbacks.disconnect が
-        複数回発火する
-    end note
-```
-
-`onDataChannel` の `onclose` (`src/base.ts:2144-2149`):
+`onDataChannel` が各 DataChannel に設定する `onclose` (`src/base.ts:2144-2149`):
 
 ```ts
 dataChannelEvent.channel.onclose = async (event): Promise<void> => {

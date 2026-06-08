@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-monitor-ice-disconnected-timer
 
@@ -20,27 +20,7 @@ High。Wi-Fi / 5G 切り替え等で `iceConnectionState` が `disconnected` の
 
 ## 現状
 
-### 状態遷移
-
-```mermaid
-stateDiagram-v2
-    [*] --> connected
-    connected --> disconnected: ネットワーク変動
-    disconnected --> connected: 復旧
-    disconnected --> failed: ブラウザ依存
-    disconnected --> AbendTimeout: 10 秒滞留 (0006 修正後)
-    failed --> AbendFailed: abendPeerConnectionState
-    AbendTimeout --> [*]
-    AbendFailed --> [*]
-
-    note right of disconnected
-        現行: connectionState !== undefined
-        ガード内のみタイマー起動
-        → 対応ブラウザではデッドコード
-    end note
-```
-
-`oniceconnectionstatechange` (1664-1687) は `connectionState === undefined` ガード内にのみ `clearTimeout` / `iceConnectionState === "failed"` 切断 / `disconnected` 10 秒タイマーを持つ。`onconnectionstatechange` (1688-1702) は `connected` (→ `triggerConnectedCallbackIfReady`) と `failed` (→ `abendPeerConnectionState("CONNECTION-STATE-FAILED")`) を見る。
+### 現状のコード `connectionState === undefined` ガード内にのみ `clearTimeout` / `iceConnectionState === "failed"` 切断 / `disconnected` 10 秒タイマーを持つ。`onconnectionstatechange` (1688-1702) は `connected` (→ `triggerConnectedCallbackIfReady`) と `failed` (→ `abendPeerConnectionState("CONNECTION-STATE-FAILED")`) を見る。
 
 `clearMonitorIceConnectionStateChange` (`src/base.ts:1753-1755`) はタイマー ID (代入元は `setTimeout` 戻り値、`1680`) に対し `clearInterval` を使っている。ブラウザでは `setTimeout` / `setInterval` の timer ID 名前空間が共有されるため `clearInterval(id)` でも `setTimeout` の ID を解除でき**機能上は等価**だが、API ペアが不整合なので `clearTimeout` に揃える (clarity 改善)。
 

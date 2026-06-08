@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-process-offer-sdp-port-zero
 
@@ -18,16 +18,7 @@ Medium。Sora 現行仕様では port=0 は transceiver 解放のみとされ (`
 
 ## 現状
 
-### 状態遷移
-
-```mermaid
-flowchart TD
-    A[processOfferSdp 入力] --> B{isFirefox?}
-    B -->|No| Z[そのまま返却]
-    B -->|Yes| C["/^m=(audio|video) 0 / を一括置換"]
-    C --> D["rejected 表明 (port=0) も port=9 に書き換わる"]
-    D --> Z
-```
+### 問題の概要
 
 `processOfferSdp` (`src/base.ts:1489-1502`) は `isFirefox()` (`src/utils.ts:119`) のとき `sdp.replaceAll(/^m=(audio|video) 0 /gm, ...)` で前回 port を見ずに一括置換する。`setRemoteDescription` (`src/base.ts:1401`) から呼ばれる。`previousOfferMidPorts` は現状未存在。
 

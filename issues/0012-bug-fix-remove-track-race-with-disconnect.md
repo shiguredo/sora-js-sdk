@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-05-21
-- Polished: 2026-06-06
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/change-remove-track-race-with-disconnect
 
@@ -15,22 +15,6 @@
 Low。`pc.close()` が同タイミングで sender を破棄するため `sender.replaceTrack(null)` のスキップは実害を出さない (GC 待ち)。`replaceAudioTrack` / `replaceVideoTrack` 経由でも track の `enabled = false` 書き換えだけは確定実行されるが、これは disconnect 中の自然な状態として利用者から解釈可能で、主たる用途 (publish 中の track 入れ替え) における disconnect レースの発生率も限定的。それでも「切断中の `removeXxxTrack` が無言で resolve する」のは API 契約として誤解を招き、デバッグの障害になるため、後方互換を壊す `[CHANGE]` で対応する (API 整合性優先)。本番観測ログは未取得で緊急度は高くない。
 
 ## 現状
-
-### 状態遷移
-
-```mermaid
-sequenceDiagram
-    participant App
-    participant SDK as removeAudioTrack
-
-    App->>SDK: removeAudioTrack()
-    SDK->>SDK: track.enabled = false
-    Note over SDK: 100ms setTimeout 開始
-    App->>SDK: disconnect() / abend()
-    SDK->>SDK: this.pc = null
-    Note over SDK: 100ms 経過
-    SDK->>SDK: pc === null → 無言 resolve (バグ)
-```
 
 ### 既存コードの構造
 

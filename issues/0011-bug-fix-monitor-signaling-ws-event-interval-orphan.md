@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-monitor-signaling-ws-interval-orphan
 
@@ -26,23 +26,6 @@
 High。アプリ側で「`connect()` 失敗 → 即リトライ」を実装した場合に踏みうる。特にタイムアウト失敗 (`multiStream` が pending のまま reject される経路) では `finally` による clear が走らないため孤児化しやすい。ただし発生は呼び出しタイミングに依存し、決定論的に毎回再現するわけではない。
 
 ## 現状
-
-### 状態遷移
-
-```mermaid
-sequenceDiagram
-    participant App
-    participant SDK as ConnectionBase
-    participant T1 as 1 回目 interval
-    participant WS2 as 2 回目 ws
-
-    App->>SDK: connect() 1 回目 (失敗)
-    SDK->>T1: setInterval 開始
-    App->>SDK: connect() 2 回目
-    Note over SDK: initializeConnection で interval 未 clear
-    SDK->>SDK: 2 回目 monitorSignalingWebSocketEvent (フィールド上書き)
-    T1->>WS2: onclose / onerror 上書き (バグ)
-```
 
 `initializeConnection` (`src/base.ts:820-848`) は末尾 (`:847`) で `this.clearConnectionTimeout()` のみ呼ぶ。`clearMonitorSignalingWebSocketEvent` (`src/base.ts:1746-1748`、`clearInterval` 使用で `setInterval` と整合) と `clearMonitorIceConnectionStateChange` (`src/base.ts:1753-1755`) は呼ばれない。
 

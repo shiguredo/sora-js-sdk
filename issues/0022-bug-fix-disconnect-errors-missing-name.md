@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-disconnect-errors-name
 

@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-forwarding-filter-exclusive
 
@@ -16,18 +16,9 @@ High。旧 API から新 API への移行期に両方セットすると、connec
 
 ## 現状
 
-### 状態遷移
+### 問題の概要
 
-```mermaid
-flowchart TD
-    A[createSignalingMessage] --> B{forwardingFilter 指定?}
-    B -->|Yes| C{forwardingFilters も指定?}
-    C -->|Yes 現行| D["両方 message に積む (バグ)"]
-    C -->|No| E[forwarding_filter のみ]
-    B -->|No| F{forwardingFilters 指定?}
-    F -->|Yes| G[forwarding_filters のみ]
-    D --> H[Sora invalid-signaling-message]
-```
+````
 
 ```ts
 if (options.forwardingFilters !== undefined) {
@@ -36,7 +27,7 @@ if (options.forwardingFilters !== undefined) {
 if (options.forwardingFilter !== undefined) {
   message.forwarding_filter = options.forwardingFilter;
 }
-```
+````
 
 `createSignalingMessage` は `ConnectError` ではなく素の `Error` を使う (他検証と同型)。
 

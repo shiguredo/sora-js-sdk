@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-generate-certificate-fallback
 
@@ -18,18 +18,7 @@ High。ただし救済できる対象は「`generateCertificate` のみが特異
 
 ## 現状
 
-### 状態遷移
-
-```mermaid
-flowchart TD
-    A[connectPeerConnection] --> B{generateCertificate 利用可能?}
-    B -->|No| E["new RTCPeerConnection(config)"]
-    B -->|Yes| C[await generateCertificate]
-    C -->|成功| D["config.certificates 設定"]
-    C -->|失敗 throw 現行| F["connect() reject (バグ)"]
-    D --> E
-    C -->|失敗 catch 修正後| E
-```
+### 問題のコード
 
 `src/base.ts:1343-1351`
 

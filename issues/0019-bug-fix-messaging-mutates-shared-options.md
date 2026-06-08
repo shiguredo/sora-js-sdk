@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-messaging-mutates-shared-options
 
@@ -20,17 +20,12 @@ High。同一 `opts` で `sendrecv()` と `messaging()` を生成する公式パ
 
 ## 現状
 
-### 状態遷移
+### 問題の概要
 
-```mermaid
-flowchart LR
-    opts["opts (呼び出し側)"]
-    sr["sendrecv.options"]
-    msg["messaging()"]
-    opts -->|同一参照| sr
     msg -->|"options.audio = false 等<br/>直接 mutate"| opts
     msg -->|同一参照経由| sr
-```
+
+````
 
 ```ts
 // src/sora.ts:210-227
@@ -43,7 +38,7 @@ messaging(..., options: ConnectionOptions = { audio: false, video: false }) {
 
 // src/base.ts:266
 this.options = options;
-```
+````
 
 再現:
 

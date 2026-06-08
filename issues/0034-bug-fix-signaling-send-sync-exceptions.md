@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-25
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Composer 2.5
 - Branch: feature/fix-signaling-send-sync-exceptions
 

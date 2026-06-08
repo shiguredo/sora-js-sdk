@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Polished: 2026-06-06
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-signaling-onmessage-exception
 
@@ -17,16 +17,6 @@
 High。`type: offer` 受信前に非 string frame、不正 JSON、分岐済み handler 内 throw が論理的に成立する。実機 Sora で人工的な再現は困難 (壊れた frame を意図的に送る経路がない) だが、発生すると `connect()` が無反応のまま `connectionTimeout` (デフォルト 60000ms、`0` なら無限) まで続き、エンドユーザは原因不明の接続失敗を見続ける。
 
 ## 現状
-
-### 状態遷移
-
-```mermaid
-stateDiagram-v2
-    [*] --> Unsettled: connect / signaling 開始
-    Unsettled --> Settled: offer / redirect resolve
-    Unsettled --> Hung: pre-offer onmessage 例外 (バグ)
-    Hung --> Hung: connectionTimeout 待ち (バグ)
-```
 
 ### 再現条件 (コードパス)
 

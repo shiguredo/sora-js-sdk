@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
-- Polished: 2026-06-02
+- Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-trace-redact-secrets
 
@@ -22,18 +22,15 @@ High。セキュリティ。`debug: true` 環境で DevTools を開くだけで 
 
 ## 現状
 
-### 状態遷移
+### 問題の概要
 
-```mermaid
-flowchart TD
-    A[signaling message] --> B[ConnectionBase.trace]
-    B --> C[callbacks.log raw]
     B --> D{debug === true?}
     D -->|Yes| E[utils.trace → console raw]
     D -->|No| F[console 出力なし]
     C --> G[JWT / metadata 平文露出]
     E --> G
-```
+
+````
 
 ```ts
 // src/base.ts:1763-1768
@@ -42,7 +39,7 @@ protected trace(title: string, message: unknown): void {
   if (!this.debug) return;
   trace(this.clientId, title, message);            // console も raw
 }
-```
+````
 
 `utils.trace` は `ConnectionBase.trace` からのみ呼ばれる (`src/base.ts:1768`)。
 
