@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-21
 - Polished: 2026-06-08
+- Completed: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-ondatachannel-same-label-overwrite
 
@@ -108,3 +109,38 @@ this.soraDataChannels[dataChannel.label] = dataChannel;
   - [FIX] onDataChannel で同名 label の DataChannel を上書きする際に旧 DC のハンドラを解除し close するようにする
     - @voluntas
   ```
+
+## 解決方法
+
+`src/base.ts` の `onDataChannel` メソッド（2133行目）に stale DataChannel の処理を追加した。
+
+`this.soraDataChannels[dataChannel.label] = dataChannel` で新しい DC を代入する前に、以下の処理を行う:
+
+1. `this.soraDataChannels[dataChannel.label]` から既存の DC を取得
+2. 既存 DC が存在し、かつ新 DC と同一オブジェクトでない場合:
+   - `onerror` / `onclose` / `onmessage` ハンドラを null 化（これにより旧 DC 起因の誤 `abend()` / `disconnect()` を防止）
+   - `writeDataChannelTimelineLog("close-stale-data-channel", existing)` でタイムラインログを出力
+   - `readyState` が `"open"` または `"connecting"` の場合に限り `close()` を呼ぶ
+
+この修正は既存の `forceCloseDataChannels`（全 DC 強制終了）と同じハンドラ null 化 → close のパターンに従っている。
+
+### 変更ファイル
+
+- `src/base.ts`: `onDataChannel` メソッドに stale DC 処理 11 行を追加
+
+### レビュー対応
+
+`/review-diff-code` を 2 周実施し、以下の指摘を反映した:
+
+- コメントを実態に合わせて修正（close が skip されるケースを明記）
+- `readyState` チェックを Deny List（`!== "closed" && !== "closing"`）から Allow List（`=== "open" || === "connecting"`）に変更
+
+以下の指摘は意図的に残した:
+
+- `existing !== dataChannel` の防衛的チェック（自己文書化、self-close 防止のため）
+- `readyState` ガード（`forceCloseDataChannels` との整合性は別 issue で検討）
+
+### テスト
+
+- 既存テスト `pnpm test` は全て通過（72 tests passed）
+- このコードパスはブラウザ WebRTC API（`RTCDataChannel`）に依存するため、モック禁止規約下での新規単体テスト追加は不可能
