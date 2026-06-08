@@ -13,6 +13,26 @@ export interface Resolution {
   width: number;
 }
 
+// 音声分析結果（1 接続分）
+export interface AudioChannelAnalysis {
+  channelCount?: number;
+  isStereo: boolean;
+  leftFrequency: number;
+  rightFrequency: number;
+}
+
+// 音声分析結果（送受信 1 接続分）
+export interface StereoAudioAnalysisData {
+  local: AudioChannelAnalysis;
+  remote: AudioChannelAnalysis;
+}
+
+// 音声分析結果（双方向 2 接続分）
+export interface StereoAudioSendRecvAnalysisData {
+  connection1: StereoAudioAnalysisData;
+  connection2: StereoAudioAnalysisData;
+}
+
 const VERSION_PATTERN = /^(\d+)\.(\d+)\.(\d+)/u;
 
 const CHROME_PROJECT_NAMES = new Set([
@@ -149,14 +169,11 @@ export async function getRecvStatsReportJson(page: Page): Promise<StatsReport> {
 }
 
 // 音声分析結果を DOM から取得する
-export async function getAnalysisData(
-  page: Page,
-  selector = "#audio-analysis",
-): Promise<Record<string, unknown>> {
+export async function getAnalysisData<T>(page: Page, selector = "#audio-analysis"): Promise<T> {
   return page.$eval(selector, (el) => {
     const element = el as HTMLElement;
     const json = element.dataset.analysis;
-    return JSON.parse(json ?? "{}");
+    return JSON.parse(json ?? "{}") as T;
   });
 }
 

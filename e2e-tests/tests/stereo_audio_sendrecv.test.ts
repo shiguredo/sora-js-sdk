@@ -8,6 +8,7 @@ import {
   getAnalysisData,
   getStatsReportJson,
 } from "./helper";
+import type { StereoAudioSendRecvAnalysisData } from "./helper";
 
 test.describe("Stereo Audio SendRecv Tests", () => {
   test.beforeEach(async ({ page, browser, browserName }) => {
@@ -92,7 +93,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     expect(conn2AudioInboundRtp?.bytesReceived).toBeGreaterThan(0);
     expect(conn2AudioInboundRtp?.packetsReceived).toBeGreaterThan(0);
 
-    const analysisData = await getAnalysisData(page);
+    const analysisData = await getAnalysisData<StereoAudioSendRecvAnalysisData>(page);
 
     console.log("Stereo sendrecv test - Audio analysis:", analysisData);
 
@@ -171,7 +172,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     await page.waitForSelector("#stats-report-2");
 
     // 音声分析結果を取得
-    const analysisData = await getAnalysisData(page);
+    const analysisData = await getAnalysisData<StereoAudioSendRecvAnalysisData>(page);
 
     console.log("Mono sendrecv test - Audio analysis:", analysisData);
 
@@ -255,7 +256,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     await page.waitForSelector("#stats-report-1");
 
     // 音声分析結果を取得
-    const analysisData = await getAnalysisData(page);
+    const analysisData = await getAnalysisData<StereoAudioSendRecvAnalysisData>(page);
 
     console.log("Mixed stereo/mono test - Audio analysis:", analysisData);
 

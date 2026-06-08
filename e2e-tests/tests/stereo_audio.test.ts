@@ -9,6 +9,7 @@ import {
   getRecvStatsReportJson,
   getStatsReportJson,
 } from "./helper";
+import type { StereoAudioAnalysisData } from "./helper";
 
 test.describe("Stereo Audio Tests", () => {
   test.beforeEach(async ({ page, browser, browserName }) => {
@@ -85,7 +86,7 @@ test.describe("Stereo Audio Tests", () => {
     expect(recvAudioInboundRtp?.bytesReceived).toBeGreaterThan(0);
     expect(recvAudioInboundRtp?.packetsReceived).toBeGreaterThan(0);
 
-    const analysisData = await getAnalysisData(page);
+    const analysisData = await getAnalysisData<StereoAudioAnalysisData>(page);
 
     console.log("Stereo test - Audio analysis:", analysisData);
 
@@ -158,7 +159,7 @@ test.describe("Stereo Audio Tests", () => {
     expect(sendAudioOutboundRtp?.bytesSent).toBeGreaterThan(0);
     expect(sendAudioOutboundRtp?.packetsSent).toBeGreaterThan(0);
 
-    const analysisData = await getAnalysisData(page);
+    const analysisData = await getAnalysisData<StereoAudioAnalysisData>(page);
 
     console.log("Mono test - Audio analysis:", analysisData);
 
