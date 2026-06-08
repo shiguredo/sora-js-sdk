@@ -27,6 +27,8 @@
   - @voluntas
 - [FIX] onDataChannel で同名 label の DataChannel を上書きする際に旧 DC のハンドラを解除し close するようにする
   - @voluntas
+- [FIX] abend() で compressMessage が失敗したときに後続のクリーンアップと disconnect 通知が実行されないのを修正する
+  - @voluntas
 
 ### misc
 

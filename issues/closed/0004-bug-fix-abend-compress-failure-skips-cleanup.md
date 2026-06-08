@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-21
+- Completed: 2026-06-08
 - Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-abend-compress-failure-skips-cleanup
@@ -115,3 +116,12 @@ compress 失敗ログは `failed-to-compress-disconnect`。error の文字列化
 - **0011** は 0006 直後 (0006 issue 参照)
 - **0034** までを 1 セットとして扱う (0004 単独では `disconnectDataChannel` 等の同型問題は残る)
 - **0030** マージ時は compress try/catch を `runShutdownOnce` 内へ移植
+
+## 解決方法
+
+`src/base.ts` の `abend()` 内 compress === true 分岐全体 (`binaryMessage` 生成から `send()` まで) を外側 try/catch で包んだ。catch 時は `failed-to-compress-disconnect` ログを出力し、後続のクリーンアップ (DataChannel close ループ、disconnectWebSocket、maybeClosePeerConnection、initializeConnection、callbacks.disconnect) に必ず到達するようにした。
+
+**変更ファイル:**
+
+- `src/base.ts`: `abend()` の compress 分岐に外側 try/catch を追加 (759-788 行)
+- `tests/compress-message.test.ts`: `compressMessage` が jsdom 環境で throw することを検証するテストを追加
