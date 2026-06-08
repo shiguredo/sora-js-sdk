@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Polished: 2026-06-08
+- Completed: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-disconnect-reentrancy
 
@@ -146,3 +147,7 @@ async disconnect(): Promise<void> {
   - [FIX] disconnect() が並列実行されたとき callbacks.disconnect() が複数回発火しないように冪等化する
     - @voluntas
   ```
+
+## 解決方法
+
+`src/base.ts` の `ConnectionBase` に `private disconnectingPromise: Promise<void> | null = null` フィールドを追加し、`disconnect()` 本体を async IIFE でラップした。冒頭で `if (this.disconnectingPromise) return this.disconnectingPromise;` の再入ガードを置き、IIFE の `finally` で `disconnectingPromise = null` に戻す。これにより並列呼び出し時は同一 Promise を返し本体は 1 回のみ実行され、1 回目完了後の遅延再入は `initializeConnection()` 後の状態で event が null になり callback 不発となる。既存 `pnpm test` (2 files, 72 tests) が通過することを確認した。CHANGES.md `## develop` に FIX エントリを追記した。
