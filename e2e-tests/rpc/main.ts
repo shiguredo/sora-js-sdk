@@ -159,13 +159,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // Simulcast Sendonly クライアント
 class SimulcastSendonlyClient {
-  private debug = false;
+  private readonly debug = false;
 
-  private channelId: string;
-  private metadata: { access_token: string };
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
 
-  private sora: SoraConnection;
-  private connection: ConnectionPublisher;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
 
   constructor(signalingUrl: string, channelId: string, accessToken: string) {
     this.sora = Sora.connection(signalingUrl, this.debug);
@@ -215,13 +215,13 @@ class SimulcastSendonlyClient {
 
 // Simulcast Recvonly クライアント (RPC 機能付き)
 class SimulcastRecvonlyClient {
-  private debug = false;
+  private readonly debug = false;
 
-  private channelId: string;
-  private metadata: { access_token: string };
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
 
-  private sora: SoraConnection;
-  private connection: ConnectionSubscriber;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionSubscriber;
 
   constructor(signalingUrl: string, channelId: string, accessToken: string) {
     this.sora = Sora.connection(signalingUrl, this.debug);
@@ -262,7 +262,7 @@ class SimulcastRecvonlyClient {
     const rpcMethod = "2025.2.0/RequestSimulcastRid";
     const rpcParams = {
       receiver_connection_id: this.connection.connectionId,
-      rid: rid,
+      rid,
     };
     return this.connection.rpc(rpcMethod, rpcParams);
   }

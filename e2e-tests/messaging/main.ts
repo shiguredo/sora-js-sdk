@@ -70,14 +70,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 class SoraClient {
-  private debug = false;
+  private readonly debug = false;
 
-  private channelId: string;
-  private metadata: { access_token: string };
-  private options: object;
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
+  private readonly options: object;
 
-  private sora: SoraConnection;
-  private connection: ConnectionMessaging;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionMessaging;
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug);
@@ -115,7 +115,7 @@ class SoraClient {
       {
         label: "#example",
         direction: "sendrecv",
-        compress: compress,
+        compress,
         // header が true の場合は sender_connection_id を追加
         header: header ? [{ type: "sender_connection_id" }] : undefined,
       },

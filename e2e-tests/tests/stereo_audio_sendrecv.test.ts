@@ -1,5 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import {
+  checkSoraVersionFromWindow,
+  unsupportedVersionSkipReason,
+  findInboundRtpStats,
+  findOutboundRtpStats,
+  getAnalysisData,
+  getStatsReportJson,
+} from "./helper";
 
 test.describe("Stereo Audio SendRecv Tests", () => {
   test.beforeEach(async ({ page, browser, browserName }) => {
@@ -9,27 +17,15 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     console.log(`Browser: ${browserName} ${browserVersion}`);
     console.log(`User Agent: ${userAgent}`);
 
-    // ページに移動してSora JS SDKのバージョンを確認
+    // ページに移動して Sora JS SDK のバージョンを確認
     await page.goto("http://localhost:9000/fake_stereo_audio_sendrecv/");
 
-    // Sora.version()を実行してバージョンを取得
-    const version = await page.evaluate(() => (window.Sora ? window.Sora.version() : null));
-
-    if (!version) {
-      // バージョンが取得できない場合はスキップ
-      test.skip(true, "Sora JS SDK version not found");
-      return;
-    }
-
-    // バージョンをパース（例: "2024.1.0" -> [2024, 1, 0]）
-    const versionParts = version.split(".").map((v: string) => Number.parseInt(v, 10));
-    const majorVersion = versionParts[0] || 0;
-    const minorVersion = versionParts[1] || 0;
-
-    // 2024.2以降でない場合はスキップ
-    if (majorVersion < 2024 || (majorVersion === 2024 && minorVersion < 2)) {
-      test.skip(true, `Sora JS SDK version ${version} is older than 2024.2`);
-    }
+    const versionCheck = await checkSoraVersionFromWindow(page, {
+      featureName: "Stereo Audio SendRecv",
+      majorVersion: 2024,
+      minorVersion: 2,
+    });
+    test.skip(!versionCheck.isSupported, unsupportedVersionSkipReason(versionCheck.skipReason));
   });
 
   test("stereo audio bidirectional transmission test", async ({ browser }) => {
@@ -71,52 +67,32 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     await page.waitForSelector("#stats-report-2");
 
     // 接続1の統計情報を取得
-    const stats1Json: Array<Record<string, unknown>> = await page.evaluate(() => {
-      const statsDiv = document.querySelector<HTMLElement>("#stats-report-1")!;
-      return statsDiv ? JSON.parse(statsDiv.dataset.statsReportJson ?? "[]") : [];
-    });
-
-    // 接続2の統計情報を取得
-    const stats2Json: Array<Record<string, unknown>> = await page.evaluate(() => {
-      const statsDiv = document.querySelector<HTMLElement>("#stats-report-2")!;
-      return statsDiv ? JSON.parse(statsDiv.dataset.statsReportJson ?? "[]") : [];
-    });
+    const stats1Json = await getStatsReportJson(page, "#stats-report-1");
+    const stats2Json = await getStatsReportJson(page, "#stats-report-2");
 
     // 接続1：音声が正常に送受信できているかを確認
-    const conn1AudioOutboundRtp = stats1Json.find(
-      (report) => report.type === "outbound-rtp" && report.kind === "audio",
-    );
+    const conn1AudioOutboundRtp = findOutboundRtpStats(stats1Json, "audio");
     expect(conn1AudioOutboundRtp).toBeDefined();
     expect(conn1AudioOutboundRtp?.bytesSent).toBeGreaterThan(0);
     expect(conn1AudioOutboundRtp?.packetsSent).toBeGreaterThan(0);
 
-    const conn1AudioInboundRtp = stats1Json.find(
-      (report) => report.type === "inbound-rtp" && report.kind === "audio",
-    );
+    const conn1AudioInboundRtp = findInboundRtpStats(stats1Json, "audio");
     expect(conn1AudioInboundRtp).toBeDefined();
     expect(conn1AudioInboundRtp?.bytesReceived).toBeGreaterThan(0);
     expect(conn1AudioInboundRtp?.packetsReceived).toBeGreaterThan(0);
 
     // 接続2：音声が正常に送受信できているかを確認
-    const conn2AudioOutboundRtp = stats2Json.find(
-      (report) => report.type === "outbound-rtp" && report.kind === "audio",
-    );
+    const conn2AudioOutboundRtp = findOutboundRtpStats(stats2Json, "audio");
     expect(conn2AudioOutboundRtp).toBeDefined();
     expect(conn2AudioOutboundRtp?.bytesSent).toBeGreaterThan(0);
     expect(conn2AudioOutboundRtp?.packetsSent).toBeGreaterThan(0);
 
-    const conn2AudioInboundRtp = stats2Json.find(
-      (report) => report.type === "inbound-rtp" && report.kind === "audio",
-    );
+    const conn2AudioInboundRtp = findInboundRtpStats(stats2Json, "audio");
     expect(conn2AudioInboundRtp).toBeDefined();
     expect(conn2AudioInboundRtp?.bytesReceived).toBeGreaterThan(0);
     expect(conn2AudioInboundRtp?.packetsReceived).toBeGreaterThan(0);
 
-    // 音声分析結果を取得
-    const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector<HTMLElement>("#audio-analysis")!;
-      return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
-    });
+    const analysisData = await getAnalysisData(page);
 
     console.log("Stereo sendrecv test - Audio analysis:", analysisData);
 
@@ -195,10 +171,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     await page.waitForSelector("#stats-report-2");
 
     // 音声分析結果を取得
-    const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector<HTMLElement>("#audio-analysis")!;
-      return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
-    });
+    const analysisData = await getAnalysisData(page);
 
     console.log("Mono sendrecv test - Audio analysis:", analysisData);
 
@@ -282,10 +255,7 @@ test.describe("Stereo Audio SendRecv Tests", () => {
     await page.waitForSelector("#stats-report-1");
 
     // 音声分析結果を取得
-    const analysisData = await page.evaluate(() => {
-      const analysisDiv = document.querySelector<HTMLElement>("#audio-analysis")!;
-      return analysisDiv ? JSON.parse(analysisDiv.dataset.analysis ?? "{}") : {};
-    });
+    const analysisData = await getAnalysisData(page);
 
     console.log("Mixed stereo/mono test - Audio analysis:", analysisData);
 

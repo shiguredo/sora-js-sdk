@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { randomUUID } from "node:crypto";
+import { findCodecStats, findOutboundRtpStatsByRid, getStatsReportJson } from "./helper";
 
 test("simulcast sendonly/recvonly pages", async ({ page }) => {
   await page.goto("http://localhost:9000/simulcast/");
@@ -44,35 +45,36 @@ test("simulcast sendonly/recvonly pages", async ({ page }) => {
   // 統計情報が表示されるまで待機
   await page.waitForSelector("#stats-report");
   // データセットから統計情報を取得
-  const sendonlyStatsReportJson: Array<Record<string, unknown>> = await page.evaluate(() => {
-    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
-  });
+  const sendonlyStatsReportJson = await getStatsReportJson(page);
 
   // sendonly stats report
-  const sendonlyVideoCodecStats = sendonlyStatsReportJson.find(
-    (stats) => stats.type === "codec" && stats.mimeType === "video/VP8",
-  );
+  const sendonlyVideoCodecStats = findCodecStats(sendonlyStatsReportJson, "video/VP8");
   expect(sendonlyVideoCodecStats).toBeDefined();
 
-  const sendonlyVideoR0OutboundRtpStats = sendonlyStatsReportJson.find(
-    (stats) => stats.type === "outbound-rtp" && stats.kind === "video" && stats.rid === "r0",
+  const sendonlyVideoR0OutboundRtpStats = findOutboundRtpStatsByRid(
+    sendonlyStatsReportJson,
+    "video",
+    "r0",
   );
   expect(sendonlyVideoR0OutboundRtpStats).toBeDefined();
   expect(sendonlyVideoR0OutboundRtpStats?.bytesSent).toBeGreaterThan(0);
   expect(sendonlyVideoR0OutboundRtpStats?.packetsSent).toBeGreaterThan(0);
   expect(sendonlyVideoR0OutboundRtpStats?.scalabilityMode).toEqual("L1T1");
 
-  const sendonlyVideoR1OutboundRtpStats = sendonlyStatsReportJson.find(
-    (stats) => stats.type === "outbound-rtp" && stats.kind === "video" && stats.rid === "r1",
+  const sendonlyVideoR1OutboundRtpStats = findOutboundRtpStatsByRid(
+    sendonlyStatsReportJson,
+    "video",
+    "r1",
   );
   expect(sendonlyVideoR1OutboundRtpStats).toBeDefined();
   expect(sendonlyVideoR1OutboundRtpStats?.bytesSent).toBeGreaterThan(0);
   expect(sendonlyVideoR1OutboundRtpStats?.packetsSent).toBeGreaterThan(0);
   expect(sendonlyVideoR1OutboundRtpStats?.scalabilityMode).toEqual("L1T1");
 
-  const sendonlyVideoR2OutboundRtpStats = sendonlyStatsReportJson.find(
-    (stats) => stats.type === "outbound-rtp" && stats.kind === "video" && stats.rid === "r2",
+  const sendonlyVideoR2OutboundRtpStats = findOutboundRtpStatsByRid(
+    sendonlyStatsReportJson,
+    "video",
+    "r2",
   );
   expect(sendonlyVideoR2OutboundRtpStats).toBeDefined();
   expect(sendonlyVideoR2OutboundRtpStats?.bytesSent).toBeGreaterThan(0);

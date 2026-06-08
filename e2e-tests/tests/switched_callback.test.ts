@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { checkSoraVersion } from "./helper";
+import { checkSoraVersion, unsupportedVersionSkipReason } from "./helper";
 
 test("switched コールバックが呼び出されることを確認する", async ({ browser }) => {
   const page = await browser.newPage();
@@ -14,11 +14,7 @@ test("switched コールバックが呼び出されることを確認する", as
     minorVersion: 2,
   });
 
-  if (!versionCheck.isSupported) {
-    test.skip(true, versionCheck.skipReason ?? "Version not supported");
-    await page.close();
-    return;
-  }
+  test.skip(!versionCheck.isSupported, unsupportedVersionSkipReason(versionCheck.skipReason));
 
   console.log(`sdkVersion=${versionCheck.version}`);
 

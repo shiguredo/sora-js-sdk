@@ -65,14 +65,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 class SoraClient {
-  private debug = false;
+  private readonly debug = false;
 
-  private channelId: string;
-  private metadata: { access_token: string };
-  private options: ConnectionOptions;
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
+  private readonly options: ConnectionOptions;
 
-  private sora: SoraConnection;
-  private connection: ConnectionPublisher;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
 
   constructor(
     signalingUrl: string,
@@ -87,7 +87,7 @@ class SoraClient {
     this.options = { connectionTimeout: 15_000 };
 
     if (videoCodecType !== undefined) {
-      this.options = { ...this.options, videoCodecType: videoCodecType };
+      this.options = { ...this.options, videoCodecType };
     }
 
     this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options);

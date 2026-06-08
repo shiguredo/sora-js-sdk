@@ -138,7 +138,7 @@ export function createSignalingMessage(
     audio: true,
     channel_id: channelId,
     environment: window.navigator.userAgent,
-    role: role,
+    role,
     sdp: offerSDP,
     sora_client: `Sora JavaScript SDK ${__SORA_JS_SDK_VERSION__}`,
     type: "connect",
@@ -414,6 +414,11 @@ export function trace(clientId: string | null, title: string, value: unknown): v
 export class ConnectError extends Error {
   code?: number;
   reason?: string;
+
+  constructor(message?: string) {
+    super(message);
+    this.name = "ConnectError";
+  }
 }
 
 export function createSignalingEvent(
@@ -510,7 +515,7 @@ export const decompressMessage = async (binaryMessage: Uint8Array): Promise<Arra
 };
 
 export function addStereoToFmtp(sdp: string): string {
-  const splitSdp = sdp.match(/^(v=.+?)(m=audio.+)/ms);
+  const splitSdp = /^(v=.+?)(m=audio.+)/msu.exec(sdp);
   if (splitSdp === null) {
     return sdp;
   }
@@ -519,7 +524,7 @@ export function addStereoToFmtp(sdp: string): string {
 
   const mediaDescriptionsList: string[][] = [];
   let mediaDescriptionList: string[] = [];
-  for (const line of splitSdp[2].split(/\n/)) {
+  for (const line of splitSdp[2].split(/\n/u)) {
     const typ = line[0];
     if (typ === "m") {
       mediaDescriptionList = [line];
@@ -573,16 +578,16 @@ function isRecvOnly(mediaDescription: string): boolean {
 }
 
 function isOpus(mediaDescription: string): boolean {
-  return /a=rtpmap:\d+\sopus/.test(mediaDescription);
+  return /a=rtpmap:\d+\sopus/u.test(mediaDescription);
 }
 
 function isFmtp(mediaDescription: string): boolean {
-  return /a=fmtp:\d+/.test(mediaDescription);
+  return /a=fmtp:\d+/u.test(mediaDescription);
 }
 
 function appendStereo(mediaDescription: string): string {
   return mediaDescription.replace(
-    /(?<!stereo=1;.*)minptime=\d+(?!.*stereo=1)/,
+    /(?<!stereo=1;.*)minptime=\d+(?!.*stereo=1)/u,
     (match) => `${match};stereo=1`,
   );
 }

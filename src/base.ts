@@ -201,15 +201,15 @@ export default class ConnectionBase {
   /**
    * 初回シグナリング接続時のタイムアウトに使用するタイムアウト時間(デフォルト 60000ms)
    */
-  private connectionTimeout: number;
+  private readonly connectionTimeout: number;
   /**
    * シグナリング候補のURLへの接続確認タイムアウトに使用するタイムアウト時間(デフォルト 3000ms)
    */
-  private signalingCandidateTimeout: number;
+  private readonly signalingCandidateTimeout: number;
   /**
    * 切断処理のタイムアウトに使用するタイムアウト時間(デフォルト 3000ms)
    */
-  private disconnectWaitTimeout: number;
+  private readonly disconnectWaitTimeout: number;
   /**
    * disconnect() の並列実行を防ぐための Promise
    */
@@ -246,7 +246,7 @@ export default class ConnectionBase {
   /**
    * RPC リクエストのプロミスを管理するマップ
    */
-  private rpcRequestPromises = new Map<
+  private readonly rpcRequestPromises = new Map<
     string | number,
     { resolve: (value: unknown) => void; reject: (reason: unknown) => void }
   >();
@@ -359,7 +359,7 @@ export default class ConnectionBase {
    *
    * @public
    */
-  on<T extends keyof Callbacks, U extends Callbacks[T]>(kind: T, callback: U): void {
+  on<T extends keyof Callbacks>(kind: T, callback: Callbacks[T]): void {
     if (kind in this.callbacks) {
       this.callbacks[kind] = callback;
     }
@@ -1438,7 +1438,7 @@ export default class ConnectionBase {
     // mid と transceiver.direction を合わせる
     for (const mid of Object.values(this.mids)) {
       const transceiver = this.pc.getTransceivers().find((t) => t.mid === mid);
-      if (transceiver && transceiver.direction === SIGNALING_ROLE_RECVONLY) {
+      if (transceiver?.direction === SIGNALING_ROLE_RECVONLY) {
         transceiver.direction = SIGNALING_ROLE_SENDRECV;
       }
     }
@@ -1509,7 +1509,7 @@ export default class ConnectionBase {
       // ただし Firefox (バージョン 109.0 で確認) はこれを正常に処理できず、
       // port で 0 が指定された場合には onremovetrack イベントが発行されないので、
       // ワークアラウンドとしてここで SDP の置換を行っている。
-      sdp = sdp.replaceAll(/^m=(audio|video) 0 /gm, (_match, kind: string) => `m=${kind} 9 `);
+      sdp = sdp.replaceAll(/^m=(audio|video) 0 /gmu, (_match, kind: string) => `m=${kind} 9 `);
     }
 
     return sdp;
@@ -2269,7 +2269,7 @@ export default class ConnectionBase {
           await this.sendStatsMessage(stats);
         }
       };
-    } else if (/^#.*/.test(dataChannelEvent.channel.label)) {
+    } else if (/^#.*/u.test(dataChannelEvent.channel.label)) {
       dataChannelEvent.channel.onmessage = async (event: MessageEvent): Promise<void> => {
         if (event.currentTarget === null) {
           return;
@@ -2360,7 +2360,7 @@ export default class ConnectionBase {
   private async sendStatsMessage(reports: RTCStatsReport[]): Promise<void> {
     if (this.soraDataChannels.stats) {
       const message = {
-        reports: reports,
+        reports,
         type: SIGNALING_MESSAGE_TYPE_STATS,
       };
       if (this.signalingOfferMessageDataChannels.stats?.compress === true) {
@@ -2494,7 +2494,7 @@ export default class ConnectionBase {
       return [];
     }
     const messagingDataChannelLabels = Object.keys(this.signalingOfferMessageDataChannels).filter(
-      (label) => /^#.*/.exec(label),
+      (label) => /^#.*/u.exec(label),
     );
     const result: DataChannelConfiguration[] = [];
     for (const label of messagingDataChannelLabels) {

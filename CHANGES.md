@@ -43,6 +43,9 @@
 - [UPDATE] e2e テストの Node バージョンを 22 / 24 / 26 に更新する
   - Node 25 を Node 26 (LTS) に置き換える
   - @voluntas
+- [UPDATE] oxc の lint / fmt 設定を vite.config.ts に統合する
+  - `.oxlintrc.jsonc` と `.oxfmtrc.jsonc` を削除する
+  - @voluntas
 - [FIX] Node 24 で `playwright install` がハングする問題を修正するため Playwright を 1.60.0 に更新する
   - @voluntas
 - [FIX] macOS の Google Chrome stable インストールが 302 リダイレクトを追従できず失敗するため playwright-core にパッチを当てて `curl` に `-L` を追加する

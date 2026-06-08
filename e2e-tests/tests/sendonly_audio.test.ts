@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { expect, test } from "@playwright/test";
+import { findCodecStats, findOutboundRtpStats, getStatsReportJson } from "./helper";
 
 test("sendonly audio pages", async ({ browser }) => {
   // 新しいページを作成
@@ -52,21 +53,14 @@ test("sendonly audio pages", async ({ browser }) => {
   await sendonly.waitForSelector("#stats-report");
 
   // データセットから統計情報を取得
-  const sendonlyStatsReportJson: Array<Record<string, unknown>> = await sendonly.evaluate(() => {
-    const statsReportDiv = document.querySelector<HTMLElement>("#stats-report")!;
-    return statsReportDiv ? JSON.parse(statsReportDiv.dataset.statsReportJson ?? "[]") : [];
-  });
+  const sendonlyStatsReportJson = await getStatsReportJson(sendonly);
 
   // 音声コーデックを確認する : 今は指定してもしなくても OPUS のみ
-  const sendonlyAudioCodecStats = sendonlyStatsReportJson.find(
-    (report) => report.type === "codec" && report.mimeType === "audio/opus",
-  );
+  const sendonlyAudioCodecStats = findCodecStats(sendonlyStatsReportJson, "audio/opus");
   expect(sendonlyAudioCodecStats).toBeDefined();
 
   // 音声ビットレートを確認する：音声を送れているかと targetBitrate の確認
-  const sendonlyAudioOutboundRtp = sendonlyStatsReportJson.find(
-    (report) => report.type === "outbound-rtp" && report.kind === "audio",
-  );
+  const sendonlyAudioOutboundRtp = findOutboundRtpStats(sendonlyStatsReportJson, "audio");
   expect(sendonlyAudioOutboundRtp).toBeDefined();
 
   // 音声が正常に送れているかを確認する

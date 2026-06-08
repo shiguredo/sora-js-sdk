@@ -2,6 +2,7 @@
 export class DisconnectWaitTimeoutError extends Error {
   constructor() {
     super("DISCONNECT-WAIT-TIMEOUT-ERROR");
+    this.name = "DisconnectWaitTimeoutError";
   }
 }
 
@@ -9,6 +10,7 @@ export class DisconnectWaitTimeoutError extends Error {
 export class DisconnectInternalError extends Error {
   constructor() {
     super("DISCONNECT-INTERNAL-ERROR");
+    this.name = "DisconnectInternalError";
   }
 }
 
@@ -16,5 +18,6 @@ export class DisconnectInternalError extends Error {
 export class DisconnectDataChannelError extends Error {
   constructor() {
     super("DISCONNECT-DATA-CHANNEL-ERROR");
+    this.name = "DisconnectDataChannelError";
   }
 }

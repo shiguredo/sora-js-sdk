@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { checkSoraVersion } from "./helper";
+import {
+  checkSoraVersion,
+  unsupportedVersionSkipReason,
+  getRpcLogContent,
+  getRpcMethods,
+  getVideoResolution,
+} from "./helper";
 
 /**
  * RPC 機能の E2E テスト
@@ -22,10 +28,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
       minorVersion: 2,
     });
 
-    if (!versionCheck.isSupported) {
-      test.skip(true, versionCheck.skipReason ?? "Version not supported");
-      return;
-    }
+    test.skip(!versionCheck.isSupported, unsupportedVersionSkipReason(versionCheck.skipReason));
 
     const channelName = randomUUID();
 
@@ -49,10 +52,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
     await page.waitForSelector("#rpc-methods:not(:empty)", { timeout: 15_000 });
 
     // rpcMethods に 2025.2.0/RequestSimulcastRid が含まれていることを確認
-    const rpcMethods = await page.evaluate(() => {
-      const element = document.querySelector<HTMLElement>("#rpc-methods");
-      return element?.dataset.rpcMethods ? JSON.parse(element.dataset.rpcMethods) : [];
-    });
+    const rpcMethods = await getRpcMethods(page);
     expect(rpcMethods).toContain("2025.2.0/RequestSimulcastRid");
 
     // リモートビデオが表示されるまで待機
@@ -67,13 +67,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
     await page.waitForTimeout(3000);
 
     // 初期解像度を取得 (r2 で開始)
-    const initialResolution = await page.evaluate(() => {
-      const element = document.querySelector<HTMLElement>("#video-resolution");
-      return {
-        height: Number(element?.dataset.height ?? 0),
-        width: Number(element?.dataset.width ?? 0),
-      };
-    });
+    const initialResolution = await getVideoResolution(page);
     console.log(`Initial resolution (r2): ${initialResolution.width}x${initialResolution.height}`);
 
     // r0 に切り替え (RPC 実行)
@@ -101,13 +95,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
     await page.waitForTimeout(3000);
 
     // r0 の解像度を取得
-    const r0Resolution = await page.evaluate(() => {
-      const element = document.querySelector<HTMLElement>("#video-resolution");
-      return {
-        height: Number(element?.dataset.height ?? 0),
-        width: Number(element?.dataset.width ?? 0),
-      };
-    });
+    const r0Resolution = await getVideoResolution(page);
     console.log(`r0 resolution: ${r0Resolution.width}x${r0Resolution.height}`);
 
     // r0 は最も低い解像度なので、初期解像度より小さいはず
@@ -130,13 +118,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
     await page.waitForTimeout(3000);
 
     // r2 の解像度を取得
-    const r2Resolution = await page.evaluate(() => {
-      const element = document.querySelector<HTMLElement>("#video-resolution");
-      return {
-        height: Number(element?.dataset.height ?? 0),
-        width: Number(element?.dataset.width ?? 0),
-      };
-    });
+    const r2Resolution = await getVideoResolution(page);
     console.log(`r2 resolution: ${r2Resolution.width}x${r2Resolution.height}`);
 
     // r2 は最も高い解像度なので、r0 より大きいはず
@@ -144,10 +126,7 @@ test.describe("RPC RequestSimulcastRid test", () => {
     expect(r2Resolution.height).toBeGreaterThan(r0Resolution.height);
 
     // RPC ログに Request と Response が記録されていることを確認
-    const rpcLogContent = await page.evaluate(() => {
-      const element = document.querySelector<HTMLElement>("#rpc-log");
-      return element?.textContent ?? "";
-    });
+    const rpcLogContent = await getRpcLogContent(page);
     expect(rpcLogContent).toContain("Request: rid=r0");
     expect(rpcLogContent).toContain("Request: rid=r2");
 

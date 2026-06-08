@@ -69,13 +69,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 class SoraClient {
-  private debug = false;
-  private channelId: string;
-  private metadata: { access_token: string };
-  private options: object = { connectionTimeout: 15_000 };
+  private readonly debug = false;
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
+  private readonly options: object = { connectionTimeout: 15_000 };
 
-  private sora: SoraConnection;
-  private connection: ConnectionPublisher;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug);

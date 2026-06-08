@@ -19,17 +19,17 @@ window.Sora = Sora;
 
 // リアルタイム音声解析クラス
 class RealtimeAudioAnalyzer {
-  private audioContext: AudioContext;
-  private source: MediaStreamAudioSourceNode;
-  private splitter: ChannelSplitterNode;
-  private analyserLeft: AnalyserNode;
-  private analyserRight: AnalyserNode;
+  private readonly audioContext: AudioContext;
+  private readonly source: MediaStreamAudioSourceNode;
+  private readonly splitter: ChannelSplitterNode;
+  private readonly analyserLeft: AnalyserNode;
+  private readonly analyserRight: AnalyserNode;
   private animationId: number | null = null;
-  private channelCount: number;
+  private readonly channelCount: number;
 
   constructor(
     stream: MediaStream,
-    private prefix: string,
+    private readonly prefix: string,
   ) {
     this.audioContext = new AudioContext();
     this.source = this.audioContext.createMediaStreamSource(stream);
@@ -285,13 +285,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 class SoraSendClient {
-  private debug = false;
-  private channelId: string;
-  private metadata: { access_token: string };
-  private options: object = { connectionTimeout: 15_000 };
+  private readonly debug = false;
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
+  private readonly options: object = { connectionTimeout: 15_000 };
 
-  private sora: SoraConnection;
-  private connection: ConnectionPublisher;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug);
@@ -350,13 +350,13 @@ class SoraSendClient {
 }
 
 class SoraRecvClient {
-  private debug = false;
-  private channelId: string;
-  private metadata: { access_token: string };
-  private options: object = { connectionTimeout: 15_000 };
+  private readonly debug = false;
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
+  private readonly options: object = { connectionTimeout: 15_000 };
 
-  private sora: SoraConnection;
-  private connection: ConnectionSubscriber;
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionSubscriber;
   private onStreamCallback: ((stream: MediaStream) => void) | null = null;
   private remoteStream: MediaStream | null = null;
 

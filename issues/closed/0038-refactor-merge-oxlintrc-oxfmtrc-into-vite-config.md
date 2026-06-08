@@ -4,6 +4,7 @@
 - Created: 2026-06-08
 - Model: Sonnet 4.6
 - Branch: feature/refactor-merge-oxlintrc-oxfmtrc-into-vite-config
+- Completed: 2026-06-09
 
 ## 目的
 
@@ -39,3 +40,17 @@ vite.config.ts      → lint.ignorePatterns と lint.options のみ、fmt.ignore
 - `vite.config.ts` の `lint` / `fmt` セクションに全設定が統合されている
 - `pnpm run lint` と `pnpm run fmt` が正常に動作する
 - CI が通過する
+
+## 解決方法
+
+`vite-plus` の `mergeJsonConfig` で `.oxlintrc.jsonc` / `.oxfmtrc.jsonc` を `vite.config.ts` に統合し、`sora-devtools` と同じ構成（`build` → `lint` → `fmt` の順、`lint.options.typeAware`）に整理した。
+
+統合により `vp lint` が初めて全ルールを適用するようになったため、以下も合わせて修正した。
+
+- `src/errors.ts`, `src/utils.ts`, `src/base.ts`: lint 違反のコード修正
+- `tests/utils.test.ts`, `tests/version-check.test.ts`: `toStrictEqual` 化など
+- `e2e-tests/**/main.ts`: `readonly` 付与
+- `e2e-tests/tests/*.test.ts`, `e2e-tests/tests/helper.ts`: `vitest/no-conditional-in-test` 対応（`test.skip()` 化、ヘルパー抽出）
+- `e2e-tests/package.json`: `oxlint` / `oxfmt` 直接呼び出しをルートの `vp lint` / `vp fmt` に統一
+
+vite-plus 非対応の vitest ルール 4 件は削除し、`vite.config.ts` にコメントで理由を記載した。
