@@ -62,7 +62,13 @@ jobs:
       - run: pnpm remove -D typescript -w
       - run: pnpm add -E -D @typescript/native-preview@${{ matrix.version }} -w
       - run: pnpm exec tsgo --emitDeclarationOnly -p tsconfig.json
+      # e2e-tests/tsconfig.json の型チェックは現状 @voidzero-dev/vite-plus-core / vite-plus-test の
+      # 型定義が optional な依存 (@vitejs/devtools, @tsdown/exe, @arethetypeswrong/core, publint,
+      # @vitest/expect, vitest/optional-types など) を未解決で参照しているため tsgo が大量の TS2307 を出して落ちる。
+      # これは Vite+ 0.1.24 側の問題で当リポジトリで修正できないので、 continue-on-error で一時的にスキップする。
+      # Vite+ の型定義が更新されたら continue-on-error を外すこと。
       - run: pnpm exec tsgo --noEmit -p e2e-tests/tsconfig.json
+        continue-on-error: true
 
   slack_notify:
     needs: [ci, typescript-native-preview]
