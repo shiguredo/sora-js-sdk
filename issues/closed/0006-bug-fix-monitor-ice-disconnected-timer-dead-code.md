@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Completed: 2026-06-09
 - Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-monitor-ice-disconnected-timer
@@ -86,3 +87,32 @@ this.pc.oniceconnectionstatechange = (_): void => {
 **検証の限界:** デッドコード修正の核心は CI 未カバー (`tests/` / `e2e-tests/` に ICE 状態遷移テストなし、モック禁止)。手動検証手順 (OS / ブラウザ、ネットワーク down 手順、期待 timeline `ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT`) は PR 説明に記載する (新規 README は作らない)。10 秒タイマー自体は既にコード上 `10_000` 実装済みで本 fix はガード削除のみ (CHANGES.md の旧 1000ms 記載との差は PR で触れる)。
 
 **マージ順:** `0006 → 0011 → 0030` (0030 は推奨同周期)。リポジトリ全体の正本チェーンは issue 0004 を参照。
+
+## 解決方法
+
+`src/base.ts` を以下のとおり修正した。
+
+### 1. `monitorPeerConnectionState` の `oniceconnectionstatechange` ガード削除
+
+- `connectionState === undefined` ガードを削除し、デッドコード化していた以下のロジックを現行ブラウザでも動作するようにした。
+  - `iceConnectionState === "disconnected"` 滞留 10 秒タイマーによる `abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT")`
+  - `iceConnectionState === "failed"` 即時の `abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED")` (副作用 1 として再有効化)
+- `if (!this.pc) return;` の null ガードのみ残し、ハンドラ剥がしと pc null 化のレース時に late dispatch されたイベントでクラッシュしないようにした。
+- 削除した stale コメント (`// connectionState が undefined の場合は iceConnectionState を見て判定する`) を削除した。
+
+### 2. `clearMonitorIceConnectionStateChange` の API ペア整合
+
+- `clearInterval` を `clearTimeout` に修正し、`setTimeout` でセットしたタイマーを `clearTimeout` で止める形に統一した (clarity 改善)。
+- ブラウザでは `setTimeout` / `setInterval` の timer ID 名前空間が共有されるため機能上の挙動は変わらない。
+- 併せて JSDoc を「`oniceconnectionstatechange` でセットした `iceConnectionState === "disconnected"` 滞留検知の setTimeout タイマーを止めるメソッド」と詳細化した。
+
+### 変更ファイル
+
+- `src/base.ts`
+- `CHANGES.md` (`## develop` に `[FIX]` エントリを追記)
+
+### テスト
+
+- 既存の `tests/utils.test.ts` / `tests/version-check.test.ts` には本変更の影響範囲のテストが無く、`AGENTS.md` の「モック・スタブ禁止」によりブラウザ API である `RTCPeerConnection.iceConnectionState` の状態遷移を作為的に再現するテストを単体テスト / PBT として書くことはできない。
+- ローカルで `pnpm test` / `pnpm typecheck` / `pnpm lint` / `pnpm fmt` を実行し全て通過することを確認した。
+- 手動検証手順は PR 本文に記載した。

@@ -1677,27 +1677,27 @@ export default class ConnectionBase {
       return;
     }
     this.pc.oniceconnectionstatechange = (_): void => {
-      // connectionState が undefined の場合は iceConnectionState を見て判定する
-      if (this.pc && this.pc.connectionState === undefined) {
-        this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
-          connectionState: this.pc.connectionState,
-          iceConnectionState: this.pc.iceConnectionState,
-          iceGatheringState: this.pc.iceGatheringState,
-        });
-        this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
-        clearTimeout(this.monitorIceConnectionStateChangeTimerId);
-        // iceConnectionState "failed" で切断する
-        if (this.pc.iceConnectionState === "failed") {
-          this.abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED");
-        }
-        // iceConnectionState "disconnected" になってから 10000ms の間変化がない場合切断する
-        else if (this.pc.iceConnectionState === "disconnected") {
-          this.monitorIceConnectionStateChangeTimerId = setTimeout(() => {
-            if (this.pc?.iceConnectionState === "disconnected") {
-              this.abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT");
-            }
-          }, 10_000);
-        }
+      if (!this.pc) {
+        return;
+      }
+      this.writePeerConnectionTimelineLog("oniceconnectionstatechange", {
+        connectionState: this.pc.connectionState,
+        iceConnectionState: this.pc.iceConnectionState,
+        iceGatheringState: this.pc.iceGatheringState,
+      });
+      this.trace("ONICECONNECTIONSTATECHANGE ICECONNECTIONSTATE", this.pc.iceConnectionState);
+      clearTimeout(this.monitorIceConnectionStateChangeTimerId);
+      // iceConnectionState "failed" で切断する
+      if (this.pc.iceConnectionState === "failed") {
+        this.abendPeerConnectionState("ICE-CONNECTION-STATE-FAILED");
+      }
+      // iceConnectionState "disconnected" になってから 10000ms の間変化がない場合切断する
+      else if (this.pc.iceConnectionState === "disconnected") {
+        this.monitorIceConnectionStateChangeTimerId = setTimeout(() => {
+          if (this.pc?.iceConnectionState === "disconnected") {
+            this.abendPeerConnectionState("ICE-CONNECTION-STATE-DISCONNECTED-TIMEOUT");
+          }
+        }, 10_000);
       }
     };
     this.pc.onconnectionstatechange = (_): void => {
@@ -1763,10 +1763,11 @@ export default class ConnectionBase {
   }
 
   /**
-   * monitorPeerConnectionState でセットしたタイマーを止めるメソッド
+   * monitorPeerConnectionState の oniceconnectionstatechange でセットした
+   * iceConnectionState === "disconnected" 滞留検知の setTimeout タイマーを止めるメソッド
    */
   protected clearMonitorIceConnectionStateChange(): void {
-    clearInterval(this.monitorIceConnectionStateChangeTimerId);
+    clearTimeout(this.monitorIceConnectionStateChangeTimerId);
   }
 
   /**
