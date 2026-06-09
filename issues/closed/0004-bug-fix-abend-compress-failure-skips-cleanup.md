@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-21
 - Polished: 2026-06-08
+- Completed: 2026-06-09
 - Model: Opus 4.7
 - Branch: feature/fix-abend-compress-failure-skips-cleanup
 
@@ -119,3 +120,11 @@ compress 失敗ログは `failed-to-compress-disconnect`。error の文字列化
 - **0011** は 0006 直後 (0006 issue 参照)
 - **0034** までを 1 セットとして扱う (0004 単独では `disconnectDataChannel` 等の同型問題は残る)
 - **0030** マージ時は compress try/catch を `runShutdownOnce` 内へ移植
+
+## 解決方法
+
+本 issue の方針 (`abend()` 内の `compressMessage` 失敗を局所 try/catch で握る) は、`compressMessage` の失敗原因が事実上ブラウザの `CompressionStream` 非対応に限定されるため対症療法であり誤りと判断。LBYL (判定可能なものは判定する) に切り替え、SDK 利用者が起動時に Capability を判定できる `Sora.getCapabilities()` API を新設する方針に転換した。
+
+設計フェーズは issue 0040 (`Sora.getCapabilities()` API の設計) で行う。本 issue 0004 はその方針転換により対応不要となるため close する。
+
+なお、issue 0034 (`disconnectDataChannel` / `sendSignalingMessage` / `sendStatsMessage` / 公開 `sendMessage` への水平展開) は compress 関連が同じ理由で不要となるが、`ws.send` / `DataChannel.send` の同期例外と readyState ガード欠落は本方針と独立した別問題のため、別途リスコープする (本 issue では扱わない)。
