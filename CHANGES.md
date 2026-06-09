@@ -27,6 +27,8 @@
   - @voluntas
 - [FIX] onDataChannel で同名 label の DataChannel を上書きする際に旧 DC のハンドラを解除し close するようにする
   - @voluntas
+- [FIX] disconnect() で WebSocket が OPEN 以外の状態のときに disconnect callback が発火しなかったのを修正する
+  - @voluntas
 
 ### misc
 

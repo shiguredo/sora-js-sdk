@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Polished: 2026-06-08
+- Completed: 2026-06-09
 - Model: Opus 4.7
 - Branch: feature/fix-disconnect-websocket-null-callback
 
@@ -92,3 +93,7 @@ High。経路 B は接続済み (または connect 試行中に `this.ws` 代入
 - 870 経路 (未接続 / connect 失敗直後) で callback を発火させる要件
 - issue 0031 (`signalingSwitched === true` 経路の event 上書き)
 - 0002 マージ後の sequential 2 回目 `disconnect()` (870 経路) の callback 再発火 (870 は引き続き null で不発が正しい)
+
+## 解決方法
+
+`src/base.ts` の `disconnectWebSocket` の `readyState !== 1` 経路 (経路 B、0002 マージ後の 905-911 行) で `resolve(null)` を `resolve({ code: 1000, reason: "NO-ERROR" })` に変更した。`!this.ws` の経路 (現状 874-877 行、null 返却で callback 不発が意図的) と `signalingSwitched === true` の早期 return (866-872 行、event は disconnectDataChannel で別途設定) には触れていない。これにより `signalingSwitched === false` かつ `this.ws` が OPEN 以外の状態で `disconnect()` を呼んだ際、呼び出し側 (`disconnect()` 1097-1104 行) の `if (reason !== null)` を通って `callbacks.disconnect` が `event.title === "DISCONNECT"` で 1 回発火する。コメントは「実 CloseEvent を待たず synthetic 値で即 resolve する」「callbacks.disconnect を発火させるため null ではなく normal 切断扱いの値を返す」の 2 行に整理した。E2E は本文どおり best-effort で、経路 B を決定論的に踏ませる手段がなく false green リスクが高いため本 PR では追加しない (回帰の主担保はコードレビュー)。既存 `pnpm test` (2 files, 72 tests) が通過することを確認した。CHANGES.md `## develop` に FIX エントリを追記した。

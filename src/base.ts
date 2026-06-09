@@ -903,10 +903,11 @@ export default class ConnectionBase {
           resolve({ code: 1006, reason: "" });
         }, this.disconnectWaitTimeout);
       } else {
-        // ws の state が open ではない場合は後処理をして終わる
+        // readyState が OPEN ではない場合は実 CloseEvent を待たず synthetic 値で即 resolve する
+        // callbacks.disconnect を発火させるため null ではなく normal 切断扱いの値を返す
         this.ws.close();
         this.ws = null;
-        resolve(null);
+        resolve({ code: 1000, reason: "NO-ERROR" });
       }
     });
   }
