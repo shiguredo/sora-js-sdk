@@ -211,9 +211,22 @@ export default class ConnectionBase {
    */
   private readonly disconnectWaitTimeout: number;
   /**
-   * disconnect() の並列実行を防ぐための Promise
+   * disconnect / abend / abendPeerConnectionState / shutdown の 4 系統を冪等化する単一実行ラッパで使う Promise
+   *
+   * @remarks
+   * 状態遷移:
+   * 1. null: いずれの shut down 系統も走っていない初期/復帰状態
+   * 2. non-null: 1 本目の work() + timeline 書き込み + callbacks.disconnect 発火が完了するまでの期間
+   * 3. null 復帰: 1 本目の finally 句で null に戻す (次の lifecycle に向けて再武装)
+   *
+   * 担う責務は「**同一 lifecycle 内の並列ガード (機構 1)**」のみ。
+   * 1 本目完了後の late `onclose` 再入の吸収 (機構 2) は本 Promise では行わず、
+   * `disconnect()` の `signalingSwitched === false` 経路で `disconnectWebSocket` が null を返したとき
+   * event を null のまま返して `runShutdownOnce` 内 `if (event !== null)` で callback を発火させない経路に集約する。
+   * `abend` / `abendPeerConnectionState` / `shutdown` は cleanup で発火元ハンドラを剥がす / 置換するため
+   * late 再入経路を持たない前提で設計されている。
    */
-  private disconnectingPromise: Promise<void> | null = null;
+  private shuttingDownPromise: Promise<void> | null = null;
   /**
    * audio / video の msid
    */
@@ -602,64 +615,130 @@ export default class ConnectionBase {
   }
 
   /**
-   * PeerConnection の state に異常が発生した場合の切断処理をするメソッド
+   * 4 系統 (disconnect / abend / abendPeerConnectionState / shutdown) を単一実行に集約するラッパ
    *
-   * @param title - disconnect callback に渡すイベントのタイトル
+   * @remarks
+   * 同期チェック `if (this.shuttingDownPromise)` で 2 本目以降は本体を実行せず同一 Promise を返す。
+   * work() で生成された SoraCloseEvent を timeline と callbacks.disconnect の双方に渡し、両者の同期と
+   * 「1 本目が勝つ」契約を実現する。発火順は timeline → callback に統一する。
+   *
+   * @param work - SoraCloseEvent を返す cleanup 処理。返り値が null の場合は callback を発火させない
+   *               (`disconnect()` の signalingSwitched === false 経路で disconnectWebSocket が null を返した
+   *               late `onclose` 吸収経路で利用する)
    */
-  private abendPeerConnectionState(title: SoraAbendTitle): void {
+  private async runShutdownOnce(work: () => Promise<SoraCloseEvent | null>): Promise<void> {
+    if (this.shuttingDownPromise) {
+      return this.shuttingDownPromise;
+    }
+    // 並列 2 本目以降の同期チェックを成立させるため、IIFE で生成した Promise を
+    // 同期 chunk のうちに shuttingDownPromise へ代入する
+    const inflight = (async (): Promise<void> => {
+      try {
+        const event = await work();
+        if (event !== null) {
+          if (event.type === "abend") {
+            this.writeSoraTimelineLog("disconnect-abend", event);
+          } else {
+            this.writeSoraTimelineLog("disconnect-normal", event);
+          }
+          // 同期 throw する callbacks.disconnect を unhandled rejection 化させないため
+          // try の中で発火する (型は (event: SoraCloseEvent) => void だが利用側の同期例外は捕捉できる)
+          this.callbacks.disconnect(event);
+        }
+      } catch (error) {
+        // try の範囲は work() / writeSoraTimelineLog / callbacks.disconnect の 3 つすべてを覆う。
+        // 主目的は work() の reject と callbacks.disconnect の同期 throw を握って IIFE の unhandled rejection を防ぐこと。
+        // writeSoraTimelineLog 内 callbacks.timeline がユーザコードで throw した場合も握られる (副作用としてログ書き込みが部分失敗する) が、
+        // disconnect lifecycle 全体は完遂させる方を優先する。Error 派生は message、それ以外は String 化して trace に流す。
+        this.trace(
+          "RUN SHUTDOWN ONCE UNCAUGHT",
+          error instanceof Error ? error.message : String(error),
+        );
+      } finally {
+        // 次回の disconnect / abend / shutdown 系統呼び出しのために必ず null 化する
+        this.shuttingDownPromise = null;
+      }
+    })();
+    this.shuttingDownPromise = inflight;
+    await inflight;
+  }
+
+  /**
+   * PeerConnection のイベントハンドラを剥がす共通処理
+   *
+   * @remarks
+   * 4 系統で共通の handler 剥がし (clearMonitorIceConnectionStateChange + pc 上の 4 ハンドラ null 化) を集約する。
+   * ws / DataChannel ハンドラ剥がしや close の系統差は各 work() に残す。
+   */
+  private clearPeerConnectionHandlers(): void {
     this.clearMonitorIceConnectionStateChange();
-    // callback を止める
     if (this.pc) {
       this.pc.ondatachannel = null;
       this.pc.oniceconnectionstatechange = null;
       this.pc.onicegatheringstatechange = null;
       this.pc.onconnectionstatechange = null;
     }
-    if (this.ws) {
-      // onclose はログを吐く専用に残す
-      this.ws.onclose = (event): void => {
-        this.writeWebSocketTimelineLog("onclose", {
-          code: event.code,
-          reason: event.reason,
-        });
-      };
-      this.ws.onmessage = null;
-      this.ws.onerror = null;
-    }
-    for (const key of Object.keys(this.soraDataChannels)) {
-      const dataChannel = this.soraDataChannels[key];
-      if (dataChannel) {
+  }
+
+  /**
+   * PeerConnection の state に異常が発生した場合の切断処理をするメソッド
+   *
+   * @param title - disconnect callback に渡すイベントのタイトル
+   */
+  private abendPeerConnectionState(title: SoraAbendTitle): void {
+    // sync 完結の work() でも async ラッパで包む (issue 0030 line 104)
+    // 外側 runShutdownOnce が `await work()` するため 1 マイクロタスク遅延が入るが、
+    // 呼び出し元 (monitorPeerConnectionState) はいずれも直後に this.pc / this.ws を読まないため安全
+    // require-await を無効化: 4 系統で work() シグネチャ Promise<SoraCloseEvent | null> に統一するため意味のある await は持たない
+    // eslint-disable-next-line typescript/require-await
+    void this.runShutdownOnce(async (): Promise<SoraCloseEvent | null> => {
+      // 共通の handler 剥がし (pc の 4 ハンドラを null 化)
+      this.clearPeerConnectionHandlers();
+      if (this.ws) {
         // onclose はログを吐く専用に残す
-        dataChannel.onclose = (event): void => {
-          const channel = event.currentTarget as RTCDataChannel;
-          this.writeDataChannelTimelineLog("onclose", channel);
-          this.trace("CLOSE DATA CHANNEL", channel.label);
+        this.ws.onclose = (event): void => {
+          this.writeWebSocketTimelineLog("onclose", {
+            code: event.code,
+            reason: event.reason,
+          });
         };
-        dataChannel.onmessage = null;
-        dataChannel.onerror = null;
+        this.ws.onmessage = null;
+        this.ws.onerror = null;
       }
-    }
-    // DataChannel を終了する
-    for (const key of Object.keys(this.soraDataChannels)) {
-      const dataChannel = this.soraDataChannels[key];
-      if (dataChannel) {
-        dataChannel.close();
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key];
+        if (dataChannel) {
+          // onclose はログを吐く専用に残す
+          dataChannel.onclose = (event): void => {
+            const channel = event.currentTarget as RTCDataChannel;
+            this.writeDataChannelTimelineLog("onclose", channel);
+            this.trace("CLOSE DATA CHANNEL", channel.label);
+          };
+          dataChannel.onmessage = null;
+          dataChannel.onerror = null;
+        }
       }
-      delete this.soraDataChannels[key];
-    }
-    // WebSocket を終了する
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
-    // PeerConnection を終了する
-    if (this.pc) {
-      this.pc.close();
-    }
-    this.initializeConnection();
-    const event = this.soraCloseEvent("abend", title);
-    this.callbacks.disconnect(event);
-    this.writeSoraTimelineLog("disconnect-abend", event);
+      // DataChannel を終了する
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key];
+        if (dataChannel) {
+          dataChannel.close();
+        }
+        delete this.soraDataChannels[key];
+      }
+      // 他 3 系統と異なり ws.close() / pc.close() を直接呼ぶ (maybeClosePeerConnection に揃える件はスコープ外)
+      // WebSocket を終了する
+      if (this.ws) {
+        this.ws.close();
+        this.ws = null;
+      }
+      // PeerConnection を終了する
+      if (this.pc) {
+        this.pc.close();
+      }
+      this.initializeConnection();
+      return this.soraCloseEvent("abend", title);
+    });
   }
 
   /**
@@ -670,45 +749,41 @@ export default class ConnectionBase {
    * @param params - 切断時の状況を入れる Record
    */
   private shutdown(params?: Record<string, unknown>): void {
-    this.clearMonitorIceConnectionStateChange();
-    // callback を止める
-    if (this.pc) {
-      this.pc.ondatachannel = null;
-      this.pc.oniceconnectionstatechange = null;
-      this.pc.onicegatheringstatechange = null;
-      this.pc.onconnectionstatechange = null;
-    }
-
-    // DataChannel シグナリングの場合は停止する
-    // Sora 側からの切断なので待ってる必要はなく、
-    // こちらからもさっさと終了してしまう
-    // DataChannel 使ってなくても soraDataChannels は {} 返すのでスキップされるだけ
-    for (const key of Object.keys(this.soraDataChannels)) {
-      const dataChannel = this.soraDataChannels[key];
-      if (dataChannel) {
-        // onclose はログを吐く専用に残す
-        dataChannel.onclose = (event): void => {
-          const channel = event.currentTarget as RTCDataChannel;
-          this.writeDataChannelTimelineLog("onclose", channel);
-          this.trace("CLOSE DATA CHANNEL", channel.label);
-        };
-        dataChannel.onmessage = null;
-        dataChannel.onerror = null;
-        // 待たずにバンバン閉じる
-        dataChannel.close();
+    // sync 完結の work() でも async ラッパで包む (issue 0030 line 104)
+    // 外側 runShutdownOnce が `await work()` するため 1 マイクロタスク遅延が入るが、
+    // 呼び出し元 (signalingOnMessageTypeClose / monitorWebSocketEvent) はいずれも直後に this.pc / this.ws を読まないため安全
+    // require-await を無効化: 4 系統で work() シグネチャ Promise<SoraCloseEvent | null> に統一するため意味のある await は持たない
+    // eslint-disable-next-line typescript/require-await
+    void this.runShutdownOnce(async (): Promise<SoraCloseEvent | null> => {
+      // 共通の handler 剥がし (pc の 4 ハンドラを null 化)
+      this.clearPeerConnectionHandlers();
+      // DataChannel シグナリングの場合は停止する
+      // Sora 側からの切断なので待ってる必要はなく、
+      // こちらからもさっさと終了してしまう
+      // DataChannel 使ってなくても soraDataChannels は {} 返すのでスキップされるだけ
+      // shutdown は ws を触らない (Sora 側から既に閉じられた前提)
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key];
+        if (dataChannel) {
+          // onclose はログを吐く専用に残す
+          dataChannel.onclose = (event): void => {
+            const channel = event.currentTarget as RTCDataChannel;
+            this.writeDataChannelTimelineLog("onclose", channel);
+            this.trace("CLOSE DATA CHANNEL", channel.label);
+          };
+          dataChannel.onmessage = null;
+          dataChannel.onerror = null;
+          // 待たずにバンバン閉じる
+          dataChannel.close();
+        }
+        delete this.soraDataChannels[key];
       }
-      delete this.soraDataChannels[key];
-    }
-
-    // peerConnection を close する
-    this.maybeClosePeerConnection();
-    this.initializeConnection();
-
-    const event = this.soraCloseEvent("normal", "SHUTDOWN", params);
-    this.writeSoraTimelineLog("disconnect-normal", event);
-    // 切断完了したコールバックを呼ぶ
-    // XXX(v): disconnect ではなく disconnected にした方が良い
-    this.callbacks.disconnect(event);
+      // peerConnection を close する
+      this.maybeClosePeerConnection();
+      this.initializeConnection();
+      // XXX(v): disconnect ではなく disconnected にした方が良い
+      return this.soraCloseEvent("normal", "SHUTDOWN", params);
+    });
   }
 
   /**
@@ -718,51 +793,64 @@ export default class ConnectionBase {
    * @param params - 切断時の状況を入れる Record
    */
   private async abend(title: SoraAbendTitle, params?: Record<string, unknown>): Promise<void> {
-    this.clearMonitorIceConnectionStateChange();
-    // callback を止める
-    if (this.pc) {
-      this.pc.ondatachannel = null;
-      this.pc.oniceconnectionstatechange = null;
-      this.pc.onicegatheringstatechange = null;
-      this.pc.onconnectionstatechange = null;
-    }
-    if (this.ws) {
-      // onclose はログを吐く専用に残す
-      this.ws.onclose = (event): void => {
-        this.writeWebSocketTimelineLog("onclose", {
-          code: event.code,
-          reason: event.reason,
-        });
-      };
-      this.ws.onmessage = null;
-      this.ws.onerror = null;
-    }
-    for (const key of Object.keys(this.soraDataChannels)) {
-      const dataChannel = this.soraDataChannels[key];
-      if (dataChannel) {
+    return this.runShutdownOnce(async (): Promise<SoraCloseEvent | null> => {
+      // 共通の handler 剥がし (pc の 4 ハンドラを null 化)
+      this.clearPeerConnectionHandlers();
+      if (this.ws) {
         // onclose はログを吐く専用に残す
-        dataChannel.onclose = (event): void => {
-          const channel = event.currentTarget as RTCDataChannel;
-          this.writeDataChannelTimelineLog("onclose", channel);
-          this.trace("CLOSE DATA CHANNEL", channel.label);
+        this.ws.onclose = (event): void => {
+          this.writeWebSocketTimelineLog("onclose", {
+            code: event.code,
+            reason: event.reason,
+          });
         };
-        dataChannel.onmessage = null;
-        dataChannel.onerror = null;
+        this.ws.onmessage = null;
+        this.ws.onerror = null;
       }
-    }
-    // 終了処理を開始する
-    if (this.soraDataChannels.signaling) {
-      const message = {
-        reason: title,
-        type: SIGNALING_MESSAGE_TYPE_DISCONNECT,
-      };
-      if (this.signalingOfferMessageDataChannels.signaling?.compress === true) {
-        const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
-        const compressedMessage = await compressMessage(binaryMessage);
-        if (this.soraDataChannels.signaling.readyState === "open") {
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key];
+        if (dataChannel) {
+          // onclose はログを吐く専用に残す
+          dataChannel.onclose = (event): void => {
+            const channel = event.currentTarget as RTCDataChannel;
+            this.writeDataChannelTimelineLog("onclose", channel);
+            this.trace("CLOSE DATA CHANNEL", channel.label);
+          };
+          dataChannel.onmessage = null;
+          dataChannel.onerror = null;
+        }
+      }
+      // 終了処理を開始する
+      if (this.soraDataChannels.signaling) {
+        const message = {
+          reason: title,
+          type: SIGNALING_MESSAGE_TYPE_DISCONNECT,
+        };
+        if (this.signalingOfferMessageDataChannels.signaling?.compress === true) {
+          const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
+          const compressedMessage = await compressMessage(binaryMessage);
+          if (this.soraDataChannels.signaling.readyState === "open") {
+            // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
+            try {
+              this.soraDataChannels.signaling.send(compressedMessage);
+              this.writeDataChannelSignalingLog(
+                "send-disconnect",
+                this.soraDataChannels.signaling,
+                message,
+              );
+            } catch (error) {
+              const errorMessage = (error as Error).message;
+              this.writeDataChannelSignalingLog(
+                "failed-to-send-disconnect",
+                this.soraDataChannels.signaling,
+                errorMessage,
+              );
+            }
+          }
+        } else if (this.soraDataChannels.signaling.readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.soraDataChannels.signaling.send(compressedMessage);
+            this.soraDataChannels.signaling.send(JSON.stringify(message));
             this.writeDataChannelSignalingLog(
               "send-disconnect",
               this.soraDataChannels.signaling,
@@ -777,45 +865,30 @@ export default class ConnectionBase {
             );
           }
         }
-      } else if (this.soraDataChannels.signaling.readyState === "open") {
-        // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
-        try {
-          this.soraDataChannels.signaling.send(JSON.stringify(message));
-          this.writeDataChannelSignalingLog(
-            "send-disconnect",
-            this.soraDataChannels.signaling,
-            message,
-          );
-        } catch (error) {
-          const errorMessage = (error as Error).message;
-          this.writeDataChannelSignalingLog(
-            "failed-to-send-disconnect",
-            this.soraDataChannels.signaling,
-            errorMessage,
-          );
+      }
+      for (const key of Object.keys(this.soraDataChannels)) {
+        const dataChannel = this.soraDataChannels[key];
+        if (dataChannel) {
+          dataChannel.onerror = null;
+          dataChannel.close();
         }
+        delete this.soraDataChannels[key];
       }
-    }
-    for (const key of Object.keys(this.soraDataChannels)) {
-      const dataChannel = this.soraDataChannels[key];
-      if (dataChannel) {
-        dataChannel.onerror = null;
-        dataChannel.close();
+      await this.disconnectWebSocket(title);
+      this.maybeClosePeerConnection();
+      this.initializeConnection();
+      // WebSocket onclose の code 1000 / 1005 (No Status Received) は通常切断扱い
+      // params?.code === 1000 は monitorWebSocketEvent で shutdown 経路へ振り分けられるため dead code だが、
+      // 冪等化リファクタの原則に従い現コードと同等で残す (dead code 整理は別 issue)
+      if (
+        title === "WEBSOCKET-ONCLOSE" &&
+        params &&
+        (params.code === 1000 || params.code === 1005)
+      ) {
+        return this.soraCloseEvent("normal", "DISCONNECT", params);
       }
-      delete this.soraDataChannels[key];
-    }
-    await this.disconnectWebSocket(title);
-    this.maybeClosePeerConnection();
-    this.initializeConnection();
-    if (title === "WEBSOCKET-ONCLOSE" && params && (params.code === 1000 || params.code === 1005)) {
-      const event = this.soraCloseEvent("normal", "DISCONNECT", params);
-      this.writeSoraTimelineLog("disconnect-normal", event);
-      this.callbacks.disconnect(event);
-      return;
-    }
-    const event = this.soraCloseEvent("abend", title, params);
-    this.writeSoraTimelineLog("disconnect-abend", event);
-    this.callbacks.disconnect(this.soraCloseEvent("abend", title, params));
+      return this.soraCloseEvent("abend", title, params);
+    });
   }
 
   /**
@@ -1056,66 +1129,51 @@ export default class ConnectionBase {
    * @public
    */
   async disconnect(): Promise<void> {
-    if (this.disconnectingPromise) {
-      return this.disconnectingPromise;
-    }
-    this.disconnectingPromise = (async (): Promise<void> => {
-      try {
-        this.clearMonitorIceConnectionStateChange();
-        // callback を止める
-        if (this.pc) {
-          this.pc.ondatachannel = null;
-          this.pc.oniceconnectionstatechange = null;
-          this.pc.onicegatheringstatechange = null;
-          this.pc.onconnectionstatechange = null;
-        }
-        // WebSocket の監視を止める
-        if (this.ws) {
-          // onclose はログを吐く専用に残す
-          this.ws.onclose = (event): void => {
-            this.writeWebSocketTimelineLog("onclose", {
-              code: event.code,
-              reason: event.reason,
-            });
-          };
-          this.ws.onmessage = null;
-          this.ws.onerror = null;
-        }
-
-        let event = null;
-        if (this.signalingSwitched) {
-          const result = await this.disconnectDataChannel();
-          if (result.code === 4999) {
-            // DataChannel の切断処理がエラーの場合は event を abend に差し替える
-            event = this.soraCloseEvent("abend", result.reason);
-          }
-          event = this.soraCloseEvent("normal", "DISCONNECT", result);
-          // もう切断されている可能性が高いが一応止める
-          await this.disconnectWebSocket("NO-ERROR");
-          this.maybeClosePeerConnection();
-        } else {
-          const reason = await this.disconnectWebSocket("NO-ERROR");
-          this.maybeClosePeerConnection();
-          // switched にはなっていないが dataChannel が存在する場合の掃除
-          this.forceCloseDataChannels();
-          if (reason !== null) {
-            event = this.soraCloseEvent("normal", "DISCONNECT", reason);
-          }
-        }
-        this.initializeConnection();
-        if (event) {
-          if (event.type === "abend") {
-            this.writeSoraTimelineLog("disconnect-abend", event);
-          } else if (event.type === "normal") {
-            this.writeSoraTimelineLog("disconnect-normal", event);
-          }
-          this.callbacks.disconnect(event);
-        }
-      } finally {
-        this.disconnectingPromise = null;
+    return this.runShutdownOnce(async (): Promise<SoraCloseEvent | null> => {
+      // 共通の handler 剥がし (pc の 4 ハンドラを null 化)
+      this.clearPeerConnectionHandlers();
+      // WebSocket の監視を止める
+      if (this.ws) {
+        // onclose はログを吐く専用に残す
+        this.ws.onclose = (event): void => {
+          this.writeWebSocketTimelineLog("onclose", {
+            code: event.code,
+            reason: event.reason,
+          });
+        };
+        this.ws.onmessage = null;
+        this.ws.onerror = null;
       }
-    })();
-    return this.disconnectingPromise;
+
+      let event: SoraCloseEvent | null = null;
+      if (this.signalingSwitched) {
+        const result = await this.disconnectDataChannel();
+        // 0031 取り込み: DataChannel 切断エラー (code 4999) のときは abend を返し、normal で上書きしない
+        // code / reason は initDict 経由で SoraCloseEvent に付与する
+        event =
+          result.code === 4999
+            ? this.soraCloseEvent("abend", result.reason, {
+                code: result.code,
+                reason: result.reason,
+              })
+            : this.soraCloseEvent("normal", "DISCONNECT", result);
+        // もう切断されている可能性が高いが一応止める
+        await this.disconnectWebSocket("NO-ERROR");
+        this.maybeClosePeerConnection();
+      } else {
+        const reason = await this.disconnectWebSocket("NO-ERROR");
+        this.maybeClosePeerConnection();
+        // switched にはなっていないが dataChannel が存在する場合の掃除
+        this.forceCloseDataChannels();
+        // 0002 機構 2: disconnectWebSocket が null を返した経路では event を null のまま返し
+        // 1 回目完了後の late onclose 再入を吸収する (initializeConnection 済み状態を活用)
+        if (reason !== null) {
+          event = this.soraCloseEvent("normal", "DISCONNECT", reason);
+        }
+      }
+      this.initializeConnection();
+      return event;
+    });
   }
 
   /**

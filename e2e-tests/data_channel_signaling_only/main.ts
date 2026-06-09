@@ -8,7 +8,9 @@ import type {
   SignalingNotifyConnectionCreated,
   SignalingNotifyMessage,
   SignalingSwitchedMessage,
+  SoraCloseEvent,
   SoraConnection,
+  TimelineEvent,
 } from "sora-js-sdk";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -19,6 +21,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const apiUrl = import.meta.env.VITE_TEST_API_URL;
 
   setSoraJsSdkVersion();
+
+  // disconnectWaitTimeout を URL クエリから受け取る (E2E は正常値しか渡さない前提)
+  // "0" を falsy で握り潰さないため !== null で判定する
+  const disconnectWaitTimeoutParam = new URLSearchParams(location.search).get(
+    "disconnectWaitTimeout",
+  );
+  const disconnectWaitTimeout =
+    disconnectWaitTimeoutParam === null
+      ? undefined
+      : Number.parseInt(disconnectWaitTimeoutParam, 10);
 
   let client: SoraClient;
 
@@ -41,6 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       secretKey,
       channelName,
       apiUrl,
+      disconnectWaitTimeout,
     );
     await client.connect(stream);
   });
@@ -86,11 +99,7 @@ class SoraClient {
   private readonly debug = false;
   private readonly channelId: string;
   private readonly metadata: { access_token: string };
-  private readonly options: ConnectionOptions = {
-    connectionTimeout: 15_000,
-    dataChannelSignaling: true,
-    ignoreDisconnectWebSocket: true,
-  };
+  private readonly options: ConnectionOptions;
 
   private readonly sora: SoraConnection;
   private readonly connection: ConnectionPublisher;
@@ -104,8 +113,19 @@ class SoraClient {
     secretKey: string,
     channelName: string,
     apiUrl: string,
+    disconnectWaitTimeout?: number,
   ) {
     this.apiUrl = apiUrl;
+
+    // disconnectWaitTimeout が指定された場合のみ options に追加する (未指定なら SDK のデフォルト 3000ms に委ねる)
+    this.options = {
+      connectionTimeout: 15_000,
+      dataChannelSignaling: true,
+      ignoreDisconnectWebSocket: true,
+    };
+    if (disconnectWaitTimeout !== undefined) {
+      this.options.disconnectWaitTimeout = disconnectWaitTimeout;
+    }
 
     this.sora = Sora.connection(signalingUrl, this.debug);
 
@@ -118,6 +138,8 @@ class SoraClient {
     this.connection.on("notify", this.onNotify.bind(this));
     this.connection.on("connected", this.onConnected.bind(this));
     this.connection.on("switched", this.onSwitched.bind(this));
+    this.connection.on("disconnect", this.onDisconnect.bind(this));
+    this.connection.on("timeline", this.onTimeline.bind(this));
 
     // E2E テスト用のコード
     this.connection.on("signaling", this.onSignaling.bind(this));
@@ -175,6 +197,42 @@ class SoraClient {
     const switchedStatusElement = document.querySelector("#switched-status");
     if (switchedStatusElement) {
       switchedStatusElement.textContent = "switched";
+    }
+    // E2E テスト用に switched 完了後の SoraConnection を window へ露出する
+    // private な soraDataChannels 等の内部参照にもアクセス可能 (テスト側で型キャストして利用)
+    (window as unknown as { soraConnection: ConnectionPublisher | null }).soraConnection =
+      this.connection;
+  }
+
+  // disconnect コールバック (E2E テスト用)
+  // disconnect が発火するたびに count を増分し、event 種別 / reason を DOM に反映する
+  // 4 系統 (disconnect / abend / abendPeerConnectionState / shutdown) の多重発火検出に使う
+  private onDisconnect(event: SoraCloseEvent): void {
+    const countElement = document.querySelector("#disconnect-count");
+    if (countElement) {
+      const current = Number.parseInt(countElement.textContent ?? "0", 10);
+      countElement.textContent = String(current + 1);
+    }
+    const typeElement = document.querySelector("#disconnect-event-type");
+    if (typeElement) {
+      typeElement.textContent = event.type;
+    }
+    const reasonElement = document.querySelector("#disconnect-event-reason");
+    if (reasonElement) {
+      reasonElement.textContent = event.reason ?? "";
+    }
+    // 最後の disconnect event を window 経由でテスト側に渡す (timeline event との構造一致 assert 用)
+    (window as unknown as { e2eLastDisconnectEvent: SoraCloseEvent }).e2eLastDisconnectEvent =
+      event;
+    // 切断完了したので連結された SoraConnection への参照は捨てる
+    (window as unknown as { soraConnection: ConnectionPublisher | null }).soraConnection = null;
+  }
+
+  // timeline コールバック (E2E テスト用)
+  // disconnect-abend / disconnect-normal だけを抽出し、window へ最後の timeline event を渡す
+  private onTimeline(event: TimelineEvent): void {
+    if (event.type === "disconnect-abend" || event.type === "disconnect-normal") {
+      (window as unknown as { e2eLastTimelineEvent: unknown }).e2eLastTimelineEvent = event.data;
     }
   }
 

@@ -3,8 +3,9 @@
 - Priority: Medium
 - Created: 2026-05-25
 - Polished: 2026-06-09
+- Completed: 2026-06-09
 - Model: Composer 2.5
-- Branch: feature/refactor-abend-shutdown-idempotency
+- Branch: feature/fix-abend-shutdown-idempotency
 
 ## 目的
 
@@ -363,3 +364,26 @@ if (!result.sameRef) {
   - [FIX] abend / abendPeerConnectionState / shutdown / disconnect の 4 系統を冪等化し callbacks.disconnect の多重発火を防ぐ。さらに abendPeerConnectionState の発火順を callback → timeline から timeline → callback に揃え 4 系統の発火順を統一する
     - @voluntas
   ```
+
+## 解決方法
+
+`src/base.ts` に `runShutdownOnce(work)` と `clearPeerConnectionHandlers()` の 2 つの private ヘルパを追加し、4 系統 (`disconnect` / `abend` / `abendPeerConnectionState` / `shutdown`) のすべてを `runShutdownOnce` 経由に書き換えた。
+
+- `private disconnectingPromise` を `private shuttingDownPromise` に rename し、JSDoc に状態遷移 (null → non-null → null 復帰) と「機構 1 (同期ガード)」「機構 2 (late 吸収)」の責務分離を明記した。
+- `runShutdownOnce` は async 関数で、同期 chunk 内で IIFE 生成 Promise を `shuttingDownPromise` に代入してから `await inflight` する。IIFE 内 `try` で `work() / writeSoraTimelineLog / callbacks.disconnect` の同期 throw を握り、`finally` で `shuttingDownPromise = null` する。
+- `clearPeerConnectionHandlers` は `clearMonitorIceConnectionStateChange()` と pc 上 4 ハンドラ (`ondatachannel` / `oniceconnectionstatechange` / `onicegatheringstatechange` / `onconnectionstatechange`) の null 化を共通化した。
+- 各 work() は系統差 (ws / DC ハンドラ剥がし、close タイミング、戻り値 event) を残しつつ `runShutdownOnce` 経由で集約された。`abendPeerConnectionState` は `ws.close()` / `pc.close()` 直呼びを現状維持 (スコープ外)。`abend` の `params.code === 1000 / 1005` 分岐も現状維持 (dead code 整理は別 issue)。
+- 旧 `src/base.ts:818` の event 二重生成バグは、`work()` 戻り値の event を `runShutdownOnce` 内で timeline / callback の両方に渡すことで構造的に解消した。
+- 0031 (`disconnect()` の DataChannel 切断エラー時 abend を normal で上書きするバグ) を同時に取り込んだ。`disconnect()` の `signalingSwitched === true` 経路で `code === 4999` のとき abend event を返し、それ以外で normal event を返す三項演算子に書き換え、`code` / `reason` を `initDict` 経由で SoraCloseEvent に付与する。
+- 0002 機構 2 (`disconnect()` の `signalingSwitched === false` 経路で `disconnectWebSocket` が null を返した late `onclose` 吸収) を維持。`work()` が `event = null` を返すと `runShutdownOnce` 内 `if (event !== null)` で callback を発火させない。
+- `abendPeerConnectionState` の発火順を `callback → timeline` から `timeline → callback` に揃え、4 系統で統一した。
+
+新規 E2E:
+
+- `e2e-tests/data_channel_signaling_only/index.html` に hidden の `#disconnect-count` / `#disconnect-event-type` / `#disconnect-event-reason` を追加。
+- `e2e-tests/data_channel_signaling_only/main.ts` に `onDisconnect` ハンドラ (count 増分、event 種別 / reason の DOM 反映、`e2eLastDisconnectEvent` 露出、`soraConnection` クリア) と `onTimeline` ハンドラ (`disconnect-abend` / `disconnect-normal` フィルタで `e2eLastTimelineEvent` 露出) を追加。`disconnectWaitTimeout` URL クエリ受け取りも追加。
+- `e2e-tests/tests/disconnect_abend_idempotency.test.ts` を新規追加。シナリオ 1 (並列 abend、Chromium 限定、安定確認 + 構造一致 hard assert + sameRef hard assert)、シナリオ 2 (normal 中の abend 割り込み、Chromium 限定、count のみ)、シナリオ 3 (明示的並列 disconnect、`disconnectWaitTimeout=1000` + 明示的 setTimeout 2 秒待機 + 再 assert)。
+
+ローカルで `pnpm test` (vitest 2 files / 72 tests pass)、`pnpm typecheck`、`pnpm run lint`、`pnpm run build` がすべて通ることを確認した。`pnpm e2e-test` は実 Sora サーバ前提のため CI で実行される。
+
+CHANGES.md `## develop` の `[FIX]` 群末尾に本 issue の `[FIX]` エントリと 0031 取り込み分の `[FIX]` エントリを追記した。

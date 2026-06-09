@@ -31,6 +31,12 @@
   - @voluntas
 - [FIX] iceConnectionState が disconnected で 10 秒経過した際の検知が現行ブラウザで動作していなかったのを修正する
   - @voluntas
+- [FIX] abend / abendPeerConnectionState / shutdown / disconnect の 4 系統を冪等化し callbacks.disconnect の多重発火を防ぐ
+  - さらに abendPeerConnectionState の発火順を callback → timeline から timeline → callback に揃え 4 系統の発火順を統一する
+  - あわせて abend() の event 二重生成バグ (timeline と callback で異なる SoraCloseEvent インスタンスを渡していた問題) を解消する
+  - @voluntas
+- [FIX] disconnect() で DataChannel 切断エラー (code 4999) 時に abend event が normal で上書きされていたのを修正する
+  - @voluntas
 
 ### misc
 

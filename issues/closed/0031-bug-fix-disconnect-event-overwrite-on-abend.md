@@ -3,8 +3,9 @@
 - Priority: High
 - Created: 2026-05-25
 - Polished: 2026-06-08
+- Completed: 2026-06-09
 - Model: Composer 2.5
-- Branch: feature/fix-disconnect-event-overwrite
+- Branch: feature/fix-abend-shutdown-idempotency
 
 ## 目的
 
@@ -118,3 +119,14 @@ if (result.code === 4999) {
   - [FIX] disconnect() で DataChannel 切断エラー (code 4999) 時に abend event が normal で上書きされないようにする
     - @voluntas
   ```
+
+## 解決方法
+
+issue 0030 (`feature/fix-abend-shutdown-idempotency` ブランチ) の 4 系統冪等化リファクタに **同時取り込み** で対応した。
+
+- `src/base.ts` の `disconnect()` が `runShutdownOnce` 経由になった際、`signalingSwitched === true` 経路で `disconnectDataChannel()` が `code === 4999` を返したとき、abend event を返し、それ以外で normal event を返す三項演算子に書き換えた。`code === 4999` の abend event には `initDict` 経由で `code` / `reason` を付与する。
+- `event = this.soraCloseEvent("abend", result.reason)` 直後に無条件で `event = this.soraCloseEvent("normal", "DISCONNECT", result)` で上書きする旧バグを解消した。
+- `e2e-tests/data_channel_signaling_only/index.html` に hidden の `#disconnect-event-type` / `#disconnect-event-reason` を追加 (0030 と同時)。`main.ts` で `onDisconnect` ハンドラを実装し、event 種別 / reason を DOM に反映する。`disconnectWaitTimeout` の URL クエリ受け取りも追加した。
+- 0031 単独の E2E (`disconnect_event_type.test.ts`) は別ファイルとして新規追加せず、0030 の `disconnect_abend_idempotency.test.ts` のシナリオ 1 内で `#disconnect-event-type` の abend assert と `#disconnect-event-reason` の assert を行う形で取り込んだ (個別のテスト分離は冗長と判断)。
+
+ローカルで `pnpm test`、`pnpm typecheck`、`pnpm run lint`、`pnpm run build` がすべて通ることを確認した。CHANGES.md `## develop` の `[FIX]` 群末尾に本 issue の `[FIX]` エントリを追記した。
