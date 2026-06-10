@@ -411,13 +411,23 @@ export function trace(clientId: string | null, title: string, value: unknown): v
   }
 }
 
+/**
+ * Sora SDK の接続/切断系の失敗を表すエラー
+ *
+ * - code: WebSocket CloseEvent の code (IANA WebSocket Close Code) のみ格納する。
+ *   それ以外の用途では使用しない。
+ * - reason: WebSocket CloseEvent の reason 文字列、または SDK 内部のエラー分類コード
+ *   (大文字スネークケース、例: WS_SEND_FAILED) のいずれかが入る。
+ */
 export class ConnectError extends Error {
   code?: number;
   reason?: string;
 
-  constructor(message?: string) {
+  constructor(message: string, code?: number, reason?: string) {
     super(message);
     this.name = "ConnectError";
+    this.code = code;
+    this.reason = reason;
   }
 }
 
