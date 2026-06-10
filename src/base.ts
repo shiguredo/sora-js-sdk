@@ -77,12 +77,6 @@ import {
   trace,
 } from "./utils";
 
-declare global {
-  interface Algorithm {
-    namedCurve: string;
-  }
-}
-
 /**
  * Sora との WebRTC 接続を扱う基底クラス
  *
@@ -1410,11 +1404,16 @@ export default class ConnectionBase {
   protected async connectPeerConnection(message: SignalingOfferMessage): Promise<void> {
     let config = { ...message.config };
     if (window.RTCPeerConnection.generateCertificate !== undefined) {
-      const certificate = await window.RTCPeerConnection.generateCertificate({
-        name: "ECDSA",
-        namedCurve: "P-256",
-      });
-      config = { certificates: [certificate], ...config };
+      // FIPS モード等で generateCertificate が失敗する環境でも接続を継続できるようフォールバックする
+      try {
+        const keygenAlgorithm: EcKeyGenParams = { name: "ECDSA", namedCurve: "P-256" };
+        const certificate = await window.RTCPeerConnection.generateCertificate(keygenAlgorithm);
+        config = { certificates: [certificate], ...config };
+      } catch (error) {
+        const reason = String(error);
+        this.trace("GENERATE CERTIFICATE FAILED", reason);
+        this.writePeerConnectionTimelineLog("generate-certificate-failed", { reason });
+      }
     }
     this.trace("PEER CONNECTION CONFIG", config);
     this.writePeerConnectionTimelineLog("new-peerconnection", config);
