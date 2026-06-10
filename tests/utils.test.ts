@@ -876,3 +876,15 @@ test("new ConnectError(message, undefined, reason) は reason のみを設定す
   expect(e.code).toBeUndefined();
   expect(e.reason).toBe("WS_SEND_FAILED");
 });
+
+// sendAnswer 経路 (src/base.ts) で投げる ConnectError の reason 値の存在を固定化する
+// (検出範囲は reason 文字列のみ。test name 中の %s は test.each で各値に置換される)
+test.each([["WS_SEND_INVALID_STATE"], ["WS_SEND_FAILED"]])(
+  "new ConnectError(message, undefined, %s) は sendAnswer 経路の reason を設定する",
+  (reason) => {
+    const e = new ConnectError("send answer failed", undefined, reason);
+    expect(e.message).toBe("send answer failed");
+    expect(e.code).toBeUndefined();
+    expect(e.reason).toBe(reason);
+  },
+);
