@@ -31,6 +31,8 @@
   - @voluntas
 - [FIX] iceConnectionState が disconnected で 10 秒経過した際の検知が現行ブラウザで動作していなかったのを修正する
   - @voluntas
+- [FIX] 切断系メソッド 5 経路で pc.onicecandidate を解除して Trickle ICE 由来の unhandled rejection を防ぐ
+  - @voluntas
 
 ### misc
 

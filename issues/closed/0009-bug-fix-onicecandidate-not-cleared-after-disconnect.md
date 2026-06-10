@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Polished: 2026-06-10
+- Completed: 2026-06-10
 - Model: Opus 4.7
 - Branch: feature/fix-onicecandidate-not-cleared
 
@@ -127,3 +128,33 @@ if (this.pc) {
 - **本 issue 自体は他 issue と独立に実装可能** (`ConnectError` も `clearPeerConnectionHandlers` も使わない 5 行追加。共通化は 0030 で扱う)
 - **本 issue の後続 (順序自由、本 issue とは独立に着手可能)**: 0008 / 0007 / 0034
 - **0030 への前進**: 0030 は 0009 / 0031 / 0042 / 0041 の 4 件すべてを必須先行依存に指定 (0030 line 13-20 の先行マージ前提 + line 373 の必須先行依存表)。本 issue マージ後さらに 0031 / 0042 / 0041 をマージしてから 0030 に進む
+
+## 解決方法
+
+切断系 5 経路すべてに `this.pc.onicecandidate = null;` を 1 行追加し、Trickle ICE 由来の unhandled rejection の発火源を断った。
+
+### `src/base.ts` 変更内容
+
+- `signalingTerminate()`: `if (this.pc) { ... }` ブロック内、`this.pc.close()` の **前** に `this.pc.onicecandidate = null;` を追加。`close()` 後 dispatch のレースを完全に消す目的と、他 4 ハンドラを置かない設計判断を 4 行の意図コメントで明示
+- `abendPeerConnectionState()`: 既存 4 ハンドラ null 化ブロック末尾 (`this.pc.onconnectionstatechange = null;` の直後) に `this.pc.onicecandidate = null;` を追加
+- `shutdown()`: 同位置に追加
+- `abend()`: 同位置に追加
+- `disconnect()`: `disconnectingPromise` ガード後の `try` ブロック内、同位置に追加
+
+### テスト
+
+- `pnpm test` (vitest) で既存単体テスト 76 件すべて通過を確認
+- E2E は本 issue「テスト方針」の方針通り追加せず、CI (`e2e-test.yml` 他) に委ねる
+
+### CHANGES.md
+
+`## develop` 直下の既存 `[FIX]` 群末尾 (`### misc` の前) に以下を追記:
+
+```
+- [FIX] 切断系メソッド 5 経路で pc.onicecandidate を解除して Trickle ICE 由来の unhandled rejection を防ぐ
+  - @voluntas
+```
+
+### レビュー結果
+
+`/review-diff-code` を 2 周実施。1 周目で出た重要指摘 (`signalingTerminate()` のコメント追加) を 1 周目内で反映し、2 周目で致命的・重要の追加指摘なしを確認。
