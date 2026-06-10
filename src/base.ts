@@ -1527,14 +1527,47 @@ export default class ConnectionBase {
 
   /**
    * シグナリングサーバーに type answer を投げるメソッド
+   *
+   * WebSocket が OPEN 以外、または ws.send が同期例外を投げた場合は
+   * 内部状態 (ws / pc / soraDataChannels) が dangling のまま残らないように
+   * signalingTerminate() で同期的にクリーンアップしてから ConnectError を throw する。
+   * onclose の非同期発火に依存すると、呼び出し元が再 connect() するまでに
+   * 初期化が間に合わず、前回の残骸を踏んで状態破壊が連鎖し得るためである。
+   *
+   * 他の send 系メソッド (sendUpdateAnswer / sendReAnswer など) は sendSignalingMessage
+   * を介して送信するため例外時の挙動が本メソッドとは対称ではない (それらは現状
+   * try/catch せず Promise reject に委ねる)。
    */
   protected sendAnswer(): void {
     if (this.pc && this.ws && this.pc.localDescription) {
       this.trace("ANSWER SDP", this.pc.localDescription.sdp);
       const { sdp } = this.pc.localDescription;
       const message = { sdp, type: SIGNALING_MESSAGE_TYPE_ANSWER };
-      this.ws.send(JSON.stringify(message));
-      this.writeWebSocketSignalingLog("send-answer", message);
+      // readyState の表記は disconnectWebSocket と揃えて === 1 / !== 1 で比較する
+      if (this.ws.readyState !== 1) {
+        this.writeWebSocketSignalingLog("failed-to-send-answer", message);
+        this.signalingTerminate();
+        throw new ConnectError(
+          "Signaling failed. Failed to send answer because WebSocket is not open",
+          undefined,
+          "WS_SEND_INVALID_STATE",
+        );
+      }
+      // readyState が OPEN でも ws.send が同期 throw する可能性 (実装/環境依存) に
+      // 備えて try/catch で防御する。失敗原因は ConnectError.reason で識別する設計のため、
+      // message には個別の error 詳細を埋め込まない。
+      try {
+        this.ws.send(JSON.stringify(message));
+        this.writeWebSocketSignalingLog("send-answer", message);
+      } catch {
+        this.writeWebSocketSignalingLog("failed-to-send-answer", message);
+        this.signalingTerminate();
+        throw new ConnectError(
+          "Signaling failed. Failed to send answer because ws.send threw",
+          undefined,
+          "WS_SEND_FAILED",
+        );
+      }
     }
   }
 

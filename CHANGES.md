@@ -33,6 +33,8 @@
   - @voluntas
 - [FIX] 切断系メソッド 5 経路で pc.onicecandidate を解除して Trickle ICE 由来の unhandled rejection を防ぐ
   - @voluntas
+- [FIX] sendAnswer の ws.send が同期 throw したときに内部状態がクリーンアップされなかったのを修正する
+  - @voluntas
 
 ### misc
 

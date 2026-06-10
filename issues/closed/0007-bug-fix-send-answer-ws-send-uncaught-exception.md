@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Polished: 2026-06-08
+- Completed: 2026-06-10
 - Model: Opus 4.7
 - Branch: feature/fix-send-answer-ws-send-exception
 
@@ -93,3 +94,11 @@ protected sendAnswer(): void {
   ```
 
 **マージ順:** `0021 → 0009 → 0001 → 0008 → 0007 → 0034` (0004 正本チェーン参照)。0021 (ConnectError constructor) が前提、0008 (onmessage 例外基盤) の後。
+
+## 解決方法
+
+`src/base.ts` の `sendAnswer` を設計方針どおり修正した。設計方針からの差分・追加判断のみここに記す。
+
+- `ConnectError` のメッセージプレフィックスを既存の `"Signaling failed. ..."` 系に揃え、両経路とも固定短文 (`"Signaling failed. Failed to send answer because WebSocket is not open"` / `"Signaling failed. Failed to send answer because ws.send threw"`) にする。失敗原因の識別は `reason` フィールドで行う設計に従い、message 側には `error.message` を埋め込まない (動的文字列の混入や reason との二重情報経路を避けるため)。
+- JSDoc には「他の send 系メソッド (`sendUpdateAnswer` / `sendReAnswer` など) は `sendSignalingMessage` を介して送信するため例外時の挙動が本メソッドとは対称ではない」と書き、issue 番号や「本 issue」の語は残さない。
+- `tests/utils.test.ts` に `WS_SEND_INVALID_STATE` / `WS_SEND_FAILED` を reason に持つ `ConnectError` 生成テストを `test.each` で並べ、sendAnswer 経路で投げる reason 値の存在を固定化する (検出範囲は reason 文字列のみ。message プレフィックスや sendAnswer 自体の振る舞いは AGENTS.md「モック禁止」 + jsdom に RTCPeerConnection 実装がない都合上、手動検証で担保する)。
