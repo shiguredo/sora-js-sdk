@@ -596,6 +596,11 @@ export default class ConnectionBase {
       this.ws = null;
     }
     if (this.pc) {
+      // close() より前に置く: close() 後に queue 済みの icecandidate イベントが
+      // dispatch されると sendSignalingMessage が CLOSING の ws/dc に send して
+      // unhandled rejection を起こすため、発火源を先に断つ。
+      // 他 4 ハンドラは sync で sendSignalingMessage を呼ばないためここでは null 化しない。
+      this.pc.onicecandidate = null;
       this.pc.close();
     }
     this.initializeConnection();
@@ -614,6 +619,7 @@ export default class ConnectionBase {
       this.pc.oniceconnectionstatechange = null;
       this.pc.onicegatheringstatechange = null;
       this.pc.onconnectionstatechange = null;
+      this.pc.onicecandidate = null;
     }
     if (this.ws) {
       // onclose はログを吐く専用に残す
@@ -677,6 +683,7 @@ export default class ConnectionBase {
       this.pc.oniceconnectionstatechange = null;
       this.pc.onicegatheringstatechange = null;
       this.pc.onconnectionstatechange = null;
+      this.pc.onicecandidate = null;
     }
 
     // DataChannel シグナリングの場合は停止する
@@ -725,6 +732,7 @@ export default class ConnectionBase {
       this.pc.oniceconnectionstatechange = null;
       this.pc.onicegatheringstatechange = null;
       this.pc.onconnectionstatechange = null;
+      this.pc.onicecandidate = null;
     }
     if (this.ws) {
       // onclose はログを吐く専用に残す
@@ -1068,6 +1076,7 @@ export default class ConnectionBase {
           this.pc.oniceconnectionstatechange = null;
           this.pc.onicegatheringstatechange = null;
           this.pc.onconnectionstatechange = null;
+          this.pc.onicecandidate = null;
         }
         // WebSocket の監視を止める
         if (this.ws) {
