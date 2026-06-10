@@ -15,6 +15,8 @@
   - Node 20 は 2026-04-30 に EoL になったため
   - <https://github.com/nodejs/Release#release-schedule>
   - @voluntas
+- [UPDATE] pnpm 11 系に上げる
+  - @voluntas
 - [UPDATE] TypeScript 6.0 へ対応する
   - @voluntas
 - [FIX] rpc メソッドのサンプルコードで、実際に存在しない RPC メソッド名が使われていたのを修正する
