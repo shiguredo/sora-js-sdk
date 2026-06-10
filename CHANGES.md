@@ -37,6 +37,8 @@
   - @voluntas
 - [FIX] signaling() の ws.onmessage 内で例外が発生したときに connect() が connectionTimeout まで固まっていたのを修正する
   - @voluntas
+- [FIX] generateCertificate が失敗した環境 (FIPS モード等) でも接続できるようにフォールバックする
+  - @voluntas
 
 ### misc
 
@@ -57,6 +59,8 @@
   - `.oxlintrc.jsonc` と `.oxfmtrc.jsonc` を削除する
   - @voluntas
 - [UPDATE] 内部 ConnectError の constructor で code と reason を引数として受け取れるようにし base.ts の後付け代入を廃止する
+  - @voluntas
+- [UPDATE] Algorithm 型のグローバル拡張を削除し generateCertificate の引数型を EcKeyGenParams に置き換える
   - @voluntas
 - [FIX] Node 24 で `playwright install` がハングする問題を修正するため Playwright を 1.60.0 に更新する
   - @voluntas

@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Completed: 2026-06-10
 - Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-generate-certificate-fallback
@@ -91,3 +92,17 @@ if (window.RTCPeerConnection.generateCertificate !== undefined) {
   - [UPDATE] Algorithm 型のグローバル拡張を削除し generateCertificate の引数型を EcKeyGenParams に置き換える
     - @voluntas
   ```
+
+## 解決方法
+
+`src/base.ts` の以下を変更した。
+
+- `connectPeerConnection` (`src/base.ts:1404-1416`) の `generateCertificate` 呼び出しを try/catch で囲み、`generateCertificate` が reject した場合は `config.certificates` を設定せずブラウザデフォルトの証明書で `new RTCPeerConnection` に進むフォールバックを実装した。catch では `this.trace("GENERATE CERTIFICATE FAILED", reason)` と `this.writePeerConnectionTimelineLog("generate-certificate-failed", { reason })` でログを残す。`reason` は `String(error)` で文字列化したものを使い回す。
+  - trace title は既存の「大文字 + 半角スペース区切り」命名慣習 (例: `"PEER CONNECTION CONFIG"`, `"CREATE OFFER"`) に合わせて `"GENERATE CERTIFICATE FAILED"` (スペース区切り) とした。`/review-diff-code` の指摘で issue 本文記載の `"GENERATE-CERTIFICATE-FAILED"` (ハイフン区切り) は既存の trace title 全 21 件と整合しないことが判明したため、issue の記載とは異なる形に修正した。
+  - catch 変数名は既存の他 catch ブロックに合わせて `error` とした (issue 本文は `e` 記載だったが、`src/base.ts` 内の他 10 箇所の catch がいずれも `error` であるため統一)。
+- `declare global { interface Algorithm { namedCurve: string; } }` (`src/base.ts:80-84`) を削除した。
+- `generateCertificate` の引数を型注釈付きローカル変数 `const keygenAlgorithm: EcKeyGenParams = { name: "ECDSA", namedCurve: "P-256" }` に切り出し、`EcKeyGenParams` (`lib.dom.d.ts` 標準) を使って渡すことで、グローバル拡張なしで型エラーを回避した。
+
+テスト追加は行わなかった (issue 完了条件の方針通り)。代わりに DevTools console で `window.RTCPeerConnection.generateCertificate = () => Promise.reject(new DOMException("test", "NotSupportedError"))` に差し替えた状態で `connect()` が成立することを確認する検証手順を PR 本文に記載する。
+
+`pnpm typecheck` (`tsc --noEmit`) と `pnpm test` (vitest) はローカルで通過。e2e-test は CI で確認する。
