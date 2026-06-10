@@ -1281,6 +1281,23 @@ export default class ConnectionBase {
       this.writeWebSocketSignalingLog("new-websocket", ws.url);
       // websocket の各 callback を設定する
       ws.binaryType = "arraybuffer";
+      // signaling() の Promise が resolve / reject 済みかを追跡するフラグ。
+      // ws.onmessage 内で発生した例外を pre-offer / post-offer で分岐させるために使う。
+      // Promise コールバック内 (ws.onmessage の外) で定義しないと毎呼び出しでリセットされる。
+      let settled = false;
+      // settled が false のときに限り signalingTerminate() を呼んで reject する。
+      // 二重呼び出し時の二重 reject と二重 signalingTerminate を防ぐ。
+      const settleReject = (error: ConnectError): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        this.signalingTerminate();
+        reject(error);
+      };
+      // ws.onclose は settled を見ず、一律 signalingTerminate() + reject を呼ぶ。
+      // Promise の settle は最初の 1 回のみ有効なため、settleReject 経路と
+      // 二重 reject されても no-op になる (signalingTerminate() の冪等性に依存)。
       ws.onclose = (event): void => {
         const error = new ConnectError(
           `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`,
@@ -1292,43 +1309,69 @@ export default class ConnectionBase {
         reject(error);
       };
       ws.onmessage = async (event): Promise<void> => {
-        if (typeof event.data !== "string") {
-          throw new TypeError("Received invalid signaling data");
-        }
-        const message = JSON.parse(event.data) as WebSocketSignalingMessage;
-        if (message.type === SIGNALING_MESSAGE_TYPE_OFFER) {
-          this.writeWebSocketSignalingLog("onmessage-offer", message);
-          this.signalingOnMessageTypeOffer(message);
-          this.connectedSignalingUrl = ws.url;
-          resolve(message);
-        } else if (message.type === SIGNALING_MESSAGE_TYPE_UPDATE) {
-          this.writeWebSocketSignalingLog("onmessage-update", message);
-          await this.signalingOnMessageTypeUpdate(message);
-        } else if (message.type === SIGNALING_MESSAGE_TYPE_RE_OFFER) {
-          this.writeWebSocketSignalingLog("onmessage-re-offer", message);
-          await this.signalingOnMessageTypeReOffer(message);
-        } else if (message.type === SIGNALING_MESSAGE_TYPE_PING) {
-          await this.signalingOnMessageTypePing(message);
-        } else if (message.type === SIGNALING_MESSAGE_TYPE_PUSH) {
-          this.callbacks.push(message, TRANSPORT_TYPE_WEBSOCKET);
-        } else if (message.type === SIGNALING_MESSAGE_TYPE_NOTIFY) {
-          if (message.event_type === "connection.created") {
-            this.writeWebSocketTimelineLog("notify-connection.created", message);
-          } else if (message.event_type === "connection.destroyed") {
-            this.writeWebSocketTimelineLog("notify-connection.destroyed", message);
+        try {
+          if (typeof event.data !== "string") {
+            throw new TypeError("Received invalid signaling data");
           }
-          this.signalingOnMessageTypeNotify(message, TRANSPORT_TYPE_WEBSOCKET);
-        } else if (message.type === SIGNALING_MESSAGE_TYPE_SWITCHED) {
-          this.writeWebSocketSignalingLog("onmessage-switched", message);
-          this.signalingOnMessageTypeSwitched(message);
-        } else if (message.type === SIGNALING_MESSAGE_TYPE_REDIRECT) {
-          this.writeWebSocketSignalingLog("onmessage-redirect", message);
-          try {
+          const message = JSON.parse(event.data) as WebSocketSignalingMessage;
+          if (message.type === SIGNALING_MESSAGE_TYPE_OFFER) {
+            this.writeWebSocketSignalingLog("onmessage-offer", message);
+            this.signalingOnMessageTypeOffer(message);
+            this.connectedSignalingUrl = ws.url;
+            // resolve 直前で settled を true にする。ここまでで throw した場合は
+            // settled === false のまま catch に入り pre-offer reject される。
+            settled = true;
+            resolve(message);
+          } else if (message.type === SIGNALING_MESSAGE_TYPE_UPDATE) {
+            this.writeWebSocketSignalingLog("onmessage-update", message);
+            await this.signalingOnMessageTypeUpdate(message);
+          } else if (message.type === SIGNALING_MESSAGE_TYPE_RE_OFFER) {
+            this.writeWebSocketSignalingLog("onmessage-re-offer", message);
+            await this.signalingOnMessageTypeReOffer(message);
+          } else if (message.type === SIGNALING_MESSAGE_TYPE_PING) {
+            await this.signalingOnMessageTypePing(message);
+          } else if (message.type === SIGNALING_MESSAGE_TYPE_PUSH) {
+            this.callbacks.push(message, TRANSPORT_TYPE_WEBSOCKET);
+          } else if (message.type === SIGNALING_MESSAGE_TYPE_NOTIFY) {
+            if (message.event_type === "connection.created") {
+              this.writeWebSocketTimelineLog("notify-connection.created", message);
+            } else if (message.event_type === "connection.destroyed") {
+              this.writeWebSocketTimelineLog("notify-connection.destroyed", message);
+            }
+            this.signalingOnMessageTypeNotify(message, TRANSPORT_TYPE_WEBSOCKET);
+          } else if (message.type === SIGNALING_MESSAGE_TYPE_SWITCHED) {
+            this.writeWebSocketSignalingLog("onmessage-switched", message);
+            this.signalingOnMessageTypeSwitched(message);
+          } else if (message.type === SIGNALING_MESSAGE_TYPE_REDIRECT) {
+            this.writeWebSocketSignalingLog("onmessage-redirect", message);
+            // redirect 失敗時は外側 catch で ConnectError
+            // (reason: "SIGNALING_ONMESSAGE_EXCEPTION") として reject される。
             const redirectMessage = await this.signalingOnMessageTypeRedirect(message);
+            settled = true;
             resolve(redirectMessage);
-          } catch (error) {
-            reject(error instanceof Error ? error : new Error(String(error)));
           }
+          // 未知の message.type は no-op (offer 待ちを継続)
+        } catch (error) {
+          if (settled) {
+            // post-offer: 接続中の ws / pc を破棄せずログのみで握りつぶす。
+            // signalingTerminate を呼ぶと正常接続が壊れるため呼ばない。
+            this.writeWebSocketSignalingLog(
+              "onmessage-exception-post-offer",
+              (error as Error).message,
+            );
+            return;
+          }
+          // pre-offer: ConnectError でラップして signalingTerminate + reject する。
+          const wrapped = new ConnectError(
+            `Signaling failed. ws.onmessage threw: ${(error as Error).message}`,
+            undefined,
+            "SIGNALING_ONMESSAGE_EXCEPTION",
+          );
+          // writeWebSocketSignalingLog は this.callbacks.signaling を呼ぶため、
+          // ユーザコールバック throw でこの行自体が失敗しうる。
+          // Promise の settle を最優先するため settleReject をログより先に呼ぶ。
+          settleReject(wrapped);
+          this.writeWebSocketSignalingLog("onmessage-exception-pre-offer", wrapped.message);
         }
       };
       let signalingMessage: SignalingConnectMessage;

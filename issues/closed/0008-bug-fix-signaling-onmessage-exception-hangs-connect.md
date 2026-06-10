@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Polished: 2026-06-08
+- Completed: 2026-06-10
 - Model: Opus 4.7
 - Branch: feature/fix-signaling-onmessage-exception
 
@@ -182,3 +183,26 @@ return new Promise((resolve, reject) => {
 ## マージ順
 
 0004 正本チェーン `0004 → 0006 → (0011) → 0021 → 0009 → 0001 → 0008 → 0007 → 0034 → 0031 → 0002 → 0005 → 0030` の一部。0008 の前提は `0021 → 0009 → 0001` で 0021 (ConnectError constructor) と 0001 (同じ `signaling()` 関数を編集) が必須。0008 マージ後に `0007 → 0034 → 0031 → 0002 → 0005 → 0030` が続く。
+
+## 解決方法
+
+`src/base.ts` の `signaling()` 内 `ws.onmessage` を `try` / `catch` で囲み、`settled` フラグと `settleReject` クロージャを Promise executor 直下に導入した。pre-offer / post-offer の境界は各 `resolve` の直前で `settled = true` にすることで判別する。
+
+- pre-offer (settled === false) の throw: `signalingTerminate()` を呼び `ConnectError("Signaling failed. ws.onmessage threw: ...", undefined, "SIGNALING_ONMESSAGE_EXCEPTION")` で reject する。
+- post-offer (settled === true) の throw: ログ `onmessage-exception-post-offer` のみ出して接続中の ws / pc は破棄しない。
+- redirect 専用の内側 try/catch (`src/base.ts:1302-1307`) は撤去し、外側 catch に集約した。redirect 失敗時の reject 型は raw Error から ConnectError (reason: "SIGNALING_ONMESSAGE_EXCEPTION") に変わる。
+- `ws.onclose` ハンドラと `signalingMessage` 生成・`ws.send`・`this.ws` 設定ブロックは現状維持。NOTIFY 分岐の `writeWebSocketTimelineLog("notify-connection.created" / "notify-connection.destroyed", message)` 呼び出しも維持。
+
+`/review-diff-code` の指摘 (3 周分) を反映し、サンプル実装からの逸脱として以下を採用した。
+
+- pre-offer catch 内の順序を `settleReject(wrapped); writeWebSocketSignalingLog(...);` に変更した。`writeWebSocketSignalingLog` は内部で `this.callbacks.signaling` (ユーザコールバック) を呼ぶため、`settleReject` をログより先に呼ぶことで、ログ呼び出しが throw しても Promise の settle が保証される。
+- コメントから時間・コンテキスト依存表現 (「本 issue」「撤去した」「修正対象外」) を排除し、現在のコードの動作・設計判断を直接説明する形に揃えた。
+
+### 変更ファイル
+
+- `src/base.ts`: `signaling()` の `ws.onmessage` を try/catch で囲み、`settled` / `settleReject` を導入。redirect 専用 try/catch を撤去。
+- `CHANGES.md`: `## develop` の `[FIX]` 群末尾、`### misc` より前に追記。
+
+### テスト
+
+本 issue 専用のテストは追加しない。`tests/` 配下に signaling 関連テストは存在せず、`ws.onmessage` は `signaling()` 内ローカルクロージャで外部から差し替え不可能、CLAUDE.md「モックやスタブは絶対に利用しないこと」規約により単体テストでは検証できないため。既存 `pnpm test` (78 件) と `pnpm e2e-test` の非回帰確認のみで担保する。
