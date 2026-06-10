@@ -35,6 +35,8 @@
   - @voluntas
 - [FIX] sendAnswer の ws.send が同期 throw したときに内部状態がクリーンアップされなかったのを修正する
   - @voluntas
+- [FIX] signaling() の ws.onmessage 内で例外が発生したときに connect() が connectionTimeout まで固まっていたのを修正する
+  - @voluntas
 
 ### misc
 
