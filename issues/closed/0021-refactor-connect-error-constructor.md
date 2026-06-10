@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-21
+- Completed: 2026-06-10
 - Polished: 2026-06-10
 - Model: Opus 4.7
 - Branch: feature/refactor-connect-error-constructor
@@ -188,3 +189,43 @@ test("ConnectError は code を undefined で reason のみ指定して生成で
 ```
 
 0001 は既に close 済み (正本チェーン上の位置を保持する目的で記載)。加えて `0021 → 0012` (`removeXxxTrack` の `ConnectError` reject) も 0021 を前提とする。`ConnectError` の新 constructor を直接利用するのは 0007 / 0008 / 0012 の 3 件。0009 / 0034 は `ConnectError` を新規には投げないが、正本チェーン上の順序を維持するため記載する。
+
+## 解決方法
+
+### `src/utils.ts`
+
+`ConnectError` の constructor を `(message?: string)` から `(message: string, code?: number, reason?: string)` に拡張した。constructor 内で `this.code = code` / `this.reason = reason` の初期化を追加し、`this.name = "ConnectError"` の設定は既存維持とした。`Object.setPrototypeOf` は追加していない (`tsconfig.json` の `target: "ES2022"` 下でネイティブ class 継承により `instanceof` が正しく動作するため、`src/errors.ts` の既存クラスとも方針を統一)。
+
+加えて、`code` / `reason` の用途が誤読されないよう、`ConnectError` クラスに JSDoc を追加した。`code` は WebSocket Close Code (IANA) 専用、`reason` は CloseEvent の reason 文字列または SDK 内部のエラー分類コード (大文字スネークケース、例: `WS_SEND_FAILED`) のいずれかが入る、と明文化している。
+
+### `src/base.ts`
+
+後付け代入 3 箇所 (`getSignalingWebSocket` の string 経路 onclose、`signaling` の onclose、`monitorSignalingWebSocketEvent` の onclose) で `error.code = event.code;` / `error.reason = event.reason;` の 2 行を削除し、`new ConnectError(...)` の constructor 引数 (`event.code`, `event.reason`) として渡す形に書き換えた。`writeWebSocketTimelineLog` / `signalingTerminate` / `reject` の呼び出しは現状維持。
+
+`new ConnectError(message)` のみの 4 箇所 (`:1138, :1248, :1251, :1625`) は変更しない。いずれも第 1 引数で `message` を必ず渡しているため、`message` 必須化により破壊されない。
+
+### `tests/utils.test.ts`
+
+末尾に `ConnectError` のテストを 4 件追加した。
+
+- `new ConnectError(message)` で code / reason が undefined のまま生成され、name が `"ConnectError"` で `ConnectError` 型として識別できることを確認する
+- `new ConnectError(message, code, reason)` で 3 引数すべてが initializer 引数で初期化されることを確認する
+- `new ConnectError(message, code)` で reason が undefined のまま生成されることを確認する
+- `new ConnectError(message, undefined, reason)` で reason のみが設定されることを確認する (後続 issue が利用するパターン)
+
+既存の `import { createSignalingMessage } from "../src/utils";` を `import { ConnectError, createSignalingMessage } from "../src/utils";` に書き換えた (vite-plus の `import/no-duplicates` ルール対策)。
+
+### `CHANGES.md`
+
+`## develop` の `### misc` セクション内、既存 `[UPDATE]` 群末尾に以下のエントリを追記した。
+
+```
+- [UPDATE] 内部 ConnectError の constructor で code と reason を引数として受け取れるようにし base.ts の後付け代入を廃止する
+  - @voluntas
+```
+
+### 検証
+
+- ローカルで `pnpm test` が通る (本 issue で追加した 4 件のテストを含む計 76 件)
+- ローカルで `pnpm typecheck` が通る
+- ローカルで `pnpm lint` が通る

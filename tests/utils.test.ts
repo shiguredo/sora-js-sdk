@@ -1,7 +1,7 @@
 // XXX: assert を使うと型がエラーがうるさいため expect を使ってる
 
 import type { AudioCodecType, DataChannelDirection, VideoCodecType } from "../src/types";
-import { createSignalingMessage } from "../src/utils";
+import { ConnectError, createSignalingMessage } from "../src/utils";
 
 const channelId = "7N3fsMHob";
 const metadata = "PG9A6RXgYqiqWKOVO";
@@ -838,4 +838,41 @@ test("createSignalingMessage audioStreamingLanguageCode: ja-JP", () => {
   expect(
     createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
   ).toStrictEqual(expectedMessage);
+});
+
+/**
+ * ConnectError のテスト
+ */
+
+// message のみ渡した場合は code / reason が undefined のまま生成され
+// name が "ConnectError" となり ConnectError 型として識別できる
+test("new ConnectError(message) は code / reason を undefined にして生成する", () => {
+  const e = new ConnectError("msg");
+  expect(e.message).toBe("msg");
+  expect(e.name).toBe("ConnectError");
+  expect(e.code).toBeUndefined();
+  expect(e.reason).toBeUndefined();
+  expect(e).toBeInstanceOf(ConnectError);
+});
+
+// 3 引数すべて渡した場合は code / reason が constructor 引数で初期化される
+test("new ConnectError(message, code, reason) は 3 引数すべてを初期化する", () => {
+  const e = new ConnectError("close", 1006, "abnormal");
+  expect(e.message).toBe("close");
+  expect(e.code).toBe(1006);
+  expect(e.reason).toBe("abnormal");
+});
+
+// code だけ指定して reason を省略した場合は reason が undefined のまま生成される
+test("new ConnectError(message, code) は reason を undefined のまま生成する", () => {
+  const e = new ConnectError("close", 1006);
+  expect(e.code).toBe(1006);
+  expect(e.reason).toBeUndefined();
+});
+
+// code を undefined にして SDK 内部のエラー分類コードを reason のみで指定するパターン
+test("new ConnectError(message, undefined, reason) は reason のみを設定する", () => {
+  const e = new ConnectError("ws send failed", undefined, "WS_SEND_FAILED");
+  expect(e.code).toBeUndefined();
+  expect(e.reason).toBe("WS_SEND_FAILED");
 });

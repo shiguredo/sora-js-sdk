@@ -1150,9 +1150,9 @@ export default class ConnectionBase {
         ws.onclose = (event): void => {
           const error = new ConnectError(
             `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`,
+            event.code,
+            event.reason,
           );
-          error.code = event.code;
-          error.reason = event.reason;
           this.writeWebSocketTimelineLog("onclose", error);
           reject(error);
         };
@@ -1275,9 +1275,9 @@ export default class ConnectionBase {
       ws.onclose = (event): void => {
         const error = new ConnectError(
           `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`,
+          event.code,
+          event.reason,
         );
-        error.code = event.code;
-        error.reason = event.reason;
         this.writeWebSocketTimelineLog("onclose", error);
         this.signalingTerminate();
         reject(error);
@@ -1614,9 +1614,9 @@ export default class ConnectionBase {
         this.ws.onclose = (event): void => {
           const error = new ConnectError(
             `Signaling failed. CloseEventCode:${event.code} CloseEventReason:'${event.reason}'`,
+            event.code,
+            event.reason,
           );
-          error.code = event.code;
-          error.reason = event.reason;
           this.writeWebSocketTimelineLog("onclose", error);
           this.signalingTerminate();
           reject(error);
