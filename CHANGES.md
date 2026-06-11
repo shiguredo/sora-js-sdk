@@ -15,6 +15,10 @@
   - Node 20 は 2026-04-30 に EoL になったため
   - <https://github.com/nodejs/Release#release-schedule>
   - @voluntas
+- [CHANGE] `removeAudioTrack` / `removeVideoTrack` 実行中に `disconnect()` 等で `RTCPeerConnection` が破棄された場合に `ConnectError` (reason `"REMOVE_TRACK_DURING_DISCONNECT"`) で reject するように変更する
+  - 利用者は `.catch` で reject を受ける必要がある (fire-and-forget で呼んでいる場合は unhandled promise rejection が発生する)
+  - 非推奨の `stopAudioTrack` / `stopVideoTrack`、および `replaceAudioTrack` / `replaceVideoTrack` 経由でも同じ reject が伝播する
+  - @voluntas
 - [UPDATE] pnpm 11 系に上げる
   - @voluntas
 - [UPDATE] TypeScript 6.0 へ対応する

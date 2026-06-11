@@ -374,7 +374,9 @@ export default class ConnectionBase {
    * ```
    *
    * @remarks
-   * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します
+   * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します。
+   * 内部で 100ms 待機する間に `disconnect()` / `abend()` 等で `RTCPeerConnection` が破棄された場合は、
+   * `ConnectError` (reason `"REMOVE_TRACK_DURING_DISCONNECT"`) で reject します
    *
    * @param stream - audio track を削除する MediaStream
    *
@@ -403,7 +405,9 @@ export default class ConnectionBase {
    * ```
    *
    * @remarks
-   * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します
+   * stream の audio track を停止後、PeerConnection の senders から対象の sender を削除します。
+   * 内部で 100ms 待機する間に `disconnect()` / `abend()` 等で `RTCPeerConnection` が破棄された場合は、
+   * `ConnectError` (reason `"REMOVE_TRACK_DURING_DISCONNECT"`) で reject します
    *
    * @param stream - audio track を削除する MediaStream
    *
@@ -416,6 +420,16 @@ export default class ConnectionBase {
     return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
       setTimeout(() => {
+        if (this.pc === null) {
+          reject(
+            new ConnectError(
+              "Disconnected during removeAudioTrack",
+              undefined,
+              "REMOVE_TRACK_DURING_DISCONNECT",
+            ),
+          );
+          return;
+        }
         const promises = stream.getAudioTracks().map(async (track) => {
           track.stop();
           stream.removeTrack(track);
@@ -450,7 +464,9 @@ export default class ConnectionBase {
    * ```
    *
    * @remarks
-   * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します
+   * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します。
+   * 内部で 100ms 待機する間に `disconnect()` / `abend()` 等で `RTCPeerConnection` が破棄された場合は、
+   * `ConnectError` (reason `"REMOVE_TRACK_DURING_DISCONNECT"`) で reject します
    *
    * @param stream - video track を停止する MediaStream
    *
@@ -479,7 +495,9 @@ export default class ConnectionBase {
    * ```
    *
    * @remarks
-   * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します
+   * stream の video track を停止後、PeerConnection の senders から対象の sender を削除します。
+   * 内部で 100ms 待機する間に `disconnect()` / `abend()` 等で `RTCPeerConnection` が破棄された場合は、
+   * `ConnectError` (reason `"REMOVE_TRACK_DURING_DISCONNECT"`) で reject します
    *
    * @param stream - video track を削除する MediaStream
    *
@@ -492,6 +510,16 @@ export default class ConnectionBase {
     return new Promise((resolve, reject) => {
       // すぐに stop すると視聴側に静止画像が残ってしまうので enabled false にした 100ms 後に stop する
       setTimeout(() => {
+        if (this.pc === null) {
+          reject(
+            new ConnectError(
+              "Disconnected during removeVideoTrack",
+              undefined,
+              "REMOVE_TRACK_DURING_DISCONNECT",
+            ),
+          );
+          return;
+        }
         const promises = stream.getVideoTracks().map(async (track) => {
           track.stop();
           stream.removeTrack(track);
@@ -526,7 +554,10 @@ export default class ConnectionBase {
    * ```
    *
    * @remarks
-   * stream の audio track を停止後、新しい audio track をセットします
+   * stream の audio track を停止後、新しい audio track をセットします。
+   * 内部で 100ms 待機する間に `disconnect()` / `abend()` 等で `RTCPeerConnection` が破棄された場合は、
+   * `ConnectError` (reason `"REMOVE_TRACK_DURING_DISCONNECT"`) で reject します。
+   * このとき新しい `audioTrack` は `stream` に追加されないため、呼び出し元側で `audioTrack.stop()` を呼んでください
    *
    * @param stream - audio track を削除する MediaStream
    * @param audioTrack - 新しい audio track
@@ -557,7 +588,10 @@ export default class ConnectionBase {
    * ```
    *
    * @remarks
-   * stream の video track を停止後、新しい video track をセットします
+   * stream の video track を停止後、新しい video track をセットします。
+   * 内部で 100ms 待機する間に `disconnect()` / `abend()` 等で `RTCPeerConnection` が破棄された場合は、
+   * `ConnectError` (reason `"REMOVE_TRACK_DURING_DISCONNECT"`) で reject します。
+   * このとき新しい `videoTrack` は `stream` に追加されないため、呼び出し元側で `videoTrack.stop()` を呼んでください
    *
    * @param stream - video track を削除する MediaStream
    * @param videoTrack - 新しい video track
