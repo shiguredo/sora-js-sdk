@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-21
 - Polished: 2026-06-08
+- Completed: 2026-06-11
 - Model: Opus 4.7
 - Branch: feature/change-remove-track-race-with-disconnect
 
@@ -130,3 +131,14 @@ reject 時点で以下の状態が利用者から観測される:
 ## マージ順
 
 **0021 → 0012**。0021 の `ConnectError` constructor (3 引数形式) が前提。0021 が `issues/pending/` に移動した場合は 0012 も同時に pending 化する (本 issue 単独で先行マージしない)。0012 は `removeXxxTrack` のみ編集し他 issue とファイル競合しないため 0004 正本チェーンには組み込まない (詳細は 0004 参照)。リリース単位としては `## develop` で 0004 系と同梱される。
+
+## 解決方法
+
+`src/base.ts` の `removeAudioTrack` と `removeVideoTrack` の `setTimeout` コールバック先頭に `this.pc === null` ガードを追加し、null 化されていれば既存処理 (`track.stop()` / `stream.removeTrack(track)` / `replaceTrack(null)`) を一切実行せず `ConnectError` で reject するようにした。
+
+- `src/base.ts:423-432` (`removeAudioTrack`) と `src/base.ts:513-522` (`removeVideoTrack`) に先頭ガードを追加。reject 引数は `new ConnectError("Disconnected during removeAudioTrack", undefined, "REMOVE_TRACK_DURING_DISCONNECT")` (video 側は `"Disconnected during removeVideoTrack"`) で、reason は両関数共通の `"REMOVE_TRACK_DURING_DISCONNECT"`、`error.message` のプレフィックスで個別操作を判別できるようにした
+- 100ms ディレイ・先行 `enabled = false` ループ・既存 `if (this.pc !== null)` 内側ガード・`removeVideoTrack` 側の `// replaceTrack は非同期操作なので catch(reject) しておく` コメントはすべて維持した
+- 公開 API の後方互換破壊を利用者に伝えるため、`stopAudioTrack` / `removeAudioTrack` / `stopVideoTrack` / `removeVideoTrack` / `replaceAudioTrack` / `replaceVideoTrack` の 6 メソッドの `@remarks` に reject 経路 (`ConnectError` reason `"REMOVE_TRACK_DURING_DISCONNECT"`) を追記した。`@throws` タグは SDK 既存 TSDoc スタイルから外れるため使わず、既存 `@remarks` 記法に揃えた
+- 本 issue 専用テストは追加しなかった (issue §検証 に従い、jsdom 環境で `this.pc` を自然に null 化するテストは書けないため、先頭ガードの到達性はコードレビューで担保)
+- `CHANGES.md` の `## develop` セクション、`[CHANGE]` 群末尾・`### misc` より前に `[CHANGE]` エントリを追記した
+- ローカルで `pnpm test` (78 tests passed) を確認した
