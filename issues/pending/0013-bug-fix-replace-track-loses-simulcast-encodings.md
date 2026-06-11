@@ -80,3 +80,22 @@ async replaceVideoTrack(stream: MediaStream, videoTrack: MediaStreamTrack): Prom
   ```
 
 **マージ順:** 着手前ゲートを通って実装する場合に限り `0014 → 0013` が必須依存 (0014 未マージだと `setSenderParameters` が丸ごと代入のまま length 不一致で `InvalidModificationError` になりうる)。0012 (切断中 reject) は本 issue の正常系 E2E が影響を受ける任意前提。pending 行きになった場合はこの依存は適用されない。
+
+## Pending 化の理由 (2026-06-11)
+
+着手前ゲート (実機 simulcast での encodings 喪失再現) を満たさない状態で、仮説の根拠も現時点で薄いため pending 化する。
+
+- W3C webrtc-pc の `replaceTrack` アルゴリズムは sender の encodings を保持する旨を規定しており、仕様準拠ブラウザでは本仮説 (`replaceTrack(null)` → 100ms → `replaceTrack(newTrack)` で encodings が壊れる) は起きない
+- 本番観測ログ・ユーザ報告とも未取得 (Sora 利用者から「`replaceVideoTrack` 後に rid が落ちる」報告は届いていない)
+- 既知のブラウザバグ (chromium issue tracker / bugzilla / webkit bugzilla) の裏取りが issue 内で行われていない
+- 仕様準拠ブラウザでは E2E の Red→Green 弁別ができないと issue 自体が認めており、回帰検出力に限界がある
+- 本仮説の検証は、実利用者が手元のブラウザ・OS で気軽に試せる sora-devtools 側の検証 UI として組み込む方針が現実的 (sora-js-sdk の e2e-tests は仕様準拠ブラウザ前提のため弁別不能)
+- 0014 (`setSenderParameters` の length 不変マージ) は本 issue に依存せず単独で有効なため、0013 の pending 化が 0014 の進行を止めることはない
+
+### 再開条件
+
+以下のいずれかが満たされた場合に reopen する。
+
+- 本番観測ログまたはユーザ報告で「`replaceVideoTrack` 後に simulcast の rid が減る・active が落ちる」現象が確認された場合
+- sora-devtools の検証 UI または本リポジトリの E2E で、特定ブラウザ・特定バージョンでの再現が取れた場合 (Sora バージョン・ブラウザ・観測値を本 issue 末尾に追記する)
+- W3C webrtc-pc の仕様改訂やブラウザ実装変更で「`replaceTrack` 後に encodings が保持されない」挙動が許容されるようになった場合
