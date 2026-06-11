@@ -1122,11 +1122,20 @@ export default class ConnectionBase {
         let event = null;
         if (this.signalingSwitched) {
           const result = await this.disconnectDataChannel();
+          // code 4999 は DataChannel 切断処理の異常 (timeout / DC onerror / signaling DC 不在)
+          // を表す。abend として通知して normal 経路と区別する。
+          // initDict 経由で code / reason を付与し、アプリ側が原因を判定できるようにする。
+          // title (第 2 引数) には result.reason をそのまま渡す。本来 abend の title は
+          // SoraAbendTitle (src/types.ts:498-505) の体系だが、ここでの統一は本 issue のスコープ外。
+          // eslint-disable-next-line unicorn/prefer-ternary
           if (result.code === 4999) {
-            // DataChannel の切断処理がエラーの場合は event を abend に差し替える
-            event = this.soraCloseEvent("abend", result.reason);
+            event = this.soraCloseEvent("abend", result.reason, {
+              code: result.code,
+              reason: result.reason,
+            });
+          } else {
+            event = this.soraCloseEvent("normal", "DISCONNECT", result);
           }
-          event = this.soraCloseEvent("normal", "DISCONNECT", result);
           // もう切断されている可能性が高いが一応止める
           await this.disconnectWebSocket("NO-ERROR");
           this.maybeClosePeerConnection();
