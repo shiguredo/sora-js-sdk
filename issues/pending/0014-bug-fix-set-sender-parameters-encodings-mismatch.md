@@ -97,3 +97,13 @@ private async setSenderParameters(
   ```
 
 **マージ順:** 依存方向は 0013 → 0014 の一方向で、**0014 は `createAnswer` 経路で独立に有効**（0013 に依存しない）。0013 をマージする場合は 0014 を先にマージする（0014 未マージだと 0013 の `setSenderParameters` が丸ごと代入のまま length 不一致で `InvalidModificationError` になりうる）。0012 は本 issue の前提ではない。
+
+## pending にした理由
+
+`setSenderParameters` で `getParameters` 側と引数 `this.encodings` の rid 集合 / length が食い違うケースは Sora 現行仕様でも本番観測ログでも確認できておらず、`InvalidModificationError` の発生は理論上のリスクに留まる。defensive な堅牢化として有用だが、現状で実害がなく既存接続も壊れていないため pending とする。
+
+着手判断のトリガー:
+
+- 本番ログまたは E2E で `setSenderParameters` の `InvalidModificationError` reject が観測された場合
+- `createAnswer` 経路の `setRemoteDescription` 前後で `getParameters().encodings` の構成が `this.encodings` と乖離する事象が Sora 仕様変更 / ブラウザ更新で発生し得ると確認できた場合
+- 0013 (`replaceTrack` で simulcast encodings 喪失) の修正に伴い `setSenderParameters` の length 不変化が前提として必要になった場合
