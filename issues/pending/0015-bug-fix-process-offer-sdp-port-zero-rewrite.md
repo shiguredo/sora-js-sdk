@@ -86,3 +86,13 @@ export function rewriteFirefoxRejectedPort(
   ```
 
 **マージ順:** 0013/0014 (simulcast encodings) とも 0016/0017 (signaling 検証) とも独立。単独マージ可。
+
+## pending にした理由
+
+本 issue は元々「第 1 段階で Firefox 再現確認、再現しなければ pending へ移動」と issue 自身が明記している通り、`rejected` 表明破壊の事象は本番未観測で再現も未確定。現行 Sora は port=0 を transceiver 解放にしか使わず、`processOfferSdp` の一括置換が実害を起こす経路は本番に存在しないため pending とする。
+
+着手判断のトリガー:
+
+- Sora が `rejected` 用途で port=0 を送る仕様を導入した、または導入予告された場合
+- Firefox サポート対象バージョン (113+) で port=0 のまま `onremovetrack` 不発が再現するか、`rejected` 表明が `processOfferSdp` で破壊される事象が確認された場合
+- Firefox 109.0 で確認したワークアラウンドが現在のサポート下限 (113+) で本当に必要かを再検証して必要と判定された場合
