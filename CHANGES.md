@@ -45,6 +45,8 @@
   - @voluntas
 - [FIX] generateCertificate が失敗した環境 (FIPS モード等) でも接続できるようにフォールバックする
   - @voluntas
+- [FIX] disconnect() で DataChannel 切断エラー (code 4999) 時に abend event が normal で上書きされないようにする
+  - @voluntas
 
 ### misc
 

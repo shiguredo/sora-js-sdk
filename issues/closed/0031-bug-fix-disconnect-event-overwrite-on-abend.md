@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-25
 - Polished: 2026-06-08
+- Completed: 2026-06-11
 - Model: Composer 2.5
 - Branch: feature/fix-disconnect-event-overwrite
 
@@ -118,3 +119,40 @@ if (result.code === 4999) {
   - [FIX] disconnect() で DataChannel 切断エラー (code 4999) 時に abend event が normal で上書きされないようにする
     - @voluntas
   ```
+
+## 解決方法
+
+### `src/base.ts` の修正
+
+`disconnect()` 内の `signalingSwitched === true` 経路 (`src/base.ts:1122-1146`) を以下のとおり修正した。
+
+- `result.code === 4999` のときは `event` を abend として通知する `if` 分岐に切り出し、normal による無条件上書きを停止した。`else` 分岐で従来どおり normal を生成する。
+- abend event には `soraCloseEvent` の第 3 引数 `initDict` 経由で `code` と `reason` を付与した。これによりアプリ側が `event.code` / `event.reason` から原因 (`DisconnectWaitTimeoutError` / `DisconnectInternalError` / `DisconnectDataChannelError`) を判別できる。
+- `title` (第 2 引数) には `result.reason` をそのまま渡す。本来 abend の `title` は `SoraAbendTitle` (`src/types.ts:498-505`) の体系だが、本 issue のスコープ外として `title` 統一は別 issue に委ねる。コメントでもその旨を明記している。
+- lint ルール `unicorn/prefer-ternary` は意図的に `eslint-disable-next-line` で抑止した。本 issue の設計方針 (`if/else` 分岐化) と、各分岐に対応する詳細コメントを残すため、ternary より `if/else` の方が読みやすい。
+
+### `e2e-tests/data_channel_signaling_only/` fixture の修正
+
+- `index.html` に `#disconnect-event-type` / `#disconnect-event-reason` の `div` を追加した (初期値は空)。
+- `main.ts` に以下を追加した。
+  - URL クエリ `?disconnectWaitTimeout=...` を読み取って `ConnectionOptions.disconnectWaitTimeout` に流し込む。`"0"` を falsy で握り潰さないため `=== null` で明示判定している (lint ルール `no-negated-condition` 回避を兼ねた書き方)。
+  - `SoraClient` の constructor に optional 引数 `disconnectWaitTimeout?: number` を追加し、constructor 内で `options` オブジェクトを組み立てるよう変更した。未指定時は SDK 既定値 (3000ms) に委ねる。
+  - `connection.on("disconnect", this.onDisconnect.bind(this))` で disconnect callback を登録する。`onDisconnect` は `event.type` / `event.reason` を DOM に出力する。後続 issue (0002) で disconnect 回数を数える処理を追加する際には、本 handler 内に処理を統合する旨をコメントで明示した (handler 二重登録禁止)。
+
+### `e2e-tests/tests/disconnect_event_type.test.ts` の追加
+
+`?disconnectWaitTimeout=0` を渡して `Promise.race` を timeout 側に確実に倒し、switched 後の `disconnect()` を呼ぶと `event.type === "abend"` かつ `event.reason === "DISCONNECT-WAIT-TIMEOUT-ERROR"` になることを確認する E2E テストを追加した。
+
+- バージョンチェックは本 fix のリグレッション検知を担保するため `majorVersion: 2026, minorVersion: 1` 以上で実行する。
+- 938 経路 (`!this.soraDataChannels.signaling`) は `signalingSwitched === false` 側に該当し本 fix の修正範囲外、DC `onerror` 経路は AGENTS.md「モック・スタブ禁止」と整合する形で fixture 化できないため、テストファイル冒頭コメントでスコープを明示した。
+- normal 経路 (4999 ではない `code: 1000` / `reason: "TYPE-DISCONNECT"`) の確認は別 issue (0002) で `#disconnect-count` を含めて追加する想定のため、本テストでは扱わない旨をコメントで明示した。
+- 単体テスト (vitest) は `soraCloseEvent` が `private` のため追加できない旨も併記した。
+
+### CHANGES.md の更新
+
+`## develop` セクションの `[FIX]` ブロックに以下を追記した。
+
+```
+- [FIX] disconnect() で DataChannel 切断エラー (code 4999) 時に abend event が normal で上書きされないようにする
+  - @voluntas
+```

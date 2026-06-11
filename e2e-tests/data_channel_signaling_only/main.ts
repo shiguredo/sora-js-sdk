@@ -8,6 +8,7 @@ import type {
   SignalingNotifyConnectionCreated,
   SignalingNotifyMessage,
   SignalingSwitchedMessage,
+  SoraCloseEvent,
   SoraConnection,
 } from "sora-js-sdk";
 
@@ -19,6 +20,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   const apiUrl = import.meta.env.VITE_TEST_API_URL;
 
   setSoraJsSdkVersion();
+
+  // URL クエリから disconnectWaitTimeout を読む
+  // `null` のときだけ undefined を返し、それ以外 (`"0"` を含む) は parseInt する。
+  // `if (v)` で `"0"` を握り潰さないために `=== null` で明示判定する。
+  const disconnectWaitTimeoutParam = new URLSearchParams(location.search).get(
+    "disconnectWaitTimeout",
+  );
+  const disconnectWaitTimeout =
+    disconnectWaitTimeoutParam === null
+      ? undefined
+      : Number.parseInt(disconnectWaitTimeoutParam, 10);
 
   let client: SoraClient;
 
@@ -41,6 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       secretKey,
       channelName,
       apiUrl,
+      disconnectWaitTimeout,
     );
     await client.connect(stream);
   });
@@ -86,11 +99,7 @@ class SoraClient {
   private readonly debug = false;
   private readonly channelId: string;
   private readonly metadata: { access_token: string };
-  private readonly options: ConnectionOptions = {
-    connectionTimeout: 15_000,
-    dataChannelSignaling: true,
-    ignoreDisconnectWebSocket: true,
-  };
+  private readonly options: ConnectionOptions;
 
   private readonly sora: SoraConnection;
   private readonly connection: ConnectionPublisher;
@@ -104,8 +113,21 @@ class SoraClient {
     secretKey: string,
     channelName: string,
     apiUrl: string,
+    disconnectWaitTimeout?: number,
   ) {
     this.apiUrl = apiUrl;
+
+    // 既存のハードコード値に disconnectWaitTimeout だけを差し込む
+    // 未指定 (`undefined`) の場合は SDK 既定値 (3000ms) に委ねる
+    const options: ConnectionOptions = {
+      connectionTimeout: 15_000,
+      dataChannelSignaling: true,
+      ignoreDisconnectWebSocket: true,
+    };
+    if (disconnectWaitTimeout !== undefined) {
+      options.disconnectWaitTimeout = disconnectWaitTimeout;
+    }
+    this.options = options;
 
     this.sora = Sora.connection(signalingUrl, this.debug);
 
@@ -118,6 +140,7 @@ class SoraClient {
     this.connection.on("notify", this.onNotify.bind(this));
     this.connection.on("connected", this.onConnected.bind(this));
     this.connection.on("switched", this.onSwitched.bind(this));
+    this.connection.on("disconnect", this.onDisconnect.bind(this));
 
     // E2E テスト用のコード
     this.connection.on("signaling", this.onSignaling.bind(this));
@@ -175,6 +198,22 @@ class SoraClient {
     const switchedStatusElement = document.querySelector("#switched-status");
     if (switchedStatusElement) {
       switchedStatusElement.textContent = "switched";
+    }
+  }
+
+  // disconnect コールバック
+  // E2E テストから event.type / event.reason を assert するために DOM に出力する。
+  // 注意: handler 二重登録禁止。後続 issue (0002) で disconnect 回数を数える処理を
+  // 追加する場合も、新規 handler を作らず本メソッド内に処理を統合すること。
+  private onDisconnect(event: SoraCloseEvent): void {
+    console.log("[disconnect]", event);
+    const disconnectEventTypeElement = document.querySelector("#disconnect-event-type");
+    if (disconnectEventTypeElement) {
+      disconnectEventTypeElement.textContent = event.type;
+    }
+    const disconnectEventReasonElement = document.querySelector("#disconnect-event-reason");
+    if (disconnectEventReasonElement) {
+      disconnectEventReasonElement.textContent = event.reason ?? "";
     }
   }
 
