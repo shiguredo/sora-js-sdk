@@ -137,7 +137,7 @@ canary タグ (`2025.2.0-canary.0` 等) は `verify-version` 通過後 `npm-publ
 
 ## スコープ外
 
-- `shiguredo/github-actions` の SHA 固定 (issue 0025)
+- `shiguredo/github-actions` の SHA 固定 (issue 0025 で対応不要と判定済み)
 - workflow `permissions` の最小権限化 (issue 0026)
 - `npm publish --provenance` 追加 (issue 0033)
 - Slack notify の `status: ${{ job.status }}` 変更 (issue 0023 で対応不要と判定済み)
@@ -145,4 +145,4 @@ canary タグ (`2025.2.0-canary.0` 等) は `verify-version` 通過後 `npm-publ
 
 ## マージ順
 
-**0024 を最初にマージする。** 0025 / 0026 が同じ `npm-publish.yml` を編集するため、0024 → 0025 → 0026 の順を推奨する。
+**0024 を最初にマージする。** 0026 が同じ `npm-publish.yml` を編集するため、0024 → 0026 の順を推奨する。

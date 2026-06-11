@@ -79,7 +79,7 @@ Trusted Publishing 未設定のまま `--provenance` を入れない。npmjs.com
 
 ## 変更履歴
 
-- `CHANGES.md` `## develop` の `### misc` に追記する (CI / リリースパイプラインの変更で SDK の機能には影響しないため misc)。種別順 CHANGE → ADD → UPDATE → FIX を守り、`[ADD]` は **`[CHANGE]` 群と `[FIX]` 群の間** に置く (0024/0025/0026 が先にマージされ misc に `[FIX]` 3 件が並ぶため、それらの上)
+- `CHANGES.md` `## develop` の `### misc` に追記する (CI / リリースパイプラインの変更で SDK の機能には影響しないため misc)。種別順 CHANGE → ADD → UPDATE → FIX を守り、`[ADD]` は **`[CHANGE]` 群と `[FIX]` 群の間** に置く (0024 / 0026 が先にマージされ misc に `[FIX]` 2 件が並ぶため、それらの上。0025 は対応不要で close)
 
   ```
   - [ADD] npm publish に --provenance を追加して supply chain 透明性を向上させる
@@ -89,7 +89,7 @@ Trusted Publishing 未設定のまま `--provenance` を入れない。npmjs.com
 ## マージ順
 
 ```
-0024 → 0025 → 0026 → 0033
+0024 → 0026 → 0033
 ```
 
-0024 (タグ検証) / 0026 (permissions 最小化) 完了後に着手する。0025 (slack-notify の SHA 固定) は `npm-publish.yml` の slack-notify 行のみを触り、0033 は publish コマンド行のみを触るためコンフリクトしない (順序上 0025 を経由するだけ)。着手前条件として Trusted Publishing 設定が別途必要 (リポジトリ外作業)。
+0024 (タグ検証) / 0026 (permissions 最小化) 完了後に着手する。0025 (slack-notify の SHA 固定) は対応不要として close 済みのためマージ順に含めない。着手前条件として Trusted Publishing 設定が別途必要 (リポジトリ外作業)。

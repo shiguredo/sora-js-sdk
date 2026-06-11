@@ -125,10 +125,10 @@ permissions:
 ## スコープ外
 
 - `npm-publish.yml` のタグ検証 (issue 0024)
-- `slack-notify` SHA 固定 (issue 0025)
+- `slack-notify` SHA 固定 (issue 0025 で対応不要と判定済み)
 - `npm publish --provenance` (issue 0033)
 - Playwright flaky 検出 (issue 0027)
 
 ## マージ順
 
-**0024 / 0025 の後。** 0024 → 0025 → 0026 を推奨する。0027 は `playwright.config.ts` のみ変更し E2E workflow を触らないため、本 issue とはコンフリクトせず順序の制約もない。
+**0024 の後。** 0024 → 0026 を推奨する。0027 は `playwright.config.ts` のみ変更し E2E workflow を触らないため、本 issue とはコンフリクトせず順序の制約もない。
