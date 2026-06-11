@@ -1,6 +1,6 @@
 # `forwardingFilter` と `forwardingFilters` の同時指定時に両方を送信して Sora に接続拒否される
 
-- Priority: High
+- Priority: Low
 - Created: 2026-05-21
 - Polished: 2026-06-08
 - Model: Opus 4.7
@@ -123,3 +123,12 @@ test("forwardingFilters のみ指定では throw しない", () => {
 ```
 
 - 同一関数 `createSignalingMessage` を編集するため **0016 を先にマージ**
+
+## pending にした理由
+
+`forwardingFilter` と `forwardingFilters` を同時指定した場合は **Sora 側で接続を拒否する** ため、SDK 側で同期 `Error` を throw してまで早期検出する必要性は低い。Sora からの拒否レスポンスでも開発者は誤用に気付ける。SDK と Sora の二重バリデーションは責務の重複でもあり、本 issue が提案する厳密な事前チェックは過剰と判断した。
+
+着手判断のトリガー:
+
+- Sora 側の拒否レスポンスだけでは開発者が誤用に気付けないという実例が出てきた場合
+- SDK 側で同期 throw する利点 (connect 前の早期検出) が、二重バリデーションの保守コストを上回ると判断できた場合
