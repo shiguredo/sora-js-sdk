@@ -55,6 +55,8 @@
 - [FIX] ConnectionBase constructor で options を shallow copy し skipIceCandidateEvent の内部代入が呼び出し側 options に漏れないように修正する
   - 上記 messaging() の修正とあわせて、同一 options を sendrecv() / sendonly() / recvonly() と messaging() に渡したときに先行 Connection の options まで書き換わる問題も解消する
   - @voluntas
+- [FIX] trace() が JWT 等の機密を含む metadata を console / callbacks.log に raw 出力していたセキュリティ問題を redact で修正する
+  - @voluntas
 
 ### misc
 

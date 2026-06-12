@@ -74,6 +74,7 @@ import {
   isFirefox,
   isSafari,
   parseDataChannelEventData,
+  redact,
   trace,
 } from "./utils";
 
@@ -1901,15 +1902,21 @@ export default class ConnectionBase {
   /**
    * trace log を出力するメソッド
    *
+   * @remarks
+   * `callbacks.log` (debug 無関係で常に呼ばれる) と console 出力 (utils.trace、
+   * `this.debug === true` 時のみ) の両経路に同じ redact 済み参照を渡すことで、
+   * JWT 等の機密情報を含む `metadata` 等のキーが平文露出しないように一括で塞ぐ
+   *
    * @param title - ログのタイトル
    * @param message - ログの本文
    */
   protected trace(title: string, message: unknown): void {
-    this.callbacks.log(title, message as JSONType);
+    const redacted = redact(message) as JSONType;
+    this.callbacks.log(title, redacted);
     if (!this.debug) {
       return;
     }
-    trace(this.clientId, title, message);
+    trace(this.clientId, title, redacted);
   }
 
   /**
