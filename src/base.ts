@@ -789,46 +789,46 @@ export default class ConnectionBase {
       }
     }
     // 終了処理を開始する
-    if (this.soraDataChannels.signaling) {
+    if (this.soraDataChannels["signaling"]) {
       const message = {
         reason: title,
         type: SIGNALING_MESSAGE_TYPE_DISCONNECT,
       };
-      if (this.signalingOfferMessageDataChannels.signaling?.compress === true) {
+      if (this.signalingOfferMessageDataChannels["signaling"]?.compress === true) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const compressedMessage = await compressMessage(binaryMessage);
-        if (this.soraDataChannels.signaling.readyState === "open") {
+        if (this.soraDataChannels["signaling"].readyState === "open") {
           // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
           try {
-            this.soraDataChannels.signaling.send(compressedMessage);
+            this.soraDataChannels["signaling"].send(compressedMessage);
             this.writeDataChannelSignalingLog(
               "send-disconnect",
-              this.soraDataChannels.signaling,
+              this.soraDataChannels["signaling"],
               message,
             );
           } catch (error) {
             const errorMessage = (error as Error).message;
             this.writeDataChannelSignalingLog(
               "failed-to-send-disconnect",
-              this.soraDataChannels.signaling,
+              this.soraDataChannels["signaling"],
               errorMessage,
             );
           }
         }
-      } else if (this.soraDataChannels.signaling.readyState === "open") {
+      } else if (this.soraDataChannels["signaling"].readyState === "open") {
         // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
         try {
-          this.soraDataChannels.signaling.send(JSON.stringify(message));
+          this.soraDataChannels["signaling"].send(JSON.stringify(message));
           this.writeDataChannelSignalingLog(
             "send-disconnect",
-            this.soraDataChannels.signaling,
+            this.soraDataChannels["signaling"],
             message,
           );
         } catch (error) {
           const errorMessage = (error as Error).message;
           this.writeDataChannelSignalingLog(
             "failed-to-send-disconnect",
-            this.soraDataChannels.signaling,
+            this.soraDataChannels["signaling"],
             errorMessage,
           );
         }
@@ -845,7 +845,11 @@ export default class ConnectionBase {
     await this.disconnectWebSocket(title);
     this.maybeClosePeerConnection();
     this.initializeConnection();
-    if (title === "WEBSOCKET-ONCLOSE" && params && (params.code === 1000 || params.code === 1005)) {
+    if (
+      title === "WEBSOCKET-ONCLOSE" &&
+      params &&
+      (params["code"] === 1000 || params["code"] === 1005)
+    ) {
       const event = this.soraCloseEvent("normal", "DISCONNECT", params);
       this.writeSoraTimelineLog("disconnect-normal", event);
       this.callbacks.disconnect(event);
@@ -975,7 +979,7 @@ export default class ConnectionBase {
     reason: string;
   }> {
     // label: signaling が存在しない場合は閉じて終了
-    if (!this.soraDataChannels.signaling) {
+    if (!this.soraDataChannels["signaling"]) {
       // それ以外の DataChannel を強制的に閉じる
       this.forceCloseDataChannels();
       return { code: 4999, reason: new DisconnectInternalError().message };
@@ -1016,44 +1020,44 @@ export default class ConnectionBase {
       reason: "NO-ERROR",
       type: SIGNALING_MESSAGE_TYPE_DISCONNECT,
     };
-    if (this.signalingOfferMessageDataChannels.signaling?.compress === true) {
+    if (this.signalingOfferMessageDataChannels["signaling"]?.compress === true) {
       const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
       const compressedMessage = await compressMessage(binaryMessage);
       if (
-        this.soraDataChannels.signaling?.readyState &&
-        this.soraDataChannels.signaling.readyState === "open"
+        this.soraDataChannels["signaling"]?.readyState &&
+        this.soraDataChannels["signaling"].readyState === "open"
       ) {
         // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
         try {
-          this.soraDataChannels.signaling.send(compressedMessage);
+          this.soraDataChannels["signaling"].send(compressedMessage);
           this.writeDataChannelSignalingLog(
             "send-disconnect",
-            this.soraDataChannels.signaling,
+            this.soraDataChannels["signaling"],
             message,
           );
         } catch (error) {
           const errorMessage = (error as Error).message;
           this.writeDataChannelSignalingLog(
             "failed-to-send-disconnect",
-            this.soraDataChannels.signaling,
+            this.soraDataChannels["signaling"],
             errorMessage,
           );
         }
       }
-    } else if (this.soraDataChannels.signaling.readyState === "open") {
+    } else if (this.soraDataChannels["signaling"].readyState === "open") {
       // Firefox で readyState が open でも DataChannel send で例外がでる場合があるため処理する
       try {
-        this.soraDataChannels.signaling.send(JSON.stringify(message));
+        this.soraDataChannels["signaling"].send(JSON.stringify(message));
         this.writeDataChannelSignalingLog(
           "send-disconnect",
-          this.soraDataChannels.signaling,
+          this.soraDataChannels["signaling"],
           message,
         );
       } catch (error) {
         const errorMessage = (error as Error).message;
         this.writeDataChannelSignalingLog(
           "failed-to-send-disconnect",
-          this.soraDataChannels.signaling,
+          this.soraDataChannels["signaling"],
           errorMessage,
         );
       }
@@ -1193,6 +1197,11 @@ export default class ConnectionBase {
         typeof signalingUrlCandidates === "string"
           ? signalingUrlCandidates
           : signalingUrlCandidates[0];
+      // noUncheckedIndexedAccess により signalingUrlCandidates[0] は string | undefined になる
+      // length === 1 のチェック直後なのでランタイムでは undefined にならないが、型を絞り込むため明示的にチェックする
+      if (signalingUrl === undefined) {
+        throw new ConnectError("Signaling failed. signalingUrl is undefined.");
+      }
       return new Promise((resolve, reject) => {
         const ws = new WebSocket(signalingUrl);
         ws.onclose = (event): void => {
@@ -2470,17 +2479,17 @@ export default class ConnectionBase {
     type: string;
     [key: string]: unknown;
   }): Promise<void> {
-    if (this.soraDataChannels.signaling) {
-      if (this.signalingOfferMessageDataChannels.signaling?.compress === true) {
+    if (this.soraDataChannels["signaling"]) {
+      if (this.signalingOfferMessageDataChannels["signaling"]?.compress === true) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const compressedMessage = await compressMessage(binaryMessage);
-        this.soraDataChannels.signaling.send(compressedMessage);
+        this.soraDataChannels["signaling"].send(compressedMessage);
       } else {
-        this.soraDataChannels.signaling.send(JSON.stringify(message));
+        this.soraDataChannels["signaling"].send(JSON.stringify(message));
       }
       this.writeDataChannelSignalingLog(
         `send-${message.type}`,
-        this.soraDataChannels.signaling,
+        this.soraDataChannels["signaling"],
         message,
       );
     } else if (this.ws !== null) {
@@ -2495,17 +2504,17 @@ export default class ConnectionBase {
    * @param reports - RTCStatsReport のリスト
    */
   private async sendStatsMessage(reports: RTCStatsReport[]): Promise<void> {
-    if (this.soraDataChannels.stats) {
+    if (this.soraDataChannels["stats"]) {
       const message = {
         reports,
         type: SIGNALING_MESSAGE_TYPE_STATS,
       };
-      if (this.signalingOfferMessageDataChannels.stats?.compress === true) {
+      if (this.signalingOfferMessageDataChannels["stats"]?.compress === true) {
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const compressedMessage = await compressMessage(binaryMessage);
-        this.soraDataChannels.stats.send(compressedMessage);
+        this.soraDataChannels["stats"].send(compressedMessage);
       } else {
-        this.soraDataChannels.stats.send(JSON.stringify(message));
+        this.soraDataChannels["stats"].send(JSON.stringify(message));
       }
     }
   }
@@ -2646,11 +2655,15 @@ export default class ConnectionBase {
       const messagingDataChannel: DataChannelConfiguration = {
         compress: settings.compress,
         direction: settings.direction,
-        header: settings.header,
         label: dataChannel.label,
         ordered: dataChannel.ordered,
         protocol: dataChannel.protocol,
       };
+      // exactOptionalPropertyTypes 対応のため、optional プロパティは undefined ではなく
+      // プロパティ自体を含めないよう条件で代入する
+      if (settings.header !== undefined) {
+        messagingDataChannel.header = settings.header;
+      }
       if (typeof dataChannel.maxPacketLifeTime === "number") {
         messagingDataChannel.maxPacketLifeTime = dataChannel.maxPacketLifeTime;
       }
@@ -2682,7 +2695,7 @@ export default class ConnectionBase {
     params?: Record<string, unknown> | unknown[],
     options?: RPCOptions,
   ): Promise<T> {
-    const rpcDataChannel = this.soraDataChannels.rpc;
+    const rpcDataChannel = this.soraDataChannels["rpc"];
     if (rpcDataChannel?.readyState !== "open") {
       throw new Error("RPC DataChannel is not available or not open");
     }
@@ -2690,24 +2703,24 @@ export default class ConnectionBase {
     // notification の場合は id を含めない
     const isNotification = options?.notification === true;
     const id = isNotification ? undefined : ++this.rpcRequestIdCounter;
-    const request: JSONRPCRequest = isNotification
-      ? {
-          jsonrpc: "2.0",
-          method,
-          params,
-        }
-      : {
-          id,
-          jsonrpc: "2.0",
-          method,
-          params,
-        };
+    // exactOptionalPropertyTypes 対応のため、optional プロパティは undefined ではなく
+    // プロパティ自体を含めないよう条件で代入する
+    const request: JSONRPCRequest = {
+      jsonrpc: "2.0",
+      method,
+    };
+    if (id !== undefined) {
+      request.id = id;
+    }
+    if (params !== undefined) {
+      request.params = params;
+    }
 
     return new Promise<T>((resolve, reject) => {
       // notification の場合はレスポンスを待たずに即座に resolve
       if (isNotification) {
         const message = JSON.stringify(request);
-        const dataChannelSettings = this.signalingOfferMessageDataChannels.rpc;
+        const dataChannelSettings = this.signalingOfferMessageDataChannels["rpc"];
 
         if (dataChannelSettings?.compress) {
           compressMessage(new TextEncoder().encode(message))
@@ -2767,7 +2780,7 @@ export default class ConnectionBase {
       });
 
       const message = JSON.stringify(request);
-      const dataChannelSettings = this.signalingOfferMessageDataChannels.rpc;
+      const dataChannelSettings = this.signalingOfferMessageDataChannels["rpc"];
 
       if (dataChannelSettings?.compress) {
         compressMessage(new TextEncoder().encode(message))

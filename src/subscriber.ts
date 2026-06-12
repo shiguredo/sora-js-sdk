@@ -39,6 +39,11 @@ export default class ConnectionSubscriber extends ConnectionBase {
     if (this.pc) {
       this.pc.ontrack = (event): void => {
         const stream = event.streams[0];
+        // noUncheckedIndexedAccess により event.streams[0] は MediaStream | undefined になる
+        // stream が存在しない場合は以降の処理を行わない
+        if (!stream) {
+          return;
+        }
         if (stream.id === "default") {
           return;
         }
