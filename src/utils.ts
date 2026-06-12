@@ -165,7 +165,7 @@ export function createSignalingMessage(
   if (typeof options.spotlight === "boolean") {
     message.spotlight = options.spotlight;
   }
-  if ("spotlightNumber" in options) {
+  if (typeof options.spotlightNumber === "number") {
     message.spotlight_number = options.spotlightNumber;
   }
   const spotlightFocusRids = ["none", "r0", "r1", "r2"];
@@ -235,13 +235,27 @@ export function createSignalingMessage(
     if (key === "video" && typeof copyOptions[key] === "boolean") {
       continue;
     }
-    if (audioPropertyKeys.includes(key) && copyOptions[key] !== null) {
+    // null だけでなく undefined も delete 側に流すために両方を明示的に弾く
+    // (`!== null` 単独だと `undefined !== null` が真になり `undefined` キーが残ってしまうため)
+    if (
+      audioPropertyKeys.includes(key) &&
+      copyOptions[key] !== null &&
+      copyOptions[key] !== undefined
+    ) {
       continue;
     }
-    if (audioOpusParamsPropertyKeys.includes(key) && copyOptions[key] !== null) {
+    if (
+      audioOpusParamsPropertyKeys.includes(key) &&
+      copyOptions[key] !== null &&
+      copyOptions[key] !== undefined
+    ) {
       continue;
     }
-    if (videoPropertyKeys.includes(key) && copyOptions[key] !== null) {
+    if (
+      videoPropertyKeys.includes(key) &&
+      copyOptions[key] !== null &&
+      copyOptions[key] !== undefined
+    ) {
       continue;
     }
     delete copyOptions[key];

@@ -47,6 +47,9 @@
   - @voluntas
 - [FIX] disconnect() で DataChannel 切断エラー (code 4999) 時に abend event が normal で上書きされないようにする
   - @voluntas
+- [FIX] createSignalingMessage で `{ audioBitRate: undefined }` のような呼び出しで message.audio / message.video が boolean true から空オブジェクト {} に置換されていたのを修正する
+  - 関連して spotlightNumber / audioOpusParams\* に undefined を渡しても message に undefined キーが積まれないようにする
+  - @voluntas
 
 ### misc
 

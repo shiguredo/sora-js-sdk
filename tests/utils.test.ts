@@ -184,6 +184,30 @@ test("createSignalingMessage audio parameters", () => {
   ).toStrictEqual(expectedMessage);
 });
 
+test("createSignalingMessage audioBitRate: undefined", () => {
+  // audioBitRate: undefined 単独の場合、copyOptions delete ループで undefined キーが除去されるため
+  // hasAudioProperty が false のまま message.audio は boolean true を保つ
+  const options = {
+    audioBitRate: undefined,
+  };
+  expect(
+    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
+  ).toStrictEqual(baseExpectedMessage);
+});
+
+test("createSignalingMessage audioBitRate: 100, audioCodecType: undefined", () => {
+  // 有効値 audioBitRate: 100 のみが拾われ、undefined の audioCodecType は delete ループで除外される
+  // (修正前は codec_type: undefined キーも message.audio に残り audio: { codec_type: undefined, bit_rate: 100 } となるため toStrictEqual で fail する)
+  const options = {
+    audioBitRate: 100,
+    audioCodecType: undefined,
+  };
+  const expectedMessage = { ...baseExpectedMessage, audio: { bit_rate: 100 } };
+  expect(
+    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
+  ).toStrictEqual(expectedMessage);
+});
+
 test("createSignalingMessage audioOpusParamsChannels", () => {
   const options = {
     audioOpusParamsChannels: 2,
@@ -320,6 +344,17 @@ test("createSignalingMessage audioOpusParamsUsedtx", () => {
   ).toStrictEqual(expectedMessage);
 });
 
+test("createSignalingMessage audioOpusParamsChannels: undefined", () => {
+  // audioOpusParamsChannels: undefined 単独の場合、copyOptions delete ループで undefined キーが
+  // 除去されるため hasAudioOpusParamsProperty が false のまま opus_params の {} 化は発生しない
+  const options = {
+    audioOpusParamsChannels: undefined,
+  };
+  expect(
+    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
+  ).toStrictEqual(baseExpectedMessage);
+});
+
 /**
  * video test
  */
@@ -370,6 +405,17 @@ test("createSignalingMessage video parameters", () => {
   expect(
     createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
   ).toStrictEqual(expectedMessage);
+});
+
+test("createSignalingMessage videoBitRate: undefined", () => {
+  // videoBitRate: undefined 単独の場合、copyOptions delete ループで undefined キーが除去されるため
+  // hasVideoProperty が false のまま message.video は boolean true を保つ
+  const options = {
+    videoBitRate: undefined,
+  };
+  expect(
+    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
+  ).toStrictEqual(baseExpectedMessage);
 });
 
 /**
@@ -808,14 +854,11 @@ test("createSignalingMessage spotlightNumber: undefined", () => {
   const options = {
     spotlightNumber: undefined,
   };
-  // spotlightNumber が options に含まれる場合は undefined でも spotlight_number が設定される
-  const expectedMessage = {
-    ...baseExpectedMessage,
-    spotlight_number: undefined,
-  };
+  // spotlightNumber: undefined は typeof options.spotlightNumber === "number" ガードで弾かれ
+  // message.spotlight_number キー自体が積まれない
   expect(
     createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
-  ).toStrictEqual(expectedMessage);
+  ).toStrictEqual(baseExpectedMessage);
 });
 
 test("createSignalingMessage audioStreamingLanguageCode: undefined", () => {

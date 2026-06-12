@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Polished: 2026-06-11
+- Completed: 2026-06-12
 - Model: Opus 4.7
 - Branch: feature/fix-undefined-options-in-create-signaling-message
 
@@ -122,3 +123,20 @@ test("createSignalingMessage audioBitRate: 100, audioCodecType: undefined", () =
 - `tests/utils.test.ts` に「3-2」のケース表 4 件を新規追加する
 - ローカルで `pnpm test` / `pnpm typecheck` / `pnpm lint` が pass し、`pnpm fmt` で差分が出ないこと
 - `CHANGES.md` `## develop` 本体に `[FIX]` エントリ 1 件を追記する
+
+## 解決方法
+
+設計方針 1 / 2 / 3 / 4 をすべて反映した。
+
+- `src/utils.ts:168-170`: `"spotlightNumber" in options` を `typeof options.spotlightNumber === "number"` に変更。`spotlightNumber: undefined` で `message.spotlight_number = undefined` が積まれる経路を塞いだ
+- `src/utils.ts:238-260`: 3 つの `continue` 条件の `copyOptions[key] !== null` を `copyOptions[key] !== null && copyOptions[key] !== undefined` に変更
+  - 設計方針 2 は `copyOptions[key] != null` (loose equality) を提案していたが、リポジトリの lint 設定 `vite.config.ts:162` が `eqeqeq: "error"` を有効にしており `!=` / `==` を許容しないため、動作上等価な `!== null && !== undefined` (strict equality の AND) を採用した
+  - `undefined != null` ⇔ `!(undefined !== null && undefined !== undefined)` ⇔ false で挙動完全一致
+- `tests/utils.test.ts:807-819` (旧位置): 期待値を `baseExpectedMessage` に書き換え、コメントを `typeof === "number"` ガード根拠に更新
+- `tests/utils.test.ts`: 新規回帰テスト 4 件を追加
+  - `createSignalingMessage audioBitRate: undefined` (audio parameters テスト直後)
+  - `createSignalingMessage audioBitRate: 100, audioCodecType: undefined` (ケース 1 直後、混在ケース)
+  - `createSignalingMessage audioOpusParamsChannels: undefined` (audioOpusParamsUsedtx テスト直後、opus_params 群末尾)
+  - `createSignalingMessage videoBitRate: undefined` (video parameters テスト直後)
+- ローカル検証: `pnpm test` (82 件 pass) / `pnpm typecheck` / `pnpm lint` / `pnpm fmt` すべて pass・差分なし
+- `CHANGES.md` `## develop` 本体の `[FIX]` 群末尾に `[FIX]` エントリ 1 件を追記
