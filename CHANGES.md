@@ -50,6 +50,11 @@
 - [FIX] createSignalingMessage で `{ audioBitRate: undefined }` のような呼び出しで message.audio / message.video が boolean true から空オブジェクト {} に置換されていたのを修正する
   - 関連して spotlightNumber / audioOpusParams\* に undefined を渡しても message に undefined キーが積まれないようにする
   - @voluntas
+- [FIX] messaging() が呼び出し側に渡された options を破壊しないように修正する
+  - @voluntas
+- [FIX] ConnectionBase constructor で options を shallow copy し skipIceCandidateEvent の内部代入が呼び出し側 options に漏れないように修正する
+  - 上記 messaging() の修正とあわせて、同一 options を sendrecv() / sendonly() / recvonly() と messaging() に渡したときに先行 Connection の options まで書き換わる問題も解消する
+  - @voluntas
 
 ### misc
 

@@ -261,7 +261,8 @@ export default class ConnectionBase {
     this.channelId = channelId;
     this.metadata = metadata;
     this.signalingUrlCandidates = signalingUrlCandidates;
-    this.options = options;
+    // 呼び出し側 options を mutate しないよう shallow copy する
+    this.options = { ...options };
 
     // options に skipIceCandidateEvent が指定されていなかったら false を指定する
     // ちなみに this.options.skipIceCandidateEvent ??= false とも書ける

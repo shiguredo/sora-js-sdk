@@ -212,16 +212,20 @@ class SoraConnection {
     metadata: JSONType = null,
     options: ConnectionOptions = { audio: false, video: false },
   ): ConnectionMessaging {
-    options.audio = false;
-    options.video = false;
-    options.dataChannelSignaling = true;
+    // 呼び出し側 options を mutate しないよう spread でコピーした上で必須値を上書きする
+    const merged: ConnectionOptions = {
+      ...options,
+      audio: false,
+      video: false,
+      dataChannelSignaling: true,
+    };
     return new ConnectionMessaging(
       this.signalingUrlCandidates,
       // messaging は role sendonly として扱う
       "sendonly",
       channelId,
       metadata,
-      options,
+      merged,
       this.debug,
     );
   }
