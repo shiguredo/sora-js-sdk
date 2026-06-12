@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Completed: 2026-06-12
 - Polished: 2026-06-12
 - Model: Opus 4.7
 - Branch: feature/fix-npm-publish-tag-version-mismatch
@@ -219,3 +220,16 @@ glob で `-canary.` を含むタグは canary 命名規約 (`<version>-canary.<n
 ## マージ順
 
 `0024 → 0026 → 0033` を推奨する。0024 と 0026 はいずれも `npm-publish.yml` を編集するが編集箇所は競合しない (0024 は `on.push.tags` / publish ジョブの `if` / 新規 `verify-version` ジョブ + `build` への `needs:` 追加、0026 はトップレベル `permissions:` の `id-token: write` 1 行削除 + e2e 系 5 workflow への `permissions: contents: read` 追加)。0024 のほうが workflow 構造変更が大きく後続 PR の差分が読みやすくなるため、`0024 → 0026` の順を推奨する。
+
+## 解決方法
+
+`.github/workflows/npm-publish.yml` に対して以下 4 点を反映した。
+
+1. `on.push.tags` を `"*"` から CalVer 系 2 つの厳格 glob (`[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*` と `[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*-canary.[0-9]*`) に変更し、4 桁年で始まる CalVer 以外のタグでは workflow が発火しないようにした
+2. `jobs:` 直下 (`build:` の直前) に `verify-version` ジョブを新設した。`permissions: contents: read` のみを明示してトップレベル `permissions:` (`id-token: write` / `contents: read`) の継承を断ち、`actions/checkout` と `actions/setup-node@v6.4.0` (node 22) を経由して、step 単位の `env:` 経由で受けた `TAG_NAME` (`github.ref_name`) と `node -p "require('./package.json').version"` の結果を比較する。一致しない場合は `::error::` を出して `exit 1` する
+3. `build` ジョブの `runs-on: ubuntu-slim` の直後に `needs: [verify-version]` を追加した。`verify-version` が fail / cancel / skipped になった場合は `build` も skip され、後続の `npm-publish-canary` / `npm-publish` も skip される間接ガード経路が成立する (`build` の `if:` は付けない)
+4. `npm-publish-canary` と `npm-publish` の `if:` を `contains(github.ref, 'canary')` から `contains(github.ref_name, '-canary.')` / `!contains(github.ref_name, '-canary.')` に変更した。`-canary.` を末尾区切り込みで判定することで `-canaryfoo` のような誤判定を排除する
+
+既存の publish step (`npm install -g npm@latest` / `npm publish --no-git-checks` / `npm publish --no-git-checks --tag canary`) と `slack_notify` ジョブは無編集のまま維持した。
+
+検証はリポジトリ内で bash の `case` 文による glob 挙動の補助確認と、`verify-version` スクリプトの一致 (`TAG_NAME=2026.1.0-canary.1` で exit 0)・不一致 (`TAG_NAME=2025.2.0` で `::error::` + exit 1) 経路をローカル実行で確認した。tag push による実機 publish 経路の検証は誤 publish のリスクがあるため行っていない (issue 完了条件で許容)。
