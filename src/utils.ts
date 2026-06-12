@@ -376,7 +376,110 @@ export function getSignalingNotifyData(
   return [];
 }
 
+// trace ログ出力時に値を [REDACTED] に置換するキー名の集合
+//
+// metadata / signaling_notify_metadata / authn_metadata / authz_metadata は
+// Sora シグナリングメッセージ・notify メッセージで JWT 等の機密情報を運ぶ
+// 実フィールドのため、必ず redact する
+//
+// access_token / secret は Sora のシグナリングメッセージのトップレベルには
+// 通常現れないが、利用者が指定する metadata の内部 (例: { metadata: { access_token } })
+// や非 metadata キー配下に機密が現れた場合に再帰で捕捉するための defensive な
+// キーとして含める
+//
+// 注意: REDACT_KEYS は types.ts の型定義と自動連動しない。機密キーが types.ts に
+// 追加された場合は手動でここに追加すること
+const REDACT_KEYS = new Set([
+  "metadata",
+  "signaling_notify_metadata",
+  "authn_metadata",
+  "authz_metadata",
+  "access_token",
+  "secret",
+]);
+
+/**
+ * trace ログ出力時に機密キーの値を `[REDACTED]` に置換する
+ *
+ * @remarks
+ * 入力は JSON サブセット (JSONType) を想定する。trace 経路に渡る値は signaling
+ * メッセージ等の plain object / 配列 / プリミティブが大半。
+ *
+ * 挙動:
+ *
+ * - キー名の完全一致のみで判定する。値の中身を走査して JWT 文字列を検出する処理はしない
+ * - 入力オブジェクトを mutation せず、plain object / 配列の場合は新しい値を返す
+ *   (非破壊)。プリミティブ・クラスインスタンスは同じ参照/値を返す
+ * - ネストしたオブジェクト・配列も再帰的に処理する
+ * - プリミティブ値・null・undefined はそのまま返す
+ * - 文字列 (例: `OFFER SDP` で渡される SDP 文字列) は早期 return 経路を通過するため
+ *   redact 対象外 (issue 0020 設計方針より SDP は redact しない)
+ * - `bigint` / `symbol` / `function` は JSONType の範囲外だが、早期 return 経路で
+ *   そのまま素通りする。trace の呼び出し元はこれらを渡さない前提
+ * - `Date` / `RegExp` / `RTCCertificate` / `RTCIceCandidate` 等の plain object
+ *   ではないクラスインスタンスはそのまま返す。これらは `Object.entries` で
+ *   getter ベースのプロパティが拾えず空オブジェクトに潰れてしまうため、
+ *   `Object.getPrototypeOf` で plain object 判定して bypass する。前提として
+ *   現状の trace 呼び出しサイトではクラスインスタンスの中に機密キーは含まれない
+ *   (`RTCCertificate` / `RTCIceCandidate` 等のブラウザネイティブオブジェクトは
+ *   metadata 等の機密フィールドを持たない)
+ * - `Object.create(null)` 由来の prototype が `null` のオブジェクトは plain object
+ *   と同等に redact 対象として扱う
+ * - 循環参照を持つオブジェクトは `WeakSet` で検出し、再訪時は `"[Circular]"`
+ *   文字列に置換することでスタックオーバーフローを防ぐ。`WeakSet` は再帰ツリー
+ *   全体で共有されるため、DAG 構造 (同一オブジェクトを複数箇所から参照) でも
+ *   後から訪れた参照は `"[Circular]"` に置換される。trace 経路に渡る値は signaling
+ *   メッセージ等の tree 構造のみで、DAG は通常発生しない
+ *
+ * 利用範囲: trace 経路 (`utils.trace` / `ConnectionBase.trace`) 専用の内部ヘルパ。
+ * SDK 利用者向けの公開 API ではない。
+ *
+ * @internal
+ * @param value - redact 対象の値
+ * @returns 機密キーの値が `[REDACTED]` に置換された値
+ */
+export function redact(value: unknown): unknown {
+  return redactInner(value, new WeakSet());
+}
+
+/**
+ * `redact` の再帰実装本体。訪問済みオブジェクト集合 `seen` を伝播させて
+ * 循環参照を検出する
+ */
+function redactInner(value: unknown, seen: WeakSet<object>): unknown {
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+  // 循環参照を検出したら `[Circular]` 文字列に置換してスタックオーバーフローを防ぐ
+  if (seen.has(value)) {
+    return "[Circular]";
+  }
+  if (Array.isArray(value)) {
+    seen.add(value);
+    // map に redactInner を直接渡すと余分な引数 (index / 配列) が seen 引数として
+    // 渡ってしまうため、第一引数のみを受ける arrow 関数でラップする
+    return value.map((v) => redactInner(v, seen));
+  }
+  // plain object 以外 (Date / RTCCertificate / RTCIceCandidate 等のクラスインスタンス)
+  // は Object.entries で enumerable own data properties しか拾えず、getter ベースの
+  // プロパティが失われて空オブジェクトに潰れてしまう。trace 経路で機密情報を含まない
+  // ことが明らかなため、そのまま値を返す
+  // (Object.getPrototypeOf の戻り値型は lib.es5 で any のため、明示的に object | null
+  //  に絞る)
+  const proto = Object.getPrototypeOf(value) as object | null;
+  if (proto !== null && proto !== Object.prototype) {
+    return value;
+  }
+  seen.add(value);
+  const result: Record<string, unknown> = {};
+  for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+    result[key] = REDACT_KEYS.has(key) ? "[REDACTED]" : redactInner(v, seen);
+  }
+  return result;
+}
+
 export function trace(clientId: string | null, title: string, value: unknown): void {
+  const redactedValue = redact(value);
   const dump = (record: unknown): void => {
     if (record && typeof record === "object") {
       let keys = null;
@@ -416,12 +519,12 @@ export function trace(clientId: string | null, title: string, value: unknown): v
   if (console.info !== undefined && console.group !== undefined) {
     // eslint-disable-next-line no-console
     console.group(`${prefix} ${title}`);
-    dump(value);
+    dump(redactedValue);
     // eslint-disable-next-line no-console
     console.groupEnd();
   } else {
     // eslint-disable-next-line no-console
-    console.log("%s %s\n", prefix, title, value);
+    console.log("%s %s\n", prefix, title, redactedValue);
   }
 }
 

@@ -2,6 +2,7 @@
 
 - Priority: High
 - Created: 2026-05-21
+- Completed: 2026-06-12
 - Polished: 2026-06-08
 - Model: Opus 4.7
 - Branch: feature/fix-trace-redact-secrets
@@ -143,3 +144,19 @@ test("redact は非対象キーをそのまま残す", () => {
 - `tests/utils.test.ts` に redact 単体テスト 3 件を追加する
 - ローカルで `pnpm test` が通ること
 - CHANGES.md `## develop` にセキュリティ修正 `[FIX]` エントリを追記する
+
+## 解決方法
+
+- `src/utils.ts` に `redact` 関数 (公開 export、`@internal`) と再帰実装 `redactInner` を追加した
+  - `REDACT_KEYS` の集合 (`metadata` / `signaling_notify_metadata` / `authn_metadata` / `authz_metadata` / `access_token` / `secret`) にキー名完全一致する値を `[REDACTED]` 文字列で置換する
+  - プリミティブ・null・undefined・文字列 (SDP など) は早期 return で素通り (SDP redact は本 issue のスコープ外)
+  - `Object.getPrototypeOf` で plain object 判定し、`Date` / `RTCCertificate` / `RTCIceCandidate` 等のクラスインスタンスは `Object.entries` で getter ベースのプロパティが拾えず空オブジェクトに潰れるため bypass する
+  - `WeakSet` で循環参照を検出し、再訪時は `[Circular]` 文字列に置換してスタックオーバーフローを防ぐ
+- `src/utils.ts` の `trace` 関数で `dump` に渡す前に `redact` を適用した
+- `src/base.ts` の `ConnectionBase.trace` で `callbacks.log` および `utils.trace` の両経路に redact 済みの値を渡すように変更した。`utils` からの import に `redact` を追加した
+- `tests/utils.test.ts` に redact の単体テストを追加した
+  - issue 設計方針通りの基本 3 件 (機密キー置換 / ネスト・配列の再帰 / 非対象キーの保持)
+  - REDACT_KEYS 全 6 キーの網羅 (`test.each`)
+  - プリミティブ・null・undefined・文字列・数値・真偽値の境界値 (`test.each`)
+  - 配列ルートの再帰、3 段以上のネスト、非破壊性、クラスインスタンス bypass、循環参照、DAG 兄弟参照の挙動固定化
+- `CHANGES.md` の `## develop` セクションに `[FIX]` エントリを追加した

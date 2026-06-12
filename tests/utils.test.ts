@@ -1,7 +1,7 @@
 // XXX: assert を使うと型がエラーがうるさいため expect を使ってる
 
 import type { AudioCodecType, DataChannelDirection, VideoCodecType } from "../src/types";
-import { ConnectError, createSignalingMessage } from "../src/utils";
+import { ConnectError, createSignalingMessage, redact } from "../src/utils";
 
 const channelId = "7N3fsMHob";
 const metadata = "PG9A6RXgYqiqWKOVO";
@@ -931,3 +931,119 @@ test.each([["WS_SEND_INVALID_STATE"], ["WS_SEND_FAILED"]])(
     expect(e.reason).toBe(reason);
   },
 );
+
+/**
+ * redact のテスト
+ *
+ * trace 経路で JWT 等の機密情報が console / callbacks.log に raw 出力される
+ * セキュリティ問題 (issue 0020) を塞ぐ redact 関数を検証する
+ */
+
+// トップレベルの機密キー (metadata) は値の中身を見ずに `[REDACTED]` に置換される
+// 非機密キー (sdp) はそのまま残る
+test("redact は機密キーを [REDACTED] に置換する", () => {
+  expect(redact({ metadata: { access_token: "jwt" }, sdp: "v=0" })).toStrictEqual({
+    metadata: "[REDACTED]",
+    sdp: "v=0",
+  });
+});
+
+// 配列内のオブジェクトでも機密キー (authn_metadata) が再帰的に redact される
+// 非対象キー (type) は影響を受けない
+test("redact はネストと配列を再帰処理する", () => {
+  expect(redact({ items: [{ authn_metadata: "secret" }, { type: "ok" }] })).toStrictEqual({
+    items: [{ authn_metadata: "[REDACTED]" }, { type: "ok" }],
+  });
+});
+
+// 機密キーを含まないオブジェクトは値も構造もそのまま残る
+test("redact は非対象キーをそのまま残す", () => {
+  expect(redact({ channel_id: "ch", role: "sendrecv" })).toStrictEqual({
+    channel_id: "ch",
+    role: "sendrecv",
+  });
+});
+
+// REDACT_KEYS の全 6 キーが個別に redact 対象であることを固定化する
+// (将来 REDACT_KEYS から 1 つでも漏れたら該当ケースが fail する)
+test.each([
+  ["metadata"],
+  ["signaling_notify_metadata"],
+  ["authn_metadata"],
+  ["authz_metadata"],
+  ["access_token"],
+  ["secret"],
+])("redact は %s キーを [REDACTED] に置換する", (key) => {
+  expect(redact({ [key]: "sensitive" })).toStrictEqual({ [key]: "[REDACTED]" });
+});
+
+// プリミティブ・null・undefined はそのまま返る (再帰の早期 return 経路)
+// ConnectionBase.trace の message: unknown は任意の型で渡りうるため境界値を保証する
+test.each([
+  ["null", null, null],
+  ["undefined", undefined, undefined],
+  ["文字列", "hello", "hello"],
+  ["数値", 42, 42],
+  ["真偽値", true, true],
+])("redact は非 object 値 (%s) をそのまま返す", (_label, input, expected) => {
+  expect(redact(input)).toBe(expected);
+});
+
+// 配列ルート (トップが配列) でも各要素が再帰的に redact される
+test("redact は配列ルートを再帰処理する", () => {
+  expect(redact([{ metadata: "x" }, { sdp: "v=0" }])).toStrictEqual([
+    { metadata: "[REDACTED]" },
+    { sdp: "v=0" },
+  ]);
+});
+
+// 多段ネスト (3 段以上) でも機密キーが再帰的に redact される
+test("redact は 3 段以上のネストでも機密キーを redact する", () => {
+  expect(redact({ a: { b: { metadata: "jwt", sdp: "v=0" } } })).toStrictEqual({
+    a: { b: { metadata: "[REDACTED]", sdp: "v=0" } },
+  });
+});
+
+// redact は入力を mutation せず新しいオブジェクトを返す (非破壊契約の固定化)
+// trace 呼び出し元では redact 後も signaling メッセージ送信を続けるため、in-place
+// 化は危険。回帰防止のために明示的なテストを置く
+test("redact は元のオブジェクトを破壊せず新しい値を返す", () => {
+  const original = { metadata: { jwt: "x" }, sdp: "v=0" };
+  const snapshot = JSON.stringify(original);
+  const result = redact(original);
+  expect(JSON.stringify(original)).toBe(snapshot);
+  expect(result).not.toBe(original);
+});
+
+// plain object ではないクラスインスタンス (例: Date) は Object.entries で
+// 内部状態が拾えず空オブジェクトに潰れてしまうため、そのまま返す
+// (PEER CONNECTION CONFIG の RTCCertificate / ONICECANDIDATE の RTCIceCandidate
+// などのデバッグ情報が消えないようにするための bypass)
+test("redact はクラスインスタンスを bypass してそのまま返す", () => {
+  const date = new Date(0);
+  expect(redact(date)).toBe(date);
+});
+
+// 循環参照を含むオブジェクトを渡してもスタックオーバーフローせず、再訪箇所は
+// `[Circular]` 文字列に置換される。入力オブジェクト側の循環参照は破壊せず維持する
+test("redact は循環参照を `[Circular]` に置換する", () => {
+  const obj: Record<string, unknown> = { name: "root" };
+  obj.self = obj;
+  const result = redact(obj) as Record<string, unknown>;
+  expect(result.name).toBe("root");
+  expect(result.self).toBe("[Circular]");
+  expect(result).not.toBe(obj);
+  // 入力オブジェクト側の循環参照はそのまま残っていること (非破壊)
+  expect(obj.self).toBe(obj);
+});
+
+// DAG 構造 (同一オブジェクトを複数箇所から参照) の挙動を固定化する
+// trace 経路に渡る signaling メッセージは tree 構造で DAG は通常発生しないが、
+// WeakSet を再帰ツリー全体で共有しているため、後から訪れた参照は `[Circular]`
+// に置換される挙動である
+test("redact は DAG の兄弟参照を `[Circular]` 化する", () => {
+  const sub = { x: 1 };
+  const result = redact({ a: sub, b: sub }) as Record<string, unknown>;
+  expect(result.a).toStrictEqual({ x: 1 });
+  expect(result.b).toBe("[Circular]");
+});
