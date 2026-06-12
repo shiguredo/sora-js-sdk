@@ -84,6 +84,8 @@
   - @voluntas
 - [FIX] macOS の Google Chrome stable インストールが 302 リダイレクトを追従できず失敗するため playwright-core にパッチを当てて `curl` に `-L` を追加する
   - @voluntas
+- [FIX] npm-publish workflow のタグトリガを厳格化し、タグ名と package.json の version が一致しない場合は publish 前に fail させる
+  - @voluntas
 
 ## 2025.2.0
 
