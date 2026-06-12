@@ -13,6 +13,9 @@ on:
     # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
     - cron: "0 2 * * 1-5"
 
+permissions:
+  contents: read
+
 jobs:
   # Chrome と Edge の Canary バージョンでのテスト
   # Playwright 経由では Canary バージョンのブラウザをインストールできない

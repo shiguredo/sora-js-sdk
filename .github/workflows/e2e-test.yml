@@ -14,6 +14,9 @@ on:
     # UTC 時間で平日 1-7 時 (JST で 10:00-16:00) に 30 分ごとに実行
     - cron: "0,30 1-7 * * 1-5"
 
+permissions:
+  contents: read
+
 jobs:
   e2e-test:
     strategy:

@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-21
 - Polished: 2026-06-11
+- Completed: 2026-06-12
 - Model: Opus 4.7
 - Branch: feature/fix-workflows-permissions
 
@@ -122,3 +123,25 @@ permissions:
 ## マージ順
 
 `0024 → 0026 → 0033` を推奨する。0024 と本 issue はいずれも `npm-publish.yml` を編集するが、編集箇所は競合しない (0024 は `on.tags` / `if` / 新規 `verify-version` ジョブ、本 issue はトップレベル `permissions:` の 1 行削除)。技術的には本 issue を 0024 より先にマージしても構わないが、PR レビュー一貫性のため 0024 → 0026 の順で進める。0033 は publish ジョブレベル `id-token: write` の存在を前提とし、本 issue はその宣言には触れないため `0026 → 0033` の順で問題ない。
+
+## 解決方法
+
+### e2e 系 5 workflow にトップレベル `permissions: contents: read` を追加
+
+以下 5 ファイルの `on:` ブロック末尾と `jobs:` 行の間にある既存の空行と `jobs:` の間に `permissions:` / `  contents: read` の 2 行を挿入した。`ci.yaml:10-11` / `dependency-review.yml:10-11` と同じ配置・字下げで揃えている。
+
+- `.github/workflows/e2e-test.yml`
+- `.github/workflows/e2e-test-canary.yml`
+- `.github/workflows/e2e-test-h265.yml`
+- `.github/workflows/e2e-test-webkit.yml`
+- `.github/workflows/npm-pkg-e2e-test.yml`
+
+### `npm-publish.yml` のトップレベル `id-token: write` を削除
+
+`.github/workflows/npm-publish.yml` のトップレベル `permissions:` ブロックから `id-token: write` の 1 行のみを削除し、`contents: read` 単独の宣言に縮めた。`verify-version` / `npm-publish-canary` / `npm-publish` / `slack_notify` ジョブのジョブレベル `permissions:` 宣言には触れていない。
+
+### 検証
+
+- `actionlint -color .github/workflows/*.yml .github/workflows/*.yaml` を実行した。本変更で新たな warning は発生していない (既存の `Apple-M2-Pro` ラベル warning 2 件は self-hosted runner のカスタムラベル設定不在によるもので本 issue のスコープ外。develop と同じ件数のまま)。
+- SDK ソースコードを触っていないため `pnpm test` の追加実行は不要。
+- 各 workflow の `paths:` フィルタに自身の YAML が含まれているため、`feature/fix-workflows-permissions` ブランチへの push で自動発火する。発火後 Actions ログの「Set up job」ステップで `GITHUB_TOKEN Permissions` が `Contents: read` のみであることを確認する。
