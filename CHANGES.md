@@ -86,6 +86,8 @@
   - @voluntas
 - [FIX] npm-publish workflow のタグトリガを厳格化し、タグ名と package.json の version が一致しない場合は publish 前に fail させる
   - @voluntas
+- [FIX] e2e 系 workflow 5 本に permissions: contents: read を追加し、npm-publish.yml の id-token: write をトップレベルから削除する
+  - @voluntas
 
 ## 2025.2.0
 
