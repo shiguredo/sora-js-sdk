@@ -57,6 +57,8 @@
   - @voluntas
 - [FIX] trace() が JWT 等の機密を含む metadata を console / callbacks.log に raw 出力していたセキュリティ問題を redact で修正する
   - @voluntas
+- [FIX] abend() の abend 分岐で SoraCloseEvent を 2 回生成して timeline と callback に別インスタンスを渡していたのを 1 つのインスタンスを共有するように修正する
+  - @voluntas
 
 ### misc
 
