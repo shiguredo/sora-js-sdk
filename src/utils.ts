@@ -543,8 +543,14 @@ export class ConnectError extends Error {
   constructor(message: string, code?: number, reason?: string) {
     super(message);
     this.name = "ConnectError";
-    this.code = code;
-    this.reason = reason;
+    // exactOptionalPropertyTypes 対応のため、optional プロパティは undefined ではなく
+    // プロパティ自体を含めないよう条件で代入する
+    if (code !== undefined) {
+      this.code = code;
+    }
+    if (reason !== undefined) {
+      this.reason = reason;
+    }
   }
 }
 
@@ -597,8 +603,14 @@ export function createTimelineEvent(
     event.data = data;
   }
   event.logType = logType;
-  event.dataChannelId = dataChannelId;
-  event.dataChannelLabel = dataChannelLabel;
+  // exactOptionalPropertyTypes 対応のため、optional プロパティは undefined ではなく
+  // プロパティ自体を含めないよう条件で代入する
+  if (dataChannelId !== undefined) {
+    event.dataChannelId = dataChannelId;
+  }
+  if (dataChannelLabel !== undefined) {
+    event.dataChannelLabel = dataChannelLabel;
+  }
   return event;
 }
 
@@ -648,10 +660,17 @@ export function addStereoToFmtp(sdp: string): string {
   }
 
   const sessionDescription = splitSdp[1];
+  const mediaSection = splitSdp[2];
+  // noUncheckedIndexedAccess により splitSdp[1] / splitSdp[2] は string | undefined になる
+  // 正規表現が両方のキャプチャグループにマッチしているのでランタイムでは undefined にならないが、
+  // 型を絞り込むため明示的にチェックする
+  if (sessionDescription === undefined || mediaSection === undefined) {
+    return sdp;
+  }
 
   const mediaDescriptionsList: string[][] = [];
   let mediaDescriptionList: string[] = [];
-  for (const line of splitSdp[2].split(/\n/u)) {
+  for (const line of mediaSection.split(/\n/u)) {
     const typ = line[0];
     if (typ === "m") {
       mediaDescriptionList = [line];
