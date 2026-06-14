@@ -2473,6 +2473,9 @@ export default class ConnectionBase {
   /**
    * シグナリングサーバーへメッセージを送信するメソッド
    *
+   * compress 分岐を除き、DataChannel / WebSocket が open でない場合は送信をスキップする。
+   * これは切断進行中に同期例外を防ぐためである。
+   *
    * @param message - 送信するメッセージ
    */
   private async sendSignalingMessage(message: {
@@ -2481,25 +2484,34 @@ export default class ConnectionBase {
   }): Promise<void> {
     if (this.soraDataChannels["signaling"]) {
       if (this.signalingOfferMessageDataChannels["signaling"]?.compress === true) {
+        // compress 分岐には readyState ガードを入れない
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const compressedMessage = await compressMessage(binaryMessage);
         this.soraDataChannels["signaling"].send(compressedMessage);
-      } else {
+        this.writeDataChannelSignalingLog(
+          `send-${message.type}`,
+          this.soraDataChannels["signaling"],
+          message,
+        );
+      } else if (this.soraDataChannels["signaling"].readyState === "open") {
         this.soraDataChannels["signaling"].send(JSON.stringify(message));
+        this.writeDataChannelSignalingLog(
+          `send-${message.type}`,
+          this.soraDataChannels["signaling"],
+          message,
+        );
       }
-      this.writeDataChannelSignalingLog(
-        `send-${message.type}`,
-        this.soraDataChannels["signaling"],
-        message,
-      );
-    } else if (this.ws !== null) {
+    } else if (this.ws?.readyState === 1) {
       this.ws.send(JSON.stringify(message));
       this.writeWebSocketSignalingLog(`send-${message.type}`, message);
     }
   }
 
   /**
-   * シグナリングサーバーに stats メッセージを投げるメソッド
+   * シグナリングサーバーに stats メッセージを送信するメソッド
+   *
+   * compress 分岐を除き、DataChannel が open でない場合は送信をスキップする。
+   * これは切断進行中に同期例外を防ぐためである。
    *
    * @param reports - RTCStatsReport のリスト
    */
@@ -2510,10 +2522,11 @@ export default class ConnectionBase {
         type: SIGNALING_MESSAGE_TYPE_STATS,
       };
       if (this.signalingOfferMessageDataChannels["stats"]?.compress === true) {
+        // compress 分岐には readyState ガードを入れない
         const binaryMessage = new TextEncoder().encode(JSON.stringify(message));
         const compressedMessage = await compressMessage(binaryMessage);
         this.soraDataChannels["stats"].send(compressedMessage);
-      } else {
+      } else if (this.soraDataChannels["stats"].readyState === "open") {
         this.soraDataChannels["stats"].send(JSON.stringify(message));
       }
     }
