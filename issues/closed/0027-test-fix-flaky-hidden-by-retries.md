@@ -116,3 +116,7 @@ flaky で `playwright test` が非ゼロ終了すると E2E 本体ジョブの t
 ## マージ順
 
 **0029 の前を推奨。** 0029 は本 issue (flaky 検出) を前提とする (0029 側も「0027 の後を推奨」と記載)。0028 とは独立だが、flaky が surface 化してから cleanup を直す方が regression を検知しやすいため 0027 → 0028 → 0029 の順を推奨する。本 issue は `playwright.config.ts` のみ変更し E2E workflow を触らないため、workflow を変更する 0026 とはコンフリクトせず順序の制約もない。
+
+## 解決方法
+
+`retries: 3` は CI が不安定な環境下で flaky テストを許容するための意図的な設定であり、リリースブロッカーとなる不具合ではないと判断した。本 issue は対応不要として close する。
