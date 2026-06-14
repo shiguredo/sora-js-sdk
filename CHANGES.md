@@ -59,6 +59,8 @@
   - @voluntas
 - [FIX] abend() の abend 分岐で SoraCloseEvent を 2 回生成して timeline と callback に別インスタンスを渡していたのを 1 つのインスタンスを共有するように修正する
   - @voluntas
+- [FIX] sendSignalingMessage / sendStatsMessage で送信前に readyState を確認し、open 以外の状態での送信を防ぐようにする
+  - @voluntas
 
 ### misc
 

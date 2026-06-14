@@ -2,6 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-25
+- Completed: 2026-06-14
 - Polished: 2026-06-14
 - Model: Composer 2.5
 - Branch: feature/fix-signaling-send-sync-exceptions
@@ -135,6 +136,21 @@ private async sendStatsMessage(reports: RTCStatsReport[]): Promise<void> {
   - [FIX] sendSignalingMessage / sendStatsMessage で送信前に readyState を確認し、open 以外の状態での送信を防ぐ
     - @voluntas
   ```
+
+## 解決方法
+
+`src/base.ts` の `sendSignalingMessage` / `sendStatsMessage` において、`DataChannel.send` / `ws.send` を呼ぶ前に `readyState` が open であることを確認するガードを追加した。
+
+- `sendSignalingMessage`
+  - `compress === false` の DataChannel 送信分岐に `readyState === "open"` ガードを追加
+  - WebSocket 送信分岐に `readyState === 1` ガードを追加
+  - `compress === true` 分岐は issue 0040 の機能検出設計完了後に別途扱うため、本 issue では現状維持
+  - JSDoc に「compress 分岐を除き、open でない場合は送信をスキップすること」を追記
+- `sendStatsMessage`
+  - DataChannel 送信分岐に `readyState === "open"` ガードを追加
+  - `compress === true` 分岐は `sendSignalingMessage` と同様に現状維持
+  - JSDoc に「compress 分岐を除き、open でない場合は送信をスキップすること」を追記
+- `CHANGES.md` の `## develop` セクションに `[FIX]` エントリを追加
 
 ## 関連 issue
 
