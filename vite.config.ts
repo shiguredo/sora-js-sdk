@@ -40,9 +40,16 @@ export default defineConfig({
     }),
   ],
   root: process.cwd(),
+  test: {
+    include: ["tests/**/*.test.ts"],
+    exclude: ["tests/global.d.ts"],
+    globals: true,
+    environment: "jsdom",
+  },
   lint: {
     options: {
       typeAware: true,
+      typeCheck: true,
     },
     plugins: ["typescript", "oxc", "unicorn", "import", "promise", "vitest"],
     categories: {
@@ -399,7 +406,7 @@ export default defineConfig({
           default: "array-simple",
         },
       ],
-      // @ts-expect-error に説明を必須
+      // ts-expect-error ディレクティブに説明を必須
       "typescript/ban-ts-comment": [
         "error",
         {
@@ -851,8 +858,15 @@ export default defineConfig({
           "import/no-nodejs-modules": "off",
         },
       },
+      {
+        // 型定義ファイルはグローバル型宣言のため副作用 import を許容する
+        files: ["**/*.d.ts"],
+        rules: {
+          "import/no-unassigned-import": "off",
+        },
+      },
     ],
-    ignorePatterns: ["dist/**", "node_modules/**"],
+    ignorePatterns: ["dist/**", "node_modules/**", "e2e-tests/**"],
   },
   fmt: {
     ignorePatterns: ["dist/**", "devtools/dist/**"],

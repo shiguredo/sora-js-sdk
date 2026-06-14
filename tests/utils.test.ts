@@ -574,9 +574,8 @@ test("createSignalingMessage dataChannels: invalid value", () => {
     dataChannels: "test",
   };
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(
-    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
-  ).toStrictEqual(baseExpectedMessage);
+  const message = createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual(baseExpectedMessage);
 });
 
 test("createSignalingMessage dataChannels: empty array", () => {
@@ -692,9 +691,8 @@ test("createSignalingMessage simulcastRid", () => {
   };
   const expectedMessage = { ...baseExpectedMessage, simulcast_rid: options.simulcastRid };
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(
-    createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false),
-  ).toStrictEqual({
+  const message = createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual({
     ...expectedMessage,
     role: "recvonly",
   });
@@ -706,9 +704,8 @@ test("createSignalingMessage simulcastRid: unknown string", () => {
     simulcastRid: "",
   };
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(
-    createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false),
-  ).toStrictEqual({
+  const message = createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual({
     ...baseExpectedMessage,
     role: "recvonly",
   });
@@ -726,9 +723,8 @@ test("createSignalingMessage simulcastRequestRid", () => {
     simulcast_request_rid: options.simulcastRequestRid,
   };
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(
-    createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false),
-  ).toStrictEqual({
+  const message = createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual({
     ...expectedMessage,
     role: "recvonly",
   });
@@ -740,9 +736,8 @@ test("createSignalingMessage simulcastRequestRid: unknown string", () => {
     simulcastRequestRid: "",
   };
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(
-    createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false),
-  ).toStrictEqual({
+  const message = createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual({
     ...baseExpectedMessage,
     role: "recvonly",
   });
@@ -783,9 +778,8 @@ test("createSignalingMessage spotlightFocusRid", () => {
     spotlight_focus_rid: options.spotlightFocusRid,
   };
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(
-    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
-  ).toStrictEqual(expectedMessage);
+  const message = createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual(expectedMessage);
 });
 
 test("createSignalingMessage spotlightFocusRid: unknown string", () => {
@@ -794,9 +788,8 @@ test("createSignalingMessage spotlightFocusRid: unknown string", () => {
     spotlightFocusRid: "",
   };
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(
-    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
-  ).toStrictEqual(baseExpectedMessage);
+  const message = createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual(baseExpectedMessage);
 });
 
 /**
@@ -811,9 +804,8 @@ test("createSignalingMessage spotlightUnfocusRid", () => {
     spotlight_unfocus_rid: options.spotlightUnfocusRid,
   };
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(
-    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
-  ).toStrictEqual(expectedMessage);
+  const message = createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual(expectedMessage);
 });
 
 test("createSignalingMessage spotlightUnfocusRid: unknown string", () => {
@@ -822,9 +814,8 @@ test("createSignalingMessage spotlightUnfocusRid: unknown string", () => {
     spotlightUnfocusRid: "",
   };
   // @ts-expect-error option で指定されている型以外を引数に指定する
-  expect(
-    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
-  ).toStrictEqual(baseExpectedMessage);
+  const message = createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual(baseExpectedMessage);
 });
 
 /**
@@ -922,15 +913,15 @@ test("new ConnectError(message, undefined, reason) は reason のみを設定す
 
 // sendAnswer 経路 (src/base.ts) で投げる ConnectError の reason 値の存在を固定化する
 // (検出範囲は reason 文字列のみ。test name 中の %s は test.each で各値に置換される)
-test.each([["WS_SEND_INVALID_STATE"], ["WS_SEND_FAILED"]])(
-  "new ConnectError(message, undefined, %s) は sendAnswer 経路の reason を設定する",
-  (reason) => {
-    const e = new ConnectError("send answer failed", undefined, reason);
-    expect(e.message).toBe("send answer failed");
-    expect(e.code).toBeUndefined();
-    expect(e.reason).toBe(reason);
-  },
-);
+test.each<["WS_SEND_INVALID_STATE" | "WS_SEND_FAILED"]>([
+  ["WS_SEND_INVALID_STATE"],
+  ["WS_SEND_FAILED"],
+])("new ConnectError(message, undefined, %s) は sendAnswer 経路の reason を設定する", (reason) => {
+  const e = new ConnectError("send answer failed", undefined, reason);
+  expect(e.message).toBe("send answer failed");
+  expect(e.code).toBeUndefined();
+  expect(e.reason).toBe(reason);
+});
 
 /**
  * redact のテスト
@@ -966,7 +957,7 @@ test("redact は非対象キーをそのまま残す", () => {
 
 // REDACT_KEYS の全 6 キーが個別に redact 対象であることを固定化する
 // (将来 REDACT_KEYS から 1 つでも漏れたら該当ケースが fail する)
-test.each([
+test.each<[string]>([
   ["metadata"],
   ["signaling_notify_metadata"],
   ["authn_metadata"],
@@ -979,7 +970,7 @@ test.each([
 
 // プリミティブ・null・undefined はそのまま返る (再帰の早期 return 経路)
 // ConnectionBase.trace の message: unknown は任意の型で渡りうるため境界値を保証する
-test.each([
+test.each<[string, unknown, unknown]>([
   ["null", null, null],
   ["undefined", undefined, undefined],
   ["文字列", "hello", "hello"],
@@ -1028,13 +1019,13 @@ test("redact はクラスインスタンスを bypass してそのまま返す",
 // `[Circular]` 文字列に置換される。入力オブジェクト側の循環参照は破壊せず維持する
 test("redact は循環参照を `[Circular]` に置換する", () => {
   const obj: Record<string, unknown> = { name: "root" };
-  obj.self = obj;
+  obj["self"] = obj;
   const result = redact(obj) as Record<string, unknown>;
-  expect(result.name).toBe("root");
-  expect(result.self).toBe("[Circular]");
+  expect(result["name"]).toBe("root");
+  expect(result["self"]).toBe("[Circular]");
   expect(result).not.toBe(obj);
   // 入力オブジェクト側の循環参照はそのまま残っていること (非破壊)
-  expect(obj.self).toBe(obj);
+  expect(obj["self"]).toBe(obj);
 });
 
 // DAG 構造 (同一オブジェクトを複数箇所から参照) の挙動を固定化する
@@ -1044,6 +1035,6 @@ test("redact は循環参照を `[Circular]` に置換する", () => {
 test("redact は DAG の兄弟参照を `[Circular]` 化する", () => {
   const sub = { x: 1 };
   const result = redact({ a: sub, b: sub }) as Record<string, unknown>;
-  expect(result.a).toStrictEqual({ x: 1 });
-  expect(result.b).toBe("[Circular]");
+  expect(result["a"]).toStrictEqual({ x: 1 });
+  expect(result["b"]).toBe("[Circular]");
 });
