@@ -1,8 +1,8 @@
 {
   "name": "sora-js-sdk-e2e-tests",
   "scripts": {
-    "fmt": "pnpm --dir .. run fmt",
-    "lint": "pnpm --dir .. run lint",
+    "fmt": "vp run -w fmt",
+    "lint": "vp run -w lint",
     "check": "tsc --noEmit"
   },
   "dependencies": {

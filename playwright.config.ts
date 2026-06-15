@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// pnpm exec playwright test --ui
+// vp exec playwright test --ui
 
 export default defineConfig({
   testDir: "e2e-tests/tests",
@@ -94,7 +94,7 @@ export default defineConfig({
     // },
   ],
   webServer: {
-    command: "pnpm run e2e-dev --port 9000",
+    command: "vp run e2e-dev --port 9000",
     reuseExistingServer: !process.env.CI,
     stderr: "pipe",
     stdout: "pipe",
