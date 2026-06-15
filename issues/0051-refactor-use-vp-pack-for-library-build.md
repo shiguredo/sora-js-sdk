@@ -5,28 +5,21 @@
 - Completed: {YYYY-MM-DD}
 - Model: Kimi K2.7 Code
 - Branch: feature/refactor-use-vp-pack-for-library-build
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-06-14
 
 ## 目的
 
-`vite-plus` のライブラリ向けビルドコマンドである `vp pack` を導入し、ビルドツールチェインを vp コマンドで統一する。
-現在の `vp build` でも npm publish に支障はないが、`vp pack` はライブラリ公開に特化しており、型定義の単一ファイル化や publint / attw との連携など、公開パッケージの品質担保に向いている。
-
-## 優先度根拠
-
-現行の `vp build` + `vite-plugin-dts` の構成で安定してビルド・公開できているため、緊急性は低い。
-ただし、`vp` コマンドによる統一的なツールチェインを進める観点から対応価値があるため Low とする。
+`vite-plus` のライブラリ向けビルドコマンドである `vp pack` を導入し、ライブラリビルドを `vp build` から完全に移行する。
 
 ## 現状
 
-`package.json` の `build` スクリプトは `vp build` となっており、`vite.config.ts` の `build.lib` ブロックと `vite-plugin-dts` でライブラリをビルドしている。
+`package.json` の `build` / `watch` / `e2e-test*` スクリプトは `vp build` となっており、`vite.config.ts` の `build.lib` ブロックと `vite-plugin-dts` でライブラリをビルドしている。
 
 ```json
 {
   "scripts": {
     "build": "vp build",
     "watch": "vp build --watch",
-    "e2e-dev": "vp dev --config e2e-tests/vite.config.ts",
     "e2e-test": "vp build && playwright test --project='chromium'",
     "e2e-test-chrome": "vp build && playwright test --project='Google Chrome*'",
     "e2e-test-edge": "vp build && playwright test --project='Microsoft Edge*'",
@@ -35,63 +28,121 @@
 }
 ```
 
-`vite.config.ts` では `build.lib.entry` に `src/sora.ts`、`formats` に `["es"]`、`fileName` に `"sora"`、`minify: true`、`target: "es2022"` を指定している。
-また、`define` で `__SORA_JS_SDK_VERSION__` を注入し、`rolldownOptions.output.banner` でバナーコメントを付与している。
-
 `vp pack` は tsdown ベースのライブラリ向けビルドコマンドで、現行の `vp build` とは以下の点で異なる。
 
 | 項目 | `vp build` | `vp pack` |
 | --- | --- | --- |
 | 出力ファイル | `dist/sora.js` + 複数 `.d.ts` | `dist/sora.js` + 単一 `sora.d.ts` |
-| 拡張子 | `.js` | デフォルトでは `.mjs`（`--platform browser` で `.js`） |
-| minify | `vite.config.ts` の設定が反映 | デフォルト無効、`--minify` が必要 |
-| target | `es2022` | デフォルト `node22.0.0`、明示が必要 |
-| `__SORA_JS_SDK_VERSION__` | 自動置換 | 自動では置換されない |
-| banner | 反映される | `pack.banner` で再定義が必要 |
+| minify | `vite.config.ts` の設定が反映 | デフォルト無効、`pack.minify` で明示が必要 |
+| target | `es2022` | `pack.target` で明示が必要 |
+| `__SORA_JS_SDK_VERSION__` | 自動置換 | 自動では置換されない。`pack.define` で再定義が必要 |
+| banner | `rolldownOptions.output.banner` で反映 | `pack.banner` で再定義が必要 |
+| dts | `vite-plugin-dts` で生成 | tsdown 内蔵の dts 生成を使用 |
 
 ## 設計方針
 
-- `vite.config.ts` に `pack` ブロックを追加し、`vp pack` 用の設定を明示する
-- `package.json` の `build` スクリプトを `vp pack` に変更する
+- ルート `vite.config.ts` から `build` ブロック全体と `import dts from "vite-plugin-dts"` を削除する
+- `vite.config.ts` に `pack` ブロックを追加する
+- `package.json` の `build` / `watch` スクリプトを `vp pack` / `vp pack --watch` に変更する
 - `e2e-test*` 系スクリプトも `vp build` から `vp pack` に統一する
-- `publint` / `attw` の有効化は別途検討する（追加依存が必要）
-- `npm-publish.yml` / `ci.yaml` は `pnpm run build` のままとし、`package.json` の変更で `vp pack` が実行されるようにする
-- 既存の `vp build` 設定は `e2e-dev` などで `vp dev` を使う必要があるため、共存または段階的な移行を検討する
+- `vite-plugin-dts` は `pack.dts: true` による内蔵 dts 生成で代替し、`devDependencies` から削除する
+- `npm-publish.yml` / `ci.yaml` は `package.json` の `build` スクリプトを介して間接的に `vp pack` を実行するようになる
 
 ## 完了条件
 
 - `vp pack` で `dist/sora.js` と `dist/sora.d.ts` が生成される
-- `__SORA_JS_SDK_VERSION__` が正しく埋め込まれる
-- バナーコメントが維持される
-- `pnpm run build` / `pnpm run e2e-test*` が正常に動作する
+- `dist/sora.js` に `__SORA_JS_SDK_VERSION__` が正しく埋め込まれている
+  - jsdom 環境で `Sora.version()` が `package.json` の `version` と一致することを確認する
+- `dist/sora.js` の先頭にバナーコメントが付与されている
+- `dist/sora.d.ts` に `@internal` 付きのシンボルが含まれていない（`grep '@internal' dist/sora.d.ts` が空であること）
+- `dist/sora.js` に `tslib` への import / require が含まれていない（`grep tslib dist/sora.js` が空であること）
+- `pnpm run build` / `pnpm run watch` / `pnpm run e2e-test*` / `pnpm run test` / `pnpm run typecheck` が正常に動作する
 - `npm-publish.yml` の Build ジョブと `ci.yaml` のビルドステップが正常に完了する
-- 公開パッケージの内容が現行の `vp build` 産物と同等である
+- `rm -rf dist && pnpm run build && npm pack --dry-run` で tarball に含まれる `dist/` 配下が `sora.js` と `sora.d.ts` のみである
+- `node -e 'import("./dist/sora.js").then((m) => console.log(m.default.version()))'` がエラーなく実行できる
+- E2E テスト（最低でも chromium プロジェクト）が通る
+- `CHANGES.md` の `## develop` セクションに `### misc` サブセクションを新設し、変更履歴を追加する
 
 ## 解決方法
 
-1. `vite.config.ts` に `pack` ブロックを追加する
+1. `vite.config.ts` から `build` ブロック全体と `import dts from "vite-plugin-dts"` を削除する
+2. `vite.config.ts` に `pack` ブロックを追加する
 
 ```ts
-pack: {
-  entry: path.resolve(import.meta.dirname, "src/sora.ts"),
-  format: "esm",
-  platform: "browser",
-  target: "es2022",
-  outDir: path.resolve(import.meta.dirname, "./dist"),
-  minify: true,
-  dts: true,
-  clean: true,
-  banner,
+const banner = `/**
+ * ${pkg.name}
+ * ${pkg.description}
+ * @version: ${pkg.version}
+ * @author: ${pkg.author}
+ * @license: ${pkg.license}
+ **/
+`;
+
+export default defineConfig({
+  // ... envDir / root / test / lint / fmt 等の既存設定 ...
   define: {
     __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
   },
-},
+  pack: {
+    entry: {
+      sora: path.resolve(import.meta.dirname, "src/sora.ts"),
+    },
+    format: "esm",
+    platform: "browser",
+    target: "es2022",
+    outDir: path.resolve(import.meta.dirname, "./dist"),
+    minify: true,
+    dts: true,
+    clean: true,
+    banner,
+    define: {
+      __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
+    },
+  },
+});
 ```
 
-2. `package.json` の `build` スクリプトを `"vp pack"` に変更する
-3. `e2e-test*` 系スクリプトの `vp build` を `vp pack` に変更する
-4. 必要に応じて `publint` / `@arethetypeswrong/core` を `devDependencies` に追加し、`vp pack --publint --attw` を有効化する
-5. CI / npm-publish.yml の動作確認を行う
+3. `tests/sora.test.ts` に以下のテストを追加する
+
+```ts
+import Sora from "../src/sora";
+import pkg from "../package.json" with { type: "json" };
+
+test("Sora.version() が package.json の version と一致する", () => {
+  expect(Sora.version()).toBe(pkg.version);
+});
+```
+
+4. `package.json` の `scripts` を以下のように変更する
+
+```json
+{
+  "build": "vp pack",
+  "watch": "vp pack --watch",
+  "e2e-test": "vp pack && playwright test --project='chromium'",
+  "e2e-test-chrome": "vp pack && playwright test --project='Google Chrome*'",
+  "e2e-test-edge": "vp pack && playwright test --project='Microsoft Edge*'",
+  "e2e-test-webkit": "vp pack && playwright test --project='WebKit'"
+}
+```
+
+5. `pnpm remove -D vite-plugin-dts` を実行し、`pnpm-lock.yaml` を更新する
+6. `CHANGES.md` の `## develop` セクションに `### misc` サブセクションを新設し、以下を追加する
+
+```markdown
+### misc
+
+- [CHANGE] ライブラリビルドを `vp build` から `vp pack` に移行する
+  - @voluntas
+```
+
+7. CI / npm-publish.yml の動作確認を行う
+
+## 注意点
+
+- `vp pack` CLI には `--define` オプションがないため、`__SORA_JS_SDK_VERSION__` は `vite.config.ts` の `pack.define` で注入する
+- `vp pack` の `--fail-on-warn` はデフォルトで有効なため、警告が出た場合はビルドが失敗する。許容すべき警告がある場合は `pack.failOnWarn: false` を検討する
+- `ci.yaml` の `typescript-native-preview` ジョブは `tsgo --emitDeclarationOnly` で `dist/sora.d.ts` を生成する。ローカルで `vp pack` 後に `tsgo` を実行すると `.d.ts` が上書きされるため、`npm pack --dry-run` 前には `dist` をクリーンして `vp pack` を再実行する
 
 ## 関連
 
