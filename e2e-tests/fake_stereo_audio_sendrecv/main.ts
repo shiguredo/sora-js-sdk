@@ -135,6 +135,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   let remoteAnalyzer1: RealtimeAudioAnalyzer | null = null;
   let localAnalyzer2: RealtimeAudioAnalyzer | null = null;
   let remoteAnalyzer2: RealtimeAudioAnalyzer | null = null;
+  // 接続 1 / 接続 2 の fake stream 由来 cleanup を個別に保持する。
+  let fakeCleanup1: (() => void) | null = null;
+  let fakeCleanup2: (() => void) | null = null;
 
   document.querySelector("#connect")?.addEventListener("click", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
@@ -155,14 +158,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       soraClient1.setForceStereoOutput(true);
     }
 
+    // 既存の cleanup が残っていれば解放してから新しい stream を生成する。
+    if (fakeCleanup1) {
+      fakeCleanup1();
+      fakeCleanup1 = null;
+    }
     // 接続1用の音声ストリームを生成（440Hz基準）
-    const stream1 = getFakeMedia({
+    const { stream: stream1, cleanup: cleanup1 } = getFakeMedia({
       audio: {
         frequency: 440,
         stereo: useStereo1,
         volume: 0.1,
       },
     });
+    fakeCleanup1 = cleanup1;
 
     // 接続1のローカル音声解析を開始
     if (localAnalyzer1) {
@@ -181,7 +190,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // 接続1を開始
-    await soraClient1.connect(stream1);
+    try {
+      await soraClient1.connect(stream1);
+    } catch (error) {
+      // connect 失敗時にも接続 1 の fake stream を解放する。
+      if (fakeCleanup1) {
+        fakeCleanup1();
+        fakeCleanup1 = null;
+      }
+      throw error;
+    }
 
     // 少し待機してから接続2を開始
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -192,14 +210,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       soraClient2.setForceStereoOutput(true);
     }
 
+    // 既存の cleanup が残っていれば解放してから新しい stream を生成する。
+    if (fakeCleanup2) {
+      fakeCleanup2();
+      fakeCleanup2 = null;
+    }
     // 接続2用の音声ストリームを生成（880Hz基準、接続1と区別するため）
-    const stream2 = getFakeMedia({
+    const { stream: stream2, cleanup: cleanup2 } = getFakeMedia({
       audio: {
         frequency: 880,
         stereo: useStereo2,
         volume: 0.1,
       },
     });
+    fakeCleanup2 = cleanup2;
 
     // 接続2のローカル音声解析を開始
     if (localAnalyzer2) {
@@ -218,33 +242,54 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // 接続2を開始
-    await soraClient2.connect(stream2);
+    try {
+      await soraClient2.connect(stream2);
+    } catch (error) {
+      // connect 失敗時にも接続 2 の fake stream を解放する。
+      if (fakeCleanup2) {
+        fakeCleanup2();
+        fakeCleanup2 = null;
+      }
+      throw error;
+    }
   });
 
   document.querySelector("#disconnect")?.addEventListener("click", async () => {
-    if (localAnalyzer1) {
-      localAnalyzer1.stop();
-      localAnalyzer1 = null;
-    }
-    if (remoteAnalyzer1) {
-      remoteAnalyzer1.stop();
-      remoteAnalyzer1 = null;
-    }
-    if (localAnalyzer2) {
-      localAnalyzer2.stop();
-      localAnalyzer2 = null;
-    }
-    if (remoteAnalyzer2) {
-      remoteAnalyzer2.stop();
-      remoteAnalyzer2 = null;
-    }
-    if (soraClient1) {
-      await soraClient1.disconnect();
-      soraClient1 = null;
-    }
-    if (soraClient2) {
-      await soraClient2.disconnect();
-      soraClient2 = null;
+    // analyzer.stop / client.disconnect が throw しても fake stream は必ず解放する。
+    try {
+      if (localAnalyzer1) {
+        localAnalyzer1.stop();
+        localAnalyzer1 = null;
+      }
+      if (remoteAnalyzer1) {
+        remoteAnalyzer1.stop();
+        remoteAnalyzer1 = null;
+      }
+      if (localAnalyzer2) {
+        localAnalyzer2.stop();
+        localAnalyzer2 = null;
+      }
+      if (remoteAnalyzer2) {
+        remoteAnalyzer2.stop();
+        remoteAnalyzer2 = null;
+      }
+      if (soraClient1) {
+        await soraClient1.disconnect();
+        soraClient1 = null;
+      }
+      if (soraClient2) {
+        await soraClient2.disconnect();
+        soraClient2 = null;
+      }
+    } finally {
+      if (fakeCleanup1) {
+        fakeCleanup1();
+        fakeCleanup1 = null;
+      }
+      if (fakeCleanup2) {
+        fakeCleanup2();
+        fakeCleanup2 = null;
+      }
     }
   });
 

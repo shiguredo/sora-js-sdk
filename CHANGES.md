@@ -92,6 +92,8 @@
   - @voluntas
 - [FIX] e2e 系 workflow 5 本に permissions: contents: read を追加し、npm-publish.yml の id-token: write をトップレベルから削除する
   - @voluntas
+- [FIX] e2e-tests の fake media 生成に明示的 cleanup() を追加し connect/disconnect 繰り返し時の RAF / AudioContext リークを防ぐ
+  - @voluntas
 
 ## 2025.2.0
 

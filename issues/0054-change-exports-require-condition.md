@@ -62,7 +62,7 @@
 
 2. `pnpm run build` と E2E テストで動作確認を行う
 3. `CHANGES.md` の `## develop` セクションに以下を追加する
-   - `[CHANGE] `exports` から `require` 条件を削除し ESM のみをサポートする`
+   - `[CHANGE] `exports`から`require` 条件を削除し ESM のみをサポートする`
 
 ## 関連
 

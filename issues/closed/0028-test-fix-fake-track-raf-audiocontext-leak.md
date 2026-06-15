@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-21
 - Polished: 2026-06-14
+- Completed: 2026-06-15
 - Model: Opus 4.7
 - Branch: feature/fix-fake-track-cleanup
 
@@ -356,3 +357,29 @@ document.querySelector("#connect")?.addEventListener("click", async () => {
 ## マージ順
 
 **0029 の前を必須。** 0029 は `fake_stereo_audio` 系 fixture の `getFakeMedia` 呼び出しと `#disconnect` ハンドラを変更するが、それらは本 issue で `getFakeMedia` の戻り値を `{ stream, cleanup }` に変更した後でないとコンパイルできない。0028 を先にマージし、0029 は 0028 マージ後に rebase してから作業を進める。
+
+## 解決方法
+
+### fake.ts
+
+- `createFakeVideoTrack` / `createFakeAudioTrack` の戻り値を `MediaStreamTrack` から `{ track: MediaStreamTrack; cleanup: () => void }` に変更した。`cleanup` は `cleaned` フラグで idempotent にガードし、`videoTrack.removeEventListener("ended", onEnded)` → `videoTrack.stop()` → `cancelAnimationFrame(animationFrameId)` の順で解放する。`updateCanvas()` 冒頭でも `cleaned` をチェックし、`cleanup()` 直後にキューされた RAF コールバックが再スケジュールされないようにした。
+- `createFakeAudioTrack` の stereo / mono 双方で `cleanup` 内に `audioTrack.stop()` / `oscillator.stop()` / `audioCtx.close().catch(handleAudioContextCloseError)` を含めた。`handleAudioContextCloseError` は `InvalidStateError` のみ無視し、それ以外は `console.error` で可視化する共通ヘルパとして抽出した。
+- `getFakeMedia` の戻り値を `MediaStream` から `{ stream: MediaStream; cleanup: () => void }` に変更し、JSDoc の `@returns` にも `cleanup` の責務 (idempotent、disconnect 時に必ず呼ぶ) を明記した。生成した全 track の cleanup を内部で集約する。
+- 既存の `console.log("... because track ended.")` 系のデバッグログを削除し、残りの英語 `console.warn` / `console.error` を日本語化した。
+
+### 呼び出し元 5 ファイル
+
+- `e2e-tests/fake_stereo_audio/main.ts` / `e2e-tests/fake_stereo_audio_sendrecv/main.ts` / `e2e-tests/fake_sendonly/main.ts` / `e2e-tests/sendrecv_webkit/main.ts` / `e2e-tests/simulcast_sendonly_webkit/main.ts` の 5 ファイルに `let fakeCleanup: (() => void) | null = null;` (sendrecv は 2 本) を追加し、`#connect` の `getFakeMedia` 直前で既存 cleanup を解放、`getFakeMedia` の `cleanup` を保持、`#disconnect` 末尾で解放する構造に統一した。
+- `#connect` で `client.connect(stream)` (sendrecv は接続 1 / 接続 2) を try/catch で囲み、connect 失敗時にも `fakeCleanup` を解放して再 throw する。
+- `#disconnect` ハンドラは try/finally で囲み、`client.disconnect` (analyzer の `stop()` を含む) が throw しても finally で `fakeCleanup` が必ず解放されるようにした。`fake_sendonly/main.ts` の `#connect` 冒頭の `if (client) await client.disconnect()` も try/finally で囲んで対称性を取った。
+
+### tsconfig.json
+
+- `e2e-tests/tsconfig.json` に `skipLibCheck: true` を追加して `pnpm --dir e2e-tests run check` が通るようにした。
+
+### 検証
+
+- `pnpm run fmt` / `pnpm run lint` / `pnpm run typecheck` / `pnpm test` / `pnpm run build` / `pnpm --dir e2e-tests run check` がすべて通ることを確認した。
+- `/review-diff-code` を 2 周回し、致命的・重要な指摘 (`ignoreAudioContextCloseError` から `handleAudioContextCloseError` への rename 漏れコメント修正、`fake_stereo_audio_sendrecv/main.ts` の disconnect で analyzer 系を try ブロックに入れる修正、`fake_sendonly/main.ts` の #connect 冒頭を try/finally で囲む修正、コメント表現の小修正) を反映した。
+- ローカル Playwright (signaling URL が必要) と CI workflow `e2e-test.yml` / `e2e-test-webkit.yml` の green 確認は CI に委ねる。
+- リーク解消の手動確認 / `fake_sendonly` の手動確認は本コミットでは未実施。issue 完了条件には残しており、後続でフォローアップ可能。

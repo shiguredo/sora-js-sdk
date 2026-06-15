@@ -31,11 +31,21 @@ const generateColors = (): { bgColor: string; contrastColor: string } => {
   return { bgColor, contrastColor };
 };
 
+// AudioContext.close() の Promise rejection を処理する。
+// 既に closed の場合は InvalidStateError が投げられるため、ここだけ無視して
+// それ以外は console.error に出すことで cleanup の異常を可視化する。
+const handleAudioContextCloseError = (error: unknown): void => {
+  if (error instanceof DOMException && error.name === "InvalidStateError") {
+    return;
+  }
+  console.error("AudioContext.close() の実行に失敗しました:", error);
+};
+
 const createFakeVideoTrack = (
   width = 320, // デフォルト幅 320px
   height = 240, // デフォルト高さ 240px
   frameRate = 30, // デフォルトフレームレート 30fps
-): MediaStreamTrack => {
+): { track: MediaStreamTrack; cleanup: () => void } => {
   // フレームレートを制限
   const fps = Math.max(MIN_FPS, Math.min(MAX_FPS, frameRate));
 
@@ -53,7 +63,10 @@ const createFakeVideoTrack = (
   // 開始時間とフレームカウンター
   const startTime = Date.now();
   let frameCount = 0;
-  let animationFrameId: number;
+  // cleanup 済みのとき RAF のキャンセル対象が無いケースを表せるよう undefined を初期値にする。
+  let animationFrameId: number | undefined;
+  // cleanup が 2 回以上呼ばれても no-op にするためのガード。
+  let cleaned = false;
 
   // 色を決定
   const { bgColor, contrastColor } = generateColors();
@@ -67,6 +80,11 @@ const createFakeVideoTrack = (
 
   // キャンバスを更新する関数 (requestAnimationFrameを使用)
   const updateCanvas = (): void => {
+    // cleanup() 直後に RAF コールバックがすでにキューされている場合があるため、
+    // 冒頭でフラグをチェックして再スケジュールしないようにする。
+    if (cleaned) {
+      return;
+    }
     frameCount++;
     const elapsedTime = Date.now() - startTime;
 
@@ -124,20 +142,36 @@ const createFakeVideoTrack = (
   const stream = canvas.captureStream(fps);
   const [videoTrack] = stream.getVideoTracks();
 
-  // トラックが停止されたらアニメーションも停止する
-  videoTrack.addEventListener("ended", () => {
-    cancelAnimationFrame(animationFrameId);
-    console.log("Animation stopped because track ended.");
-  });
+  // cleanup は idempotent。複数回呼んでも 1 回目以外は no-op にする。
+  // ended ハンドラと #disconnect 経由の明示 cleanup の両方から呼ばれることを想定している。
+  const cleanup = (): void => {
+    if (cleaned) {
+      return;
+    }
+    cleaned = true;
+    videoTrack.removeEventListener("ended", onEnded);
+    videoTrack.stop();
+    if (animationFrameId !== undefined) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = undefined;
+    }
+  };
 
-  return videoTrack;
+  // ended イベントから cleanup を呼ぶことで、track.stop() を外部から呼ばれた場合にも
+  // RAF / リスナーが解放されるようにする。
+  const onEnded = (): void => {
+    cleanup();
+  };
+  videoTrack.addEventListener("ended", onEnded);
+
+  return { track: videoTrack, cleanup };
 };
 
 const createFakeAudioTrack = (
   frequency = 440, // デフォルト周波数 A4 (440Hz)
   volume = 0.1, // デフォルト音量 (0.0 - 1.0)
   stereo = false, // ステレオかモノラルか
-): MediaStreamTrack => {
+): { track: MediaStreamTrack; cleanup: () => void } => {
   // AudioContextを作成
   const audioCtx = new AudioContext();
 
@@ -187,23 +221,28 @@ const createFakeAudioTrack = (
     // MediaStreamからAudioTrackを取得
     const [audioTrack] = destination.stream.getAudioTracks();
 
-    // デバッグ情報
-    console.log("Created stereo audio track:", {
-      channelCount: destination.channelCount,
-      leftFreq: frequency,
-      rightFreq: frequency * 1.5,
-    });
-
-    // トラックが停止されたらAudioContextを閉じる
-    audioTrack.addEventListener("ended", () => {
+    // cleanup は idempotent。複数回呼んでも 1 回目以外は no-op にする。
+    let cleaned = false;
+    const cleanup = (): void => {
+      if (cleaned) {
+        return;
+      }
+      cleaned = true;
+      audioTrack.removeEventListener("ended", onEnded);
+      audioTrack.stop();
       oscillatorLeft.stop();
       oscillatorRight.stop();
-      void audioCtx.close().then(() => {
-        console.log("AudioContext closed because track ended.");
-      });
-    });
+      // AudioContext.close() は Promise を返すが await すると cleanup の同期性が崩れる。
+      // 失敗時は handleAudioContextCloseError が InvalidStateError 以外を console.error に出す。
+      void audioCtx.close().catch(handleAudioContextCloseError);
+    };
 
-    return audioTrack;
+    const onEnded = (): void => {
+      cleanup();
+    };
+    audioTrack.addEventListener("ended", onEnded);
+
+    return { track: audioTrack, cleanup };
   }
   // モノラルの場合（既存の実装）
   // OscillatorNode（音源）を作成
@@ -228,15 +267,25 @@ const createFakeAudioTrack = (
   // MediaStreamからAudioTrackを取得
   const [audioTrack] = destination.stream.getAudioTracks();
 
-  // トラックが停止されたらAudioContextを閉じる
-  audioTrack.addEventListener("ended", () => {
+  // cleanup は idempotent。複数回呼んでも 1 回目以外は no-op にする。
+  let cleaned = false;
+  const cleanup = (): void => {
+    if (cleaned) {
+      return;
+    }
+    cleaned = true;
+    audioTrack.removeEventListener("ended", onEnded);
+    audioTrack.stop();
     oscillator.stop();
-    void audioCtx.close().then(() => {
-      console.log("AudioContext closed because track ended.");
-    });
-  });
+    void audioCtx.close().catch(handleAudioContextCloseError);
+  };
 
-  return audioTrack;
+  const onEnded = (): void => {
+    cleanup();
+  };
+  audioTrack.addEventListener("ended", onEnded);
+
+  return { track: audioTrack, cleanup };
 };
 
 // --- getFakeMedia のための型定義 ---
@@ -260,10 +309,16 @@ interface FakeMediaStreamConstraints {
  * @param constraints - 生成するトラックの種類と設定を指定するオブジェクト。
  *   - video: true または { width, height, frameRate } 形式のオブジェクトでビデオトラックを要求します。
  *   - audio: true または { frequency, volume } 形式のオブジェクトでオーディオトラックを要求します。
- * @returns 指定されたトラックを含む MediaStream。要求されたトラックがない場合は空の MediaStream を返します。
+ * @returns
+ *   - stream: 指定されたトラックを含む MediaStream。要求されたトラックがない場合は空の MediaStream を返します。
+ *   - cleanup: 生成したトラックの RAF / AudioContext / Oscillator 等のリソースを解放する関数。
+ *     呼び出し元は disconnect 時に必ず呼ぶこと。cleanup は idempotent。
  */
-export const getFakeMedia = (constraints: FakeMediaStreamConstraints): MediaStream => {
+export const getFakeMedia = (
+  constraints: FakeMediaStreamConstraints,
+): { stream: MediaStream; cleanup: () => void } => {
   const tracks: MediaStreamTrack[] = [];
+  const cleanups: Array<() => void> = [];
 
   if (constraints.video) {
     // デフォルトのビデオ設定
@@ -272,12 +327,13 @@ export const getFakeMedia = (constraints: FakeMediaStreamConstraints): MediaStre
     if (typeof constraints.video === "object") {
       videoOptions = { ...videoOptions, ...constraints.video };
     }
-    const videoTrack = createFakeVideoTrack(
+    const { track, cleanup } = createFakeVideoTrack(
       videoOptions.width,
       videoOptions.height,
       videoOptions.frameRate,
     );
-    tracks.push(videoTrack);
+    tracks.push(track);
+    cleanups.push(cleanup);
   }
 
   if (constraints.audio) {
@@ -287,19 +343,27 @@ export const getFakeMedia = (constraints: FakeMediaStreamConstraints): MediaStre
     if (typeof constraints.audio === "object") {
       audioOptions = { ...audioOptions, ...constraints.audio };
     }
-    const audioTrack = createFakeAudioTrack(
+    const { track, cleanup } = createFakeAudioTrack(
       audioOptions.frequency,
       audioOptions.volume,
       audioOptions.stereo,
     );
-    tracks.push(audioTrack);
+    tracks.push(track);
+    cleanups.push(cleanup);
   }
 
   // 要求されたトラックがない場合、警告を出力（エラーをスローする代わりに）
   if (tracks.length === 0) {
-    console.warn("getFakeMedia called with no tracks requested.");
+    console.warn("getFakeMedia: 要求されたトラックがありません。");
   }
 
   // 生成されたトラックで MediaStream を作成して返す
-  return new MediaStream(tracks);
+  return {
+    stream: new MediaStream(tracks),
+    cleanup: (): void => {
+      for (const fn of cleanups) {
+        fn();
+      }
+    },
+  };
 };

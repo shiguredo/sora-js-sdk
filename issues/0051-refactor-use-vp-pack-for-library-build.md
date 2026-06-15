@@ -30,14 +30,14 @@
 
 `vp pack` は tsdown ベースのライブラリ向けビルドコマンドで、現行の `vp build` とは以下の点で異なる。
 
-| 項目 | `vp build` | `vp pack` |
-| --- | --- | --- |
-| 出力ファイル | `dist/sora.js` + 複数 `.d.ts` | `dist/sora.js` + 単一 `sora.d.ts` |
-| minify | `vite.config.ts` の設定が反映 | デフォルト無効、`pack.minify` で明示が必要 |
-| target | `es2022` | `pack.target` で明示が必要 |
-| `__SORA_JS_SDK_VERSION__` | 自動置換 | 自動では置換されない。`pack.define` で再定義が必要 |
-| banner | `rolldownOptions.output.banner` で反映 | `pack.banner` で再定義が必要 |
-| dts | `vite-plugin-dts` で生成 | tsdown 内蔵の dts 生成を使用 |
+| 項目                      | `vp build`                             | `vp pack`                                          |
+| ------------------------- | -------------------------------------- | -------------------------------------------------- |
+| 出力ファイル              | `dist/sora.js` + 複数 `.d.ts`          | `dist/sora.js` + 単一 `sora.d.ts`                  |
+| minify                    | `vite.config.ts` の設定が反映          | デフォルト無効、`pack.minify` で明示が必要         |
+| target                    | `es2022`                               | `pack.target` で明示が必要                         |
+| `__SORA_JS_SDK_VERSION__` | 自動置換                               | 自動では置換されない。`pack.define` で再定義が必要 |
+| banner                    | `rolldownOptions.output.banner` で反映 | `pack.banner` で再定義が必要                       |
+| dts                       | `vite-plugin-dts` で生成               | tsdown 内蔵の dts 生成を使用                       |
 
 ## 設計方針
 
