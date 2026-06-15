@@ -2,6 +2,7 @@
 
 - Priority: Low
 - Created: 2026-05-25
+- Completed: 2026-06-15
 - Polished: 2026-06-12
 - Model: Composer 2.5
 - Branch: feature/add-npm-publish-provenance
@@ -151,3 +152,14 @@ publish 2 経路の publish コマンドに `--provenance` を **末尾** で追
 - **0026 (closed, commit `772d1d81`)**: workflow permissions 最小化の上流。publish ジョブレベル `id-token: write` を本 issue が利用する
 - **0039 (open)**: `actions/setup-node` を `setup-vp` に置換。本 issue とは編集箇所が異なり競合しないため、本 issue → 0039 の順を推奨
 - **`--no-git-checks` 削除 issue (未起票)**: 本 issue マージ後にリリース実施者が refactor カテゴリで起票予定 (スコープ外セクション参照)
+
+## 解決方法
+
+`.github/workflows/npm-publish.yml` の publish 2 経路の `npm publish` コマンドに `--provenance` フラグを末尾追加した。
+
+- `npm-publish-canary` ジョブ (`:77`): `npm publish --no-git-checks --tag canary` → `npm publish --no-git-checks --tag canary --provenance`
+- `npm-publish` ジョブ (`:103`): `npm publish --no-git-checks` → `npm publish --no-git-checks --provenance`
+
+設計方針セクションで指示された通り、フラグは末尾に追加して 1 行内 diff を読みやすくし、`--no-git-checks` の位置は変更しない。他のステップ・ジョブ (`verify-version` / `build` / `slack_notify` / 各 `setup-node` / `npm install -g npm@latest` / artifact 系 step / 各 `permissions:`) は無編集。`package.json` も無編集。
+
+完了条件のコード変更 3 項目はすべて充足。検証 4 項目のうち PR diff の確認とジョブレベル `id-token: write` の残存確認はレビューで充足。マージ後の動作確認 (Provenance バッジ表示・`npm audit signatures` での検証等) はマージ後フォローアップセクションに沿って次回 canary tag push 時にリリース実施者が実施する。
