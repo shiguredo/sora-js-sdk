@@ -45,6 +45,12 @@ npm install sora-js-sdk
 pnpm add sora-js-sdk
 ```
 
+### vp
+
+```bash
+vp install sora-js-sdk
+```
+
 ### Node.js の条件
 
 - Sora JavaScript SDK 2026.1.0 以降は **Node.js 22.0 以降** を要求します
@@ -65,10 +71,10 @@ Playwright を利用した E2E テストを実行できます。
 ```bash
 # .env.local を作成して適切な値を設定してください
 $ cp .env.template .env.local
-$ pnpm install
-$ pnpm run build
-$ pnpm exec playwright install chromium --with-deps
-$ pnpm run e2e-test
+$ vp install
+$ vp build
+$ vp exec playwright install chromium --with-deps
+$ vp run e2e-test
 ```
 
 ### E2E テストページ
@@ -76,7 +82,7 @@ $ pnpm run e2e-test
 E2E テストで実行するページを Vite にて起動できます。
 
 ```bash
-pnpm run e2e-dev
+vp run e2e-dev
 ```
 
 ### npm に公開されている安定版のパッケージの E2E テスト

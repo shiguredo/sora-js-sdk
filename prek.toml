@@ -38,7 +38,7 @@ priority = 0
 [[repos.hooks]]
 id = "typecheck"
 name = "tsc --noEmit"
-entry = "pnpm exec tsc --noEmit"
+entry = "vp exec tsc --noEmit"
 language = "system"
 pass_filenames = false
 priority = 10
