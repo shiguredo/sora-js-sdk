@@ -94,8 +94,6 @@
   - @voluntas
 - [FIX] e2e-tests の fake media 生成に明示的 cleanup() を追加し connect/disconnect 繰り返し時の RAF / AudioContext リークを防ぐ
   - @voluntas
-- [FIX] e2e-tests と tests で SDK の stereo ネゴ (addStereoToFmtp / audio.opus_params.stereo) の回帰を検知できるようにする
-  - @voluntas
 
 ## 2025.2.0
 
