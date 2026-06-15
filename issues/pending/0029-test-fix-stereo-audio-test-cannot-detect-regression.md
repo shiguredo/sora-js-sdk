@@ -520,3 +520,35 @@ if (fakeCleanup2) {
 - `waitForTimeout` 置換 (issue 0032)
 - npm pkg e2e (`npm-pkg-e2e-test.yml`) — 公開済み SDK version 固定のため対象外
 - `package.json` の `e2e-test` script の project 名 typo (`chromium` vs `Chromium`) の修正
+
+## pending 理由
+
+2026-06-15 に `/auto-resolve 0029` で本 issue を実装した PR #741 を作成したが、CI で stereo audio 系テスト 3 件が接続初期化段階で fail し、設計判断が必要なため pending に戻す。
+
+### CI 失敗の内容
+
+- PR #741: <https://github.com/shiguredo/sora-js-sdk/pull/741> (closed, not merged)
+- 各 e2e ジョブで 19 件 pass / 3 件 fail。fail は本 issue で変更した stereo audio 系 5 テスト (stereo_audio.test.ts の stereo / mono、stereo_audio_sendrecv.test.ts の stereo / mono / mixed) のうち 3 件
+- 全 fail で同じエラー: `Error: page.waitForSelector: Test ended.` が `#sendonly-connection-id:not(:empty)` および `#connection-id-1:not(:empty)` の待機で発生
+- 接続自体が `connection.created` notify を返さず初期化段階で失敗している。本 issue が追加した SDP assert には到達していない
+- 他 19 件の e2e テスト (stereo audio 系以外) は全 pass のため SDK 接続経路全体が壊れたわけではなく、stereo audio 系 fixture の変更が Sora との接続に影響している
+
+### 想定原因の候補 (未確定。設計判断が必要)
+
+1. `SoraRecvClient` で `forceStereoOutput` 立ち時に新規追加した `audioOpusParamsMinptime: 10` が Sora の signaling 受け入れ仕様と相性が悪い可能性。`audio.opus_params.minptime: 10` を CI 環境の Sora が拒否しているか、もしくは offer SDP 生成が想定と違う挙動になっている
+2. `SoraSendRecvClient` で `forceStereoOutput` 値の取得を削除した結果、HTML 初期 checked 値に依存していた既存挙動が壊れた可能性
+3. 接続順序の再整理 (`sendClient` を `new` する位置を `getFakeMedia` の後に移動) が SDK の内部状態と相性が悪い可能性
+4. fake_stereo_audio_sendrecv の `useStereo1/2` の渡し方が変わったことで Sora の signaling message 生成順序が壊れた可能性
+
+### 再着手前に決めるべきこと
+
+- `audioOpusParamsMinptime` を Sora の signaling 仕様と突き合わせて値域を確定する。Sora が `minptime: 10` を受け取った際の offer SDP 生成挙動 (recv 側 answer に minptime が反映されるか) を実環境で確認する
+- `forceStereoOutput` の `setForceStereoOutput()` 後付け代入と constructor 単発代入で SDK 内 signaling message 生成タイミングに差が出ないかを確認する
+- 接続失敗のローカル再現 (signaling URL 必要) を行い、ブラウザ console の signaling onmessage / SDK trace で具体的な失敗ポイントを切り分ける
+- CI failure ログから、3 件の fail のうちどのテストが先に倒れているか (stereo / mono / mixed のいずれか) を特定し、最小再現の fixture を作る
+- 必要なら fixture 側を「`sendClient` の `new` を `getFakeMedia` 前に戻す」「`audioOpusParamsMinptime` を一度外す」等の段階的 revert で原因切り分けを進める
+
+### 関連 PR
+
+- PR #741 (closed, not merged): <https://github.com/shiguredo/sora-js-sdk/pull/741>
+- 必須前提だった 0028 (#740) は merged 済みのため本 issue 再着手時の依存解消は完了している
