@@ -33,6 +33,21 @@ export interface StereoAudioSendRecvAnalysisData {
   connection2: StereoAudioAnalysisData;
 }
 
+// fake_stereo_audio fixture の #stereo-negotiation dataset 形式
+// stereo audio E2E で送信 / 受信側の localDescription と codec stats を持ち回す
+export interface StereoNegotiationData {
+  sendLocalSdp: string;
+  recvLocalSdp: string;
+  sendOpusCodec: StatsReport[number] | null;
+}
+
+// fake_stereo_audio_sendrecv fixture の #stereo-negotiation dataset 形式
+// 2 接続分の sendrecv answer SDP を持ち回す
+export interface StereoSendRecvNegotiationData {
+  conn1LocalSdp: string;
+  conn2LocalSdp: string;
+}
+
 const VERSION_PATTERN = /^(\d+)\.(\d+)\.(\d+)/u;
 
 const CHROME_PROJECT_NAMES = new Set([
@@ -82,6 +97,52 @@ export function checkVersionSupport(
 // バージョン未対応時のスキップ理由を返す
 export function unsupportedVersionSkipReason(skipReason?: string): string {
   return skipReason ?? "Version not supported";
+}
+
+// opus の payload type を answer SDP から抽出する。
+// WebRTC では opus channel 数は rtpmap で常に 2 として宣言されるが、
+// 保険として末尾の channel 数は緩く受ける。
+// CRLF SDP の末尾 \r を許容するため `\r?` を入れる。
+export function getOpusPayloadType(sdp: string): number | null {
+  const match = /^a=rtpmap:(\d+) opus\/48000\/\d+\r?$/mu.exec(sdp);
+  return match === null ? null : Number.parseInt(match[1], 10);
+}
+
+// opus payload type に対応する fmtp 行のパラメータ列を抽出する内部 helper。
+// CRLF / LF どちらの SDP でも末尾の \r を group 1 に含めないため
+// `([^\r\n]+)` で行末文字を除外する。
+function extractFmtpParams(sdp: string, payloadType: number): string[] | null {
+  const fmtpRegex = new RegExp(`^a=fmtp:${payloadType} ([^\\r\\n]+)$`, "mu");
+  const match = fmtpRegex.exec(sdp);
+  if (match === null) {
+    return null;
+  }
+  return match[1].split(";").map((param) => param.trim());
+}
+
+// opus fmtp に stereo=1 が含まれるかを判定する。
+// addStereoToFmtp / Sora の audio.opus_params.stereo 反映の検証に使う。
+export function hasOpusStereo(sdp: string, payloadType: number): boolean {
+  const params = extractFmtpParams(sdp, payloadType);
+  return params !== null && params.includes("stereo=1");
+}
+
+// appendStereo の冪等ガードが壊れて二重付与された場合を検知するため
+// `stereo=1` の出現回数を返す。
+export function countOpusStereo(sdp: string, payloadType: number): number {
+  const params = extractFmtpParams(sdp, payloadType);
+  if (params === null) {
+    return 0;
+  }
+  return params.filter((param) => param === "stereo=1").length;
+}
+
+// opus fmtp に minptime パラメータが含まれるかを判定する。
+// forceStereoOutput 経路は recv answer に minptime があることが addStereoToFmtp の起動条件のため
+// 受信 SDP の minptime 有無で assert を分岐させる。
+export function hasOpusMinptime(sdp: string, payloadType: number): boolean {
+  const params = extractFmtpParams(sdp, payloadType);
+  return params !== null && params.some((param) => /^minptime=\d+$/u.test(param));
 }
 
 // Playwright 用のラッパー関数
@@ -174,6 +235,38 @@ export async function getAnalysisData<T>(page: Page, selector = "#audio-analysis
     const element = el as HTMLElement;
     const json = element.dataset.analysis;
     return JSON.parse(json ?? "{}") as T;
+  });
+}
+
+// #stereo-negotiation の dataset.negotiation が現れるまで待ってから JSON を取り出す。
+// #get-stats クリック直後は dataset が未書き込みの可能性があるため、
+// 必ずこの helper 経由でアクセスする。
+// timeout は短め (10 秒) にして失敗時に原因切り分けを早める。Playwright デフォルトの 30 秒は
+// 「dataset 書き込み失敗」の原因を 30 秒待たないと見えないため不適切。
+// ジェネリクスデフォルトは設けず、呼び出し側で <StereoNegotiationData> か
+// <StereoSendRecvNegotiationData> を明示することで形状ミスを compile 時に検知する。
+export async function waitForStereoNegotiationData<T>(
+  page: Page,
+  options: { selector?: string; timeout?: number } = {},
+): Promise<T> {
+  const { selector = "#stereo-negotiation", timeout = 10_000 } = options;
+  await page.waitForFunction(
+    (sel) => {
+      const el = document.querySelector(sel);
+      return el !== null && (el as HTMLElement).dataset.negotiation !== undefined;
+    },
+    selector,
+    { timeout },
+  );
+  return page.$eval(selector, (el) => {
+    const element = el as HTMLElement;
+    const json = element.dataset.negotiation;
+    // fixture 側は必ず JSON.stringify(...) で非空文字を書き込むが、防御として空文字時は
+    // 明示的に throw して原因を即座に特定できるようにする
+    if (json === undefined || json === "") {
+      throw new Error("#stereo-negotiation dataset.negotiation is empty");
+    }
+    return JSON.parse(json) as T;
   });
 }
 

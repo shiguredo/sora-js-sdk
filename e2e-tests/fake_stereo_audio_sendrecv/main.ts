@@ -2,7 +2,12 @@ import { getFakeMedia } from "../src/fake";
 import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 import Sora from "sora-js-sdk";
-import type { ConnectionPublisher, SignalingNotifyMessage, SoraConnection } from "sora-js-sdk";
+import type {
+  ConnectionOptions,
+  ConnectionPublisher,
+  SignalingNotifyMessage,
+  SoraConnection,
+} from "sora-js-sdk";
 
 // Soraオブジェクトをwindowに公開（テスト用）
 declare global {
@@ -142,21 +147,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector("#connect")?.addEventListener("click", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
-    // 接続1の設定を取得
+    // sendrecv 方向では addStereoToFmtp が isRecvOnly ゲートで弾かれて no-op になるため
+    // forceStereoOutput は SDP 上の差を生まない。fixture では useStereo のみを反映する。
+    // HTML 初期値への暗黙依存を解消するためテスト側からも明示的にチェック状態を制御する。
     const useStereo1 = document.querySelector<HTMLInputElement>("#use-stereo-1")!.checked;
-    const forceStereoOutput1 =
-      document.querySelector<HTMLInputElement>("#force-stereo-output-1")!.checked;
-
-    // 接続2の設定を取得
     const useStereo2 = document.querySelector<HTMLInputElement>("#use-stereo-2")!.checked;
-    const forceStereoOutput2 =
-      document.querySelector<HTMLInputElement>("#force-stereo-output-2")!.checked;
 
     // 接続1を作成
-    soraClient1 = new SoraSendRecvClient(signalingUrl, channelId, secretKey, "1");
-    if (forceStereoOutput1) {
-      soraClient1.setForceStereoOutput(true);
-    }
+    soraClient1 = new SoraSendRecvClient(signalingUrl, channelId, secretKey, "1", {
+      useStereo: useStereo1,
+    });
 
     // 既存の cleanup が残っていれば解放してから新しい stream を生成する。
     if (fakeCleanup1) {
@@ -205,10 +205,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // 接続2を作成
-    soraClient2 = new SoraSendRecvClient(signalingUrl, channelId, secretKey, "2");
-    if (forceStereoOutput2) {
-      soraClient2.setForceStereoOutput(true);
-    }
+    soraClient2 = new SoraSendRecvClient(signalingUrl, channelId, secretKey, "2", {
+      useStereo: useStereo2,
+    });
 
     // 既存の cleanup が残っていれば解放してから新しい stream を生成する。
     if (fakeCleanup2) {
@@ -410,6 +409,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         },
       });
     }
+
+    // 2 接続分の sendrecv answer SDP を持ち回す #stereo-negotiation を atomic に書き込んで append する。
+    // fake_stereo_audio_sendrecv の #stats-report-1 は statsDiv1.innerHTML 上書きで再構築されるため、
+    // append は innerHTML 上書きの後に行う。複数回 click 対策の防御的 remove も残す。
+    document.querySelector("#stereo-negotiation")?.remove();
+
+    const negotiationDiv = document.createElement("div");
+    negotiationDiv.id = "stereo-negotiation";
+    negotiationDiv.dataset.negotiation = JSON.stringify({
+      conn1LocalSdp: soraClient1.getLocalSdp() ?? "",
+      conn2LocalSdp: soraClient2.getLocalSdp() ?? "",
+    });
+    document.querySelector("#stats-report-1")?.append(negotiationDiv);
   });
 });
 
@@ -417,7 +429,7 @@ class SoraSendRecvClient {
   private readonly debug = false;
   private readonly channelId: string;
   private readonly metadata: { access_token: string };
-  private readonly options: object = { connectionTimeout: 15_000 };
+  private readonly options: ConnectionOptions;
 
   private readonly sora: SoraConnection;
   private readonly connection: ConnectionPublisher;
@@ -430,6 +442,7 @@ class SoraSendRecvClient {
     channelId: string,
     secretKey: string,
     connectionNumber: string,
+    fixtureOptions: { useStereo: boolean },
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug);
     this.channelId = channelId;
@@ -438,25 +451,16 @@ class SoraSendRecvClient {
     // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey };
 
+    const baseOptions: ConnectionOptions = { connectionTimeout: 15_000 };
+    if (fixtureOptions.useStereo) {
+      baseOptions.audioOpusParamsStereo = true;
+    }
+    // sendrecv では addStereoToFmtp が呼ばれないため audioOpusParamsMinptime は設定しない。
+    this.options = baseOptions;
+
     this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options);
     this.connection.on("track", this.onTrack.bind(this));
     this.connection.on("notify", this.onNotify.bind(this));
-
-    // SDPデバッグ用
-    this.connection.on("signaling", (event) => {
-      if (event.type === "answer") {
-        console.log(
-          `Connection ${this.connectionNumber} Answer SDP (stereo check):`,
-          (event as any).sdp?.includes("stereo=1"),
-        );
-      }
-    });
-  }
-
-  setForceStereoOutput(forceStereo: boolean): void {
-    if (forceStereo) {
-      this.connection.options.forceStereoOutput = true;
-    }
   }
 
   setOnStreamCallback(callback: (stream: MediaStream) => void): void {
@@ -497,6 +501,11 @@ class SoraSendRecvClient {
       throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
+  }
+
+  // SDK 内部 PC の localDescription.sdp を fixture 経由で取得するための getter。
+  getLocalSdp(): string | null {
+    return this.connection.pc?.localDescription?.sdp ?? null;
   }
 
   private onTrack(event: RTCTrackEvent): void {

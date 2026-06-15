@@ -1,7 +1,7 @@
 // XXX: assert を使うと型がエラーがうるさいため expect を使ってる
 
 import type { AudioCodecType, DataChannelDirection, VideoCodecType } from "../src/types";
-import { ConnectError, createSignalingMessage, redact } from "../src/utils";
+import { addStereoToFmtp, ConnectError, createSignalingMessage, redact } from "../src/utils";
 
 const channelId = "7N3fsMHob";
 const metadata = "PG9A6RXgYqiqWKOVO";
@@ -1037,4 +1037,282 @@ test("redact は DAG の兄弟参照を `[Circular]` 化する", () => {
   const result = redact({ a: sub, b: sub }) as Record<string, unknown>;
   expect(result["a"]).toStrictEqual({ x: 1 });
   expect(result["b"]).toBe("[Circular]");
+});
+
+/**
+ * addStereoToFmtp の仕様固定テスト群
+ *
+ * src/base.ts:1595 の forceStereoOutput 経路で SDK 生成 answer SDP の opus fmtp に
+ * stereo=1 を追加する hack を、SDK 単体で確実に検証するためのユニットテスト。
+ * E2E (Playwright) はブラウザ / Sora の SDP 挙動に依存して best-effort になるため、
+ * 決定的な回帰検知はここで担保する。
+ *
+ * fixture SDP は実際のブラウザ生成 SDP に合わせて CRLF を使用する。
+ * addStereoToFmtp は split(/\n/u) と m= プレフィックス判定で行を扱うため
+ * 末尾の \r は各行に残ったまま join で再構成される。LF / CRLF どちらでも
+ * 仕様としては同じ挙動になる。
+ */
+
+// 基本形 (recvonly + setup:active + opus + minptime=10) を組み立てる helper。
+// 改行は \r\n (CRLF) を使用する。
+const buildBaseStereoFmtpSdp = (): string =>
+  [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "a=fmtp:111 minptime=10;useinbandfec=1",
+    "",
+  ].join("\r\n");
+
+// 正常系: 基本形 (recvonly + setup:active + opus + minptime=10) を入力すると
+// opus fmtp が `minptime=10;stereo=1;useinbandfec=1` に書き換わり
+// session description (v= から m=audio の手前まで) は変化しないこと。
+test("addStereoToFmtp は基本形の opus fmtp に stereo=1 を付与する", () => {
+  const input = buildBaseStereoFmtpSdp();
+  const expected = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "a=fmtp:111 minptime=10;stereo=1;useinbandfec=1",
+    "",
+  ].join("\r\n");
+  expect(addStereoToFmtp(input)).toBe(expected);
+});
+
+// 冪等: 入力 fmtp が既に `minptime=10;stereo=1;useinbandfec=1` のとき
+// 出力でも `stereo=1` が 1 つだけのままで二重付与しないこと。
+// appendStereo の look-behind / look-ahead ガードが効いていることを固定化する。
+test("addStereoToFmtp は既に stereo=1 が含まれる fmtp を二重付与しない", () => {
+  const input = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "a=fmtp:111 minptime=10;stereo=1;useinbandfec=1",
+    "",
+  ].join("\r\n");
+  expect(addStereoToFmtp(input)).toBe(input);
+});
+
+// minptime 欠落: 基本形から fmtp 行の `minptime=10;` を取り除いた SDP では
+// `stereo=1` が付与されない。これは appendStereo が minptime=\d+ にだけマッチして
+// 末尾に stereo=1 を追加するため、minptime が無いと replace の正規表現がヒットしない。
+// 現状実装の挙動を仕様として固定する。将来「minptime 不要で stereo=1 を付ける」
+// 改修を行うときはこのテストの期待値を更新する。
+test("addStereoToFmtp は fmtp に minptime が無い場合 stereo=1 を付与しない", () => {
+  const input = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "a=fmtp:111 useinbandfec=1",
+    "",
+  ].join("\r\n");
+  expect(addStereoToFmtp(input)).toBe(input);
+});
+
+// isRecvOnly ゲート (sendrecv): 基本形の `a=recvonly` を `a=sendrecv` に置換した SDP では
+// `stereo=1` が付与されない。addStereoToFmtp は recvonly の media description だけを対象にする。
+test("addStereoToFmtp は sendrecv の opus fmtp に stereo=1 を付与しない", () => {
+  const input = buildBaseStereoFmtpSdp().replace("a=recvonly", "a=sendrecv");
+  expect(addStereoToFmtp(input)).toBe(input);
+});
+
+// isRecvOnly ゲート (sendonly): 基本形の `a=recvonly` を `a=sendonly` に置換した SDP では
+// `stereo=1` が付与されない。送信経路は audioOpusParamsStereo の signaling 経路で扱う。
+test("addStereoToFmtp は sendonly の opus fmtp に stereo=1 を付与しない", () => {
+  const input = buildBaseStereoFmtpSdp().replace("a=recvonly", "a=sendonly");
+  expect(addStereoToFmtp(input)).toBe(input);
+});
+
+// isSetupActive ゲート (actpass): 基本形の `a=setup:active` を `a=setup:actpass` に置換した SDP では
+// `stereo=1` が付与されない。actpass は DTLS の役割未確定状態で、SDK の answer SDP では
+// 通常 active になるため、actpass の media description は処理対象外として扱う。
+test("addStereoToFmtp は setup:actpass の opus fmtp に stereo=1 を付与しない", () => {
+  const input = buildBaseStereoFmtpSdp().replace("a=setup:active", "a=setup:actpass");
+  expect(addStereoToFmtp(input)).toBe(input);
+});
+
+// isSetupActive ゲート (passive): 基本形の `a=setup:active` を `a=setup:passive` に置換した SDP では
+// `stereo=1` が付与されない。passive は SDK 生成 answer では発生しない想定だが、念のため固定化する。
+test("addStereoToFmtp は setup:passive の opus fmtp に stereo=1 を付与しない", () => {
+  const input = buildBaseStereoFmtpSdp().replace("a=setup:active", "a=setup:passive");
+  expect(addStereoToFmtp(input)).toBe(input);
+});
+
+// 最短一致 split (video が audio より前): `m=audio` セクションの直前に video の media description を
+// 挟んだ SDP では、addStereoToFmtp の split 正規表現 `/^(v=.+?)(m=audio.+)/msu` は最短一致なので
+// session description には video セクションも含まれ、media section は m=audio から末尾まで。
+// よって video セクションは session description として処理されず無変更で残り、
+// audio セクションのみに stereo=1 が付与される。最短一致挙動の仕様固定テスト。
+test("addStereoToFmtp は video セクションが先にある SDP で audio のみに stereo=1 を付与する", () => {
+  const input = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=video 9 UDP/TLS/RTP/SAVPF 96",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=fmtp:96 minptime=10",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "a=fmtp:111 minptime=10;useinbandfec=1",
+    "",
+  ].join("\r\n");
+  const expected = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=video 9 UDP/TLS/RTP/SAVPF 96",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=fmtp:96 minptime=10",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "a=fmtp:111 minptime=10;stereo=1;useinbandfec=1",
+    "",
+  ].join("\r\n");
+  expect(addStereoToFmtp(input)).toBe(expected);
+});
+
+// splitSdp === null (m=audio 不在): video のみの SDP では split 正規表現が null を返すため
+// 入力 SDP がそのまま返る。addStereoToFmtp の早期 return パスを固定化する。
+test("addStereoToFmtp は m=audio が無い SDP を変更せず返す", () => {
+  const input = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=video 9 UDP/TLS/RTP/SAVPF 96",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:96 VP8/90000",
+    "",
+  ].join("\r\n");
+  expect(addStereoToFmtp(input)).toBe(input);
+});
+
+// isAudio ゲート (audio が先): split 正規表現が最短一致のため、`m=audio` が先にあると
+// media section に audio + video が両方含まれ、mediaDescriptionsList を split したループで
+// video 側の media description が `isAudio` ゲートで false 判定されて素通しされる。
+// この経路を直接踏ませて、video 側の fmtp に stereo=1 が誤付与されないことを固定化する。
+test("addStereoToFmtp は audio が先の SDP で video セクションには stereo=1 を付与しない", () => {
+  const input = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "a=fmtp:111 minptime=10;useinbandfec=1",
+    "m=video 9 UDP/TLS/RTP/SAVPF 96",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=fmtp:96 minptime=10",
+    "",
+  ].join("\r\n");
+  const expected = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "a=fmtp:111 minptime=10;stereo=1;useinbandfec=1",
+    "m=video 9 UDP/TLS/RTP/SAVPF 96",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=fmtp:96 minptime=10",
+    "",
+  ].join("\r\n");
+  expect(addStereoToFmtp(input)).toBe(expected);
+});
+
+// isOpus ゲート (非 opus rtpmap): rtpmap の codec を opus 以外 (PCMA/G.711) に置き換えた SDP では
+// `isOpus` ゲートで false 判定されて素通しされ、fmtp に minptime があっても stereo=1 が付与されない。
+test("addStereoToFmtp は非 opus の audio rtpmap に stereo=1 を付与しない", () => {
+  const input = buildBaseStereoFmtpSdp().replace(
+    "a=rtpmap:111 opus/48000/2",
+    "a=rtpmap:111 PCMA/8000",
+  );
+  expect(addStereoToFmtp(input)).toBe(input);
+});
+
+// isFmtp ゲート (fmtp 行不在): audio media description から `a=fmtp:111 ...` 行を完全に削除した SDP では
+// `isFmtp` ゲートで false 判定されて素通しされ、media description が無変更で返る。
+test("addStereoToFmtp は fmtp 行が無い audio セクションに stereo=1 を付与しない", () => {
+  const input = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "",
+  ].join("\r\n");
+  expect(addStereoToFmtp(input)).toBe(input);
+});
+
+// LF のみ SDP: 改行を LF のみに変えた SDP でも CRLF と同じ挙動になることを固定化する。
+// addStereoToFmtp 内の split(/\n/u) は LF / CRLF 両方をサポートする実装。
+test("addStereoToFmtp は LF 改行の SDP でも opus fmtp に stereo=1 を付与する", () => {
+  const input = buildBaseStereoFmtpSdp().replaceAll("\r\n", "\n");
+  const expected = [
+    "v=0",
+    "o=- 0 0 IN IP4 0.0.0.0",
+    "s=-",
+    "t=0 0",
+    "m=audio 9 UDP/TLS/RTP/SAVPF 111",
+    "c=IN IP4 0.0.0.0",
+    "a=setup:active",
+    "a=recvonly",
+    "a=rtpmap:111 opus/48000/2",
+    "a=fmtp:111 minptime=10;stereo=1;useinbandfec=1",
+    "",
+  ].join("\n");
+  expect(addStereoToFmtp(input)).toBe(expected);
 });

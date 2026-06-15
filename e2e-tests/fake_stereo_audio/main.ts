@@ -3,9 +3,10 @@ import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 import Sora from "sora-js-sdk";
 import type {
-  SignalingNotifyMessage,
+  ConnectionOptions,
   ConnectionPublisher,
   ConnectionSubscriber,
+  SignalingNotifyMessage,
   SoraConnection,
 } from "sora-js-sdk";
 
@@ -144,13 +145,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.querySelector("#connect")?.addEventListener("click", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
-    // 受信側を先に接続
-    recvClient = new SoraRecvClient(signalingUrl, channelId, secretKey);
-
-    // forceStereoOutputを設定
+    // HTML 初期値への暗黙依存を解消するためテスト側からも明示的にチェック状態を制御する。
+    const useStereo = document.querySelector<HTMLInputElement>("#use-stereo")!.checked;
     const forceStereoOutput =
       document.querySelector<HTMLInputElement>("#force-stereo-output")!.checked;
-    recvClient.setForceStereoOutput(forceStereoOutput);
+
+    // 受信側を先に new + connect する (sendonly + recvonly 構成で
+    // 受信側が SFU に先に attach されている必要があるため)
+    recvClient = new SoraRecvClient(signalingUrl, channelId, secretKey, { forceStereoOutput });
 
     // リモートストリーム受信時のコールバックを設定
     recvClient.setOnStreamCallback((stream: MediaStream) => {
@@ -162,11 +164,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     await recvClient.connect();
-
-    // 送信側を接続
-    sendClient = new SoraSendClient(signalingUrl, channelId, secretKey);
-
-    const useStereo = document.querySelector<HTMLInputElement>("#use-stereo")!.checked;
 
     // 既存の cleanup が残っていれば解放してから新しい stream を生成する。
     // 手動操作で同一 page 内の再接続が起きた場合の防御。
@@ -182,6 +179,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       },
     });
     fakeCleanup = cleanup;
+
+    sendClient = new SoraSendClient(signalingUrl, channelId, secretKey, { useStereo });
 
     // ローカル音声のリアルタイム解析を開始
     if (localAnalyzer) {
@@ -228,7 +227,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
-    if (!sendClient) {
+    if (!sendClient || !recvClient) {
       return;
     }
 
@@ -307,6 +306,29 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
       statsDiv.append(analysisDiv);
     }
+
+    // SDP / codec stats を持ち回す #stereo-negotiation を atomic に書き込んで append する。
+    // RTCStatsReport.values() は RTCStats を yield する。mimeType を持つのは
+    // codec 派生型 (type === "codec") なので mimeType を持つ shape で narrow する。
+    // 注: TypeScript 標準 lib.dom.d.ts に RTCCodecStats 型は無いため ad-hoc な shape で扱う。
+    const sendOpusCodec =
+      Array.from(statsReport.values()).find(
+        (report) =>
+          report.type === "codec" && (report as { mimeType?: string }).mimeType === "audio/opus",
+      ) ?? null;
+
+    // statsDiv は innerHTML 上書きで再構築されるため、#stereo-negotiation は最後に append する。
+    // 複数回 click 対策の防御的 remove も残す。
+    document.querySelector("#stereo-negotiation")?.remove();
+
+    const negotiationDiv = document.createElement("div");
+    negotiationDiv.id = "stereo-negotiation";
+    negotiationDiv.dataset.negotiation = JSON.stringify({
+      sendLocalSdp: sendClient.getLocalSdp() ?? "",
+      recvLocalSdp: recvClient.getLocalSdp() ?? "",
+      sendOpusCodec,
+    });
+    statsDiv.append(negotiationDiv);
   });
 });
 
@@ -314,27 +336,33 @@ class SoraSendClient {
   private readonly debug = false;
   private readonly channelId: string;
   private readonly metadata: { access_token: string };
-  private readonly options: object = { connectionTimeout: 15_000 };
+  private readonly options: ConnectionOptions;
 
   private readonly sora: SoraConnection;
   private readonly connection: ConnectionPublisher;
 
-  constructor(signalingUrl: string, channelId: string, secretKey: string) {
+  constructor(
+    signalingUrl: string,
+    channelId: string,
+    secretKey: string,
+    fixtureOptions: { useStereo: boolean },
+  ) {
     this.sora = Sora.connection(signalingUrl, this.debug);
     this.channelId = channelId;
 
     // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey };
 
+    const baseOptions: ConnectionOptions = { connectionTimeout: 15_000 };
+    if (fixtureOptions.useStereo) {
+      // false 明示と key 省略で Sora signaling の挙動が変わるため、false 時は key 自体を省略する。
+      // (src/utils.ts:291 の `"audioOpusParamsStereo" in copyOptions` 判定が key の有無で分岐する)
+      baseOptions.audioOpusParamsStereo = true;
+    }
+    this.options = baseOptions;
+
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options);
     this.connection.on("notify", this.onNotify.bind(this));
-
-    // SDPデバッグ用
-    this.connection.on("signaling", (event) => {
-      if (event.type === "answer") {
-        console.log("Answer SDP (stereo check):", (event as any).sdp?.includes("stereo=1"));
-      }
-    });
   }
 
   async connect(stream: MediaStream): Promise<void> {
@@ -362,6 +390,12 @@ class SoraSendClient {
     return this.connection.pc.getStats();
   }
 
+  // SDK 内部 PC の localDescription.sdp を fixture 経由で取得するための getter。
+  // 内部 PC は SDK で public 宣言かつ null 許容のため getStats と同じカプセル化方針で getter にしている。
+  getLocalSdp(): string | null {
+    return this.connection.pc?.localDescription?.sdp ?? null;
+  }
+
   private onNotify(event: SignalingNotifyMessage): void {
     if (
       event.event_type === "connection.created" &&
@@ -379,29 +413,39 @@ class SoraRecvClient {
   private readonly debug = false;
   private readonly channelId: string;
   private readonly metadata: { access_token: string };
-  private readonly options: object = { connectionTimeout: 15_000 };
+  private readonly options: ConnectionOptions;
 
   private readonly sora: SoraConnection;
   private readonly connection: ConnectionSubscriber;
   private onStreamCallback: ((stream: MediaStream) => void) | null = null;
   private remoteStream: MediaStream | null = null;
 
-  constructor(signalingUrl: string, channelId: string, secretKey: string) {
+  constructor(
+    signalingUrl: string,
+    channelId: string,
+    secretKey: string,
+    fixtureOptions: { forceStereoOutput: boolean },
+  ) {
     this.sora = Sora.connection(signalingUrl, this.debug);
     this.channelId = channelId;
 
     // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey };
 
+    const baseOptions: ConnectionOptions = { connectionTimeout: 15_000 };
+    if (fixtureOptions.forceStereoOutput) {
+      baseOptions.forceStereoOutput = true;
+      // forceStereoOutput が立つときだけ Sora の offer に minptime を要求する。
+      // addStereoToFmtp は recv answer SDP の opus fmtp に minptime=\d+ が
+      // 含まれることが起動条件のため、minptime を載せて経路を成立させる。
+      // 値 10 は tests/utils.test.ts の audioOpusParamsMinptime テストと同じ。
+      baseOptions.audioOpusParamsMinptime = 10;
+    }
+    this.options = baseOptions;
+
     this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options);
     this.connection.on("track", this.onTrack.bind(this));
     this.connection.on("notify", this.onNotify.bind(this));
-  }
-
-  setForceStereoOutput(forceStereo: boolean): void {
-    if (forceStereo) {
-      this.connection.options.forceStereoOutput = true;
-    }
   }
 
   setOnStreamCallback(callback: (stream: MediaStream) => void): void {
@@ -426,6 +470,11 @@ class SoraRecvClient {
       throw new Error("PeerConnection is not ready");
     }
     return this.connection.pc.getStats();
+  }
+
+  // SDK 内部 PC の localDescription.sdp を fixture 経由で取得するための getter。
+  getLocalSdp(): string | null {
+    return this.connection.pc?.localDescription?.sdp ?? null;
   }
 
   private onTrack(event: RTCTrackEvent): void {
