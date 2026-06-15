@@ -18,21 +18,48 @@ document.addEventListener("DOMContentLoaded", async () => {
   setSoraJsSdkVersion();
 
   let client: SoraClient;
+  // getFakeMedia の cleanup を保持し、#disconnect / 次回 #connect / connect 失敗時に解放する。
+  let fakeCleanup: (() => void) | null = null;
 
   document.querySelector("#connect")?.addEventListener("click", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
     const videoCodecType = getVideoCodecType();
 
+    // 既存の cleanup が残っていれば解放してから新しい stream を生成する。
+    if (fakeCleanup) {
+      fakeCleanup();
+      fakeCleanup = null;
+    }
+
     client = new SoraClient(signalingUrl, channelId, secretKey, videoCodecType);
 
-    const stream = getFakeMedia({
+    const { stream, cleanup } = getFakeMedia({
       audio: true,
       video: true,
     });
-    await client.connect(stream);
+    fakeCleanup = cleanup;
+
+    try {
+      await client.connect(stream);
+    } catch (error) {
+      // connect 失敗時にも fake stream を解放してリソースリークを防ぐ。
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
+      throw error;
+    }
   });
   document.querySelector("#disconnect")?.addEventListener("click", async () => {
-    await client.disconnect();
+    // client.disconnect が throw しても fake stream は必ず解放する。
+    try {
+      await client.disconnect();
+    } finally {
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
+    }
   });
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {

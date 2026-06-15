@@ -59,7 +59,7 @@ attw: true,
 3. 検出された警告 / エラーを確認し、必要に応じて `package.json` の `exports` 構成を修正する
 4. 許容する警告がある場合は、`pack.publint` / `pack.attw` のオプションで制御するか、issue 内に理由を記載する
 5. `CHANGES.md` の `## develop` セクションの `### misc` に以下を追加する
-   - `[ADD] `vp pack` の `publint` / `attw` 検証を有効化する`
+   - `[ADD] `vp pack`の`publint`/`attw` 検証を有効化する`
 
 ## 関連
 

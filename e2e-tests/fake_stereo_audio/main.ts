@@ -138,6 +138,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   let recvClient: SoraRecvClient;
   let localAnalyzer: RealtimeAudioAnalyzer | null = null;
   let remoteAnalyzer: RealtimeAudioAnalyzer | null = null;
+  // getFakeMedia の cleanup を保持し、#disconnect / 次回 #connect / connect 失敗時に解放する。
+  let fakeCleanup: (() => void) | null = null;
 
   document.querySelector("#connect")?.addEventListener("click", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
@@ -166,13 +168,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const useStereo = document.querySelector<HTMLInputElement>("#use-stereo")!.checked;
 
-    const stream = getFakeMedia({
+    // 既存の cleanup が残っていれば解放してから新しい stream を生成する。
+    // 手動操作で同一 page 内の再接続が起きた場合の防御。
+    if (fakeCleanup) {
+      fakeCleanup();
+      fakeCleanup = null;
+    }
+    const { stream, cleanup } = getFakeMedia({
       audio: {
         frequency: 440,
         stereo: useStereo,
         volume: 0.1,
       },
     });
+    fakeCleanup = cleanup;
 
     // ローカル音声のリアルタイム解析を開始
     if (localAnalyzer) {
@@ -181,23 +190,40 @@ document.addEventListener("DOMContentLoaded", async () => {
     localAnalyzer = new RealtimeAudioAnalyzer(stream, "local");
     localAnalyzer.start();
 
-    await sendClient.connect(stream);
+    try {
+      await sendClient.connect(stream);
+    } catch (error) {
+      // connect 失敗時にも fake stream を解放してリソースリークを防ぐ。
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
+      throw error;
+    }
   });
 
   document.querySelector("#disconnect")?.addEventListener("click", async () => {
-    if (localAnalyzer) {
-      localAnalyzer.stop();
-      localAnalyzer = null;
-    }
-    if (remoteAnalyzer) {
-      remoteAnalyzer.stop();
-      remoteAnalyzer = null;
-    }
-    if (sendClient) {
-      await sendClient.disconnect();
-    }
-    if (recvClient) {
-      await recvClient.disconnect();
+    // sendClient / recvClient の disconnect が throw しても fake stream は必ず解放する。
+    try {
+      if (localAnalyzer) {
+        localAnalyzer.stop();
+        localAnalyzer = null;
+      }
+      if (remoteAnalyzer) {
+        remoteAnalyzer.stop();
+        remoteAnalyzer = null;
+      }
+      if (sendClient) {
+        await sendClient.disconnect();
+      }
+      if (recvClient) {
+        await recvClient.disconnect();
+      }
+    } finally {
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
     }
   });
 

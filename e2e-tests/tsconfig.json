@@ -12,6 +12,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "stripInternal": true,
+    "skipLibCheck": true,
     "newLine": "LF",
     "types": ["node"],
     "paths": {
