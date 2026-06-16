@@ -21,8 +21,7 @@
   "exports": {
     ".": {
       "types": "./dist/sora.d.ts",
-      "import": "./dist/sora.js",
-      "require": "./dist/sora.js"
+      "import": "./dist/sora.js"
     }
   },
   "scripts": {
