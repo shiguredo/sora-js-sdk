@@ -21,6 +21,10 @@
   - @voluntas
 - [CHANGE] `abendPeerConnectionState()` の発火順を他 3 系統と揃え timeline → callback の順にする
   - @voluntas
+- [CHANGE] Node.js の最低要件を 22.18.0 以上に引き上げる
+  - 後続のビルドツール移行で導入される `tsdown` 0.22 系が Node.js `^22.18.0 || >=24.0.0` を要求するため
+  - <https://www.npmjs.com/package/tsdown>
+  - @voluntas
 - [UPDATE] pnpm 11 系に上げる
   - @voluntas
 - [UPDATE] TypeScript 6.0 へ対応する
