@@ -131,3 +131,7 @@ for (const key of Object.keys(copyOptions) as Array<keyof ConnectionOptions>) {
 ## マージ順
 
 issue 0018 (マージ済) → issue 0046 → 本 issue。0046 で `in` 演算子が消えた後の方が、本 refactor で残る delete ループの構造がより読みやすくなる。
+
+## メモ
+
+- 本 issue で delete ループの統合 / helper 抽出を行う際、issue 0046 (closed) の完了条件 :109 と方針 :110 の間に矛盾 (`video*Params の有効値・undefined・混在ケースが pass し続けることが動的挙動不変の証拠` と `新規テストは追加しない` が両立していない) があった。本 issue の実装時にあわせて、`videoVP9Params` / `videoH264Params` / `videoH265Params` / `videoAV1Params` 系の回帰テストと audio/video params キーへの `null` 入力テストを補強するかを検討する。スコープ拡張が大きい場合は、テスト補強を別 issue として切り出す。
