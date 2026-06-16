@@ -694,8 +694,8 @@ export default class ConnectionBase {
     }
     this.initializeConnection();
     const event = this.soraCloseEvent("abend", title);
-    this.callbacks.disconnect(event);
     this.writeSoraTimelineLog("disconnect-abend", event);
+    this.callbacks.disconnect(event);
   }
 
   /**

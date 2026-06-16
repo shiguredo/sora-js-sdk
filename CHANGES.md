@@ -19,6 +19,8 @@
   - 利用者は `.catch` で reject を受ける必要がある (fire-and-forget で呼んでいる場合は unhandled promise rejection が発生する)
   - 非推奨の `stopAudioTrack` / `stopVideoTrack`、および `replaceAudioTrack` / `replaceVideoTrack` 経由でも同じ reject が伝播する
   - @voluntas
+- [CHANGE] `abendPeerConnectionState()` の発火順を他 3 系統と揃え timeline → callback の順にする
+  - @voluntas
 - [UPDATE] pnpm 11 系に上げる
   - @voluntas
 - [UPDATE] TypeScript 6.0 へ対応する

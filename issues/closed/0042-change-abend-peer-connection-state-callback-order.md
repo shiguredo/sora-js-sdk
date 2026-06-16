@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-09
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-06-16
 - Model: Opus 4.7
 - Branch: feature/change-abend-peer-connection-state-callback-order
 - Polished: 2026-06-16
@@ -114,4 +114,7 @@ this.writeSoraTimelineLog("disconnect-abend", event);
 
 ## 解決方法
 
-実装完了後に追記する (どのファイルをどう変更したかの実績)。
+- `src/base.ts:697-698` の 2 行を入れ替え、`abendPeerConnectionState()` の発火順を他 3 系統 (`shutdown` / `abend` / `disconnect`) と揃えて `writeSoraTimelineLog` → `callbacks.disconnect` の順にした。`event` 生成 (`:696`) はそのまま、参照同一性も維持。
+- `:645-695` (handler 剥がし、DataChannel close、`ws.close()`、`pc.close()`、`initializeConnection`) は変更なし。
+- `CHANGES.md` `## develop` 配下、`[CHANGE]` 群末尾 (`removeAudioTrack` / `removeVideoTrack` 担当者行の直後、`[UPDATE] pnpm 11 系に上げる` の直前) に `[CHANGE]` エントリを 1 件追加した。
+- `pnpm test` (108 件 pass) / `pnpm typecheck` / `pnpm lint` をローカルで通過。`grep -nE 'writeSoraTimelineLog\("disconnect-abend"|callbacks\.disconnect' src/base.ts | head -2` の結果が `:697 writeSoraTimelineLog → :698 callbacks.disconnect` で issue の機械的確認も満たした。
