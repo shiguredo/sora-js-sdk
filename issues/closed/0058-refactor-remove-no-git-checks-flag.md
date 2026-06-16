@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-15
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-06-16
 - Model: Opus 4.7
 - Branch: feature/refactor-remove-no-git-checks-flag
 - Polished: 2026-06-16
@@ -144,4 +144,17 @@ publish が失敗した場合の復旧手順 (0033 と同等):
 6. PR 作成・レビュー・squash merge する
 7. マージ後フォローアップ (上記セクション) を次回 publish タイミングでリリース実施者が確認する
 
-実績 (実装完了後に追記):
+実績:
+
+- 事前調査 Step 1 を実施した。
+  - `git blame .github/workflows/npm-publish.yml` で経緯確認: `7ec64660` (2025-05-05) の workflow 新規作成時から `--no-git-checks` が付いていた。同 commit のコメントに `# pnpm publish は CI では正常に動作しない / https://github.com/pnpm/pnpm/issues/4937` とあり、元々 `pnpm publish` 用の現役フラグが `npm publish` に切り替わった際に残置された格好。
+  - `.gitignore` に `dist/` が含まれていることを確認 (`.npmignore` は無く、`package.json` の `files: ["dist"]` で制御)。
+  - ローカルで `npm publish --dry-run --tag canary` を `--no-git-checks` ありとなしの両方で実行: あり = `npm warn Unknown cli config "--git-checks". This will stop working in the next major version of npm.` warning、なし = warning 無しで正常完了。`npm config get git-checks` は `undefined` で npm 11 にはこの config 項目自体が存在しない。
+  - 判定: case A (単純削除可能)。
+- `.github/workflows/npm-publish.yml:77` の `npm publish --no-git-checks --tag canary --provenance` から `--no-git-checks` を削除した。
+- `.github/workflows/npm-publish.yml:103` の `npm publish --no-git-checks --provenance` から `--no-git-checks` を削除した。
+- `grep -n "no-git-checks\|git-checks" .github/workflows/npm-publish.yml` の結果が 0 件であることを確認した。
+- `# pnpm publish は CI では正常に動作しない` のコメント (`:74`, `:100`) は 0055 のスコープのため触っていない。
+- `CHANGES.md` の `## develop` 配下、`### misc` 内 `[FIX]` 群末尾 (`e2e-tests の fake media 生成に明示的 cleanup()...` エントリの直後、`## 2025.2.0` の直前) に `[FIX]` エントリ 1 件を追加した。
+- `pnpm fmt` 後の追加差分なしを確認した。
+- 動作確認 (本 PR では実施しない): publish workflow は tag push でのみ起動するため、マージ後フォローアップで次回 canary tag push 時に warning 消失と publish 成功を確認する。

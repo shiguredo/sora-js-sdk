@@ -111,6 +111,9 @@
   - @voluntas
 - [FIX] e2e-tests の fake media 生成に明示的 cleanup() を追加し connect/disconnect 繰り返し時の RAF / AudioContext リークを防ぐ
   - @voluntas
+- [FIX] `.github/workflows/npm-publish.yml` から `--no-git-checks` フラグを削除する
+  - npm 11 で `npm warn Unknown cli config "--git-checks". This will stop working in the next major version of npm.` warning が出ており、npm v12 で publish が break する前に対処する
+  - @voluntas
 
 ## 2025.2.0
 
