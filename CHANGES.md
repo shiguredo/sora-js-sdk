@@ -86,6 +86,8 @@
   - @voluntas
 - [UPDATE] Algorithm 型のグローバル拡張を削除し generateCertificate の引数型を EcKeyGenParams に置き換える
   - @voluntas
+- [UPDATE] `DisconnectWaitTimeoutError` / `DisconnectInternalError` / `DisconnectDataChannelError` の constructor で `name` プロパティをクラス名に設定するようにする
+  - @voluntas
 - [FIX] Node 24 で `playwright install` がハングする問題を修正するため Playwright を 1.60.0 に更新する
   - @voluntas
 - [FIX] macOS の Google Chrome stable インストールが 302 リダイレクトを追従できず失敗するため playwright-core にパッチを当てて `curl` に `-L` を追加する
