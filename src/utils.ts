@@ -267,10 +267,12 @@ export function createSignalingMessage(
   const hasAudioProperty = Object.keys(copyOptions).some((key) => audioPropertyKeys.includes(key));
   if (message.audio && hasAudioProperty) {
     message.audio = {};
-    if ("audioCodecType" in copyOptions) {
+    // ConnectionOptions の各キーの型に沿った typeof ガードで narrow する。
+    // null は事前の delete ループで除去済みのため、typeof 系で弾かれても message に積む値の集合は不変。
+    if (typeof copyOptions.audioCodecType === "string") {
       message.audio.codec_type = copyOptions.audioCodecType;
     }
-    if ("audioBitRate" in copyOptions) {
+    if (typeof copyOptions.audioBitRate === "number") {
       message.audio.bit_rate = copyOptions.audioBitRate;
     }
   }
@@ -282,28 +284,29 @@ export function createSignalingMessage(
       message.audio = {};
     }
     message.audio.opus_params = {};
-    if ("audioOpusParamsChannels" in copyOptions) {
+    // 各キーの型に沿った typeof ガードで narrow する。null 事前 delete 前提は audio セクションと同じ。
+    if (typeof copyOptions.audioOpusParamsChannels === "number") {
       message.audio.opus_params.channels = copyOptions.audioOpusParamsChannels;
     }
-    if ("audioOpusParamsMaxplaybackrate" in copyOptions) {
+    if (typeof copyOptions.audioOpusParamsMaxplaybackrate === "number") {
       message.audio.opus_params.maxplaybackrate = copyOptions.audioOpusParamsMaxplaybackrate;
     }
-    if ("audioOpusParamsStereo" in copyOptions) {
+    if (typeof copyOptions.audioOpusParamsStereo === "boolean") {
       message.audio.opus_params.stereo = copyOptions.audioOpusParamsStereo;
     }
-    if ("audioOpusParamsSpropStereo" in copyOptions) {
+    if (typeof copyOptions.audioOpusParamsSpropStereo === "boolean") {
       message.audio.opus_params.sprop_stereo = copyOptions.audioOpusParamsSpropStereo;
     }
-    if ("audioOpusParamsMinptime" in copyOptions) {
+    if (typeof copyOptions.audioOpusParamsMinptime === "number") {
       message.audio.opus_params.minptime = copyOptions.audioOpusParamsMinptime;
     }
-    if ("audioOpusParamsPtime" in copyOptions) {
+    if (typeof copyOptions.audioOpusParamsPtime === "number") {
       message.audio.opus_params.ptime = copyOptions.audioOpusParamsPtime;
     }
-    if ("audioOpusParamsUseinbandfec" in copyOptions) {
+    if (typeof copyOptions.audioOpusParamsUseinbandfec === "boolean") {
       message.audio.opus_params.useinbandfec = copyOptions.audioOpusParamsUseinbandfec;
     }
-    if ("audioOpusParamsUsedtx" in copyOptions) {
+    if (typeof copyOptions.audioOpusParamsUsedtx === "boolean") {
       message.audio.opus_params.usedtx = copyOptions.audioOpusParamsUsedtx;
     }
   }
@@ -314,22 +317,24 @@ export function createSignalingMessage(
   const hasVideoProperty = Object.keys(copyOptions).some((key) => videoPropertyKeys.includes(key));
   if (message.video && hasVideoProperty) {
     message.video = {};
-    if ("videoCodecType" in copyOptions) {
+    // video*Params は JSONType (null 値も透過する型定義) のため typeof === "object" ではなく !== undefined で narrow する。
+    // それ以外のキーは ConnectionOptions の型に沿った typeof ガード。null は事前 delete ループで除去済み。
+    if (typeof copyOptions.videoCodecType === "string") {
       message.video.codec_type = copyOptions.videoCodecType;
     }
-    if ("videoBitRate" in copyOptions) {
+    if (typeof copyOptions.videoBitRate === "number") {
       message.video.bit_rate = copyOptions.videoBitRate;
     }
-    if ("videoVP9Params" in copyOptions) {
+    if (copyOptions.videoVP9Params !== undefined) {
       message.video.vp9_params = copyOptions.videoVP9Params;
     }
-    if ("videoH264Params" in copyOptions) {
+    if (copyOptions.videoH264Params !== undefined) {
       message.video.h264_params = copyOptions.videoH264Params;
     }
-    if ("videoH265Params" in copyOptions) {
+    if (copyOptions.videoH265Params !== undefined) {
       message.video.h265_params = copyOptions.videoH265Params;
     }
-    if ("videoAV1Params" in copyOptions) {
+    if (copyOptions.videoAV1Params !== undefined) {
       message.video.av1_params = copyOptions.videoAV1Params;
     }
   }

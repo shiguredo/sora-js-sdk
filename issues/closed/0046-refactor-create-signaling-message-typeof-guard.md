@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-06-11
 - Polished: 2026-06-16
+- Completed: 2026-06-16
 - Model: Opus 4.7
 - Branch: feature/refactor-create-signaling-message-typeof-guard
 
@@ -123,4 +124,12 @@ if (copyOptions.videoVP9Params !== undefined) {
 
 ## 解決方法
 
-実装完了後に追記する (どのファイルをどう変更したかの実績)。
+- `src/utils.ts` の `createSignalingMessage` 内 16 箇所を設計方針の表 (:43-48) に従ったガードに置き換えた。
+  - string 系 2 件 (`audioCodecType` / `videoCodecType`): `typeof copyOptions.X === "string"`
+  - number 系 6 件 (`audioBitRate` / `audioOpusParamsChannels` / `audioOpusParamsMaxplaybackrate` / `audioOpusParamsMinptime` / `audioOpusParamsPtime` / `videoBitRate`): `typeof copyOptions.X === "number"`
+  - boolean 系 4 件 (`audioOpusParamsStereo` / `audioOpusParamsSpropStereo` / `audioOpusParamsUseinbandfec` / `audioOpusParamsUsedtx`): `typeof copyOptions.X === "boolean"`
+  - JSONType 系 4 件 (`videoVP9Params` / `videoH264Params` / `videoH265Params` / `videoAV1Params`): `copyOptions.X !== undefined`
+- audio / audio_opus_params / video の 3 ブロック先頭に、typeof ガードと事前 delete ループとの依存関係を説明する日本語コメントを追加した。
+- `grep -nE '"[A-Za-z0-9]+" in copyOptions' src/utils.ts` が 0 件であることを確認した (issue 完了条件で指定された `[A-Za-z]+` パターンは数字を含む `videoVP9Params` 等 4 件を見逃すため、`[A-Za-z0-9]+` で再確認した)。
+- `CHANGES.md` の `## develop` `### misc` 内、`[UPDATE]` 群末尾に `[UPDATE]` エントリを 1 件追加した。
+- 完了条件で指定された `pnpm typecheck` / `pnpm lint` / `pnpm test` / `pnpm fmt` を順序通り実行し、すべて pass・fmt 後の追加差分が無いことを確認した。テスト 108 件すべて pass。

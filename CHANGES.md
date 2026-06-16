@@ -90,6 +90,9 @@
   - @voluntas
 - [UPDATE] `DisconnectWaitTimeoutError` / `DisconnectInternalError` / `DisconnectDataChannelError` の constructor で `name` プロパティをクラス名に設定するようにする
   - @voluntas
+- [UPDATE] `createSignalingMessage` の audio / video パラメータ判定で `"X" in copyOptions` を `typeof` / `!== undefined` ガードに置き換える
+  - 型安全化リファクタで動的挙動の変化はなし
+  - @voluntas
 - [FIX] Node 24 で `playwright install` がハングする問題を修正するため Playwright を 1.60.0 に更新する
   - @voluntas
 - [FIX] macOS の Google Chrome stable インストールが 302 リダイレクトを追従できず失敗するため playwright-core にパッチを当てて `curl` に `-L` を追加する
