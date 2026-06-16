@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-14
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-06-16
 - Model: Opus 4.7
 - Branch: feature/change-raise-engines-node-to-22-18-0
 - Polished: 2026-06-16
@@ -103,4 +103,7 @@ Node 22.0 - 22.17 を使い続ける利用者は、本リリース以降 `engine
 
 ## 解決方法
 
-実装完了後に追記する (どのファイルをどう変更したかの実績)。
+- `package.json` の `engines.node` を `">=22"` から `">=22.18.0"` に変更した。`engines.pnpm` は `">=11"` のまま据え置き。
+- `CHANGES.md` の `## develop` 配下、`[CHANGE]` 群末尾 (`abendPeerConnectionState` エントリの直後、`[UPDATE] pnpm 11 系に上げる` の直前) に `[CHANGE]` エントリ 1 件を追加した。
+- 完了条件テンプレ (`:84`) に元々書かれていた `(issue 0051)` という issue 番号への参照は `shiguredo-issues` 規約 (`CHANGES.md` に issue 番号への参照を書いてはいけない) に違反するため、実装時に「後続のビルドツール移行で導入される `tsdown` 0.22 系が要求するため」のように issue 番号を含まない理由表現に書き換えた。
+- ローカルで `pnpm install --frozen-lockfile` / `pnpm typecheck` / `pnpm lint` / `pnpm test` (108 件 pass) / `pnpm fmt` を順序通り通過させ、fmt 後の追加差分が無いことを確認した。
