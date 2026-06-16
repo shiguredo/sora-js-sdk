@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-14
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-06-16
 - Model: Opus 4.7
 - Branch: feature/change-exports-require-condition
 - Polished: 2026-06-16
@@ -138,4 +138,10 @@ TypeScript `moduleResolution` 別の影響:
 7. `CHANGES.md` の `## develop` 直系 `[CHANGE]` 群末尾に上記エントリを追記する
 8. CI で Build / Test ジョブが正常に完了することを確認する
 
-実績 (実装完了後に追記):
+実績:
+
+- `package.json` の `exports["."]` から `"require": "./dist/sora.js"` の 1 行を削除した。条件キーの順序は `types` → `import` を維持。
+- `CHANGES.md` の `## develop` 配下、`[CHANGE]` 群末尾 (`Node.js の最低要件を 22.18.0` エントリの直後、`[UPDATE] pnpm 11 系に上げる` の直前) に `[CHANGE]` エントリ 1 件を追加した。
+- ローカルで `pnpm build` (`dist/sora.js` 58.31 kB / gzip 11.94 kB) / `pnpm typecheck` / `pnpm lint` / `pnpm test` (108 件 pass) / `pnpm fmt` を順序通り通過。fmt 後の追加差分なし。`npm pkg get exports` の出力で `exports["."]` に `require` キーが消えていることを確認した。
+- `pnpm e2e-test` (chromium) はローカルでは実行せず、CI に委ねる方針とした。
+- `main` / `module` フィールドの扱いは issue 0054 のスコープ外 (`:85-87` 参照) として残置。0053 (`publint` / `attw` 有効化) 着手時に検出される警告に基づいて follow-up issue で対処する。
