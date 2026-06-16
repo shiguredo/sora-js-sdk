@@ -82,6 +82,11 @@
   - @voluntas
 - [CHANGE] Slack 通知を rtCamp/action-slack-notify から shiguredo/github-actions の slack-notify に切り替える
   - @voluntas
+- [CHANGE] GitHub Actions workflow の Node セットアップを `actions/setup-node` から `voidzero-dev/setup-vp` に置き換え、pnpm 経由のコマンドを `vp` 経由に統一し、不要になった `pnpm/action-setup` を削除する
+  - 全 11 箇所の `voidzero-dev/setup-vp` に `run-install: false` を明示し、setup-vp デフォルトの暗黙 `vp install` と手動 `vp install --frozen-lockfile` の二重実行を防ぐ
+  - @voluntas
+- [ADD] `e2e-test-h265.yml` / `e2e-test-webkit.yml` に `workflow_dispatch:` トリガを追加し、self-hosted runner ジョブを手動で起動できるようにする
+  - @voluntas
 - [ADD] CI に @typescript/native-preview による型検証ジョブを追加する
   - @voluntas
 - [ADD] npm publish に --provenance を追加して supply chain 透明性を向上させる
