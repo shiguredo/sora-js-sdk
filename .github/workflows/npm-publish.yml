@@ -74,7 +74,7 @@ jobs:
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
       - run: npm install -g npm@latest
-      - run: npm publish --no-git-checks --tag canary --provenance
+      - run: npm publish --tag canary --provenance
 
   npm-publish:
     runs-on: ubuntu-slim
@@ -100,7 +100,7 @@ jobs:
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
       - run: npm install -g npm@latest
-      - run: npm publish --no-git-checks --provenance
+      - run: npm publish --provenance
 
   slack_notify:
     needs: [npm-publish-canary, npm-publish]
