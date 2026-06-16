@@ -9,7 +9,9 @@
 
 ## 目的
 
-`.github/workflows/` 配下の各ワークフローで `actions/setup-node` を `voidzero-dev/setup-vp` に置き換え、Node セットアップ手段を `sora-devtools` と揃える。あわせて pnpm 経由のコマンドのうち `vp` サブコマンドで代替可能なもの (`pnpm install --frozen-lockfile` / `pnpm run build` / `pnpm run lint` / `pnpm run typecheck` / `pnpm exec playwright` / `pnpm exec tsgo` / `pnpm run test`) を `vp` 経由に書き換える。matrix で `package.json` を一時的に差し替える `pnpm add` / `pnpm remove` は本 issue のスコープ外として pnpm 直呼び出しのまま維持し、`pnpm/action-setup` も触らない。
+`.github/workflows/` 配下の各ワークフローで `actions/setup-node` を `voidzero-dev/setup-vp` に置き換え、Node セットアップ手段を `sora-devtools` と揃える。あわせて pnpm 経由のコマンドすべて (`pnpm install` / `pnpm run *` / `pnpm exec *` / `pnpm add` / `pnpm remove`) を `vp` 経由に統一し、不要になった `pnpm/action-setup` も全削除する。
+
+vp は実行時に pnpm を自動 download するため `pnpm/action-setup` は不要 (vite-plus 公式 <https://viteplus.dev/guide/install> 「Vite+ automatically downloads the matching package manager and uses it for the command you ran.」)。`sora-devtools` 側も 4 ワークフロー全てで `voidzero-dev/setup-vp` のみ・`pnpm/action-setup` 0 件で動作実績あり (`sora-devtools/.github/workflows/{ci,e2e-test,deploy-r2,release}.yml`)。
 
 ## 優先度根拠
 
@@ -45,25 +47,29 @@
   - `registry-url: https://registry.npmjs.org` (`npm-publish-canary` / `npm-publish` ジョブ): `voidzero-dev/setup-vp` の `registry-url` 入力に同じ値を渡す。`actions/setup-node` と同じく `~/.npmrc` に `registry=` を書き込む挙動を「## 着手前確認」で確認する。
   - `cache` / `run-install` / `node-version-file` は追加しない (キャッシュ / install 戦略は別 issue 扱い)。
 
-### pnpm/action-setup の扱い
+### pnpm/action-setup の削除
 
-matrix で `package.json` を一時的に書き換える pnpm 直呼び出しが残るため、現状の `pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8` をすべての既存ジョブで触らない (追加・削除しない)。`vp install` が生成する pnpm シムだけに依存することの未検証リスクを避け、`pnpm/action-setup` が無いジョブには元から無いまま、有るジョブには元から有るまま維持する。
+`vp install` / `vp add` / `vp remove` / `vp exec` / `vp run` 等は vp が内部で pnpm を自動 download して呼ぶため、`pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8` の uses はすべて削除する。本 issue で workflow 内の pnpm 直叩きを 0 件にするため、`pnpm/action-setup` を残す動機は無くなる。
+
+`sora-devtools` 側は既に同方針 (4 ワークフロー全て `voidzero-dev/setup-vp` のみ、`pnpm/action-setup` 0 件) で動作実績がある。
 
 ### コマンド対応表
 
 `package.json` の scripts (`"build": "vp build"`, `"lint": "vp lint --type-aware"`, `"typecheck": "tsc --noEmit"`, `"test": "vp test run"`) の中身を workflow に展開する形で書き換える。`pnpm run X` から `vp run X` への一律機械置換は採用しない (`vp run` 経路の挙動が `voidzero-dev/setup-vp` 環境で未検証のため)。`sora-devtools` が採用する `vp check` (lint + fmt + type-check 統合) も本 issue では採用しない (本リポジトリの `lint` / `typecheck` を独立 step に保つ運用を本 issue で変えない。`vp check` への統合は別 issue で扱う)。
 
-| 変更前                           | 変更後                         | 補足                                                                                                                                                                                   |
-| -------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm install --frozen-lockfile` | `vp install --frozen-lockfile` | `--frozen-lockfile` を明示し pnpm install と同じく lockfile drift をエラー終了させる挙動を維持する                                                                                     |
-| `pnpm run build`                 | `vp build`                     | scripts の中身と完全一致                                                                                                                                                               |
-| `pnpm run lint`                  | `vp lint --type-aware`         | scripts の中身と完全一致。`--type-aware` を落とすと型情報を使う lint ルールが無効化されるため必ず付ける                                                                                |
-| `pnpm run typecheck`             | `vp exec tsc --noEmit`         | scripts の中身と同じ tsc 直叩きを `vp exec` 経由で行う。`vp typecheck` サブコマンドは `vite-plus` 0.1.24 では未提供のため使わない。`vp exec` は `node_modules/.bin/tsc` を解決する前提 |
-| `pnpm run test`                  | `vp test run`                  | scripts の中身と完全一致                                                                                                                                                               |
-| `pnpm exec playwright <args>`    | `vp exec playwright <args>`    | 引数 (`install <browser> --with-deps`、`test --project="..." <file>`) はそのまま透過する                                                                                               |
-| `pnpm exec tsgo <args>`          | `vp exec tsgo <args>`          | `typescript-native-preview` ジョブの 2 行のみ                                                                                                                                          |
+| 変更前                             | 変更後                           | 補足                                                                                                                                                                                                |
+| ---------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile`   | `vp install --frozen-lockfile`   | `--frozen-lockfile` を明示し pnpm install と同じく lockfile drift をエラー終了させる挙動を維持する                                                                                                  |
+| `pnpm add -E -D typescript@... -w` | `vp add -E -D typescript@... -w` | `vp add` は `-E` / `-D` / `-w` を完全サポート (`vp add --help` で確認)。matrix で `package.json` を一時差し替える経路 (`ci.yaml` `typescript-native-preview` ジョブ、`npm-pkg-e2e-test.yml`) も含む |
+| `pnpm remove -D typescript -w`     | `vp remove -D typescript -w`     | `vp remove` も `-D` / `-w` をサポート (`typescript-native-preview` ジョブで使用)                                                                                                                    |
+| `pnpm run build`                   | `vp build`                       | scripts の中身と完全一致                                                                                                                                                                            |
+| `pnpm run lint`                    | `vp lint --type-aware`           | scripts の中身と完全一致。`--type-aware` を落とすと型情報を使う lint ルールが無効化されるため必ず付ける                                                                                             |
+| `pnpm run typecheck`               | `vp exec tsc --noEmit`           | scripts の中身と同じ tsc 直叩きを `vp exec` 経由で行う。`vp typecheck` サブコマンドは `vite-plus` 0.1.24 では未提供のため使わない。`vp exec` は `node_modules/.bin/tsc` を解決する前提              |
+| `pnpm run test`                    | `vp test run`                    | scripts の中身と完全一致                                                                                                                                                                            |
+| `pnpm exec playwright <args>`      | `vp exec playwright <args>`      | 引数 (`install <browser> --with-deps`、`test --project="..." <file>`) はそのまま透過する                                                                                                            |
+| `pnpm exec tsgo <args>`            | `vp exec tsgo <args>`            | `typescript-native-preview` ジョブの 2 行のみ                                                                                                                                                       |
 
-`sora-devtools` 側の動作実績は `vp install --frozen-lockfile` が `sora-devtools/.github/workflows/deploy-r2.yml:22` の 1 ヶ所のみ、`vp exec playwright install` / `vp exec playwright test` が `sora-devtools/.github/workflows/e2e-test.yml:33-34` (いずれも ubuntu-24.04)。`vp lint --type-aware` / `vp exec tsc --noEmit` / `vp exec tsgo`、および Windows runner / macOS runner (`macos-15` / self-hosted macOS) での `voidzero-dev/setup-vp` 全般の動作は `sora-devtools` に実績がなく、本 issue の PR で初回検証する。
+`sora-devtools` 側の動作実績は `vp install --frozen-lockfile` が `sora-devtools/.github/workflows/deploy-r2.yml:22` の 1 ヶ所のみ、`vp exec playwright install` / `vp exec playwright test` が `sora-devtools/.github/workflows/e2e-test.yml:33-34` (いずれも ubuntu-24.04)。`vp lint --type-aware` / `vp exec tsc --noEmit` / `vp exec tsgo` / `vp add` / `vp remove`、および Windows runner / macOS runner (`macos-15` / self-hosted macOS) での `voidzero-dev/setup-vp` 全般の動作は `sora-devtools` に実績がなく、本 issue の PR で初回検証する。
 
 ## 着手前確認
 
@@ -96,15 +102,14 @@ matrix で `package.json` を一時的に書き換える pnpm 直呼び出しが
 - run: pnpm run test
 ```
 
-変更後:
+変更後 (`pnpm/action-setup` 行は削除):
 
 ```yaml
 - uses: voidzero-dev/setup-vp@ca1c46663915d6c1042ae23bd39ab85718bfb0fa # v1.10.0
   with:
     node-version: ${{ matrix.node }}
-- uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
 - run: vp install --frozen-lockfile
-- run: pnpm add -E -D typescript@${{ matrix.typescript }} -w
+- run: vp add -E -D typescript@${{ matrix.typescript }} -w
 - run: vp build
 - run: vp lint --type-aware
 - run: vp exec tsc --noEmit
@@ -113,17 +118,18 @@ matrix で `package.json` を一時的に書き換える pnpm 直呼び出しが
 
 他ジョブも同じ要領で置換する。各ジョブ特有の取り扱い:
 
-- `ci.yaml` の `typescript-native-preview` ジョブ (`ci.yaml:48-71`): `pnpm exec tsgo --emitDeclarationOnly -p tsconfig.json` (line 64) と `pnpm exec tsgo --noEmit -p e2e-tests/tsconfig.json` (line 70) を `vp exec tsgo ...` に置換。line 65-69 の YAML コメント (`# e2e-tests/tsconfig.json の型チェックは現状...` 5 行) と line 71 の `continue-on-error: true` は変更せず保持する。
+- `ci.yaml` の `typescript-native-preview` ジョブ (`ci.yaml:48-71`): `pnpm remove -D typescript -w` を `vp remove -D typescript -w` に、`pnpm add -E -D @typescript/native-preview@${{ matrix.version }} -w` を `vp add -E -D @typescript/native-preview@${{ matrix.version }} -w` に、`pnpm exec tsgo --emitDeclarationOnly -p tsconfig.json` (line 64) と `pnpm exec tsgo --noEmit -p e2e-tests/tsconfig.json` (line 70) を `vp exec tsgo ...` に置換。line 65-69 の YAML コメント (`# e2e-tests/tsconfig.json の型チェックは現状...` 5 行) と line 71 の `continue-on-error: true` は変更せず保持する。
 - `e2e-test-h265.yml:57-58` の `playwright test` 行は `- run:` の値が改行 + インデントで複数行に分かれている (YAML plain scalar の改行畳み込み)。`vp exec playwright test ...` に置換する際も同じ書式を保ち、引数 `e2e-tests/tests/h265.test.ts` を落とさない。`e2e-test-webkit.yml:45` は単一行のため、`pnpm exec playwright test ...` を `vp exec playwright test ...` に置換するだけ。
 - `npm-publish.yml` の `npm-publish-canary` (`:63-66`) / `npm-publish` (`:89-92`) ジョブ: `with:` の `node-version: 22` と `registry-url: https://registry.npmjs.org` を `voidzero-dev/setup-vp` の `with:` にそのまま入れる。
-- `npm-pkg-e2e-test.yml:72`: `pnpm install --frozen-lockfile` を `vp install --frozen-lockfile` に置換する (対応表通り)。直後の `pnpm add -E sora-js-sdk@${{ matrix.sdk_version }}` (`:73-74`) は維持する。
+- `npm-pkg-e2e-test.yml:72`: `pnpm install --frozen-lockfile` を `vp install --frozen-lockfile` に、`pnpm add -E sora-js-sdk@${{ matrix.sdk_version }}` (`:73-74`) を `vp add -E sora-js-sdk@${{ matrix.sdk_version }}` に置換する。
+- 全 workflow から `pnpm/action-setup@...` の `uses` 行を削除する。`grep -rn 'pnpm/action-setup' .github/workflows/` 結果が 0 件になることを確認する。
 
 ### ステップ 2: CHANGES.md への追記
 
 `CHANGES.md` の `## develop` 直下にある既存 `### misc` の `[CHANGE]` 群末尾 (現状の最後の `[CHANGE]` 行の次) に以下を追加する。種別順 `[CHANGE] → [ADD] → [UPDATE] → [FIX]` を維持する。
 
 ```markdown
-- [CHANGE] GitHub Actions workflow の Node セットアップを `actions/setup-node` から `voidzero-dev/setup-vp` に置き換え、pnpm 経由のコマンドを `vp` 経由に統一する
+- [CHANGE] GitHub Actions workflow の Node セットアップを `actions/setup-node` から `voidzero-dev/setup-vp` に置き換え、pnpm 経由のコマンドを `vp` 経由に統一し、不要になった `pnpm/action-setup` を削除する
   - @voluntas
 ```
 
@@ -131,8 +137,9 @@ matrix で `package.json` を一時的に書き換える pnpm 直呼び出しが
 
 - `grep -rn 'actions/setup-node' .github/workflows/` の結果が 0 件。
 - `grep -rn 'voidzero-dev/setup-vp' .github/workflows/` の結果が「現状」表に列挙した 11 ジョブ分の 11 行と一致する。
-- `grep -rnE 'pnpm install( |$)' .github/workflows/` / `grep -rnE 'pnpm run( |$)' .github/workflows/` / `grep -rnE 'pnpm exec( |$)' .github/workflows/` の結果がそれぞれ 0 件。
-- `grep -rn 'pnpm ' .github/workflows/` の結果に残るのは (a) `pnpm/action-setup` 行、(b) `pnpm add` / `pnpm remove` 行、(c) `# pnpm publish は CI では正常に動作しない` 等のコメント行のみで、それ以外の `pnpm` 直呼び出しが無いことを目視確認する。
+- `grep -rn 'pnpm/action-setup' .github/workflows/` の結果が 0 件。
+- `grep -rnE 'pnpm (install|run|exec|add|remove)( |$)' .github/workflows/` の結果が 0 件。
+- `grep -rn 'pnpm' .github/workflows/` の結果に残るのは (a) `# pnpm publish は CI では正常に動作しない` 等のコメント行のみで、それ以外の `pnpm` 直呼び出しが無いことを目視確認する。
 - `npm-publish-canary` / `npm-publish` ジョブに一時的に `- run: cat ~/.npmrc` ステップを追加して PR の CI ログで `registry=https://registry.npmjs.org` の書き込みを確認し、PR マージ前に該当ステップを削除する。
 - `ci.yaml` の `ci` (Node 3 × TypeScript 12 = 36 ジョブ) と `typescript-native-preview` (Node 26 固定 × version 2 = 2 ジョブ) が PR の CI ですべて成功する。
 - `e2e-test.yml` (ubuntu-24.04 / macos-15 / windows-2025-vs2026 × Chromium / Chrome / Chrome Beta × Node 3 = 27 ジョブ) が PR の CI ですべて成功する。
@@ -144,15 +151,15 @@ matrix で `package.json` を一時的に書き換える pnpm 直呼び出しが
 
 ## スコープ外
 
-- `pnpm add` / `pnpm remove` の `vp` 化 (`vite-plus` 側に matrix 差し替え対応が入った段階で別 issue)。
 - `npm-publish.yml` の `npm install -g npm@latest` / `npm publish` の `vp` / `pnpm` 化 (0033 の経緯から npm のまま維持)。
 - `vp check` への lint / typecheck / fmt 統合 (本 issue では独立 step を維持。統合は別 issue)。
-- ライブラリビルドを `vp pack` に切り替え (0051)、`node-version` の引き上げ (0052)、`npm-publish.yml` のリファクタ群 (0055-0058)。
+- ライブラリビルドを `vp pack` に切り替え (0051)、`node-version` の引き上げ (0052 closed)、`npm-publish.yml` のリファクタ群 (0055 / 0056 / 0057、0058 は closed)。
 - `voidzero-dev/setup-vp` のバージョン追従 (v1.10.0 → v1.12.0 等の追従は `sora-devtools` 側の更新と合わせて別 issue)。
 
 ## 関連 issue
 
 - 0033 (closed): `npm publish --provenance` を追加。`actions/setup-node` から `setup-vp` への置換は本 issue で扱うとスコープ外セクションで予告された。
-- 0051 (open): ライブラリビルドを `vp build` から `vp pack` に切り替える。本 issue 着手時に 0051 がマージ済みなら `package.json` の `build` script が `vp pack` になっているため、workflow にも `vp build` ではなく `vp pack` を直書きする。本 issue → 0051 の順を推奨。
-- 0052 (open): `engines.node` を `22.18.0` 以上に引き上げる。本 issue 着手時に 0052 がマージ済みなら workflow の `node-version` 値が `"22.18.0"` 等に変わっているので、その値を保ったまま `voidzero-dev/setup-vp` に渡す。
-- 0055-0058 (open): `npm-publish.yml` のリファクタ群 (コメント整理 / `npm install -g npm@latest` 重複共通化 / publish 2 ジョブ統合 / `--no-git-checks` 削除)。本 issue 着手時にいずれかがマージ済みなら publish ジョブ構造が変わっている可能性があるため、その時点での `npm-publish.yml` を再確認してから置換する。
+- 0051 (open): ライブラリビルドを `vp build` から `vp pack` に切り替える。本 issue 着手時に 0051 がマージ済みなら `package.json` の `build` script が `vp pack` になっているため、workflow にも `vp build` ではなく `vp pack` を直書きする。本 issue → 0051 の順を推奨。2026.1.0 リリースでは 0051 は次バージョン送り判断のため、本 issue 着手時点では未マージ前提。
+- 0052 (closed): `engines.node` を `22.18.0` 以上に引き上げ済み。workflow の `node-version` 値はまだ `22` / `"26"` 等のままなので本 issue では現状値を保ったまま `voidzero-dev/setup-vp` に渡す。
+- 0055 / 0056 / 0057 (open): `npm-publish.yml` のリファクタ群 (コメント整理 / `npm install -g npm@latest` 重複共通化 / publish 2 ジョブ統合)。本 issue 着手時にいずれかがマージ済みなら publish ジョブ構造が変わっている可能性があるため、その時点での `npm-publish.yml` を再確認してから置換する。
+- 0058 (closed): `--no-git-checks` 削除済み。本 issue では `npm publish` 行自体に手を入れない (スコープ外) ので影響なし。
