@@ -15,6 +15,8 @@
 
 - [CHANGE] ライブラリビルドを `vp build` から `vp pack` に移行する
   - @voluntas
+- [ADD] `e2e-tests/sendonly` にビデオコーデック指定 UI を追加する
+  - @voluntas
 
 ## 2026.1.0
 

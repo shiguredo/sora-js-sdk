@@ -1,4 +1,4 @@
-import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
+import { getChannelId, getVideoCodecType, setSoraJsSdkVersion } from "../src/misc";
 
 import Sora from "sora-js-sdk";
 import type {
@@ -6,6 +6,8 @@ import type {
   SignalingEvent,
   ConnectionPublisher,
   SoraConnection,
+  VideoCodecType,
+  ConnectionOptions,
 } from "sora-js-sdk";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -24,8 +26,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
+    const videoCodecType = getVideoCodecType();
 
-    client = new SoraClient(signalingUrl, channelId, secretKey);
+    client = new SoraClient(signalingUrl, channelId, secretKey, videoCodecType);
 
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
@@ -77,18 +80,27 @@ class SoraClient {
   private readonly debug = false;
   private readonly channelId: string;
   private readonly metadata: { access_token: string };
-  private readonly options: object = { connectionTimeout: 15_000 };
+  private readonly options: ConnectionOptions = { connectionTimeout: 15_000 };
 
   private readonly sora: SoraConnection;
   private readonly connection: ConnectionPublisher;
 
-  constructor(signalingUrl: string, channelId: string, secretKey: string) {
+  constructor(
+    signalingUrl: string,
+    channelId: string,
+    secretKey: string,
+    videoCodecType: VideoCodecType | undefined,
+  ) {
     this.sora = Sora.connection(signalingUrl, this.debug);
 
     this.channelId = channelId;
 
     // access_token を指定する metadata の生成
     this.metadata = { access_token: secretKey };
+
+    if (videoCodecType !== undefined) {
+      this.options = { ...this.options, videoCodecType };
+    }
 
     this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options);
     this.connection.on("notify", this.onNotify.bind(this));

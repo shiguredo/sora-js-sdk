@@ -24,6 +24,10 @@ test("sendonly/recvonly pages", async ({ browser }) => {
   await sendonly.fill("#channel-name", channelName);
   await recvonly.fill("#channel-name", channelName);
 
+  // ビデオコーデックを設定
+  const videoCodecType = "VP9";
+  await sendonly.selectOption("#video-codec-type", videoCodecType);
+
   // SDK バージョンの表示
   await sendonly.waitForSelector("#sora-js-sdk-version");
   const sendonlySdkVersion = await sendonly.$eval("#sora-js-sdk-version", (el) => el.textContent);
