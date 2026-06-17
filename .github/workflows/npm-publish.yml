@@ -3,30 +3,52 @@ name: npm-publish
 on:
   push:
     tags:
-      - "*"
+      - "[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*"
+      - "[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*-canary.[0-9]*"
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
+  verify-version:
+    name: Verify tag matches package.json version
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: voidzero-dev/setup-vp@ca1c46663915d6c1042ae23bd39ab85718bfb0fa # v1.10.0
+        with:
+          node-version: 22
+          # このジョブは `node -p` のみを実行し vp / 依存関係を使わないため自動 install を無効化する
+          run-install: false
+      - name: Compare tag name with package.json version
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$PKG_VERSION" != "$TAG_NAME" ]; then
+            echo "::error::Tag ${TAG_NAME} does not match package.json version ${PKG_VERSION}"
+            exit 1
+          fi
+          echo "Tag ${TAG_NAME} matches package.json version ${PKG_VERSION}"
+
   build:
     name: Build
     runs-on: ubuntu-slim
+    needs: [verify-version]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: voidzero-dev/setup-vp@ca1c46663915d6c1042ae23bd39ab85718bfb0fa # v1.10.0
         with:
-          node-version: 20
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - run: pnpm --version
-      - run: pnpm install
-      - run: pnpm run build
-      - run: pnpm run lint
-      - run: pnpm run typecheck
-      - uses: actions/upload-artifact@v5
+          node-version: 22
+          # 後段で `vp install --frozen-lockfile` を走らせるため setup-vp の自動 install を無効化する
+          run-install: false
+      - run: vp install --frozen-lockfile
+      - run: vp build
+      - run: vp lint --type-aware
+      - run: vp exec tsc --noEmit
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sora-js-sdk-dist
           path: dist/
@@ -37,17 +59,19 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: ${{ contains(github.ref, 'canary') }}
+    if: ${{ contains(github.ref_name, '-canary.') }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@ca1c46663915d6c1042ae23bd39ab85718bfb0fa # v1.10.0
         with:
-          node-version: 20
+          node-version: 22
           registry-url: https://registry.npmjs.org
+          # このジョブは artifact の dist/ をダウンロードして `npm publish` するだけで vp / 依存関係を使わないため自動 install を無効化する
+          run-install: false
 
       - name: Download Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sora-js-sdk-dist
           path: dist/
@@ -55,7 +79,7 @@ jobs:
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
       - run: npm install -g npm@latest
-      - run: npm publish --no-git-checks --tag canary
+      - run: npm publish --tag canary --provenance
 
   npm-publish:
     runs-on: ubuntu-slim
@@ -63,17 +87,19 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: ${{ !contains(github.ref, 'canary') }}
+    if: ${{ !contains(github.ref_name, '-canary.') }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@ca1c46663915d6c1042ae23bd39ab85718bfb0fa # v1.10.0
         with:
-          node-version: 20
+          node-version: 22
           registry-url: https://registry.npmjs.org
+          # このジョブは artifact の dist/ をダウンロードして `npm publish` するだけで vp / 依存関係を使わないため自動 install を無効化する
+          run-install: false
 
       - name: Download Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sora-js-sdk-dist
           path: dist/
@@ -81,18 +107,19 @@ jobs:
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
       - run: npm install -g npm@latest
-      - run: npm publish --no-git-checks
+      - run: npm publish --provenance
 
-  slack_notify_failed:
+  slack_notify:
     needs: [npm-publish-canary, npm-publish]
-    runs-on: ubuntu-24.04
-    if: failure()
+    runs-on: ubuntu-slim
+    if: ${{ !cancelled() }}
+    permissions:
+      actions: read
     steps:
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: sora-js-sdk
-          SLACK_COLOR: danger
-          SLACK_TITLE: Failed
-          SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: sora-js-sdk
+          notify_mode: failure_and_fixed

@@ -1,144 +1,176 @@
-import { getFakeMedia } from '../src/fake'
-import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
+import { getFakeMedia } from "../src/fake";
+import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora, {
-  type SignalingNotifyMessage,
-  type SignalingEvent,
-  type ConnectionPublisher,
-  type SoraConnection,
-} from 'sora-js-sdk'
+import Sora from "sora-js-sdk";
+import type {
+  SignalingNotifyMessage,
+  SignalingEvent,
+  ConnectionPublisher,
+  SoraConnection,
+} from "sora-js-sdk";
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
-  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+document.addEventListener("DOMContentLoaded", async () => {
+  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
+  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || "";
+  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || "";
+  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY;
 
-  setSoraJsSdkVersion()
+  setSoraJsSdkVersion();
 
-  let client: SoraClient
+  let client: SoraClient;
+  // getFakeMedia の cleanup を保持し、#disconnect / 次回 #connect / connect 失敗時に解放する。
+  let fakeCleanup: (() => void) | null = null;
 
-  document.querySelector('#connect')?.addEventListener('click', async () => {
-    if (client) {
-      await client.disconnect()
+  document.querySelector("#connect")?.addEventListener("click", async () => {
+    // 旧 client.disconnect が throw しても fake stream は必ず解放してから新しい stream を生成する。
+    try {
+      if (client) {
+        await client.disconnect();
+      }
+    } finally {
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
     }
 
-    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
-    client = new SoraClient(signalingUrl, channelId, secretKey)
+    client = new SoraClient(signalingUrl, channelId, secretKey);
 
-    const useFakeAudio = (document.querySelector('#use-fake-audio') as HTMLInputElement).checked
-    const useFakeVideo = (document.querySelector('#use-fake-video') as HTMLInputElement).checked
+    const useFakeAudio = document.querySelector<HTMLInputElement>("#use-fake-audio")!.checked;
+    const useFakeVideo = document.querySelector<HTMLInputElement>("#use-fake-video")!.checked;
 
-    const stream = getFakeMedia({
+    const { stream, cleanup } = getFakeMedia({
       audio: useFakeAudio,
       video: useFakeVideo,
-    })
+    });
+    fakeCleanup = cleanup;
 
-    await client.connect(stream)
-  })
-
-  document.querySelector('#disconnect')?.addEventListener('click', async () => {
-    if (client) {
-      await client.disconnect()
+    try {
+      await client.connect(stream);
+    } catch (error) {
+      // connect 失敗時にも fake stream を解放してリソースリークを防ぐ。
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
+      throw error;
     }
-  })
+  });
 
-  document.querySelector('#get-stats')?.addEventListener('click', async () => {
+  document.querySelector("#disconnect")?.addEventListener("click", async () => {
+    // client.disconnect が throw しても fake stream は必ず解放する。
+    try {
+      if (client) {
+        await client.disconnect();
+      }
+    } finally {
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
+    }
+  });
+
+  document.querySelector("#get-stats")?.addEventListener("click", async () => {
     if (!client) {
-      return
+      return;
     }
 
-    const statsReport = await client.getStats()
-    const statsDiv = document.querySelector('#stats-report') as HTMLElement
-    const statsReportJsonDiv = document.querySelector('#stats-report-json')
+    const statsReport = await client.getStats();
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
+    const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
-      let statsHtml = ''
-      const statsReportJson: Record<string, unknown>[] = []
+      let statsHtml = "";
+      const statsReportJson: Array<Record<string, unknown>> = [];
       for (const report of statsReport.values()) {
-        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
-        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
+        statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
+        const reportJson: Record<string, unknown> = {
+          id: report.id,
+          type: report.type,
+        };
         for (const [key, value] of Object.entries(report)) {
-          if (key !== 'type' && key !== 'id') {
-            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
-            reportJson[key] = value
+          if (key !== "type" && key !== "id") {
+            statsHtml += `<li><strong>${key}:</strong> ${String(value)}</li>`;
+            reportJson[key] = value;
           }
         }
-        statsHtml += '</ul>'
-        statsReportJson.push(reportJson)
+        statsHtml += "</ul>";
+        statsReportJson.push(reportJson);
       }
-      statsDiv.innerHTML = statsHtml
+      statsDiv.innerHTML = statsHtml;
       // データ属性としても保存（オプション）
-      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
+      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson);
     }
-  })
-})
+  });
+});
 
 class SoraClient {
-  private debug = false
-  private channelId: string
-  private metadata: { access_token: string }
-  private options: object = { connectionTimeout: 15000 }
+  private readonly debug = false;
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
+  private readonly options: object = { connectionTimeout: 15_000 };
 
-  private sora: SoraConnection
-  private connection: ConnectionPublisher
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
-    this.sora = Sora.connection(signalingUrl, this.debug)
+    this.sora = Sora.connection(signalingUrl, this.debug);
 
-    this.channelId = channelId
+    this.channelId = channelId;
 
     // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey }
+    this.metadata = { access_token: secretKey };
 
-    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
-    this.connection.on('notify', this.onNotify.bind(this))
+    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options);
+    this.connection.on("notify", this.onNotify.bind(this));
 
     // E2E テスト用のコード
-    this.connection.on('signaling', this.onSignaling.bind(this))
+    this.connection.on("signaling", this.onSignaling.bind(this));
   }
 
   async connect(stream: MediaStream): Promise<void> {
-    await this.connection.connect(stream)
+    await this.connection.connect(stream);
 
-    const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
+    const videoElement = document.querySelector<HTMLVideoElement>("#local-video");
     if (videoElement !== null) {
-      videoElement.srcObject = stream
+      videoElement.srcObject = stream;
     }
   }
 
   async disconnect(): Promise<void> {
-    await this.connection.disconnect()
+    await this.connection.disconnect();
 
-    const videoElement = document.querySelector<HTMLVideoElement>('#local-video')
+    const videoElement = document.querySelector<HTMLVideoElement>("#local-video");
     if (videoElement !== null) {
-      videoElement.srcObject = null
+      videoElement.srcObject = null;
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error('PeerConnection is not ready'))
+      throw new Error("PeerConnection is not ready");
     }
-    return this.connection.pc.getStats()
+    return this.connection.pc.getStats();
   }
 
   private onNotify(event: SignalingNotifyMessage): void {
     if (
-      event.event_type === 'connection.created' &&
+      event.event_type === "connection.created" &&
       this.connection.connectionId === event.connection_id
     ) {
-      const connectionIdElement = document.querySelector('#connection-id')
+      const connectionIdElement = document.querySelector("#connection-id");
       if (connectionIdElement) {
-        connectionIdElement.textContent = event.connection_id
+        connectionIdElement.textContent = event.connection_id;
       }
     }
   }
 
   // E2E テスト用のコード
   private onSignaling(event: SignalingEvent): void {
-    if (event.type === 'onmessage-switched') {
-      console.log('[signaling]', event.type, event.transportType)
+    if (event.type === "onmessage-switched") {
+      console.log("[signaling]", event.type, event.transportType);
     }
   }
 }

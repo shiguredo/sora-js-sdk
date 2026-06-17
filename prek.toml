@@ -1,0 +1,53 @@
+# Configuration file for `prek`, a git hook framework written in Rust.
+# See https://prek.j178.dev for more information.
+#:schema https://www.schemastore.org/prek.json
+
+default_stages = ["pre-commit"]
+
+# prek 組み込みフック (オフラインで動作する Rust ネイティブ実装)
+[[repos]]
+repo = "builtin"
+hooks = [
+  # patches/ の pnpm パッチはコンテキスト行の行頭スペースや末尾改行が
+  # 変更されると corrupt patch になり適用できなくなるため除外する
+  { id = "trailing-whitespace", exclude = "^patches/" },
+  { id = "end-of-file-fixer", exclude = "^patches/" },
+  { id = "check-yaml" },
+  { id = "check-toml" },
+  # マージコンフリクトマーカーが残ったコミットを防ぐ
+  { id = "check-merge-conflict" },
+  # 秘密鍵の誤コミットを防ぐ
+  { id = "detect-private-key" },
+]
+
+# プロジェクト固有のローカルフック
+# priority が小さいほど先に実行される。同じ priority なら並列実行される
+[[repos]]
+repo = "local"
+
+# vp check: フォーマット (oxfmt) と lint (oxlint type-aware) をまとめて実行
+[[repos.hooks]]
+id = "check"
+name = "vp check"
+entry = "vp check"
+language = "system"
+pass_filenames = false
+priority = 0
+
+# tsc --noEmit: TypeScript の型チェック
+[[repos.hooks]]
+id = "typecheck"
+name = "tsc --noEmit"
+entry = "vp exec tsc --noEmit"
+language = "system"
+pass_filenames = false
+priority = 10
+
+# vp test run: vitest によるユニットテスト
+[[repos.hooks]]
+id = "test"
+name = "vp test"
+entry = "vp test run"
+language = "system"
+pass_filenames = false
+priority = 20

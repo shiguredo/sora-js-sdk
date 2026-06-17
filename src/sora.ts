@@ -1,8 +1,8 @@
-import type ConnectionBase from './base'
-import { applyMediaStreamConstraints } from './helpers'
-import ConnectionMessaging from './messaging'
-import ConnectionPublisher from './publisher'
-import ConnectionSubscriber from './subscriber'
+import type ConnectionBase from "./base";
+import { applyMediaStreamConstraints } from "./helpers";
+import ConnectionMessaging from "./messaging";
+import ConnectionPublisher from "./publisher";
+import ConnectionSubscriber from "./subscriber";
 import type {
   AudioCodecType,
   Callbacks,
@@ -26,8 +26,8 @@ import type {
   JSONType,
   MessagingHeaderField,
   MessagingHeaderFieldType,
-  Role,
   RPCOptions,
+  Role,
   SignalingAudio,
   SignalingCloseMessage,
   SignalingConnectDataChannel,
@@ -48,8 +48,8 @@ import type {
   SignalingOfferMessageDataChannel,
   SignalingPingMessage,
   SignalingPushMessage,
-  SignalingRedirectMessage,
   SignalingReOfferMessage,
+  SignalingRedirectMessage,
   SignalingReqStatsMessage,
   SignalingSwitchedMessage,
   SignalingUpdateMessage,
@@ -67,7 +67,7 @@ import type {
   TransportType,
   VideoCodecType,
   WebSocketSignalingMessage,
-} from './types'
+} from "./types";
 
 /**
  * Role 毎の Connection インスタンスを生成するためのクラス
@@ -79,15 +79,15 @@ class SoraConnection {
   /**
    * シグナリングに使用する URL の候補
    */
-  signalingUrlCandidates: string | string[]
+  signalingUrlCandidates: string | string[];
   /**
    * デバッグフラグ
    */
-  debug: boolean
+  debug: boolean;
 
   constructor(signalingUrlCandidates: string | string[], debug = false) {
-    this.signalingUrlCandidates = signalingUrlCandidates
-    this.debug = debug
+    this.signalingUrlCandidates = signalingUrlCandidates;
+    this.debug = debug;
   }
   /**
    * role sendrecv で接続するための Connection インスタンスを生成するメソッド
@@ -114,12 +114,12 @@ class SoraConnection {
   ): ConnectionPublisher {
     return new ConnectionPublisher(
       this.signalingUrlCandidates,
-      'sendrecv',
+      "sendrecv",
       channelId,
       metadata,
       options,
       this.debug,
-    )
+    );
   }
   /**
    * role sendonly で接続するための Connection インスタンスを生成するメソッド
@@ -146,12 +146,12 @@ class SoraConnection {
   ): ConnectionPublisher {
     return new ConnectionPublisher(
       this.signalingUrlCandidates,
-      'sendonly',
+      "sendonly",
       channelId,
       metadata,
       options,
       this.debug,
-    )
+    );
   }
   /**
    * role recvonly で接続するための Connection インスタンスを生成するメソッド
@@ -178,12 +178,12 @@ class SoraConnection {
   ): ConnectionSubscriber {
     return new ConnectionSubscriber(
       this.signalingUrlCandidates,
-      'recvonly',
+      "recvonly",
       channelId,
       metadata,
       options,
       this.debug,
-    )
+    );
   }
 
   /**
@@ -212,18 +212,22 @@ class SoraConnection {
     metadata: JSONType = null,
     options: ConnectionOptions = { audio: false, video: false },
   ): ConnectionMessaging {
-    options.audio = false
-    options.video = false
-    options.dataChannelSignaling = true
+    // 呼び出し側 options を mutate しないよう spread でコピーした上で必須値を上書きする
+    const merged: ConnectionOptions = {
+      ...options,
+      audio: false,
+      video: false,
+      dataChannelSignaling: true,
+    };
     return new ConnectionMessaging(
       this.signalingUrlCandidates,
       // messaging は role sendonly として扱う
-      'sendonly',
+      "sendonly",
       channelId,
       metadata,
-      options,
+      merged,
       this.debug,
-    )
+    );
   }
 
   /**
@@ -233,7 +237,7 @@ class SoraConnection {
    * @deprecated
    */
   get signalingUrl(): string | string[] {
-    return this.signalingUrlCandidates
+    return this.signalingUrlCandidates;
   }
 }
 
@@ -255,17 +259,14 @@ export default {
    * @public
    *
    */
-  connection: (signalingUrlCandidates: string | string[], debug = false): SoraConnection => {
-    return new SoraConnection(signalingUrlCandidates, debug)
-  },
+  connection: (signalingUrlCandidates: string | string[], debug = false): SoraConnection =>
+    new SoraConnection(signalingUrlCandidates, debug),
   /**
    * SDK のバージョンを返すメソッド
    *
    * @public
    */
-  version: (): string => {
-    return __SORA_JS_SDK_VERSION__
-  },
+  version: (): string => __SORA_JS_SDK_VERSION__,
   /**
    * WebRTC のユーティリティ関数群
    *
@@ -274,7 +275,7 @@ export default {
   helpers: {
     applyMediaStreamConstraints,
   },
-}
+};
 
 export type {
   AudioCodecType,
@@ -345,4 +346,4 @@ export type {
   TransportType,
   VideoCodecType,
   WebSocketSignalingMessage,
-}
+};

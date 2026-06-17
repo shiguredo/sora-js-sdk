@@ -1,6 +1,7 @@
 name: e2e-test-h265
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - develop
@@ -13,16 +14,19 @@ on:
     # UTC 時間で毎日 2:00 (JST で 11:00) に実行、月曜日から金曜日
     - cron: "0 2 * * 1-5"
 
+permissions:
+  contents: read
+
 jobs:
-  # Chrome と Edge の Canary バージョンでのテスト
-  # Playwright 経由では Canary バージョンのブラウザをインストールできない
-  # Homebrew 経由でインストールしている
+  # H265 を再生できる Chrome 各バージョン (Stable / Beta / Dev / Canary) で
+  # self-hosted Apple Silicon 上でテストする
+  # Playwright 経由では Canary / Dev バージョンのブラウザをインストールできないため Homebrew 経由でインストールしている
   e2e-test-h265:
     strategy:
       matrix:
         node:
-          # Nodejs のテストではないので一番古い LTS である 20 でのみ動作確認する
-          - "20"
+          # Nodejs のテストではないので一番古い LTS である 22 でのみ動作確認する
+          - "22"
         browser:
           - name: "Google Chrome Canary"
             type: "google-chrome@canary"
@@ -42,51 +46,37 @@ jobs:
       labels: [self-hosted, macOS, ARM64, Apple-M2-Pro]
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
-      - uses: Homebrew/actions/setup-homebrew@master
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: Homebrew/actions/setup-homebrew@8eb7f2efa6ab636da09aef605b497fd5b8a7587d # master
       - run: brew install --cask ${{ matrix.browser.type}}
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@ca1c46663915d6c1042ae23bd39ab85718bfb0fa # v1.10.0
         with:
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - run: pnpm --version
-      - run: pnpm install
-      - run: pnpm run build
-      - run: pnpm playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/h265.test.ts
+          # 後段で `vp install --frozen-lockfile` を走らせるため setup-vp の自動 install を無効化する
+          run-install: false
+      - run: vp install --frozen-lockfile
+      - run: vp build
+      - run: vp exec playwright test --project="${{ matrix.browser.name }}" e2e-tests/tests/h265.test.ts
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
-      # - uses: actions/upload-artifact@v4
+      # - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       #   if: always()
       #   with:
       #     name: playwright-report
       #     path: playwright-report/
       #     retention-days: 30
 
-  # slack_notify_succeeded:
-  #   needs: [e2e-test]
-  #   runs-on: ubuntu-24.04
-  #   if: success()
-  #   steps:
-  #     - name: Slack Notification
-  #       uses: rtCamp/action-slack-notify@v2
-  #       env:
-  #         SLACK_CHANNEL: sora-js-sdk
-  #         SLACK_COLOR: good
-  #         SLACK_TITLE: Succeeded
-  #         SLACK_ICON_EMOJI: ":star-struck:"
-  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-  slack_notify_failed:
+  slack_notify:
     needs: [e2e-test-h265]
-    runs-on: ubuntu-24.04
-    if: failure()
+    runs-on: ubuntu-slim
+    if: ${{ !cancelled() }}
+    permissions:
+      actions: read
     steps:
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: sora-js-sdk
-          SLACK_COLOR: danger
-          SLACK_TITLE: Failed
-          SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: sora-js-sdk
+          notify_mode: failure_and_fixed

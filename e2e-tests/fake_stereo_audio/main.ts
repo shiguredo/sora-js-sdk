@@ -1,406 +1,454 @@
-import { getFakeMedia } from '../src/fake'
-import { getChannelId, setSoraJsSdkVersion } from '../src/misc'
+import { getFakeMedia } from "../src/fake";
+import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
-import Sora, {
-  type SignalingNotifyMessage,
-  type ConnectionPublisher,
-  type ConnectionSubscriber,
-  type SoraConnection,
-} from 'sora-js-sdk'
+import Sora from "sora-js-sdk";
+import type {
+  SignalingNotifyMessage,
+  ConnectionPublisher,
+  ConnectionSubscriber,
+  SoraConnection,
+} from "sora-js-sdk";
 
 // Soraオブジェクトをwindowに公開（テスト用）
 declare global {
   interface Window {
-    Sora: typeof Sora
+    Sora: typeof Sora;
   }
 }
-window.Sora = Sora
+window.Sora = Sora;
 
 // リアルタイム音声解析クラス
 class RealtimeAudioAnalyzer {
-  private audioContext: AudioContext
-  private source: MediaStreamAudioSourceNode
-  private splitter: ChannelSplitterNode
-  private analyserLeft: AnalyserNode
-  private analyserRight: AnalyserNode
-  private animationId: number | null = null
-  private channelCount: number
+  private readonly audioContext: AudioContext;
+  private readonly source: MediaStreamAudioSourceNode;
+  private readonly splitter: ChannelSplitterNode;
+  private readonly analyserLeft: AnalyserNode;
+  private readonly analyserRight: AnalyserNode;
+  private animationId: number | null = null;
+  private readonly channelCount: number;
 
   constructor(
     stream: MediaStream,
-    private prefix: string,
+    private readonly prefix: string,
   ) {
-    this.audioContext = new AudioContext()
-    this.source = this.audioContext.createMediaStreamSource(stream)
-    this.channelCount = this.source.channelCount
+    this.audioContext = new AudioContext();
+    this.source = this.audioContext.createMediaStreamSource(stream);
+    this.channelCount = this.source.channelCount;
 
     // チャンネル分離
-    this.splitter = this.audioContext.createChannelSplitter(2)
-    this.source.connect(this.splitter)
+    this.splitter = this.audioContext.createChannelSplitter(2);
+    this.source.connect(this.splitter);
 
     // 左チャンネルのアナライザー
-    this.analyserLeft = this.audioContext.createAnalyser()
-    this.analyserLeft.fftSize = 2048
-    this.analyserLeft.smoothingTimeConstant = 0.8
-    this.splitter.connect(this.analyserLeft, 0)
+    this.analyserLeft = this.audioContext.createAnalyser();
+    this.analyserLeft.fftSize = 2048;
+    this.analyserLeft.smoothingTimeConstant = 0.8;
+    this.splitter.connect(this.analyserLeft, 0);
 
     // 右チャンネルのアナライザー
-    this.analyserRight = this.audioContext.createAnalyser()
-    this.analyserRight.fftSize = 2048
-    this.analyserRight.smoothingTimeConstant = 0.8
+    this.analyserRight = this.audioContext.createAnalyser();
+    this.analyserRight.fftSize = 2048;
+    this.analyserRight.smoothingTimeConstant = 0.8;
 
     if (this.channelCount >= 2) {
-      this.splitter.connect(this.analyserRight, 1)
+      this.splitter.connect(this.analyserRight, 1);
     }
   }
 
   private detectDominantFrequency(analyser: AnalyserNode): number {
-    const dataArray = new Float32Array(analyser.frequencyBinCount)
-    analyser.getFloatFrequencyData(dataArray)
+    const dataArray = new Float32Array(analyser.frequencyBinCount);
+    analyser.getFloatFrequencyData(dataArray);
 
-    let maxValue = Number.NEGATIVE_INFINITY
-    let maxIndex = 0
+    let maxValue = Number.NEGATIVE_INFINITY;
+    let maxIndex = 0;
 
     // 100Hz以上の周波数のみを対象にする（ノイズ除去）
-    const minIndex = Math.floor((100 * analyser.fftSize) / this.audioContext.sampleRate)
+    const minIndex = Math.floor((100 * analyser.fftSize) / this.audioContext.sampleRate);
 
     for (let i = minIndex; i < dataArray.length; i++) {
       if (dataArray[i] > maxValue) {
-        maxValue = dataArray[i]
-        maxIndex = i
+        maxValue = dataArray[i];
+        maxIndex = i;
       }
     }
 
-    return (maxIndex * this.audioContext.sampleRate) / analyser.fftSize
+    return (maxIndex * this.audioContext.sampleRate) / analyser.fftSize;
   }
 
   private updateDisplay(): void {
-    const leftFreq = this.detectDominantFrequency(this.analyserLeft)
+    const leftFreq = this.detectDominantFrequency(this.analyserLeft);
     const rightFreq =
-      this.channelCount >= 2 ? this.detectDominantFrequency(this.analyserRight) : leftFreq
+      this.channelCount >= 2 ? this.detectDominantFrequency(this.analyserRight) : leftFreq;
 
     // 片方のチャンネルが0Hzの場合はステレオと判定しない
     const isStereo =
-      this.channelCount >= 2 && leftFreq > 0 && rightFreq > 0 && Math.abs(leftFreq - rightFreq) > 50
+      this.channelCount >= 2 &&
+      leftFreq > 0 &&
+      rightFreq > 0 &&
+      Math.abs(leftFreq - rightFreq) > 50;
 
     // 表示更新
-    const channelCountEl = document.querySelector(`#${this.prefix}-channel-count`)
-    const leftFreqEl = document.querySelector(`#${this.prefix}-left-frequency`)
-    const rightFreqEl = document.querySelector(`#${this.prefix}-right-frequency`)
-    const isStereoEl = document.querySelector(`#${this.prefix}-is-stereo`)
+    const channelCountEl = document.querySelector(`#${this.prefix}-channel-count`);
+    const leftFreqEl = document.querySelector(`#${this.prefix}-left-frequency`);
+    const rightFreqEl = document.querySelector(`#${this.prefix}-right-frequency`);
+    const isStereoEl = document.querySelector(`#${this.prefix}-is-stereo`);
 
-    if (channelCountEl) channelCountEl.textContent = this.channelCount.toString()
-    if (leftFreqEl) leftFreqEl.textContent = leftFreq.toFixed(1)
-    if (rightFreqEl) rightFreqEl.textContent = rightFreq.toFixed(1)
-    if (isStereoEl) isStereoEl.textContent = isStereo ? 'Yes' : 'No'
+    if (channelCountEl) {
+      channelCountEl.textContent = this.channelCount.toString();
+    }
+    if (leftFreqEl) {
+      leftFreqEl.textContent = leftFreq.toFixed(1);
+    }
+    if (rightFreqEl) {
+      rightFreqEl.textContent = rightFreq.toFixed(1);
+    }
+    if (isStereoEl) {
+      isStereoEl.textContent = isStereo ? "Yes" : "No";
+    }
 
     // 次のフレーム
-    this.animationId = requestAnimationFrame(() => this.updateDisplay())
+    this.animationId = requestAnimationFrame(() => {
+      this.updateDisplay();
+    });
   }
 
   start(): void {
-    this.updateDisplay()
+    this.updateDisplay();
   }
 
   stop(): void {
     if (this.animationId !== null) {
-      cancelAnimationFrame(this.animationId)
-      this.animationId = null
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
     }
-    this.source.disconnect()
-    this.audioContext.close()
+    this.source.disconnect();
+    void this.audioContext.close();
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL
-  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || ''
-  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || ''
-  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY
+document.addEventListener("DOMContentLoaded", async () => {
+  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
+  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || "";
+  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || "";
+  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY;
 
-  setSoraJsSdkVersion()
+  setSoraJsSdkVersion();
 
-  let sendClient: SoraSendClient
-  let recvClient: SoraRecvClient
-  let localAnalyzer: RealtimeAudioAnalyzer | null = null
-  let remoteAnalyzer: RealtimeAudioAnalyzer | null = null
+  let sendClient: SoraSendClient;
+  let recvClient: SoraRecvClient;
+  let localAnalyzer: RealtimeAudioAnalyzer | null = null;
+  let remoteAnalyzer: RealtimeAudioAnalyzer | null = null;
+  // getFakeMedia の cleanup を保持し、#disconnect / 次回 #connect / connect 失敗時に解放する。
+  let fakeCleanup: (() => void) | null = null;
 
-  document.querySelector('#connect')?.addEventListener('click', async () => {
-    const channelId = getChannelId(channelIdPrefix, channelIdSuffix)
+  document.querySelector("#connect")?.addEventListener("click", async () => {
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
     // 受信側を先に接続
-    recvClient = new SoraRecvClient(signalingUrl, channelId, secretKey)
+    recvClient = new SoraRecvClient(signalingUrl, channelId, secretKey);
 
     // forceStereoOutputを設定
-    const forceStereoOutput = (document.querySelector('#force-stereo-output') as HTMLInputElement)
-      .checked
-    recvClient.setForceStereoOutput(forceStereoOutput)
+    const forceStereoOutput =
+      document.querySelector<HTMLInputElement>("#force-stereo-output")!.checked;
+    recvClient.setForceStereoOutput(forceStereoOutput);
 
     // リモートストリーム受信時のコールバックを設定
     recvClient.setOnStreamCallback((stream: MediaStream) => {
       if (remoteAnalyzer) {
-        remoteAnalyzer.stop()
+        remoteAnalyzer.stop();
       }
-      remoteAnalyzer = new RealtimeAudioAnalyzer(stream, 'remote')
-      remoteAnalyzer.start()
-    })
+      remoteAnalyzer = new RealtimeAudioAnalyzer(stream, "remote");
+      remoteAnalyzer.start();
+    });
 
-    await recvClient.connect()
+    await recvClient.connect();
 
     // 送信側を接続
-    sendClient = new SoraSendClient(signalingUrl, channelId, secretKey)
+    sendClient = new SoraSendClient(signalingUrl, channelId, secretKey);
 
-    const useStereo = (document.querySelector('#use-stereo') as HTMLInputElement).checked
+    const useStereo = document.querySelector<HTMLInputElement>("#use-stereo")!.checked;
 
-    const stream = getFakeMedia({
+    // 既存の cleanup が残っていれば解放してから新しい stream を生成する。
+    // 手動操作で同一 page 内の再接続が起きた場合の防御。
+    if (fakeCleanup) {
+      fakeCleanup();
+      fakeCleanup = null;
+    }
+    const { stream, cleanup } = getFakeMedia({
       audio: {
         frequency: 440,
-        volume: 0.1,
         stereo: useStereo,
+        volume: 0.1,
       },
-    })
+    });
+    fakeCleanup = cleanup;
 
     // ローカル音声のリアルタイム解析を開始
     if (localAnalyzer) {
-      localAnalyzer.stop()
+      localAnalyzer.stop();
     }
-    localAnalyzer = new RealtimeAudioAnalyzer(stream, 'local')
-    localAnalyzer.start()
+    localAnalyzer = new RealtimeAudioAnalyzer(stream, "local");
+    localAnalyzer.start();
 
-    await sendClient.connect(stream)
-  })
+    try {
+      await sendClient.connect(stream);
+    } catch (error) {
+      // connect 失敗時にも fake stream を解放してリソースリークを防ぐ。
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
+      throw error;
+    }
+  });
 
-  document.querySelector('#disconnect')?.addEventListener('click', async () => {
-    if (localAnalyzer) {
-      localAnalyzer.stop()
-      localAnalyzer = null
+  document.querySelector("#disconnect")?.addEventListener("click", async () => {
+    // sendClient / recvClient の disconnect が throw しても fake stream は必ず解放する。
+    try {
+      if (localAnalyzer) {
+        localAnalyzer.stop();
+        localAnalyzer = null;
+      }
+      if (remoteAnalyzer) {
+        remoteAnalyzer.stop();
+        remoteAnalyzer = null;
+      }
+      if (sendClient) {
+        await sendClient.disconnect();
+      }
+      if (recvClient) {
+        await recvClient.disconnect();
+      }
+    } finally {
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
     }
-    if (remoteAnalyzer) {
-      remoteAnalyzer.stop()
-      remoteAnalyzer = null
-    }
-    if (sendClient) {
-      await sendClient.disconnect()
-    }
-    if (recvClient) {
-      await recvClient.disconnect()
-    }
-  })
+  });
 
-  document.querySelector('#get-stats')?.addEventListener('click', async () => {
+  document.querySelector("#get-stats")?.addEventListener("click", async () => {
     if (!sendClient) {
-      return
+      return;
     }
 
-    const statsReport = await sendClient.getStats()
-    const statsDiv = document.querySelector('#stats-report') as HTMLElement
-    const statsReportJsonDiv = document.querySelector('#stats-report-json')
+    const statsReport = await sendClient.getStats();
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
+    const statsReportJsonDiv = document.querySelector("#stats-report-json");
     if (statsDiv && statsReportJsonDiv) {
-      let statsHtml = ''
-      const statsReportJson: Record<string, unknown>[] = []
+      let statsHtml = "";
+      const statsReportJson: Array<Record<string, unknown>> = [];
       for (const report of statsReport.values()) {
-        statsHtml += `<h3>Type: ${report.type}</h3><ul>`
-        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
+        statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
+        const reportJson: Record<string, unknown> = {
+          id: report.id,
+          type: report.type,
+        };
         for (const [key, value] of Object.entries(report)) {
-          if (key !== 'type' && key !== 'id') {
-            statsHtml += `<li><strong>${key}:</strong> ${value}</li>`
-            reportJson[key] = value
+          if (key !== "type" && key !== "id") {
+            statsHtml += `<li><strong>${key}:</strong> ${String(value)}</li>`;
+            reportJson[key] = value;
           }
         }
-        statsHtml += '</ul>'
-        statsReportJson.push(reportJson)
+        statsHtml += "</ul>";
+        statsReportJson.push(reportJson);
       }
-      statsDiv.innerHTML = statsHtml
+      statsDiv.innerHTML = statsHtml;
       // データ属性としても保存
-      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson)
+      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson);
     }
 
     // 受信側の統計情報も取得してステレオかどうか確認
     if (recvClient) {
-      const recvStatsReport = await recvClient.getStats()
-      const recvStatsReportJson: Record<string, unknown>[] = []
+      const recvStatsReport = await recvClient.getStats();
+      const recvStatsReportJson: Array<Record<string, unknown>> = [];
       for (const report of recvStatsReport.values()) {
-        const reportJson: Record<string, unknown> = { id: report.id, type: report.type }
+        const reportJson: Record<string, unknown> = {
+          id: report.id,
+          type: report.type,
+        };
         for (const [key, value] of Object.entries(report)) {
-          reportJson[key] = value
+          reportJson[key] = value;
         }
-        recvStatsReportJson.push(reportJson)
+        recvStatsReportJson.push(reportJson);
       }
       // 受信側の統計情報をデータ属性に保存
-      const recvStatsDiv = document.createElement('div')
-      recvStatsDiv.dataset.recvStatsReportJson = JSON.stringify(recvStatsReportJson)
-      statsDiv.appendChild(recvStatsDiv)
+      const recvStatsDiv = document.createElement("div");
+      recvStatsDiv.dataset.recvStatsReportJson = JSON.stringify(recvStatsReportJson);
+      statsDiv.append(recvStatsDiv);
 
       // テスト用のデータ属性を保存
-      const localChannelCount = document.querySelector('#local-channel-count')?.textContent || '0'
-      const localLeftFreq = document.querySelector('#local-left-frequency')?.textContent || '0'
-      const localRightFreq = document.querySelector('#local-right-frequency')?.textContent || '0'
-      const localIsStereo = document.querySelector('#local-is-stereo')?.textContent || 'No'
+      const localChannelCount = document.querySelector("#local-channel-count")?.textContent ?? "0";
+      const localLeftFreq = document.querySelector("#local-left-frequency")?.textContent ?? "0";
+      const localRightFreq = document.querySelector("#local-right-frequency")?.textContent ?? "0";
+      const localIsStereo = document.querySelector("#local-is-stereo")?.textContent ?? "No";
 
-      const remoteChannelCount = document.querySelector('#remote-channel-count')?.textContent || '0'
-      const remoteLeftFreq = document.querySelector('#remote-left-frequency')?.textContent || '0'
-      const remoteRightFreq = document.querySelector('#remote-right-frequency')?.textContent || '0'
-      const remoteIsStereo = document.querySelector('#remote-is-stereo')?.textContent || 'No'
+      const remoteChannelCount =
+        document.querySelector("#remote-channel-count")?.textContent ?? "0";
+      const remoteLeftFreq = document.querySelector("#remote-left-frequency")?.textContent ?? "0";
+      const remoteRightFreq = document.querySelector("#remote-right-frequency")?.textContent ?? "0";
+      const remoteIsStereo = document.querySelector("#remote-is-stereo")?.textContent ?? "No";
 
-      const analysisDiv = document.createElement('div')
-      analysisDiv.id = 'audio-analysis'
+      const analysisDiv = document.createElement("div");
+      analysisDiv.id = "audio-analysis";
       analysisDiv.dataset.analysis = JSON.stringify({
         local: {
           channelCount: Number.parseInt(localChannelCount, 10),
+          isStereo: localIsStereo === "Yes",
           leftFrequency: Number.parseFloat(localLeftFreq),
           rightFrequency: Number.parseFloat(localRightFreq),
-          isStereo: localIsStereo === 'Yes',
         },
         remote: {
           channelCount: Number.parseInt(remoteChannelCount, 10),
+          isStereo: remoteIsStereo === "Yes",
           leftFrequency: Number.parseFloat(remoteLeftFreq),
           rightFrequency: Number.parseFloat(remoteRightFreq),
-          isStereo: remoteIsStereo === 'Yes',
         },
-      })
-      statsDiv.appendChild(analysisDiv)
+      });
+      statsDiv.append(analysisDiv);
     }
-  })
-})
+  });
+});
 
 class SoraSendClient {
-  private debug = false
-  private channelId: string
-  private metadata: { access_token: string }
-  private options: object = { connectionTimeout: 15000 }
+  private readonly debug = false;
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
+  private readonly options: object = { connectionTimeout: 15_000 };
 
-  private sora: SoraConnection
-  private connection: ConnectionPublisher
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
-    this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = channelId
+    this.sora = Sora.connection(signalingUrl, this.debug);
+    this.channelId = channelId;
 
     // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey }
+    this.metadata = { access_token: secretKey };
 
-    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options)
-    this.connection.on('notify', this.onNotify.bind(this))
+    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options);
+    this.connection.on("notify", this.onNotify.bind(this));
 
     // SDPデバッグ用
-    this.connection.on('signaling', (event) => {
-      if (event.type === 'answer') {
-        console.log('Answer SDP (stereo check):', event.sdp?.includes('stereo=1'))
+    this.connection.on("signaling", (event) => {
+      if (event.type === "answer") {
+        console.log("Answer SDP (stereo check):", (event as any).sdp?.includes("stereo=1"));
       }
-    })
+    });
   }
 
   async connect(stream: MediaStream): Promise<void> {
-    await this.connection.connect(stream)
+    await this.connection.connect(stream);
 
-    const audioElement = document.querySelector<HTMLAudioElement>('#local-audio')
+    const audioElement = document.querySelector<HTMLAudioElement>("#local-audio");
     if (audioElement !== null) {
-      audioElement.srcObject = stream
+      audioElement.srcObject = stream;
     }
   }
 
   async disconnect(): Promise<void> {
-    await this.connection.disconnect()
+    await this.connection.disconnect();
 
-    const audioElement = document.querySelector<HTMLAudioElement>('#local-audio')
+    const audioElement = document.querySelector<HTMLAudioElement>("#local-audio");
     if (audioElement !== null) {
-      audioElement.srcObject = null
+      audioElement.srcObject = null;
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error('PeerConnection is not ready'))
+      throw new Error("PeerConnection is not ready");
     }
-    return this.connection.pc.getStats()
+    return this.connection.pc.getStats();
   }
 
   private onNotify(event: SignalingNotifyMessage): void {
     if (
-      event.event_type === 'connection.created' &&
+      event.event_type === "connection.created" &&
       this.connection.connectionId === event.connection_id
     ) {
-      const connectionIdElement = document.querySelector('#sendonly-connection-id')
+      const connectionIdElement = document.querySelector("#sendonly-connection-id");
       if (connectionIdElement) {
-        connectionIdElement.textContent = event.connection_id
+        connectionIdElement.textContent = event.connection_id;
       }
     }
   }
 }
 
 class SoraRecvClient {
-  private debug = false
-  private channelId: string
-  private metadata: { access_token: string }
-  private options: object = { connectionTimeout: 15000 }
+  private readonly debug = false;
+  private readonly channelId: string;
+  private readonly metadata: { access_token: string };
+  private readonly options: object = { connectionTimeout: 15_000 };
 
-  private sora: SoraConnection
-  private connection: ConnectionSubscriber
-  private onStreamCallback: ((stream: MediaStream) => void) | null = null
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionSubscriber;
+  private onStreamCallback: ((stream: MediaStream) => void) | null = null;
+  private remoteStream: MediaStream | null = null;
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
-    this.sora = Sora.connection(signalingUrl, this.debug)
-    this.channelId = channelId
+    this.sora = Sora.connection(signalingUrl, this.debug);
+    this.channelId = channelId;
 
     // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey }
+    this.metadata = { access_token: secretKey };
 
-    this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options)
-    this.connection.on('track', this.onTrack.bind(this))
-    this.connection.on('notify', this.onNotify.bind(this))
+    this.connection = this.sora.recvonly(this.channelId, this.metadata, this.options);
+    this.connection.on("track", this.onTrack.bind(this));
+    this.connection.on("notify", this.onNotify.bind(this));
   }
 
   setForceStereoOutput(forceStereo: boolean): void {
     if (forceStereo) {
-      this.connection.options.forceStereoOutput = true
+      this.connection.options.forceStereoOutput = true;
     }
   }
 
   setOnStreamCallback(callback: (stream: MediaStream) => void): void {
-    this.onStreamCallback = callback
+    this.onStreamCallback = callback;
   }
 
   async connect(): Promise<void> {
-    await this.connection.connect()
+    await this.connection.connect();
   }
 
   async disconnect(): Promise<void> {
-    await this.connection.disconnect()
+    await this.connection.disconnect();
 
-    const audioElement = document.querySelector<HTMLAudioElement>('#remote-audio')
+    const audioElement = document.querySelector<HTMLAudioElement>("#remote-audio");
     if (audioElement !== null) {
-      audioElement.srcObject = null
+      audioElement.srcObject = null;
     }
   }
 
-  getStats(): Promise<RTCStatsReport> {
+  async getStats(): Promise<RTCStatsReport> {
     if (this.connection.pc === null) {
-      return Promise.reject(new Error('PeerConnection is not ready'))
+      throw new Error("PeerConnection is not ready");
     }
-    return this.connection.pc.getStats()
+    return this.connection.pc.getStats();
   }
 
   private onTrack(event: RTCTrackEvent): void {
-    this.remoteStream = event.streams[0]
-    const audioElement = document.querySelector<HTMLAudioElement>('#remote-audio')
+    this.remoteStream = event.streams[0];
+    const audioElement = document.querySelector<HTMLAudioElement>("#remote-audio");
     if (audioElement !== null) {
-      audioElement.srcObject = event.streams[0]
+      audioElement.srcObject = event.streams[0];
     }
 
     // ストリームコールバックを実行
     if (this.onStreamCallback && event.streams[0]) {
-      this.onStreamCallback(event.streams[0])
+      this.onStreamCallback(event.streams[0]);
     }
   }
 
   private onNotify(event: SignalingNotifyMessage): void {
     if (
-      event.event_type === 'connection.created' &&
+      event.event_type === "connection.created" &&
       this.connection.connectionId === event.connection_id
     ) {
-      const connectionIdElement = document.querySelector('#recvonly-connection-id')
+      const connectionIdElement = document.querySelector("#recvonly-connection-id");
       if (connectionIdElement) {
-        connectionIdElement.textContent = event.connection_id
+        connectionIdElement.textContent = event.connection_id;
       }
     }
   }

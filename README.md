@@ -1,6 +1,5 @@
 # Sora JavaScript SDK
 
-![Static Badge](https://img.shields.io/badge/Checked_with-Biome-60a5fa?style=flat&logo=biome)
 [![GitHub tag](https://img.shields.io/github/tag/shiguredo/sora-js-sdk.svg)](https://github.com/shiguredo/sora-js-sdk)
 [![npm version](https://badge.fury.io/js/sora-js-sdk.svg)](https://badge.fury.io/js/sora-js-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -20,9 +19,9 @@ Please read <https://github.com/shiguredo/oss> before use.
 
 ## 条件
 
-- WebRTC SFU Sora 2024.1.0 以降
+- WebRTC SFU Sora 2025.1.0 以降
 - TypeScript 5.1 以降
-- Node.js 20.19 以降
+- Node.js 22.12 以降
 
 ## 使い方
 
@@ -46,10 +45,17 @@ npm install sora-js-sdk
 pnpm add sora-js-sdk
 ```
 
+### vp
+
+```bash
+vp install sora-js-sdk
+```
+
 ### Node.js の条件
 
+- Sora JavaScript SDK 2026.1.0 以降は **Node.js 22.0 以降** を要求します
+- Sora JavaScript SDK 2025.1.0 以降は **Node.js 20.0 以降** を要求します
 - Sora JavaScript SDK 2024.2.x までは **Node.js 18.0 以降** を要求します
-- 次のリリース Sora JavaScript SDK 2025.1.0 以降は **Node.js 20.0 以降** を要求します
 
 > [!CAUTION]
 > Sora JavaScript SDK 2024.2.0 以降は [Compression Stream API](https://developer.mozilla.org/ja/docs/Web/API/Compression_Streams_API) を利用しているため、ブラウザの要件がありますのでご確認ください。
@@ -65,10 +71,10 @@ Playwright を利用した E2E テストを実行できます。
 ```bash
 # .env.local を作成して適切な値を設定してください
 $ cp .env.template .env.local
-$ pnpm install
-$ pnpm run build
-$ pnpm exec playwright install chromium --with-deps
-$ pnpm run e2e-test
+$ vp install
+$ vp build
+$ vp exec playwright install chromium --with-deps
+$ vp run e2e-test
 ```
 
 ### E2E テストページ
@@ -76,7 +82,7 @@ $ pnpm run e2e-test
 E2E テストで実行するページを Vite にて起動できます。
 
 ```bash
-pnpm run e2e-dev
+vp run e2e-dev
 ```
 
 ### npm に公開されている安定版のパッケージの E2E テスト
@@ -84,6 +90,7 @@ pnpm run e2e-dev
 以下のバージョンの npm に公開されている安定版のパッケージは、
 最新の Sora で E2E テストが通ることを確認しています。
 
+- 2026.1.0
 - 2025.2.0
 - 2025.1.0
 - 2024.2.2

@@ -1,4 +1,4 @@
-import ConnectionBase from './base'
+import ConnectionBase from "./base";
 
 /**
  * messaging_only 専用のクラス
@@ -21,30 +21,30 @@ export default class ConnectionMessaging extends ConnectionBase {
     // options が
     await Promise.race([
       this.multiStream().finally(() => {
-        this.clearConnectionTimeout()
-        this.clearMonitorSignalingWebSocketEvent()
+        this.clearConnectionTimeout();
+        this.clearMonitorSignalingWebSocketEvent();
       }),
       this.setConnectionTimeout(),
       this.monitorSignalingWebSocketEvent(),
-    ])
-    this.monitorWebSocketEvent()
-    this.monitorPeerConnectionState()
+    ]);
+    this.monitorWebSocketEvent();
+    this.monitorPeerConnectionState();
   }
 
   /**
    * マルチストリームで Sora へ接続するメソッド
    */
   private async multiStream(): Promise<void> {
-    await this.disconnect()
-    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates)
-    const signalingMessage = await this.signaling(ws)
-    await this.connectPeerConnection(signalingMessage)
-    await this.setRemoteDescription(signalingMessage)
-    await this.createAnswer(signalingMessage)
-    this.sendAnswer()
+    await this.disconnect();
+    const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
+    const signalingMessage = await this.signaling(ws);
+    await this.connectPeerConnection(signalingMessage);
+    await this.setRemoteDescription(signalingMessage);
+    await this.createAnswer(signalingMessage);
+    this.sendAnswer();
     if (!this.options.skipIceCandidateEvent) {
-      await this.onIceCandidate()
+      await this.onIceCandidate();
     }
-    await this.waitChangeConnectionStateConnected()
+    await this.waitChangeConnectionStateConnected();
   }
 }

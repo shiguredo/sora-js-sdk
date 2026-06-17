@@ -1,56 +1,55 @@
 {
   "name": "sora-js-sdk",
-  "version": "2025.2.0",
+  "version": "2026.1.0",
   "description": "WebRTC SFU Sora JavaScript SDK",
-  "main": "dist/sora.js",
-  "module": "dist/sora.mjs",
-  "exports": {
-    ".": {
-      "types": "./dist/sora.d.ts",
-      "import": "./dist/sora.mjs",
-      "require": "./dist/sora.mjs"
-    }
+  "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
   },
-  "scripts": {
-    "build": "vite build",
-    "watch": "vite build --watch",
-    "e2e-dev": "vite --config e2e-tests/vite.config.ts",
-    "e2e-test": "pnpm build && playwright test --project='chromium'",
-    "e2e-test-chrome": "pnpm build && playwright test --project='Google Chrome*'",
-    "e2e-test-edge": "pnpm build && playwright test --project='Microsoft Edge*'",
-    "e2e-test-webkit": "pnpm build && playwright test --project='WebKit'",
-    "lint": "biome lint",
-    "fmt": "biome format --write",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "doc": "typedoc"
-  },
+  "license": "Apache-2.0",
+  "author": "Shiguredo Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/shiguredo/sora-js-sdk.git"
   },
-  "author": "Shiguredo Inc.",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://discord.gg/shiguredo"
-  },
-  "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
   "files": [
     "dist"
   ],
+  "type": "module",
+  "main": "dist/sora.js",
+  "module": "dist/sora.js",
+  "exports": {
+    ".": {
+      "types": "./dist/sora.d.ts",
+      "import": "./dist/sora.js"
+    }
+  },
+  "scripts": {
+    "build": "vp build",
+    "watch": "vp build --watch",
+    "e2e-dev": "vp dev --config e2e-tests/vite.config.ts",
+    "e2e-test": "vp build && playwright test --project='chromium'",
+    "e2e-test-chrome": "vp build && playwright test --project='Google Chrome*'",
+    "e2e-test-edge": "vp build && playwright test --project='Microsoft Edge*'",
+    "e2e-test-webkit": "vp build && playwright test --project='WebKit'",
+    "fmt": "vp fmt",
+    "lint": "vp lint --type-aware",
+    "typecheck": "tsc --noEmit",
+    "test": "vp test run",
+    "doc": "typedoc"
+  },
   "devDependencies": {
-    "@biomejs/biome": "2.3.8",
-    "@playwright/test": "1.57.0",
-    "@types/node": "24.10.1",
-    "jsdom": "27.2.0",
-    "typedoc": "0.28.15",
-    "typescript": "5.9.3",
-    "vite": "7.2.6",
-    "vite-plugin-dts": "4.5.4",
-    "vitest": "4.0.15"
+    "@playwright/test": "1.60.0",
+    "@types/node": "25.9.2",
+    "jsdom": "29.1.1",
+    "typedoc": "0.28.19",
+    "typescript": "6.0.3",
+    "vite-plugin-dts": "5.0.2",
+    "vite-plus": "0.1.24"
   },
   "engines": {
-    "pnpm": ">=8",
-    "node": ">=20"
-  }
+    "node": ">=22.18.0",
+    "pnpm": ">=11"
+  },
+  "packageManager": "pnpm@11.7.0"
 }

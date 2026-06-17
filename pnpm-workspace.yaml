@@ -1,6 +1,28 @@
+# パッケージ公開から最低限経過させる分数 (10080 分 = 7 日)
+# サプライチェーン攻撃のリスク軽減のため、公開直後のパッケージのインストールを遅延させる
+minimumReleaseAge: 10080
+# minimumReleaseAge の対象外とするパッケージ
+# 自社管理パッケージおよびコアツールチェーンは即時インストールを許可する
+minimumReleaseAgeExclude:
+  # 自社パッケージ (Shiguredo)
+  - sora-js-sdk
+  - "@shiguredo/*"
+  # ビルドツールチェーン (Voidzero)
+  # vite-plus / vitest は活発に更新されるため制限対象外とする
+  - "@voidzero-dev/*"
+  - "@vitest/*"
+  - "vite-plus"
+
 packages:
   - e2e-tests
+
+# ビルド時に pre/post install スクリプトを実行するパッケージ
 onlyBuiltDependencies:
-  - '@biomejs/biome'
   - esbuild
-minimumReleaseAge: 2880
+
+# playwright-core のパッチ
+# macOS の Google Chrome stable インストール時に curl が 302 リダイレクトを追従できず
+# ダウンロードに失敗する問題を修正するため、curl に `-L` を追加する
+# 上流: https://github.com/microsoft/playwright/blob/v1.60.0/packages/playwright-core/bin/reinstall_chrome_stable_mac.sh
+patchedDependencies:
+  playwright-core@1.60.0: patches/playwright-core@1.60.0.patch

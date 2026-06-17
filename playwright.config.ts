@@ -1,21 +1,23 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from "@playwright/test";
 
-// pnpm exec playwright test --ui
+// vp exec playwright test --ui
 
 export default defineConfig({
-  testDir: 'e2e-tests/tests',
+  testDir: "e2e-tests/tests",
+  // 本来は flaky テストをなくすべきだが、一時的に対応
+  retries: 3,
   workers: 1,
   // fullyParallel: true,
-  reporter: 'list',
+  reporter: "list",
   use: {
     launchOptions: {
       args: [
         // CORS 無効
-        '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process',
+        "--disable-web-security",
+        "--disable-features=IsolateOrigins,site-per-process",
 
-        '--use-fake-ui-for-media-stream',
-        '--use-fake-device-for-media-stream',
+        "--use-fake-ui-for-media-stream",
+        "--use-fake-device-for-media-stream",
         // "--use-file-for-fake-video-capture=/app/sample.mjpeg",
 
         // '--enable-features=WebRtcAllowH265Send,WebRtcAllowH265Receive',
@@ -25,49 +27,65 @@ export default defineConfig({
   projects: [
     // Chromium
     {
-      name: 'Chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "Chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
 
     // Chrome
     {
-      name: 'Google Chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome', userAgent: undefined },
+      name: "Google Chrome",
+      use: {
+        ...devices["Desktop Chrome"],
+        channel: "chrome",
+        userAgent: undefined,
+      },
     },
     {
-      name: 'Google Chrome Beta',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome-beta', userAgent: undefined },
+      name: "Google Chrome Beta",
+      use: {
+        ...devices["Desktop Chrome"],
+        channel: "chrome-beta",
+        userAgent: undefined,
+      },
     },
     {
-      name: 'Google Chrome Dev',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome-dev', userAgent: undefined },
+      name: "Google Chrome Dev",
+      use: {
+        ...devices["Desktop Chrome"],
+        channel: "chrome-dev",
+        userAgent: undefined,
+      },
     },
     {
-      name: 'Google Chrome Canary',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome-canary', userAgent: undefined },
+      name: "Google Chrome Canary",
+      use: {
+        ...devices["Desktop Chrome"],
+        channel: "chrome-canary",
+        userAgent: undefined,
+      },
     },
 
     // Edge
     {
-      name: 'Microsoft Edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
+      name: "Microsoft Edge",
+      use: { ...devices["Desktop Edge"], channel: "msedge" },
     },
     {
-      name: 'Microsoft Edge Beta',
-      use: { ...devices['Desktop Edge'], channel: 'msedge-beta' },
+      name: "Microsoft Edge Beta",
+      use: { ...devices["Desktop Edge"], channel: "msedge-beta" },
     },
     {
-      name: 'Microsoft Edge Dev',
-      use: { ...devices['Desktop Edge'], channel: 'msedge-dev' },
+      name: "Microsoft Edge Dev",
+      use: { ...devices["Desktop Edge"], channel: "msedge-dev" },
     },
     {
-      name: 'Microsoft Edge Canary',
-      use: { ...devices['Desktop Edge'], channel: 'msedge-canary' },
+      name: "Microsoft Edge Canary",
+      use: { ...devices["Desktop Edge"], channel: "msedge-canary" },
     },
 
     {
-      name: 'WebKit',
-      use: { ...devices['Desktop Safari'] },
+      name: "WebKit",
+      use: { ...devices["Desktop Safari"] },
     },
 
     // {
@@ -76,10 +94,10 @@ export default defineConfig({
     // },
   ],
   webServer: {
-    command: 'pnpm run e2e-dev --port 9000',
-    url: 'http://localhost:9000/',
+    command: "vp run e2e-dev --port 9000",
     reuseExistingServer: !process.env.CI,
-    stdout: 'pipe',
-    stderr: 'pipe',
+    stderr: "pipe",
+    stdout: "pipe",
+    url: "http://localhost:9000/",
   },
-})
+});

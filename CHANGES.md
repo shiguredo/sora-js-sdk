@@ -11,6 +11,119 @@
 
 ## develop
 
+## 2026.1.0
+
+**リリース日**: 2026-06-17
+
+- [CHANGE] Node 20 のサポートを終了する
+  - Node 20 は 2026-04-30 に EoL になったため
+  - <https://github.com/nodejs/Release#release-schedule>
+  - @voluntas
+- [CHANGE] `removeAudioTrack` / `removeVideoTrack` 実行中に `disconnect()` 等で `RTCPeerConnection` が破棄された場合に `ConnectError` (reason `"REMOVE_TRACK_DURING_DISCONNECT"`) で reject するように変更する
+  - 利用者は `.catch` で reject を受ける必要がある (fire-and-forget で呼んでいる場合は unhandled promise rejection が発生する)
+  - 非推奨の `stopAudioTrack` / `stopVideoTrack`、および `replaceAudioTrack` / `replaceVideoTrack` 経由でも同じ reject が伝播する
+  - @voluntas
+- [CHANGE] `abendPeerConnectionState()` の発火順を他 3 系統と揃え timeline → callback の順にする
+  - @voluntas
+- [CHANGE] Node.js の最低要件を 22.18.0 以上に引き上げる
+  - 後続のビルドツール移行で導入される `tsdown` 0.22 系が Node.js `^22.18.0 || >=24.0.0` を要求するため
+  - <https://www.npmjs.com/package/tsdown>
+  - @voluntas
+- [CHANGE] `package.json` の `exports["."]` から `require` 条件を削除し ESM のみをサポートする
+  - `require("sora-js-sdk")` は元から `ERR_REQUIRE_ESM` で失敗していたが、削除後は `ERR_PACKAGE_PATH_NOT_EXPORTED` でエラーメッセージが変わる
+  - CJS で利用していたコードは `import` または `await import()` に置き換える必要がある
+  - @voluntas
+- [UPDATE] pnpm 11 系に上げる
+  - @voluntas
+- [UPDATE] TypeScript 6.0 へ対応する
+  - @voluntas
+- [FIX] rpc メソッドのサンプルコードで、実際に存在しない RPC メソッド名が使われていたのを修正する
+  - @sile
+- [FIX] type: redirect 受信時に旧 WebSocket の onmessage ハンドラが解除されていなかったのを修正する
+  - @voluntas
+- [FIX] type: switched (ignore_disconnect_websocket) 経路で旧 WebSocket の onmessage / onerror ハンドラが解除されていなかったのを修正する
+  - @voluntas
+- [FIX] disconnect() が並列実行されたとき callbacks.disconnect() が複数回発火しないように冪等化する
+  - @voluntas
+- [FIX] onDataChannel で同名 label の DataChannel を上書きする際に旧 DC のハンドラを解除し close するようにする
+  - @voluntas
+- [FIX] disconnect() で WebSocket が OPEN 以外の状態のときに disconnect callback が発火しなかったのを修正する
+  - @voluntas
+- [FIX] iceConnectionState が disconnected で 10 秒経過した際の検知が現行ブラウザで動作していなかったのを修正する
+  - @voluntas
+- [FIX] 切断系メソッド 5 経路で pc.onicecandidate を解除して Trickle ICE 由来の unhandled rejection を防ぐ
+  - @voluntas
+- [FIX] sendAnswer の ws.send が同期 throw したときに内部状態がクリーンアップされなかったのを修正する
+  - @voluntas
+- [FIX] signaling() の ws.onmessage 内で例外が発生したときに connect() が connectionTimeout まで固まっていたのを修正する
+  - @voluntas
+- [FIX] generateCertificate が失敗した環境 (FIPS モード等) でも接続できるようにフォールバックする
+  - @voluntas
+- [FIX] disconnect() で DataChannel 切断エラー (code 4999) 時に abend event が normal で上書きされないようにする
+  - @voluntas
+- [FIX] createSignalingMessage で `{ audioBitRate: undefined }` のような呼び出しで message.audio / message.video が boolean true から空オブジェクト {} に置換されていたのを修正する
+  - 関連して spotlightNumber / audioOpusParams\* に undefined を渡しても message に undefined キーが積まれないようにする
+  - @voluntas
+- [FIX] messaging() が呼び出し側に渡された options を破壊しないように修正する
+  - @voluntas
+- [FIX] ConnectionBase constructor で options を shallow copy し skipIceCandidateEvent の内部代入が呼び出し側 options に漏れないように修正する
+  - 上記 messaging() の修正とあわせて、同一 options を sendrecv() / sendonly() / recvonly() と messaging() に渡したときに先行 Connection の options まで書き換わる問題も解消する
+  - @voluntas
+- [FIX] trace() が JWT 等の機密を含む metadata を console / callbacks.log に raw 出力していたセキュリティ問題を redact で修正する
+  - @voluntas
+- [FIX] abend() の abend 分岐で SoraCloseEvent を 2 回生成して timeline と callback に別インスタンスを渡していたのを 1 つのインスタンスを共有するように修正する
+  - @voluntas
+- [FIX] sendSignalingMessage / sendStatsMessage で送信前に readyState を確認し、open 以外の状態での送信を防ぐようにする
+  - @voluntas
+
+### misc
+
+- [CHANGE] Vite+ に切り替える
+  - @voluntas
+- [CHANGE] Biome から oxc に移行する
+  - @voluntas
+- [CHANGE] E2E テストの環境変数の Prefix を `TEST_` に切り替える
+  - @voluntas
+- [CHANGE] Slack 通知を rtCamp/action-slack-notify から shiguredo/github-actions の slack-notify に切り替える
+  - @voluntas
+- [CHANGE] GitHub Actions workflow の Node セットアップを `actions/setup-node` から `voidzero-dev/setup-vp` に置き換え、pnpm 経由のコマンドを `vp` 経由に統一し、不要になった `pnpm/action-setup` を削除する
+  - 全 11 箇所の `voidzero-dev/setup-vp` に `run-install: false` を明示し、setup-vp デフォルトの暗黙 `vp install` と手動 `vp install --frozen-lockfile` の二重実行を防ぐ
+  - @voluntas
+- [ADD] `e2e-test-h265.yml` / `e2e-test-webkit.yml` に `workflow_dispatch:` トリガを追加し、self-hosted runner ジョブを手動で起動できるようにする
+  - @voluntas
+- [ADD] CI に @typescript/native-preview による型検証ジョブを追加する
+  - @voluntas
+- [ADD] npm publish に --provenance を追加して supply chain 透明性を向上させる
+  - @voluntas
+- [UPDATE] e2e テストの Node バージョンを 22 / 24 / 26 に更新する
+  - Node 25 を Node 26 (LTS) に置き換える
+  - @voluntas
+- [UPDATE] oxc の lint / fmt 設定を vite.config.ts に統合する
+  - `.oxlintrc.jsonc` と `.oxfmtrc.jsonc` を削除する
+  - @voluntas
+- [UPDATE] 内部 ConnectError の constructor で code と reason を引数として受け取れるようにし base.ts の後付け代入を廃止する
+  - @voluntas
+- [UPDATE] Algorithm 型のグローバル拡張を削除し generateCertificate の引数型を EcKeyGenParams に置き換える
+  - @voluntas
+- [UPDATE] `DisconnectWaitTimeoutError` / `DisconnectInternalError` / `DisconnectDataChannelError` の constructor で `name` プロパティをクラス名に設定するようにする
+  - @voluntas
+- [UPDATE] `createSignalingMessage` の audio / video パラメータ判定で `"X" in copyOptions` を `typeof` / `!== undefined` ガードに置き換える
+  - 型安全化リファクタで動的挙動の変化はなし
+  - @voluntas
+- [FIX] Node 24 で `playwright install` がハングする問題を修正するため Playwright を 1.60.0 に更新する
+  - @voluntas
+- [FIX] macOS の Google Chrome stable インストールが 302 リダイレクトを追従できず失敗するため playwright-core にパッチを当てて `curl` に `-L` を追加する
+  - @voluntas
+- [FIX] npm-publish workflow のタグトリガを厳格化し、タグ名と package.json の version が一致しない場合は publish 前に fail させる
+  - @voluntas
+- [FIX] e2e 系 workflow 5 本に permissions: contents: read を追加し、npm-publish.yml の id-token: write をトップレベルから削除する
+  - @voluntas
+- [FIX] e2e-tests の fake media 生成に明示的 cleanup() を追加し connect/disconnect 繰り返し時の RAF / AudioContext リークを防ぐ
+  - @voluntas
+- [FIX] `.github/workflows/npm-publish.yml` から `--no-git-checks` フラグを削除する
+  - npm 11 で `npm warn Unknown cli config "--git-checks". This will stop working in the next major version of npm.` warning が出ており、npm v12 で publish が break する前に対処する
+  - @voluntas
+
 ## 2025.2.0
 
 **リリース日**: 2025-12-09
@@ -25,6 +138,7 @@
   - `type: switched` メッセージを受信したときに呼び出される
   - @voluntas
 - [ADD] `"type": "offer"` に含まれる `rpc_methods` を `rpcMethods` プロパティでアクセスできるようにする
+  - @voluntas
 - [ADD] RPC 機能を利用する `rpc()` メソッドを追加する
   - `timeout` オプションでタイムアウト時間（ミリ秒）を指定できる
   - `notification: true` オプションでレスポンスを待たない通知型リクエストができる
@@ -176,7 +290,7 @@
 - [CHANGE] Node.js 18 をビルドとテストから落とす
   - @voluntas
 - [CHANGE] examples を e2e-tests に変更する
-  - 環境変数の Prefix を TEST_ に切り替える
+  - 環境変数の Prefix を TEST\_ に切り替える
   - @voluntas
 - [CHANGE] tsconfig.json の moduleResolution を Bundler に変更する
   - @voluntas
@@ -857,7 +971,6 @@
 - [UPDATE] Firefox の Media Panel addon の Media-Webrtc が動作するよう RTCPeerConnection の変数格納を削除する
   - @yuitowest
 - [ADD] ConnectionOptions の新しいプロパティに型を追加する
-
   - @exKAZUu
 
 - [FIX] setDirection を direction に変更する

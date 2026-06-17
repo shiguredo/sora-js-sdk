@@ -1,58 +1,58 @@
-import { randomUUID } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { randomUUID } from "node:crypto";
+import { expect, test } from "@playwright/test";
 
 // Sora API を利用するので要注意
-test('sendonly_reconnect type:reconnect pages', async ({ page }) => {
+test("sendonly_reconnect type:reconnect pages", async ({ page }) => {
   test.skip(
-    process.env.RUNNER_ENVIRONMENT === 'self-hosted',
-    'Sora API を利用するので Tailscale が利用できない self-hosted では実行しない',
-  )
+    process.env.RUNNER_ENVIRONMENT === "self-hosted",
+    "Sora API を利用するので Tailscale が利用できない self-hosted では実行しない",
+  );
 
   // デバッグ用
-  page.on('console', (msg) => {
-    console.log(msg.type(), msg.text())
-  })
+  page.on("console", (msg) => {
+    console.log(msg.type(), msg.text());
+  });
 
   // それぞれのページに対して操作を行う
-  await page.goto('http://localhost:9000/sendonly_reconnect/')
+  await page.goto("http://localhost:9000/sendonly_reconnect/");
 
   // SDK バージョンの表示
-  await page.waitForSelector('#sora-js-sdk-version')
-  const sdkVersion = await page.$eval('#sora-js-sdk-version', (el) => el.textContent)
-  console.log(`sdkVersion=${sdkVersion}`)
+  await page.waitForSelector("#sora-js-sdk-version");
+  const sdkVersion = await page.$eval("#sora-js-sdk-version", (el) => el.textContent);
+  console.log(`sdkVersion=${sdkVersion}`);
 
-  const channelName = randomUUID()
-  await page.fill('#channel-name', channelName)
+  const channelName = randomUUID();
+  await page.fill("#channel-name", channelName);
 
-  await page.click('#connect')
+  await page.click("#connect");
 
   // #connection-id 要素が存在し、その内容が空でないことを確認するまで待つ
-  await page.waitForSelector('#connection-id:not(:empty)')
-  const connectionId = await page.$eval('#connection-id', (el) => el.textContent)
-  console.log(`connectionId=${connectionId}`)
+  await page.waitForSelector("#connection-id:not(:empty)");
+  const connectionId = await page.$eval("#connection-id", (el) => el.textContent);
+  console.log(`connectionId=${connectionId}`);
 
   // レース対策
-  await page.waitForTimeout(3000)
+  await page.waitForTimeout(3000);
 
   // API で切断
-  await page.click('#disconnect-api')
+  await page.click("#disconnect-api");
 
   // API リクエストの完了を待つ
-  await page.waitForSelector('#api-disconnect-status:not(:empty)')
-  const apiDisconnectStatus = await page.$eval('#api-disconnect-status', (el) => el.textContent)
-  console.log(`apiDisconnectStatus=${apiDisconnectStatus}`)
-  expect(apiDisconnectStatus).toBe('success')
+  await page.waitForSelector("#api-disconnect-status:not(:empty)");
+  const apiDisconnectStatus = await page.$eval("#api-disconnect-status", (el) => el.textContent);
+  console.log(`apiDisconnectStatus=${apiDisconnectStatus}`);
+  expect(apiDisconnectStatus).toBe("success");
 
   // #connection-id 要素の内容を取得（再接続後に設定される）
-  await page.waitForSelector('#connection-id:not(:empty)')
-  const reconnectConnectionId = await page.$eval('#connection-id', (el) => el.textContent)
-  console.log(`reconnectConnectionId=${reconnectConnectionId}`)
+  await page.waitForSelector("#connection-id:not(:empty)");
+  const reconnectConnectionId = await page.$eval("#connection-id", (el) => el.textContent);
+  console.log(`reconnectConnectionId=${reconnectConnectionId}`);
 
-  expect(reconnectConnectionId).not.toBe(connectionId)
+  expect(reconnectConnectionId).not.toBe(connectionId);
 
-  await page.waitForSelector('#reconnect-log')
-  const reconnectLog = await page.$eval('#reconnect-log', (el) => el.textContent)
-  expect(reconnectLog).toBe('Success')
+  await page.waitForSelector("#reconnect-log");
+  const reconnectLog = await page.$eval("#reconnect-log", (el) => el.textContent);
+  expect(reconnectLog).toBe("Success");
 
-  await page.close()
-})
+  await page.close();
+});

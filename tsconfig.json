@@ -1,30 +1,90 @@
 {
   "compilerOptions": {
+    // === 出力ターゲット ===
+    // コンパイル後の JavaScript の ECMAScript バージョン
     "target": "ES2022",
+    // 生成するモジュールシステム (ESM 出力)
     "module": "ES2022",
+    // strict ファミリーを一括有効化
+    // (noImplicitAny / strictNullChecks / strictFunctionTypes /
+    //  strictBindCallApply / strictPropertyInitialization /
+    //  alwaysStrict / noImplicitThis / useUnknownInCatchVariables)
     "strict": true,
+
+    // === 型定義ファイル (.d.ts) 出力 ===
+    // .d.ts 型定義ファイルを生成する (公開 SDK のため必須)
     "declaration": true,
+    // .d.ts の出力先ディレクトリ
     "declarationDir": "./dist",
-    "strictNullChecks": true,
-    "importHelpers": true,
-    "moduleResolution": "Bundler",
-    "experimentalDecorators": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
+    // ソースのルートディレクトリ (出力ディレクトリ構造の基点)
+    "rootDir": "./src",
+    // @internal タグが付いた宣言を .d.ts から除外する (内部 API を隠蔽)
     "stripInternal": true,
+
+    // === モジュール解決 / 相互運用 ===
+    // __extends / __awaiter 等のヘルパーを tslib から import する (バンドルサイズ削減)
+    "importHelpers": true,
+    // モジュール解決方式 (vite / esbuild など最新バンドラ向け)
+    "moduleResolution": "Bundler",
+    // CommonJS モジュールと ES Module の相互運用を有効化する
+    "esModuleInterop": true,
+    // default export を持たないモジュールから default import することを型上許容する
+    "allowSyntheticDefaultImports": true,
+    // .json ファイルを import 可能にする
+    "resolveJsonModule": true,
+
+    // === コード品質: 未使用検出 ===
     // 未使用のローカル変数をエラーにする
     "noUnusedLocals": true,
     // 未使用のパラメータをエラーにする
     "noUnusedParameters": true,
-    // 関数の引数の型を厳密にチェックする
-    "strictFunctionTypes": true,
-    // プロパティの初期化を厳密にチェックする
-    "strictPropertyInitialization": true,
-    "newLine": "LF",
+    // 未使用のラベルをエラーにする
+    "allowUnusedLabels": false,
+    // 到達不能コードをエラーにする
+    "allowUnreachableCode": false,
+
+    // === コード品質: 制御フロー ===
+    // 関数のすべてのコードパスが値を返すことを強制する
+    "noImplicitReturns": true,
+    // switch 文の case のフォールスルーを禁止する
+    "noFallthroughCasesInSwitch": true,
+
+    // === 型: 厳格化追加 ===
+    // インデックスアクセス (arr[i] や map[key]) の結果に undefined を含める
+    "noUncheckedIndexedAccess": true,
+    // オプショナルプロパティ (?:) と「明示的に undefined」を別物として扱う
+    "exactOptionalPropertyTypes": true,
+    // インデックスシグネチャ越しのプロパティアクセスをドット記法で許さない
+    "noPropertyAccessFromIndexSignature": true,
+    // override キーワードの付け忘れをエラーにする
+    "noImplicitOverride": true,
+
+    // === モジュール: 厳格化 ===
+    // 各ファイルを単独でトランスパイル可能であることを保証する (vite / esbuild 前提)
+    "isolatedModules": true,
+    // import / export の構文を厳密にする (type のみの import を明示する必要がある)
+    "verbatimModuleSyntax": true,
+    // ファイル名の大文字小文字の不一致をエラーにする (TS 5.0+ で既定 true だが明示)
+    "forceConsistentCasingInFileNames": true,
+    // クラスフィールドの初期化を Object.defineProperty 相当にする (ES2022 既定挙動)
+    "useDefineForClassFields": true,
+
+    // === エラー報告: 省略させない ===
+    // 型エラーメッセージの省略を無効化する (原因特定を容易にする)
+    "noErrorTruncation": true,
+    // ライブラリ側の型エラーも検出する (skipLibCheck をあえて切る)
+    "skipLibCheck": false,
+    // 暗黙的に @types/* を取り込まない (必要なものは明示的に import する)
     "types": [],
+
+    // === 出力フォーマット ===
+    // 生成ファイルの改行コードを LF に統一する
+    "newLine": "LF",
+    // 利用可能な組み込み型ライブラリ (DOM API と最新の ECMAScript API)
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
+  // 型チェック対象 (src 配下の .ts のみ)
   "include": ["src/**/*.ts"],
+  // 型チェック対象から除外する (依存パッケージとテストは別 tsconfig 管理)
   "exclude": ["node_modules", "tests"]
 }

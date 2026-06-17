@@ -63,13 +63,13 @@ def update_version(file_path: str, dry_run: bool) -> Optional[str]:
     return new_version
 
 
-# pnpm install & pnpm build 実行
-def run_pnpm_operations(dry_run: bool) -> None:
+# vp build 実行
+def run_vp_operations(dry_run: bool) -> None:
     if dry_run:
-        print("Dry-run: Would run 'pnpm run build'")
+        print("Dry-run: Would run 'vp build'")
     else:
-        subprocess.run(["pnpm", "run", "build"], check=True)
-        print("pnpm run build executed")
+        subprocess.run(["vp", "build"], check=True)
+        print("vp build executed")
 
 
 # git コミット、タグ、プッシュを実行
@@ -101,7 +101,7 @@ def git_operations_after_build(new_version: str, dry_run: bool) -> None:
 # メイン処理
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Update package.json version, run pnpm install, build, and commit changes."
+        description="Update package.json version, run vp build, and commit changes."
     )
     parser.add_argument(
         "--dry-run",
@@ -121,8 +121,8 @@ def main() -> None:
     # バージョン更新後にまず git commit
     git_commit_version(new_version, args.dry_run)
 
-    # pnpm install & build 実行
-    run_pnpm_operations(args.dry_run)
+    # vp build 実行
+    run_vp_operations(args.dry_run)
 
     # ビルド後のファイルを git commit, タグ付け、プッシュ
     git_operations_after_build(new_version, args.dry_run)

@@ -4,7 +4,7 @@
 #
 # Source repository: https://github.com/actions/dependency-review-action
 # Public documentation: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review#dependency-review-enforcement
-name: 'Dependency Review'
+name: "Dependency Review"
 on: [pull_request]
 
 permissions:
@@ -14,7 +14,7 @@ jobs:
   dependency-review:
     runs-on: ubuntu-24.04
     steps:
-      - name: 'Checkout Repository'
-        uses: actions/checkout@v6
-      - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v4
+      - name: "Checkout Repository"
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: "Dependency Review"
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
