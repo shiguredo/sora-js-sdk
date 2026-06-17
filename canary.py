@@ -63,13 +63,13 @@ def update_version(file_path: str, dry_run: bool) -> Optional[str]:
     return new_version
 
 
-# vp build 実行
+# vp run build 実行
 def run_vp_operations(dry_run: bool) -> None:
     if dry_run:
-        print("Dry-run: Would run 'vp build'")
+        print("Dry-run: Would run 'vp run build'")
     else:
-        subprocess.run(["vp", "build"], check=True)
-        print("vp build executed")
+        subprocess.run(["vp", "run", "build"], check=True)
+        print("vp run build executed")
 
 
 # git コミット、タグ、プッシュを実行
@@ -101,7 +101,7 @@ def git_operations_after_build(new_version: str, dry_run: bool) -> None:
 # メイン処理
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Update package.json version, run vp build, and commit changes."
+        description="Update package.json version, run vp run build, and commit changes."
     )
     parser.add_argument(
         "--dry-run",
@@ -121,7 +121,7 @@ def main() -> None:
     # バージョン更新後にまず git commit
     git_commit_version(new_version, args.dry_run)
 
-    # vp build 実行
+    # vp run build 実行
     run_vp_operations(args.dry_run)
 
     # ビルド後のファイルを git commit, タグ付け、プッシュ

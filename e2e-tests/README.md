@@ -8,7 +8,7 @@ cd sora-js-sdk
 # .env.local を作成して適切な値を設定してください
 cp .env.template .env.local
 vp install
-vp build
+vp run build
 vp run e2e-test
 ```
 

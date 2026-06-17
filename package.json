@@ -25,13 +25,13 @@
     }
   },
   "scripts": {
-    "build": "vp build",
-    "watch": "vp build --watch",
+    "build": "vp pack",
+    "watch": "vp pack --watch",
     "e2e-dev": "vp dev --config e2e-tests/vite.config.ts",
-    "e2e-test": "vp build && playwright test --project='chromium'",
-    "e2e-test-chrome": "vp build && playwright test --project='Google Chrome*'",
-    "e2e-test-edge": "vp build && playwright test --project='Microsoft Edge*'",
-    "e2e-test-webkit": "vp build && playwright test --project='WebKit'",
+    "e2e-test": "vp pack && playwright test --project='chromium'",
+    "e2e-test-chrome": "vp pack && playwright test --project='Google Chrome*'",
+    "e2e-test-edge": "vp pack && playwright test --project='Microsoft Edge*'",
+    "e2e-test-webkit": "vp pack && playwright test --project='WebKit'",
     "fmt": "vp fmt",
     "lint": "vp lint --type-aware",
     "typecheck": "tsc --noEmit",
@@ -44,7 +44,6 @@
     "jsdom": "29.1.1",
     "typedoc": "0.28.19",
     "typescript": "6.0.3",
-    "vite-plugin-dts": "5.0.2",
     "vite-plus": "0.1.24"
   },
   "engines": {
