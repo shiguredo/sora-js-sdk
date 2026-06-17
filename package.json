@@ -1,6 +1,6 @@
 {
   "name": "sora-js-sdk",
-  "version": "2026.1.0-canary.3",
+  "version": "2026.1.0-canary.4",
   "description": "WebRTC SFU Sora JavaScript SDK",
   "homepage": "https://github.com/shiguredo/sora-js-sdk#readme",
   "bugs": {
