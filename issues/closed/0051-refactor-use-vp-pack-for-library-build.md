@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-14
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-06-17
 - Model: Kimi K2.7 Code
 - Branch: feature/refactor-use-vp-pack-for-library-build
 - Polished: 2026-06-14
@@ -65,78 +65,23 @@
 
 ## 解決方法
 
-1. `vite.config.ts` から `build` ブロック全体と `import dts from "vite-plugin-dts"` を削除する
-2. `vite.config.ts` に `pack` ブロックを追加する
-
-```ts
-const banner = `/**
- * ${pkg.name}
- * ${pkg.description}
- * @version: ${pkg.version}
- * @author: ${pkg.author}
- * @license: ${pkg.license}
- **/
-`;
-
-export default defineConfig({
-  // ... envDir / root / test / lint / fmt 等の既存設定 ...
-  define: {
-    __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
-  },
-  pack: {
-    entry: {
-      sora: path.resolve(import.meta.dirname, "src/sora.ts"),
-    },
-    format: "esm",
-    platform: "browser",
-    target: "es2022",
-    outDir: path.resolve(import.meta.dirname, "./dist"),
-    minify: true,
-    dts: true,
-    clean: true,
-    banner,
-    define: {
-      __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
-    },
-  },
-});
-```
-
-3. `tests/sora.test.ts` に以下のテストを追加する
-
-```ts
-import Sora from "../src/sora";
-import pkg from "../package.json" with { type: "json" };
-
-test("Sora.version() が package.json の version と一致する", () => {
-  expect(Sora.version()).toBe(pkg.version);
-});
-```
-
-4. `package.json` の `scripts` を以下のように変更する
-
-```json
-{
-  "build": "vp pack",
-  "watch": "vp pack --watch",
-  "e2e-test": "vp pack && playwright test --project='chromium'",
-  "e2e-test-chrome": "vp pack && playwright test --project='Google Chrome*'",
-  "e2e-test-edge": "vp pack && playwright test --project='Microsoft Edge*'",
-  "e2e-test-webkit": "vp pack && playwright test --project='WebKit'"
-}
-```
-
-5. `pnpm remove -D vite-plugin-dts` を実行し、`pnpm-lock.yaml` を更新する
-6. `CHANGES.md` の `## develop` セクションに `### misc` サブセクションを新設し、以下を追加する
-
-```markdown
-### misc
-
-- [CHANGE] ライブラリビルドを `vp build` から `vp pack` に移行する
-  - @voluntas
-```
-
-7. CI / npm-publish.yml の動作確認を行う
+- `vite.config.ts` から `build` ブロック全体と `vite-plugin-dts` の import を削除し、`pack` ブロックを追加した
+  - `__SORA_JS_SDK_VERSION__` の define 値は `versionDefine` 定数に集約し、トップレベル `define`（テスト / dev 用）と `pack.define`（`vp pack` 用）の両方から参照するようにした
+  - バナー出力、`dts: true` による単一 `.d.ts` 生成、`clean: true` による出力ディレクトリクリーンを有効にした
+- `package.json` の `build` / `watch` / `e2e-test*` スクリプトを `vp pack` ベースに変更し、`devDependencies` から `vite-plugin-dts` を削除した
+- `tests/sora.test.ts` に `sora.version() が package.json の version と一致する` テストを追加した
+  - `package.json` の import には `with { type: "json" }` を付与し、`tests/tsconfig.json` の `module` を `esnext` に変更して import attributes に対応した
+- `CHANGES.md` の `## develop` セクションに `### misc` サブセクションを新設し、ビルドツール移行の変更履歴を追加した
+- `vp build` から `vp run build`（`package.json` の `build` スクリプト経由）へ移行していない箇所を修正した
+  - `.github/workflows/ci.yaml`
+  - `.github/workflows/npm-publish.yml`
+  - `.github/workflows/e2e-test.yml`
+  - `.github/workflows/e2e-test-canary.yml`
+  - `.github/workflows/e2e-test-h265.yml`
+  - `.github/workflows/e2e-test-webkit.yml`
+  - `canary.py`
+- `README.md` / `e2e-tests/README.md` の build 手順表記を `vp run build` に更新した
+- `pnpm-lock.yaml` を `vp install` で更新し、`vite-plugin-dts` とその推移的依存を削除した
 
 ## 注意点
 

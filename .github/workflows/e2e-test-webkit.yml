@@ -42,7 +42,7 @@ jobs:
           # 後段で `vp install --frozen-lockfile` を走らせるため setup-vp の自動 install を無効化する
           run-install: false
       - run: vp install --frozen-lockfile
-      - run: vp build
+      - run: vp run build
       - run: vp exec playwright install webkit --with-deps
       - run: vp exec playwright test --project="WebKit" e2e-tests/tests/webkit.test.ts
         env:

@@ -1,6 +1,5 @@
 import path from "node:path";
 import { defineConfig } from "vite-plus";
-import dts from "vite-plugin-dts";
 import pkg from "./package.json" with { type: "json" };
 
 const banner = `/**
@@ -11,34 +10,30 @@ const banner = `/**
  * @license: ${pkg.license}
  **/
 `;
+
+const versionDefine = {
+  __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
+};
+
 export default defineConfig({
-  build: {
-    minify: true,
+  // テスト環境および vp dev 実行時に __SORA_JS_SDK_VERSION__ を注入する
+  define: versionDefine,
+  pack: {
+    entry: {
+      sora: path.resolve(import.meta.dirname, "src/sora.ts"),
+    },
+    format: "esm",
+    platform: "browser",
     target: "es2022",
-    emptyOutDir: true,
-    manifest: false,
     outDir: path.resolve(import.meta.dirname, "./dist"),
-    lib: {
-      entry: path.resolve(import.meta.dirname, "src/sora.ts"),
-      name: "WebRTC SFU Sora JavaScript SDK",
-      formats: ["es"],
-      fileName: "sora",
-    },
-    rolldownOptions: {
-      output: {
-        banner,
-      },
-    },
-  },
-  define: {
-    __SORA_JS_SDK_VERSION__: JSON.stringify(pkg.version),
+    minify: true,
+    dts: true,
+    clean: true,
+    banner,
+    // vp pack ビルド時に __SORA_JS_SDK_VERSION__ を注入する
+    define: versionDefine,
   },
   envDir: path.resolve(import.meta.dirname, "./"),
-  plugins: [
-    dts({
-      include: ["src/**/*"],
-    }),
-  ],
   root: process.cwd(),
   test: {
     include: ["tests/**/*.test.ts"],

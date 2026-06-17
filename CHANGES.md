@@ -11,6 +11,11 @@
 
 ## develop
 
+### misc
+
+- [CHANGE] ライブラリビルドを `vp build` から `vp pack` に移行する
+  - @voluntas
+
 ## 2026.1.0
 
 **リリース日**: 2026-06-17

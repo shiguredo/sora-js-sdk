@@ -45,7 +45,7 @@ jobs:
           # 後段で `vp install --frozen-lockfile` を走らせるため setup-vp の自動 install を無効化する
           run-install: false
       - run: vp install --frozen-lockfile
-      - run: vp build
+      - run: vp run build
       - run: vp lint --type-aware
       - run: vp exec tsc --noEmit
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
