@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2026.1.0
+
+**リリース日**: 2026-06-17
+
 - [CHANGE] Node 20 のサポートを終了する
   - Node 20 は 2026-04-30 に EoL になったため
   - <https://github.com/nodejs/Release#release-schedule>
