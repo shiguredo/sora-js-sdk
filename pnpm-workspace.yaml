@@ -12,6 +12,9 @@ minimumReleaseAgeExclude:
   - "@voidzero-dev/*"
   - "@vitest/*"
   - "vite-plus"
+  # TypeScript の rc / next / beta はリリース直後に CI で検証する必要があるため制限対象外とする
+  - typescript
+  - "@typescript/*"
 
 packages:
   - e2e-tests
