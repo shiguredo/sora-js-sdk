@@ -149,7 +149,7 @@ slack_notify:
 
 本 issue では @voluntas (リポジトリ管理権限保持者) が以下を実施する。
 
-- [ ] GitHub リポジトリ Settings > Pages を以下に変更する
+- [x] GitHub リポジトリ Settings > Pages を以下に変更する
   - Source: `GitHub Actions`
   - Custom domain: 設定しない (`shiguredo.github.io/sora-js-sdk` のまま運用)
   - Enforce HTTPS: 有効 (デフォルトで有効になる想定)
