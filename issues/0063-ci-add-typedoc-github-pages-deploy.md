@@ -42,16 +42,6 @@ Low。現行運用 (内部ドキュメント管理リポジトリ側への手動
 - workflow 内に `pnpm` 直叩きは無く、0039 (closed, commit `7f8cb0c6`) で `voidzero-dev/setup-vp` + `vp` 経由に統一済み
 - 既存 workflow に `concurrency` 設定は無い
 
-### npm-publish.yml のタグパターン
-
-`.github/workflows/npm-publish.yml` `:5-7` のタグトリガーは以下の 2 行:
-
-```yaml
-tags:
-  - "[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*"
-  - "[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*-canary.[0-9]*"
-```
-
 ## 設計方針
 
 ### ファイル名
@@ -60,21 +50,17 @@ tags:
 
 ### トリガー
 
-- `push.tags`: stable リリースタグのみ。canary は除外する。
+`master` ブランチへの push と `workflow_dispatch` の 2 つ。stable リリースは `release/*` → `master` の merge で master へ取り込まれるため、master push に絞れば自動的に stable のみが対象になる。canary や develop の差分は master に来ないので明示的な除外も不要。`workflow_dispatch` は本 issue マージ後すぐに初回デプロイを走らせるため、また将来 doc 単独で再デプロイしたい時のために用意する。
 
-  ```yaml
-  on:
-    push:
-      tags:
-        - "[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*"
-    workflow_dispatch:
-  ```
+```yaml
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+```
 
-  canary を **除外する理由**: GitHub Pages は最後にデプロイされた artifact で上書き配信される (環境名 `github-pages` で 1 セットしか保持されない)。canary タグは短期間に大量発火するため、含めると stable リリース doc が canary doc に上書きされ、公開リファレンスが「実装中の canary 版」になる。stable リリースに合わせた doc 配信に絞る。
-
-- `workflow_dispatch`: 手動キック用。develop ブランチから直接 dispatch すると `github.ref_name` は `develop` になる。本番配信 (`https://shiguredo.github.io/sora-js-sdk/`) を develop 由来の typedoc で上書きしないため、技術ガードを 2 段で入れる:
-  1. **deploy ジョブに `if: startsWith(github.ref, 'refs/tags/')` を付ける**。workflow_dispatch では build ジョブまでで止め、deploy / slack_notify は走らせない。これで dispatch 経由の本番上書きを防げる
-  2. **Settings > Environments の `github-pages` 環境に Deployment branches 制約を設定する** (タグ `[0-9][0-9][0-9][0-9].*` のみ許可)。workflow_dispatch ガードの二重防御。手作業手順に含める
+deploy ジョブには `if: github.ref == 'refs/heads/master'` を入れ、master 以外のブランチで `workflow_dispatch` を誤実行した場合に開発中の typedoc が本番配信を上書きするのを防ぐ。これだけが「複雑にしない」範囲で許容する追加ガード (Environments の Deployment branches 制約は導入しない)。
 
 ### runner
 
@@ -93,7 +79,7 @@ tags:
 build ジョブと deploy ジョブを分け、`actions/upload-pages-artifact` / `actions/deploy-pages` 公式パターンに従う。
 
 - **build ジョブ**: checkout → setup-vp → `vp install --frozen-lockfile` → `vp run doc` → `actions/upload-pages-artifact` で `apidoc/` をアップロード
-- **deploy ジョブ**: `actions/deploy-pages` で配信。`environment.name: github-pages` を設定し、deploy ジョブのみ `pages: write` + `id-token: write` を付与。`if: startsWith(github.ref, 'refs/tags/')` で workflow_dispatch では実行しない
+- **deploy ジョブ**: `actions/deploy-pages` で配信。`environment.name: github-pages` を設定し、deploy ジョブのみ `pages: write` + `id-token: write` を付与。`if: github.ref == 'refs/heads/master'` で master 以外のブランチからの workflow_dispatch では skip する
 
 `actions/upload-pages-artifact` の `path` のデフォルトは `_site` のため、`path: apidoc` を **必ず明示** する (省略すると `_site` ディレクトリを探しに行って失敗する)。artifact 名は `github-pages` 固定で `actions/deploy-pages` が自動で参照する。
 
@@ -119,7 +105,7 @@ concurrency:
 
 ### Slack 通知
 
-最終ジョブとして以下を付ける (`npm-publish.yml` などと揃える)。`needs: [deploy]` で `if: ${{ !cancelled() }}` を付けるため、deploy が失敗しても発火する (`failure_and_fixed` モードで失敗 / 復旧通知)。一方、`workflow_dispatch` で deploy が skip された場合は skip 連鎖で slack_notify も skip される (手動 dispatch 時の Slack 通知は不要のため意図通り)。
+最終ジョブとして以下を付ける (`npm-publish.yml` などと揃える)。`needs: [deploy]` で `if: ${{ !cancelled() }}` を付けるため、deploy が失敗しても発火する (`failure_and_fixed` モードで失敗 / 復旧通知)。
 
 ```yaml
 slack_notify:
@@ -137,116 +123,47 @@ slack_notify:
         notify_mode: failure_and_fixed
 ```
 
-### workflow_run で npm-publish 完了を待つ案 (採用しない)
-
-`workflow_run` で npm publish 完了後に doc を配信する連動は技術的には可能だが、npm publish と doc 配信は順序依存が無く、両 workflow が同じタグ push を独立に受け取る方が単純なため採用しない。
-
 ### `actions/configure-pages` を使わない理由
 
 `actions/deploy-pages` v4 以降は内部で `configure-pages` 相当の処理を行うため、build ジョブで明示的に呼ぶ必要はない。本 issue でも省略する。
 
-### 完成形 workflow (例)
+### 完成形 workflow
 
-```yaml
-name: deploy-apidoc
-
-on:
-  push:
-    tags:
-      - "[0-9][0-9][0-9][0-9].[0-9]*.[0-9]*"
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
-jobs:
-  build:
-    runs-on: ubuntu-slim
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-      - uses: voidzero-dev/setup-vp@ca1c46663915d6c1042ae23bd39ab85718bfb0fa # v1.10.0
-        with:
-          node-version: 22
-      - run: vp install --frozen-lockfile
-      - run: vp run doc
-      - uses: actions/upload-pages-artifact@<SHA> # vX.Y.Z
-        with:
-          path: apidoc
-
-  deploy:
-    runs-on: ubuntu-slim
-    needs: [build]
-    if: startsWith(github.ref, 'refs/tags/')
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@<SHA> # vX.Y.Z
-
-  slack_notify:
-    needs: [deploy]
-    runs-on: ubuntu-slim
-    if: ${{ !cancelled() }}
-    permissions:
-      actions: read
-    steps:
-      - uses: shiguredo/github-actions/.github/actions/slack-notify@main
-        with:
-          status: ${{ job.status }}
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          slack_channel: sora-js-sdk
-          notify_mode: failure_and_fixed
-```
+`.github/workflows/deploy-apidoc.yml` を参照する。実装時に採用した SHA は「コード変更」セクション参照。
 
 ## 完了条件
 
 ### 着手前確認
 
-- [ ] `vp install --frozen-lockfile` 後にローカルで `vp run doc` を実行し、`apidoc/index.html` が生成され主要ページ (`interfaces/SoraConnection.html`, `modules.html`, `hierarchy.html`) が描画されることを確認する
-- [ ] `du -sh apidoc/` で出力サイズを実測して記録する (現状は 1.7 MB。GitHub Pages の artifact 制限 1 GB の 0.2 % 未満)
-- [ ] `actions/upload-pages-artifact` と `actions/deploy-pages` の最新リリース SHA を取得し、本 issue のコード変更チェックボックスに採用 SHA を編集で埋める
+- [x] `vp install --frozen-lockfile` 後にローカルで `vp run doc` を実行し、`apidoc/index.html` が生成され主要ページ (`interfaces/SoraConnection.html`, `modules.html`, `hierarchy.html`) が描画されることを確認する
+- [x] `du -sh apidoc/` で出力サイズを実測して記録する (現状は 1.7 MB。GitHub Pages の artifact 制限 1 GB の 0.2 % 未満)
+- [x] `actions/upload-pages-artifact` と `actions/deploy-pages` の最新リリース SHA を取得し、本 issue のコード変更チェックボックスに採用 SHA を編集で埋める
 
 ### コード変更
 
-- [ ] `.github/workflows/deploy-apidoc.yml` を「完成形 workflow (例)」の構成で新規作成する
-- [ ] `actions/upload-pages-artifact@<採用 SHA> # <vX.Y.Z>` に確定する
-- [ ] `actions/deploy-pages@<採用 SHA> # <vX.Y.Z>` に確定する
-- [ ] 他の workflow ファイル・`package.json`・`typedoc.json`・`TYPEDOC.md` は無編集
+- [x] `.github/workflows/deploy-apidoc.yml` を「設計方針」セクションの方針に沿って新規作成する
+- [x] `actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0` に確定する
+- [x] `actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0` に確定する
+- [x] 他の workflow ファイル・`package.json`・`typedoc.json`・`TYPEDOC.md` は無編集
 
 ### リポジトリ管理権限保持者 (@voluntas) の手作業
 
 本 issue では @voluntas (リポジトリ管理権限保持者) が以下を実施する。
 
-- [ ] GitHub リポジトリ Settings > Pages を以下に変更する
+- [x] GitHub リポジトリ Settings > Pages を以下に変更する
   - Source: `GitHub Actions`
   - Custom domain: 設定しない (`shiguredo.github.io/sora-js-sdk` のまま運用)
   - Enforce HTTPS: 有効 (デフォルトで有効になる想定)
-- [ ] Settings > Environments の `github-pages` 環境 (`actions/deploy-pages` 初回実行時に自動作成) で **Deployment branches and tags** に `Selected branches and tags` を選び、`Add deployment branch or tag rule` ダイアログで **`Ref type: Tag` を選択** してタグパターン `[0-9][0-9][0-9][0-9].*` を許可ルールに追加する (branch rule と混同しないこと。workflow_dispatch ガードの二重防御)
 
-### merge 前検証
+### マージ後 (master への次回 merge 時) 検証
 
-- [ ] `workflow_dispatch` を develop から手動キックし、build ジョブが緑になることを確認する。deploy ジョブは `if: startsWith(github.ref, 'refs/tags/')` で skip される (deploy / slack_notify ジョブは実行されない)
-- [ ] build ジョブのログで `actions/upload-pages-artifact` が `apidoc/` を artifact として正常にアップロードしていることを確認する (workflow_dispatch では artifact が残置されるが、retention は actions/upload-pages-artifact のデフォルトで自動失効し、次回 tag push で同名 `github-pages` artifact が上書きされるため運用上の懸念なし)
-
-### マージ後 (初回 stable タグ push 時) 検証
-
-- [ ] 次回 stable リリースタグ push 時に workflow が自動発火し、build → deploy → slack_notify が全て緑になることを確認する
+- [ ] 次回 stable リリースが master に merge されたタイミングで workflow が自動発火し、build → deploy → slack_notify が全て緑になることを確認する
 - [ ] `https://shiguredo.github.io/sora-js-sdk/` でルート (`index.html`)・`interfaces/SoraConnection.html`・`modules.html`・`hierarchy.html` が 200 で表示されることを確認する
-- [ ] canary タグ push 時に本 workflow が **発火しない** ことを確認する (タグパターン除外の確認)
 - [ ] deploy ジョブが `ubuntu-slim` で `actions/deploy-pages` を完走できることを確認する。失敗した場合は **deploy ジョブのみ `ubuntu-latest`** に切り替える PR を別途出す
 
 ### 変更履歴
 
-- [ ] `CHANGES.md` の `## develop` セクションに `### misc` の `[ADD]` として以下相当の 1 行を追加する (具体的な文面は実装時にコミット内容に合わせて確定)
+- [x] `CHANGES.md` の `## develop` セクションに `### misc` の `[ADD]` として以下相当の 1 行を追加する (具体的な文面は実装時にコミット内容に合わせて確定)
 
   ```
   - [ADD] typedoc 生成物を GitHub Pages にデプロイする workflow を追加する

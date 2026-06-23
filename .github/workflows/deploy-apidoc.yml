@@ -1,0 +1,62 @@
+name: deploy-apidoc
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: voidzero-dev/setup-vp@ca1c46663915d6c1042ae23bd39ab85718bfb0fa # v1.10.0
+        with:
+          node-version: 22
+          # 後段で `vp install --frozen-lockfile` を走らせるため setup-vp の自動 install を無効化する
+          run-install: false
+      - run: vp install --frozen-lockfile
+      - run: vp run doc
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: apidoc
+
+  deploy:
+    runs-on: ubuntu-slim
+    needs: [build]
+    # workflow_dispatch を master 以外のブランチで誤実行した場合に開発中の typedoc が本番配信を上書きしないよう deploy は master のみで走らせる
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+
+  slack_notify:
+    needs: [deploy]
+    runs-on: ubuntu-slim
+    # deploy が失敗しても failure 通知を発火させたいので !cancelled() のみで分岐する
+    if: ${{ !cancelled() }}
+    permissions:
+      actions: read
+    steps:
+      - name: Slack Notification
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: sora-js-sdk
+          notify_mode: failure_and_fixed
