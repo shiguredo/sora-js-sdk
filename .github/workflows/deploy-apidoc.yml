@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -31,6 +32,8 @@ jobs:
   deploy:
     runs-on: ubuntu-slim
     needs: [build]
+    # workflow_dispatch を master 以外のブランチで誤実行した場合に開発中の typedoc が本番配信を上書きしないよう deploy は master のみで走らせる
+    if: github.ref == 'refs/heads/master'
     permissions:
       contents: read
       pages: write
