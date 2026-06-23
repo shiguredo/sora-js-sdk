@@ -50,7 +50,7 @@ Low。現行運用 (内部ドキュメント管理リポジトリ側への手動
 
 ### トリガー
 
-`master` ブランチへの push と `workflow_dispatch` の 2 つ。stable リリースは `release/*` → `master` の merge で master へ取り込まれるため、master push に絞れば自動的に stable のみが対象になる。canary や develop の差分は master に来ないので明示的な除外も不要。`workflow_dispatch` は本 issue マージ後すぐに初回デプロイを走らせるため、また将来 doc 単独で再デプロイしたい時のために用意する。
+`master` ブランチへの push と `workflow_dispatch` の 2 つ。stable リリースは `release/*` → `master` の merge で master へ取り込まれるため、master push に絞れば自動的に stable のみが対象になる。canary や develop の差分は master に来ないので明示的な除外も不要。`workflow_dispatch` は本 issue マージ後すぐに初回デプロイを走らせるため、また将来 doc 単独で再デプロイしたい時のために用意する。利用者は Actions の Run workflow で master を選んで実行する。
 
 ```yaml
 on:
@@ -59,8 +59,6 @@ on:
       - master
   workflow_dispatch:
 ```
-
-deploy ジョブには `if: github.ref == 'refs/heads/master'` を入れ、master 以外のブランチで `workflow_dispatch` を誤実行した場合に開発中の typedoc が本番配信を上書きするのを防ぐ。これだけが「複雑にしない」範囲で許容する追加ガード (Environments の Deployment branches 制約は導入しない)。
 
 ### runner
 
@@ -79,7 +77,7 @@ deploy ジョブには `if: github.ref == 'refs/heads/master'` を入れ、maste
 build ジョブと deploy ジョブを分け、`actions/upload-pages-artifact` / `actions/deploy-pages` 公式パターンに従う。
 
 - **build ジョブ**: checkout → setup-vp → `vp install --frozen-lockfile` → `vp run doc` → `actions/upload-pages-artifact` で `apidoc/` をアップロード
-- **deploy ジョブ**: `actions/deploy-pages` で配信。`environment.name: github-pages` を設定し、deploy ジョブのみ `pages: write` + `id-token: write` を付与。`if: github.ref == 'refs/heads/master'` で master 以外のブランチからの workflow_dispatch では skip する
+- **deploy ジョブ**: `actions/deploy-pages` で配信。`environment.name: github-pages` を設定し、deploy ジョブのみ `pages: write` + `id-token: write` を付与
 
 `actions/upload-pages-artifact` の `path` のデフォルトは `_site` のため、`path: apidoc` を **必ず明示** する (省略すると `_site` ディレクトリを探しに行って失敗する)。artifact 名は `github-pages` 固定で `actions/deploy-pages` が自動で参照する。
 
