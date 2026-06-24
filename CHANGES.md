@@ -19,6 +19,9 @@
   - @voluntas
 - [ADD] typedoc 生成物を GitHub Pages にデプロイする workflow を追加する
   - @voluntas
+- [UPDATE] `@playwright/test` を 1.60.0 から 1.61.0 に更新する
+  - 上流で `reinstall_chrome_stable_mac.sh` の curl に `-L` が追加されたため `playwright-core@1.60.0` のパッチを削除する
+  - @voluntas
 
 ## 2026.1.0
 
