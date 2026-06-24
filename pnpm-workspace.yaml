@@ -19,10 +19,3 @@ packages:
 # ビルド時に pre/post install スクリプトを実行するパッケージ
 onlyBuiltDependencies:
   - esbuild
-
-# playwright-core のパッチ
-# macOS の Google Chrome stable インストール時に curl が 302 リダイレクトを追従できず
-# ダウンロードに失敗する問題を修正するため、curl に `-L` を追加する
-# 上流: https://github.com/microsoft/playwright/blob/v1.60.0/packages/playwright-core/bin/reinstall_chrome_stable_mac.sh
-patchedDependencies:
-  playwright-core@1.60.0: patches/playwright-core@1.60.0.patch
