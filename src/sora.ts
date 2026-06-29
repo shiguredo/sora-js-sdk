@@ -1,73 +1,8 @@
-import type ConnectionBase from "./base";
 import { applyMediaStreamConstraints } from "./helpers";
 import ConnectionMessaging from "./messaging";
 import ConnectionPublisher from "./publisher";
 import ConnectionSubscriber from "./subscriber";
-import type {
-  AudioCodecType,
-  Callbacks,
-  ConnectionOptions,
-  DataChannelConfiguration,
-  DataChannelDirection,
-  DataChannelEvent,
-  DataChannelMessageEvent,
-  DataChannelSignalingMessage,
-  ForwardingFilter,
-  ForwardingFilterAction,
-  ForwardingFilterRule,
-  ForwardingFilterRuleField,
-  ForwardingFilterRuleKindValue,
-  ForwardingFilterRuleOperator,
-  ForwardingFilterRuleValue,
-  JSONRPCErrorResponse,
-  JSONRPCRequest,
-  JSONRPCResponse,
-  JSONRPCSuccessResponse,
-  JSONType,
-  MessagingHeaderField,
-  MessagingHeaderFieldType,
-  RPCOptions,
-  Role,
-  SignalingAudio,
-  SignalingCloseMessage,
-  SignalingConnectDataChannel,
-  SignalingConnectMessage,
-  SignalingEvent,
-  SignalingMessageDirection,
-  SignalingMessageEvent,
-  SignalingNotifyConnectionCreated,
-  SignalingNotifyConnectionDestroyed,
-  SignalingNotifyConnectionUpdated,
-  SignalingNotifyMessage,
-  SignalingNotifyMetadata,
-  SignalingNotifyNetworkStatus,
-  SignalingNotifySpotlightChanged,
-  SignalingNotifySpotlightFocused,
-  SignalingNotifySpotlightUnfocused,
-  SignalingOfferMessage,
-  SignalingOfferMessageDataChannel,
-  SignalingPingMessage,
-  SignalingPushMessage,
-  SignalingReOfferMessage,
-  SignalingRedirectMessage,
-  SignalingReqStatsMessage,
-  SignalingSwitchedMessage,
-  SignalingUpdateMessage,
-  SignalingVideo,
-  Simulcast,
-  SimulcastRequestRid,
-  SimulcastRid,
-  SoraAbendTitle,
-  SoraCloseEvent,
-  SoraCloseEventInitDict,
-  SoraCloseEventType,
-  SpotlightFocusRid,
-  TimelineEvent,
-  TimelineEventLogType,
-  TransportType,
-  VideoCodecType,
-  WebSocketSignalingMessage,
-} from "./types";
+import type { ConnectionOptions, JSONType } from "./types";
 
 /**
  * Role 毎の Connection インスタンスを生成するためのクラス
@@ -277,14 +212,15 @@ export default {
   },
 };
 
+export type { default as ConnectionBase } from "./base";
+export type { default as ConnectionMessaging } from "./messaging";
+export type { default as ConnectionPublisher } from "./publisher";
+export type { default as ConnectionSubscriber } from "./subscriber";
+export type { SoraConnection };
 export type {
   AudioCodecType,
   Callbacks,
-  ConnectionBase,
-  ConnectionMessaging,
   ConnectionOptions,
-  ConnectionPublisher,
-  ConnectionSubscriber,
   DataChannelConfiguration,
   DataChannelDirection,
   DataChannelEvent,
@@ -339,11 +275,10 @@ export type {
   SoraCloseEvent,
   SoraCloseEventInitDict,
   SoraCloseEventType,
-  SoraConnection,
   SpotlightFocusRid,
   TimelineEvent,
   TimelineEventLogType,
   TransportType,
   VideoCodecType,
   WebSocketSignalingMessage,
-};
+} from "./types";

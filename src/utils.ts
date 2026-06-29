@@ -659,14 +659,13 @@ export const decompressMessage = async (binaryMessage: Uint8Array): Promise<Arra
 };
 
 export function addStereoToFmtp(sdp: string): string {
-  const splitSdp = /^(v=.+?)(m=audio.+)/msu.exec(sdp);
+  const splitSdp = /^(?<sessionDescription>v=.+?)(?<mediaSection>m=audio.+)/msu.exec(sdp);
   if (splitSdp === null) {
     return sdp;
   }
 
-  const sessionDescription = splitSdp[1];
-  const mediaSection = splitSdp[2];
-  // noUncheckedIndexedAccess により splitSdp[1] / splitSdp[2] は string | undefined になる
+  const sessionDescription = splitSdp.groups?.["sessionDescription"];
+  const mediaSection = splitSdp.groups?.["mediaSection"];
   // 正規表現が両方のキャプチャグループにマッチしているのでランタイムでは undefined にならないが、
   // 型を絞り込むため明示的にチェックする
   if (sessionDescription === undefined || mediaSection === undefined) {

@@ -22,6 +22,11 @@
 - [UPDATE] `@playwright/test` を 1.60.0 から 1.61.0 に更新する
   - 上流で `reinstall_chrome_stable_mac.sh` の curl に `-L` が追加されたため `playwright-core@1.60.0` のパッチを削除する
   - @voluntas
+- [UPDATE] `vite-plus` を 0.1.24 から 0.2.1 に更新する
+  - 新しい lint ルールに対応するため `src/sora.ts` の re-export と `src/utils.ts` / `src/base.ts` の正規表現を修正する
+  - @voluntas
+- [UPDATE] `@types/node` を 25.9.3 から 26.0.0 に更新する
+  - @voluntas
 
 ## 2026.1.0
 
