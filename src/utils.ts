@@ -489,7 +489,7 @@ export function trace(clientId: string | null, title: string, value: unknown): v
     if (record && typeof record === "object") {
       let keys = null;
       try {
-        keys = Object.keys(structuredClone(record) as Record<string, unknown>);
+        keys = Object.keys(structuredClone(record));
       } catch {
         // 何もしない
       }
