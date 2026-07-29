@@ -119,8 +119,8 @@ vp run e2e-dev
 Apache License 2.0
 
 ```text
-Copyright 2017-2025, Shiguredo Inc.
-Copyright 2017-2022, Yuki Ito (Original Author)
+Copyright 2017 Shiguredo Inc.
+Copyright 2017 Yuki Ito (Original Author)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
