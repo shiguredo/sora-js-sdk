@@ -39,7 +39,7 @@
     "doc": "typedoc"
   },
   "devDependencies": {
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.62.0",
     "@types/node": "26.1.1",
     "jsdom": "29.1.1",
     "typedoc": "0.28.20",
