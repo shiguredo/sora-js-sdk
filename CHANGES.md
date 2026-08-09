@@ -27,6 +27,9 @@
   - @voluntas
 - [UPDATE] `@types/node` を 25.9.3 から 26.0.0 に更新する
   - @voluntas
+- [UPDATE] TypeScript を 6.0.3 から 7.0.2 に更新する
+  - tsconfig の `declarationDir` を削除して tsgo での型定義生成に対応する
+  - @voluntas
 
 ## 2026.1.0
 

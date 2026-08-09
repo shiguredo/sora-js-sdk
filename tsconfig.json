@@ -14,8 +14,6 @@
     // === 型定義ファイル (.d.ts) 出力 ===
     // .d.ts 型定義ファイルを生成する (公開 SDK のため必須)
     "declaration": true,
-    // .d.ts の出力先ディレクトリ
-    "declarationDir": "./dist",
     // ソースのルートディレクトリ (出力ディレクトリ構造の基点)
     "rootDir": "./src",
     // @internal タグが付いた宣言を .d.ts から除外する (内部 API を隠蔽)
