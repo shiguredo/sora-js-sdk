@@ -3,8 +3,6 @@
   "compilerOptions": {
     // テストでは .d.ts 出力不要
     "declaration": false,
-    // 継承元の declarationDir を無効化する
-    "declarationDir": null,
     // src / e2e-tests/tests/helper.ts も含められるようプロジェクトルートを rootDir にする
     "rootDir": "..",
     // テストでは意図的に undefined を持つプロパティを含むオブジェクトリテラルを渡すケースがあるため緩和する
