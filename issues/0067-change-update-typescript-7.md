@@ -1,7 +1,7 @@
 # TypeScript 7 に対応する
 
 - Created: 2026-08-10
-- Completed: 未対応
+- Completed: 2026-08-10
 - Branch: feature/update-typescript-7
 - Polished: 未対応
 
@@ -40,3 +40,14 @@ TypeScript 7.0 (Go 実装の Project Corsa / tsgo) は npm の `typescript` パ�
 - `pnpm build` が成功し、`dist/sora.d.ts` が生成される
 - `pnpm lint` / `pnpm typecheck` / `pnpm test` が全て成功する
 - CI の `ci` ジョブの typescript matrix に `7.0` が含まれ、全組み合わせが pass する
+
+## 解決方法
+
+- `tsconfig.json` から `declarationDir` を削除した
+  - rolldown-plugin-dts は typescript 7.0 系のとき tsgo を一時ディレクトリ出力で起動するが、tsgo は tsconfig の `declarationDir` を優先して `dist/` に出力してしまうため、一時ディレクトリに d.ts が生成されずビルドが失敗していた
+  - d.ts の出力先は vite-plus が制御しており、`tsc` で emit する用途はないため削除して問題ない
+- `tests/tsconfig.json` の `declarationDir: null` (継承元の無効化) を削除した
+- `package.json` の typescript を 6.0.3 から 7.0.2 に更新した
+- `.github/workflows/ci.yaml` の typescript matrix に `7.0` を追加した
+- `CHANGES.md` の `## develop` `### misc` に `[UPDATE]` エントリを追記した
+- 検証: `pnpm build` / `pnpm lint` / `pnpm typecheck` / `pnpm test` (109 件) / `pnpm exec tsc --noEmit -p e2e-tests/tsconfig.json` が全て成功することを確認した
