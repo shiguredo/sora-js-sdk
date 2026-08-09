@@ -43,7 +43,7 @@
     "@types/node": "26.1.2",
     "jsdom": "30.0.1",
     "typedoc": "0.28.20",
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "vite-plus": "0.2.8"
   },
   "engines": {
