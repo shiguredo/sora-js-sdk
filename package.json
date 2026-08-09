@@ -39,12 +39,12 @@
     "doc": "typedoc"
   },
   "devDependencies": {
-    "@playwright/test": "1.61.1",
-    "@types/node": "26.1.1",
-    "jsdom": "29.1.1",
+    "@playwright/test": "1.62.1",
+    "@types/node": "26.1.2",
+    "jsdom": "30.0.1",
     "typedoc": "0.28.20",
-    "typescript": "6.0.3",
-    "vite-plus": "0.2.5"
+    "typescript": "7.0.2",
+    "vite-plus": "0.2.8"
   },
   "engines": {
     "node": ">=22.18.0",
