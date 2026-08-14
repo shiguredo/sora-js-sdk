@@ -14,6 +14,11 @@ updates:
       semver-major-days: 30
       semver-minor-days: 7
       semver-patch-days: 3
+    # @playwright/test 1.62.1 に同梱される WebKit エンジン (r2336) で
+    # RTCPeerConnection がハングし WebKit の E2E テストが失敗するため固定する
+    # 修正版のリリースを確認してから固定を解除する
+    ignore:
+      - dependency-name: "@playwright/test"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
