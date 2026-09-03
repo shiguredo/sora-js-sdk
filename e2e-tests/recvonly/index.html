@@ -18,6 +18,15 @@
       <div style="display: flex">
         <div id="remote-videos"></div>
       </div>
+      <h2>受信 PCM 解析</h2>
+      <canvas
+        id="audio-waveform"
+        width="960"
+        height="360"
+        style="display: block; max-width: 100%; height: auto; background: #111"
+        aria-label="受信音声の L/R 波形"
+      ></canvas>
+      <pre id="audio-analysis">音声トラックの受信待ち...</pre>
       <div id="stats-report" style="white-space: pre-wrap; font-family: monospace"></div>
       <div id="stats-report-json"></div>
     </div>
