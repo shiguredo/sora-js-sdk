@@ -41,6 +41,131 @@ const handleAudioContextCloseError = (error: unknown): void => {
   console.error("AudioContext.close() の実行に失敗しました:", error);
 };
 
+export type StereoAudioMode = "both" | "left" | "right";
+
+type StereoAudioPattern = "constant" | "both-left-right";
+
+export interface StereoAudioModeGains {
+  left: number;
+  right: number;
+}
+
+export const STEREO_AUDIO_MODE_DURATION_SECONDS = 5;
+
+const STEREO_AUDIO_MODE_SEQUENCE: readonly StereoAudioMode[] = ["both", "left", "right"];
+const STEREO_AUDIO_MODE_FADE_SECONDS = 0.02;
+const STEREO_AUDIO_PATTERN_SCHEDULER_LEAD_SECONDS = 0.1;
+
+export const getStereoAudioMode = (elapsedSeconds: number): StereoAudioMode => {
+  if (!Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) {
+    throw new RangeError("elapsedSeconds must be a finite non-negative number");
+  }
+
+  const modeIndex =
+    Math.floor(elapsedSeconds / STEREO_AUDIO_MODE_DURATION_SECONDS) %
+    STEREO_AUDIO_MODE_SEQUENCE.length;
+  const mode = STEREO_AUDIO_MODE_SEQUENCE[modeIndex];
+  if (mode === undefined) {
+    throw new Error("Stereo audio mode sequence is empty");
+  }
+  return mode;
+};
+
+export const getStereoAudioModeGains = (
+  mode: StereoAudioMode,
+  volume: number,
+): StereoAudioModeGains => {
+  switch (mode) {
+    case "both":
+      return { left: volume, right: volume };
+    case "left":
+      return { left: volume, right: 0 };
+    case "right":
+      return { left: 0, right: volume };
+    default:
+      throw new Error("Unsupported stereo audio mode");
+  }
+};
+
+const startStereoAudioPattern = (
+  audioContext: AudioContext,
+  gainLeft: GainNode,
+  gainRight: GainNode,
+  volume: number,
+): { stop: () => void } => {
+  const patternStartTime = audioContext.currentTime + STEREO_AUDIO_PATTERN_SCHEDULER_LEAD_SECONDS;
+  let nextTransitionIndex = 1;
+  let timeoutId: number | undefined;
+  let stopped = false;
+
+  const initialGains = getStereoAudioModeGains(getStereoAudioMode(0), volume);
+  gainLeft.gain.setValueAtTime(initialGains.left, audioContext.currentTime);
+  gainLeft.gain.setValueAtTime(initialGains.left, patternStartTime);
+  gainRight.gain.setValueAtTime(initialGains.right, audioContext.currentTime);
+  gainRight.gain.setValueAtTime(initialGains.right, patternStartTime);
+
+  const scheduleNextTransition = (): void => {
+    if (stopped) {
+      return;
+    }
+
+    const transitionTime =
+      patternStartTime + nextTransitionIndex * STEREO_AUDIO_MODE_DURATION_SECONDS;
+    const delayMilliseconds = Math.max(
+      0,
+      (transitionTime - audioContext.currentTime - STEREO_AUDIO_PATTERN_SCHEDULER_LEAD_SECONDS) *
+        1000,
+    );
+
+    timeoutId = window.setTimeout(() => {
+      timeoutId = undefined;
+      if (stopped) {
+        return;
+      }
+
+      const previousMode = getStereoAudioMode(
+        (nextTransitionIndex - 1) * STEREO_AUDIO_MODE_DURATION_SECONDS,
+      );
+      const nextMode = getStereoAudioMode(nextTransitionIndex * STEREO_AUDIO_MODE_DURATION_SECONDS);
+      const previousGains = getStereoAudioModeGains(previousMode, volume);
+      const nextGains = getStereoAudioModeGains(nextMode, volume);
+      const transitionStartTime = Math.max(
+        audioContext.currentTime + 0.005,
+        transitionTime - STEREO_AUDIO_MODE_FADE_SECONDS / 2,
+      );
+      const transitionEndTime = Math.max(
+        transitionStartTime,
+        transitionTime + STEREO_AUDIO_MODE_FADE_SECONDS / 2,
+      );
+
+      gainLeft.gain.cancelScheduledValues(transitionStartTime);
+      gainLeft.gain.setValueAtTime(previousGains.left, transitionStartTime);
+      gainLeft.gain.linearRampToValueAtTime(nextGains.left, transitionEndTime);
+      gainRight.gain.cancelScheduledValues(transitionStartTime);
+      gainRight.gain.setValueAtTime(previousGains.right, transitionStartTime);
+      gainRight.gain.linearRampToValueAtTime(nextGains.right, transitionEndTime);
+
+      nextTransitionIndex += 1;
+      scheduleNextTransition();
+    }, delayMilliseconds);
+  };
+
+  scheduleNextTransition();
+
+  return {
+    stop: (): void => {
+      stopped = true;
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
+      const stopTime = audioContext.currentTime;
+      gainLeft.gain.cancelScheduledValues(stopTime);
+      gainRight.gain.cancelScheduledValues(stopTime);
+    },
+  };
+};
+
 const createFakeVideoTrack = (
   width = 320, // デフォルト幅 320px
   height = 240, // デフォルト高さ 240px
@@ -171,6 +296,7 @@ const createFakeAudioTrack = (
   frequency = 440, // デフォルト周波数 A4 (440Hz)
   volume = 0.1, // デフォルト音量 (0.0 - 1.0)
   stereo = false, // ステレオかモノラルか
+  stereoPattern: StereoAudioPattern = "constant",
 ): { track: MediaStreamTrack; cleanup: () => void } => {
   // AudioContextを作成
   const audioCtx = new AudioContext();
@@ -193,6 +319,11 @@ const createFakeAudioTrack = (
 
     const gainRight = audioCtx.createGain();
     gainRight.gain.setValueAtTime(volume, audioCtx.currentTime);
+
+    const stereoAudioPattern =
+      stereoPattern === "both-left-right"
+        ? startStereoAudioPattern(audioCtx, gainLeft, gainRight, volume)
+        : null;
 
     // ChannelMergerNodeでステレオに結合
     const merger = audioCtx.createChannelMerger(2);
@@ -232,6 +363,7 @@ const createFakeAudioTrack = (
       audioTrack.stop();
       oscillatorLeft.stop();
       oscillatorRight.stop();
+      stereoAudioPattern?.stop();
       // AudioContext.close() は Promise を返すが await すると cleanup の同期性が崩れる。
       // 失敗時は handleAudioContextCloseError が InvalidStateError 以外を console.error に出す。
       void audioCtx.close().catch(handleAudioContextCloseError);
@@ -296,6 +428,7 @@ interface FakeMediaTrackConstraints {
   frequency?: number;
   volume?: number;
   stereo?: boolean;
+  stereoPattern?: StereoAudioPattern;
 }
 
 interface FakeMediaStreamConstraints {
@@ -308,7 +441,7 @@ interface FakeMediaStreamConstraints {
  *
  * @param constraints - 生成するトラックの種類と設定を指定するオブジェクト。
  *   - video: true または { width, height, frameRate } 形式のオブジェクトでビデオトラックを要求します。
- *   - audio: true または { frequency, volume } 形式のオブジェクトでオーディオトラックを要求します。
+ *   - audio: true または { frequency, volume, stereo, stereoPattern } 形式のオブジェクトでオーディオトラックを要求します。
  * @returns
  *   - stream: 指定されたトラックを含む MediaStream。要求されたトラックがない場合は空の MediaStream を返します。
  *   - cleanup: 生成したトラックの RAF / AudioContext / Oscillator 等のリソースを解放する関数。
@@ -338,7 +471,12 @@ export const getFakeMedia = (
 
   if (constraints.audio) {
     // デフォルトのオーディオ設定
-    let audioOptions = { frequency: 440, stereo: false, volume: 0.1 };
+    let audioOptions = {
+      frequency: 440,
+      stereo: false,
+      stereoPattern: "constant" as StereoAudioPattern,
+      volume: 0.1,
+    };
     // オブジェクトで設定が渡された場合はマージ
     if (typeof constraints.audio === "object") {
       audioOptions = { ...audioOptions, ...constraints.audio };
@@ -347,6 +485,7 @@ export const getFakeMedia = (
       audioOptions.frequency,
       audioOptions.volume,
       audioOptions.stereo,
+      audioOptions.stereoPattern,
     );
     tracks.push(track);
     cleanups.push(cleanup);

@@ -62,8 +62,13 @@ test.describe("Stereo Audio Tests", () => {
     console.log(`sendonly connectionId=${sendonlyConnectionId}`);
     console.log(`recvonly connectionId=${recvonlyConnectionId}`);
 
-    // レース対策
-    await page.waitForTimeout(3000);
+    // パターンの両チャンネル再生区間で検証する
+    await page.waitForFunction(
+      () =>
+        document.querySelector("#local-is-stereo")?.textContent === "Yes" &&
+        document.querySelector("#remote-is-stereo")?.textContent === "Yes",
+      { timeout: 15_000 },
+    );
 
     // 'Get Stats' ボタンをクリックして統計情報を取得
     await page.click("#get-stats");

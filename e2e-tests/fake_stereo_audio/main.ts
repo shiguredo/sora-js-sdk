@@ -178,6 +178,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       audio: {
         frequency: 440,
         stereo: useStereo,
+        stereoPattern: "both-left-right",
         volume: 0.1,
       },
     });
