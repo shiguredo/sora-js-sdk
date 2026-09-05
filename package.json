@@ -44,7 +44,7 @@
     "jsdom": "30.0.1",
     "typedoc": "0.28.20",
     "typescript": "7.0.2",
-    "vite-plus": "0.2.8"
+    "vite-plus": "0.3.0"
   },
   "engines": {
     "node": ">=22.18.0",
