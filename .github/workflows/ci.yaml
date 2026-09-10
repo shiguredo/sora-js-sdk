@@ -14,13 +14,18 @@ jobs:
   ci:
     runs-on: ubuntu-slim
     strategy:
+      # typescript のバージョンごとの検証で 1 つ失敗しても、他のバージョンの
+      # 合否が cancelled で隠れないように fail-fast を無効化する
+      fail-fast: false
       matrix:
         node:
           - "26"
           - "24"
           - "22"
+        # typescript@next は日次で更新され、vite-plus が TS 7.1 dev に追随するまで
+        # vp run build の dts 生成が失敗する。先行版は beta でカバーできるため、
+        # vite-plus が TS 7.1 dev に対応するまで matrix から外す
         typescript:
-          - "next"
           - "beta"
           - "7.0"
           - "6.0"
