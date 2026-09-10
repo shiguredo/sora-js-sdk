@@ -38,12 +38,19 @@ export default class ConnectionMessaging extends ConnectionBase {
     await this.disconnect();
     const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
     const signalingMessage = await this.signaling(ws);
-    await this.connectPeerConnection(signalingMessage);
-    await this.setRemoteDescription(signalingMessage);
-    await this.createAnswer(signalingMessage);
-    this.sendAnswer();
-    if (!this.options.skipIceCandidateEvent) {
-      await this.onIceCandidate();
+    try {
+      await this.connectPeerConnection(signalingMessage);
+      await this.setRemoteDescription(signalingMessage);
+      await this.createAnswer(signalingMessage);
+      this.sendAnswer();
+      if (!this.options.skipIceCandidateEvent) {
+        await this.onIceCandidate();
+      }
+    } catch (error) {
+      // offer 交渉中の例外で ws / pc を放置すると Sora 側の切断待ちまで残るため、
+      // 呼び出し元へ伝播する前にここでクリーンアップする
+      this.signalingTerminate();
+      throw error;
     }
     await this.waitChangeConnectionStateConnected();
   }
