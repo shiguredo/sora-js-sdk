@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-09-10
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-09-10
 - Model: Opus 4.7
 - Branch: feature/fix-ci-typescript-next-build-failure
 - Polished: {YYYY-MM-DD}
@@ -85,4 +85,10 @@ ci:
 
 ## 解決方法
 
-実装完了後に追記する (どのファイルをどう変更したかの実績)。
+`.github/workflows/ci.yaml` の `ci` ジョブを変更した。
+
+- `strategy.fail-fast: false` を設定し、1 ジョブが失敗しても他のバージョンの合否が cancelled で隠れないようにした。
+- `typescript@next` を `ci` の matrix から外した。job レベルの `continue-on-error` は matrix の該当ジョブを failed のまま表示する GitHub Actions の挙動があり、`ci` の check を pass にできないため、blocking な matrix から外す方式を採用した。先行版の検証は `beta` がカバーする。
+- `vite-plus` が TypeScript 7.1 dev に対応したら `typescript@next` を matrix に戻す旨をワークフローのコメントに明記した。
+
+検証: `vp check` / `check-yaml` / `vp test run` が成功。CI 全体の合否は本変更を含む PR で確認する。
