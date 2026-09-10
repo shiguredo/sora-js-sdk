@@ -35,53 +35,60 @@ export default class ConnectionSubscriber extends ConnectionBase {
     await this.disconnect();
     const ws = await this.getSignalingWebSocket(this.signalingUrlCandidates);
     const signalingMessage = await this.signaling(ws);
-    await this.connectPeerConnection(signalingMessage);
-    if (this.pc) {
-      this.pc.ontrack = (event): void => {
-        const stream = event.streams[0];
-        // noUncheckedIndexedAccess により event.streams[0] は MediaStream | undefined になる
-        // stream が存在しない場合は以降の処理を行わない
-        if (!stream) {
-          return;
-        }
-        if (stream.id === "default") {
-          return;
-        }
-        if (stream.id === this.connectionId) {
-          return;
-        }
-        const data = {
-          enabled: event.track.enabled,
-          id: event.track.id,
-          kind: event.track.kind,
-          label: event.track.label,
-          muted: event.track.muted,
-          readyState: event.track.readyState,
-          "stream.id": stream.id,
-        };
-        this.writePeerConnectionTimelineLog("ontrack", data);
-        this.callbacks.track(event);
-        stream.onremovetrack = (event): void => {
-          this.callbacks.removetrack(event);
-          if (event.target) {
-            const streamId = (event.target as MediaStream).id;
-            const index = this.remoteConnectionIds.indexOf(streamId);
-            if (index !== -1) {
-              this.remoteConnectionIds.splice(index, 1);
-            }
+    try {
+      await this.connectPeerConnection(signalingMessage);
+      if (this.pc) {
+        this.pc.ontrack = (event): void => {
+          const stream = event.streams[0];
+          // noUncheckedIndexedAccess により event.streams[0] は MediaStream | undefined になる
+          // stream が存在しない場合は以降の処理を行わない
+          if (!stream) {
+            return;
           }
+          if (stream.id === "default") {
+            return;
+          }
+          if (stream.id === this.connectionId) {
+            return;
+          }
+          const data = {
+            enabled: event.track.enabled,
+            id: event.track.id,
+            kind: event.track.kind,
+            label: event.track.label,
+            muted: event.track.muted,
+            readyState: event.track.readyState,
+            "stream.id": stream.id,
+          };
+          this.writePeerConnectionTimelineLog("ontrack", data);
+          this.callbacks.track(event);
+          stream.onremovetrack = (event): void => {
+            this.callbacks.removetrack(event);
+            if (event.target) {
+              const streamId = (event.target as MediaStream).id;
+              const index = this.remoteConnectionIds.indexOf(streamId);
+              if (index !== -1) {
+                this.remoteConnectionIds.splice(index, 1);
+              }
+            }
+          };
+          if (this.remoteConnectionIds.includes(stream.id)) {
+            return;
+          }
+          this.remoteConnectionIds.push(stream.id);
         };
-        if (this.remoteConnectionIds.includes(stream.id)) {
-          return;
-        }
-        this.remoteConnectionIds.push(stream.id);
-      };
-    }
-    await this.setRemoteDescription(signalingMessage);
-    await this.createAnswer(signalingMessage);
-    this.sendAnswer();
-    if (!this.options.skipIceCandidateEvent) {
-      await this.onIceCandidate();
+      }
+      await this.setRemoteDescription(signalingMessage);
+      await this.createAnswer(signalingMessage);
+      this.sendAnswer();
+      if (!this.options.skipIceCandidateEvent) {
+        await this.onIceCandidate();
+      }
+    } catch (error) {
+      // offer 交渉中の例外で ws / pc を放置すると Sora 側の切断待ちまで残るため、
+      // 呼び出し元へ伝播する前にここでクリーンアップする
+      this.signalingTerminate();
+      throw error;
     }
     await this.waitChangeConnectionStateConnected();
   }

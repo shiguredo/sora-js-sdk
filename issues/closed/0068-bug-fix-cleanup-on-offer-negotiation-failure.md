@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-09-10
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-09-10
 - Model: Opus 4.7
 - Branch: feature/fix-cleanup-on-offer-negotiation-failure
 - Polished: 2026-09-10
@@ -73,4 +73,10 @@ Medium。`setRemoteDescription` / `createAnswer` が reject する条件 (ブラ
 
 ## 解決方法
 
-実装完了後に追記する (どのファイルをどう変更したかの実績)。
+`signalingTerminate()` を `protected` に変更し、publisher / subscriber / messaging の各 `multiStream()` で offer 受信後の `connectPeerConnection()` から `onIceCandidate()` までを try/catch で包んだ。失敗時は `signalingTerminate()` で ws / pc / DataChannel をクリーンアップしてから例外を再 throw する。`waitChangeConnectionStateConnected()` は設計どおり区間に含めず、既存の挙動を維持する。
+
+- `src/base.ts`: `signalingTerminate()` を `private` から `protected` に変更 (処理内容は不変)
+- `src/publisher.ts` / `src/subscriber.ts` / `src/messaging.ts`: `multiStream()` の post-offer 区間に try/catch を追加し、失敗時に `signalingTerminate()` を呼んでから rethrow
+- `CHANGES.md`: `## develop` 直下 (`### misc` より前) に `[FIX]` を追記
+
+検証: `vp check` / `vp exec tsc --noEmit` / `vp test run` (109 tests pass) / `vp pack` がすべて成功。`setRemoteDescription` の reject を決定的に再現する自動テストは AGENTS.md のモック禁止と jsdom に `RTCPeerConnection` がない制約により追加していない (E2E での再現は未確認で、手動検証の対象)。

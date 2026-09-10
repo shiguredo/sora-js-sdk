@@ -612,8 +612,11 @@ export default class ConnectionBase {
 
   /**
    * connect 処理中に例外が発生した場合の切断処理をするメソッド
+   *
+   * @remarks
+   * サブクラスの `multiStream()` からも、offer 交渉中の例外時に呼べるように protected にしている
    */
-  private signalingTerminate(): void {
+  protected signalingTerminate(): void {
     for (const key of Object.keys(this.soraDataChannels)) {
       const dataChannel = this.soraDataChannels[key];
       if (dataChannel) {
