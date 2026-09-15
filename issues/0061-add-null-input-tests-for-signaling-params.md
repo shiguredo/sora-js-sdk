@@ -5,11 +5,11 @@
 - Completed: {YYYY-MM-DD}
 - Model: Opus 4.7
 - Branch: feature/add-null-input-tests-for-signaling-params
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-15
 
 ## 目的
 
-`createSignalingMessage` (`src/utils.ts`) の `copyOptions` delete ループ (`:230-262`、issue 0018 closed で導入) が、audio / video パラメータキーに `null` を渡されたときに事前に delete する動作を pin する回帰テストを `tests/utils.test.ts` に追加する。
+`createSignalingMessage` (`src/utils.ts`) の `copyOptions` delete ループ (issue 0018 closed で導入) が、audio / video パラメータキーに `null` を渡されたときに事前に delete する動作を pin する回帰テストを `tests/utils.test.ts` に追加する。
 
 issue 0046 (closed) の `typeof` ガード置換は「`null` は事前 delete ループで除去されるため、`typeof === "number"` 等で `null` が弾かれても message に積む値の集合は不変」という前提に依存しているが、この前提を保証する `null` 入力テストが現状 0 件で、将来 delete ループの条件が `value != null` から `value !== null && value !== undefined` の片方が抜けるような書き換えが入ると、本 refactor 後の挙動が静かに壊れても unit テストでは検知できない。
 
@@ -19,7 +19,7 @@ Low。issue 0046 / 0018 マージ済みで動的挙動は正しく動いてお�
 
 ## 現状
 
-`tests/utils.test.ts` を `grep -n "null" tests/utils.test.ts` で確認すると、`audio/video パラメータキー` (`audioCodecType` / `audioBitRate` / `audioOpusParams*` / `videoCodecType` / `videoBitRate` / `videoVP9Params` 等) に `null` を渡したテストは 0 件。`channelId: null` / `metadata: null` 等の他キーに対する null テストは存在するが、本 issue の対象キーには無い。
+`tests/utils.test.ts` を `rg -n "null" tests/utils.test.ts` で確認すると、`audio/video パラメータキー` (`audioCodecType` / `audioBitRate` / `audioOpusParams*` / `videoCodecType` / `videoBitRate` / `videoVP9Params` 等) に `null` を渡したテストは 0 件。`channelId: null` / `metadata: null` 等の他キーに対する null テストは存在するが、本 issue の対象キーには無い。
 
 issue 0018 (closed) で `copyOptions[key] !== null && copyOptions[key] !== undefined` の事前 delete が導入され、issue 0046 (closed) で `typeof` ガードへ置換された結果、これらキーに `null` を渡しても `message.audio.*` / `message.video.*` には積まれない挙動が成立しているが、それを担保するテストが存在しない。
 
