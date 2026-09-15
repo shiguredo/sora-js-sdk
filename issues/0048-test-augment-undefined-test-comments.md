@@ -2,13 +2,13 @@
 
 - Priority: Low
 - Created: 2026-06-12
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-15
 - Model: Opus 4.7
 - Branch: feature/refactor-augment-undefined-test-comments
 
 ## 目的
 
-`tests/utils.test.ts` の既存 `createSignalingMessage audio: undefined` / `createSignalingMessage video: undefined` テストはコメントが付いていない。一方、issue 0018 で新規に追加した同種の `audioBitRate: undefined` / `videoBitRate: undefined` / `audioOpusParamsChannels: undefined` / `audioBitRate: 100, audioCodecType: undefined` には「copyOptions delete ループで undefined キーが除去されるため `audio: true` / `video: true` を保つ」という意図コメントが付いている。
+`tests/utils.test.ts` の既存 `createSignalingMessage audio: undefined` / `createSignalingMessage video: undefined` テストはコメントが付いていない。一方、issue 0018 で新規に追加した同種の `audioBitRate: undefined` / `videoBitRate: undefined` / `audioOpusParamsChannels: undefined` / `audioBitRate: 100, audioCodecType: undefined` には「copyOptions delete ループで undefined キーが除去されるため boolean (`audio: true` / `video: true`) を保つ / `{}` 化しない」旨の意図コメントが付いている。
 
 既存と新規でコメント濃度の非対称が生じており、`CLAUDE.md` の「テストはコメントを重視すること」原則からも「既存側にも同等のコメントを追加して揃える」のが本来あるべき姿。`/auto-resolve 18,19` の処理中、issue 0018 のレビュー (観点 2 改善 4) で broken windows として指摘されたが、issue 0018 のスコープ外として保留したため別 issue として起票する。
 
@@ -25,10 +25,9 @@ test("createSignalingMessage audio: undefined", () => {
   const options = {
     audio: undefined,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: true };
   expect(
     createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
-  ).toStrictEqual(expectedMessage);
+  ).toStrictEqual(baseExpectedMessage);
 });
 
 test("createSignalingMessage video: undefined", () => {
@@ -57,7 +56,7 @@ test("createSignalingMessage audioBitRate: undefined", () => {
 });
 ```
 
-`audio: undefined` / `video: undefined` 経路は `audioBitRate: undefined` と異なり「`src/utils.ts:232-237` の boolean ガードを `typeof === "boolean"` で通らず、末尾の `delete copyOptions[key]` で落ちる → `copyOptions.audio === undefined` で `if (copyOptions.audio !== undefined)` の代入分岐をスキップ → `message.audio` が `baseExpectedMessage.audio` (`true`) を保つ」という別経路の挙動。テストを読んだだけではこの経路は分からない。
+`audio: undefined` / `video: undefined` 経路は `audioBitRate: undefined` と異なり「`createSignalingMessage` の `copyOptions` delete ループ内の boolean ガード (`key === "audio" && typeof copyOptions[key] === "boolean"`) を `typeof === "boolean"` で通らず、ループ末尾の `delete copyOptions[key]` で落ちる → `copyOptions.audio === undefined` で `if (copyOptions.audio !== undefined)` の代入分岐をスキップ → `message.audio` が `baseExpectedMessage.audio` (`true`) を保つ」という別経路の挙動。テストを読んだだけではこの経路は分からない。
 
 ## 設計方針
 
@@ -67,15 +66,14 @@ test("createSignalingMessage audioBitRate: undefined", () => {
 
 ```ts
 test("createSignalingMessage audio: undefined", () => {
-  // audio: undefined は src/utils.ts:232-234 の boolean ガード (typeof === "boolean") を通らず、
-  // copyOptions delete ループ末尾の delete で除去されるため message.audio は baseExpectedMessage.audio (true) を保つ
+  // audio: undefined は copyOptions delete ループ内の boolean ガード (typeof === "boolean") を通らず、
+  // ループ末尾の delete で除去されるため message.audio は baseExpectedMessage.audio (true) を保つ
   const options = {
     audio: undefined,
   };
-  const expectedMessage = { ...baseExpectedMessage, audio: true };
   expect(
     createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false),
-  ).toStrictEqual(expectedMessage);
+  ).toStrictEqual(baseExpectedMessage);
 });
 ```
 
@@ -90,5 +88,5 @@ video 側も同様の趣旨で書く。
 
 ## スコープ外
 
-- 他の `undefined` 系既存テスト (`clientId: undefined`、`bundleId: undefined`、`signalingNotifyMetadata: undefined`、`dataChannelSignaling: undefined`、`ignoreDisconnectWebSocket: undefined`、`audioStreamingLanguageCode: undefined`、`spotlightNumber: undefined` 等) へのコメント補強 — 本 issue は `audio: undefined` / `video: undefined` の 2 件のみに限定 (これらは issue 0018 で新規追加した `audioBitRate: undefined` 等との対称性を保つことが主目的のため)
+- 他の `undefined` 系既存テスト (`clientId: undefined`、`bundleId: undefined`、`dataChannelSignaling: undefined`、`ignoreDisconnectWebSocket: undefined`、`audioStreamingLanguageCode: undefined`、`spotlightNumber: undefined` 等) へのコメント補強 — 本 issue は `audio: undefined` / `video: undefined` の 2 件のみに限定 (これらは issue 0018 で新規追加した `audioBitRate: undefined` 等との対称性を保つことが主目的のため)
 - テストの構造変更 / 命名変更 / `describe` ブロック導入等のリファクタ
