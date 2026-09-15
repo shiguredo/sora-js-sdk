@@ -13,7 +13,7 @@
 
 ## 優先度根拠
 
-Low。typedoc 出力の見た目は変わらず、SDK 利用者には影響しない。`intentionallyNotExported` の列挙保守がコード追加のたびに発生する運用上の負債を減らす refactor の位置付け。0063 (Pages 配信) / 0064 (TYPEDOC.md 表紙刷新) の後で着手する想定で、0063 は 2026-09-15 に closed 済みのため待機制約は解消されている。
+Low。typedoc 出力の見た目は変わらず、SDK 利用者には影響しない。`intentionallyNotExported` の列挙保守がコード追加のたびに発生する運用上の負債を減らす refactor の位置付け。0063 (Pages 配信) / 0064 (TYPEDOC.md 表紙刷新) の後で着手する想定だったが、0063 は 2026-09-15 に closed 済みで、0064 は `TYPEDOC.md` のみの編集で本 refactor と編集ファイルが重ならず順序依存がないため、待機制約は解消されている。
 
 ## 現状
 
@@ -64,7 +64,7 @@ export const SIGNALING_ROLE_SENDRECV = "sendrecv" as const;
 
 - typedoc は entry point (`./src/sora.ts`) を起点に型情報を辿る。本 refactor の対象定数は `sora.ts` から再 export されていないため、`@internal` を付けても外部 API 表面 (公開型シンボル) には影響しない
 - `dist/sora.d.ts` への影響: 既に `@internal` 付きシンボルは `.d.ts` から除外される運用 (`tsconfig.json` の `stripInternal: true`、0051 の検証条件、過去 CHANGES.md の `## 2023.2.0` エントリ)。本 refactor で `.d.ts` の表面が変わらないことを確認する
-- 2026-09-16 時点で確認済み: `intentionallyNotExported` 配列内の 16 個と、`src/types.ts` が `import type` で参照している 16 個 (型位置参照のみ) が一致している。`SIGNALING_MESSAGE_TYPE_ANSWER` など `intentionallyNotExported` に無いが `constants.ts` には存在する定数 (`ANSWER` / `CANDIDATE` / `PONG` / `STATS` / `RE_ANSWER` / `DISCONNECT` / `DATA_CHANNEL_LABEL_*`) は型位置参照が無く、現在 typedoc 警告も出ていない = 何かから参照されていない、ので `@internal` 対応は不要。実装時にも grep で集合が一致することを突き合わせる
+- 2026-09-16 時点で確認済み: `intentionallyNotExported` 配列内の 16 個と、`src/types.ts` が `import type` で参照している 16 個 (型位置参照のみ) が一致している。`SIGNALING_MESSAGE_TYPE_ANSWER` など `intentionallyNotExported` に無いが `constants.ts` には存在する定数 (`ANSWER` / `CANDIDATE` / `PONG` / `STATS` / `RE_ANSWER` / `DISCONNECT` / `DATA_CHANNEL_LABEL_*`) は公開 API (entry point から辿れる型) からの型位置参照が無く (`ConnectionBase.signalingOnMessageTypePing` 内の `typeof` 参照は private メソッドのため `excludePrivate: true` 対象外)、現在 typedoc 警告も出ていない = typedoc が見る公開 API からは参照されていない、ので `@internal` 対応は不要。実装時にも grep で集合が一致することを突き合わせる
 
 ## 完了条件
 
