@@ -4,18 +4,18 @@
 - Created: 2026-09-16
 - Completed: {YYYY-MM-DD}
 - Branch: feature/update-typedoc-typescript7-compat
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-16
 
 ## 目的
 
 現 develop の依存構成では typedoc 0.28.20 が TypeScript 7.0.2 と非互換で `vp run doc` が起動時にクラッシュし、`apidoc/` を生成できない。これにより次の 2 点が解消できていない状態にある。
 
 - `.github/workflows/deploy-apidoc.yml` は build ジョブで `vp run doc` を実行するため、workflow が master に反映された後の次回発火 (次回リリース時の master マージ / workflow_dispatch) で失敗し、GitHub Pages 配信が更新できなくなる
-- 0064 (`TYPEDOC.md` 表紙刷新) / 0066 (`@example` 充実) の完了条件に含まれる「生成物の HTML を目視確認する」検証が実施できない
+- 0064 (`TYPEDOC.md` 表紙刷新) / 0066 (`@example` 充実) / 0075 (`ConnectionBase.pc` の `@example` 追加) の完了条件に含まれる「`vp run doc` 生成物の HTML を目視確認する」検証が実施できない
 
 ## 優先度根拠
 
-High。SDK 本体の挙動には影響しないが、(1) GitHub Pages での API ドキュメント配信が次回リリース時から壊れる、(2) open の doc 系 issue 2 件 (0064 / 0066) の完了条件検証を恒久的にブロックする、のどちらも放置すると後続作業が滞留するため。
+High。SDK 本体の挙動には影響しないが、(1) GitHub Pages での API ドキュメント配信が次回リリース時から壊れる、(2) open の doc 系 issue 3 件 (0064 / 0066 / 0075) の完了条件検証を恒久的にブロックする、のどちらも放置すると後続作業が滞留するため。
 
 ## 現状
 
@@ -42,10 +42,11 @@ High。SDK 本体の挙動には影響しないが、(1) GitHub Pages での API
 
 - 実装時に typedoc の TypeScript 7 対応版への更新か、`@typescript/typescript6` の併用のどちらかを確定し、`package.json` / `pnpm-lock.yaml` を更新する
 - `vp install --frozen-lockfile` 後に `vp run doc` を実行し、`apidoc/` の生成を確認する
-- 完了後は 0064 / 0066 の完了条件にある HTML 目視確認が実施可能になる
+- 完了後は 0064 / 0066 / 0075 の完了条件にある HTML 目視確認が実施可能になる
 
 ## 関連 issue
 
 - **0065 (closed、2026-09-16)**: 本問題を「残る別問題 (スコープ外)」として記載している
 - **0064 (open)**: `vp run doc` での生成物確認を完了条件に含む
 - **0066 (open)**: 同上 (typedoc の `@example` 充実)
+- **0075 (open)**: 同上 (`ConnectionBase.pc` の `@example` 追加)
