@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-12
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-15
 - Model: Opus 4.7
 - Branch: feature/refactor-skip-ice-candidate-event-comment
 
@@ -10,7 +10,7 @@
 
 `src/base.ts` の `ConnectionBase` constructor 内、`this.options.skipIceCandidateEvent ??= false;` の直上にある 3 行コメントが、現行コードと矛盾している部分・情報量が薄い部分を含んでいるため整理する。
 
-`/auto-resolve 18,19` の処理中、issue 0019 (`feature/fix-messaging-mutates-shared-options`) のレビュー (観点 6: 削除候補検出) で本コメントブロックが指摘されたが、issue 0019 のスコープ外として保留したため、別 issue として起票する。
+issue 0019 (`feature/fix-messaging-mutates-shared-options`) の対応では本コメントブロックがスコープ外とされ (「本修正と無関係のため一切手を入れない」と明記)、そのまま残っているため、別 issue として起票する。
 
 ## 優先度根拠
 
@@ -33,7 +33,7 @@ this.options.skipIceCandidateEvent ??= false;
 | 行                                                                                  | 内容                          | 問題                                                                                                                                                     |
 | ----------------------------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | L1 (「options に skipIceCandidateEvent が指定されていなかったら false を指定する」) | 業務上の意図を述べる          | 残すべき情報                                                                                                                                             |
-| L2 (「ちなみに `this.options.skipIceCandidateEvent ??= false` とも書ける」)         | `??=` 構文の代替表現を案内    | **直下のコードがまさにその形** のため矛盾。過去のリファクタで `if (...) { ... = false }` を `??=` に書き換えた際にコメントを更新し忘れた残骸と推測される |
+| L2 (「ちなみに `this.options.skipIceCandidateEvent ??= false` とも書ける」)         | `??=` 構文の代替表現を案内    | **直下のコードがまさにその形** のため矛盾。git 履歴 (commit `9a9d6a29`) で、`if (this.options.skipIceCandidateEvent === undefined) { this.options.skipIceCandidateEvent = false; }` を oxlint の `prefer-optional-chain` による `--fix` 一括修正で `??=` に書き換えた際にコメントを更新し忘れた残骸と確認できた |
 | L3 (MDN URL)                                                                        | `??=` の言語仕様を MDN で参照 | TypeScript を読む読者には不要                                                                                                                            |
 
 ## 設計方針
@@ -45,12 +45,12 @@ L2 と L3 を削除し、L1 のみ残す。
 this.options.skipIceCandidateEvent ??= false;
 ```
 
-`??=` の挙動 (logical nullish assignment) は TypeScript 4.0 / ES2021 以降の標準構文で、リポジトリの `engines.node` は `>=22` のため言語仕様としては自明。MDN への外部参照はメンテナンス負荷 (リンク切れ追従) も発生するため削除する。
+`??=` の挙動 (logical nullish assignment) は TypeScript 4.0 / ES2021 以降の標準構文で、リポジトリの `engines.node` は `>=22.18.0` (package.json) のため言語仕様としては自明。MDN への外部参照はメンテナンス負荷 (リンク切れ追従) も発生するため削除する。
 
 ## 完了条件
 
 - `src/base.ts` の `??=` 直上 3 行コメントを 1 行 (「options に skipIceCandidateEvent が指定されていなかったら false を指定する」) に整理する
-- ローカルで `pnpm test` / `pnpm typecheck` / `pnpm lint` が pass し、`pnpm fmt` で差分が出ないこと
+- ローカルで `vp test run` / `vp check` / `vp exec tsc --noEmit` が pass し、`vp fmt` で差分が出ないこと
 - `CHANGES.md` `## develop` の `### misc` セクションに `[UPDATE]` エントリを 1 件追記する (機能に直接影響しないリファクタリングのため `misc`)
 
 ## スコープ外
