@@ -25,23 +25,31 @@ High。SDK 本体の挙動には影響しないが、(1) GitHub Pages での API
 - shiguredo-typescript スキルには「TypeDoc は TypeScript 7 の API に未対応 (TypeScript 7.0 はプログラマティック API を持たず、API は 7.1 以降で提供予定)。TypeDoc が必要な間は `@typescript/typescript6` を併用し、TypeDoc の TypeScript 7 対応後に一本化する」と定められているが、本リポジトリでは未実施
 - 0063 (closed、2026-09-15) の検証記録では `vp run doc` の最終成功は workflow 実行 (2026-06-23、TypeScript 6 系 (typedoc の peer 範囲内) の時代)。`deploy-apidoc.yml` は 2026-09-15 時点で master 未反映
 - typedoc の書式 (entry point / excludePrivate 等) 自体には問題は無く、0063 の検証時には正常に生成できている
+- 2026-09-16 時点で typedoc の stable 最新は 0.28.20 のままであり、TypeScript 7 対応版は未リリース (typedoc の追跡 issue <https://github.com/TypeStrong/typedoc/issues/3098> に「TypeScript 7.1 リリース後に公開予定、時期は未定」と記載されている)
+- 2026-09-16 の実測: devDependencies へ `@typescript/typescript6` を追加するだけでは typedoc 0.28.20 は依然として `typescript` (7.0.2) を peer 解決し、起動時にクラッシュする (`ts.SyntaxKind` が undefined)。pnpm の `overrides` で typedoc だけの `typescript` を差し替えても解決は変わらない
 
 ## 設計方針
 
-- 優先候補: typedoc を TypeScript 7 対応版 (7.1 以降で API 提供予定に合わせて) へ更新する。対応版リリース前であれば `@typescript/typescript6` を追加して typedoc が型情報を解決できる構成に切り替える (shiguredo-typescript スキルの記載どおり)
-- どちらの手段でも、`vp install --frozen-lockfile && vp run doc` が終了コード 0 で完走し `apidoc/` が生成されることを確認する
+- 実装手段は `@typescript/typescript6` の併用構成に確定する。typedoc の TypeScript 7 対応版は 2026-09-16 時点で未リリース (上記 `#3098`、時期未定) のため、「対応版へ更新」は現状実現できず、対応版のリリース後に skill の記載どおり一本化する
+- 併用構成の要点 (2026-09-16 に動作を実測済み)
+  - ルート (`package.json`) は `typescript: 7.0.2` を維持する (SDK のビルド / typecheck は TypeScript 7 のまま)
+  - pnpm workspace のサブパッケージ (例: `docs/`) に `typedoc` と `"typescript": "npm:@typescript/typescript6@6.0.2"` を導入する。`npm:` エイリアスにより `docs` 配下では `typescript` パッケージ名が TypeScript 6 の API を指すため、typedoc 0.28.20 が動作する
+  - `@typescript/typescript6` をルートの devDependencies へ単純追加するのは不可 (上記「現状」の実測どおり。typedoc は `typescript` パッケージ名で解決するため)
+  - typedoc の実行はルートの `doc` スクリプトから workspace のタスクを呼ぶ形にし、`vp install --frozen-lockfile && vp run doc` がルートで完走する形を維持する (`.github/workflows/deploy-apidoc.yml` の build ジョブを変更不要にするため)
+- 本構成でも、`vp install --frozen-lockfile && vp run doc` が終了コード 0 で完走し `apidoc/` が生成されることを確認する
 - `typedoc.json` の設定変更は本 issue の目的に必要な範囲のみに留める (`intentionallyNotExported` の整理は 0065 で「@internal では置換不可」と実測された別問題であり、本 issue では扱わない)
 
 ## 完了条件
 
 - `vp install --frozen-lockfile && vp run doc` が success で完走し、`apidoc/index.html` が生成される
-- `.github/workflows/deploy-apidoc.yml` の build ジョブと同じ条件 (ubuntu-slim / Node.js 22 / `vp install --frozen-lockfile` → `vp run doc`) で完走できる
+- `.github/workflows/deploy-apidoc.yml` の build ジョブと同じ条件 (ubuntu-slim / Node.js 22 / `vp install --frozen-lockfile` → `vp run doc`) で完走できる (ルートの `doc` スクリプト経由で workspace タスクを呼ぶため、workflow 側のステップ変更は不要)
 - `CHANGES.md` の `## develop` セクション `### misc` に `[UPDATE]` として 1 行追加する
+- ルート (`package.json`) の `typescript` は 7.0.2 のまま維持され、`vp run build` / `vp run typecheck` が引き続き成功する (SDK 側は TypeScript 7 のままであること)
 
 ## 解決方法
 
-- 実装時に typedoc の TypeScript 7 対応版への更新か、`@typescript/typescript6` の併用のどちらかを確定し、`package.json` / `pnpm-lock.yaml` を更新する
-- `vp install --frozen-lockfile` 後に `vp run doc` を実行し、`apidoc/` の生成を確認する
+- pnpm workspace へ doc ビルド用のサブパッケージを追加する (例: `docs/`。`pnpm-workspace.yaml` の `packages:` に追加)。`docs/` 側の devDependencies は `typedoc@0.28.20` と `"typescript": "npm:@typescript/typescript6@6.0.2"` (`docs/package.json` の `doc` スクリプトは `typedoc` を呼ぶ)。`typedoc.json` の `entryPoints` / `readme` / `out` は `docs/` からの相対パスで参照する (例: `../src/sora.ts` / `../TYPEDOC.md` / `../apidoc`。`out: ../apidoc` にすればルートの `apidoc/` に出力され、deploy-apidoc.yml の `path: apidoc` も変更不要)
+- ルートの `package.json` の `doc` スクリプトを workspace の doc タスクを呼ぶ形に変更する (例: `vp run docs#doc` 相当)。`vp install --frozen-lockfile` 後に `vp run doc` を実行し、`apidoc/` の生成を確認する
 - 完了後は 0064 / 0066 / 0075 の完了条件にある HTML 目視確認が実施可能になる
 
 ## 関連 issue
