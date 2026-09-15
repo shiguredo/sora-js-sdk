@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-22
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-09-16
 - Model: Opus 4.7
 - Branch: feature/refactor-replace-intentionally-not-exported
 - Polished: 2026-09-16
@@ -93,3 +93,46 @@ export const SIGNALING_ROLE_SENDRECV = "sendrecv" as const;
 - **0066 (open)**: typedoc の `@example` 充実。`typedoc.json` / `TYPEDOC.md` は無編集 (それぞれ 0065 / 0064 の範囲) と明記されており、本 refactor と競合しない
 - **過去 CHANGES.md `## 2023.2.0`**: 「ユーザが直接使わない型には @internal を指定して .d.ts に含まれないようにする」既往対応
 - **0020 (closed)**: `redact` 関数の `@internal` 付与例 (issues/closed/0020-bug-fix-trace-leaks-jwt-and-metadata.md)
+
+## 解決方法
+
+本 issue の設計方針 (`@internal` 付与 + `excludeInternal: true` で `intentionallyNotExported` を置き換える) は typedoc 0.28.20 の実挙動で無効と確認されたため、ソースコードの変更は行わず closed とする (判定種別: 前提崩壊・実測による否定)。
+
+### 実測の手順と結果
+
+現 develop のソース (`src/constants.ts` / `src/types.ts` / `src/sora.ts` / `typedoc.json`) をコピーし、typedoc 0.28.20 + typescript 6.0.3 (typedoc の peer 依存範囲内) で `typedoc --options typedoc.json` を実行して検証した。
+
+1. 現状の `typedoc.json` (16 個の列挙あり、`excludeInternal` なし) では警告 2 件:
+   - `The following symbols were marked as intentionally not exported, but were either not referenced in the documentation, or were exported:` の下に `SIGNALING_MESSAGE_TYPE_CLOSE` / `CONNECT` / `NOTIFY` / `OFFER` / `PING` / `PUSH` / `REDIRECT` / `RE_OFFER` / `REQ_STATS` / `SWITCHED` / `UPDATE` の 11 件 (未使用エントリ警告)
+   - `SignalingNotifySimulcastSwitched, defined in sora-js-sdk/src/types.ts, is referenced by SignalingNotifyMessage but not included in the documentation` (列挙漏れ)
+2. 本 issue の設計どおりの変更 (対象 16 定数に `/** @internal */`、`typedoc.json` から `intentionallyNotExported` 削除、`"excludeInternal": true` 追加) では警告 6 件:
+   - `SIGNALING_ROLE_SENDRECV` / `SIGNALING_ROLE_SENDONLY` / `SIGNALING_ROLE_RECVONLY` が `Role` から、`TRANSPORT_TYPE_WEBSOCKET` / `TRANSPORT_TYPE_DATACHANNEL` が `TransportType` から参照され、`not included in the documentation` の警告
+   - 上記 `SignalingNotifySimulcastSwitched` の警告
+
+つまり **`@internal` + `excludeInternal` では「export されていないシンボルが参照されている」警告は抑制されない**。
+
+### なぜ抑制されないか
+
+typedoc 0.28.20 の検証ロジック (`src/lib/validation/exports.ts` の `validateExports`) は、ドキュメント化された型から参照される対象に reflection が無い場合 (`type.reflection` が falsy) に警告を出す。`@internal` + `excludeInternal` で除外されるのは **コンバートされた reflection が存在する** シンボルのみである。本 issue の対象定数は entry point (`./src/sora.ts`) から export / re-export されないため reflection 自体が生成されず、`@internal` が評価される機会もなく、警告も抑制されない (警告が消えるのは reflection が生成されて `removedSymbolIds` に入る場合のみ。typedoc のテスト `#2704` の `@ignore` ケースが該当)。
+
+### 現状記述との不一致 (実測で否定された項目)
+
+- 「16 個、列挙漏れなし」: 実際に警告を出しているのは 5 個 (`SIGNALING_ROLE_*` / `TRANSPORT_TYPE_*`。いずれも type alias `Role` / `TransportType` の `typeof` 参照)。`SIGNALING_MESSAGE_TYPE_*` の 11 個は interface プロパティの `type: typeof ...` が literal 型に変換されるため参照警告を出さず、`intentionallyNotExported` のエントリとしては未使用で、逆に typedoc の「未使用エントリ」警告の対象になっている
+- 「現在 typedoc 警告も出ていない」: `SignalingNotifySimulcastSwitched` (types.ts の `SignalingNotifyMessage` ユニオンメンバー) は commit 68fffc22 で追加されたが、`intentionallyNotExported` への追記も `src/sora.ts` からの re-export もされておらず、「not included in the documentation」の警告が出る状態
+- `src/types.ts` が `import type` で参照している 16 個とリストが一致している事実は正しいが、それは「型位置で参照されている」ことの確認であり、typedoc の警告対象集合とは一致しない
+
+### その他の確認事項
+
+- 現 develop は `package.json` で `typedoc: 0.28.20` + `typescript: 7.0.2` の組み合わせであり、typedoc 0.28.20 の peer 依存 (`typescript: 5.0.x 〜 6.0.x`) の範囲外。typescript@7.0.2 では typedoc が起動時にクラッシュする (`ts.SyntaxKind` が undefined)。したがって現状 `vp run doc` は実行不能で、本 issue の完了条件の検証もそもそも行えない (shiguredo-typescript スキルの「TypeDoc が必要な間は `@typescript/typescript6` を併用」が未実施)
+- 本 issue の狙い (列挙保守の負債削減) 自体は妥当だが、typedoc 0.28.20 では `intentionallyNotExported` が「非 export 参照の警告抑制」の唯一の手段であり、`@internal` には置換できない
+
+### 残る別問題 (本 issue スコープ外)
+
+- `vp run doc` の typedoc / TypeScript 7 非互換の解消 (dependency 更新または `@typescript/typescript6` の併用)
+- `intentionallyNotExported` を実使用の 5 件に減らし、`SignalingNotifySimulcastSwitched` を追加または re-export する保守 (本 issue の負債削減の現実的な残作業)
+
+### 変更ファイル
+
+- `issues/0065-refactor-replace-intentionally-not-exported.md` → `issues/closed/` へ移動
+- ソースコード変更なし
+- `CHANGES.md` への追記なし
