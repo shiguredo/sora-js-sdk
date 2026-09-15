@@ -13,7 +13,7 @@
 
 ## 優先度根拠
 
-Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) は 2026-09-15 に closed 済みで、API ドキュメントは `https://shiguredo.github.io/sora-js-sdk/` で配信される一般利用者向けの主導線になる (0063 の検証結果でトップページ他が 200 を返すことを確認済み)。`@example` は typedoc 出力でメソッドカードに直接表示されるため、利用者の初手の理解度に直結する。一方で SDK 本体の挙動には影響せず緊急性は無いため High ではなく Medium。0063 マージ待ちは解消済みであり、いつでも着手できる。
+Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) は 2026-09-15 に closed 済みで、API ドキュメントは `https://shiguredo.github.io/sora-js-sdk/` で配信されている (0063 の検証結果でトップページ他が 200 を返すことを確認済み)。`@example` は typedoc 出力でメソッドカードに直接表示されるため、利用者の初手の理解度に直結する。なお、利用者の主導線は README.md の「API 一覧」が指す内部ドキュメントサイト (`https://sora-js-sdk.shiguredo.jp/api.html`) であり、GitHub Pages への一本化は 0063 のスコープ外 (内部ドキュメント側のリンク書き換え) の完了後になる。一方で SDK 本体の挙動には影響せず緊急性は無いため High ではなく Medium。0063 マージ待ちは解消済みであり、いつでも着手できる。
 
 ## 現状
 
@@ -71,14 +71,14 @@ Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) は 2026-09-15 �
 
 ### `rpc` の `@example` 拡張
 
-`rpc` は現状の 1 行 (`await connection.rpc('2025.2.0/RequestSimulcastRid', { rid: 'r0' })`) をベースに、(1) 前提として `RPC DataChannel` が open であること、(2) レスポンス型が型引数で指定できること、(3) `notification: true` での片方向呼び出しの 3 例を `@example` ブロックとして分けて示す。`@throws` 相当の情報 (`RPC DataChannel is not available or not open`) は `@remarks` で補足する (本 issue は `@example` 中心だが、`rpc` だけ `@remarks` を最小限触る)。
+`rpc` は現状の 1 行 (`await sendrecv.rpc('2025.2.0/RequestSimulcastRid', { rid: 'r0' })`) をベースに、(1) 前提として `RPC DataChannel` が open であること、(2) レスポンス型が型引数で指定できること、(3) `notification: true` での片方向呼び出しの 3 例を `@example` ブロックとして分けて示す。現状の例のレシーバは `connection` だが、`connection` は `Sora.connection()` の戻り値 (SoraConnection) で `rpc` メソッドを持たない。`rpc` は `ConnectionBase` のメソッドのため、例では role 接続のインスタンス (例: `sendrecv`) をレシーバにする (`@throws` 相当の情報 (`RPC DataChannel is not available or not open`) は `@remarks` で補足する (本 issue は `@example` 中心だが、`rpc` だけ `@remarks` を最小限触る))。
 
 ### スコープ
 
 - 対象は `@example` ブロックの新規追加・刷新と、コードフェンス言語指定の統一のみ
 - `@deprecated` の `stopAudioTrack` / `stopVideoTrack` は、現行の `@example` を `removeAudioTrack` / `removeVideoTrack` への置き換えガイドとして最小限残す (深追いしない)
 - API の挙動・シグネチャ・引数名・ファイル分割は変更しない
-- `typedoc.json` / `TYPEDOC.md` は無編集 (それぞれ closed 済みの 0065 / open の 0064 の範囲)
+- `typedoc.json` / `TYPEDOC.md` は無編集 (`typedoc.json` は open の 0089 が `docs/` への移設を含めて変更予定、`TYPEDOC.md` は open の 0064 の範囲)
 
 ## 完了条件
 
@@ -95,7 +95,7 @@ Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) は 2026-09-15 �
 
 ### ファイル変更
 
-- `src/base.ts` の `@example` ブロックを言語指定 `typescript` に揃え、`on` / `disconnect` / `sendMessage` / `rpc` の例を「設計方針」に沿って拡張する
+- `src/base.ts` の `@example` ブロックを言語指定 `typescript` に揃え、`on` / `disconnect` / `sendMessage` / `rpc` の例を「設計方針」に沿って拡張する。あわせて `removeAudioTrack` / `removeVideoTrack` / `replaceAudioTrack` / `replaceVideoTrack` の例も「スニペットの粒度」どおり `Sora.connection(...)` から始まるシーケンスに揃える (`@deprecated` の `stopAudioTrack` / `stopVideoTrack` は置き換えガイドとして最小限のまま)
 - `src/sora.ts` / `src/publisher.ts` / `src/subscriber.ts` / `src/messaging.ts` の `@example` を「Sora.connection → role 選択 → on() でコールバック設定 → connect()」シーケンスに揃え、シグナリング URL を `wss://sora.example.com/signaling` に統一する (既存の `ws://192.0.2.100:5000/signaling` を置き換える)
 
 ### 検証
