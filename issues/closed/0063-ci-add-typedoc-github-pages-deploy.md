@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-22
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-09-15
 - Model: Opus 4.7
 - Branch: feature/add-typedoc-github-pages-deploy
 - Polished: 2026-06-22
@@ -19,7 +19,7 @@ Low。現行運用 (内部ドキュメント管理リポジトリ側への手動
 
 ### typedoc 設定
 
-- `package.json` の `doc` script は `typedoc` を呼ぶだけ (`:39`)
+- `package.json` の `doc` script (`"doc": "typedoc"`) は `typedoc` を呼ぶだけ
 - `typedoc.json` の `entryPoints` は `./src/sora.ts`、出力先は `apidoc/`、`readme` は `./TYPEDOC.md`、`disableSources: true`、`excludePrivate: true`、`excludeProtected: true`
 - typedoc 生成物 `apidoc/` の出力構造はディレクトリ `assets/`, `interfaces/`, `types/`, `variables/` と、ルートのファイル `index.html`, `modules.html`, `hierarchy.html`, `.nojekyll` (typedoc が自動生成)。`index.html` がルートにあるため GitHub Pages にそのまま配信できる
 - `typedoc.json` の `entryPoints` がソース直接 (`./src/sora.ts`) なので、typedoc 実行に dist の事前ビルドは不要 (`vp install` 後に `vp run doc` で完結)
@@ -46,7 +46,7 @@ Low。現行運用 (内部ドキュメント管理リポジトリ側への手動
 
 ### ファイル名
 
-`.github/workflows/deploy-apidoc.yml` に確定する。過去 (2023-01-05 〜 2024-02-21、commit `652f2ce6` / PR #490 commit `b8811334`、CHANGES.md `:433`) に `deploy-pages.yml` が存在したが、これは demo / example 配信用で E2E テスト整備時に削除済み。本 issue は API ドキュメント配信用で目的が異なるため、過去ファイル名との混同を避けるため `deploy-apidoc.yml` を採用する。
+`.github/workflows/deploy-apidoc.yml` に確定する。過去 (2023-01-05 〜 2024-02-21、commit `652f2ce6` / PR #490 commit `b8811334`、CHANGES.md の `## 2024.1.0` の `### misc` に `[CHANGE] deploy-pages.yml を削除する`) に `deploy-pages.yml` が存在したが、これは demo / example 配信用で E2E テスト整備時に削除済み。本 issue は API ドキュメント配信用で目的が異なるため、過去ファイル名との混同を避けるため `deploy-apidoc.yml` を採用する。
 
 ### トリガー
 
@@ -83,7 +83,7 @@ build ジョブと deploy ジョブを分け、`actions/upload-pages-artifact` /
 
 ### permissions (ジョブ別)
 
-トップレベルは `contents: read` (public リポジトリの tag checkout に十分)。各ジョブの追加権限は完成形 YAML に従う。slack_notify ジョブの `actions: read` は `shiguredo/github-actions/.github/actions/slack-notify@main` が前ジョブの conclusion を `actions/github-script` 経由で取得するため必須 (`npm-publish.yml:117` と同じ)。
+トップレベルは `contents: read` (public リポジトリの tag checkout に十分)。各ジョブの追加権限は完成形 YAML に従う。slack_notify ジョブの `actions: read` は `shiguredo/github-actions/.github/actions/slack-notify@main` が前ジョブの conclusion を `actions/github-script` 経由で取得するため必須 (`npm-publish.yml` の `slack_notify` ジョブと同じ)。
 
 ### concurrency
 
@@ -128,6 +128,25 @@ slack_notify:
 ### 完成形 workflow
 
 `.github/workflows/deploy-apidoc.yml` を参照する。実装時に採用した SHA は「コード変更」セクション参照。
+
+## 解決方法
+
+- **PR #756** (commit `055d94fa`): `.github/workflows/deploy-apidoc.yml` を新規追加し、`CHANGES.md` の `## develop` セクション `### misc` に `[ADD]` エントリを追加した。あわせて本 issue の「設計方針」と完了条件のチェックボックスを実装内容に合わせて更新した
+- **PR #757** (commit `4ee95828`): deploy ジョブの `if: github.ref == 'refs/heads/master'` ガードを削除した (push トリガーの `branches: [master]` で担保済み、`workflow_dispatch` は Run workflow で master を選ぶ前提のため)
+- @voluntas により GitHub リポジトリ Settings > Pages の Source を `GitHub Actions` に変更済み (`gh api repos/shiguredo/sora-js-sdk/pages` で `build_type: workflow` を確認)
+
+### 検証結果 (2026-09-15 時点)
+
+- `.github/workflows/deploy-apidoc.yml` が現存し、設計どおりの 3 ジョブ構成 (build / deploy / slack_notify)、`concurrency.group: pages`、`actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0`、`actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0` を確認した
+- `CHANGES.md` の `## develop` → `### misc` に `[ADD] typedoc 生成物を GitHub Pages にデプロイする workflow を追加する` + `- @voluntas` を確認した (`## develop` セクションの既存 `[ADD]` 群の末尾)
+- workflow 実行 (run id `28013989573`、2026-06-23、`workflow_dispatch`): build / deploy / slack_notify が全て success (`ubuntu-slim` で完走。`gh api repos/shiguredo/sora-js-sdk/actions/runs/28013989573/jobs` で確認)
+- `https://shiguredo.github.io/sora-js-sdk/` が 200 を返し、`modules.html` / `hierarchy.html` / `interfaces/SoraConnection.html` も 200、`classes/SoraConnection.html` は 404 (設計どおり `interfaces/` 側に出力され `classes/` は生成されない)
+- 未確認は「マージ後検証」の初回項目 (次回 stable リリースが master に merge され workflow が自動発火して緑になること) のみ。本 workflow は 2026-09-15 時点で master 未反映 (最終リリース 2026.1.0 は workflow 追加前) のため、次回リリース時に自動検証される。実装内容の完了をもって本 issue は closed とする
+
+### 補足
+
+- 「現状」セクションの記載は全て本 issue 起票時点 (2026-06-22) のスナップショットである (例: `.github/workflows/` は当時 8 本。本 workflow 追加後は 9 本)
+- `actions/checkout` / `voidzero-dev/setup-vp` は commit `6012c489` 以降の actions 更新で、現行 `deploy-apidoc.yml` ではそれぞれ `@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0` / `@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0` になっている
 
 ## 完了条件
 
