@@ -5,7 +5,7 @@
 - Completed: {YYYY-MM-DD}
 - Model: Opus 4.7
 - Branch: feature/update-typedoc-examples
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-16
 
 ## 目的
 
@@ -13,36 +13,36 @@
 
 ## 優先度根拠
 
-Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) のマージ後、API ドキュメントは `https://shiguredo.github.io/sora-js-sdk/` で配信される一般利用者向けの主導線になる。`@example` は typedoc 出力でメソッドカードに直接表示されるため、利用者の初手の理解度に直結する。一方で SDK 本体の挙動には影響せず緊急性は無いため High ではなく Medium。0063 マージ後の早い段階で着手したい。
+Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) は 2026-09-15 に closed 済みで、API ドキュメントは `https://shiguredo.github.io/sora-js-sdk/` で配信される一般利用者向けの主導線になる (0063 の検証結果でトップページ他が 200 を返すことを確認済み)。`@example` は typedoc 出力でメソッドカードに直接表示されるため、利用者の初手の理解度に直結する。一方で SDK 本体の挙動には影響せず緊急性は無いため High ではなく Medium。0063 マージ待ちは解消済みであり、いつでも着手できる。
 
 ## 現状
 
 ### typedoc 設定と公開対象
 
-- `/Users/voluntas/shiguredo/sora-js-sdk/typedoc.json` の `entryPoints` は `./src/sora.ts`、`excludePrivate: true` / `excludeProtected: true`。`@public` の有無に関係なく、クラスの `public` メソッドは出力される
-- 出力対象になる公開クラス: `SoraConnection` (`src/sora.ts`)、`ConnectionPublisher` (`src/publisher.ts`)、`ConnectionSubscriber` (`src/subscriber.ts`)、`ConnectionMessaging` (`src/messaging.ts`)、`ConnectionBase` (`src/base.ts`)
+- `typedoc.json` (リポジトリルート) の `entryPoints` は `./src/sora.ts`、`excludePrivate: true` / `excludeProtected: true`。`@public` の有無に関係なく、クラスの `public` メソッドは出力される
+- 出力対象になる公開クラス: `SoraConnection` (`src/sora.ts`)、`ConnectionPublisher` (`src/publisher.ts`)、`ConnectionSubscriber` (`src/subscriber.ts`)、`ConnectionMessaging` (`src/messaging.ts`)、`ConnectionBase` (`src/base.ts`)。いずれも `export type` で再 export されるため、typedoc 0.28.20 では `interfaces/` 配下に出力される (`classes/` ディレクトリは生成されない。0063 の検証結果どおり)
 
 ### 既存 `@example` の状況
 
-`grep -rn "@example" src/` で確認した合計 17 箇所の `@example` がある。
+`rg -n "@example" src/` で確認した合計 17 箇所の `@example` がある。
 
-- `src/sora.ts:95 / 131 / 159 / 195 / 251`: `SoraConnection` の各 `sendrecv` / `sendonly` / `recvonly` / `messaging` メソッドと `Sora.connection`。いずれも 1 〜 2 行
-- `src/publisher.ts:10`: `ConnectionPublisher.connect`。`getUserMedia` → `connect` の 3 行
-- `src/subscriber.ts:10`: `ConnectionSubscriber.connect`。2 行
-- `src/messaging.ts:12`: `ConnectionMessaging.connect`。2 行
-- `src/base.ts:345 / 369 / 400 / 459 / 490 / 548 / 582 / 1093`: `on` / `stopAudioTrack` (@deprecated) / `removeAudioTrack` / `stopVideoTrack` (@deprecated) / `removeVideoTrack` / `replaceAudioTrack` / `replaceVideoTrack` / `disconnect`
-- `src/base.ts:2694`: `rpc`。1 行
+- `src/sora.ts` の `SoraConnection.sendrecv` / `sendonly` / `recvonly` / `messaging` と `Sora.connection` (5 箇所)。いずれも 1 〜 2 行
+- `src/publisher.ts` の `ConnectionPublisher.connect`。`getUserMedia` → `connect` の 3 行
+- `src/subscriber.ts` の `ConnectionSubscriber.connect`。2 行
+- `src/messaging.ts` の `ConnectionMessaging.connect`。2 行
+- `src/base.ts` の `ConnectionBase.on` / `stopAudioTrack` (@deprecated) / `removeAudioTrack` / `stopVideoTrack` (@deprecated) / `removeVideoTrack` / `replaceAudioTrack` / `replaceVideoTrack` / `disconnect`
+- `src/base.ts` の `ConnectionBase.rpc`。1 行
 
 ### 言語指定の混在
 
-- ` ```typescript ` 指定: `src/sora.ts` (5 箇所)、`src/publisher.ts`、`src/subscriber.ts`、`src/messaging.ts`、`src/base.ts:2694` (`rpc`)
+- ` ```typescript ` 指定: `src/sora.ts` (5 箇所)、`src/publisher.ts`、`src/subscriber.ts`、`src/messaging.ts`、`src/base.ts` の `rpc` (計 9 箇所)
 - 無印 ` ``` `: `src/base.ts` の `on` / `stopAudioTrack` / `removeAudioTrack` / `stopVideoTrack` / `removeVideoTrack` / `replaceAudioTrack` / `replaceVideoTrack` / `disconnect` (8 箇所)
 
 ### `@example` が無い、または不足している公開メソッド
 
-- `src/base.ts` の `sendMessage` (`:2604`) は `@public` JSDoc も `@example` も無いが、`public` メソッドとして typedoc に出力される。利用者が DataChannel メッセージング (`Sora.connection(...).messaging(...)`) を扱う際の中核 API でありながら、ドキュメント側に呼び出し例が無い
-- `src/base.ts` の `on` (`:358`) の `@example` は `track` イベント 1 例だけ。`Callbacks` (`src/types.ts:432`) で定義されている 13 種の kind (`disconnect` / `push` / `track` / `removetrack` / `notify` / `switched` / `connected` / `log` / `timeout` / `timeline` / `signaling` / `message` / `datachannel`) のうち、複数の典型 kind に触れる例が欲しい
-- `src/base.ts` の `disconnect` (`:1100`) と `rpc` (`:2706`) の `@example` は 1 行のみで、エラー時の挙動や前段の準備 (`connect()` 済みであること、`open` 状態の DataChannel が必要であること等) が読み取れない
+- `src/base.ts` の `ConnectionBase.sendMessage` は `@public` JSDoc も `@example` も無いが、`public` メソッドとして typedoc に出力される。利用者が DataChannel メッセージング (`Sora.connection(...).messaging(...)`) を扱う際の中核 API でありながら、ドキュメント側に呼び出し例が無い
+- `src/base.ts` の `ConnectionBase.on` の `@example` は `track` イベント 1 例だけ。`Callbacks` (`src/types.ts`) で定義されている 13 種の kind (`disconnect` / `push` / `track` / `removetrack` / `notify` / `switched` / `connected` / `log` / `timeout` / `timeline` / `signaling` / `message` / `datachannel`) のうち、複数の典型 kind に触れる例が欲しい
+- `src/base.ts` の `ConnectionBase.disconnect` と `ConnectionBase.rpc` の `@example` は 1 行のみで、エラー時の挙動や前段の準備 (`connect()` 済みであること、`open` 状態の DataChannel が必要であること等) が読み取れない
 
 ## 設計方針
 
@@ -55,11 +55,11 @@ Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) のマージ後�
 - 各 `@example` は「`Sora.connection(...)` → role 選択 → 必要なら `on()` でコールバック設定 → `connect()`」までの一貫したシーケンスが追える粒度を基本とする
 - メソッドカードに直接出る都合上、長すぎるとノイズになる。 1 メソッドあたり 5 〜 15 行を目安にする
 - `await` / `async` を省略しない。`async` 関数内での実行を前提にすることを明示するため、`async function main() { ... }` 形式は避け、`await` を直接書くトップレベル風スニペットに統一する (利用者が試すときの摩擦を下げる)
-- シグナリング URL は `wss://sora.example.com/signaling` などの実在しないドメインで統一する。`192.0.2.x` (TEST-NET-1) はそのまま残してよい
+- シグナリング URL は全て `wss://sora.example.com/signaling` に統一する (example.com はドキュメント用途に予約された実在しないドメイン)。既存の `ws://192.0.2.100:5000/signaling` (5 箇所) はこの形式へ置き換える。`192.0.2.x` (TEST-NET-1) は残さない
 
 ### `on()` の `@example` 拡張
 
-`on()` のメソッドカード本体には現状の 1 例 (`track`) を踏襲した形を残しつつ、`Callbacks` の代表的な kind を網羅する例を追加する。`disconnect` / `notify` / `signaling` / `message` / `datachannel` あたりの典型ユースケースを 1 ブロックずつ並べる構成にする。複数の `@example` ブロックを並列に書ける typedoc 仕様を活用する。
+`on()` のメソッドカード本体には現状の 1 例 (`track`) を踏襲した形を残しつつ、`Callbacks` の代表的な kind を網羅する例を追加する。追加するのは `disconnect` / `notify` / `signaling` / `message` / `datachannel` の 5 kind で、典型ユースケースを 1 ブロックずつ並べる構成にする。複数の `@example` ブロックを並列に書ける typedoc 仕様を活用する。
 
 ### `sendMessage` の `@example` 追加
 
@@ -78,31 +78,32 @@ Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) のマージ後�
 - 対象は `@example` ブロックの新規追加・刷新と、コードフェンス言語指定の統一のみ
 - `@deprecated` の `stopAudioTrack` / `stopVideoTrack` は、現行の `@example` を `removeAudioTrack` / `removeVideoTrack` への置き換えガイドとして最小限残す (深追いしない)
 - API の挙動・シグネチャ・引数名・ファイル分割は変更しない
-- `typedoc.json` / `TYPEDOC.md` は無編集 (それぞれ 0065 / 0064 の範囲)
+- `typedoc.json` / `TYPEDOC.md` は無編集 (それぞれ closed 済みの 0065 / open の 0064 の範囲)
 
 ## 完了条件
 
-- 対象 5 ファイル (`src/sora.ts` / `src/publisher.ts` / `src/subscriber.ts` / `src/messaging.ts` / `src/base.ts`) の `@example` が「設計方針」の粒度に揃っている
+- 対象 5 ファイル (`src/sora.ts` / `src/publisher.ts` / `src/subscriber.ts` / `src/messaging.ts` / `src/base.ts`) の `@example` が「設計方針」の粒度に揃っている (`@deprecated` の `stopAudioTrack` / `stopVideoTrack` だけは「スコープ」どおり置き換えガイドとして最小限のまま)
 - 全 `@example` のコードフェンスが ` ```typescript ` に統一されている
 - `sendMessage` に `@example` が追加されている
-- `on()` の `@example` が `Callbacks` の複数 kind を網羅する形で拡張されている
+- `on()` の `@example` が `Callbacks` の代表 kind (`disconnect` / `notify` / `signaling` / `message` / `datachannel`) を網羅する形で拡張されている
 - `disconnect` / `rpc` の `@example` がシーケンスとエラー前提を読み取れる形に拡張されている
-- ローカルで `vp install --frozen-lockfile && vp run doc` を実行し、`apidoc/index.html` から各メソッドカードに展開された例が typedoc の HTML 上で崩れずに表示される
-- typedoc のビルドが既存の警告数を増やさない
+- `@example` 追加に伴い `tsc --noEmit` / `vp lint --type-aware` が通る
+- `vp run doc` が実行可能な環境で実行し (現 develop は 0089 の typedoc / TypeScript 7 非互換のため実行不能)、`apidoc/interfaces/ConnectionBase.html` ("interfaces/" 配下。0063 の実測どおり `classes/` は生成されない) 等から各メソッドカードに展開された例が typedoc の HTML 上で崩れずに表示される
+- typedoc のビルドが既存の警告数を増やさない (0089 解消後に確認する)
 
 ## 解決方法
 
 ### ファイル変更
 
 - `src/base.ts` の `@example` ブロックを言語指定 `typescript` に揃え、`on` / `disconnect` / `sendMessage` / `rpc` の例を「設計方針」に沿って拡張する
-- `src/sora.ts` / `src/publisher.ts` / `src/subscriber.ts` / `src/messaging.ts` の `@example` を「Sora.connection → role 選択 → on() でコールバック設定 → connect()」シーケンスに揃え、URL を `wss://sora.example.com/signaling` 系で統一する
-- 既存の `192.0.2.100:5000` を使った例も残す場合は 1 箇所に集約し、混在させない
+- `src/sora.ts` / `src/publisher.ts` / `src/subscriber.ts` / `src/messaging.ts` の `@example` を「Sora.connection → role 選択 → on() でコールバック設定 → connect()」シーケンスに揃え、シグナリング URL を `wss://sora.example.com/signaling` に統一する (既存の `ws://192.0.2.100:5000/signaling` を置き換える)
 
 ### 検証
 
-- `vp install --frozen-lockfile` 後に `vp run doc` を実行し、`apidoc/` を再生成する
-- `apidoc/classes/ConnectionBase.html` (typedoc が出力する名称に依る) 等から、各 `@example` がコードブロックとして崩れずに表示されること、`typescript` シンタックスハイライトが効いていることを目視確認する
-- 0063 マージ後の `https://shiguredo.github.io/sora-js-sdk/` 配信物でも同様に確認する
+- `@example` の追加・変更後に `tsc --noEmit` / `vp lint --type-aware` が通ることを確認する
+- `vp run doc` が実行可能な環境 (0089 で typedoc / TypeScript 7 非互換を解消後) で `vp install --frozen-lockfile` 後に `vp run doc` を実行し、`apidoc/` を再生成する
+- `apidoc/interfaces/ConnectionBase.html` ("interfaces/". 0063 の実測どおり `classes/` は生成されない。`ConnectionBase` 等の公開クラスも `export type` 再 export のため interfaces/ 配下) 等から、各 `@example` がコードブロックとして崩れずに表示されること、`typescript` シンタックスハイライトが効いていることを目視確認する
+- 配信中の `https://shiguredo.github.io/sora-js-sdk/` (0063 の検証で 200 を確認済み。次回 master へのマージ時に `deploy-apidoc.yml` 経由で更新される) でも同様に確認する
 
 ### 変更履歴
 
@@ -111,12 +112,13 @@ Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) のマージ後�
 ## スコープ外 (本 issue では実装しない)
 
 - `TYPEDOC.md` の表紙刷新 (0064 で扱う)
-- `typedoc.json` の `intentionallyNotExported` を `@internal` + `excludeInternal: true` に置き換える作業 (0065 で扱う)
+- `typedoc.json` の `intentionallyNotExported` の整理 (0065 は「`@internal` + `excludeInternal` では置換できない」と実測され、2026-09-16 にソース変更なしで closed 済み。現状維持のまま本 issue では触らない)
 - `@param` / `@returns` / `@remarks` 等、`@example` 以外の TSDoc タグの整理 (`rpc` の `@remarks` 最小修正を除く)
 - API シグネチャや引数名の変更
 
 ## 関連 issue
 
-- **0063 (open)**: typedoc 生成物の GitHub Pages デプロイ。本 issue の `@example` が一般利用者の目に触れるのは 0063 マージ後
+- **0063 (closed、2026-09-15)**: typedoc 生成物の GitHub Pages デプロイ。配信は稼働済みで、本 issue の `@example` は一般利用者の目に触れる
 - **0064 (open)**: TYPEDOC.md を API ドキュメントの表紙として刷新する。編集ファイルは重ならない
-- **0065 (open)**: `typedoc.json` の `intentionallyNotExported` を `@internal` + `excludeInternal: true` に置き換える。編集ファイルは重ならない
+- **0065 (closed、2026-09-16)**: `typedoc.json` の `intentionallyNotExported` を `@internal` + `excludeInternal: true` に置き換える作業。「typedoc 0.28.20 では置換不可」と実測され、ソース変更なしで closed 済み。編集ファイルは重ならない
+- **0089 (open)**: `vp run doc` を TypeScript 7 で実行可能にする。本 issue の完了条件にある typedoc 生成物の目視確認の前提であり、0089 の解消後に検証する
