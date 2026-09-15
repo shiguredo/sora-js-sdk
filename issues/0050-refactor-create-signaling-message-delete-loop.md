@@ -2,13 +2,13 @@
 
 - Priority: Low
 - Created: 2026-06-12
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-15
 - Model: Opus 4.7
 - Branch: feature/refactor-create-signaling-message-delete-loop
 
 ## 目的
 
-`createSignalingMessage` (`src/utils.ts:230-263`) の `copyOptions` delete ループには、issue 0018 で追加された「`copyOptions[key] !== null && copyOptions[key] !== undefined`」の同一ガードが 3 箇所コピペで反復している。Rule of Three を満たし、helper 関数 (例: `isValueSet`) への抽出が読みやすさと修正漏れ防止 (3 箇所同時に直す必要があった事実そのものが脆さを示す) に有効。
+`createSignalingMessage` の `copyOptions` delete ループ (関数内の `for` ループ) には、issue 0018 で追加された「`copyOptions[key] !== null && copyOptions[key] !== undefined`」の同一ガードが 3 箇所コピペで反復している。Rule of Three を満たし、helper 関数 (例: `isValueSet`) への抽出が読みやすさと修正漏れ防止 (3 箇所同時に直す必要があった事実そのものが脆さを示す) に有効。
 
 加えて、3 つの判定配列 (`audioPropertyKeys` / `audioOpusParamsPropertyKeys` / `videoPropertyKeys`) の `continue` 分岐は **すべて同じ動作 (continue)** で個別判定する必要がなく、配列を統合した 1 つの判定に圧縮できる。各キーは prefix で相互排他のため統合しても挙動は変わらない。
 
@@ -16,11 +16,11 @@
 
 ## 優先度根拠
 
-Low。バグではなくリファクタリングで、利用者影響なし。動的挙動は 1 ビットも変えない。issue 0046 (`"X" in copyOptions` → `typeof` ガード置き換え) と組み合わせることで `createSignalingMessage` 全体のコードクオリティが上がるが、緊急性はない。
+Low。バグではなくリファクタリングで、利用者影響なし。動的挙動は 1 ビットも変えない。issue 0046 (マージ済み) による `"X" in copyOptions` → `typeof` ガード置き換えが適用済みの `createSignalingMessage` 全体のコードクオリティをさらに上げられるが、緊急性はない。
 
 ## 現状
 
-`src/utils.ts:230-263` (issue 0018 マージ後、commit `232694a4` 時点) の該当箇所:
+現行の `createSignalingMessage` (`src/utils.ts` の `createSignalingMessage` 関数。issue 0018 マージ後の delete ループから変更なし) の該当箇所:
 
 ```ts
 const copyOptions = { ...options };
@@ -64,7 +64,7 @@ for (const key of Object.keys(copyOptions) as Array<keyof ConnectionOptions>) {
 2. **判定配列 3 つの個別 `continue`**: 3 つの `continue` 分岐は同じ動作。`audioPropertyKeys` / `audioOpusParamsPropertyKeys` / `videoPropertyKeys` は prefix で相互排他のため統合可能
 3. **コメントが 1 箇所のみ**: 「null だけでなく undefined も delete 側に流すために両方を明示的に弾く」のコメントは最初の 1 箇所にしか付いておらず、2 〜 3 箇所目の同一ガードは別意図と誤読されうる
 
-`audioPropertyKeys` / `audioOpusParamsPropertyKeys` / `videoPropertyKeys` は `src/utils.ts:211-229` で定義され、本ループ以降にも `hasAudioProperty` / `hasAudioOpusParamsProperty` / `hasVideoProperty` (`src/utils.ts:267-300`) の判定で個別に再利用されているため、配列自体は残す必要がある。
+`audioPropertyKeys` / `audioOpusParamsPropertyKeys` / `videoPropertyKeys` は `createSignalingMessage` 内の `copyOptions` 構築前 (`src/utils.ts` の `const audioPropertyKeys = [...]` 以降) で定義され、本ループ以降にも `hasAudioProperty` / `hasAudioOpusParamsProperty` / `hasVideoProperty` の判定で個別に再利用されているため、配列自体は残す必要がある。
 
 ## 設計方針
 
@@ -88,7 +88,7 @@ const isValueSet = (value: unknown): boolean => value !== null && value !== unde
 const propertyKeys = [...audioPropertyKeys, ...audioOpusParamsPropertyKeys, ...videoPropertyKeys];
 ```
 
-を `:230` の `copyOptions` 構築前後に追加し、ループ内の 3 つの `continue` を 1 つに統合:
+を `copyOptions` の構築直後に追加し、ループ内の 3 つの `continue` を 1 つに統合:
 
 ```ts
 const copyOptions = { ...options };
@@ -108,30 +108,27 @@ for (const key of Object.keys(copyOptions) as Array<keyof ConnectionOptions>) {
 }
 ```
 
-行数は約 25 行 → 約 13 行に減り、修正漏れリスクも消える。
+行数は `copyOptions` 構築から delete ループ終わりまで **33 行** → **15 行** (現状の実装を `const copyOptions` 構築から数えた場合) に減り、修正漏れリスクも消える。
 
 ## 完了条件
 
-- `src/utils.ts:230-263` の `copyOptions` delete ループを「設計方針 1 / 2」のとおりに統合し、helper 関数 / 統合配列で書き直す
+- `createSignalingMessage` の `copyOptions` delete ループを「設計方針 1 / 2」のとおりに統合し、helper 関数 / 統合配列で書き直す
 - 既存テスト `tests/utils.test.ts` 全件が修正なしで pass する (動的挙動を変えないため、テスト書き換えは不要なはず)
 - ローカルで `pnpm test` / `pnpm typecheck` / `pnpm lint` が pass し、`pnpm fmt` で差分が出ないこと
-- `CHANGES.md` `## develop` の `### misc` に refactor エントリ 1 件を追記する (機能に直接影響しないリファクタリングのため `misc`)
+- `CHANGES.md` `## develop` の `### misc` に `[UPDATE]` の refactor エントリ 1 件を追記する (`shiguredo-changelog` の種別に従い、機能に直接影響しないリファクタリングのため `misc`、`[UPDATE]` とする。issue 0046 の型安全化リファクタも `[UPDATE]` で記載されている)
 
 ## 前提
 
 - 動的挙動は 1 ビットも変えない (本 issue は構造リファクタのみ)
-- issue 0046 マージ後の状態を前提とする (0046 で `"X" in copyOptions` が `typeof` ガードに置き換えられた後の方が、delete ループ周辺のコードが軽くなり統合の意義が明確になる)
+- issue 0046 マージ後の状態を前提とする (0046 は 2026-06-16 にマージ済み。`"X" in copyOptions` が `typeof` ガードに置き換えられた後なので、delete ループ周辺のコードが軽くなり統合の意義が明確になっている)
 
 ## スコープ外
 
-- `"X" in copyOptions` を `typeof` ガードに置き換える型安全化リファクタ (issue 0046)
+- `"X" in copyOptions` を `typeof` ガードに置き換える型安全化リファクタ (issue 0046、マージ済み)
 - `audioPropertyKeys` / `audioOpusParamsPropertyKeys` / `videoPropertyKeys` の配列定義自体の見直し (本 issue は配列の利用方法のみ変更)
 - `hasAudioProperty` / `hasAudioOpusParamsProperty` / `hasVideoProperty` の 3 つの判定の統合 (本 issue は delete ループのみに限定。これらは別意味で利用されており、統合すると後続コードの意図が変わる)
+- audio / video パラメータのテスト補強 (`videoVP9Params` 等の正常系テストは issue 0060、`null` 入力テストは issue 0061、いずれも open で起票済みなので本 issue では扱わない)
 
 ## マージ順
 
-issue 0018 (マージ済) → issue 0046 → 本 issue。0046 で `in` 演算子が消えた後の方が、本 refactor で残る delete ループの構造がより読みやすくなる。
-
-## メモ
-
-- 本 issue で delete ループの統合 / helper 抽出を行う際、issue 0046 (closed) の完了条件 :109 と方針 :110 の間に矛盾 (`video*Params の有効値・undefined・混在ケースが pass し続けることが動的挙動不変の証拠` と `新規テストは追加しない` が両立していない) があった。本 issue の実装時にあわせて、`videoVP9Params` / `videoH264Params` / `videoH265Params` / `videoAV1Params` 系の回帰テストと audio/video params キーへの `null` 入力テストを補強するかを検討する。スコープ拡張が大きい場合は、テスト補強を別 issue として切り出す。
+issue 0018 (マージ済) → issue 0046 (マージ済) → 本 issue。0046 で `in` 演算子が消えた後の方が、本 refactor で残る delete ループの構造がより読みやすくなる。
