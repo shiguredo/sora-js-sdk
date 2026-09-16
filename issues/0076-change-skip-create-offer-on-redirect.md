@@ -2,8 +2,8 @@
 
 - Created: 2026-09-10
 - Completed: {YYYY-MM-DD}
-- Branch: feature/change-skip-create-offer-on-redirect
-- Polished: {YYYY-MM-DD}
+- Branch: feature/update-skip-create-offer-on-redirect
+- Polished: 2026-09-16
 
 ## 目的
 
@@ -17,7 +17,7 @@
 - `src/base.ts` の `createOffer()` は `iceServers: []` の一時 `RTCPeerConnection` を生成して `pc.createOffer()` を呼び、`pc.close()` したうえで `create-offer` timeline ログを記録する
 - `src/base.ts` の `signaling` 内 `ws.onmessage` の `type: redirect` 分岐は `signalingOnMessageTypeRedirect(message)` を呼ぶ
 - `src/base.ts` の `signalingOnMessageTypeRedirect(message)` は `message.location` に対して `getSignalingWebSocket` で新しい WebSocket を取得し、`this.signaling(ws, true)` を呼ぶ。このため `signaling` 先頭の `createOffer()` が再度実行される
-- 結果として、リダイレクトを挟む接続の流れは `create-offer` -> `ws open` -> `ws connect` -> `type: connect` -> `redirect` -> `ws close` -> `create-offer` -> `ws open` ... となる
+- 結果として、リダイレクトを挟む接続の流れは `ws open` -> `create-offer` -> `type: connect` 送信 -> `redirect` -> `ws close` -> `ws open` -> `create-offer` -> `type: connect` 送信 ... となる。`signaling` を呼ぶたびに先頭の `createOffer()` が実行されるため、1 回の接続で `create-offer` が 2 回以上記録される
 - `redirect` フラグは `src/utils.ts` の `createSignalingMessage` の引数を経由して `type: connect` メッセージの `redirect: true` に使われている。この挙動は維持する必要がある
 
 ## 設計方針
@@ -36,7 +36,7 @@
 - 初回接続 (redirect なし) では従来どおり `createOffer` が 1 回実行されること
 - 多段 redirect でも offer が再利用されること
 - `type: connect` メッセージの `redirect: true` の付与が維持されていること
-- `pnpm test` / `pnpm typecheck` / `pnpm lint` が通ること
+- ローカルで `vp test run` / `vp check` / `vp exec tsc --noEmit` が通ること
 - `CHANGES.md` の `## develop` に `[UPDATE]` エントリが追記されていること
 
 ## テスト方針
@@ -47,5 +47,5 @@
   - `ws.onmessage` の redirect 分岐が `signaling` の offer を `signalingOnMessageTypeRedirect` に渡していること
   - `signalingOnMessageTypeRedirect` が受け取った offer を `signaling(ws, true, offer)` に渡していること
   - offer 未指定時は従来どおり `createOffer()` が呼ばれること
-- 既存の `pnpm test` / `pnpm typecheck` / `pnpm lint` が回帰なく通ることを確認する
+- 既存の `vp test run` / `vp check` / `vp exec tsc --noEmit` が回帰なく通ることを確認する
 - クラスタ環境が利用できる場合は手動で確認する。redirect を挟む接続で timeline の `create-offer` が 1 回だけであること、redirect 後の `type: connect` の `sdp` が最初の offer と一致することを確認する
