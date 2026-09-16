@@ -4,7 +4,7 @@
 - Created: 2026-09-10
 - Completed: {YYYY-MM-DD}
 - Branch: feature/refactor-organize-soracloseevent-types
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-16
 
 ## 目的
 
@@ -75,6 +75,8 @@ export interface SoraCloseEventParams {
 
 `disconnect()` の `code: 4999` 経路は `title` を `"INTERNAL-ERROR"` に統一し、原因 (`result.reason`) は `event.reason` のみに残す。`"INTERNAL-ERROR"` は `SoraAbendTitle` に定義済みだが現状使用箇所が無い。サブ経路の判別は既存どおり `event.reason` で行うため、`e2e-tests/tests/disconnect_event_type.test.ts` (reason を検証している) への影響は無い。
 
+なお、`src/base.ts` の `disconnect()` 内には issue 0031 が残した「ここでの統一は本 issue のスコープ外」という趣旨のコメントがある。本 issue で title を `"INTERNAL-ERROR"` に統一するため、このコメントは新しい実装に合わせて書き換えるか削除する。矛盾したまま残すと、あとでコードを読んだときにスコープ外の前提が誤って引き継がれる。
+
 ## 完了条件
 
 ### コード変更
@@ -85,6 +87,7 @@ export interface SoraCloseEventParams {
 - [ ] `src/base.ts` の `soraCloseEvent()` の `title` を `SoraCloseEventTitle` にする
 - [ ] `src/base.ts` の `disconnectWebSocket()` の引数を `reason` に改名し、`"NO-ERROR"` をイベント title の union から分離する
 - [ ] `disconnect()` の `code: 4999` 経路の `title` を `"INTERNAL-ERROR"` にし、原因を `event.reason` に残す
+- [ ] `src/base.ts` の `disconnect()` 内にある「ここでの統一は本 issue のスコープ外」の趣旨のコメントを、`title` を `"INTERNAL-ERROR"` に統一する新しい実装に合わせて書き換えるか削除する
 
 ### 検証
 
