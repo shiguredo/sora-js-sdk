@@ -65,8 +65,8 @@ Low。SDK の機能には直接影響しない CI 検証強化。issue 0054 (`ex
 | ファイル         | 内容                                                                                           |
 | ---------------- | ---------------------------------------------------------------------------------------------- |
 | `vite.config.ts` | `pack` ブロックに `publint: true` / `attw: true` を追加                                        |
-| `package.json`   | `devDependencies` に `publint` / `@arethetypeswrong/core` を追加                                |
-| `pnpm-lock.yaml` | 前提となる依存追加に伴う更新                                                                    |
+| `package.json`   | `devDependencies` に `publint` / `@arethetypeswrong/core` を追加                               |
+| `pnpm-lock.yaml` | 前提となる依存追加に伴う更新                                                                   |
 | `CHANGES.md`     | `## develop` の `### misc` の `[ADD]` 群末尾に 1 エントリ追記 (挿入位置の詳細は完了条件を参照) |
 
 ## 完了条件

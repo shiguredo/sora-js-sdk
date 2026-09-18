@@ -19,9 +19,9 @@ Low。CI / publish ジョブの動作には影響しない。構造重複の解�
 
 `.github/workflows/npm-publish.yml` の publish 2 ジョブ (`npm-publish-canary` / `npm-publish`) は steps の中身がほぼ同一で、以下の差分のみがある。
 
-| 項目                  | `npm-publish-canary` ジョブ              | `npm-publish` ジョブ                     |
-| --------------------- | ---------------------------------------- | ---------------------------------------- |
-| `if` 条件             | `contains(github.ref_name, '-canary.')`  | `!contains(github.ref_name, '-canary.')` |
+| 項目                   | `npm-publish-canary` ジョブ             | `npm-publish` ジョブ                     |
+| ---------------------- | --------------------------------------- | ---------------------------------------- |
+| `if` 条件              | `contains(github.ref_name, '-canary.')` | `!contains(github.ref_name, '-canary.')` |
 | `npm publish` コマンド | `npm publish --tag canary --provenance` | `npm publish --provenance`               |
 
 それ以外の構成 (`runs-on`、`needs`、`permissions`、`actions/checkout`、`voidzero-dev/setup-vp`、`actions/download-artifact`、`npm install -g npm@latest` までの全ステップ) は完全に同一。この現状は 0033 (closed, `--provenance` 追加) / 0058 (closed, `--no-git-checks` 削除) / 0039 (closed, `actions/setup-node` → `voidzero-dev/setup-vp` 置換) マージ後の確定状態。`voidzero-dev/setup-vp` は `node-version: 22` / `registry-url: https://registry.npmjs.org` / `run-install: false` で、`npm install -g npm@latest` の直前には `# pnpm publish は CI では正常に動作しない` の 2 行コメントがある。
