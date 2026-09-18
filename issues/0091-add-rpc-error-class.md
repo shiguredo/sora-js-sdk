@@ -4,7 +4,7 @@
 - Created: 2026-09-18
 - Completed: {YYYY-MM-DD}
 - Branch: feature/add-rpc-error-class
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-18
 
 ## 目的
 
