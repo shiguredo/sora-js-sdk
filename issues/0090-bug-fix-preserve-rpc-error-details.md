@@ -4,7 +4,7 @@
 - Created: 2026-09-18
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-preserve-rpc-error-details
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-18
 
 ## 目的
 
@@ -12,7 +12,7 @@ RPC でサーバーが JSON-RPC エラーを返したとき、呼び出し側が
 
 ## 優先度根拠
 
-High。RPC の失敗経路のうち「サーバーがエラーを返す」ケースで、エラーの内容が一切取得できなくなる。JSON-RPC 2.0 のエラーレスポンスは `code` / `message` / `data` を持つことが前提であり、呼び出し側はこれを使って分岐・リトライ・通知を判断する。情報は SDK 内部で破棄されるため呼び出し側に回避策が無い。実際に sora-devtools 2026.1.0 の RPC タブでは、Call 時に `[object Object]` のアラートが表示され、RPC Results にもエラーの内容が残らない状態になっている。
+High。RPC の失敗経路のうち「サーバーがエラーを返す」ケースで、エラーの内容が一切取得できなくなる。JSON-RPC 2.0 のエラーレスポンスは `code` / `message` を必須、`data` を任意で持つ仕様であり、呼び出し側はこれを使って分岐・リトライ・通知を判断する。情報は SDK 内部で破棄されるため呼び出し側に回避策が無い。実際に sora-devtools 2026.1.0 の RPC タブでは、Call 時に `[object Object]` のアラートが表示され、RPC Results にもエラーの内容が残らない状態になっている。
 
 ## 現状
 
