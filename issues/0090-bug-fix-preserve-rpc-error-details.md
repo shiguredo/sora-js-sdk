@@ -53,10 +53,17 @@ High。RPC の失敗経路のうち「サーバーがエラーを返す」ケー
 - export が増えていない (公開 API の追加が無い)
 - クライアント側のエラー (DataChannel 未接続、タイムアウト、notification 送信失敗) の挙動が変わっていない
 - 成功時の `result` の扱いと `rpcMethods` が変わっていない
-- JSON-RPC エラーオブジェクトから `Error` への変換を検証する単体テストが追加されている
-- `e2e-tests/rpc` に、サーバーがエラーを返す呼び出しで `message` と `cause` を検証する経路が追加されている
+- `e2e-tests/rpc` に、サーバーがエラーを返す呼び出しで `code` / `message` / `data` (Sora が返す実値) と plain な `Error` の契約、RPC ログへの出力を検証する経路が追加されている
+- `e2e-tests/rpc` に、成功時に `rpc()` が解決する `result` の内容を検証する経路が追加されている
 - `skills/sora-js-sdk/SKILL.md` の RPC 節にエラー時の `cause` が追記されている
 - `vp test run` / `vp check` / `vp exec tsc --noEmit` が通る
 - `CHANGES.md` の `## develop` に `[FIX]` が追記されている
 
-テスト戦略: jsdom に `RTCDataChannel` が無く、AGENTS.md でモック・スタブも禁止されているため、DataChannel 経由の reject は単体テストで再現できない。変換処理の単体テストと E2E テストの 2 段で担保する。
+テスト戦略: jsdom に `RTCDataChannel` が無く、AGENTS.md でモック・スタブも禁止されているため、DataChannel 経由の reject は単体テストでは再現できない。`e2e-tests/rpc` の E2E テストで次を検証する。
+
+- サーバーが返す JSON-RPC エラーの `code` / `message` / `data` が `cause` から取得でき、`message` がサーバーの `message` になること (期待値は Sora が実際に返す値に合わせる)
+- reject される値が plain な `Error` インスタンスであること
+- エラーの内容が RPC ログに出力されること
+- 成功時に `rpc()` が解決する `result` の内容
+
+これにより「`handleRPCResponse` のエラー経路が変換処理を呼ぶこと」と「reject ラッパーが `Error` を再包装しないこと」も併せて検証できている。どちらが壊れても `message` と `cause` の実値の一致で失敗するためである。
