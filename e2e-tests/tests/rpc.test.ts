@@ -153,6 +153,12 @@ test.describe("RPC test", () => {
   });
 
   test("サーバーが返した RPC エラーの message と cause を取得できる", async ({ browser }) => {
+    // NPM パッケージの E2E テストで検証する公開済みバージョンには、サーバーが返した
+    // JSON-RPC エラーを cause に保持する修正が含まれていないためスキップする
+    if (process.env.NPM_PKG_E2E_TEST === "true") {
+      test.skip();
+    }
+
     const { context, page } = await connectRpcPage(browser);
 
     // 不要な項目を含めた params で RPC を実行し、サーバーが JSON-RPC エラーを返すまで待機
