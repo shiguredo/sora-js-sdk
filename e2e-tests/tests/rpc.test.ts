@@ -162,7 +162,9 @@ test.describe("RPC test", () => {
     expect(rpcError.message.length).toBeGreaterThan(0);
 
     // reject される値は plain な Error インスタンスのままであること
+    // (DataChannel 経由の reject は単体テストで再現できないため、ここで契約を検証する)
     expect(rpcError.isError).toBe(true);
+    expect(rpcError.isPlainError).toBe(true);
     expect(rpcError.name).toBe("Error");
 
     // cause から JSON-RPC エラーオブジェクトの code / message を取得できること

@@ -249,6 +249,8 @@ export interface RpcErrorRecord {
   hasCause: boolean;
   // reject された値が Error インスタンスか
   isError: boolean;
+  // plain な Error (サブクラスではない) か
+  isPlainError: boolean;
   // Error の message
   message: string;
   // Error の name

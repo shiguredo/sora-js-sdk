@@ -23,6 +23,8 @@ interface RpcErrorRecord {
   cause: unknown;
   hasCause: boolean;
   isError: boolean;
+  // plain な Error (サブクラスではない) かどうか
+  isPlainError: boolean;
   message: string;
   name: string;
 }
@@ -148,6 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         cause: error instanceof Error ? error.cause : undefined,
         hasCause: error instanceof Error && error.cause !== undefined,
         isError: error instanceof Error,
+        isPlainError: error instanceof Error && Object.getPrototypeOf(error) === Error.prototype,
         message: error instanceof Error ? error.message : String(error),
         name: error instanceof Error ? error.name : "",
       };
