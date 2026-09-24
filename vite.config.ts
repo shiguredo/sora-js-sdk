@@ -87,6 +87,8 @@ export default defineConfig({
       "no-continue": "off",
       // let 宣言後に条件分岐で代入するパターンは一般的なため無効化
       "init-declarations": "off",
+      // 1 スコープ内で宣言をまとめず個別に const を宣言するスタイルのため無効化
+      "one-var": "off",
       // コールバック内で親スコープの変数名を再利用するパターンは一般的なため無効化
       "no-shadow": "off",
       // TODO/XXX コメントは開発中の課題管理に必要なため無効化
@@ -200,6 +202,8 @@ export default defineConfig({
       "no-throw-literal": "error",
       // 未使用の式を禁止
       "no-unused-expressions": "error",
+      // 未使用変数を禁止 (意図的に未使用とする変数・引数は _ 始まりで命名するため無視)
+      "no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       // 不要な call()/apply() を禁止
       "no-useless-call": "error",
       // 不要な文字列連結を禁止

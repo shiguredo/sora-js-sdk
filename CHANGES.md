@@ -33,6 +33,14 @@
 - [UPDATE] TypeScript を 6.0.3 から 7.0.2 に更新する
   - tsconfig の `declarationDir` を削除して tsgo での型定義生成に対応する
   - @voluntas
+- [UPDATE] `@types/node` を 26.5.1 から 26.6.1 に更新する
+  - @voluntas
+- [UPDATE] `jsdom` を 30.0.1 から 30.1.0 に更新する
+  - @voluntas
+- [UPDATE] `vite-plus` を 0.2.8 から 1.0.0-rc.0 に更新する
+  - 新しい lint ルールに対応するため `vite.config.ts` で `one-var` を無効化し、`no-unused-vars` に `argsIgnorePattern` / `varsIgnorePattern` を設定する
+  - `pnpm-workspace.yaml` の `minimumReleaseAgeExclude` に oxc 系パッケージを追加する
+  - @voluntas
 
 ## 2026.1.0
 

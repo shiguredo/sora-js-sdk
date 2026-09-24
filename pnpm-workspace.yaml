@@ -12,6 +12,15 @@ minimumReleaseAgeExclude:
   - "@voidzero-dev/*"
   - "@vitest/*"
   - "vite-plus"
+  # ビルドツールチェーン (oxc)
+  # vite-plus が同梱する oxlint / oxfmt は活発に更新されるため制限対象外とする
+  - "@oxc-project/*"
+  - "@oxfmt/*"
+  - "oxfmt"
+  - "@oxlint/*"
+  - "@oxlint-tsgolint/*"
+  - "oxlint"
+  - "oxlint-tsgolint"
 
 packages:
   - e2e-tests
