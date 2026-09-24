@@ -158,8 +158,7 @@ test.describe("RPC test", () => {
 
     // サーバーが返した message がそのまま Error の message になること
     // ("[object Object]" に潰れていたら失敗する)
-    expect(rpcError.message).not.toBe("[object Object]");
-    expect(rpcError.message.length).toBeGreaterThan(0);
+    expect(rpcError.message).toBe("JSON-RPC-INVALID-PARAMS");
 
     // reject される値は plain な Error インスタンスのままであること
     // (DataChannel 経由の reject は単体テストで再現できないため、ここで契約を検証する)
@@ -167,11 +166,15 @@ test.describe("RPC test", () => {
     expect(rpcError.isPlainError).toBe(true);
     expect(rpcError.name).toBe("Error");
 
-    // cause から JSON-RPC エラーオブジェクトの code / message を取得できること
+    // cause から JSON-RPC エラーオブジェクトの code / message / data を取得できること
+    // 期待値は Sora が実際に返す値に合わせる (Sora とのインターフェース確認のため、
+    // 現在のレスポンスを正として扱う)
     expect(rpcError.hasCause).toBe(true);
-    const cause = rpcError.cause as { code: number; message: string };
-    expect(typeof cause.code).toBe("number");
-    expect(cause.message).toBe(rpcError.message);
+    expect(rpcError.cause).toStrictEqual({
+      code: -32_602,
+      data: { "UNKNOWN-KEYS": ["invalid_param"] },
+      message: "JSON-RPC-INVALID-PARAMS",
+    });
 
     // 切断
     await page.click("#disconnect");
