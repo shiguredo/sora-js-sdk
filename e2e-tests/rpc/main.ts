@@ -17,6 +17,16 @@ import type {
 } from "sora-js-sdk";
 import { generateJwt, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
+// サーバーが返した RPC エラーの記録 (#rpc-error の dataset に JSON で書き出す)
+// E2E テスト側はこの記録から message と cause を検証する
+interface RpcErrorRecord {
+  cause: unknown;
+  hasCause: boolean;
+  isError: boolean;
+  message: string;
+  name: string;
+}
+
 // RPC ログを追加する関数
 function addRpcLog(message: string): void {
   const rpcLogElement = document.querySelector<HTMLElement>("#rpc-log");
@@ -115,6 +125,42 @@ document.addEventListener("DOMContentLoaded", async () => {
   for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="rid"]')) {
     radio.addEventListener("change", async () => handleRidChange(radio));
   }
+
+  // サーバーが JSON-RPC エラーを返す経路の検証用
+  // Sora は params に不要な項目が含まれている場合にエラーを返す
+  document.querySelector("#invalid-rpc")?.addEventListener("click", async () => {
+    if (!recvonlyClient) {
+      console.error("Recvonly client not initialized");
+      return;
+    }
+
+    const timestamp = new Date().toISOString();
+    addRpcLog(`[${timestamp}] Invalid request`);
+
+    try {
+      const result = await recvonlyClient.requestSimulcastRidWithInvalidParams();
+      const responseTimestamp = new Date().toISOString();
+      addRpcLog(`[${responseTimestamp}] Unexpected response: ${JSON.stringify(result)}`);
+    } catch (error) {
+      // サーバーが返したエラーは Error の cause に JSON-RPC エラーオブジェクトが入る
+      // クライアント側のエラー (DataChannel 未接続、タイムアウト) では cause は未設定
+      const errorRecord: RpcErrorRecord = {
+        cause: error instanceof Error ? error.cause : undefined,
+        hasCause: error instanceof Error && error.cause !== undefined,
+        isError: error instanceof Error,
+        message: error instanceof Error ? error.message : String(error),
+        name: error instanceof Error ? error.name : "",
+      };
+      const errorTimestamp = new Date().toISOString();
+      addRpcLog(`[${errorTimestamp}] Error: ${errorRecord.message}`);
+
+      const rpcErrorElement = document.querySelector<HTMLElement>("#rpc-error");
+      if (rpcErrorElement) {
+        rpcErrorElement.textContent = `${errorRecord.name}: ${errorRecord.message}`;
+        rpcErrorElement.dataset.rpcError = JSON.stringify(errorRecord);
+      }
+    }
+  });
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     if (!recvonlyClient) {
@@ -265,6 +311,17 @@ class SimulcastRecvonlyClient {
       rid,
     };
     return this.connection.rpc(rpcMethod, rpcParams);
+  }
+
+  // サーバーが JSON-RPC エラーを返すことを検証するため、不要な項目を含めた params で RPC を呼び出す
+  // サーバーがエラーを返さなかった場合にテストがハングしないようタイムアウトを指定する
+  async requestSimulcastRidWithInvalidParams(): Promise<unknown> {
+    const rpcMethod = "2025.2.0/RequestSimulcastRid";
+    const rpcParams = {
+      invalid_param: "invalid",
+      rid: "r0",
+    };
+    return this.connection.rpc(rpcMethod, rpcParams, { timeout: 10_000 });
   }
 
   async getStats(): Promise<RTCStatsReport> {

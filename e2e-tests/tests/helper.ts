@@ -241,6 +241,29 @@ export async function getRpcMethods(page: Page): Promise<string[]> {
   });
 }
 
+// サーバーが返した RPC エラーの記録 (e2e-tests/rpc/main.ts が #rpc-error の dataset に書き出す)
+export interface RpcErrorRecord {
+  // サーバーが返した場合は JSON-RPC エラーオブジェクト ({ code, message, data })
+  cause: unknown;
+  // cause が設定されているか (サーバーが返したエラーかどうかの判別に使う)
+  hasCause: boolean;
+  // reject された値が Error インスタンスか
+  isError: boolean;
+  // Error の message
+  message: string;
+  // Error の name
+  name: string;
+}
+
+// サーバーが返した RPC エラーの記録を取得する
+export async function getRpcError(page: Page): Promise<RpcErrorRecord> {
+  return page.$eval("#rpc-error", (el) => {
+    const element = el as HTMLElement;
+    const json = element.dataset.rpcError;
+    return JSON.parse(json ?? "{}") as RpcErrorRecord;
+  });
+}
+
 // ビデオ解像度を取得する
 export async function getVideoResolution(page: Page): Promise<Resolution> {
   return page.$eval("#video-resolution", (el) => {
