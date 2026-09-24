@@ -29,6 +29,14 @@ interface RpcErrorRecord {
   name: string;
 }
 
+// サーバーが JSON-RPC エラーを返すことを検証するためのリクエスト
+// Sora は params に不要な項目 (ここでは invalid_param) が含まれている場合にエラーを返す
+const INVALID_RPC_METHOD = "2025.2.0/RequestSimulcastRid";
+const INVALID_RPC_PARAMS = {
+  invalid_param: "invalid",
+  rid: "r0",
+};
+
 // RPC ログを追加する関数
 function addRpcLog(message: string): void {
   const rpcLogElement = document.querySelector<HTMLElement>("#rpc-log");
@@ -131,6 +139,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // サーバーが JSON-RPC エラーを返す経路の検証用
   // Sora は params に不要な項目が含まれている場合にエラーを返す
+  // どのようなリクエストを不正として送るのかをボタンの下に表示する
+  const invalidRpcRequestElement = document.querySelector<HTMLElement>("#invalid-rpc-request");
+  if (invalidRpcRequestElement) {
+    invalidRpcRequestElement.textContent =
+      `${INVALID_RPC_METHOD} ${JSON.stringify(INVALID_RPC_PARAMS)}` +
+      " (不要な項目 invalid_param を含むためサーバーがエラーを返す)";
+  }
   document.querySelector("#invalid-rpc")?.addEventListener("click", async () => {
     if (!recvonlyClient) {
       console.error("Recvonly client not initialized");
@@ -321,12 +336,7 @@ class SimulcastRecvonlyClient {
   // サーバーが JSON-RPC エラーを返すことを検証するため、不要な項目を含めた params で RPC を呼び出す
   // サーバーがエラーを返さなかった場合にテストがハングしないようタイムアウトを指定する
   async requestSimulcastRidWithInvalidParams(): Promise<unknown> {
-    const rpcMethod = "2025.2.0/RequestSimulcastRid";
-    const rpcParams = {
-      invalid_param: "invalid",
-      rid: "r0",
-    };
-    return this.connection.rpc(rpcMethod, rpcParams, { timeout: 10_000 });
+    return this.connection.rpc(INVALID_RPC_METHOD, INVALID_RPC_PARAMS, { timeout: 10_000 });
   }
 
   async getStats(): Promise<RTCStatsReport> {
