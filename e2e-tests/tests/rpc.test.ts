@@ -139,6 +139,11 @@ test.describe("RPC test", () => {
     expect(rpcLogContent).toContain("Request: rid=r1");
     expect(rpcLogContent).toContain("Request: rid=r0");
 
+    // rpc() が解決した result に、サーバーが返した切り替え後の rid が入っていること
+    // (RequestSimulcastRid の応答は切り替え先の rid を返す)
+    expect(rpcLogContent).toContain('"rid":"r1"');
+    expect(rpcLogContent).toContain('"rid":"r0"');
+
     // 切断
     await page.click("#disconnect");
 
