@@ -13,6 +13,8 @@
 
 - [FIX] 初回接続の offer 交渉中に setRemoteDescription / createAnswer が失敗したときに ws / pc がクリーンアップされなかったのを修正する
   - @voluntas
+- [FIX] rpc() がサーバーの JSON-RPC エラーを `Error("[object Object]")` に潰していたのを修正し、`message` をサーバーの `message` にして `code` / `message` / `data` を `cause` から取得できるようにする
+  - @voluntas
 
 ### misc
 
