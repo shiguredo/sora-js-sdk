@@ -176,6 +176,11 @@ test.describe("RPC test", () => {
       message: "JSON-RPC-INVALID-PARAMS",
     });
 
+    // RPC ログに cause の内容 (code / data) が出力されていること
+    const rpcLogContent = await getRpcLogContent(page);
+    expect(rpcLogContent).toContain('"code":-32602');
+    expect(rpcLogContent).toContain('"UNKNOWN-KEYS":["invalid_param"]');
+
     // 切断
     await page.click("#disconnect");
 

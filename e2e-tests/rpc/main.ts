@@ -171,7 +171,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         name: error instanceof Error ? error.name : "",
       };
       const errorTimestamp = new Date().toISOString();
-      addRpcLog(`[${errorTimestamp}] Error: ${errorRecord.message}`);
+      // cause にはサーバーが返した JSON-RPC エラーオブジェクト (code / message / data) が入る
+      // クライアント側のエラー (DataChannel 未接続、タイムアウト) では cause が無い
+      const causeText = errorRecord.hasCause ? JSON.stringify(errorRecord.cause) : "none";
+      addRpcLog(`[${errorTimestamp}] Error: ${errorRecord.message} cause=${causeText}`);
 
       const rpcErrorElement = document.querySelector<HTMLElement>("#rpc-error");
       if (rpcErrorElement) {
