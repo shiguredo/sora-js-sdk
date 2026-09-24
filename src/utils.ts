@@ -4,6 +4,7 @@ import type {
   DataChannelConfiguration,
   DataChannelEvent,
   DataChannelMessageEvent,
+  JSONRPCErrorResponse,
   JSONType,
   SignalingConnectDataChannel,
   SignalingConnectMessage,
@@ -633,6 +634,29 @@ export function createDataChannelEvent(channel: DataChannelConfiguration): DataC
   const event = new Event("datachannel") as DataChannelEvent;
   event.datachannel = channel;
   return event;
+}
+
+/**
+ * JSON-RPC エラーオブジェクトから `Error` を組み立てる
+ *
+ * @remarks
+ * Sora が JSON-RPC のエラーを返した場合、レスポンスの `error` は JSON-RPC 2.0 仕様の
+ * `code` (必須) / `message` (必須) / `data` (任意) を持つオブジェクトになる。
+ * このオブジェクトをそのまま reject すると `String(reason)` の `"[object Object]"` に
+ * 潰れて内容が失われるため、`message` を `Error` の message に、オブジェクト全体を
+ * `cause` に保持した `Error` を組み立てる。
+ *
+ * 返す値は plain な `Error` インスタンスである (`name` は `"Error"`、`instanceof Error` は真)。
+ * 呼び出し側は `cause` の有無で「サーバーが返したエラー」と「クライアント側のエラー
+ * (DataChannel 未接続、タイムアウト、notification 送信失敗)」を判別する。
+ * クライアント側のエラーには `cause` を設定しない。
+ *
+ * @internal
+ * @param error - JSON-RPC レスポンスの error オブジェクト
+ * @returns `message` に JSON-RPC の message、`cause` に JSON-RPC エラーオブジェクトを持つ Error
+ */
+export function createErrorFromJSONRPCError(error: JSONRPCErrorResponse["error"]): Error {
+  return new Error(error.message, { cause: error });
 }
 
 export async function parseDataChannelEventData(
