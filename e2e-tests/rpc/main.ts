@@ -66,10 +66,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     await sendonlyClient.connect(stream);
 
     // Recvonly を接続 (RPC 用のプライベートクレームを含む JWT を生成する)
+    // このテストサーバーはプライベートクレームの値を認証ウェブフックの払い出しとして
+    // そのまま返す。視聴する rid は指定せず Sora のデフォルト (r0) で開始する
     const privateClaims = {
       rpc_methods: ["2025.2.0/RequestSimulcastRid"],
       simulcast: true,
-      simulcast_request_rid: "r2",
       simulcast_rpc_rids: ["none", "r0", "r1", "r2"],
     };
     const recvonlyAccessToken = await generateJwt(channelId, secretKey, privateClaims);
@@ -277,10 +278,11 @@ class SimulcastRecvonlyClient {
     this.channelId = channelId;
     this.metadata = { access_token: accessToken };
 
+    // 視聴する rid は指定しない (Sora のデフォルトである r0 で開始し、
+    // 切り替えは RPC の 2025.2.0/RequestSimulcastRid で行う)
     this.connection = this.sora.recvonly(this.channelId, this.metadata, {
       connectionTimeout: 15_000,
       simulcast: true,
-      simulcastRid: "r2",
     });
 
     this.connection.on("notify", this.onnotify.bind(this));
