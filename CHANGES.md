@@ -13,7 +13,9 @@
 
 - [FIX] 初回接続の offer 交渉中に setRemoteDescription / createAnswer が失敗したときに ws / pc がクリーンアップされなかったのを修正する
   - @voluntas
-- [FIX] rpc() がサーバーの JSON-RPC エラーを `Error("[object Object]")` に潰していたのを修正し、`message` をサーバーの `message` にして `code` / `message` / `data` を `cause` から取得できるようにする
+- [FIX] rpc() がサーバーの JSON-RPC エラーを `Error("[object Object]")` に潰していたのを修正し、サーバーが返したエラーを `cause` から取得できるようにする
+  - `message` にサーバーが返した `message` を設定する
+  - `cause` に `code` / `message` / `data` を設定する
   - @miosakuma
 
 ### misc
