@@ -123,9 +123,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       const result = await recvonlyClient.requestSimulcastRid(rid);
+      const resultJson = JSON.stringify(result);
       const responseTimestamp = new Date().toISOString();
-      addRpcLog(`[${responseTimestamp}] Response: ${JSON.stringify(result)}`);
+      addRpcLog(`[${responseTimestamp}] Response: ${resultJson}`);
       console.log("RequestSimulcastRid sent successfully", result);
+
+      // 直前の result を E2E テスト側で厳密に検証できるように dataset に書き出す
+      const rpcResponseElement = document.querySelector<HTMLElement>("#rpc-response");
+      if (rpcResponseElement) {
+        rpcResponseElement.textContent = resultJson;
+        rpcResponseElement.dataset.rpcResult = resultJson;
+      }
     } catch (error) {
       const errorTimestamp = new Date().toISOString();
       addRpcLog(`[${errorTimestamp}] Error: ${String(error)}`);

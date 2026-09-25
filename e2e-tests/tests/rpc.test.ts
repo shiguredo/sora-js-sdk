@@ -7,6 +7,7 @@ import {
   getRpcError,
   getRpcLogContent,
   getRpcMethods,
+  getRpcResult,
   getVideoResolution,
 } from "./helper";
 
@@ -79,6 +80,11 @@ test.describe("RPC test", () => {
     const initialResolution = await getVideoResolution(page);
     console.log(`Initial resolution (r0): ${initialResolution.width}x${initialResolution.height}`);
 
+    // 解像度が測定できていることを確認する
+    // (未測定の場合は 0 が返り、大小比較だけでは 0 でも成立してしまう)
+    expect(initialResolution.width).toBeGreaterThan(0);
+    expect(initialResolution.height).toBeGreaterThan(0);
+
     // r1 に切り替え (RPC 実行)
     await page.click('input[name="rid"][value="r1"]');
 
@@ -99,6 +105,14 @@ test.describe("RPC test", () => {
       },
       { timeout: 15_000 },
     );
+
+    // rpc() が解決した result を厳密に検証する
+    // (2025.2.0/RequestSimulcastRid の応答は切り替え先の rid と接続情報)
+    expect(await getRpcResult(page)).toStrictEqual({
+      channel_id: expect.any(String),
+      receiver_connection_id: expect.any(String),
+      rid: "r1",
+    });
 
     // 解像度が変わるまで待機
     await page.waitForTimeout(3000);
@@ -123,12 +137,25 @@ test.describe("RPC test", () => {
       { timeout: 15_000 },
     );
 
+    // rpc() が解決した result を厳密に検証する
+    // (2025.2.0/RequestSimulcastRid の応答は切り替え先の rid と接続情報)
+    expect(await getRpcResult(page)).toStrictEqual({
+      channel_id: expect.any(String),
+      receiver_connection_id: expect.any(String),
+      rid: "r0",
+    });
+
     // 解像度が戻るまで待機
     await page.waitForTimeout(3000);
 
     // r0 の解像度を取得
     const r0Resolution = await getVideoResolution(page);
     console.log(`r0 resolution: ${r0Resolution.width}x${r0Resolution.height}`);
+
+    // 解像度が測定できていることを確認する
+    // (未測定の 0 は r1 より小さいので、大小比較だけでは成立してしまう)
+    expect(r0Resolution.width).toBeGreaterThan(0);
+    expect(r0Resolution.height).toBeGreaterThan(0);
 
     // r0 は最も低い解像度なので、r1 より小さいはず
     expect(r0Resolution.width).toBeLessThan(r1Resolution.width);
@@ -138,11 +165,6 @@ test.describe("RPC test", () => {
     const rpcLogContent = await getRpcLogContent(page);
     expect(rpcLogContent).toContain("Request: rid=r1");
     expect(rpcLogContent).toContain("Request: rid=r0");
-
-    // rpc() が解決した result に、サーバーが返した切り替え後の rid が入っていること
-    // (RequestSimulcastRid の応答は切り替え先の rid を返す)
-    expect(rpcLogContent).toContain('"rid":"r1"');
-    expect(rpcLogContent).toContain('"rid":"r0"');
 
     // 切断
     await page.click("#disconnect");
@@ -194,6 +216,45 @@ test.describe("RPC test", () => {
 
     // 切断
     await page.click("#disconnect");
+
+    // クリーンアップ
+    await page.close();
+    await context.close();
+  });
+
+  test("切断後の rpc() はクライアント側のエラーになり cause が設定されない", async ({
+    browser,
+  }) => {
+    const { context, page } = await connectRpcPage(browser);
+
+    // 切断して RPC DataChannel を閉じる
+    // #rpc-methods がクリアされると切断処理が完了したことが分かる
+    await page.click("#disconnect");
+    await page.waitForFunction(
+      () => document.querySelector<HTMLElement>("#rpc-methods")?.dataset.rpcMethods === undefined,
+      { timeout: 15_000 },
+    );
+
+    // 切断後に RPC を実行するとクライアント側のエラーになる
+    await page.click("#invalid-rpc");
+    await page.waitForSelector("#rpc-error[data-rpc-error]", { timeout: 15_000 });
+
+    const rpcError = await getRpcError(page);
+
+    // クライアント側のエラーでは cause が設定されない
+    // (cause の有無でサーバーが返したエラーかどうかを判別する契約)
+    expect(rpcError.hasCause).toBe(false);
+    expect(rpcError.cause).toBeUndefined();
+    expect(rpcError.message).toBe("RPC DataChannel is not available or not open");
+
+    // reject される値は plain な Error インスタンスのままであること
+    expect(rpcError.isError).toBe(true);
+    expect(rpcError.isPlainError).toBe(true);
+    expect(rpcError.name).toBe("Error");
+
+    // RPC ログには cause が無いことが出力される
+    const rpcLogContent = await getRpcLogContent(page);
+    expect(rpcLogContent).toContain("cause=none");
 
     // クリーンアップ
     await page.close();

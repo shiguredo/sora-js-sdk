@@ -266,6 +266,16 @@ export async function getRpcError(page: Page): Promise<RpcErrorRecord> {
   });
 }
 
+// 直前の RPC 呼び出しで rpc() が解決した result を取得する
+// (e2e-tests/rpc/main.ts が #rpc-response の dataset に JSON で書き出す)
+export async function getRpcResult(page: Page): Promise<unknown> {
+  return page.$eval("#rpc-response", (el) => {
+    const element = el as HTMLElement;
+    const json = element.dataset.rpcResult;
+    return json === undefined ? undefined : JSON.parse(json);
+  });
+}
+
 // ビデオ解像度を取得する
 export async function getVideoResolution(page: Page): Promise<Resolution> {
   return page.$eval("#video-resolution", (el) => {
