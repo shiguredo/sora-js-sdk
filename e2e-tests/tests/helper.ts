@@ -272,7 +272,12 @@ export async function getRpcResult(page: Page): Promise<unknown> {
   return page.$eval("#rpc-response", (el) => {
     const element = el as HTMLElement;
     const json = element.dataset.rpcResult;
-    return json === undefined ? undefined : JSON.parse(json);
+    // dataset は文字列しか保持できないため、result が undefined の場合は "undefined" が入る
+    // JSON.parse("undefined") は SyntaxError になるため、未取得として扱う
+    if (json === undefined || json === "undefined") {
+      return undefined;
+    }
+    return JSON.parse(json);
   });
 }
 

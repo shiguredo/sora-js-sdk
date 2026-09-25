@@ -129,8 +129,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("RequestSimulcastRid sent successfully", result);
 
       // 直前の result を E2E テスト側で厳密に検証できるように dataset に書き出す
+      // result が undefined の場合は dataset に "undefined" が入ってしまうため書き出さない
       const rpcResponseElement = document.querySelector<HTMLElement>("#rpc-response");
-      if (rpcResponseElement) {
+      if (rpcResponseElement && resultJson !== undefined) {
         rpcResponseElement.textContent = resultJson;
         rpcResponseElement.dataset.rpcResult = resultJson;
       }

@@ -175,11 +175,11 @@ test.describe("RPC test", () => {
   });
 
   test("サーバーが返した RPC エラーの message と cause を取得できる", async ({ browser }) => {
-    // NPM パッケージの E2E テストで検証する公開済みバージョンには、サーバーが返した
-    // JSON-RPC エラーを cause に保持する修正が含まれていないためスキップする
-    if (process.env.NPM_PKG_E2E_TEST === "true") {
-      test.skip();
-    }
+    // NPM パッケージの E2E テストは公開済みバージョンを検証する
+    test.skip(
+      process.env.NPM_PKG_E2E_TEST === "true",
+      "公開済みバージョンには cause の修正が含まれていないため",
+    );
 
     const { context, page } = await connectRpcPage(browser);
 
