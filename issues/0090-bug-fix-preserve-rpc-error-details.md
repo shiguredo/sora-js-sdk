@@ -35,9 +35,9 @@ High。RPC の失敗経路のうち「サーバーがエラーを返す」ケー
 
 ## 設計方針
 
-- `src/base.ts` の `ConnectionBase.handleRPCResponse` で、`response.error` をそのまま reject せず `new Error(response.error.message, { cause: response.error })` を reject する。`message` はサーバーが返した `message` になり、`cause` に `{ code, message, data }` が保持される。
+- `src/base.ts` の `ConnectionBase.handleRPCResponse` で、`response.error` をそのまま reject せず `createErrorFromJSONRPCError(response.error)` が返す `Error` を reject する。`message` はサーバーが返した `message` になり、`cause` に `{ code, message, data }` が保持される。サーバーが JSON-RPC 2.0 に反する値 (`null` / 文字列など) を返しても reject できなくならないよう、`error` がオブジェクト以外の場合は `String(error)` を `message` にした `Error` を返す (`cause` は設定しない)。
 - reject される値は 2026.1.0 と同じ plain な `Error` インスタンスのままとする (`name` は `"Error"`、`instanceof Error` は真)。新しいエラークラスの新設と re-export は公開 API の追加 (`[ADD]`) になるため本 issue には含めず、別 issue (0091) で扱う。
-- 呼び出し側の判別は `error.cause` の有無で行う。この契約 (サーバーがエラーを返した場合のみ `cause` に JSON-RPC エラーオブジェクトが入る) を TSDoc に明記する。クライアント側のエラー (DataChannel 未接続、タイムアウト、notification 送信失敗) には `cause` を設定しない。
+- 呼び出し側の判別は `error.cause` の有無で行う。この契約 (`cause` が設定されていればサーバーが返したエラー) を TSDoc に明記する。クライアント側のエラー (DataChannel 未接続、タイムアウト、notification 送信失敗) には `cause` を設定しないが、`cause` が無いことがクライアント側のエラーを意味するわけではないことも明記する。
 - `cause` を設定するのは `handleRPCResponse` のエラー経路のみとし、`rpc()` の reject ラッパー (`reject(reason instanceof Error ? reason : new Error(String(reason)))`) の汎用の包み込みは変更しない。
 - JSON-RPC エラーオブジェクトから `Error` を組み立てる処理は `src/utils.ts` の純粋な関数として切り出し、`RTCDataChannel` を使わずに単体テストできるようにする。
 - `rpc()` の reject の型は `unknown` のまま変更しない。TSDoc に、サーバーがエラーを返した場合は `cause` に `JSONRPCErrorResponse["error"]` が入ることを追記する。
@@ -53,8 +53,10 @@ High。RPC の失敗経路のうち「サーバーがエラーを返す」ケー
 - export が増えていない (公開 API の追加が無い)
 - クライアント側のエラー (DataChannel 未接続、タイムアウト、notification 送信失敗) の挙動が変わっていない
 - 成功時の `result` の扱いと `rpcMethods` が変わっていない
+- `createErrorFromJSONRPCError` の単体テストが追加されている (`message` / `cause` の保持、`data` が無い場合、オブジェクト以外の値でも settle できること)
 - `e2e-tests/rpc` に、サーバーがエラーを返す呼び出しで `code` / `message` / `data` (Sora が返す実値) と plain な `Error` の契約、RPC ログへの出力を検証する経路が追加されている
 - `e2e-tests/rpc` に、成功時に `rpc()` が解決する `result` の内容を検証する経路が追加されている
+- `e2e-tests/rpc` に、切断後の `rpc()` がクライアント側のエラーになり `cause` が設定されないことを検証する経路が追加されている
 - `skills/sora-js-sdk/SKILL.md` の RPC 節にエラー時の `cause` が追記されている
 - `vp test run` / `vp check` / `vp exec tsc --noEmit` が通る
 - `CHANGES.md` の `## develop` に `[FIX]` が追記されている
@@ -65,7 +67,10 @@ High。RPC の失敗経路のうち「サーバーがエラーを返す」ケー
 - reject される値が plain な `Error` インスタンスであること
 - エラーの内容が RPC ログに出力されること
 - 成功時に `rpc()` が解決する `result` の内容
+- 切断後に `rpc()` を呼び出したとき、クライアント側のエラーになり `cause` が設定されないこと
 
 これにより「`handleRPCResponse` のエラー経路が変換処理を呼ぶこと」と「reject ラッパーが `Error` を再包装しないこと」も併せて検証できている。どちらが壊れても `message` と `cause` の実値の一致で失敗するためである。
 
-なお、公開済みパッケージを検証する `npm-pkg-e2e-test` はこの修正が含まれていないバージョンを対象とするため、エラー経路の検証は `NPM_PKG_E2E_TEST` で判定してスキップする (rid 切り替えの検証は公開済みバージョンでも通るため対象外)。
+サーバーが JSON-RPC 2.0 に反する値を返した場合の挙動は E2E では再現できないため、`createErrorFromJSONRPCError` の単体テストで検証する。オブジェクト以外 (`null` / `undefined` / 文字列) は TypeError にならず `String(error)` を `message` にして settle し `cause` を設定しないこと、オブジェクトなら `message` が文字列でなくても `cause` に保持すること (`code` / `data` を捨てないこと) を確認する。
+
+なお、公開済みパッケージを検証する `npm-pkg-e2e-test` はこの修正が含まれていないバージョンを対象とするため、サーバーがエラーを返す経路の検証は `NPM_PKG_E2E_TEST` で判定してスキップする (rid 切り替えと切断後のクライアント側エラーの検証は公開済みバージョンでも通るため対象外)。
