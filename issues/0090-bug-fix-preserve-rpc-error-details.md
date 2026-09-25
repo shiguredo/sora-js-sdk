@@ -2,7 +2,7 @@
 
 - Priority: High
 - Created: 2026-09-18
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-09-25
 - Branch: feature/fix-preserve-rpc-error-details
 - Polished: 2026-09-18
 
@@ -74,3 +74,23 @@ High。RPC の失敗経路のうち「サーバーがエラーを返す」ケー
 サーバーが JSON-RPC 2.0 に反する値を返した場合の挙動は E2E では再現できないため、`createErrorFromJSONRPCError` の単体テストで検証する。オブジェクト以外 (`null` / `undefined` / 文字列) は TypeError にならず `String(error)` を `message` にして settle し `cause` を設定しないこと、オブジェクトなら `message` が文字列でなくても `cause` に保持すること (`code` / `data` を捨てないこと) を確認する。
 
 なお、公開済みパッケージを検証する `npm-pkg-e2e-test` はこの修正が含まれていないバージョンを対象とするため、サーバーがエラーを返す経路の検証は `NPM_PKG_E2E_TEST` で判定してスキップする (rid 切り替えと切断後のクライアント側エラーの検証は公開済みバージョンでも通るため対象外)。
+
+## 解決方法
+
+`handleRPCResponse` がサーバーの JSON-RPC エラーを `cause` に保持した plain な `Error` で reject するようにした。`message` はサーバーが返した `message` になり、`cause` から `code` / `message` / `data` を取得できる。呼び出し側は `cause` が設定されていればサーバーが返したエラーと判別できる。
+
+- `src/utils.ts`: `createErrorFromJSONRPCError` を追加。`error` がオブジェクトなら `message` を `Error` の message に、オブジェクト全体を `cause` に保持する (`message` が文字列でない場合は `JSON.stringify(error)` を message にして `code` / `data` を捨てない)
+- `src/base.ts`: `handleRPCResponse` のエラー経路で `createErrorFromJSONRPCError(response.error)` が返す `Error` を reject する。`rpc()` の TSDoc に `cause` の契約を片方向 (設定されていればサーバーが返したエラー。設定されていない場合でもクライアント側のエラーとは限らない) として明記
+- JSON-RPC 2.0 に反する値 (`null` / `undefined` / 文字列) が返された場合も TypeError にならず settle するようにした (`String(error)` を message にし `cause` は設定しない。2026.1.0 と同じ挙動で、`handleRPCResponse` が reject に到達せず未解決のままになる問題を防ぐ)
+- `skills/sora-js-sdk/SKILL.md`: RPC 節に `cause` の契約と判別例を追記
+- `tests/utils.test.ts`: `createErrorFromJSONRPCError` の単体テストを追加 (7 件)
+- `e2e-tests/rpc`: サーバーがエラーを返す経路 (Sora の実応答の `code` / `message` / `data` と RPC ログへの出力)、成功時に `rpc()` が解決する `result`、切断後のクライアント側エラーの検証を追加
+- `CHANGES.md`: `## develop` に `[FIX]` と misc の `[ADD]` / `[UPDATE]` を追記
+
+動作確認:
+
+- `vp check` / `vp exec tsc --noEmit` / `vp test run` (116 tests pass) が成功
+- Chromium 全 E2E: 24 passed / 3 skipped / 0 failed
+- 一時的な単体テストで `handleRPCResponse` の分岐 (error / result / id なし / 保留中のリクエストなし) と JSON-RPC 2.0 に反する値の挙動を確認した (確認後に削除)。あわせて実装を一時的に元の不具合 (`promise.reject(response.error)`) に戻すとテストが失敗することも確認し、退行を検出できることを確かめた
+- 目視によるログの確認: ブラウザの RPC ログに `Error: JSON-RPC-INVALID-PARAMS cause={"code":-32602,"data":{"UNKNOWN-KEYS":["invalid_param"]},"message":"JSON-RPC-INVALID-PARAMS"}` が出力されること、`Invalid Request:` に送信したメソッドと params が表示されることを確認した
+- 公開済みパッケージ (`sora-js-sdk@2025.2.0`) に対する E2E (npm-pkg-e2e-test 相当): 2 passed / 1 skipped (エラー経路は修正が含まれないバージョンのため `NPM_PKG_E2E_TEST` でスキップ)。スキップを外すとエラー経路テストが失敗することも確認した
