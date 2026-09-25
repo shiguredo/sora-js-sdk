@@ -4,7 +4,6 @@ import type {
   DataChannelConfiguration,
   DataChannelEvent,
   DataChannelMessageEvent,
-  JSONRPCErrorResponse,
   JSONType,
   SignalingConnectDataChannel,
   SignalingConnectMessage,
@@ -646,17 +645,29 @@ export function createDataChannelEvent(channel: DataChannelConfiguration): DataC
  * 潰れて内容が失われるため、`message` を `Error` の message に、オブジェクト全体を
  * `cause` に保持した `Error` を組み立てる。
  *
+ * サーバーが仕様に反する値 (`null` / `undefined` / 文字列 / 配列など) を返した場合でも
+ * `rpc()` が reject できなくならないよう、`message` が文字列でない値は `String(error)` を
+ * message にした `Error` を返す。この場合 `cause` は設定しない。
+ *
  * 返す値は plain な `Error` インスタンスである (`name` は `"Error"`、`instanceof Error` は真)。
  * 呼び出し側は `cause` の有無で「サーバーが返したエラー」と「クライアント側のエラー
  * (DataChannel 未接続、タイムアウト、notification 送信失敗)」を判別する。
  * クライアント側のエラーには `cause` を設定しない。
  *
  * @internal
- * @param error - JSON-RPC レスポンスの error オブジェクト
+ * @param error - JSON-RPC レスポンスの error の値 (仕様に反する値の場合もある)
  * @returns `message` に JSON-RPC の message、`cause` に JSON-RPC エラーオブジェクトを持つ Error
  */
-export function createErrorFromJSONRPCError(error: JSONRPCErrorResponse["error"]): Error {
-  return new Error(error.message, { cause: error });
+export function createErrorFromJSONRPCError(error: unknown): Error {
+  if (typeof error === "object" && error !== null) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return new Error(message, { cause: error });
+    }
+  }
+  // message を持たない値でも reject できるように文字列化する
+  // (2026.1.0 までの `new Error(String(reason))` と同じ message になる)
+  return new Error(String(error));
 }
 
 export async function parseDataChannelEventData(
