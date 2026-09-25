@@ -1080,16 +1080,30 @@ test("createErrorFromJSONRPCError は data が無い場合も message と cause 
   expect(error.cause).toStrictEqual({ code: -32_602, message: "Invalid params" });
 });
 
-// サーバーが仕様に反する値を返しても TypeError にならず Error で settle できること
-// (2026.1.0 までの `new Error(String(reason))` と同じ message にする)
-test.each([[null], [undefined], ["boom"], [["a", "b"]]])(
+// サーバーがオブジェクト以外 (JSON-RPC 2.0 に反する値) を返しても TypeError にならず
+// Error で settle できること (2026.1.0 までの `new Error(String(reason))` と同じ message)
+test.each([[null], [undefined], ["boom"]])(
   "createErrorFromJSONRPCError は %s でも Error を組み立てる",
   (value) => {
     const error = createErrorFromJSONRPCError(value);
 
     expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe(String(value));
-    // cause はサーバーが JSON-RPC エラーを返した場合のみ設定する
+    // オブジェクト以外はサーバーが返したエラーとして扱わない (cause を設定しない)
     expect(error.cause).toBeUndefined();
+  },
+);
+
+// JSON-RPC 2.0 の error はオブジェクトのため、message が文字列でないオブジェクトでも
+// cause に保持して code / data を捨てないこと
+// (cause が設定されていればサーバーが返したエラーと判別できる契約を保つ)
+test.each([[{ code: -32_602 }], [["a", "b"]]])(
+  "createErrorFromJSONRPCError は %s でも cause に保持する",
+  (value) => {
+    const error = createErrorFromJSONRPCError(value);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe(JSON.stringify(value));
+    expect(error.cause).toBe(value);
   },
 );

@@ -286,7 +286,7 @@ const result = await connection.rpc("2025.2.0/RequestSimulcastRid", {
 });
 ```
 
-サーバーが JSON-RPC エラーを返した場合は plain な `Error` で reject する。`message` はサーバーが返した `error.message` になり、`cause` に `JSONRPCErrorResponse["error"]` (`{ code, message, data }`) が入る。クライアント側のエラー (RPC DataChannel が利用できない、タイムアウト、notification 送信失敗) では `cause` を設定しないため、`cause` の有無でサーバーが返したエラーかどうかを判別できる。
+サーバーが JSON-RPC エラーを返した場合は plain な `Error` で reject する。`message` はサーバーが返した `error.message` になり、`cause` に `JSONRPCErrorResponse["error"]` (`{ code, message, data }`) が入る。`cause` が設定されていればサーバーが返したエラーと判別できる。クライアント側のエラー (RPC DataChannel が利用できない、タイムアウト、notification 送信失敗) では `cause` を設定しないが、`cause` が無いことがクライアント側のエラーを意味するわけではない (サーバーがオブジェクト以外の `error` を返した場合など)。
 
 ```typescript
 try {
