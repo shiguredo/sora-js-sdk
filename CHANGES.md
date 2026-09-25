@@ -13,6 +13,10 @@
 
 - [FIX] 初回接続の offer 交渉中に setRemoteDescription / createAnswer が失敗したときに ws / pc がクリーンアップされなかったのを修正する
   - @voluntas
+- [FIX] rpc() がサーバーの JSON-RPC エラーを `Error("[object Object]")` に潰していたのを修正し、サーバーが返したエラーを `cause` から取得できるようにする
+  - `message` にサーバーが返した `message` を設定する
+  - `cause` に `code` / `message` / `data` を設定する
+  - @miosakuma
 
 ### misc
 
@@ -22,6 +26,11 @@
   - @voluntas
 - [ADD] typedoc 生成物を GitHub Pages にデプロイする workflow を追加する
   - @voluntas
+- [ADD] `e2e-tests/rpc` にサーバーが JSON-RPC エラーを返す呼び出しの検証を追加する
+  - `code` / `message` / `data` が `cause` から取得できることと、エラーの内容が RPC ログに出力されることを検証する
+  - 成功時に `rpc()` が解決する `result` の内容を検証する
+  - 切断後の `rpc()` がクライアント側のエラーになり `cause` が設定されないことを検証する
+  - @miosakuma
 - [UPDATE] `@playwright/test` を 1.60.0 から 1.61.0 に更新する
   - 上流で `reinstall_chrome_stable_mac.sh` の curl に `-L` が追加されたため `playwright-core@1.60.0` のパッチを削除する
   - @voluntas
@@ -41,6 +50,10 @@
   - 新しい lint ルールに対応するため `vite.config.ts` で `one-var` を無効化し、`no-unused-vars` に `argsIgnorePattern` / `varsIgnorePattern` を設定する
   - `pnpm-workspace.yaml` の `minimumReleaseAgeExclude` に oxc 系パッケージを追加する
   - @voluntas
+- [UPDATE] `e2e-tests/rpc` の simulcast rid 切り替えテストの切り替え先を r0 から r1 に変更する
+  - 初期 rid を r2 固定から Sora のデフォルト (r0) に変更する
+  - 負荷の高い r2 は使わない
+  - @miosakuma
 
 ## 2026.1.0
 

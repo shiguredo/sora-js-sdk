@@ -1,7 +1,12 @@
 // XXX: assert を使うと型がエラーがうるさいため expect を使ってる
 
 import type { AudioCodecType, DataChannelDirection, VideoCodecType } from "../src/types";
-import { ConnectError, createSignalingMessage, redact } from "../src/utils";
+import {
+  ConnectError,
+  createErrorFromJSONRPCError,
+  createSignalingMessage,
+  redact,
+} from "../src/utils";
 
 const channelId = "7N3fsMHob";
 const metadata = "PG9A6RXgYqiqWKOVO";
@@ -1038,3 +1043,67 @@ test("redact は DAG の兄弟参照を `[Circular]` 化する", () => {
   expect(result["a"]).toStrictEqual({ x: 1 });
   expect(result["b"]).toBe("[Circular]");
 });
+
+/**
+ * createErrorFromJSONRPCError のテスト
+ *
+ * サーバーが返した JSON-RPC エラーの内容が失われないことを検証する。
+ * E2E は Sora が仕様どおりに返すエラーしか再現できないため、仕様に反する値でも
+ * reject (settle) できることはここで検証する。
+ */
+
+// JSON-RPC 2.0 のエラーは code / message を必須、data を任意で持つ
+// message を Error の message に、オブジェクト全体を cause に保持すること
+test("createErrorFromJSONRPCError は message と cause を保持する", () => {
+  const error = createErrorFromJSONRPCError({
+    code: -32_602,
+    data: { "UNKNOWN-KEYS": ["invalid_param"] },
+    message: "JSON-RPC-INVALID-PARAMS",
+  });
+
+  expect(error.message).toBe("JSON-RPC-INVALID-PARAMS");
+  expect(error.name).toBe("Error");
+  // サブクラスではなく plain な Error であること (Error.prototype を直接継承する)
+  expect(Object.getPrototypeOf(error)).toBe(Error.prototype);
+  expect(error.cause).toStrictEqual({
+    code: -32_602,
+    data: { "UNKNOWN-KEYS": ["invalid_param"] },
+    message: "JSON-RPC-INVALID-PARAMS",
+  });
+});
+
+// data が無い場合でも code / message を cause から取得できること
+test("createErrorFromJSONRPCError は data が無い場合も message と cause を保持する", () => {
+  const error = createErrorFromJSONRPCError({ code: -32_602, message: "Invalid params" });
+
+  expect(error.message).toBe("Invalid params");
+  expect(error.cause).toStrictEqual({ code: -32_602, message: "Invalid params" });
+});
+
+// サーバーがオブジェクト以外 (JSON-RPC 2.0 に反する値) を返しても TypeError にならず
+// Error で settle できること (2026.1.0 までの `new Error(String(reason))` と同じ message)
+test.each([[null], [undefined], ["boom"]])(
+  "createErrorFromJSONRPCError は %s でも Error を組み立てる",
+  (value) => {
+    const error = createErrorFromJSONRPCError(value);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe(String(value));
+    // オブジェクト以外はサーバーが返したエラーとして扱わない (cause を設定しない)
+    expect(error.cause).toBeUndefined();
+  },
+);
+
+// JSON-RPC 2.0 の error はオブジェクトのため、message が文字列でないオブジェクトでも
+// cause に保持して code / data を捨てないこと
+// (cause が設定されていればサーバーが返したエラーと判別できる契約を保つ)
+test.each([[{ code: -32_602 }], [["a", "b"]]])(
+  "createErrorFromJSONRPCError は %s でも cause に保持する",
+  (value) => {
+    const error = createErrorFromJSONRPCError(value);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe(JSON.stringify(value));
+    expect(error.cause).toBe(value);
+  },
+);

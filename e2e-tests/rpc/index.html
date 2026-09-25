@@ -78,9 +78,9 @@
         <span id="video-resolution"></span>
       </div>
       <div class="rid-selector" style="margin: 10px 0">
-        <label><input type="radio" name="rid" value="r0" /><span>r0</span></label>
+        <label><input type="radio" name="rid" value="r0" checked /><span>r0</span></label>
         <label><input type="radio" name="rid" value="r1" /><span>r1</span></label>
-        <label><input type="radio" name="rid" value="r2" checked /><span>r2</span></label>
+        <label><input type="radio" name="rid" value="r2" /><span>r2</span></label>
       </div>
       <div
         id="remote-videos"
@@ -95,7 +95,23 @@
       ></div>
 
       <hr />
+      <h2>RPC Error</h2>
+      <button id="invalid-rpc">invalid rpc</button>
+      <div>
+        <strong>Invalid Request:</strong>
+        <span id="invalid-rpc-request"></span>
+      </div>
+      <div>
+        <strong>RPC Error:</strong>
+        <span id="rpc-error"></span>
+      </div>
+
+      <hr />
       <h2>RPC Log</h2>
+      <div>
+        <strong>RPC Response:</strong>
+        <span id="rpc-response"></span>
+      </div>
       <div
         id="rpc-log"
         style="
