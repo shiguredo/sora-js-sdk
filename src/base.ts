@@ -67,6 +67,7 @@ import {
   createDataChannelData,
   createDataChannelEvent,
   createDataChannelMessageEvent,
+  createErrorFromJSONRPCError,
   createSignalingEvent,
   createSignalingMessage,
   createTimelineEvent,
@@ -2702,6 +2703,16 @@ export default class ConnectionBase {
    * const result = await connection.rpc('2025.2.0/RequestSimulcastRid', { rid: 'r0' });
    * ```
    *
+   * @remarks
+   * サーバーが JSON-RPC エラーを返した場合は plain な `Error` で reject します。
+   * `message` はサーバーが返した `error.message` になり、`cause` に
+   * `JSONRPCErrorResponse["error"]` (`{ code, message, data }`) が入ります。
+   * `cause` が設定されていればサーバーが返したエラーと判別できます。
+   * クライアント側のエラー (RPC DataChannel が利用できない、タイムアウト、
+   * notification 送信失敗) で reject する場合は `cause` を設定しませんが、
+   * `cause` が無いことがクライアント側のエラーを意味するわけではありません
+   * (サーバーがオブジェクト以外の `error` を返した場合など)。
+   *
    * @param method - RPC メソッド名
    * @param params - RPC パラメーター
    * @param options - RPC オプション
@@ -2855,7 +2866,7 @@ export default class ConnectionBase {
     this.rpcRequestPromises.delete(response.id);
 
     if ("error" in response) {
-      promise.reject(response.error);
+      promise.reject(createErrorFromJSONRPCError(response.error));
     } else {
       promise.resolve(response.result);
     }

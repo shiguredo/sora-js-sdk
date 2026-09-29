@@ -286,6 +286,20 @@ const result = await connection.rpc("2025.2.0/RequestSimulcastRid", {
 });
 ```
 
+サーバーが JSON-RPC エラーを返した場合は plain な `Error` で reject する。`message` はサーバーが返した `error.message` になり、`cause` に `JSONRPCErrorResponse["error"]` (`{ code, message, data }`) が入る。`cause` が設定されていればサーバーが返したエラーと判別できる。クライアント側のエラー (RPC DataChannel が利用できない、タイムアウト、notification 送信失敗) では `cause` を設定しないが、`cause` が無いことがクライアント側のエラーを意味するわけではない (サーバーがオブジェクト以外の `error` を返した場合など)。
+
+```typescript
+try {
+  await connection.rpc("2025.2.0/RequestSimulcastRid", { rid: "r0" });
+} catch (error) {
+  if (error instanceof Error && error.cause !== undefined) {
+    // サーバーが JSON-RPC エラーを返した場合
+    const rpcError = error.cause as JSONRPCErrorResponse["error"];
+    console.error(rpcError.code, rpcError.message, rpcError.data);
+  }
+}
+```
+
 ### 切断イベント (SoraCloseEvent)
 
 `disconnect` コールバックで受け取る。
