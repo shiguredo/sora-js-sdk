@@ -4,7 +4,7 @@
 - Created: 2026-09-30
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-preserve-error-details-in-logs
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-30
 
 ## 目的
 
@@ -152,6 +152,7 @@ if (timelineElement) {
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { expect, test } from "@playwright/test";
+import { checkSoraVersion, unsupportedVersionSkipReason } from "./helper";
 
 // 誰も listen していないポートを確保する (実サーバーを立てて閉じるだけで、モックは使わない)
 const reserveClosedPort = async (): Promise<number> => {
@@ -176,8 +177,18 @@ test("接続失敗時の timeline onclose イベント data から name / code /
       `ws://127.0.0.1:${port}/signaling`,
     )}`,
   );
+
+  // バージョンチェック (この修正が入る 2026.2.0 以降のみ実行する)
+  const versionCheck = await checkSoraVersion(page, {
+    featureName: "timeline onclose error details",
+    majorVersion: 2026,
+    minorVersion: 2,
+  });
+  test.skip(!versionCheck.isSupported, unsupportedVersionSkipReason(versionCheck.skipReason));
+
   await page.click("#connect");
-  await page.waitForSelector("#timeline:not(:empty)", { timeout: 10000 });
+  // 結果は #timeline の data 属性に書き込むため、属性の存在を待つ
+  await page.waitForSelector("#timeline[data-onclose]", { timeout: 10000 });
   const oncloseEvents = JSON.parse((await page.getAttribute("#timeline", "data-onclose")) ?? "[]");
   console.log(`timelineOnclose=${JSON.stringify(oncloseEvents)}`);
 
@@ -186,6 +197,8 @@ test("接続失敗時の timeline onclose イベント data から name / code /
   await page.close();
 });
 ```
+
+`checkSoraVersion` を使うため、fixture には `#sora-js-sdk-version` と `setSoraJsSdkVersion()` (`e2e-tests/src/misc.ts`) を含めること。バージョンガードが無いと、公開済みの旧バージョンを検証する npm-pkg-e2e-test (`.github/workflows/npm-pkg-e2e-test.yml`) がこのテストで常に失敗する (rpc.test.ts と同じ方式)。
 
 実行: `vp exec playwright test --project=Chromium --retries=0 e2e-tests/tests/connect_error_timeline.test.ts` (playwright.config.ts の `webServer` が `e2e-dev` を起動する)
 
