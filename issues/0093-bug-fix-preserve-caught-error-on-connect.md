@@ -4,7 +4,7 @@
 - Created: 2026-09-30
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-preserve-caught-error-on-connect
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-09-30
 
 ## 目的
 
