@@ -23,9 +23,7 @@ Medium。接続失敗そのものは reject で伝わるが、原因の情報は
 ```ts
 try {
   return await Promise.any(
-    signalingUrlCandidates.map(async (signalingUrl) =>
-      testSignalingUrlCandidate(signalingUrl),
-    ),
+    signalingUrlCandidates.map(async (signalingUrl) => testSignalingUrlCandidate(signalingUrl)),
   );
 } catch {
   throw new ConnectError("Signaling failed. All signaling URL candidates failed to connect");
@@ -37,10 +35,10 @@ try {
 
 実測 (2026-09-30、dist/sora.js = 2026.2.0-canary.0、Chromium、到達できないポート 2 つを候補に指定)。
 
-| 経路 | `message` | `code` | `reason` | `cause` |
-| :--- | :--- | :--- | :--- | :--- |
-| 単一 URL | `Signaling failed. CloseEventCode:1006 CloseEventReason:''` | `1006` | `""` | なし |
-| 複数 URL | `Signaling failed. All signaling URL candidates failed to connect` | `undefined` | `undefined` | なし |
+| 経路     | `message`                                                          | `code`      | `reason`    | `cause` |
+| :------- | :----------------------------------------------------------------- | :---------- | :---------- | :------ |
+| 単一 URL | `Signaling failed. CloseEventCode:1006 CloseEventReason:''`        | `1006`      | `""`        | なし    |
+| 複数 URL | `Signaling failed. All signaling URL candidates failed to connect` | `undefined` | `undefined` | なし    |
 
 同じ失敗 (接続拒否) でも、`signalingUrlCandidates` を単一で指定した場合と複数で指定した場合とで得られる情報が異なる。`skills/sora-js-sdk/SKILL.md` は複数候補の指定を案内しており、到達可能な経路である。
 
@@ -65,10 +63,10 @@ try {
 
 `reason` で失敗の分類はできるが、元の例外は `cause` にも残らない。`CONNECTING` の `WebSocket` に対して `send()` を呼んだときの例外の実測 (Chromium / WebKit)。
 
-| ブラウザ | `name` | `message` |
-| :--- | :--- | :--- |
+| ブラウザ | `name`              | `message`                                                             |
+| :------- | :------------------ | :-------------------------------------------------------------------- |
 | Chromium | `InvalidStateError` | `Failed to execute 'send' on 'WebSocket': Still in CONNECTING state.` |
-| WebKit | `InvalidStateError` | `The object is in an invalid state.` |
+| WebKit   | `InvalidStateError` | `The object is in an invalid state.`                                  |
 
 ### pre-offer の `ws.onmessage` 例外は message へ文字列連結して包み替える
 

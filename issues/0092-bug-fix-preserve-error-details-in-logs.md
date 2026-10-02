@@ -48,10 +48,10 @@ try {
 
 到達できないポートへ `connect()` して失敗させ、`on("timeline")` で受け取った `onclose` イベントを調べた結果。
 
-| 対象 | `constructor.name` | `name` | `message` | `code` | `reason` |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `connect()` の reject (`ConnectError`) | `ConnectError` | `"ConnectError"` | `Signaling failed. CloseEventCode:1006 CloseEventReason:''` | `1006` | `""` |
-| timeline の `onclose` イベント data | `Error` | `"Error"` | `Signaling failed. CloseEventCode:1006 CloseEventReason:''` | `undefined` | `undefined` |
+| 対象                                   | `constructor.name` | `name`           | `message`                                                   | `code`      | `reason`    |
+| :------------------------------------- | :----------------- | :--------------- | :---------------------------------------------------------- | :---------- | :---------- |
+| `connect()` の reject (`ConnectError`) | `ConnectError`     | `"ConnectError"` | `Signaling failed. CloseEventCode:1006 CloseEventReason:''` | `1006`      | `""`        |
+| timeline の `onclose` イベント data    | `Error`            | `"Error"`        | `Signaling failed. CloseEventCode:1006 CloseEventReason:''` | `undefined` | `undefined` |
 
 `structuredClone` の挙動は Chromium / WebKit の両方で同じであることを確認している (Error 派生 + own property のオブジェクトを複製すると `name` が `"Error"` になり own property は消える)。
 
@@ -76,10 +76,10 @@ try {
 
 `RTCDataChannel` を close して `send()` を呼んだときの実測 (Chromium / WebKit)。
 
-| ブラウザ | `name` | `message` |
-| :--- | :--- | :--- |
+| ブラウザ | `name`              | `message`                                                                               |
+| :------- | :------------------ | :-------------------------------------------------------------------------------------- |
 | Chromium | `InvalidStateError` | `Failed to execute 'send' on 'RTCDataChannel': RTCDataChannel.readyState is not 'open'` |
-| WebKit | `InvalidStateError` | `The object is in an invalid state.` |
+| WebKit   | `InvalidStateError` | `The object is in an invalid state.`                                                    |
 
 WebKit では記録された message から例外の種別が分からない。
 
