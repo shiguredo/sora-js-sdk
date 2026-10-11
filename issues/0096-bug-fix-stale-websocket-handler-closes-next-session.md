@@ -3,7 +3,7 @@
 - Created: 2026-10-06
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-stale-websocket-handler-closes-next-session
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-12
 
 ## 目的
 
@@ -25,7 +25,7 @@ High。サイマルキャスト非対応ブラウザで `simulcast: true` にし
 
 ## 設計方針
 
-`createSignalingMessage` または `ws.send` が失敗したとき、その WebSocket の `onclose` / `onmessage` / `onerror` を外してから `close()` する。外したあとの close イベントでは `signalingTerminate()` を呼ばない。
+`createSignalingMessage` または `ws.send` が失敗したとき、その WebSocket の `onclose` / `onmessage` / `onerror` を外してから `close()` する。外したあとの close イベントでは `signalingTerminate()` を呼ばない。失敗したソケットはその場で `close()` するため `this.ws = ws` の代入は行わない (代入は現状どおり `ws.send` の成功後)。
 
 `disconnectWebSocket` の `onclose` は、ハンドラを付けたソケット自身だけを閉じる。`this.ws` が別インスタンスなら触らない。`close()` して resolve する経路では、遅延 `onclose` が後続の接続を閉じないようにハンドラを外す。
 
@@ -35,4 +35,5 @@ High。サイマルキャスト非対応ブラウザで `simulcast: true` にし
 
 - `createSignalingMessage` が throw したとき、その WebSocket が close され、後から届く `onclose` が `signalingTerminate()` を呼ばない
 - `disconnectWebSocket` のあと、古いソケットの `onclose` が新しい `this.ws` を `close()` しない
-- 失敗したソケットを `disconnect()` で回収できる。`this.ws` 未設定のまま参照だけ失われない
+- `ws.send` が throw したときも、その WebSocket が close され、後から届く `onclose` が `signalingTerminate()` を呼ばない
+- 失敗したソケットが open のまま残らない
