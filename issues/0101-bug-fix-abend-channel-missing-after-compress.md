@@ -3,7 +3,7 @@
 - Created: 2026-10-06
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-abend-channel-missing-after-compress
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-12
 
 ## 目的
 
@@ -11,9 +11,9 @@
 
 ## 優先度根拠
 
-Medium。DataChannel は `onerror` で `abend()`、`onclose` で `disconnect()` が走る。圧縮の `await` 中に `disconnect()` が Map から signaling を消すと、`abend()` は `TypeError` で止まり、PeerConnection が残る。`ws.onerror` は `await this.abend()` を try していない。
+Medium。DataChannel は `onerror` で `abend()`、`onclose` で `disconnect()` が走る。圧縮の `await` 中に並走する切断処理 (`disconnect()` 経由の `initializeConnection`、`shutdown()`、別の `abend()`) が Map から signaling を消すと、`abend()` は `TypeError` で止まり、その後ろの DataChannel close、`disconnectWebSocket`、`maybeClosePeerConnection`、`initializeConnection`、`callbacks.disconnect` が実行されない。呼び出し元 (`ws.onerror` / `ws.onclose`、DataChannel の `onerror`) は `await this.abend()` を try していないため、unhandled rejection になる。なお Map から signaling を消す経路 (`shutdown()`、`signalingTerminate()`、別の `abend()`、`disconnect()` の `initializeConnection`) はいずれも自身で PeerConnection を close するため、実害は「PeerConnection が残る」ことではなく、上記の unhandled rejection と、`abend()` 由来の切断イベント (title / type) が失われて別経路のイベントだけが届くことである。
 
-`issues/closed/0004-bug-fix-abend-compress-failure-skips-cleanup.md` は `compressMessage` 自体の失敗を初期化時の機能検出で扱うとして closed になっている。本 issue は圧縮 API の失敗ではなく、`await` のあと参照が無いことによる `TypeError` である。`issues/pending/0030-refactor-abend-shutdown-idempotency.md` はこの圧縮分岐をスコープ外にしている。
+`issues/closed/0004-bug-fix-abend-compress-failure-skips-cleanup.md` は `compressMessage` 自体の失敗を初期化時の機能検出で扱うとして closed になっている。本 issue は圧縮 API の失敗ではなく、`await` のあと参照が無いことによる `TypeError` である。`issues/pending/0030-refactor-abend-shutdown-idempotency.md` はこの圧縮分岐をそのまま `work()` 内へ転載する方針であり (reject 経路のみ 0040 に委ねる)、本 issue の修正後の状態が転載対象になる。
 
 ## 現状
 
@@ -36,4 +36,4 @@ Medium。DataChannel は `onerror` で `abend()`、`onclose` で `disconnect()` 
 - 圧縮の `await` 中に signaling DataChannel が Map から消えても、`TypeError` にならず `callbacks.disconnect` まで実行する
 - チャネルが `"open"` のままなら、従来どおり disconnect メッセージを送ってから切断する
 - `compressMessage` の reject を本 issue の try/catch では握らない
-- `disconnect()` との並走で、参照が消えたこと自体を理由に PeerConnection が残らない
+- `disconnect()` との並走でも、参照が消えたことを理由に `abend()` が途中で止まらない (TypeError にならない)
