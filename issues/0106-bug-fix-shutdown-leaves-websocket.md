@@ -3,7 +3,7 @@
 - Created: 2026-10-06
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-shutdown-leaves-websocket
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-12
 
 ## 目的
 
@@ -15,6 +15,8 @@ Medium。`ignore_disconnect_websocket` が false の switched では WebSocket �
 
 `issues/closed/0001-bug-fix-redirect-old-ws-onmessage-not-cleared.md` は `ignore_disconnect_websocket: true` のときハンドラを外して `close()` する。false のときに type `close` で参照だけ外す経路は対象外である。
 
+`issues/pending/0043-bug-fix-signaling-terminate-leaks-ws-handlers.md` は `signalingTerminate()` (接続フェーズの失敗時) のハンドラ解除が対象で、`shutdown()` は WebSocket が close 済みを前提に対象外としている。本 issue はその前提が崩れる false 経路を扱う。
+
 ## 現状
 
 `ConnectionBase.signalingOnMessageTypeClose` は `shutdown()` だけを呼ぶ。`shutdown()` は DataChannel と PeerConnection を閉じ、`initializeConnection` で `this.ws = null` にする。`WebSocket.close()` は呼ばない。`onclose` / `onmessage` / `onerror` も外さない。
@@ -25,7 +27,7 @@ Medium。`ignore_disconnect_websocket` が false の switched では WebSocket �
 
 ## 設計方針
 
-`shutdown()` は `initializeConnection` で参照を消す前に、残っている WebSocket の `onmessage` / `onerror` を外し、`onclose` はログ専用にするか外したうえで `close()` する。後から届く `onclose` は、その時点の `this.ws` が別インスタンスなら `shutdown()` も `abend()` も呼ばない。
+`shutdown()` は `initializeConnection` で参照を消す前に、残っている WebSocket に対し `abend()` / `disconnect()` と同じハンドラ処理をしてから `close()` する。`onclose` はログ専用に差し替え、`onmessage` / `onerror` は外す。差し替えた `onclose` は `shutdown()` も `abend()` も呼ばないため、遅れて届く close イベントはログのみで、再接続後の WebSocket には触れない。`this.ws` が `null` のときは何もしない。
 
 `ignore_disconnect_websocket: true` で switched 時にすでに閉じている経路は変えない。`issues/pending/0030-refactor-abend-shutdown-idempotency.md` の 4 系統統合は本 issue で行わない。
 
