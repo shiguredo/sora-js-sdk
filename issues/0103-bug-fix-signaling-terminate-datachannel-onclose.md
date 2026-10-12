@@ -3,7 +3,7 @@
 - Created: 2026-10-06
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-signaling-terminate-datachannel-onclose
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-12
 
 ## 目的
 
