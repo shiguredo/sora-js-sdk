@@ -3,7 +3,7 @@
 - Created: 2026-10-06
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-datachannel-onclose-disconnect-timeout
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-12
 
 ## 目的
 
@@ -11,7 +11,7 @@
 
 ## 優先度根拠
 
-Medium。シグナリングを DataChannel へ切り替えたあと、type `close` を伴わずにチャネルが閉じると、利用者は既定 3000 ms 待ったあと type `"abend"`、title `"DISCONNECT-WAIT-TIMEOUT-ERROR"` を受け取る。ローカルの PeerConnection は `forceCloseDataChannels` で閉じるので残りはしない。通知の種別が正常切断にならない。利用者が `disconnect()` したときも、Map に `"closed"` のチャネルが残っていれば同じ待ちになる。全チャネルが `"open"` の呼び出しは、この待ちが必ずタイムアウトする経路には入らない。
+Medium。シグナリングを DataChannel へ切り替えたあと、type `close` を伴わずにチャネルが閉じると、利用者は既定 3000 ms 待ったあと type `"abend"`、title `"DISCONNECT-WAIT-TIMEOUT-ERROR"` を受け取る。ローカルの DataChannel は `forceCloseDataChannels`、PeerConnection は `disconnect()` の後段の `maybeClosePeerConnection` がそれぞれ閉じるので、残りはしない。通知の種別が正常切断にならない。利用者が `disconnect()` したときも、Map に `"closed"` のチャネルが残っていれば同じ待ちになる。全チャネルが `"open"` の呼び出しは、この待ちが必ずタイムアウトする経路には入らない。
 
 ## 現状
 
@@ -25,7 +25,7 @@ type `close` メッセージは `shutdown()` が先にログ専用の `onclose` 
 
 ## 設計方針
 
-`disconnectDataChannel` を始める時点で `readyState === "closed"` のチャネルは、待ちの対象にしない。まだ開いているチャネルだけ新しい `onclose` を待ち、それらを `close()` する。
+`disconnectDataChannel` を始める時点で `readyState === "closed"` のチャネルは、待ちの対象にしない。まだ開いているチャネルだけ新しい `onclose` を待ち、type `disconnect` メッセージの送信が済んでからそれらを `close()` する。`disconnectWaitTimeout` の待ち上限は残す。
 
 すでに全部閉じているなら、タイムアウトを待たずに正常切断として終える。`onerror` で `DisconnectDataChannelError` になる経路は維持する。
 
