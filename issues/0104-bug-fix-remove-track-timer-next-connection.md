@@ -3,7 +3,7 @@
 - Created: 2026-10-06
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-remove-track-timer-next-connection
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-12
 
 ## 目的
 
@@ -23,7 +23,7 @@ Medium。タイマーが見ているのは「今の `this.pc` が null か」だ
 
 ## 設計方針
 
-タイマーを登録した時点の `RTCPeerConnection` と、100 ms 後の `this.pc` が同一でなければ、0012 と同じ `ConnectError` (`reason: "REMOVE_TRACK_DURING_DISCONNECT"`) で reject する。`track.stop()` / `removeTrack` / `replaceTrack(null)` は実行しない。
+タイマーを登録した時点の `RTCPeerConnection` を控えておき、100 ms 後の `this.pc` が null の場合、または控えた `RTCPeerConnection` と同一でない場合に、0012 と同じ `ConnectError` (`reason: "REMOVE_TRACK_DURING_DISCONNECT"`) で reject する。`track.stop()` / `removeTrack` / `replaceTrack(null)` は実行しない。
 
 `this.pc === null` の既存経路のエラー型と reason は変えない。100 ms の待ちと、その前の `enabled = false` は維持する。
 
