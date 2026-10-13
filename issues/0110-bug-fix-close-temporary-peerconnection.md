@@ -3,7 +3,7 @@
 - Created: 2026-10-06
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-close-temporary-peerconnection
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-14
 
 ## 目的
 
@@ -15,7 +15,7 @@ Medium。`ConnectionBase.createOffer` は `iceServers` が空の一時 PeerConne
 
 ## 現状
 
-`ConnectionBase.signaling` は、WebSocket のハンドラを付ける Promise より前に `await this.createOffer()` する。`createOffer()` が throw すると、その Promise は作られない。`ConnectionPublisher` / `ConnectionSubscriber` / `ConnectionMessaging` の `multiStream` は `await this.signaling(ws)` を try の外で呼ぶ。try と `signalingTerminate()` は offer を受け取ったあとである。したがって `createOffer()` の失敗では、`getSignalingWebSocket` が返した WebSocket も閉じられない。この時点では `this.ws` にも入っていない。`getSignalingWebSocket` が付けた `onclose` は、すでに resolve した Promise を reject するだけで、`signalingTerminate()` は呼ばない。
+`ConnectionBase.signaling` は、WebSocket のハンドラを付ける Promise より前に `await this.createOffer()` する。`createOffer()` が throw すると、その Promise は作られない。`ConnectionPublisher` / `ConnectionSubscriber` / `ConnectionMessaging` の `multiStream` は `await this.signaling(ws)` を try の外で呼ぶ。try と `signalingTerminate()` は offer を受け取ったあとである。したがって `createOffer()` の失敗では、`getSignalingWebSocket` が返した WebSocket も閉じられない。この時点では `this.ws` にも入っていない。単一 URL 経路では `getSignalingWebSocket` が付けた `onclose` が残っており、これはすでに resolve した Promise を reject するだけで、`signalingTerminate()` は呼ばない。複数候補経路では選ばれた WebSocket の `onclose` は null にされている。
 
 一時 PeerConnection は `createOffer` のローカル変数であり、SDK の `this.pc` には入らない。Safari は `addTransceiver` のあと `createOffer()` する。それ以外は `offerToReceiveAudio` / `offerToReceiveVideo` を渡して `createOffer()` する。`pc.close()` はどちらの分岐でも `createOffer()` の成功後にしか無い。`addTransceiver` または `createOffer()` が throw すると `close()` に到達しない。成功時は `close()` してから timeline の `create-offer` を残して return する。
 
@@ -23,7 +23,7 @@ Medium。`ConnectionBase.createOffer` は `iceServers` が空の一時 PeerConne
 
 `createOffer()` の成否に関係なく、関数を抜ける前に一時 PeerConnection を `close()` する。`addTransceiver` が throw した場合も同じである。成功時の戻り値と `create-offer` の timeline は維持する。失敗時は timeline に成功の `create-offer` を残さず、例外はそのまま伝播する。
 
-`signaling()` は `createOffer()` が失敗したとき、引数の WebSocket を `close()` してから例外を伝播する。この `close()` では `signalingTerminate()` を呼ばない。ハンドラはまだ付いていない。
+`signaling()` は `createOffer()` が失敗したとき、引数の WebSocket を `close()` してから例外を伝播する。この `close()` では `signalingTerminate()` を呼ばない。`signaling()` のハンドラはまだ付いておらず、単一 URL 経路で付いているのは `getSignalingWebSocket` の `onclose` だけである。これも `signalingTerminate()` は呼ばない。
 
 redirect のたびに `createOffer()` を再実行する件は `issues/0076-change-skip-create-offer-on-redirect.md` の範囲であり、本 issue では呼ばれる回数を変えない。
 
