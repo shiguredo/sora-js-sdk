@@ -3,7 +3,7 @@
 - Created: 2026-10-06
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-redact-ice-server-credential
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-14
 
 ## 目的
 
