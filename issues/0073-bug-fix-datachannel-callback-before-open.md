@@ -4,7 +4,7 @@
 - Created: 2026-09-10
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-datachannel-callback-before-open
-- Polished: 2026-09-14
+- Polished: 2026-10-15
 
 ## 目的
 
@@ -55,7 +55,7 @@ Medium。WebSocket の `switched` メッセージと DataChannel の `open` は�
 - 同一 DataChannel について `datachannel` コールバックが複数回発火しない
 - `datachannel` コールバックの直後に `sendMessage` を呼んでも `Messaging DataChannel is not open` にならない
 - `switched` / `connected` コールバックの既存の契約・順序が変わっていない
-- E2E テスト `e2e-tests/messaging` で `datachannel` コールバック発火後に送信する経路を検証する。現状は `connection.created` notify で送信ボタンを有効化しており、その時点では DataChannel が open していない可能性がある
+- E2E テスト (`e2e-tests/messaging`) で `datachannel` コールバック発火後に送信する経路を検証する。`e2e-tests/messaging/main.ts` の送信ボタン (`#send-message`) の有効化を `connection.created` notify (`onnotify`) から `datachannel` コールバック (`ondatachannel`) 発火時に移す (現状は DataChannel の open 前に有効化されており、open 前の送信を誘発する)
 - ローカルで `vp test run` / `vp check` / `vp exec tsc --noEmit` が通る
 - `CHANGES.md` の `## develop` 直下 (`### misc` より前) に `[FIX]` を追記する
 
@@ -64,4 +64,4 @@ Medium。WebSocket の `switched` メッセージと DataChannel の `open` は�
     - @voluntas
   ```
 
-テスト戦略: AGENTS.md の「モックやスタブは絶対に利用しないこと」、および jsdom に `RTCDataChannel` 実装がないことから、`ondatachannel` / `onopen` の順序を単体テストで決定的に再現できない。E2E テストで DataChannel の open を起点に送信する経路を追加して担保する。
+テスト戦略: AGENTS.md の「モックやスタブは絶対に利用しないこと」、および jsdom に `RTCDataChannel` 実装がないことから、`ondatachannel` / `onopen` の順序を単体テストで決定的に再現できない。E2E テストで DataChannel の open を起点に送信する経路を担保する。既存の `messaging.test.ts` は `datachannel` コールバック発火を DOM (`#messaging li`) で待ってから送信するため、`main.ts` の送信ボタン有効化を `ondatachannel` に移すことで、open 起点の送信が決定論的に検証される。
