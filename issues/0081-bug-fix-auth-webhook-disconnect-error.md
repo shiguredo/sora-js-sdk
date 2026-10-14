@@ -4,7 +4,7 @@
 - Created: 2026-09-11
 - Completed: {YYYY-MM-DD}
 - Branch: feature/fix-auth-webhook-disconnect-error
-- Polished: 2026-09-14
+- Polished: 2026-10-14
 
 ## 目的
 
@@ -25,7 +25,7 @@ High。認証エラーはアプリケーションがユーザーにエラー表�
 ### 接続確立前の失敗は connect() の reject で伝わる
 
 - `src/base.ts` の `signaling()` は `ws.onclose` で `ConnectError` を reject する。`ConnectError.code` / `ConnectError.reason` には `CloseEvent` の code / reason が入り、`message` には `CloseEventCode:${code} CloseEventReason:'${reason}'` が入る
-- 同様の `ConnectError` は `src/base.ts` の `getSignalingWebSocket()` (単一 URL 経路) と `monitorSignalingWebSocketEvent()` でも reject される。`connect()` は `Promise.race` 経由で最初の reject を受け取るため、いずれの経路でも利用者には同じ内容 (code / reason を持つ `ConnectError`) が届く
+- 同様の `ConnectError` は `src/base.ts` の `getSignalingWebSocket()` (単一 URL 経路) と `monitorSignalingWebSocketEvent()` でも reject される。`connect()` は `Promise.race` 経由で最初の reject を受け取るため、認証拒否 (WebSocket が open したあとの close) ではいずれの経路でも利用者には同じ内容 (code / reason を持つ `ConnectError`) が届く。なお複数 URL 候補で open 前に接続が失敗した場合は候補ごとの理由が reject 値から失われる点があり、それは `issues/0093-bug-fix-preserve-caught-error-on-connect.md` で扱う (認証拒否は open 後に発生するため本 issue の対象ではない)
 - したがって認証拒否による WebSocket 切断は、利用者からは `connect()` の reject として観測される。`ConnectError` は `src/sora.ts` から export されておらず、利用者は `error.name === "ConnectError"` と `error.code` / `error.reason` で判別する (closed issue `issues/closed/0021-refactor-connect-error-constructor.md` の方針と同じ)
 - この挙動は 2024-08 時点でも同じである。git 履歴の `packages/sdk/src/base.ts` (当時の構成) の `signaling()` が `error.code = event.code` / `error.reason = event.reason` を設定して reject していた
 
@@ -56,15 +56,15 @@ High。認証エラーはアプリケーションがユーザーにエラー表�
 
 - **`connect()` の reject を正式な仕様として確定できるか**: 接続確立前の失敗は `connect()` の reject (`ConnectError`) で伝える現状の挙動を仕様として確定できるか。確定する場合は利用者向けに明記する (TypeDoc の JSDoc)。あわせて、`ConnectError` を `src/sora.ts` から export するか (現状は export されておらず、利用者側に型・`instanceof` 判定がない) を決める
 - **接続確立前でも `disconnect` callback を発火させるか**: 接続していないのに `disconnect` (または `SoraCloseEvent`) を発火させるのは接続状態の契約と食い違うため、発火させない現状維持を推すが、最終判断は確認後に行う。どちらにしても接続確立前後の発火条件を仕様として明記する
-- **Sora が auth_webhook 拒否時に返す WebSocket close code / reason**: 本リポジトリの旧実装 (2015 年、git 履歴 `138c2579`「認証エラーは 4401 固定にする」、`9525ab3c`「認証失敗時の処理を修正する」) では、認証エラーを close code 4401 と判定して `onError(e.reason)` に reason を渡していた。現行 Sora でも 4401 なのか、また reason に何が入るのかを実機で確認する
+- **Sora が auth_webhook 拒否時に返す WebSocket close code / reason**: 本リポジトリの旧実装では、認証エラーの扱いが変遷している。git 履歴 `138c2579` (2015-11-18、「認証エラーは 4401 固定にする」) では close code を 4401 固定で判定して `onError(e.reason)` に reason を渡していたが、`9525ab3c` (2015-12-01) で `onError(e)` に変更され、`937f6acc` (2016-02-02、「ステータスコードが 440x の場合は全て reject する」) で 440 系全体の判定に変わった。さらに `6f7aa36d` (2017-03-07、「sora.js で WebRTC の処理をすべてやるように修正する」) で 440 系の判定自体が廃止され、以後は接続確立前の close を code によらず `reject(e)` (CloseEvent 全体) で伝える形だった。現行 Sora でも 440 系で閉じられるのか、また reason に何が入るのかを実機で確認する
 - **サンプル修正は本 issue のスコープ外**: sora-js-sdk-examples 側で `connect()` の reject をハンドリングする修正は別リポジトリの話であり、本 issue では扱わない
 
 ## 完了条件
 
 - `auth_webhook` 設定済みの Sora で拒否時の WebSocket close code / reason を確認し、`connect()` の reject から `ConnectError.code` / `ConnectError.reason` に同じ値が入ることを確認する (結果は本 issue に残す)
-- 伝達経路 (接続確立前は `connect()` の reject、確立後は `disconnect` callback) が仕様として確定され、利用者向けに明記されている (TypeDoc の JSDoc に reject 時の `ConnectError` と判別方法を記載する。`ConnectError` を export する場合は `src/sora.ts` の export にも反映する。確定できない場合は、その旨と理由を本 issue に残す)
+- 伝達経路 (接続確立前は `connect()` の reject、確立後は `disconnect` callback) が仕様として確定され、利用者向けに明記されている (TypeDoc の JSDoc に reject 時の `ConnectError` と判別方法を記載する。`ConnectError` を export する場合は `src/sora.ts` の export にも反映する。export するかどうかを確定できない場合は、その旨と理由を本 issue に残す)
 - 接続確立前では `disconnect` callback が発火しないことが仕様として明記されている
-- 確認の結果、現行 Sora の close code / reason が旧実装 (4401) と異なる場合も、その旨を確認結果とともに明記する
+- 確認の結果、現行 Sora の close code / reason が旧実装で扱われていた 440 系と異なる場合も、その旨を確認結果とともに明記する
 
 ## テスト方針
 
