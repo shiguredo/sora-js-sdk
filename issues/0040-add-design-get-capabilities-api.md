@@ -4,7 +4,7 @@
 - Created: 2026-06-09
 - Model: Opus 4.7
 - Branch: feature/design-get-capabilities-api
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 
 ## 目的
 
@@ -33,8 +33,8 @@ Medium。issue 0004 / 0034 の方針転換 (双方 closed 済み) の前提と�
 - 圧縮実装: `src/utils.ts` の `compressMessage` / `decompressMessage` (いずれも deflate 固定)
 - 呼び出し: `src/base.ts` 内 (`compressMessage` は 7 箇所、`decompressMessage` は 1 箇所)
   - `compressMessage`: `abend`、`disconnectDataChannel`、`sendSignalingMessage`、`sendStatsMessage`、公開 `sendMessage`、`rpc` の notification / 通常リクエストの 2 経路
-  - `decompressMessage`: メッセージング用 DataChannel の onmessage
-  - 補足: `src/utils.ts` の `parseDataChannelEventData` も `decompressMessage` を呼び、RPC の onmessage から使われる
+  - `decompressMessage`: メッセージング用 DataChannel (`#label`) の onmessage (直接呼び出し)
+  - 補足: `src/utils.ts` の `parseDataChannelEventData` も `decompressMessage` を呼び、signaling / notify / push / stats / rpc の 5 つの DataChannel onmessage から使われる
 - すべて `signalingOfferMessageDataChannels.*.compress === true` 分岐内 (`rpc` 分岐は `dataChannelSettings?.compress`)。ただし `rpc` の 2 箇所は `.catch` 付きのため、reject しても unhandled rejection にはならない
 - 利用者から見ると、現状は接続後に compress 経路で初めて失敗が顕在化する
 
@@ -73,21 +73,27 @@ Medium。issue 0004 / 0034 の方針転換 (双方 closed 済み) の前提と�
    - README / sora-js-sdk スキルは「Compression Stream API 対応が必須 (Chrome / Edge 80 以降、Firefox 113 以降、Safari 16.4 以降)」と定めている
    - 対応ブラウザでは本 API の compress 判定は常に true になり、要件外ブラウザでの事前検出 (compress 経路を避ける、未対応の UI 表示) が主な用途になる
 
-### 推奨たたき台
+### 設計方針 (決定)
 
-- API: `Sora.getCapabilities()` (案 A)
-- 戻り値: 機能単位プロパティの object (案 a)
-- 命名:
+「決めること」に対する回答を次のとおり決定する (完了条件に合わせ、本 issue をこれで確定とする)。
 
-  ```ts
-  Sora.getCapabilities(): {
-    dataChannelSignalingCompress: boolean
-  }
-  ```
+1. **API の形と置き場所**: `Sora.getCapabilities()` (案 A)。判定結果はブラウザ / 環境に依存し接続インスタンスごとに変わらないため、インスタンスメソッド (案 B) ではなく default export object に追加する。独立 named export (案 C) は `connection()` / `version()` / `helpers` と同じく `Sora` の default export object に公開メンバを置く既存の作法に揃わないため不採用
+2. **戻り値の型**: 機能単位プロパティの object (案 a)。1 機能に 1 プロパティとし、将来 codec / simulcast などの判定をプロパティ追加で拡張できるようにする。機能の組 (案 b) は今回の単一判定には階層が過剰なため不採用
+3. **判定対象**: `CompressionStream("deflate")` と `DecompressionStream("deflate")` の両方が `globalThis` に存在するか (deflate のみ)。送信 (`compressMessage`) と受信 (`parseDataChannelEventData` / `decompressMessage`) の両経路が使われるため、片方での代表は経路の保証にならない。gzip 等他アルゴリズムは SDK が使用しないため対象外
+4. **同期 / 非同期**: 同期 (両クラスの存在確認で判定が完了するため)
+5. **TypeScript 型公開**: 戻り値型を `SoraCapabilities` として named export する
+6. **`getCapabilities()` 結果と SDK 内部挙動の関係**: 本 issue は判定結果の公開のみ。SDK 内部が `compress: true` 経路で実際にどう振る舞うか (起動時拒否 / 接続時拒否 / 例外 throw) は別 issue で決める
+7. **既存のブラウザ要件との関係**: README / sora-js-sdk スキルの要件 (Chrome / Edge 80 以降、Firefox 113 以降、Safari 16.4 以降) に従う。対応ブラウザでは compress 判定は常に true になり、主用途は要件外ブラウザでの事前検出 (未対応の UI 表示) である
 
-- 判定: `CompressionStream` と `DecompressionStream` の両方が `globalThis` に存在 (deflate のみ。gzip 等他アルゴリズムは今回の判定対象外)
-- 同期戻り、戻り値型は `SoraCapabilities` として named export
-- 判定はブラウザ全体の CompressionStream 対応であり、stats / rpc / メッセージング用 DataChannel の compress 経路も同じ判定に依存する。プロパティ名は最初のユースケース (シグナリング) を代表とし、他の経路への適用は後続の実装 issue で共通の判定関数を使って扱う
+API シグネチャ:
+
+```ts
+Sora.getCapabilities(): {
+  dataChannelSignalingCompress: boolean
+}
+```
+
+判定はブラウザ全体の CompressionStream 対応であり、stats / rpc / notify / push / メッセージング用 DataChannel の compress 経路も同じ判定に依存する (notify / push は受信のみ、他は送信・受信の両方)。プロパティ名は最初のユースケース (シグナリング) を代表とし、他の経路への適用は後続の実装 issue で共通の判定関数を使って扱う。
 
 ## 完了条件
 
