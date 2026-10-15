@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-12
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 - Model: Opus 4.7
 - Branch: feature/refactor-create-signaling-message-delete-loop
 
@@ -12,7 +12,7 @@
 
 加えて、3 つの判定配列 (`audioPropertyKeys` / `audioOpusParamsPropertyKeys` / `videoPropertyKeys`) の `continue` 分岐は **すべて同じ動作 (continue)** で個別判定する必要がなく、配列を統合した 1 つの判定に圧縮できる。各キーは prefix で相互排他のため統合しても挙動は変わらない。
 
-`/auto-resolve 18,19` の処理中、issue 0018 のレビューで「観点 2 重要 #2」「観点 1 改善 2」「観点 6 #3」として helper 抽出と 3 配列統合が指摘されたが、観点間で意見が割れた (観点 1 と観点 6 は Premature Abstraction として推奨せず) ことから issue 0018 のスコープ外として保留したため、別 issue として起票する。
+本 issue は `/auto-resolve 18,19` の処理中 (issue 0018 の対応時) に、helper 抽出と 3 配列統合を issue 0018 のスコープ外として別 issue に切り出して起票した。当時は観点間で意見が割れて結論が未収束だった (2026.1.0 のリリース整理 issue 0059 にも「観点間で意見割れ、結論未収束」と記録されている)。
 
 ## 優先度根拠
 
@@ -93,6 +93,8 @@ const propertyKeys = [...audioPropertyKeys, ...audioOpusParamsPropertyKeys, ...v
 ```ts
 const copyOptions = { ...options };
 const propertyKeys = [...audioPropertyKeys, ...audioOpusParamsPropertyKeys, ...videoPropertyKeys];
+// copyOptions[key] が「値として設定済み」(null でも undefined でもない) か判定する
+// !== null 単独だと undefined !== null が真になり undefined キーが delete されないため、両方を明示的に弾く
 const isValueSet = (value: unknown): boolean => value !== null && value !== undefined;
 for (const key of Object.keys(copyOptions) as Array<keyof ConnectionOptions>) {
   if (key === "audio" && typeof copyOptions[key] === "boolean") {
@@ -108,7 +110,7 @@ for (const key of Object.keys(copyOptions) as Array<keyof ConnectionOptions>) {
 }
 ```
 
-行数は `copyOptions` 構築から delete ループ終わりまで **33 行** → **15 行** (現状の実装を `const copyOptions` 構築から数えた場合) に減り、修正漏れリスクも消える。
+行数は `copyOptions` 構築から delete ループ終わりまで **33 行** → **17 行** (現状の実装を `const copyOptions` 構築から数えた場合。helper の説明コメント 2 行を含む) に減り、修正漏れリスクも消える。
 
 ## 完了条件
 
@@ -131,4 +133,4 @@ for (const key of Object.keys(copyOptions) as Array<keyof ConnectionOptions>) {
 
 ## マージ順
 
-issue 0018 (マージ済) → issue 0046 (マージ済) → 本 issue。0046 で `in` 演算子が消えた後の方が、本 refactor で残る delete ループの構造がより読みやすくなる。
+issue 0018 (マージ済) → issue 0046 (マージ済) → 本 issue。0046 で `in` 演算子が消え、delete ループ周辺のコードが軽くなった後の方が、本 refactor の意義が明確になる。
