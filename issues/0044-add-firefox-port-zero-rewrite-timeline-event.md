@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-06-11
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 - Model: Opus 4.7
 - Branch: feature/add-firefox-port-zero-rewrite-timeline-event
 
@@ -168,7 +168,7 @@ private processOfferSdp(offerSdp: string): string {
 - `src/base.ts` の `processOfferSdp` を上記 §設計方針 の orchestrator イメージに従って書き換える。`processOfferSdp` メソッドは `private` のまま残し、`setRemoteDescription` からの呼び出し関係は変更しない。書き換えが発生したとき (`kinds.length > 0`) のみ `writePeerConnectionTimelineLog("firefox-port-zero-rewrite", { kinds, firefoxVersion })` を発行する
 - 既存の lint 対応コメント (`// lint 対応で引数を変更したりしないようにしてる`) と Firefox workaround の意図を説明する既存コメントは維持する
 - 既存テスト (`pnpm test` / 既存の Playwright プロジェクト) が退行なくそのまま通る
-- CHANGES.md の `## develop` セクション本体 (`### misc` ではない) の先頭 (現状は `[FIX]` エントリ 1 件のみで、その `[FIX]` エントリの前。`shiguredo-changelog` 規約の種別順 CHANGE → ADD → UPDATE → FIX に従った位置) に以下を追記する。`### misc` ではなく本体に置く理由: 本変更は `callbacks.timeline` に新規 eventType を発行する SDK の公開挙動の追加であり、SDK 利用者の観測可能な機能追加に該当するため (`shiguredo-changelog` 規約では機能に直接影響しない変更のみ `### misc` に置く)。担当者は実装者の GitHub ID に置き換えること:
+- CHANGES.md の `## develop` セクション本体 (`### misc` ではない) の先頭 (現状は `[FIX]` エントリが 2 件あるため、それらすべての `[FIX]` エントリの前。`shiguredo-changelog` 規約の種別順 CHANGE → ADD → UPDATE → FIX に従った位置) に以下を追記する。`### misc` ではなく本体に置く理由: 本変更は `callbacks.timeline` に新規 eventType を発行する SDK の公開挙動の追加であり、SDK 利用者の観測可能な機能追加に該当するため (`shiguredo-changelog` 規約では機能に直接影響しない変更のみ `### misc` に置く)。担当者は実装者の GitHub ID に置き換えること:
 
   ```
   - [ADD] Firefox 向け processOfferSdp の port=0 書き換えが発火したことを timeline event firefox-port-zero-rewrite として記録する
