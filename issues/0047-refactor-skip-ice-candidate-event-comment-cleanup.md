@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-12
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 - Model: Opus 4.7
 - Branch: feature/refactor-skip-ice-candidate-event-comment
 
@@ -33,7 +33,7 @@ this.options.skipIceCandidateEvent ??= false;
 | 行                                                                                  | 内容                          | 問題                                                                                                                                                                                                                                                                                                            |
 | ----------------------------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | L1 (「options に skipIceCandidateEvent が指定されていなかったら false を指定する」) | 業務上の意図を述べる          | 残すべき情報                                                                                                                                                                                                                                                                                                    |
-| L2 (「ちなみに `this.options.skipIceCandidateEvent ??= false` とも書ける」)         | `??=` 構文の代替表現を案内    | **直下のコードがまさにその形** のため矛盾。git 履歴 (commit `9a9d6a29`) で、`if (this.options.skipIceCandidateEvent === undefined) { this.options.skipIceCandidateEvent = false; }` を oxlint の `prefer-optional-chain` による `--fix` 一括修正で `??=` に書き換えた際にコメントを更新し忘れた残骸と確認できた |
+| L2 (「ちなみに `this.options.skipIceCandidateEvent ??= false` とも書ける」)         | `??=` 構文の代替表現を案内    | **直下のコードがまさにその形** のため矛盾。このコメントは `d2ad49c5` (skipIceCandidate オプションの追加時) で if 文と共に追加され、`9a9d6a29` (2026-03-13) で if 文 (`if (this.options.skipIceCandidateEvent === undefined) { this.options.skipIceCandidateEvent = false; }`) が `??=` に書き換えられた際に更新されなかった残骸 |
 | L3 (MDN URL)                                                                        | `??=` の言語仕様を MDN で参照 | TypeScript を読む読者には不要                                                                                                                                                                                                                                                                                   |
 
 ## 設計方針
