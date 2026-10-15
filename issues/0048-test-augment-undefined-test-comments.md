@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-06-12
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 - Model: Opus 4.7
 - Branch: feature/refactor-augment-undefined-test-comments
 
@@ -10,7 +10,7 @@
 
 `tests/utils.test.ts` の既存 `createSignalingMessage audio: undefined` / `createSignalingMessage video: undefined` テストはコメントが付いていない。一方、issue 0018 で新規に追加した同種の `audioBitRate: undefined` / `videoBitRate: undefined` / `audioOpusParamsChannels: undefined` / `audioBitRate: 100, audioCodecType: undefined` には「copyOptions delete ループで undefined キーが除去されるため boolean (`audio: true` / `video: true`) を保つ / `{}` 化しない」旨の意図コメントが付いている。
 
-既存と新規でコメント濃度の非対称が生じており、`CLAUDE.md` の「テストはコメントを重視すること」原則からも「既存側にも同等のコメントを追加して揃える」のが本来あるべき姿。`/auto-resolve 18,19` の処理中、issue 0018 のレビュー (観点 2 改善 4) で broken windows として指摘されたが、issue 0018 のスコープ外として保留したため別 issue として起票する。
+既存と新規でコメント濃度の非対称が生じており、`CLAUDE.md` の「テストはコメントを重視すること」原則からも「既存側にも同等のコメントを追加して揃える」のが本来あるべき姿。issue 0018 のレビューで指摘されたが、issue 0018 では扱わなかったため別 issue として起票する。
 
 ## 優先度根拠
 
@@ -60,7 +60,7 @@ test("createSignalingMessage audioBitRate: undefined", () => {
 
 ## 設計方針
 
-既存 2 テストに 1〜2 行の意図コメントを追加する。経路の違い (`audio: undefined` は boolean ガード + 末尾 delete、`audioBitRate: undefined` は delete ループの `continue` 条件) を区別できる粒度で書く。
+既存 2 テストに 1〜2 行の意図コメントを追加する。経路の違い (`audio: undefined` は boolean 型ガード (`typeof copyOptions[key] === "boolean"`) を通らず、`audioBitRate: undefined` は値セットガード (`!== null && !== undefined`) を通らず、どちらもループ末尾の `delete copyOptions[key]` で除去される) を区別できる粒度で書く。
 
 例:
 
@@ -88,5 +88,5 @@ video 側も同様の趣旨で書く。
 
 ## スコープ外
 
-- 他の `undefined` 系既存テスト (`clientId: undefined`、`bundleId: undefined`、`dataChannelSignaling: undefined`、`ignoreDisconnectWebSocket: undefined`、`audioStreamingLanguageCode: undefined`、`spotlightNumber: undefined` 等) へのコメント補強 — 本 issue は `audio: undefined` / `video: undefined` の 2 件のみに限定 (これらは issue 0018 で新規追加した `audioBitRate: undefined` 等との対称性を保つことが主目的のため)
+- 他の `undefined` 系既存テスト (`clientId: undefined`、`bundleId: undefined`、`dataChannelSignaling: undefined`、`ignoreDisconnectWebSocket: undefined`、`audioStreamingLanguageCode: undefined` 等。`spotlightNumber: undefined` は issue 0018 で既に意図コメントへ更新済みのため対象外) へのコメント補強 — 本 issue は `audio: undefined` / `video: undefined` の 2 件のみに限定 (これらは issue 0018 で新規追加した `audioBitRate: undefined` 等との対称性を保つことが主目的のため)
 - テストの構造変更 / 命名変更 / `describe` ブロック導入等のリファクタ
