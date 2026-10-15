@@ -5,13 +5,13 @@
 - Completed: {YYYY-MM-DD}
 - Model: Opus 4.7
 - Branch: feature/add-publint-attw-validation
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 
 ## 目的
 
-`vp pack` (vite-plus 内蔵のライブラリ向けビルドコマンド。develop 時点では vite-plus 0.2.8。内部では tsdown 0.22.14 を利用) の `--publint` / `--attw` オプションを有効化し、npm 公開パッケージの型定義・エントリポイント・`exports` 構成の問題を CI で継続的に検証する。`publint` と `attw` (Are the types wrong) はパッケージング上の典型的な問題 (`exports` の条件順、型定義のエントリ、CJS/ESM の整合性等) を検出する OSS。
+`vp pack` (vite-plus 内蔵のライブラリ向けビルドコマンド。2026-10-16 時点の develop では vite-plus 1.0.0-rc.0。内部では tsdown 0.23.0 を利用) の `--publint` / `--attw` オプションを有効化し、npm 公開パッケージの型定義・エントリポイント・`exports` 構成の問題を CI で継続的に検証する。`publint` と `attw` (Are the types wrong) はパッケージング上の典型的な問題 (`exports` の条件順、型定義のエントリ、CJS/ESM の整合性等) を検出する OSS。
 
-磨き上げ時に vite-plus 0.2.8 (vite-plus-core に同梱される tsdown 0.22.14) の CLI 定義と型定義を実物で確認し、以下のオプションが内蔵されていることを確認した:
+磨き上げ時 (2026-10-16) に vite-plus 1.0.0-rc.0 (vite-plus-core に同梱される tsdown 0.23.0) の CLI 定義と型定義を実物で確認し、以下のオプションが内蔵されていることを確認した:
 
 ```
 --publint       Enable publint (default: false)
@@ -36,9 +36,9 @@ Low。SDK の機能には直接影響しない CI 検証強化。issue 0054 (`ex
 
 ## 現状
 
-- `package.json`: `"type": "module"` の ESM 専用パッケージ。`main` / `module` は `dist/sora.js`、`exports["."]` は `types` (`./dist/sora.d.ts`) → `import` (`./dist/sora.js`) の 2 条件のみ。`scripts.build` は `vp pack`。`devDependencies` に vite-plus 0.2.8 を持つ
+- `package.json`: `"type": "module"` の ESM 専用パッケージ。`main` / `module` は `dist/sora.js`、`exports["."]` は `types` (`./dist/sora.d.ts`) → `import` (`./dist/sora.js`) の 2 条件のみ。`scripts.build` は `vp pack`。`devDependencies` に vite-plus 1.0.0-rc.0 を持つ
 - `vite.config.ts`: `pack` ブロック (entry / format / platform / target / outDir / minify / dts / clean / banner / define) は定義済みだが、`publint` / `attw` は未設定
-- vite-plus 0.2.8 は `publint` / `@arethetypeswrong/core` を `@voidzero-dev/vite-plus-core` の optional peerDependencies として要求する。現 `pnpm-lock.yaml` にはインストールされていない (任意依存のため) ので、有効化には devDependencies への追加が必要 (詳細は「設計方針」参照)
+- vite-plus 1.0.0-rc.0 は `publint` / `@arethetypeswrong/core` を `@voidzero-dev/vite-plus-core` の optional peerDependencies として要求する。現 `pnpm-lock.yaml` にはインストールされていない (任意依存のため) ので、有効化には devDependencies への追加が必要 (詳細は「設計方針」参照)
 - 0054 で `exports["."].require` は削除済みのため、`attw` の `false-cjs` 系および `publint` の ESM-as-CJS 系警告の主因は解消済み
 
 ## 設計方針
@@ -76,7 +76,7 @@ Low。SDK の機能には直接影響しない CI 検証強化。issue 0054 (`ex
 - `pnpm run build` (内部で `vp pack` 実行) で `publint` / `attw` の検証が実行される。CI の `ci.yaml` / `npm-publish.yml` も `vp run build` 経由で同様に実行される
 - ビルドが警告 / エラーなしで完了する。残る警告がある場合は `pack.suppressWarnings` / `pack.attw.ignoreRules` で許容ルールを設定し、`vite.config.ts` のコメントで理由を日本語で記載する
 - ローカルで `pnpm run build` / `pnpm run test` / `pnpm e2e-test` (chromium) が pass する
-- `CHANGES.md` `## develop` の `### misc` 内の `[ADD]` 群末尾に次を追記する (現 develop では `[ADD] typedoc 生成物を GitHub Pages にデプロイする workflow を追加する` エントリの直後、`[UPDATE] @playwright/test` エントリの直前。前後のエントリ追加・削除で位置は変動するため、マージ時点では「`### misc` の `[ADD]` 群末尾」という相対位置で判断する):
+- `CHANGES.md` `## develop` の `### misc` 内の `[ADD]` 群末尾に次を追記する (現 develop では `### misc` の `[ADD]` 群末尾、すなわち `[ADD] \`e2e-tests/rpc\` にサーバーが JSON-RPC エラーを返す呼び出しの検証を追加する` エントリの直後。前後のエントリ追加・削除で位置は変動するため、マージ時点では「`### misc` の `[ADD]` 群末尾」という相対位置で判断する):
 
   ```
   - [ADD] `vp pack` の `publint` / `attw` 検証を有効化する
@@ -91,7 +91,7 @@ Low。SDK の機能には直接影響しない CI 検証強化。issue 0054 (`ex
 
 - `vp pack --fail-on-warn` はデフォルト true。本 issue で `publint: true` / `attw: true` を入れると、警告検出時に CI ビルドが失敗する
 - `publint` / `@arethetypeswrong/core` は vite-plus-core の optional peerDependencies のため、devDependencies に追加しない限り `vp pack` はモジュール import に失敗する
-- attw はパッケージの型を解決する際に外部へ問い合わせることがある。CI 環境 (GitHub Actions) はインターネットアクセス可能なので問題ない想定
+- attw は tsdown がローカルで作成した tarball を解析するため、外部への問い合わせは発生しない (tsdown 0.23.0 は `createPackageFromTarballData` を使用)
 - `e2e-test` 系スクリプトも先頭で `vp pack` を実行するため、`pnpm e2e-test` 実行時にも publint / attw の検証が走る
 
 ## スコープ外
