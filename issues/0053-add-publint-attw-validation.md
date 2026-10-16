@@ -76,7 +76,7 @@ Low。SDK の機能には直接影響しない CI 検証強化。issue 0054 (`ex
 - `pnpm run build` (内部で `vp pack` 実行) で `publint` / `attw` の検証が実行される。CI の `ci.yaml` / `npm-publish.yml` も `vp run build` 経由で同様に実行される
 - ビルドが警告 / エラーなしで完了する。残る警告がある場合は `pack.suppressWarnings` / `pack.attw.ignoreRules` で許容ルールを設定し、`vite.config.ts` のコメントで理由を日本語で記載する
 - ローカルで `pnpm run build` / `pnpm run test` / `pnpm e2e-test` (chromium) が pass する
-- `CHANGES.md` `## develop` の `### misc` 内の `[ADD]` 群末尾に次を追記する (現 develop では `### misc` の `[ADD]` 群末尾、すなわち `[ADD] \`e2e-tests/rpc\` にサーバーが JSON-RPC エラーを返す呼び出しの検証を追加する` エントリの直後。前後のエントリ追加・削除で位置は変動するため、マージ時点では「`### misc` の `[ADD]` 群末尾」という相対位置で判断する):
+- `CHANGES.md` `## develop` の `### misc` 内の `[ADD]` 群末尾に次を追記する (現 develop では `### misc` の `[ADD]` 群末尾、すなわち `[ADD] \`e2e-tests/rpc\` にサーバーが JSON-RPC エラーを返す呼び出しの検証を追加する` エントリの直後。前後のエントリ追加・削除で位置は変動するため、マージ時点では「`### misc`の`[ADD]` 群末尾」という相対位置で判断する):
 
   ```
   - [ADD] `vp pack` の `publint` / `attw` 検証を有効化する

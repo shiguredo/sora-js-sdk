@@ -43,29 +43,29 @@ rg -n "waitForTimeout" e2e-tests/tests/
 
 ## 置換対象一覧
 
-| ファイル | 対象箇所 | 待機条件 (後続 assert に合わせる) |
-| --- | --- | --- |
-| `authz_simulcast_encodings.test.ts` | `test("authz simulcast encodings")` の接続後 | 後続は `#pc-state` の `dataset.connectionState === "connected"` 待ちと `#connection-id:not(:empty)` 待ちの後に続く。これらは接続確立しか見ないため sleep の置換には不十分 (stats 送出を担保しない)。`#get-stats` クリック後に `#stats-report` の outbound-rtp を **r0 限定・video** で poll する。後続 assert は r0 の `bytesSent > 0` / `packetsSent > 2` / `scalabilityMode === "L1T1"` (fixture は `simulcast_sendonly`) と r1 / r2 の `bytesSent === 0`。`packetsSent` を `minValue: 3` で待つ (`bytesSent > 0` は同一エントリで同時に成立する。`scalabilityMode` は静的) |
-| `stereo_audio.test.ts` | `test("stereo audio transmission test")` の接続後 | **双方向** (fixture: `fake_stereo_audio`、audio のみ)。送信側 `#stats-report` の outbound-rtp `bytesSent > 0` と、受信側 `[data-recv-stats-report-json]` の inbound-rtp `bytesReceived > 0` の両方を待つ。受信側は fixture の append 問題があるため「共通ヘルパー」の注記 (issue 0029 で対処) を参照。0029 対象のため本 issue では実施しない |
-| `stereo_audio.test.ts` | `test("mono audio transmission test")` の接続後 | 送信側 outbound-rtp `bytesSent > 0` のみ (受信側には assert が無い。fixture は audio のみ)。上記とは別条件。0029 対象のため本 issue では実施しない |
-| `stereo_audio_sendrecv.test.ts` | `test("stereo audio bidirectional transmission test")` の接続後 | **双方向** (fixture: `fake_stereo_audio_sendrecv`、audio のみ)。fixture は `#stats-report-1` / `#stats-report-2` の 2 要素で plain な `#stats-report` は無い。`statsSelector` にそれぞれを渡し、送信側 (outbound) / 受信側 (inbound) の各 `bytesSent > 0` / `bytesReceived > 0` を待つ (後続 assert は `findOutboundRtpStats` / `findInboundRtpStats` の audio を対象。`#audio-analysis` は静的 div を上書きする方式)。0029 対象のため本 issue では実施しない |
-| `stereo_audio_sendrecv.test.ts` | `test("mono audio bidirectional transmission test")` の接続後 | **RTP stats の assert は無い** (後続は `getAnalysisData` の `dataset.analysis` のみ)。`#get-stats` クリック後に `#audio-analysis` の `dataset.analysis` 書き込みを `waitForFunction` / `expect.poll` で待つ (fixture は静的 div を上書きするため書ける)。0029 対象のため本 issue では実施しない |
-| `stereo_audio_sendrecv.test.ts` | `test("mixed stereo/mono bidirectional transmission test")` の接続後 | 同上 (後続は `getAnalysisData` の `dataset.analysis` のみ)。`#get-stats` クリック後に `#audio-analysis` の `dataset.analysis` 書き込みを待つ。0029 対象のため本 issue では実施しない |
-| `sendrecv.test.ts` | `test("sendrecv x2")` の 2 ページ接続後 | **双方向** (fixture: `sendrecv`)。各 page で outbound / inbound それぞれ **audio と video の両方** を待つ (後続 assert は各 page の audio / video 両方の outbound `bytesSent > 0` + `packetsSent > 0` と inbound `bytesReceived > 0` + `packetsReceived > 0`)。ヘルパーは `some` で単一エントリしか判定しないため `mediaType` を指定した 4 呼び出し/ページ。audio 送出だけで抜けさせない |
-| `webkit.test.ts` | `test("WebKit")` の sendrecv 2 ページ接続後 | **双方向** (fixture: `sendrecv_webkit`)。sendrecv と同様、各 page で audio / video 両方の outbound / inbound を待つ (後続 assert は `findOutboundRtpStats` / `findInboundRtpStats` の audio / video について `bytesSent > 0` / `bytesReceived > 0`)。`mediaType` を指定した 4 呼び出し/ページ |
-| `webkit.test.ts` | `test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo")` の接続後 (fixture: `simulcast_sendonly_webkit`、video のみ) | `#connection-id:not(:empty)` は直前で待機済み。後続 assert は r0 / r1 の `bytesSent > 500` + `packetsSent > 50` と r2 の `bytesSent === 0` (scalabilityMode assert はコメントアウト中のため対象外)。**r0 と r1 の両方** を rid 付きで待つ (`minValue` は 501 / 51)。`bytesSent >= 1` で抜けると直後の `> 500` assert が flaky のまま残る |
-| `simulcast_rid.test.ts` | `test("simulcast sendonly/recvonly pages")` の 2 ページ接続後 | **両 page** (fixture: `simulcast_sendonly` / `simulcast_recvonly`、video のみ)。sendonly は r0 / r1 / r2 **すべて** の outbound `bytesSent > 0` + `packetsSent > 0` + `scalabilityMode === "L1T1"`、recvonly は inbound video `bytesReceived > 0` + `packetsReceived > 0`、さらに recvonly の `frameWidth` / `frameHeight` が sendonly r1 と一致 (後続 assert は `findOutboundRtpStatsByRid` / `findInboundRtpStats`)。**「全 rid の AND」「文字列比較」「2 ページ間の比較」を含むため共通ヘルパーでは表現できない。テスト独自の `expect.poll` で書く** (置換例参照) |
-| `simulcast.test.ts` | `test("simulcast sendonly/recvonly pages")` の接続後 | 後続は 3 rid すべての outbound `bytesSent > 0` + `packetsSent > 0` + `scalabilityMode === "L1T1"`。`#stats-report` は静的 div のため `waitForSelector` は no-op、また `#get-stats` クリック後の単一スナップショット読み取りは非同期書き込みと race する。**削除ではなく決定的待機に置換**する: 3 rid それぞれで `bytesSent` / `packetsSent` を poll (`waitForRtpStat` を rid 付きで 6 回。`scalabilityMode` は静的のため poll に含めず、同一スナップショットの assert で検出)。`#get-stats` クリックは poll 内で再クリックする (共通ヘルパー) |
-| `sendonly_recvonly.test.ts` | `test("sendonly/recvonly pages")` の sendonly / recvonly 接続後 | sendonly (fixture: `sendonly`): `#stats-report` の outbound-rtp を **audio と video の両方** 待つ (後続 assert は `findOutboundRtpStats(..., "audio")` / `"video"` の `bytesSent > 0` + `packetsSent > 0`)。recvonly (fixture: `recvonly`): inbound-rtp を audio と video の両方待つ (`findInboundRtpStats` の `bytesReceived > 0` + `packetsReceived > 0`)。`mediaType` を指定 (各 2 呼び出し/ページ) |
-| `sendonly_audio.test.ts` | `test("sendonly audio pages")` の接続後 | sendonly (fixture: `sendonly_audio`、audio のみ `video: false`)。`#stats-report` の outbound-rtp `bytesSent > 0` + `packetsSent > 0` を待つ (audio のみのため `mediaType: "audio"` を明示すると意図が明確) |
-| `rpc.test.ts` | `test("RPC で simulcast rid を切り替えられる")` の初期解像度取得前 | r0 で開始 (fixture: `rpc`、video のみ)。`#video-resolution` は remote video の `resize` イベント (`rpc/main.ts` の `ontrack`) でのみ更新される。`#rpc-methods` の内容確認・`#switched[data-switched="true"]` 待機は既存だが、解像度はまだ未測定の可能性がある。`getVideoResolution` が width / height とも 0 より大きくなるまで `expect.poll` (後続 assert は `initialResolution.width > 0` / `height > 0`) |
-| `rpc.test.ts` | `test("RPC で simulcast rid を切り替えられる")` の r1 切替後の解像度反映待ち | `#current-rid` の `dataset.currentRid === "r1"` 待機と `getRpcResult` の `rid: "r1"` 検証は既存。以降 `getVideoResolution` が **`initialResolution` より大きく** なるまで `expect.poll` (後続 assert は `r1Resolution` の width / height 両方の `toBeGreaterThan(initialResolution.*)`。`#video-resolution` の更新は resize イベント起点) |
-| `rpc.test.ts` | `test("RPC で simulcast rid を切り替えられる")` の r0 復帰後の解像度反映待ち | `#current-rid` の `dataset.currentRid === "r0"` 待機と `getRpcResult` の `rid: "r0"` 検証は既存。以降 `getVideoResolution` が 0 より大きく、かつ **`r1Resolution` より小さく** なるまで `expect.poll` (後続 assert は `r0Resolution` の width / height 両方の `> 0` と `toBeLessThan(r1Resolution.*)`。未測定の 0 は r1 より小さいため `> 0` の確認が必須) |
-| `h265.test.ts` | `test("H265")` の 2 ページ接続後 | **双方向** (fixture: `h265`、audio と video を送出するが **後続 assert は video のみ**)。各 page で outbound video `bytesSent > 0` + `packetsSent > 0` と inbound video `bytesReceived > 0` + `packetsReceived > 0` を待つ (`mediaType: "video"`。audio は assert されないため待つ必要は無い) |
-| `spotlight_sendrecv.test.ts` | `test("spotlight sendrecv x2")` の 2 ページ接続後 | テストは stats を一切読み取らない (RTP stats の assert が存在しない。fixture `spotlight_sendrecv/main.ts` に `#get-stats` ハンドラは無く、index.html のボタンは dead)。直前の `#connection-id:not(:empty)` 待機で接続確立は担保済みのため **削除** する |
-| `reconnect.test.ts` | `test("sendonly_reconnect type:reconnect pages")` の接続後 | テストは `#stats-report` / `#get-stats` を一切使わない。後続 assert は `#api-disconnect-status` の "success" と、再接続後の `#connection-id` が元と異なること、`#reconnect-log` の "Success" のみで **stats 系の assert は存在しない**。fixture (`sendonly_reconnect`) の `#stats-report` は `#get-stats` クリック時のみ書かれるため、メディア送出を待つと「テストが読まないデータ」への待機になる。直前に `#connection-id:not(:empty)` を待機済みで接続確立は担保されるため **削除** する |
-| `connected_callback.test.ts` | - | `waitForTimeout` を使用しないため対象外 |
-| `spotlight_sendonly_recvonly.test.ts` | - | `waitForTimeout` を使用しないため対象外 |
+| ファイル                              | 対象箇所                                                                                                                          | 待機条件 (後続 assert に合わせる)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `authz_simulcast_encodings.test.ts`   | `test("authz simulcast encodings")` の接続後                                                                                      | 後続は `#pc-state` の `dataset.connectionState === "connected"` 待ちと `#connection-id:not(:empty)` 待ちの後に続く。これらは接続確立しか見ないため sleep の置換には不十分 (stats 送出を担保しない)。`#get-stats` クリック後に `#stats-report` の outbound-rtp を **r0 限定・video** で poll する。後続 assert は r0 の `bytesSent > 0` / `packetsSent > 2` / `scalabilityMode === "L1T1"` (fixture は `simulcast_sendonly`) と r1 / r2 の `bytesSent === 0`。`packetsSent` を `minValue: 3` で待つ (`bytesSent > 0` は同一エントリで同時に成立する。`scalabilityMode` は静的) |
+| `stereo_audio.test.ts`                | `test("stereo audio transmission test")` の接続後                                                                                 | **双方向** (fixture: `fake_stereo_audio`、audio のみ)。送信側 `#stats-report` の outbound-rtp `bytesSent > 0` と、受信側 `[data-recv-stats-report-json]` の inbound-rtp `bytesReceived > 0` の両方を待つ。受信側は fixture の append 問題があるため「共通ヘルパー」の注記 (issue 0029 で対処) を参照。0029 対象のため本 issue では実施しない                                                                                                                                                                                                                                  |
+| `stereo_audio.test.ts`                | `test("mono audio transmission test")` の接続後                                                                                   | 送信側 outbound-rtp `bytesSent > 0` のみ (受信側には assert が無い。fixture は audio のみ)。上記とは別条件。0029 対象のため本 issue では実施しない                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `stereo_audio_sendrecv.test.ts`       | `test("stereo audio bidirectional transmission test")` の接続後                                                                   | **双方向** (fixture: `fake_stereo_audio_sendrecv`、audio のみ)。fixture は `#stats-report-1` / `#stats-report-2` の 2 要素で plain な `#stats-report` は無い。`statsSelector` にそれぞれを渡し、送信側 (outbound) / 受信側 (inbound) の各 `bytesSent > 0` / `bytesReceived > 0` を待つ (後続 assert は `findOutboundRtpStats` / `findInboundRtpStats` の audio を対象。`#audio-analysis` は静的 div を上書きする方式)。0029 対象のため本 issue では実施しない                                                                                                                 |
+| `stereo_audio_sendrecv.test.ts`       | `test("mono audio bidirectional transmission test")` の接続後                                                                     | **RTP stats の assert は無い** (後続は `getAnalysisData` の `dataset.analysis` のみ)。`#get-stats` クリック後に `#audio-analysis` の `dataset.analysis` 書き込みを `waitForFunction` / `expect.poll` で待つ (fixture は静的 div を上書きするため書ける)。0029 対象のため本 issue では実施しない                                                                                                                                                                                                                                                                               |
+| `stereo_audio_sendrecv.test.ts`       | `test("mixed stereo/mono bidirectional transmission test")` の接続後                                                              | 同上 (後続は `getAnalysisData` の `dataset.analysis` のみ)。`#get-stats` クリック後に `#audio-analysis` の `dataset.analysis` 書き込みを待つ。0029 対象のため本 issue では実施しない                                                                                                                                                                                                                                                                                                                                                                                          |
+| `sendrecv.test.ts`                    | `test("sendrecv x2")` の 2 ページ接続後                                                                                           | **双方向** (fixture: `sendrecv`)。各 page で outbound / inbound それぞれ **audio と video の両方** を待つ (後続 assert は各 page の audio / video 両方の outbound `bytesSent > 0` + `packetsSent > 0` と inbound `bytesReceived > 0` + `packetsReceived > 0`)。ヘルパーは `some` で単一エントリしか判定しないため `mediaType` を指定した 4 呼び出し/ページ。audio 送出だけで抜けさせない                                                                                                                                                                                      |
+| `webkit.test.ts`                      | `test("WebKit")` の sendrecv 2 ページ接続後                                                                                       | **双方向** (fixture: `sendrecv_webkit`)。sendrecv と同様、各 page で audio / video 両方の outbound / inbound を待つ (後続 assert は `findOutboundRtpStats` / `findInboundRtpStats` の audio / video について `bytesSent > 0` / `bytesReceived > 0`)。`mediaType` を指定した 4 呼び出し/ページ                                                                                                                                                                                                                                                                                 |
+| `webkit.test.ts`                      | `test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo")` の接続後 (fixture: `simulcast_sendonly_webkit`、video のみ) | `#connection-id:not(:empty)` は直前で待機済み。後続 assert は r0 / r1 の `bytesSent > 500` + `packetsSent > 50` と r2 の `bytesSent === 0` (scalabilityMode assert はコメントアウト中のため対象外)。**r0 と r1 の両方** を rid 付きで待つ (`minValue` は 501 / 51)。`bytesSent >= 1` で抜けると直後の `> 500` assert が flaky のまま残る                                                                                                                                                                                                                                      |
+| `simulcast_rid.test.ts`               | `test("simulcast sendonly/recvonly pages")` の 2 ページ接続後                                                                     | **両 page** (fixture: `simulcast_sendonly` / `simulcast_recvonly`、video のみ)。sendonly は r0 / r1 / r2 **すべて** の outbound `bytesSent > 0` + `packetsSent > 0` + `scalabilityMode === "L1T1"`、recvonly は inbound video `bytesReceived > 0` + `packetsReceived > 0`、さらに recvonly の `frameWidth` / `frameHeight` が sendonly r1 と一致 (後続 assert は `findOutboundRtpStatsByRid` / `findInboundRtpStats`)。**「全 rid の AND」「文字列比較」「2 ページ間の比較」を含むため共通ヘルパーでは表現できない。テスト独自の `expect.poll` で書く** (置換例参照)          |
+| `simulcast.test.ts`                   | `test("simulcast sendonly/recvonly pages")` の接続後                                                                              | 後続は 3 rid すべての outbound `bytesSent > 0` + `packetsSent > 0` + `scalabilityMode === "L1T1"`。`#stats-report` は静的 div のため `waitForSelector` は no-op、また `#get-stats` クリック後の単一スナップショット読み取りは非同期書き込みと race する。**削除ではなく決定的待機に置換**する: 3 rid それぞれで `bytesSent` / `packetsSent` を poll (`waitForRtpStat` を rid 付きで 6 回。`scalabilityMode` は静的のため poll に含めず、同一スナップショットの assert で検出)。`#get-stats` クリックは poll 内で再クリックする (共通ヘルパー)                                 |
+| `sendonly_recvonly.test.ts`           | `test("sendonly/recvonly pages")` の sendonly / recvonly 接続後                                                                   | sendonly (fixture: `sendonly`): `#stats-report` の outbound-rtp を **audio と video の両方** 待つ (後続 assert は `findOutboundRtpStats(..., "audio")` / `"video"` の `bytesSent > 0` + `packetsSent > 0`)。recvonly (fixture: `recvonly`): inbound-rtp を audio と video の両方待つ (`findInboundRtpStats` の `bytesReceived > 0` + `packetsReceived > 0`)。`mediaType` を指定 (各 2 呼び出し/ページ)                                                                                                                                                                        |
+| `sendonly_audio.test.ts`              | `test("sendonly audio pages")` の接続後                                                                                           | sendonly (fixture: `sendonly_audio`、audio のみ `video: false`)。`#stats-report` の outbound-rtp `bytesSent > 0` + `packetsSent > 0` を待つ (audio のみのため `mediaType: "audio"` を明示すると意図が明確)                                                                                                                                                                                                                                                                                                                                                                    |
+| `rpc.test.ts`                         | `test("RPC で simulcast rid を切り替えられる")` の初期解像度取得前                                                                | r0 で開始 (fixture: `rpc`、video のみ)。`#video-resolution` は remote video の `resize` イベント (`rpc/main.ts` の `ontrack`) でのみ更新される。`#rpc-methods` の内容確認・`#switched[data-switched="true"]` 待機は既存だが、解像度はまだ未測定の可能性がある。`getVideoResolution` が width / height とも 0 より大きくなるまで `expect.poll` (後続 assert は `initialResolution.width > 0` / `height > 0`)                                                                                                                                                                   |
+| `rpc.test.ts`                         | `test("RPC で simulcast rid を切り替えられる")` の r1 切替後の解像度反映待ち                                                      | `#current-rid` の `dataset.currentRid === "r1"` 待機と `getRpcResult` の `rid: "r1"` 検証は既存。以降 `getVideoResolution` が **`initialResolution` より大きく** なるまで `expect.poll` (後続 assert は `r1Resolution` の width / height 両方の `toBeGreaterThan(initialResolution.*)`。`#video-resolution` の更新は resize イベント起点)                                                                                                                                                                                                                                     |
+| `rpc.test.ts`                         | `test("RPC で simulcast rid を切り替えられる")` の r0 復帰後の解像度反映待ち                                                      | `#current-rid` の `dataset.currentRid === "r0"` 待機と `getRpcResult` の `rid: "r0"` 検証は既存。以降 `getVideoResolution` が 0 より大きく、かつ **`r1Resolution` より小さく** なるまで `expect.poll` (後続 assert は `r0Resolution` の width / height 両方の `> 0` と `toBeLessThan(r1Resolution.*)`。未測定の 0 は r1 より小さいため `> 0` の確認が必須)                                                                                                                                                                                                                    |
+| `h265.test.ts`                        | `test("H265")` の 2 ページ接続後                                                                                                  | **双方向** (fixture: `h265`、audio と video を送出するが **後続 assert は video のみ**)。各 page で outbound video `bytesSent > 0` + `packetsSent > 0` と inbound video `bytesReceived > 0` + `packetsReceived > 0` を待つ (`mediaType: "video"`。audio は assert されないため待つ必要は無い)                                                                                                                                                                                                                                                                                 |
+| `spotlight_sendrecv.test.ts`          | `test("spotlight sendrecv x2")` の 2 ページ接続後                                                                                 | テストは stats を一切読み取らない (RTP stats の assert が存在しない。fixture `spotlight_sendrecv/main.ts` に `#get-stats` ハンドラは無く、index.html のボタンは dead)。直前の `#connection-id:not(:empty)` 待機で接続確立は担保済みのため **削除** する                                                                                                                                                                                                                                                                                                                       |
+| `reconnect.test.ts`                   | `test("sendonly_reconnect type:reconnect pages")` の接続後                                                                        | テストは `#stats-report` / `#get-stats` を一切使わない。後続 assert は `#api-disconnect-status` の "success" と、再接続後の `#connection-id` が元と異なること、`#reconnect-log` の "Success" のみで **stats 系の assert は存在しない**。fixture (`sendonly_reconnect`) の `#stats-report` は `#get-stats` クリック時のみ書かれるため、メディア送出を待つと「テストが読まないデータ」への待機になる。直前に `#connection-id:not(:empty)` を待機済みで接続確立は担保されるため **削除** する                                                                                    |
+| `connected_callback.test.ts`          | -                                                                                                                                 | `waitForTimeout` を使用しないため対象外                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `spotlight_sendonly_recvonly.test.ts` | -                                                                                                                                 | `waitForTimeout` を使用しないため対象外                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 **置換後の残件:** 24 箇所のうち、本 issue で置換するのは 19 箇所 (上表)。stereo 2 ファイルの 5 箇所は issue 0029 と同時に対応する (後述)。
 
@@ -163,10 +163,46 @@ export async function waitForRtpStat(
 
 ```ts
 // audio と video の両方を assert する双方向テスト (sendrecv.test.ts 相当)
-await waitForRtpStat(page, "outbound-rtp", "bytesSent", 1, "#stats-report", "statsReportJson", undefined, "audio");
-await waitForRtpStat(page, "outbound-rtp", "bytesSent", 1, "#stats-report", "statsReportJson", undefined, "video");
-await waitForRtpStat(page, "inbound-rtp", "bytesReceived", 1, "#stats-report", "statsReportJson", undefined, "audio");
-await waitForRtpStat(page, "inbound-rtp", "bytesReceived", 1, "#stats-report", "statsReportJson", undefined, "video");
+await waitForRtpStat(
+  page,
+  "outbound-rtp",
+  "bytesSent",
+  1,
+  "#stats-report",
+  "statsReportJson",
+  undefined,
+  "audio",
+);
+await waitForRtpStat(
+  page,
+  "outbound-rtp",
+  "bytesSent",
+  1,
+  "#stats-report",
+  "statsReportJson",
+  undefined,
+  "video",
+);
+await waitForRtpStat(
+  page,
+  "inbound-rtp",
+  "bytesReceived",
+  1,
+  "#stats-report",
+  "statsReportJson",
+  undefined,
+  "audio",
+);
+await waitForRtpStat(
+  page,
+  "inbound-rtp",
+  "bytesReceived",
+  1,
+  "#stats-report",
+  "statsReportJson",
+  undefined,
+  "video",
+);
 ```
 
 `h265.test.ts` は後続 assert が video のみのため、各 page で outbound / inbound の video 2 呼び出しにする。`sendonly_recvonly.test.ts` は送信ページ (outbound) と受信ページ (inbound) が分かれているため、各ページで audio / video の 2 呼び出しにする。
@@ -200,10 +236,7 @@ expect(r1Resolution.height).toBeGreaterThan(initialResolution.height);
 await expect
   .poll(async () => {
     const { width, height } = await getVideoResolution(page);
-    return (
-      width > 0 && height > 0 &&
-      width < r1Resolution.width && height < r1Resolution.height
-    );
+    return width > 0 && height > 0 && width < r1Resolution.width && height < r1Resolution.height;
   })
   .toBe(true);
 const r0Resolution = await getVideoResolution(page);
@@ -226,11 +259,7 @@ await expect
       const stats = JSON.parse(json) as Array<Record<string, unknown>>;
       return ["r0", "r1", "r2"].every((rid) => {
         const s = stats.find((entry) => entry.type === "outbound-rtp" && entry.rid === rid);
-        return (
-          s !== undefined &&
-          Number(s.bytesSent ?? 0) > 0 &&
-          Number(s.packetsSent ?? 0) > 0
-        );
+        return s !== undefined && Number(s.bytesSent ?? 0) > 0 && Number(s.packetsSent ?? 0) > 0;
       });
     });
   })
@@ -259,10 +288,7 @@ await expect
     const recv = recvonlyStats.find((s) => s.type === "inbound-rtp" && s.kind === "video");
     return (
       [r0, r1, r2].every(
-        (s) =>
-          s !== undefined &&
-          Number(s.bytesSent ?? 0) > 0 &&
-          Number(s.packetsSent ?? 0) > 0,
+        (s) => s !== undefined && Number(s.bytesSent ?? 0) > 0 && Number(s.packetsSent ?? 0) > 0,
       ) &&
       recv !== undefined &&
       Number(recv.bytesReceived ?? 0) > 0 &&
