@@ -3,7 +3,7 @@
 - Created: 2026-09-10
 - Completed: {YYYY-MM-DD}
 - Branch: feature/add-adaptive-ptime
-- Polished: 2026-09-16
+- Polished: 2026-10-17
 
 ## 目的
 
@@ -11,7 +11,7 @@
 
 adaptivePtime は W3C の WebRTC Extensions 仕様（https://w3c.github.io/webrtc-extensions/ の「RTCRtpEncodingParameters extensions」節）で `RTCRtpEncodingParameters` の拡張メンバとして定義されている音声向けパラメータで、音声のパケット化時間（フレーム長）をネットワーク状況に応じて動的に変更できるようにする。ブラウザでは音声トラックにのみ効果があり、サイマルキャストの有無に関係なく、SDK の設定で音声トラックに適用できるようにする。
 
-注意点として、この拡張は webrtc-pc（W3C Recommendation）には含まれておらず、WebRTC Extensions の editor's draft にのみ存在する。実装は Chromium のみで、仕様も at-risk であり将来変更される可能性がある。
+注意点として、この拡張は webrtc-pc（W3C Recommendation）には含まれておらず、WebRTC Extensions の editor's draft にのみ存在する。実装は Chromium のみである。なお、WebRTC Extensions で at-risk とされているのは `RTCRtpEncodingParameters` の `ptime`（webrtc-pc からこの仕様へ移されたため at-risk）であり、`adaptivePtime` 自体が at-risk というわけではない。ただし仕様全体が editor's draft であるため、将来変更される可能性がある。
 
 ## 現状
 
@@ -24,19 +24,22 @@ adaptivePtime は W3C の WebRTC Extensions 仕様（https://w3c.github.io/webrt
 
 - `ConnectionOptions` に `adaptivePtime?: boolean` を追加する。デフォルトは false とし、後方互換を維持する
 - `adaptivePtime` が true の場合、`createAnswer()` 内（`setRemoteDescription()` 後、`pc.createAnswer()` 呼び出し前）で `getAudioTransceiver()` の sender の `getParameters()` の各 encoding に `adaptivePtime = true` を設定して `setParameters()` する。video sender への適用と同じく `await` する
+- 適用するのは audio sender に track が関連付けられている場合（`getParameters()` の encodings が空でない場合）のみとする。track が無い場合（recvonly のみの接続など、`getAudioTransceiver()` の sender に track が無い場合）は何もせず、エラーにもしない
 - video sender には従来どおり offer の `encodings` をそのまま適用し、`adaptivePtime` の設定は audio sender にのみ行う（video へは波及させない）
-- simulcast が無効でも、audio transceiver があれば適用する。audio transceiver が無い場合は何もしない
+- simulcast が無効でも、audio transceiver と送信 track があれば適用する。audio transceiver が無い場合、または送信 track が無い場合は何もしない
 - `adaptivePtime` を指定しない場合は従来どおりの挙動にする
-- `RTCRtpEncodingParameters` の標準型（lib.dom.d.ts）には `adaptivePtime` が存在しないため、型拡張（interface merging で `adaptivePtime?: boolean` を追加）を行うか、型付きの安全なキャストで扱う。`any` は使わない
-- 実装時には AGENTS.md の規約に従い、WebRTC Extensions の仕様名・節番号と at-risk（将来変更される可能性）をコードコメントに明記する
-- `CHANGES.md` の `## develop` に `[ADD]` エントリを追記する
+- `RTCRtpEncodingParameters` の標準型（lib.dom.d.ts）には `adaptivePtime` が存在しないため、型拡張（interface merging で `adaptivePtime?: boolean` を追加）を行うか、型付きの安全なキャストで扱う。`any` は使わない。e2e テストから `adaptivePtime` を参照する箇所でも同じ型拡張またはキャストを用いる
+- 実装時には AGENTS.md の規約に従い、WebRTC Extensions の仕様名・節番号（「RTCRtpEncodingParameters extensions」節）と、editor's draft であり将来変更される可能性がある旨をコードコメントに明記する。あわせて、仕様上 `adaptivePtime` を true にする場合は `ptime` を設定してはならない（設定すると `InvalidModificationError`）という制約をコメントに残す
+- なお `audioOpusParamsPtime` / `audioOpusParamsMinptime` は Sora シグナリング経由で SDP 属性（`a=ptime` 等）として扱われ、`RTCRtpEncodingParameters` とは無関係であり、上記の `ptime` 制約には抵触しない。加えて、現状の TypeScript（lib.dom.d.ts）と Chromium の IDL には `RTCRtpEncodingParameters.ptime` が存在しないため、SDK からこの制約に抵触する設定はできない
+- `CHANGES.md` の `## develop`（`### misc` ではなく直下）に担当者の行（`- @ユーザー名`）を含む `[ADD]` エントリを追記する
 
 ## 完了条件
 
-- `adaptivePtime: true` を指定すると audio sender の encoding の `adaptivePtime` が true になること
+- 音声送信がある接続（sendonly / sendrecv）で `adaptivePtime: true` を指定すると audio sender の encoding の `adaptivePtime` が true になること
+- 音声送信が無い接続（recvonly など）では `adaptivePtime: true` を指定しても何も設定されず、接続がエラーにならないこと
 - video sender の encoding に `adaptivePtime` が設定されないこと
 - `adaptivePtime` を指定しない場合は従来どおりの挙動になること
-- `CHANGES.md` の `## develop` に `[ADD]` が追記されていること
+- `CHANGES.md` の `## develop` に担当者の行を含む `[ADD]` が追記されていること
 
 ## テスト方針
 
