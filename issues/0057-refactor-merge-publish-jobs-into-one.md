@@ -5,7 +5,7 @@
 - Completed: {YYYY-MM-DD}
 - Model: Opus 4.7
 - Branch: feature/refactor-merge-publish-jobs-into-one
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 
 ## 目的
 
