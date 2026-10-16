@@ -5,11 +5,11 @@
 - Completed: {YYYY-MM-DD}
 - Model: Opus 4.7
 - Branch: feature/add-null-input-tests-for-signaling-params
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 
 ## 目的
 
-`createSignalingMessage` (`src/utils.ts`) の `copyOptions` delete ループ (issue 0018 closed で導入) が、audio / video パラメータキーに `null` を渡されたときに事前に delete する動作を pin する回帰テストを `tests/utils.test.ts` に追加する。
+`createSignalingMessage` (`src/utils.ts`) の `copyOptions` delete ループ (現在の `!== null && !== undefined` 条件は issue 0018 closed で導入) が、audio / video パラメータキーに `null` を渡されたときに事前に delete する動作を pin する回帰テストを `tests/utils.test.ts` に追加する。
 
 issue 0046 (closed) の `typeof` ガード置換は「`null` は事前 delete ループで除去されるため、`typeof === "number"` 等で `null` が弾かれても message に積む値の集合は不変」という前提に依存しているが、この前提を保証する `null` 入力テストが現状 0 件で、将来 delete ループの条件が `value != null` から `value !== null && value !== undefined` の片方が抜けるような書き換えが入ると、本 refactor 後の挙動が静かに壊れても unit テストでは検知できない。
 
