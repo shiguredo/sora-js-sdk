@@ -3,7 +3,7 @@
 - Created: 2026-09-10
 - Completed: {YYYY-MM-DD}
 - Branch: feature/update-skip-create-offer-on-redirect
-- Polished: 2026-09-16
+- Polished: 2026-10-16
 
 ## 目的
 
