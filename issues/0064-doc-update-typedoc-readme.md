@@ -5,7 +5,7 @@
 - Completed: {YYYY-MM-DD}
 - Model: Opus 4.7
 - Branch: feature/update-typedoc-readme
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 
 ## 目的
 
@@ -13,7 +13,7 @@
 
 ## 優先度根拠
 
-Low。本 issue は API ドキュメントの表紙 (`TYPEDOC.md`) のみの変更で、SDK の挙動には影響しない。0063 (typedoc 生成物の GitHub Pages デプロイ) は 2026-09-15 に closed 済みで、`https://shiguredo.github.io/sora-js-sdk/` での配信は稼働している (0063 の検証結果でトップページ他が 200 を返すことを確認済み) が、README の API リファレンスは今も内部ドキュメントサイト側の手動コピー (`https://sora-js-sdk.shiguredo.jp/api.html`) を指しており、利用者の主導線が GitHub Pages に移るのは 0063 のスコープ外 (内部ドキュメント側のリンク書き換え) の完了後になる。SDK 利用者の主導線は時雨堂ドキュメントサイト側のチュートリアル / examples であり、緊急性は高くないため Low。0063 マージ待ちは解消済みであり、いつでも着手できる。
+Low。本 issue は API ドキュメントの表紙 (`TYPEDOC.md`) のみの変更で、SDK の挙動には影響しない。0063 (typedoc 生成物の GitHub Pages デプロイ) は 2026-09-15 に closed 済みで、`https://shiguredo.github.io/sora-js-sdk/` での配信は稼働している (0063 の検証結果でトップページ他が 200 を返すことを確認済み) が、README の API リファレンスは今も内部ドキュメントサイト側の手動コピー (`https://sora-js-sdk.shiguredo.jp/api.html`) を指しており、利用者の主導線が GitHub Pages に移るのは 0063 のスコープ外 (内部ドキュメント側のリンク書き換え) の完了後になる。SDK 利用者の主導線は時雨堂ドキュメントサイト側のチュートリアル / examples であり、緊急性は高くないため Low。0063 マージ待ちは解消済みであり、いつでも着手できる。ただし完了条件の検証 (`vp run doc` による `apidoc/index.html` の生成・目視確認) と GitHub Pages への再デプロイは、open の 0089 (`vp run doc` を TypeScript 7 で実行可能にする) の解消が前提となる。現 develop では typedoc 0.28.20 と TypeScript 7.0.2 の非互換で `vp run doc` が起動時にクラッシュするため、`TYPEDOC.md` の書き換えは先行して実施し、検証は 0089 の解消後に回す。
 
 ## 現状
 
@@ -27,7 +27,7 @@ Low。本 issue は API ドキュメントの表紙 (`TYPEDOC.md`) のみの変�
 - `TYPEDOC.md` の冒頭に「Sora JS SDK API ドキュメント表紙」として、以下を簡潔に並べる
   - SDK が何をするものか (1 〜 2 文。WebRTC SFU Sora に接続するクライアント SDK である旨)
   - 最小コードサンプル (1 例。`Sora.connection(...)` → `sendrecv` の起動)
-  - 4 つの role の使い分け (`sendrecv` / `sendonly` / `recvonly` / `messaging` を 1 行ずつ説明、`src/sora.ts` の JSDoc から表現を揃える)
+  - 4 つの role の使い分け (`sendrecv` / `sendonly` / `recvonly` / `messaging` を 1 行ずつ説明、`src/sora.ts` の JSDoc から表現を揃える。シグナリング URL は 0066 (open) の統一方針に合わせ `wss://sora.example.com/signaling` を使う)
   - 関連ドキュメントへのリンク (時雨堂ドキュメントサイトのチュートリアル / examples / Sora 本体ドキュメント)
 - 既存のライセンス文と OSS 注意書きはセクションごと最下部に移動する (削除はしない)
 - 文体は README.md と同じく日本語、全角半角間の半角スペース規約に従う
@@ -37,10 +37,10 @@ Low。本 issue は API ドキュメントの表紙 (`TYPEDOC.md`) のみの変�
 
 ## 完了条件
 
-- `TYPEDOC.md` が刷新され、`vp run doc` で生成した `apidoc/index.html` のトップに「表紙」として機能する内容 (SDK 概要・最小サンプル・role 使い分け・リンク) が表示される
+- `TYPEDOC.md` が刷新され、`vp run doc` で生成した `apidoc/index.html` のトップに「表紙」として機能する内容 (SDK 概要・最小サンプル・role 使い分け・リンク) が表示される (`vp run doc` が実行可能な環境は open の 0089 の解消後)
 - ライセンス文・OSS 注意書きはセクション位置を最下部に変えるが、削除はしない
 - `typedoc.json` は無編集
-- 0063 (closed) で導入された GitHub Pages 配信 `https://shiguredo.github.io/sora-js-sdk/` のトップに表紙として表示されることを確認できる (再デプロイは `.github/workflows/deploy-apidoc.yml` の `workflow_dispatch` 手動実行、または次回 master へのマージ時の自動発火で行う)
+- 0063 (closed) で導入された GitHub Pages 配信 `https://shiguredo.github.io/sora-js-sdk/` のトップに表紙として表示されることを確認できる (再デプロイは `.github/workflows/deploy-apidoc.yml` の `workflow_dispatch` 手動実行、または次回 master へのマージ時の自動発火で行う。いずれも `vp run doc` を実行するため、open の 0089 の解消後に確認する)
 
 ## 解決方法
 
@@ -51,8 +51,8 @@ Low。本 issue は API ドキュメントの表紙 (`TYPEDOC.md`) のみの変�
 
 ### 検証
 
-- ローカルで `vp install --frozen-lockfile && vp run doc` を実行し、`apidoc/index.html` を開いて表紙の表示を目視確認する
-- 実装後の再デプロイ後に `https://shiguredo.github.io/sora-js-sdk/` で確認する (再デプロイは `deploy-apidoc.yml` の `workflow_dispatch` 手動実行、または次回 master へのマージ時の自動発火)
+- open の 0089 で `vp run doc` を実行可能にした後に、`vp install --frozen-lockfile && vp run doc` を実行し、`apidoc/index.html` を開いて表紙の表示を目視確認する (現 develop は 0089 に記載の typedoc / TypeScript 7 非互換のため `vp run doc` が起動時にクラッシュする)
+- 実装後の再デプロイ後に `https://shiguredo.github.io/sora-js-sdk/` で確認する (再デプロイは `deploy-apidoc.yml` の `workflow_dispatch` 手動実行、または次回 master へのマージ時の自動発火。いずれも `vp run doc` を実行するため 0089 の解消後に実施する)
 
 ### 変更履歴
 
@@ -61,3 +61,5 @@ Low。本 issue は API ドキュメントの表紙 (`TYPEDOC.md`) のみの変�
 ## 関連 issue
 
 - **0063 (closed、2026-09-15)**: typedoc 生成物の GitHub Pages デプロイ。配信は稼働済みで、本 issue の表紙刷新は GitHub Pages のトップに表示される
+- **0066 (open)**: JSDoc の `@example` 充実とシグナリング URL の `wss://sora.example.com/signaling` への統一。本 issue の表紙サンプルも同 URL に揃える (編集ファイルは重ならない。0066 は `src/`、本 issue は `TYPEDOC.md`)
+- **0089 (open)**: `vp run doc` を TypeScript 7 で実行可能にする。本 issue の完了条件にある `apidoc/index.html` の目視確認と GitHub Pages 再デプロイの前提。0089 の解消後に検証する
