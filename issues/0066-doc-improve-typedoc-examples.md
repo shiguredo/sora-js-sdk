@@ -5,7 +5,7 @@
 - Completed: {YYYY-MM-DD}
 - Model: Opus 4.7
 - Branch: feature/update-typedoc-examples
-- Polished: 2026-09-16
+- Polished: 2026-10-17
 
 ## 目的
 
@@ -53,7 +53,7 @@ Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) は 2026-09-15 �
 ### スニペットの粒度
 
 - 各 `@example` は「`Sora.connection(...)` → role 選択 → 必要なら `on()` でコールバック設定 → `connect()`」までの一貫したシーケンスが追える粒度を基本とする
-- メソッドカードに直接出る都合上、長すぎるとノイズになる。 1 メソッドあたり 5 〜 15 行を目安にする
+- メソッドカードに直接出る都合上、長すぎるとノイズになる。 1 つの `@example` ブロックあたり 5 〜 15 行を目安にする (`on()` / `rpc` は複数ブロックを並べるためメソッド全体では 15 行を超えるが、ブロック単位でこの目安に揃える)
 - `await` / `async` を省略しない。`async` 関数内での実行を前提にすることを明示するため、`async function main() { ... }` 形式は避け、`await` を直接書くトップレベル風スニペットに統一する (利用者が試すときの摩擦を下げる)
 - シグナリング URL は全て `wss://sora.example.com/signaling` に統一する (example.com はドキュメント用途に予約された実在しないドメイン)。既存の `ws://192.0.2.100:5000/signaling` (5 箇所) はこの形式へ置き換える。`192.0.2.x` (TEST-NET-1) は残さない
 
@@ -71,7 +71,7 @@ Medium。0063 (typedoc 生成物の GitHub Pages デプロイ) は 2026-09-15 �
 
 ### `rpc` の `@example` 拡張
 
-`rpc` は現状の 1 行 (`await sendrecv.rpc('2025.2.0/RequestSimulcastRid', { rid: 'r0' })`) をベースに、(1) 前提として `RPC DataChannel` が open であること、(2) レスポンス型が型引数で指定できること、(3) `notification: true` での片方向呼び出しの 3 例を `@example` ブロックとして分けて示す。現状の例のレシーバは `connection` だが、`connection` は `Sora.connection()` の戻り値 (SoraConnection) で `rpc` メソッドを持たない。`rpc` は `ConnectionBase` のメソッドのため、例では role 接続のインスタンス (例: `sendrecv`) をレシーバにする (`@throws` 相当の情報 (`RPC DataChannel is not available or not open`) は `@remarks` で補足する (本 issue は `@example` 中心だが、`rpc` だけ `@remarks` を最小限触る))。
+`rpc` は現状の 1 行 (`const result = await connection.rpc('2025.2.0/RequestSimulcastRid', { rid: 'r0' });`) をベースに、(1) 前提として `RPC DataChannel` が open であること、(2) レスポンス型が型引数で指定できること、(3) `notification: true` での片方向呼び出しの 3 例を `@example` ブロックとして分けて示す。現状の例のレシーバは `connection` だが、`connection` は `Sora.connection()` の戻り値 (SoraConnection) で `rpc` メソッドを持たない。`rpc` は `ConnectionBase` のメソッドのため、例では role 接続のインスタンス (例: `sendrecv`) をレシーバにする (`@throws` 相当の情報 (`RPC DataChannel is not available or not open`) は `@remarks` で補足する (本 issue は `@example` 中心だが、`rpc` だけ `@remarks` を最小限触る))。
 
 ### スコープ
 
