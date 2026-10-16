@@ -4,7 +4,7 @@
 - Created: 2026-09-10
 - Completed: {YYYY-MM-DD}
 - Branch: feature/refactor-organize-soracloseevent-types
-- Polished: 2026-09-16
+- Polished: 2026-10-17
 
 ## 目的
 
@@ -63,17 +63,19 @@ export interface SoraCloseEventParams {
 
 `SoraCloseEventTitle` / `SoraNormalCloseEventTitle` / `SoraCloseEventParams` は `src/sora.ts` の `export type` 群に追加し、利用者が title / params を判別できるようにする。
 
+なお `skills/sora-js-sdk/SKILL.md` の切断イベント節には利用者向けに `SoraCloseEvent` の interface (`title: string` / `params?: Record<string, unknown>`) と `SoraAbendTitle` の値一覧が記載されているため、同節も新しい型に合わせて更新する (issue 0090 と同様に SDK 変更の対象に含める)。
+
 ### イベント生成 (`src/base.ts` の `soraCloseEvent`)
 
 `title` 引数を `string` から `SoraCloseEventTitle` に変更し、内部クラス `SoraCloseEvent` の `title` / `params` も上記の型に合わせる。
 
 ### シグナリング reason の分離 (`src/base.ts` の `disconnectWebSocket`)
 
-引数名を `title` から `reason` に改名し、型を専用の型名 (`SoraDisconnectReason = SoraAbendTitle | "NO-ERROR"` など) にする。`"NO-ERROR"` がイベント title の union と混ざらないことを型名で示す。専用型は外部に公開する必要がないため `src/types.ts` に置くか `src/base.ts` のローカル型にするかは実装時に決める。
+引数名を `title` から `reason` に改名し、型を専用の型名 (`SoraDisconnectReason = SoraAbendTitle | "NO-ERROR"` など) にする。`"NO-ERROR"` がイベント title の union と混ざらないことを型名で示す。専用型は外部に公開する必要がないため `src/types.ts` に置くか `src/base.ts` のローカル型にするかは実装時に決める。`disconnectWebSocket` の JSDoc の `@param` も改名に合わせて更新する。
 
 ### code 4999 の abend title
 
-`disconnect()` の `code: 4999` 経路は `title` を `"INTERNAL-ERROR"` に統一し、原因 (`result.reason`) は `event.reason` のみに残す。`"INTERNAL-ERROR"` は `SoraAbendTitle` に定義済みだが現状使用箇所が無い。サブ経路の判別は既存どおり `event.reason` で行うため、`e2e-tests/tests/disconnect_event_type.test.ts` (reason を検証している) への影響は無い。
+`disconnect()` の `code: 4999` 経路は `title` を `"INTERNAL-ERROR"` に統一し、原因 (`result.reason`) は `event.reason` のみに残す。`"INTERNAL-ERROR"` は `SoraAbendTitle` に定義済みだが現状使用箇所が無い。サブ経路の判別は既存どおり `event.reason` で行うため、`e2e-tests/tests/disconnect_event_type.test.ts` の既存の reason 検証はそのまま維持する。ただし本 issue の唯一の利用者可観測変更がこの title であるため、`e2e-tests/data_channel_signaling_only` の fixture と `disconnect_event_type.test.ts` を拡張し、`event.title` が `"INTERNAL-ERROR"` になることも検証する (下記の完了条件)。
 
 なお、`src/base.ts` の `disconnect()` 内には issue 0031 が残した「ここでの統一は本 issue のスコープ外」という趣旨のコメントがある。本 issue で title を `"INTERNAL-ERROR"` に統一するため、このコメントは新しい実装に合わせて書き換えるか削除する。矛盾したまま残すと、あとでコードを読んだときにスコープ外の前提が誤って引き継がれる。
 
@@ -84,10 +86,13 @@ export interface SoraCloseEventParams {
 - [ ] `src/types.ts` に `SoraNormalCloseEventTitle` / `SoraCloseEventTitle` / `SoraCloseEventParams` を追加する
 - [ ] `SoraCloseEvent.title` を `SoraCloseEventTitle`、`SoraCloseEvent.params` と `SoraCloseEventInitDict.params` を `SoraCloseEventParams` にする
 - [ ] `src/sora.ts` から新規型を export する
-- [ ] `src/base.ts` の `soraCloseEvent()` の `title` を `SoraCloseEventTitle` にする
-- [ ] `src/base.ts` の `disconnectWebSocket()` の引数を `reason` に改名し、`"NO-ERROR"` をイベント title の union から分離する
+- [ ] `src/base.ts` の `soraCloseEvent()` の `title` 引数、および内部クラス `SoraCloseEvent` の `title` / `params` を `SoraCloseEventTitle` / `SoraCloseEventParams` にする
+- [ ] `src/base.ts` の `disconnectWebSocket()` の引数を `reason` に改名し、`"NO-ERROR"` をイベント title の union から分離する (`disconnectWebSocket` の JSDoc の `@param` も改名する)
 - [ ] `disconnect()` の `code: 4999` 経路の `title` を `"INTERNAL-ERROR"` にし、原因を `event.reason` に残す
 - [ ] `src/base.ts` の `disconnect()` 内にある「ここでの統一は本 issue のスコープ外」の趣旨のコメントを、`title` を `"INTERNAL-ERROR"` に統一する新しい実装に合わせて書き換えるか削除する
+- [ ] `e2e-tests/data_channel_signaling_only` の `index.html` / `main.ts` に `#disconnect-event-title` を追加し、`SoraCloseEvent.title` を DOM に出力する
+- [ ] `e2e-tests/tests/disconnect_event_type.test.ts` に `#disconnect-event-title` が `"INTERNAL-ERROR"` になることの検証を追加する (既存の `event.type` / `event.reason` の検証は維持する)
+- [ ] `skills/sora-js-sdk/SKILL.md` の切断イベント節 (`SoraCloseEvent` の interface と title / params の説明) を `SoraCloseEventTitle` / `SoraCloseEventParams` に合わせて更新する
 
 ### 検証
 
@@ -95,11 +100,12 @@ export interface SoraCloseEventParams {
 - [ ] `pnpm lint` が通る
 - [ ] `pnpm test` が通る
 - [ ] `pnpm build` で `dist/sora.d.ts` に新規型が出力されることを確認する
+- [ ] `pnpm e2e-test` が通る (`disconnect_event_type.test.ts` で `event.title` が `"INTERNAL-ERROR"`、`event.type` が `"abend"`、`event.reason` が `"DISCONNECT-WAIT-TIMEOUT-ERROR"` になることを検証する)
 
 ### 変更履歴
 
 - [ ] `CHANGES.md` の `## develop` に `[CHANGE]` として、`disconnect()` の DataChannel 切断エラー (code 4999) 時の `SoraCloseEvent.title` を `"INTERNAL-ERROR"` に変更し原因を `reason` に残す旨を追記する
-- [ ] 型追加と内部引数名の変更は `### misc` の `[UPDATE]` として追記する
+- [ ] 型追加、内部引数名の変更、利用者向け SKILL.md の更新は `## develop` の `### misc` の `[UPDATE]` として、E2E での title 検証の追加は `### misc` の `[ADD]` として追記する
 
 ## 関連 issue
 
