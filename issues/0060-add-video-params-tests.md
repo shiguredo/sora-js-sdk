@@ -5,7 +5,7 @@
 - Completed: {YYYY-MM-DD}
 - Model: Opus 4.7
 - Branch: feature/add-video-params-tests
-- Polished: 2026-09-15
+- Polished: 2026-10-16
 
 ## 目的
 
@@ -25,7 +25,7 @@ issue 0046 では「動的挙動は 1 ビットも変えない」を方針とし
 
 - 4 プロパティそれぞれについて以下のケースを単体テストとして追加する:
   - 有効値 (例: `videoVP9Params: { profile_id: 0 }`) を渡すと `message.video.vp9_params` に等価のオブジェクトが積まれる
-  - `undefined` を渡すと `message.video.*_params` キーが message に積まれない
+  - `undefined` を渡すと `message.video.*_params` キーが message に積まれない。`undefined` 単独の場合は copyOptions delete ループでキーが除去されるため `hasVideoProperty` が false のまま `message.video` は boolean `true` を保ち、期待値は `baseExpectedMessage` と等価になる (既存の `createSignalingMessage videoBitRate: undefined` テストと同じ)
   - `videoBitRate` 等の他キーとの混在 (例: `videoBitRate: 500, videoVP9Params: { profile_id: 0 }`) で双方が正しく積まれる
 - `null` 入力テスト (delete ループ依存の pin) は別 issue (audio/video params キー全 16 件への null 入力テスト) で扱う
 - 既存の `createSignalingMessage video parameters` テスト / `createSignalingMessage videoBitRate: undefined` テストのスタイル (`expect(createSignalingMessage(...)).toStrictEqual(...)`) に揃える
