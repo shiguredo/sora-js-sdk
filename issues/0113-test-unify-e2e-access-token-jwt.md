@@ -2,8 +2,8 @@
 
 - Created: 2026-10-16
 - Completed: {YYYY-MM-DD}
-- Branch: feature/test-unify-e2e-access-token-jwt
-- Polished: {YYYY-MM-DD}
+- Branch: feature/refactor-unify-e2e-access-token-jwt
+- Polished: 2026-10-16
 
 ## 目的
 
@@ -24,7 +24,6 @@ Medium。単独では CI の失敗を解消しないが、issue 0114 の前提�
 
 - テストサーバーは access_token を JWT として検証し、プライベートクレームの値を認証ウェブフックの払い出しとして扱う (`e2e-tests/rpc/main.ts` の `rpc_methods` などの指定がこの仕組みを使っている)
 - シークレットキーをそのまま access_token に指定した場合は JWT ではないため、プライベートクレームを指定できない
-- fixture はブラウザ側で動くため、Playwright 側の `e2e-tests/tests/helper.ts` の `checkVersionSupport` は使えない
 
 ## 設計方針
 
