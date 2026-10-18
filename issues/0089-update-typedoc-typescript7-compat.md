@@ -4,7 +4,7 @@
 - Created: 2026-09-16
 - Completed: {YYYY-MM-DD}
 - Branch: feature/update-typedoc-typescript7-compat
-- Polished: 2026-09-16
+- Polished: 2026-10-18
 
 ## 目的
 
