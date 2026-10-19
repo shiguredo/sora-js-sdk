@@ -1,7 +1,7 @@
 # E2E テストの access_token の生成を JWT に統一する
 
 - Created: 2026-10-16
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-10-19
 - Branch: feature/refactor-unify-e2e-access-token-jwt
 - Polished: 2026-10-16
 
@@ -46,3 +46,7 @@ Medium。単独では CI の失敗を解消しないが、issue 0114 の前提�
 - ローカルで `vp test run` / `vp check` / `vp exec tsc --noEmit` が通ること
 - E2E (chromium) が通ること
 - `CHANGES.md` の `## develop` の `### misc` にエントリが追記されていること
+
+## 解決方法
+
+`e2e-tests/src/misc.ts` に `generateAccessToken` を追加し、全 20 fixture が接続の直前にこれで JWT を生成するようにした。シークレットキーをそのまま access_token に指定する方式は廃止した。再接続する fixture は再接続時にも JWT を生成し直す。既存の JWT fixture のプライベートクレームは維持している。
