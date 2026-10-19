@@ -1,4 +1,4 @@
-import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
+import { generateAccessToken, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 import Sora from "sora-js-sdk";
 import type { SoraConnection, ConnectionPublisher, SignalingNotifyMessage } from "sora-js-sdk";
@@ -37,7 +37,7 @@ class SoraClient {
   private readonly debug = false;
 
   private readonly channelId: string;
-  private readonly metadata: { access_token: string };
+  private readonly secretKey: string;
   private readonly options: object;
 
   private readonly sora: SoraConnection;
@@ -45,10 +45,9 @@ class SoraClient {
 
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.channelId = channelId;
+    this.secretKey = secretKey;
 
     this.sora = Sora.connection(signalingUrl, this.debug);
-
-    this.metadata = { access_token: secretKey };
 
     this.options = {
       audio: true,
@@ -59,7 +58,8 @@ class SoraClient {
       video: true,
     };
 
-    this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options);
+    // access_token は接続の直前に生成するため、ここでは metadata を指定しない
+    this.connection = this.sora.sendrecv(this.channelId, undefined, this.options);
 
     this.connection.on("notify", this.onnotify.bind(this));
     this.connection.on("track", this.ontrack.bind(this));
@@ -67,6 +67,10 @@ class SoraClient {
   }
 
   async connect(stream: MediaStream) {
+    // access_token の有効期限が切れないよう、接続の直前に JWT を生成する
+    this.connection.metadata = {
+      access_token: await generateAccessToken(this.channelId, this.secretKey),
+    };
     await this.connection.connect(stream);
     const localVideo = document.querySelector<HTMLVideoElement>("#local-video");
     if (localVideo) {

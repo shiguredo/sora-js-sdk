@@ -1,5 +1,5 @@
 import { getFakeMedia } from "../src/fake";
-import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
+import { generateAccessToken, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 import Sora from "sora-js-sdk";
 import type { ConnectionPublisher, SignalingNotifyMessage, SoraConnection } from "sora-js-sdk";
@@ -416,7 +416,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 class SoraSendRecvClient {
   private readonly debug = false;
   private readonly channelId: string;
-  private readonly metadata: { access_token: string };
+  private readonly secretKey: string;
   private readonly options: object = { connectionTimeout: 15_000 };
 
   private readonly sora: SoraConnection;
@@ -433,12 +433,11 @@ class SoraSendRecvClient {
   ) {
     this.sora = Sora.connection(signalingUrl, this.debug);
     this.channelId = channelId;
+    this.secretKey = secretKey;
     this.connectionNumber = connectionNumber;
 
-    // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey };
-
-    this.connection = this.sora.sendrecv(this.channelId, this.metadata, this.options);
+    // access_token は接続の直前に生成するため、ここでは metadata を指定しない
+    this.connection = this.sora.sendrecv(this.channelId, undefined, this.options);
     this.connection.on("track", this.onTrack.bind(this));
     this.connection.on("notify", this.onNotify.bind(this));
 
@@ -464,6 +463,10 @@ class SoraSendRecvClient {
   }
 
   async connect(stream: MediaStream): Promise<void> {
+    // access_token の有効期限が切れないよう、接続の直前に JWT を生成する
+    this.connection.metadata = {
+      access_token: await generateAccessToken(this.channelId, this.secretKey),
+    };
     await this.connection.connect(stream);
 
     const audioElement = document.querySelector<HTMLAudioElement>(

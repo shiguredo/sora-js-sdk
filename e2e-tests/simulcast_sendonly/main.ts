@@ -6,7 +6,7 @@ import type {
   SoraConnection,
   VideoCodecType,
 } from "sora-js-sdk";
-import { generateJwt, getChannelId, setSoraJsSdkVersion } from "../src/misc";
+import { generateAccessToken, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 document.addEventListener("DOMContentLoaded", () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -135,8 +135,10 @@ class SimulcastSendonlySoraClient {
       privateClaims.simulcast_encodings = this.simulcastEncodings;
     }
 
-    const jwt = await generateJwt(this.channelId, this.secretKey, privateClaims);
-    this.connection.metadata = { access_token: jwt };
+    // access_token の有効期限が切れないよう、接続の直前に JWT を生成する
+    this.connection.metadata = {
+      access_token: await generateAccessToken(this.channelId, this.secretKey, privateClaims),
+    };
 
     await this.connection.connect(stream);
 

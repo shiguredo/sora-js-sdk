@@ -3,7 +3,10 @@ import type { VideoCodecType } from "sora-js-sdk";
 
 import Sora from "sora-js-sdk";
 
-export const generateJwt = async (
+// access_token に使う JWT の有効期限
+const ACCESS_TOKEN_EXPIRATION_TIME = "30s";
+
+const generateJwt = async (
   channelId: string,
   secretKey: string,
   privateClaims: Record<string, unknown> = {},
@@ -14,13 +17,23 @@ export const generateJwt = async (
     ...privateClaims,
   };
   console.log("payload:", payload);
-  return (
-    new SignJWT(payload)
-      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      // 30 秒後に有効期限切れ
-      .setExpirationTime("30s")
-      .sign(new TextEncoder().encode(secretKey))
-  );
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setExpirationTime(ACCESS_TOKEN_EXPIRATION_TIME)
+    .sign(new TextEncoder().encode(secretKey));
+};
+
+// access_token はテストサーバーが JWT として検証し、プライベートクレームを
+// 認証ウェブフックの払い出しとして扱う。そのため fixture はシークレットキーを
+// そのまま access_token に指定せず、このヘルパで JWT を生成して指定する。
+// JWT の有効期限は ACCESS_TOKEN_EXPIRATION_TIME (30 秒) なので、
+// 接続の直前に呼ぶこと。
+export const generateAccessToken = async (
+  channelId: string,
+  secretKey: string,
+  privateClaims: Record<string, unknown> = {},
+): Promise<string> => {
+  return generateJwt(channelId, secretKey, privateClaims);
 };
 
 export const setSoraJsSdkVersion = (id = "sora-js-sdk-version"): void => {

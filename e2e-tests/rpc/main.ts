@@ -15,7 +15,7 @@ import type {
   SimulcastRid,
   SoraConnection,
 } from "sora-js-sdk";
-import { generateJwt, getChannelId, setSoraJsSdkVersion } from "../src/misc";
+import { generateAccessToken, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 // サーバーが返した RPC エラーの記録 (#rpc-error の dataset に JSON で書き出す)
 // E2E テスト側はこの記録から message と cause を検証する
@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 
     // Sendonly を接続
-    const sendonlyAccessToken = await generateJwt(channelId, secretKey, {});
+    const sendonlyAccessToken = await generateAccessToken(channelId, secretKey, {});
     sendonlyClient = new SimulcastSendonlyClient(signalingUrl, channelId, sendonlyAccessToken);
 
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       simulcast: true,
       simulcast_rpc_rids: ["none", "r0", "r1", "r2"],
     };
-    const recvonlyAccessToken = await generateJwt(channelId, secretKey, privateClaims);
+    const recvonlyAccessToken = await generateAccessToken(channelId, secretKey, privateClaims);
     recvonlyClient = new SimulcastRecvonlyClient(signalingUrl, channelId, recvonlyAccessToken);
 
     await recvonlyClient.connect();
