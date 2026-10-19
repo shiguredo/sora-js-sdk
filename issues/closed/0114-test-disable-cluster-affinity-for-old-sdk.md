@@ -51,6 +51,6 @@ High。`npm-pkg-e2e-test` は月曜から金曜まで毎日実行される。202
 
 ## 解決方法
 
-`e2e-tests/src/misc.ts` の `generateAccessToken` で `Sora.version()` を確認し、`type redirect` に対応していない `2021.2.0` 未満の sora-js-sdk のときだけ、認証のプライベートクレームに `cluster_affinity: false` を含めるようにした。対応しているバージョンでは指定せず、テストサーバーの既定 (有効) のままにする。バージョンは CalVer (年.リリース番号.パッチ) として比較し、解析できない場合はエラーにする。
+`e2e-tests/src/misc.ts` の `generateAccessToken` で `Sora.version()` を確認し、`cluster_affinity` を false にするバージョンとして列挙した `2021.1.7` のときだけ、認証のプライベートクレームに `cluster_affinity: false` を含めるようにした。対応しているバージョンでは指定せず、テストサーバーの既定 (有効) のままにする。`npm-pkg-e2e-test` の matrix に含まれる古いバージョンは今後増えないため、バージョン比較ではなくバージョンの列挙で管理する。
 
 ローカルで実際の sora-js-sdk 2021.1.7 を e2e-tests に読み込んでテストサーバーへ接続し、未対応のままでは `ConnectError: Signaling failed. CloseEventCode:1000 CloseEventReason:'REDIRECT'` で接続に失敗すること、`cluster_affinity: false` を含めると接続できることを確認した。現行の 2026.2.0-canary.0 では `cluster_affinity` が含まれず接続できることも確認した。`npm-pkg-e2e-test` の 2021.1.7 ジョブでの確認はブランチを push した後に CI で行う。
