@@ -1,4 +1,9 @@
-import { getChannelId, getVideoCodecType, setSoraJsSdkVersion } from "../src/misc";
+import {
+  generateAccessToken,
+  getChannelId,
+  getVideoCodecType,
+  setSoraJsSdkVersion,
+} from "../src/misc";
 
 import Sora from "sora-js-sdk";
 import type {
@@ -79,7 +84,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 class SoraClient {
   private readonly debug = false;
   private readonly channelId: string;
-  private readonly metadata: { access_token: string };
+  private readonly secretKey: string;
   private readonly options: ConnectionOptions = { connectionTimeout: 15_000 };
 
   private readonly sora: SoraConnection;
@@ -94,15 +99,14 @@ class SoraClient {
     this.sora = Sora.connection(signalingUrl, this.debug);
 
     this.channelId = channelId;
-
-    // access_token を指定する metadata の生成
-    this.metadata = { access_token: secretKey };
+    this.secretKey = secretKey;
 
     if (videoCodecType !== undefined) {
       this.options = { ...this.options, videoCodecType };
     }
 
-    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options);
+    // access_token は接続の直前に生成するため、ここでは metadata を指定しない
+    this.connection = this.sora.sendonly(this.channelId, undefined, this.options);
     this.connection.on("notify", this.onNotify.bind(this));
 
     // E2E テスト用のコード
@@ -110,6 +114,10 @@ class SoraClient {
   }
 
   async connect(stream: MediaStream): Promise<void> {
+    // access_token の有効期限が切れないよう、接続の直前に JWT を生成する
+    this.connection.metadata = {
+      access_token: await generateAccessToken(this.channelId, this.secretKey),
+    };
     await this.connection.connect(stream);
 
     const videoElement = document.querySelector<HTMLVideoElement>("#local-video");

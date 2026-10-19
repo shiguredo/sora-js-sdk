@@ -1,4 +1,4 @@
-import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
+import { generateAccessToken, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 import Sora from "sora-js-sdk";
 import type {
@@ -92,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
 class SimulcastSendonlySoraClient {
   private readonly debug = false;
   private readonly channelId: string;
+  private readonly secretKey: string;
 
   private readonly sora: SoraConnection;
   private readonly connection: ConnectionPublisher;
@@ -99,24 +100,26 @@ class SimulcastSendonlySoraClient {
   constructor(signalingUrl: string, channelId: string, secretKey: string) {
     this.sora = Sora.connection(signalingUrl, this.debug);
     this.channelId = channelId;
+    this.secretKey = secretKey;
 
-    this.connection = this.sora.sendonly(
-      this.channelId,
-      { access_token: secretKey },
-      {
-        audio: false,
-        connectionTimeout: 15_000,
-        simulcast: true,
-        video: true,
-        videoBitRate: 1500,
-        videoCodecType: "VP8",
-      },
-    );
+    // access_token は接続の直前に生成するため、ここでは metadata を指定しない
+    this.connection = this.sora.sendonly(this.channelId, undefined, {
+      audio: false,
+      connectionTimeout: 15_000,
+      simulcast: true,
+      video: true,
+      videoBitRate: 1500,
+      videoCodecType: "VP8",
+    });
 
     this.connection.on("notify", this.onnotify.bind(this));
   }
 
   async connect(stream: MediaStream) {
+    // access_token の有効期限が切れないよう、接続の直前に JWT を生成する
+    this.connection.metadata = {
+      access_token: await generateAccessToken(this.channelId, this.secretKey),
+    };
     await this.connection.connect(stream);
     const localVideo = document.querySelector<HTMLVideoElement>("#local-video");
     if (localVideo) {
@@ -156,6 +159,7 @@ class SimulcastRecvonlySoraClient {
   private readonly debug = false;
 
   private readonly channelId: string;
+  private readonly secretKey: string;
   private readonly rid: SimulcastRid;
 
   private readonly sora: SoraConnection;
@@ -163,15 +167,17 @@ class SimulcastRecvonlySoraClient {
 
   constructor(signalingUrl: string, channelId: string, rid: SimulcastRid, secretKey: string) {
     this.channelId = channelId;
+    this.secretKey = secretKey;
     this.rid = rid;
 
     this.sora = Sora.connection(signalingUrl, this.debug);
 
-    this.connection = this.sora.recvonly(
-      this.channelId,
-      { access_token: secretKey },
-      { connectionTimeout: 15_000, simulcast: true, simulcastRid: this.rid },
-    );
+    // access_token は接続の直前に生成するため、ここでは metadata を指定しない
+    this.connection = this.sora.recvonly(this.channelId, undefined, {
+      connectionTimeout: 15_000,
+      simulcast: true,
+      simulcastRid: this.rid,
+    });
 
     this.connection.on("notify", this.onnotify.bind(this));
     this.connection.on("track", this.ontrack.bind(this));
@@ -179,6 +185,10 @@ class SimulcastRecvonlySoraClient {
   }
 
   async connect() {
+    // access_token の有効期限が切れないよう、接続の直前に JWT を生成する
+    this.connection.metadata = {
+      access_token: await generateAccessToken(this.channelId, this.secretKey),
+    };
     await this.connection.connect();
   }
 

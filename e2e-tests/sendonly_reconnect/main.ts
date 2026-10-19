@@ -5,7 +5,7 @@ import type {
   SignalingNotifyMessage,
   SoraConnection,
 } from "sora-js-sdk";
-import { getChannelId, setSoraJsSdkVersion } from "../src/misc";
+import { generateAccessToken, getChannelId, setSoraJsSdkVersion } from "../src/misc";
 
 document.addEventListener("DOMContentLoaded", async () => {
   const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
@@ -80,7 +80,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 class SoraClient {
   private readonly debug = false;
   private readonly channelId: string;
-  private metadata: { access_token: string } = { access_token: "" };
   private readonly options: object = { connectionTimeout: 15_000 };
 
   private readonly sora!: SoraConnection;
@@ -105,10 +104,8 @@ class SoraClient {
   }
 
   private setupConnection(): void {
-    // access_token を指定する metadata の生成
-    this.metadata = { access_token: this.secretKey };
-
-    this.connection = this.sora.sendonly(this.channelId, this.metadata, this.options);
+    // access_token は接続の直前に生成するため、ここでは metadata を指定しない
+    this.connection = this.sora.sendonly(this.channelId, undefined, this.options);
     this.connection.on("notify", this.onNotify.bind(this));
     this.connection.on("disconnect", this.onDisconnect.bind(this));
 
@@ -117,15 +114,23 @@ class SoraClient {
   }
 
   async connect(stream: MediaStream): Promise<void> {
-    // MediaStreamを保存して再接続時に使用
+    // MediaStream を保存して再接続時に使用する
     this.mediaStream = stream;
 
-    await this.connection.connect(stream);
+    await this.connectWithAccessToken(stream);
 
     const videoElement = document.querySelector<HTMLVideoElement>("#local-video");
     if (videoElement !== null) {
       videoElement.srcObject = stream;
     }
+  }
+
+  // access_token の有効期限が切れないよう、接続の直前に JWT を生成する
+  private async connectWithAccessToken(stream: MediaStream): Promise<void> {
+    this.connection.metadata = {
+      access_token: await generateAccessToken(this.channelId, this.secretKey),
+    };
+    await this.connection.connect(stream);
   }
 
   async disconnect(): Promise<void> {
@@ -180,8 +185,9 @@ class SoraClient {
       this.setupConnection();
 
       try {
-        // 保存したストリームで再接続
-        await this.connection.connect(this.mediaStream);
+        // 保存したストリームで再接続する
+        // access_token の有効期限が切れているため、再接続の直前に JWT を生成し直す
+        await this.connectWithAccessToken(this.mediaStream);
         console.log("[sendonly_reconnect] 再接続に成功しました");
         const reconnectLogElement = document.querySelector("#reconnect-log");
         if (reconnectLogElement) {

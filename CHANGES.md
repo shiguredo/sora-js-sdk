@@ -54,6 +54,9 @@
   - 初期 rid を r2 固定から Sora のデフォルト (r0) に変更する
   - 負荷の高い r2 は使わない
   - @miosakuma
+- [UPDATE] E2E テストの access_token の生成を JWT に統一する
+  - すべての fixture で接続の直前に JWT を生成し、シークレットキーをそのまま access_token に指定する方式を廃止する
+  - @miosakuma
 
 ## 2026.1.0
 
