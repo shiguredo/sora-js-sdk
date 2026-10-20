@@ -1,7 +1,7 @@
 # `type redirect` 非対応の SDK では cluster_affinity を無効化する
 
 - Created: 2026-10-16
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-10-19
 - Branch: feature/update-disable-cluster-affinity-for-old-sdk
 - Polished: 2026-10-16
 
@@ -48,3 +48,9 @@ High。`npm-pkg-e2e-test` は月曜から金曜まで毎日実行される。202
 - ローカルで `vp test run` / `vp check` / `vp exec tsc --noEmit` が通ること
 - E2E (chromium) が通ること
 - `CHANGES.md` の `## develop` の `### misc` にエントリが追記されていること
+
+## 解決方法
+
+`e2e-tests/src/misc.ts` の `generateAccessToken` で `Sora.version()` を確認し、`cluster_affinity` を false にするバージョンとして列挙した `2021.1.7` のときだけ、認証のプライベートクレームに `cluster_affinity: false` を含めるようにした。対応しているバージョンでは指定せず、テストサーバーの既定 (有効) のままにする。`npm-pkg-e2e-test` の matrix に含まれる古いバージョンは今後増えないため、バージョン比較ではなくバージョンの列挙で管理する。
+
+ローカルで実際の sora-js-sdk 2021.1.7 を e2e-tests に読み込んでテストサーバーへ接続し、未対応のままでは `ConnectError: Signaling failed. CloseEventCode:1000 CloseEventReason:'REDIRECT'` で接続に失敗すること、`cluster_affinity: false` を含めると接続できることを確認した。現行の 2026.2.0-canary.0 では `cluster_affinity` が含まれず接続できることも確認した。`npm-pkg-e2e-test` の 2021.1.7 ジョブでの確認はブランチを push した後に CI で行う。

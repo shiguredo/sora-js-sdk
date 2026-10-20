@@ -6,6 +6,21 @@ import Sora from "sora-js-sdk";
 // access_token に使う JWT の有効期限
 const ACCESS_TOKEN_EXPIRATION_TIME = "30s";
 
+// access_token のプライベートクレームで cluster_affinity を false にする
+// sora-js-sdk のバージョン
+// type redirect に対応していないバージョンは、テストサーバーがクラスター
+// アフィニティを有効にしていると接続時に type redirect を受け取っても
+// 再接続できない。type redirect 対応は 2021.2.0 で追加されており、
+// npm-pkg-e2e-test の matrix では 2021.1.7 のみが該当する。matrix に含まれる
+// 古いバージョンは今後増えないため、バージョン比較ではなく列挙で管理する
+const CLUSTER_AFFINITY_FALSE_VERSIONS = ["2021.1.7"] as const;
+
+// cluster_affinity を false にして接続する sora-js-sdk のバージョンかどうか
+const isClusterAffinityFalseVersion = (version: string): boolean =>
+  CLUSTER_AFFINITY_FALSE_VERSIONS.some(
+    (clusterAffinityFalseVersion) => clusterAffinityFalseVersion === version,
+  );
+
 const generateJwt = async (
   channelId: string,
   secretKey: string,
@@ -28,12 +43,20 @@ const generateJwt = async (
 // そのまま access_token に指定せず、このヘルパで JWT を生成して指定する。
 // JWT の有効期限は ACCESS_TOKEN_EXPIRATION_TIME (30 秒) なので、
 // 接続の直前に呼ぶこと。
+//
+// CLUSTER_AFFINITY_FALSE_VERSIONS に該当する sora-js-sdk では、認証の
+// プライベートクレームで cluster_affinity を false にして、クラスターアフィニティ
+// による redirect が発生しないようにする。対応しているバージョンでは指定せず、
+// テストサーバーの既定 (有効) に任せる。
 export const generateAccessToken = async (
   channelId: string,
   secretKey: string,
   privateClaims: Record<string, unknown> = {},
 ): Promise<string> => {
-  return generateJwt(channelId, secretKey, privateClaims);
+  const privateClaimsWithClusterAffinity = isClusterAffinityFalseVersion(Sora.version())
+    ? { cluster_affinity: false, ...privateClaims }
+    : privateClaims;
+  return generateJwt(channelId, secretKey, privateClaimsWithClusterAffinity);
 };
 
 export const setSoraJsSdkVersion = (id = "sora-js-sdk-version"): void => {

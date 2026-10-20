@@ -57,6 +57,9 @@
 - [UPDATE] E2E テストの access_token の生成を JWT に統一する
   - すべての fixture で接続の直前に JWT を生成し、シークレットキーをそのまま access_token に指定する方式を廃止する
   - @miosakuma
+- [UPDATE] E2E テストで type redirect 非対応の sora-js-sdk では access_token の cluster_affinity を false にする
+  - `2021.2.0` より前のバージョンは、クラスターアフィニティが有効なテストサーバーから type redirect を受け取ると接続に失敗するため
+  - @miosakuma
 
 ## 2026.1.0
 
