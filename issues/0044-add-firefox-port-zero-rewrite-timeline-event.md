@@ -159,7 +159,7 @@ private processOfferSdp(offerSdp: string): string {
 - `data` への追加フィールド (書き換え対象 mid、offer 全体の m-section 総数など)。`kinds` / `firefoxVersion` の 2 フィールドで確定し、本番計測の結果さらに必要と分かったら別 issue で拡張する
 - `processOfferSdp` メソッドの jsdoc (`カスタムコーデック対応用に offer SDP を処理するメソッド` 等) の更新。書き換え本体が 0015 で変わる予定のため、本 issue では既存 jsdoc に手を入れない
 - Firefox 環境での `processOfferSdp` 通過総回数 (= 分母) の観測。本 issue では「書き換えが発生した回数 (= 分子)」のみを観測する
-- **自動テストの追加 (vitest 単体テスト / Playwright Firefox による E2E テスト / `playwright.config.ts` の Firefox runner 有効化 / CI workflow への Firefox 追加)。これらは関連 issue 0045 (pending) で扱う**。本 issue では手動検証のみで動作確認する
+- **自動テストの追加 (vitest 単体テスト / Playwright Firefox による E2E テスト)。これは関連 issue 0045 (pending) で扱う**。**Firefox runner の基盤整備 (`playwright.config.ts` の Firefox プロジェクト有効化、`shouldSkipFirefoxTest()`、CI workflow、Firefox バイナリの install) は 0116 (open) で扱う**。本 issue では手動検証のみで動作確認する
 
 ## 完了条件
 
@@ -196,4 +196,5 @@ private processOfferSdp(offerSdp: string): string {
 ## 関連 issue
 
 - **0015 (`feature/fix-process-offer-sdp-port-zero`、pending)**: 同じ `processOfferSdp` の port=0 書き換えを mid 限定化して RFC 3264 rejected 表明を保護するバグ修正。`issues/pending/` にあり、pending 理由は「現行 Sora は port=0 を transceiver 解放にしか使わず、一括置換が実害を起こす経路は本番に存在しないため」。着手判断のトリガーは「Sora が rejected 用途で port=0 を送る仕様を導入した / Firefox 113+ で port=0 のまま `onremovetrack` 不発が再現した / サポート下限 113+ で workaround の必要性を再検証して必要と判定された」のいずれかであり、0044 の観測値はその判断材料となる。0044 は 0015 を支援する観測装置の追加として独立した issue (1 issue 1 カテゴリ規約) で分離する
-- **0045 (`feature/add-firefox-port-zero-rewrite-tests`、pending)**: 0044 で追加する `rewriteOfferSdpPortZero` / `getFirefoxMajorVersion` の単体テスト (vitest) と、`firefox-port-zero-rewrite` event 発火の Playwright Firefox による E2E テストを追加する。Playwright Firefox runner 整備 (`playwright.config.ts` のコメントアウト解除、CI workflow のマトリクス拡張) も本 issue ではなく 0045 で扱う。0044 マージ後の本番観測値が 0015 の再開判断にどの程度有用かを見極めてから、0045 の整備優先度を再検討する
+- **0045 (`feature/add-firefox-port-zero-rewrite-tests`、pending)**: 0044 で追加する `rewriteOfferSdpPortZero` / `getFirefoxMajorVersion` の単体テスト (vitest) と、`firefox-port-zero-rewrite` event 発火の Playwright Firefox による E2E テストを追加する。0044 マージ後の本番観測値が 0015 の再開判断にどの程度有用かを見極めてから、0045 の整備優先度を再検討する
+- **0116 (`feature/test-firefox-codec-simulcast`、open)**: Firefox E2E の基盤整備 (Firefox プロジェクト有効化、`shouldSkipFirefoxTest()`、CI workflow、Firefox バイナリの install) を行う。0045 はこの基盤を利用する
