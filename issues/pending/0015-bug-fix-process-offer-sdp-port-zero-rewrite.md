@@ -64,7 +64,7 @@ export function rewriteFirefoxRejectedPort(
 
 **変更対象:** `src/utils.ts` (`rewriteFirefoxRejectedPort`)、`src/base.ts` (`processOfferSdp` / offer ハンドラ / `initializeConnection` / フィールド宣言)、`tests/` (純粋関数のユニットテスト)。
 
-**スコープ外:** `m=application` の port=0 書き換え / 初回 offer で port=0 (previous なし) の書き換え / Sora 側 port=0 仕様変更 / Playwright Firefox 自動 E2E (Firefox runner 未整備)。
+**スコープ外:** `m=application` の port=0 書き換え / 初回 offer で port=0 (previous なし) の書き換え / Sora 側 port=0 仕様変更 / Playwright Firefox 自動 E2E (Firefox runner 基盤は 0116 で整備)。
 
 ## 完了条件
 
