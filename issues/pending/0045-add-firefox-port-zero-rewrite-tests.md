@@ -8,19 +8,19 @@
 
 ## 目的
 
-issue 0044 で追加する `firefox-port-zero-rewrite` timeline event および補助関数の動作を検証する自動テストを追加する。具体的には、vitest による純粋関数の単体テストと、Playwright Firefox runner を整備したうえでの実 Firefox を用いた E2E テストを追加する。
+issue 0044 で追加する `firefox-port-zero-rewrite` timeline event および補助関数の動作を検証する自動テストを追加する。具体的には、vitest による純粋関数の単体テストと、0116 で整備する Playwright Firefox runner を利用した実 Firefox の E2E テストを追加する。
 
 0044 は SDK 本体実装 (`src/utils.ts` への純粋関数 2 つ追加、`src/base.ts` の `processOfferSdp` orchestrator 修正) のみを担当し、自動テストは本 issue に分離した。0044 は手動検証手順 (PR 説明に記載) で動作確認する方針。
 
 ## 優先度根拠
 
-Low。0044 の SDK 本体実装は手動検証で動作確認できるため、自動テスト追加の緊急性は低い。0044 マージ後に本番運用での `firefox-port-zero-rewrite` 観測値が関連 issue 0015 の意思決定にどの程度有用かを見極めてから、テスト整備の優先度と方法を再検討する。
+Low。0044 の SDK 本体実装は手動検証で動作確認できるため、自動テスト追加の緊急性は低い。0044 マージ後に本番運用での `firefox-port-zero-rewrite` 観測値が関連 issue 0015 の意思決定にどの程度有用かを見極めてから、テスト整備の優先度と方法を再検討する。Firefox runner の基盤整備は 0116 に移したため、本 issue の作業は単体テストと port-zero E2E テストの追加に絞られる。
 
 ## 現状
 
-`tests/utils.test.ts` は vitest + jsdom で純粋関数を直接テストするスタイルが既に確立している (例: `createSignalingMessage` のテスト)。一方で Playwright Firefox runner は `playwright.config.ts:91-94` 付近でコメントアウトされており、`.github/workflows/e2e-test.yml` の matrix にも Firefox エントリがない。0044 で追加する純粋関数 (`rewriteOfferSdpPortZero` / `getFirefoxMajorVersion`) とその orchestrator 修正に対する自動テストはまだ存在しない。
+`tests/utils.test.ts` は vitest + jsdom で純粋関数を直接テストするスタイルが既に確立している (例: `createSignalingMessage` のテスト)。0044 で追加する純粋関数 (`rewriteOfferSdpPortZero` / `getFirefoxMajorVersion`) とその orchestrator 修正に対する自動テストはまだ存在しない。Playwright Firefox runner の基盤整備 (`playwright.config.ts` の Firefox プロジェクト有効化、`shouldSkipFirefoxTest()`、CI workflow、Firefox バイナリの install) は 0116 で行う。
 
-関連 issue 0015 でも「Playwright Firefox 自動 E2E (Firefox runner 未整備)」がスコープ外として明示されており、Firefox runner 整備自体を 0044 / 0015 から独立した本 issue として扱う。
+関連 issue 0015 でも「Playwright Firefox 自動 E2E (Firefox runner 未整備)」がスコープ外として明示されている。Firefox runner の基盤整備は 0116 に移し、本 issue は `firefox_port_zero_rewrite.test.ts` の追加に専念する。
 
 ## 設計方針
 
@@ -49,13 +49,12 @@ Low。0044 の SDK 本体実装は手動検証で動作確認できるため、�
 
 ### E2E テスト (Playwright Firefox)
 
-`firefox-port-zero-rewrite` event が実 Firefox で発火することを検証するため、Playwright Firefox runner を有効化し、専用 E2E テストを 1 本追加する。
+`firefox-port-zero-rewrite` event が実 Firefox で発火することを検証するため、専用 E2E テストを 1 本追加する。Firefox runner の基盤整備は 0116 で完了している前提とする。
 
-- `playwright.config.ts` の `projects` 配列でコメントアウトされている `{ name: "firefox", use: { ...devices["Desktop Firefox"] } }` を有効化する
 - `e2e-tests/tests/firefox_port_zero_rewrite.test.ts` を新規追加する。本テストは Firefox runner でのみ動作させ、それ以外のプロジェクトでは `test.skip` でスキップする
-- 既存の WebKit テスト (`e2e-tests/tests/webkit.test.ts`) の skip パターン (`shouldSkipWebKitTest(test.info().project.name)`) に倣い、`e2e-tests/tests/helper.ts` に `shouldSkipFirefoxTest(projectName: string): boolean` を追加する
+- skip 判定には 0116 で追加される `shouldSkipFirefoxTest(projectName: string): boolean` を利用する
 - 必要なら `e2e-tests/firefox_port_zero_rewrite/index.html` / `main.ts` を新規追加し、`e2e-tests/vite.config.ts` の `rolldownOptions.input` にエントリを追加する。または既存 `e2e-tests/sendrecv/` の構造を流用し、各 role 別 `main.ts` に `connection.on("timeline", ...)` の subscription を追加する判断を行う
-- CI workflow (`.github/workflows/e2e-test.yml` 等) のマトリクスに `{ name: "firefox", type: "firefox" }` を追加し、`pnpm exec playwright install firefox --with-deps` で Firefox バイナリを取得する
+- CI の Firefox 実行基盤は 0116 の workflow を利用する。本テストをその workflow の実行対象に追加する
 
 ### テストシナリオ (要決定)
 
@@ -67,27 +66,27 @@ E2E テストのシナリオは「multistream sendrecv で接続 → publisher �
 
 ### スコープ外
 
+- Playwright Firefox runner の基盤整備 (`playwright.config.ts` の Firefox プロジェクト有効化、`shouldSkipFirefoxTest()`、CI workflow、Firefox バイナリの install)。これは 0116 で扱う
 - 既存の Chromium / WebKit / Edge 系 Playwright プロジェクトで動いているテスト群を Firefox 対応させる作業。本 issue では新規追加した `firefox_port_zero_rewrite.test.ts` のみを Firefox runner で動かす
 - 0044 の SDK 本体実装 (`rewriteOfferSdpPortZero` / `getFirefoxMajorVersion` の追加、`processOfferSdp` の orchestrator 修正)
-- 関連 issue 0015 の Firefox 再現確認 (本 issue で Firefox runner が整備されれば 0015 でも流用可能だが、0015 の再現確認自体は 0015 で扱う)
+- 関連 issue 0015 の Firefox 再現確認 (0116 の runner 基盤を利用できるが、0015 の再現確認自体は 0015 で扱う)
 
 ## 完了条件
 
 - `tests/utils.test.ts` に `rewriteOfferSdpPortZero` と `getFirefoxMajorVersion` の単体テストを追加し、すべて pass する
-- `playwright.config.ts` の Firefox runner を有効化する
+- 0116 で有効化された Firefox プロジェクトと `shouldSkipFirefoxTest()` を利用している
 - `e2e-tests/tests/firefox_port_zero_rewrite.test.ts` を新規追加し、Playwright Firefox runner で pass する
-- 必要に応じて `e2e-tests/firefox_port_zero_rewrite/` 配下のエントリ HTML/TS と `e2e-tests/vite.config.ts` の更新、`e2e-tests/tests/helper.ts` への `shouldSkipFirefoxTest` 追加を行う
-- CI workflow (`.github/workflows/e2e-test.yml` 等) で Firefox runner を実行する設定を追加し、`pnpm exec playwright install firefox --with-deps` で Firefox バイナリを取得する
+- 必要に応じて `e2e-tests/firefox_port_zero_rewrite/` 配下のエントリ HTML/TS と `e2e-tests/vite.config.ts` の更新を行う
+- 0116 の Firefox E2E workflow で `firefox_port_zero_rewrite.test.ts` が実行される
 - 既存の vitest テストと既存の Chromium / WebKit / Edge 系 E2E テストが退行なくそのまま通る
-- ローカルで `pnpm test` と `pnpm exec playwright test --project=firefox` の両方が通る
-- CHANGES.md の `## develop` セクションに本 issue 用の `[ADD]` エントリを追記する。具体的なエントリ文面は着手時に確定する (例: `[ADD] Playwright Firefox runner を有効化し firefox-port-zero-rewrite の自動 E2E テストを追加する`)
+- ローカルで `pnpm test` と `pnpm exec playwright test --project=<Firefox プロジェクト>` の両方が通る
+- CHANGES.md の `## develop` セクションに本 issue 用の `[ADD]` エントリを追記する。具体的なエントリ文面は着手時に確定する (例: `[ADD] firefox-port-zero-rewrite の自動 E2E テストを追加する`)
 
 ## pending にした理由
 
 以下の前提条件が確定するまで実装に着手しないため、本 issue は `issues/pending/` に配置している。
 
-- **Playwright Firefox runner 整備の影響範囲**: CI 設定変更 (`.github/workflows/e2e-test.yml` 等のマトリクス拡張、Firefox バイナリの install 経路追加、`pnpm exec playwright install firefox --with-deps` のフロー追加) を含み、既存の Chromium / WebKit / Edge 系 runner で動いているテスト群への副作用 (`webServer` の port 9000 共有による競合リスク、`workers: 1` 制約下での実行時間増、既存テスト全件が Firefox runner で flaky になるリスク) の評価が事前に必要
-- **E2E テストシナリオの Sora 側挙動依存**: 「publisher 切断 → port=0 を含む re-offer」が Sora バージョンと multistream 設定に依存し、Sora バージョン固定や `.env` 環境変数追加など、E2E 基盤側の判断が必要となる
+- **E2E テストシナリオの Sora 側挙動依存**: 「publisher 切断 → port=0 を含む re-offer」が Sora バージョンと multistream 設定に依存し、Sora バージョン固定や `.env` 環境変数追加など、E2E 基盤側の判断が必要となる。この判断は 0116 の Firefox E2E 基盤で扱う
 - **0044 の本番観測値の有用性確認**: 0044 (実装本体) を先にマージし、本番運用での `firefox-port-zero-rewrite` 観測値が 0015 の意思決定にどの程度有用かを見極めてから、本 issue の自動テスト整備の優先度と方法を再検討する
 
 着手判断のトリガー:
@@ -99,4 +98,5 @@ E2E テストのシナリオは「multistream sendrecv で接続 → publisher �
 ## 関連 issue
 
 - **0044 (`feature/add-firefox-port-zero-rewrite-timeline-event`)**: `firefox-port-zero-rewrite` timeline event の SDK 本体実装。本 issue は 0044 のテスト分を独立 issue として分離したもの
-- **0015 (`feature/fix-process-offer-sdp-port-zero`)**: `processOfferSdp` の port=0 書き換えを mid 限定化する bug fix。本 issue で Playwright Firefox runner が整備されれば、0015 の第 1 段階「Firefox 再現確認」を自動化する基盤としても再利用できる
+- **0116 (`feature/test-firefox-codec-simulcast`、open)**: Firefox E2E の基盤整備 (Firefox プロジェクト有効化、`shouldSkipFirefoxTest()`、CI workflow、Firefox バイナリの install) とコーデック / simulcast テスト。本 issue はその基盤を利用する
+- **0015 (`feature/fix-process-offer-sdp-port-zero`)**: `processOfferSdp` の port=0 書き換えを mid 限定化する bug fix。0116 の Firefox runner 基盤を利用できるが、0015 の第 1 段階「Firefox 再現確認」自体は 0015 で扱う
