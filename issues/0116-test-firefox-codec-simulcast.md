@@ -1,0 +1,82 @@
+# Firefox のコーデックと simulcast encodings を確認する E2E テストを追加する
+
+- Created: 2026-10-21
+- Completed: {YYYY-MM-DD}
+- Branch: feature/test-firefox-codec-simulcast
+- Polished: {YYYY-MM-DD}
+
+## 目的
+
+Firefox で simulcast が実際に動作することを E2E で確認できるようにする。
+
+0115 で Firefox を simulcast 利用可能と判定するようになっても、Sora との接続で r0 / r1 / r2 の送出や simulcast encodings が期待どおり動作するとは限らない。判定エラーが出ないことだけでなく、実際に simulcast が確立して送出・受信できること、Firefox で利用できるビデオコーデック、simulcast encodings の挙動を継続的に確認する。Firefox / Sora / SDK の実装が変わったときにテストで検知できるようにする。
+
+WebKit の `e2e-tests/tests/webkit.test.ts` と同等の位置づけで、Firefox 用の E2E テストを追加する。
+
+## 現状
+
+- `playwright.config.ts` の Firefox プロジェクトはコメントアウトされており、`.github/workflows/e2e-test.yml` の matrix にも Firefox がない。Firefox runner の基盤整備も本 issue で行う
+- Firefox 用の E2E テストと fixture は存在しない
+- WebKit は `e2e-tests/tests/webkit.test.ts` で sendrecv と simulcast encodings を確認している。ただしビデオコーデックは毎回ランダムに選択するため、どのコーデックを検証したかが実行ごとに変わり、変化の検知には弱い
+- 0115 で Firefox の simulcast 利用可否判定は通るようになる予定だが、実際に Sora と simulcast が確立するかは未検証。`setSenderParameters()` の encodings 制約など、判定以外の要因で失敗する可能性がある (pending 0014)
+- `e2e-tests/src/fake.ts` の `getFakeMedia()` は Firefox / WebKit 向けに用意されており、実カメラ / マイクなしで送受信できる
+- Firefox で利用できるコーデックは OS や Firefox のバージョンに依存し、リポジトリ内に Firefox 用の期待値はない
+
+## 設計方針
+
+### runner と CI (基盤整備)
+
+Firefox E2E の基盤整備も本 issue で行う。0045 はこの基盤を利用する。
+
+- `playwright.config.ts` の `projects` 配列でコメントアウトされている Firefox プロジェクトを有効化する
+- `e2e-tests/tests/helper.ts` に `shouldSkipFirefoxTest()` を追加する
+- `vp exec playwright install firefox` で Firefox バイナリを取得できるようにする
+- 通常の `e2e-test` matrix には Firefox を追加しない。既存テストの多くは Chromium の fake device フラグ前提で、Firefox では動かないため
+- WebKit と同様の専用 workflow `e2e-test-firefox.yml` を追加し、`e2e-tests/tests/firefox.test.ts` のみを `--project=<Firefox プロジェクト>` で実行する
+- 実行 OS は H264 / H265 の対応が OS 依存であることを踏まえて決める。まず macOS で確認し、必要なら Linux / Windows を追加する
+
+### fixture とテスト
+
+- `e2e-tests/sendrecv_firefox/` と `e2e-tests/simulcast_sendonly_firefox/` を追加する。どちらも `getFakeMedia()` を使い、`e2e-tests/vite.config.ts` の `rolldownOptions.input` に追加する
+- 受信側は既存の `e2e-tests/simulcast_recvonly/` を流用する
+- `e2e-tests/tests/firefox.test.ts` を追加する
+
+### コーデックの確認
+
+- VP8 / VP9 / AV1 / H264 / H265 を対象に、コーデックごとのテストを分ける
+- Firefox で動くコーデックは codec stats と outbound / inbound RTP の bytes / packets を assert する
+- 動かないコーデックは `test.fail` にし、Firefox 側の対応が変わったときに suite が fail して気づけるようにする
+- ランダム選択は使わない。実行ごとに検証対象が変わらず、失敗原因を特定できるようにする
+- 初回実装時に実 Firefox で実行し、各コーデックの成否を確認して期待値を確定する
+
+### simulcast の実動作と encodings の確認
+
+- `simulcast_sendonly_firefox` で `simulcast: true` を指定して接続し、以下を stats で確認する
+  - connection-id が取得でき、接続が確立している
+  - r0 / r1 / r2 の outbound-rtp が存在し、bytesSent / packetsSent が増えている
+  - `active: false` にした rid は送出されていない
+- `simulcast_recvonly` を同じチャンネルに接続し、指定した rid の映像が受信できることも確認する
+- simulcast encodings の `active` 切り替え、`scaleResolutionDownTo` / `scaleResolutionDownBy`、`scalabilityMode` の取得可否を stats で確認する
+- 現時点で Firefox が未対応の項目は `test.fail` にし、対応したら suite が fail して気づけるようにする
+- 実接続で追加の不具合 (例: `setSenderParameters()` の encodings 制約) が見つかった場合は本 issue に混ぜず、別 issue として切り出す
+
+## 完了条件
+
+- `e2e-tests/sendrecv_firefox/` と `e2e-tests/simulcast_sendonly_firefox/` が追加され、`e2e-tests/vite.config.ts` に登録されている
+- `playwright.config.ts` の Firefox プロジェクトが有効化されている
+- `e2e-tests/tests/helper.ts` に `shouldSkipFirefoxTest()` が追加されている
+- `e2e-tests/tests/firefox.test.ts` が追加され、Firefox プロジェクトで実行できる
+- Firefox と Sora で simulcast が確立し、sendonly 側から r0 / r1 / r2 が送出され、recvonly 側で受信できることを E2E で確認できる
+- コーデックごとの期待値と simulcast encodings の期待値が実 Firefox で確認され、テストに反映されている
+- `test.fail` を使った項目が、実装が変わったときに suite を fail させて検知できる状態になっている
+- `.github/workflows/e2e-test-firefox.yml` で Firefox テストが安定して実行できる
+- 既存の Chromium / Chrome / WebKit のテストが退行なく pass する
+- `vp run build` / `vp check` / `vp test run` が pass する
+- `CHANGES.md` の `## develop` に `[ADD]` エントリを追記する
+
+## 関連 issue
+
+- pending 0045: `firefox-port-zero-rewrite` のテスト。Firefox E2E の基盤整備は本 issue が行い、0045 はその基盤を利用する
+- open 0115: Firefox の simulcast 利用可否判定の修正。判定が通るだけでは実動作は保証されないため、本 issue で実動作を確認する
+- pending 0014: `setSenderParameters()` の encodings 制約。実接続で顕在化した場合は別途対応する
+- 0015 / 0044: `processOfferSdp` の port=0 ワークアラウンドと観測。本 issue とは別スコープ
