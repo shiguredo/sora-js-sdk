@@ -3,7 +3,7 @@
 - Created: 2026-10-21
 - Completed: {YYYY-MM-DD}
 - Branch: feature/test-firefox-codec-simulcast
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-21
 
 ## 目的
 
@@ -28,22 +28,24 @@ WebKit の `e2e-tests/tests/webkit.test.ts` と同等の位置づけで、Firefo
 
 Firefox E2E の基盤整備も本 issue で行う。0045 はこの基盤を利用する。
 
-- `playwright.config.ts` の `projects` 配列でコメントアウトされている Firefox プロジェクトを有効化する
-- `e2e-tests/tests/helper.ts` に `shouldSkipFirefoxTest()` を追加する
+- `playwright.config.ts` の `projects` 配列でコメントアウトされている Firefox プロジェクトを有効化する。プロジェクト名はコメントアウトされている `firefox` をそのまま使い、workflow の `--project` と `shouldSkipFirefoxTest()` の判定も `firefox` に揃える
+- `e2e-tests/tests/helper.ts` に `shouldSkipFirefoxTest(projectName: string): boolean` を追加する。`projectName !== "firefox"` または `process.platform !== "darwin"` のとき true を返し、WebKit と同様に macOS 以外では skip する。Linux / Windows を追加する場合は OS 条件を更新する
 - `vp exec playwright install firefox` で Firefox バイナリを取得できるようにする
 - 通常の `e2e-test` matrix には Firefox を追加しない。既存テストの多くは Chromium の fake device フラグ前提で、Firefox では動かないため
-- WebKit と同様の専用 workflow `e2e-test-firefox.yml` を追加し、`e2e-tests/tests/firefox.test.ts` のみを `--project=<Firefox プロジェクト>` で実行する
-- 実行 OS は H264 / H265 の対応が OS 依存であることを踏まえて決める。まず macOS で確認し、必要なら Linux / Windows を追加する
+- WebKit と同様の専用 workflow `e2e-test-firefox.yml` を追加し、`e2e-tests/tests/firefox.test.ts` のみを `--project="firefox"` で実行する
+- 実行 OS は H264 / H265 の対応が OS 依存であることを踏まえて決める。まず WebKit と同じ self-hosted macOS (Apple-M2-Pro) で確認し、必要なら GitHub-hosted macOS や Linux / Windows を追加する
 
 ### fixture とテスト
 
 - `e2e-tests/sendrecv_firefox/` と `e2e-tests/simulcast_sendonly_firefox/` を追加する。どちらも `getFakeMedia()` を使い、`e2e-tests/vite.config.ts` の `rolldownOptions.input` に追加する
+- `sendrecv_firefox` の `#video-codec-type` には VP8 / VP9 / AV1 / H264 / H265 の選択肢を用意する (既存の `sendrecv_webkit` には AV1 がないため追加する)
+- `simulcast_sendonly_firefox` は `simulcast_sendonly_webkit` と同様に `#simulcast-encodings` の入力を持ち、`generateAccessToken()` の private claims `simulcast_encodings` に渡す
 - 受信側は既存の `e2e-tests/simulcast_recvonly/` を流用する
 - `e2e-tests/tests/firefox.test.ts` を追加する
 
 ### コーデックの確認
 
-- VP8 / VP9 / AV1 / H264 / H265 を対象に、コーデックごとのテストを分ける
+- VP8 / VP9 / AV1 / H264 / H265 を対象に、コーデックごとのテストを分ける。`sendrecv_firefox` の `#video-codec-type` で各コーデックを明示的に選択する
 - Firefox で動くコーデックは codec stats と outbound / inbound RTP の bytes / packets を assert する
 - 動かないコーデックは `test.fail` にし、Firefox 側の対応が変わったときに suite が fail して気づけるようにする
 - ランダム選択は使わない。実行ごとに検証対象が変わらず、失敗原因を特定できるようにする
@@ -51,32 +53,37 @@ Firefox E2E の基盤整備も本 issue で行う。0045 はこの基盤を利�
 
 ### simulcast の実動作と encodings の確認
 
-- `simulcast_sendonly_firefox` で `simulcast: true` を指定して接続し、以下を stats で確認する
+- 0115 のマージ後に、`simulcast_sendonly_firefox` で `simulcast: true` を指定して接続する。0115 が未マージの間は `createSignalingMessage()` が `Simulcast can not be used with this browser` を throw するため、simulcast の実動作テストは実行できない
+- 全 rid が active のケースを確認する
   - connection-id が取得でき、接続が確立している
   - r0 / r1 / r2 の outbound-rtp が存在し、bytesSent / packetsSent が増えている
-  - `active: false` にした rid は送出されていない
-- `simulcast_recvonly` を同じチャンネルに接続し、指定した rid の映像が受信できることも確認する
-- simulcast encodings の `active` 切り替え、`scaleResolutionDownTo` / `scaleResolutionDownBy`、`scalabilityMode` の取得可否を stats で確認する
+  - `simulcast_recvonly` を同じチャンネルに r1 で接続し、r1 の映像が受信できることを確認する
+- `active: false` のケースを別テストで確認する
+  - 接続前に `simulcast_encodings` で r2 を `active: false` にして接続する
+  - r2 の outbound-rtp は存在するが、bytesSent が 0 で packetsSent が 2 以下であることを確認する
+  - r0 / r1 の outbound-rtp は bytesSent / packetsSent が増えていることを確認する
+- simulcast encodings の `active` は outbound-rtp の `active` と bytesSent / packetsSent で確認する。`scaleResolutionDownTo` / `scaleResolutionDownBy` は `RTCOutboundRtpStreamStats` に直接含まれないため、outbound-rtp の `frameWidth` / `frameHeight` で縮小結果を確認する。`scalabilityMode` は outbound-rtp の `scalabilityMode` で確認する
+- `scaleResolutionDownTo` / `scaleResolutionDownBy` を確認する場合は、fake media のソース解像度を縮小先より大きくする (例: 1280x720 のソースを 960x540 に縮小する)。ソースと縮小先が同じ解像度では縮小結果を確認できない
 - 現時点で Firefox が未対応の項目は `test.fail` にし、対応したら suite が fail して気づけるようにする
-- 実接続で追加の不具合 (例: `setSenderParameters()` の encodings 制約) が見つかった場合は本 issue に混ぜず、別 issue として切り出す
+- 実接続で追加の不具合 (例: `setSenderParameters()` の encodings 制約) が見つかった場合は本 issue に混ぜず、別 issue として切り出す。本 issue では該当テストを `test.fail` にして suite で検知できる状態にし、別 issue の修正後に `test.fail` を外す
 
 ## 完了条件
 
 - `e2e-tests/sendrecv_firefox/` と `e2e-tests/simulcast_sendonly_firefox/` が追加され、`e2e-tests/vite.config.ts` に登録されている
 - `playwright.config.ts` の Firefox プロジェクトが有効化されている
 - `e2e-tests/tests/helper.ts` に `shouldSkipFirefoxTest()` が追加されている
-- `e2e-tests/tests/firefox.test.ts` が追加され、Firefox プロジェクトで実行できる
-- Firefox と Sora で simulcast が確立し、sendonly 側から r0 / r1 / r2 が送出され、recvonly 側で受信できることを E2E で確認できる
+- `e2e-tests/tests/firefox.test.ts` が追加され、`firefox` プロジェクトで実行できる
+- 0115 のマージ後、Firefox と Sora で simulcast が確立し、sendonly 側から r0 / r1 / r2 が送出され、recvonly 側で受信できることを E2E で確認できる。追加の不具合が見つかった場合は、その不具合を別 issue に切り出し、本 issue では該当テストを `test.fail` にして suite で検知できる状態にする
 - コーデックごとの期待値と simulcast encodings の期待値が実 Firefox で確認され、テストに反映されている
 - `test.fail` を使った項目が、実装が変わったときに suite を fail させて検知できる状態になっている
-- `.github/workflows/e2e-test-firefox.yml` で Firefox テストが安定して実行できる
+- `.github/workflows/e2e-test-firefox.yml` で Firefox テストが self-hosted macOS 上で安定して実行できる
 - 既存の Chromium / Chrome / WebKit のテストが退行なく pass する
 - `vp run build` / `vp check` / `vp test run` が pass する
-- `CHANGES.md` の `## develop` に `[ADD]` エントリを追記する
+- `CHANGES.md` の `## develop` の `### misc` に `[ADD]` エントリを追記する。E2E テスト基盤の追加は機能に直接影響しないため `### misc` に置き、担当者行 (`- @ユーザー名`) を 2 文字インデントで付ける
 
 ## 関連 issue
 
 - pending 0045: `firefox-port-zero-rewrite` のテスト。Firefox E2E の基盤整備は本 issue が行い、0045 はその基盤を利用する
-- open 0115: Firefox の simulcast 利用可否判定の修正。判定が通るだけでは実動作は保証されないため、本 issue で実動作を確認する
+- open 0115: Firefox の simulcast 利用可否判定の修正。本 issue の simulcast 実動作テストは 0115 のマージ後に有効化する。0115 が未マージの間は `createSignalingMessage()` が `Simulcast can not be used with this browser` を throw するため、simulcast のテストは実行できない。判定が通るだけでは実動作は保証されないため、本 issue で実動作を確認する
 - pending 0014: `setSenderParameters()` の encodings 制約。実接続で顕在化した場合は別途対応する
 - 0015 / 0044: `processOfferSdp` の port=0 ワークアラウンドと観測。本 issue とは別スコープ
