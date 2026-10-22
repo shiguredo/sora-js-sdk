@@ -61,7 +61,7 @@ rolldown-plugin-dts の main ブランチと 0.29.0-beta.2 では peerDependenci
 
 ## 解決方法
 
-`ci.yaml` の `matrix.typescript` から `beta` を削除した。あわせて、`next` と `beta` を外している理由 (vite-plus が TypeScript 7.1 のネイティブ版 API に未対応で dts 生成が失敗する) と、戻す条件 (rolldown-plugin-dts 0.29 系を取り込んだ vite-plus に更新できたとき) をコメントに明記した。
+`ci.yaml` の `matrix.typescript` から `beta` をコメントアウトして外した。一時的な除外のため、あとで戻しやすいよう削除せずコメントアウトで残している。あわせて、`next` と `beta` を外している理由 (vite-plus が TypeScript 7.1 のネイティブ版 API に未対応で dts 生成が失敗する) と、戻す条件 (rolldown-plugin-dts 0.29 系を取り込んだ vite-plus に更新できたとき) をコメントに明記した。
 
 `typescript@next` は 0070 で既に外しており、今回 `beta` も外すことで先行版の検証は一時的になくなる。上流対応が入ったら両方を matrix に戻す。
 

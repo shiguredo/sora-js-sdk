@@ -31,6 +31,7 @@ jobs:
         # なお beta は moving tag で、minimumReleaseAge (7 日) により公開直後の版は
         # 入らない点に注意する (matrix に戻す際は実際に入った版を CI ログで確認する)。
         typescript:
+          # - "beta"
           - "7.0"
           - "6.0"
           - "5.9"
