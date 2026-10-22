@@ -11,6 +11,7 @@ minimumReleaseAgeExclude:
   # vite-plus / vitest は活発に更新されるため制限対象外とする
   - "@voidzero-dev/*"
   - "@vitest/*"
+  - "vitest"
   - "vite-plus"
   # ビルドツールチェーン (oxc)
   # vite-plus が同梱する oxlint / oxfmt は活発に更新されるため制限対象外とする
