@@ -70,5 +70,6 @@ Firefox 158.0.1 の `RTCRtpSender.getCapabilities("video").headerExtensions` に
 - Firefox 158.0.1 の実機で `RTCRtpSender.getCapabilities("video").headerExtensions` に rid 系の URI が含まれないことを確認した
 - 同じ Firefox で、変更前は `Simulcast can not be used with this browser` で停止していた simulcast 送信接続が、変更後は接続に成功し r0 / r1 / r2 の outbound-rtp が送出されることを確認した
 - Chromium / Google Chrome / Google Chrome Beta で `simulcast_rid.test.ts` / `rpc.test.ts` / `authz_simulcast_encodings.test.ts` が pass した
+- GitHub Actions の e2e-test (Chromium / Google Chrome / Google Chrome Beta) と e2e-test-webkit が pass した
 - WebKit で `webkit.test.ts` が期待どおりの失敗を含めて pass した
-- Edge は確認に使用した macOS 27 環境で安定版 Edge が起動できずローカルでは確認できなかった。CI の e2e-test-canary で Edge Canary の E2E を確認する
+- Edge は確認に使用した macOS 27 環境で安定版 Edge が起動できず E2E を実行できなかった。代わりに Edge Beta 156 と Edge Canary 157 の `RTCRtpSender.getCapabilities("video").headerExtensions` が rid 系の URI をすべて含み、旧実装でも新実装でも判定結果が変わらないことを確認した
