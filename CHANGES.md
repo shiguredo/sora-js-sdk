@@ -60,6 +60,14 @@
 - [UPDATE] E2E テストで type redirect 非対応の sora-js-sdk では access_token の cluster_affinity を false にする
   - `2021.2.0` より前のバージョンは、クラスターアフィニティが有効なテストサーバーから type redirect を受け取ると接続に失敗するため
   - @miosakuma
+- [UPDATE] `@types/node` を 26.6.1 から 26.6.5 に更新する
+  - @miosakuma
+- [UPDATE] `jsdom` を 30.1.0 から 30.1.2 に更新する
+  - @miosakuma
+- [UPDATE] `vite-plus` を 1.0.0-rc.0 から 1.3.0 に更新する
+  - 同梱される rolldown / tsdown / vitest / oxlint / oxfmt が更新される
+  - `pnpm-workspace.yaml` の `minimumReleaseAgeExclude` に `vitest` を追加する
+  - @miosakuma
 
 ## 2026.1.0
 
