@@ -17,6 +17,9 @@
   - `message` にサーバーが返した `message` を設定する
   - `cause` に `code` / `message` / `data` を設定する
   - @miosakuma
+- [FIX] Firefox で simulcast を利用可能と判定する
+  - `RTCRtpSender.getCapabilities("video").headerExtensions` のヘッダ拡張の有無ではなく、`RTCRtpSender.getCapabilities` が利用できるかどうかで判定する
+  - @miosakuma
 
 ### misc
 
