@@ -37,12 +37,7 @@ function browser(): Browser {
 }
 
 function enabledSimulcast(): boolean {
-  // simulcast の可否は RTCRtpSender.getCapabilities("video").headerExtensions の内容では判定しない。
-  // ヘッダ拡張の一覧は実装によっては rid 系 (rtp-stream-id など) を含まない。Firefox 158.0.1 で
-  // 確認した範囲では、dom/media/webrtc/jsep/JsepSessionImpl.cpp の JsepSessionImpl::GetRtpExtensions が
-  // a=rid を含む m-section に rid 系の a=extmap を追加するため、SDP レベルでは rid ベースの
-  // simulcast を扱える。実装が変わるとこの前提は崩れ得るため、ここでは simulcast に必要な API が
-  // 存在するかだけを判定し、実際の可否は Sora との SDP 交渉に委ねる。
+  // RTCRtpSender と RTCRtpSender.getCapabilities が存在する環境を simulcast 可能とみなす。
   const rtpSenderConstructor = window.RTCRtpSender;
   if (!rtpSenderConstructor) {
     return false;
