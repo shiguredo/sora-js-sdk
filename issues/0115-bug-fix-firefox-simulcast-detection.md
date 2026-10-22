@@ -1,7 +1,7 @@
 # Firefox で simulcast を利用可能と判定する
 
 - Created: 2026-10-21
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-10-22
 - Branch: feature/fix-firefox-simulcast-detection
 - Polished: 2026-10-21
 
@@ -34,7 +34,8 @@ Firefox 158.0.1 の `RTCRtpSender.getCapabilities("video").headerExtensions` に
 ## 設計方針
 
 - `enabledSimulcast()` から `REQUIRED_HEADER_EXTENSIONS` と `headerExtensions` の判定を削除する
-- `window.RTCRtpSender`、`RTCRtpSender.getCapabilities` の存在チェックと、`RTCRtpSender.getCapabilities("video")` の戻り値が `null` でないことのチェックは残し、API 自体が無い、または `getCapabilities("video")` が `null` を返す環境では従来どおり `false` を返す
+- `window.RTCRtpSender` と `RTCRtpSender.getCapabilities` の存在チェックは残し、API 自体が無い環境では従来どおり `false` を返す
+- `RTCRtpSender.getCapabilities("video")` の戻り値が `null` でないことのチェックは、実質的に常に true となり判定の根拠にならないため削除する
 - Firefox 固有の分岐 (`isFirefox()`) は追加しない。`getCapabilities` のヘッダ拡張リストは実装依存で不完全になり得るため、ヘッダ拡張リストを simulcast 可否の根拠にしない方針とする
 - `createSignalingMessage()` のエラー条件は変えず、`enabledSimulcast()` の内部判定だけを変える
 - Sora と接続したときの `setSenderParameters()` の encodings 制約など、判定以外の要因で追加の不具合が見つかった場合は本 issue には含めず、別 issue として切り出す
@@ -54,3 +55,20 @@ Firefox 158.0.1 の `RTCRtpSender.getCapabilities("video").headerExtensions` に
 - pending 0014: `setSenderParameters()` の encodings と Firefox の `InvalidModificationError` に関する懸念。実接続検証で顕在化した場合は 0014 の対応として扱う
 - open 0116: Firefox E2E の基盤整備。本 issue の確認は runner 整備前のため手動で行う
 - 0040: `Sora.getCapabilities()` API の設計。Firefox を simulcast 可能とする判定結果を公開 API に反映するかは 0040 の範囲
+
+## 解決方法
+
+`src/utils.ts` の `enabledSimulcast()` から `REQUIRED_HEADER_EXTENSIONS` と `RTCRtpSender.getCapabilities("video").headerExtensions` の内容による判定を削除し、`window.RTCRtpSender` と `RTCRtpSender.getCapabilities` が存在する環境を simulcast 可能と判定するように変更した。`RTCRtpSender.getCapabilities("video")` の戻り値が `null` でないことのチェックは、実質的に常に true となり判定の根拠にならないため削除した。
+
+- `src/utils.ts` の `enabledSimulcast()` を API の存在チェックだけに変更する
+- `tests/utils.test.ts` に simulcast 非対応環境のフォールバック経路 (sendonly は throw、recvonly は throw しない) のテストを追加する
+- `CHANGES.md` の `## develop` に `[FIX]` エントリを追加する
+
+### 検証結果
+
+- `vp run build` / `vp check` / `vp test run` は pass した
+- Firefox 158.0.1 の実機で `RTCRtpSender.getCapabilities("video").headerExtensions` に rid 系の URI が含まれないことを確認した
+- 同じ Firefox で、変更前は `Simulcast can not be used with this browser` で停止していた simulcast 送信接続が、変更後は接続に成功し r0 / r1 / r2 の outbound-rtp が送出されることを確認した
+- Chromium / Google Chrome / Google Chrome Beta で `simulcast_rid.test.ts` / `rpc.test.ts` / `authz_simulcast_encodings.test.ts` が pass した
+- WebKit で `webkit.test.ts` が期待どおりの失敗を含めて pass した
+- Edge は確認に使用した macOS 27 環境で安定版 Edge が起動できずローカルでは確認できなかった。CI の e2e-test-canary で Edge Canary の E2E を確認する
