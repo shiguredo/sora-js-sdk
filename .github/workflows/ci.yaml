@@ -22,11 +22,15 @@ jobs:
           - "26"
           - "24"
           - "22"
-        # typescript@next は日次で更新され、vite-plus が TS 7.1 dev に追随するまで
-        # vp run build の dts 生成が失敗する。先行版は beta でカバーできるため、
-        # vite-plus が TS 7.1 dev に対応するまで matrix から外す
+        # typescript@next / typescript@beta は TypeScript 7.1 系を指しており、
+        # vite-plus (rolldown-plugin-dts) が TS 7.1 のネイティブ版 API に未対応のため
+        # vp run build の dts 生成が失敗する。失敗自体は SDK が TypeScript の内部変更に
+        # 追随できていないことの検知として妥当だが、上流が対応するまで CI が常時赤になり
+        # 通知が鳴り続けるため、先行版の検証は一時的に matrix から外している。
+        # 戻す条件: rolldown-plugin-dts 0.29 系を取り込んだ vite-plus に更新できたとき。
+        # なお beta は moving tag で、minimumReleaseAge (7 日) により公開直後の版は
+        # 入らない点に注意する (matrix に戻す際は実際に入った版を CI ログで確認する)。
         typescript:
-          - "beta"
           - "7.0"
           - "6.0"
           - "5.9"
