@@ -102,6 +102,7 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
   - simulcast の全 rid active の送出と r1 の recvonly 受信を確認するテスト
   - simulcast の r2 を `active: false` にしたときのテスト
   - `scaleResolutionDownBy` が outbound-rtp の `frameWidth` / `frameHeight` に反映されることを確認するテスト
+  - `scaleResolutionDownTo` が outbound-rtp の `frameWidth` / `frameHeight` に反映されることを確認する `test.fail` テスト
   - `scalabilityMode` が outbound-rtp に反映されることを確認する `test.fail` テスト
 - `.github/workflows/e2e-test-firefox.yml` を追加し、self-hosted の macOS で `firefox.test.ts` のみを `--project="firefox"` で実行するようにした
 - `CHANGES.md` の `## develop` の `### misc` に `[ADD]` エントリを追加した
@@ -117,16 +118,22 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
   - r2 まで送出させるには `videoBitRate` を 5000 にしないと帯域配分が足りず r2 が送出されないため、テストでは 5000 を指定する
 - r2 の `active: false`: r2 の outbound-rtp は存在するが bytesSent が 0、packetsSent は 1 になる。r0 / r1 は送出され続ける
 - `scaleResolutionDownBy`: 1280x720 のソースに対して r0 = 320x180、r1 = 640x360、r2 = 1280x720 になり、`frameWidth` / `frameHeight` に反映される
+- `scaleResolutionDownTo`: Firefox は `scaleResolutionDownTo` を適用せず、r0 / r1 / r2 のすべてがソース解像度の 1280x720 のまま送出される。`test.fail` にした。Firefox が `scaleResolutionDownTo` に対応すると `test.fail` が失敗して検知できる
 - `scalabilityMode`: Firefox の outbound-rtp には `scalabilityMode` が含まれないため `test.fail` にした。Firefox が `scalabilityMode` を取得できるようになると `test.fail` が失敗して検知できる
 - `setSenderParameters()` の encodings 制約 (pending 0014) は顕在化しなかった
 
 ### Sora の `simulcast_encodings` について
 
-authz の private claims で指定できる `simulcast_encodings` は `rid` / `active` / `scalabilityMode` / `scaleResolutionDownBy` を受け付けるが、`scaleResolutionDownTo` は受け付けず、指定すると Sora が既定の encodings (L1T1、`scaleResolutionDownBy` 4 / 2 / 1) に置き換える。そのため `scaleResolutionDownTo` では縮小結果を確認できない。本 issue では `scaleResolutionDownBy` で縮小結果を確認するテストにした。
+認証時に払い出す `simulcast_encodings` のスキーマは Sora のドキュメントに従う必要がある。`rid` / `active` / `scaleResolutionDownBy` / `maxBitrate` / `maxFramerate` / `scaleResolutionDownTo` / `scalabilityMode` などが指定できる。
+
+- `scaleResolutionDownTo` は `{"maxWidth": 960, "maxHeight": 540}` の形式で指定する。`{"width": 960, "height": 540}` のように指定すると、Sora は `INVALID-AUTHZ-VALUE` として `simulcast_encodings` の値全体を破棄し、既定の encodings (L1T1、`scaleResolutionDownBy` 4 / 2 / 1) に置き換える
+- `scaleResolutionDownTo` は Chrome 131 / Edge 131 以降でのみ利用できる。Chrome では `scaleResolutionDownTo` を全 encodings に指定しないと `setParameters` が `If a resolution is specified on any encoding then it must be specified on all encodings` で失敗するため、`active: false` の rid も含めてすべての encodings に指定する
+- `scalabilityMode` を指定する場合は `scaleResolutionDownBy` も併記する
+- 本 issue では `scaleResolutionDownBy` で縮小結果を確認するテスト (pass) と、`scaleResolutionDownTo` を確認するテスト (`test.fail`) の両方を追加した
 
 ### 検証結果
 
 - `vp run build` / `vp check` / `vp test run` / `vp exec tsc --noEmit -p e2e-tests/tsconfig.json` は pass した
-- `e2e-tests/tests/firefox.test.ts` は `--project="firefox"` で 9 テストが登録されることを確認した
-- Chromium で同じテストを実行して fixture とテストコードの配線を確認した。VP8 / VP9 / AV1 と simulcast の各テストは pass し、H264 / H265 / `scalabilityMode` の `test.fail` は Chromium が対応しているため "Expected to fail, but passed" になった。Firefox 用の期待値が正しく設定されていることの確認になる
+- `e2e-tests/tests/firefox.test.ts` は `--project="firefox"` で 10 テストが登録されることを確認した
+- Chromium で同じテストを実行して fixture とテストコードの配線を確認した。VP8 / VP9 / AV1 と simulcast の各テストは pass し、H264 / H265 / `scalabilityMode` / `scaleResolutionDownTo` の `test.fail` は Chromium が対応しているため "Expected to fail, but passed" になった。Firefox 用の期待値が正しく設定されていることの確認になる
 - Chromium の `sendrecv.test.ts` と `simulcast_rid.test.ts` が pass し、既存テストへの退行がないことを確認した
