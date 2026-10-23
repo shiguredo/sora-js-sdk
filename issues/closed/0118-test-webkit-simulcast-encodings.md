@@ -19,13 +19,15 @@ WebKit の E2E テストが Sora の authz スキーマに違反した `simulcas
 
 この値には次の問題がある。
 
-- Sora の authz の `simulcast_encodings` で `scaleResolutionDownTo` は `{"maxWidth": 960, "maxHeight": 540}` の形式で指定する。`width` / `height` は不正なため、Sora は `simulcast_encodings` の値全体を `INVALID-AUTHZ-VALUE` として破棄し、既定の encodings (L1T1、`scaleResolutionDownBy` 4 / 2 / 1) に置き換える
+- Sora の authz の `simulcast_encodings` で `scaleResolutionDownTo` は `{"maxHeight": 540, "maxWidth": 960}` の形式で指定する。`width` / `height` は不正なため、Sora は `simulcast_encodings` の値全体を `INVALID-AUTHZ-VALUE` として破棄し、既定の encodings (L1T1、`scaleResolutionDownBy` 4 / 2 / 1) に置き換える
 - `scaleResolutionDownTo` は Chrome 131 / Edge 131 以降でのみ利用でき、Chrome では active な全 encodings に指定しないと `setParameters` が `If a resolution is specified on any encoding then it must be specified on all encodings` で失敗する。r2 は `active: false` のため r0 / r1 にだけ指定しても Chrome の検証は通るが、現状は r0 / r1 の形式が `width` / `height` で不正なため、Sora の authz で値全体が破棄される
 - テストの assertion は `bytesSent` / `packetsSent` だけで、`frameWidth` / `frameHeight` を確認していない。名前が示す scaleResolutionDownTo の反映を検証できていない
 - `e2e-tests/simulcast_sendonly_webkit` の fake media は 960x540 で、`scaleResolutionDownTo` の指定値 960x540 と同じ解像度のため、仮に形式を直しても WebKit が scaleResolutionDownTo を無視した結果と区別できない
 - `test.fail` のため、上記の理由で失敗しても suite は pass し、値が不正であることに気づけない
 
 Sora 2027.1.0-canary.5 の authz で上記の警告が出ることは確認済み。正しい形式で指定すれば Chromium では scaleResolutionDownTo が outbound-rtp の解像度に反映されることも確認済み。r2 は `active: false` のため、outbound-rtp の `frameWidth` / `frameHeight` は確認対象にしない。
+
+Sora の authz スキーマと対応ブラウザの記述は Sora のドキュメント「映像のエンコーディングパラメーターのカスタマイズ」に基づく (2026-10 時点。スキーマは変更され得る)。
 
 ## 設計方針
 
@@ -47,7 +49,7 @@ Sora 2027.1.0-canary.5 の authz で上記の警告が出ることは確認済�
 - `e2e-tests/simulcast_sendonly_webkit` の fake media のソース解像度が `scaleResolutionDownTo` の縮小先より大きい
 - r0 / r1 の outbound-rtp の `frameWidth` / `frameHeight` で scaleResolutionDownTo の反映を確認している。r2 は `active: false` のまま `bytesSent` / `packetsSent` で確認する
 - WebKit で `webkit.test.ts` が期待どおりの失敗 (`test.fail`) として動作し、他の WebKit テストが退行なく pass する
-- Sora のログに `INVALID-AUTHZ-VALUE` が出ない
+- Sora が返す offer の `encodings` に、指定した `scaleResolutionDownTo` がそのまま含まれる (Sora のログに `INVALID-AUTHZ-VALUE` が出ないことは Sora 側で確認する)
 - Chromium で同じ条件の scaleResolutionDownTo が r0 / r1 の `frameWidth` / `frameHeight` に反映されることを確認する
 - `vp check` / `vp test run` が pass する
 - `CHANGES.md` の `## develop` の `### misc` にテスト修正のエントリを追記する
@@ -69,16 +71,17 @@ Sora 2027.1.0-canary.5 の authz で上記の警告が出ることは確認済�
 - Safari の simulcast は VP8 / H264 / H265 で動作し、VP9 ではレイヤーが 1 本しか送出されず r0 / r1 の 2 レイヤーを確認できないため、テストで VP8 を明示するようにした
 - r0 / r1 の outbound-rtp に `frameWidth` / `frameHeight` の assertion を追加した
   - 幅は scaleResolutionDownTo の maxWidth (400 / 800) と完全一致で確認する
-  - 高さはアスペクト比の維持とエンコーダのアラインメントで数 px ずれることがあるため、r0 は 224 から 225、r1 は 448 から 450 の範囲で確認する
+  - 高さはアスペクト比の維持とエンコーダのアラインメントで 1 から 2 px ずれることがあるため、r0 は 224 から 225、r1 は 448 から 450 の範囲で確認する
 - `test.fail` は維持した。WebKit が scaleResolutionDownTo に対応したときに suite が失敗して気づける
 
 ### 検証結果
 
 - WebKit で `webkit.test.ts` を実行し、sendrecv のテストは pass、`ScaleResolutionDownTo` のテストは期待どおりの失敗を含めて suite が pass することを確認した
   - Playwright の WebKit は scaleResolutionDownTo を適用せず、独自の既定スケーリングで r0 = 240x135、r1 = 480x270 を送出するため、400 / 800 の assertion で失敗する
-  - WebKit で encodings 未指定の simulcast は VP8 / H264 / H265 では 3 レイヤー、VP9 では 1 レイヤー (r0) だけになることを確認した。テストでは VP8 を明示している。実 Safari でも VP9 では 1 本だけという報告と一致する
+  - WebKit で encodings 未指定の simulcast は VP8 / H264 / H265 では 3 レイヤー、VP9 では 1 レイヤー (r0) だけになることを確認した。テストでは VP8 を明示している。実 Safari での確認は未実施。Sora のドキュメントでは Safari 26.0 は VP9 / AV1 のサイマルキャスト未対応とされている
 - Chromium で同じ `simulcast_encodings` を指定すると、outbound-rtp は r0 = 400x224、r1 = 800x448 になった。幅は maxWidth と一致し、高さは 16 の倍数へのアラインメントで 1 から 2 px 小さくなる
   - 期待値はこの実測と maxHeight どおりの 225 / 450 の両方を許容する範囲にした
   - `videoBitRate` は 1500 でも r0 / r1 が送出された
-- Sora が返した offer の `encodings` に `scaleResolutionDownTo` がそのまま含まれることを確認した。authz の値として受理されており、`INVALID-AUTHZ-VALUE` は解消している (Sora のログ自体は Sora 側で確認する必要がある)
-- `vp run build` / `vp check` / `vp test run` は pass した
+- Sora が返した offer の `encodings` に `scaleResolutionDownTo` がそのまま含まれることを確認した。authz の値として受理されていると判断した。Sora のログ (`INVALID-AUTHZ-VALUE`) は Sora 側のログを参照できないため未確認
+- 検証環境は macOS 27.0.1、Playwright 1.63.0 同梱の WebKit 26.6 / Chromium 153.0.8010.12、Sora 2027.1.0-canary.5
+- `vp run build` / `vp check` / `vp test run` は pass した。E2E は `vp exec playwright test --project=WebKit e2e-tests/tests/webkit.test.ts` で実行した

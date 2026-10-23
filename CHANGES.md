@@ -72,7 +72,7 @@
   - `pnpm-workspace.yaml` の `minimumReleaseAgeExclude` に `vitest` を追加する
   - @miosakuma
 - [FIX] WebKit の simulcast_encodings テストが Sora の authz スキーマに違反した値を使っていたのを修正する
-  - `scaleResolutionDownTo` を `maxHeight` / `maxWidth` 形式にし、r0 = 400x225、r1 = 800x450 を指定して `frameWidth` / `frameHeight` を assert する
+  - `scaleResolutionDownTo` を `{"maxHeight": 225, "maxWidth": 400}` (r0) と `{"maxHeight": 450, "maxWidth": 800}` (r1) に修正し、outbound-rtp の `frameWidth` / `frameHeight` で縮小結果を検証する
   - @miosakuma
 
 ## 2026.1.0
