@@ -1,7 +1,7 @@
 # Firefox のコーデックと simulcast encodings を確認する E2E テストを追加する
 
 - Created: 2026-10-21
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-10-23
 - Branch: feature/test-firefox-codec-simulcast
 - Polished: 2026-10-21
 
@@ -87,3 +87,46 @@ Firefox E2E の基盤整備も本 issue で行う。0045 はこの基盤を利�
 - open 0115: Firefox の simulcast 利用可否判定の修正。本 issue の simulcast 実動作テストは 0115 のマージ後に有効化する。0115 が未マージの間は `createSignalingMessage()` が `Simulcast can not be used with this browser` を throw するため、simulcast のテストは実行できない。判定が通るだけでは実動作は保証されないため、本 issue で実動作を確認する
 - pending 0014: `setSenderParameters()` の encodings 制約。実接続で顕在化した場合は別途対応する
 - 0015 / 0044: `processOfferSdp` の port=0 ワークアラウンドと観測。本 issue とは別スコープ
+
+## 解決方法
+
+Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
+
+- `playwright.config.ts` の `projects` 配列に `firefox` プロジェクトを追加した
+- `e2e-tests/tests/helper.ts` に `shouldSkipFirefoxTest()` を追加した。`projectName !== "firefox"` または macOS 以外では skip する
+- `e2e-tests/sendrecv_firefox/` と `e2e-tests/simulcast_sendonly_firefox/` を追加し、`e2e-tests/vite.config.ts` の `rolldownOptions.input` に登録した
+  - `sendrecv_firefox` の `#video-codec-type` には VP8 / VP9 / AV1 / H264 / H265 の選択肢を用意した
+  - `simulcast_sendonly_firefox` は 1280x720 の fake media を使い、`scaleResolutionDownBy` による縮小結果を `frameWidth` / `frameHeight` で確認できるようにした
+- `e2e-tests/tests/firefox.test.ts` に以下のテストを追加した
+  - コーデック別の sendrecv テスト (VP8 / VP9 / AV1 / H264 / H265)。codec 統計と outbound / inbound RTP の bytes / packets を確認する
+  - simulcast の全 rid active の送出と r1 の recvonly 受信を確認するテスト
+  - simulcast の r2 を `active: false` にしたときのテスト
+  - `scaleResolutionDownBy` が outbound-rtp の `frameWidth` / `frameHeight` に反映されることを確認するテスト
+  - `scalabilityMode` が outbound-rtp に反映されることを確認する `test.fail` テスト
+- `.github/workflows/e2e-test-firefox.yml` を追加し、self-hosted の macOS で `firefox.test.ts` のみを `--project="firefox"` で実行するようにした
+- `CHANGES.md` の `## develop` の `### misc` に `[ADD]` エントリを追加した
+
+### 実 Firefox での確認結果
+
+実装時に実 Firefox で Sora へ接続し、以下を確認した。検証環境では Playwright の Firefox を起動できなかったため、同じ fixture を geckodriver 経由の Firefox 158.0.1 で操作して期待値を確定した。Playwright の Firefox で `firefox.test.ts` を実行する確認は CI (self-hosted macOS) で行う。
+
+- VP8 / VP9 / AV1: codec 統計が取得でき、outbound / inbound RTP の bytes / packets が増える。テストは pass する
+- H264: 接続はできるが映像が送出されない (outbound-rtp の bytesSent が 0)。`test.fail` にした。H264 の可否は OpenH264 の有無に依存するため、Firefox が H264 を送出できるようになると `test.fail` が失敗して検知できる
+- H265: ビデオの codec 統計が取得できず、送出も受信もされない。`test.fail` にした
+- simulcast 全 rid active: r0 / r1 / r2 の outbound-rtp が存在し、bytesSent / packetsSent が増える。recvonly を r1 で接続すると 640x360 の映像を受信できる
+  - r2 まで送出させるには `videoBitRate` を 5000 にしないと帯域配分が足りず r2 が送出されないため、テストでは 5000 を指定する
+- r2 の `active: false`: r2 の outbound-rtp は存在するが bytesSent が 0、packetsSent は 1 になる。r0 / r1 は送出され続ける
+- `scaleResolutionDownBy`: 1280x720 のソースに対して r0 = 320x180、r1 = 640x360、r2 = 1280x720 になり、`frameWidth` / `frameHeight` に反映される
+- `scalabilityMode`: Firefox の outbound-rtp には `scalabilityMode` が含まれないため `test.fail` にした。Firefox が `scalabilityMode` を取得できるようになると `test.fail` が失敗して検知できる
+- `setSenderParameters()` の encodings 制約 (pending 0014) は顕在化しなかった
+
+### Sora の `simulcast_encodings` について
+
+authz の private claims で指定できる `simulcast_encodings` は `rid` / `active` / `scalabilityMode` / `scaleResolutionDownBy` を受け付けるが、`scaleResolutionDownTo` は受け付けず、指定すると Sora が既定の encodings (L1T1、`scaleResolutionDownBy` 4 / 2 / 1) に置き換える。そのため `scaleResolutionDownTo` では縮小結果を確認できない。本 issue では `scaleResolutionDownBy` で縮小結果を確認するテストにした。
+
+### 検証結果
+
+- `vp run build` / `vp check` / `vp test run` / `vp exec tsc --noEmit -p e2e-tests/tsconfig.json` は pass した
+- `e2e-tests/tests/firefox.test.ts` は `--project="firefox"` で 9 テストが登録されることを確認した
+- Chromium で同じテストを実行して fixture とテストコードの配線を確認した。VP8 / VP9 / AV1 と simulcast の各テストは pass し、H264 / H265 / `scalabilityMode` の `test.fail` は Chromium が対応しているため "Expected to fail, but passed" になった。Firefox 用の期待値が正しく設定されていることの確認になる
+- Chromium の `sendrecv.test.ts` と `simulcast_rid.test.ts` が pass し、既存テストへの退行がないことを確認した
