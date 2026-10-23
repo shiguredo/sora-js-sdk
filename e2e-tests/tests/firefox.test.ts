@@ -27,9 +27,12 @@ const SIMULCAST_SOURCE_HEIGHT = 720;
 const SIMULCAST_VIDEO_BIT_RATE = 5000;
 
 // simulcast encodings は Sora の authz の private claims として JSON で渡す。
-// scalabilityMode は TypeScript の RTCRtpEncodingParameters に含まれないことがあるため、
-// simulcast encodings 用の型として拡張する
-type SimulcastEncoding = RTCRtpEncodingParameters & { scalabilityMode?: string };
+// scalabilityMode と scaleResolutionDownTo は TypeScript の RTCRtpEncodingParameters に
+// 含まれないことがあるため、simulcast encodings 用の型として拡張する
+type SimulcastEncoding = RTCRtpEncodingParameters & {
+  scalabilityMode?: string;
+  scaleResolutionDownTo?: { maxHeight: number; maxWidth: number };
+};
 
 // 全 rid を active にした simulcast encodings
 // scaleResolutionDownBy は 1280x720 のソースに対して
@@ -45,6 +48,17 @@ const SIMULCAST_ENCODINGS_R2_INACTIVE: SimulcastEncoding[] = [
   { active: true, rid: "r0", scalabilityMode: "L1T1", scaleResolutionDownBy: 4 },
   { active: true, rid: "r1", scalabilityMode: "L1T1", scaleResolutionDownBy: 2 },
   { active: false, rid: "r2" },
+];
+
+// scaleResolutionDownTo を指定した simulcast encodings
+// Sora の authz のスキーマでは maxWidth / maxHeight で指定する
+// (width / height で指定すると Sora が INVALID-AUTHZ-VALUE として値を破棄する)
+// Chrome では scaleResolutionDownTo を全 encodings に指定しないと setParameters が失敗するため、
+// active: false にする rid も含めてすべての encodings に指定する
+const SIMULCAST_ENCODINGS_SCALE_RESOLUTION_DOWN_TO: SimulcastEncoding[] = [
+  { active: true, rid: "r0", scaleResolutionDownTo: { maxHeight: 540, maxWidth: 960 } },
+  { active: true, rid: "r1", scaleResolutionDownTo: { maxHeight: 540, maxWidth: 960 } },
+  { active: true, rid: "r2", scaleResolutionDownTo: { maxHeight: 540, maxWidth: 960 } },
 ];
 
 // Firefox で送受信できるビデオコーデックかどうか
@@ -305,6 +319,31 @@ test.describe("Firefox", () => {
       );
     }
   });
+
+  // Firefox は scaleResolutionDownTo (Chrome 131 / Edge 131 以降のみ対応) を適用せず、
+  // 全 rid をソース解像度のまま送出するため、このテストは fail する
+  test.fail(
+    "Firefox simulcast scaleResolutionDownTo が outbound-rtp の解像度に反映される",
+    async ({ page }) => {
+      const channelName = randomUUID();
+      const stats = await connectAndGetSimulcastStats(
+        page,
+        channelName,
+        SIMULCAST_ENCODINGS_SCALE_RESOLUTION_DOWN_TO,
+        10000,
+      );
+
+      for (const rid of ["r0", "r1", "r2"]) {
+        const outboundRtp = findOutboundRtpStatsByRid(stats, "video", rid);
+        expect(outboundRtp, `sendonly: ${rid} の outbound-rtp`).toBeDefined();
+        // 送出自体は行われていることを確認する
+        expect(outboundRtp?.bytesSent, `sendonly: ${rid} の bytesSent`).toBeGreaterThan(0);
+        // scaleResolutionDownTo では 1280x720 のソースが 960x540 に縮小される
+        expect(outboundRtp?.frameWidth, `sendonly: ${rid} の frameWidth`).toBe(960);
+        expect(outboundRtp?.frameHeight, `sendonly: ${rid} の frameHeight`).toBe(540);
+      }
+    },
+  );
 
   // Firefox の outbound-rtp には scalabilityMode が含まれないため、このテストは fail する
   test.fail("Firefox simulcast scalabilityMode が outbound-rtp に反映される", async ({ page }) => {
