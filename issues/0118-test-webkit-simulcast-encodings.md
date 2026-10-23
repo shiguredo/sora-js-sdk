@@ -1,7 +1,7 @@
 # WebKit の simulcast_encodings テストが Sora の authz スキーマに違反した値を使っている
 
 - Created: 2026-10-23
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-10-23
 - Branch: feature/fix-webkit-simulcast-encodings-test
 - Polished: 2026-10-23
 - Reporter: @miosakuma
@@ -25,18 +25,20 @@ WebKit の E2E テストが Sora の authz スキーマに違反した `simulcas
 - `e2e-tests/simulcast_sendonly_webkit` の fake media は 960x540 で、`scaleResolutionDownTo` の指定値 960x540 と同じ解像度のため、仮に形式を直しても WebKit が scaleResolutionDownTo を無視した結果と区別できない
 - `test.fail` のため、上記の理由で失敗しても suite は pass し、値が不正であることに気づけない
 
-Sora 2027.1.0-canary.5 の authz で上記の警告が出ることは確認済み。正しい形式で r0 / r1 に指定すれば、Chromium では r0 / r1 の outbound-rtp が 960x540 になることも確認済み。r2 は `active: false` のため、outbound-rtp の `frameWidth` / `frameHeight` は確認対象にしない。
+Sora 2027.1.0-canary.5 の authz で上記の警告が出ることは確認済み。正しい形式で指定すれば Chromium では scaleResolutionDownTo が outbound-rtp の解像度に反映されることも確認済み。r2 は `active: false` のため、outbound-rtp の `frameWidth` / `frameHeight` は確認対象にしない。
 
 ## 設計方針
 
-- `simulcast_encodings` の `scaleResolutionDownTo` は `{"maxWidth": 960, "maxHeight": 540}` の形式にする
+- `simulcast_encodings` の `scaleResolutionDownTo` は `{"maxHeight": 225, "maxWidth": 400}` のような形式にする
 - `scaleResolutionDownTo` は active な r0 / r1 に指定し、r2 は `{ active: false, rid: "r2" }` のままにする。Chrome の検証は active な encodings のみを対象とするため、r2 への指定は不要
-- `e2e-tests/simulcast_sendonly_webkit` の fake media のソース解像度を縮小先より大きくする (例: 1280x720 のソースを 960x540 に縮小する)
-  - WebKit が scaleResolutionDownTo を無視する場合、r0 / r1 の outbound-rtp の `frameWidth` / `frameHeight` は 1280x720 のままになる
-  - scaleResolutionDownTo が反映される場合、r0 / r1 は 960x540 になる
+- `e2e-tests/simulcast_sendonly_webkit` の fake media (960x540) より小さい縮小先を指定する
+  - r0 = `{"maxHeight": 225, "maxWidth": 400}`、r1 = `{"maxHeight": 450, "maxWidth": 800}`
+  - WebKit が scaleResolutionDownTo を無視する場合、Playwright の WebKit では独自の既定スケーリングで r0 = 240x135、r1 = 480x270 になる
+  - scaleResolutionDownTo が反映される場合、r0 = 400x225、r1 = 800x450 になる (高さはエンコーダのアラインメントで 224 / 448 になることがある)
 - r0 / r1 の assertion に outbound-rtp の `frameWidth` / `frameHeight` を追加し、scaleResolutionDownTo の反映を確認する。r2 は `active: false` のため、`bytesSent` / `packetsSent` の assertion を維持する
+- Safari の simulcast は VP8 / H264 / H265 で動作し、VP9 ではレイヤーが 1 本しか送出されないため、テストでは VP8 を明示する
 - WebKit が未対応の間は `test.fail` を維持し、対応したら suite が失敗して気づける状態にする
-- Chromium で同じ条件の scaleResolutionDownTo が r0 / r1 で 960x540 に反映されることを確認し、期待値の妥当性を検証する
+- Chromium で同じ条件の scaleResolutionDownTo が r0 / r1 に反映されることを確認し、期待値の妥当性を検証する
 - 実行後に Sora のログへ `INVALID-AUTHZ-VALUE` が出ないことを確認する
 
 ## 完了条件
@@ -54,3 +56,29 @@ Sora 2027.1.0-canary.5 の authz で上記の警告が出ることは確認済�
 
 - open 0116: Firefox のコーデックと simulcast encodings を確認する E2E テスト。本 issue は 0116 の調査中に、既存の WebKit テストが Sora の authz スキーマに違反した値を使っていることを見つけたもの
 - pending 0045: `firefox-port-zero-rewrite` のテスト。WebKit のテスト修正とは独立
+
+## 解決方法
+
+`e2e-tests/tests/webkit.test.ts` の `WebKit Authz simulcast_encodings ScaleResolutionDownTo` テストを修正した。
+
+- `e2e-tests/tests/webkit.test.ts` の `simulcast_encodings` を Sora の authz スキーマに合わせた
+  - `scaleResolutionDownTo` を `{"maxHeight": 225, "maxWidth": 400}` (r0) と `{"maxHeight": 450, "maxWidth": 800}` (r1) に修正した
+  - 960x540 のソースより小さい値にすることで、scaleResolutionDownTo の反映を frameWidth / frameHeight で検出できるようにした
+  - active な r0 / r1 にだけ指定し、r2 は `{ active: false, rid: "r2" }` のままにした (Chrome の setParameters 制約は active な encodings のみが対象)
+  - `scalabilityMode` の指定は残した。WebKit は `scalabilityMode` を IDL で公開していないため無視し、outbound-rtp では独自の既定値 (L1T3) を返す。コメントアウトされていた assertion は意味を持たないため削除した
+- Safari の simulcast は VP8 / H264 / H265 で動作し、VP9 ではレイヤーが 1 本しか送出されず r0 / r1 の 2 レイヤーを確認できないため、テストで VP8 を明示するようにした
+- r0 / r1 の outbound-rtp に `frameWidth` / `frameHeight` の assertion を追加した
+  - 幅は scaleResolutionDownTo の maxWidth (400 / 800) と完全一致で確認する
+  - 高さはアスペクト比の維持とエンコーダのアラインメントで数 px ずれることがあるため、r0 は 224 から 225、r1 は 448 から 450 の範囲で確認する
+- `test.fail` は維持した。WebKit が scaleResolutionDownTo に対応したときに suite が失敗して気づける
+
+### 検証結果
+
+- WebKit で `webkit.test.ts` を実行し、sendrecv のテストは pass、`ScaleResolutionDownTo` のテストは期待どおりの失敗を含めて suite が pass することを確認した
+  - Playwright の WebKit は scaleResolutionDownTo を適用せず、独自の既定スケーリングで r0 = 240x135、r1 = 480x270 を送出するため、400 / 800 の assertion で失敗する
+  - WebKit で encodings 未指定の simulcast は VP8 / H264 / H265 では 3 レイヤー、VP9 では 1 レイヤー (r0) だけになることを確認した。テストでは VP8 を明示している。実 Safari でも VP9 では 1 本だけという報告と一致する
+- Chromium で同じ `simulcast_encodings` を指定すると、outbound-rtp は r0 = 400x224、r1 = 800x448 になった。幅は maxWidth と一致し、高さは 16 の倍数へのアラインメントで 1 から 2 px 小さくなる
+  - 期待値はこの実測と maxHeight どおりの 225 / 450 の両方を許容する範囲にした
+  - `videoBitRate` は 1500 でも r0 / r1 が送出された
+- Sora が返した offer の `encodings` に `scaleResolutionDownTo` がそのまま含まれることを確認した。authz の値として受理されており、`INVALID-AUTHZ-VALUE` は解消している (Sora のログ自体は Sora 側で確認する必要がある)
+- `vp run build` / `vp check` / `vp test run` は pass した
