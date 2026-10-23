@@ -74,6 +74,10 @@
 - [FIX] WebKit の simulcast_encodings テストが Sora の authz スキーマに違反した値を使っていたのを修正する
   - `scaleResolutionDownTo` を `{"maxHeight": 225, "maxWidth": 400}` (r0) と `{"maxHeight": 450, "maxWidth": 800}` (r1) に修正し、outbound-rtp の `frameWidth` で縮小結果を検証する
   - @miosakuma
+- [ADD] Firefox のコーデックと simulcast を確認する E2E テストを追加する
+  - `e2e-tests/sendrecv_firefox` と `e2e-tests/simulcast_sendonly_firefox` を追加し、`e2e-tests/tests/firefox.test.ts` で検証する
+  - `.github/workflows/e2e-test-firefox.yml` を追加し、self-hosted の macOS で実行する
+  - @miosakuma
 
 ## 2026.1.0
 

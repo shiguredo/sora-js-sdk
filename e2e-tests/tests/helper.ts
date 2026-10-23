@@ -130,6 +130,12 @@ export function shouldSkipWebKitTest(projectName: string): boolean {
   return projectName !== "WebKit" || process.platform !== "darwin";
 }
 
+// Firefox テストをスキップすべきかどうか
+// Firefox は macOS でのみテストを行う。Linux / Windows を追加する場合は OS 条件を更新する
+export function shouldSkipFirefoxTest(projectName: string): boolean {
+  return projectName !== "firefox" || process.platform !== "darwin";
+}
+
 // 統計レポート JSON を DOM から取得する
 export async function getStatsReportJson(
   page: Page,

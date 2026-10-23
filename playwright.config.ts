@@ -88,10 +88,11 @@ export default defineConfig({
       use: { ...devices["Desktop Safari"] },
     },
 
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
+    // Firefox は e2e-tests/tests/firefox.test.ts でのみ利用する
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+    },
   ],
   webServer: {
     command: "vp run e2e-dev --port 9000",

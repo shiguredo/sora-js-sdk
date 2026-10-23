@@ -1,0 +1,203 @@
+import {
+  generateAccessToken,
+  getChannelId,
+  getVideoCodecType,
+  setSoraJsSdkVersion,
+} from "../src/misc";
+import { getFakeMedia } from "../src/fake";
+import Sora from "sora-js-sdk";
+import type {
+  SoraConnection,
+  SignalingNotifyMessage,
+  ConnectionPublisher,
+  VideoCodecType,
+  ConnectionOptions,
+} from "sora-js-sdk";
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const signalingUrl = import.meta.env.VITE_TEST_SIGNALING_URL;
+  const channelIdPrefix = import.meta.env.VITE_TEST_CHANNEL_ID_PREFIX || "";
+  const channelIdSuffix = import.meta.env.VITE_TEST_CHANNEL_ID_SUFFIX || "";
+  const secretKey = import.meta.env.VITE_TEST_SECRET_KEY;
+
+  setSoraJsSdkVersion();
+
+  let client: SoraClient;
+  // getFakeMedia の cleanup を保持し、#disconnect / 次回 #connect / connect 失敗時に解放する。
+  let fakeCleanup: (() => void) | null = null;
+
+  document.querySelector("#connect")?.addEventListener("click", async () => {
+    const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
+    const videoCodecType = getVideoCodecType();
+
+    // 既存の cleanup が残っていれば解放してから新しい stream を生成する。
+    if (fakeCleanup) {
+      fakeCleanup();
+      fakeCleanup = null;
+    }
+
+    client = new SoraClient(signalingUrl, channelId, secretKey, videoCodecType);
+
+    const { stream, cleanup } = getFakeMedia({
+      audio: true,
+      video: true,
+    });
+    fakeCleanup = cleanup;
+
+    try {
+      await client.connect(stream);
+    } catch (error) {
+      // connect 失敗時にも fake stream を解放してリソースリークを防ぐ。
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
+      throw error;
+    }
+  });
+  document.querySelector("#disconnect")?.addEventListener("click", async () => {
+    // client.disconnect が throw しても fake stream は必ず解放する。
+    try {
+      await client.disconnect();
+    } finally {
+      if (fakeCleanup) {
+        fakeCleanup();
+        fakeCleanup = null;
+      }
+    }
+  });
+
+  document.querySelector("#get-stats")?.addEventListener("click", async () => {
+    const statsReport = await client.getStats();
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
+    const statsReportJsonDiv = document.querySelector("#stats-report-json");
+    if (statsDiv && statsReportJsonDiv) {
+      let statsHtml = "";
+      const statsReportJson: Array<Record<string, unknown>> = [];
+      for (const report of statsReport.values()) {
+        statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
+        const reportJson: Record<string, unknown> = {
+          id: report.id,
+          type: report.type,
+        };
+        for (const [key, value] of Object.entries(report)) {
+          if (key !== "type" && key !== "id") {
+            statsHtml += `<li><strong>${key}:</strong> ${String(value)}</li>`;
+            reportJson[key] = value;
+          }
+        }
+        statsHtml += "</ul>";
+        statsReportJson.push(reportJson);
+      }
+      statsDiv.innerHTML = statsHtml;
+      // データ属性としても保存（オプション）
+      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson);
+    }
+  });
+});
+
+class SoraClient {
+  private readonly debug = false;
+
+  private readonly channelId: string;
+  private readonly secretKey: string;
+  private readonly options: ConnectionOptions;
+
+  private readonly sora: SoraConnection;
+  private readonly connection: ConnectionPublisher;
+
+  constructor(
+    signalingUrl: string,
+    channelId: string,
+    secretKey: string,
+    videoCodecType: VideoCodecType | undefined,
+  ) {
+    this.sora = Sora.connection(signalingUrl, this.debug);
+    this.channelId = channelId;
+    this.secretKey = secretKey;
+    this.options = { connectionTimeout: 15_000 };
+
+    if (videoCodecType !== undefined) {
+      this.options = { ...this.options, videoCodecType };
+    }
+
+    // access_token は接続の直前に生成するため、ここでは metadata を指定しない
+    this.connection = this.sora.sendrecv(this.channelId, undefined, this.options);
+
+    this.connection.on("notify", this.onnotify.bind(this));
+    this.connection.on("track", this.ontrack.bind(this));
+    this.connection.on("removetrack", this.onremovetrack.bind(this));
+  }
+
+  async connect(stream: MediaStream) {
+    // access_token の有効期限が切れないよう、接続の直前に JWT を生成する
+    this.connection.metadata = {
+      access_token: await generateAccessToken(this.channelId, this.secretKey),
+    };
+    await this.connection.connect(stream);
+    const localVideo = document.querySelector<HTMLVideoElement>("#local-video");
+    if (localVideo) {
+      localVideo.srcObject = stream;
+    }
+  }
+
+  async disconnect() {
+    await this.connection.disconnect();
+
+    // お掃除
+    const localVideo = document.querySelector<HTMLVideoElement>("#local-video");
+    if (localVideo) {
+      localVideo.srcObject = null;
+    }
+    // お掃除
+    const remoteVideos = document.querySelector("#remote-videos");
+    if (remoteVideos) {
+      remoteVideos.innerHTML = "";
+    }
+  }
+
+  async getStats(): Promise<RTCStatsReport> {
+    if (this.connection.pc === null) {
+      throw new Error("PeerConnection is not ready");
+    }
+    return this.connection.pc.getStats();
+  }
+
+  private onnotify(event: SignalingNotifyMessage): void {
+    if (
+      event.event_type === "connection.created" &&
+      this.connection.connectionId === event.connection_id
+    ) {
+      const connectionIdElement = document.querySelector("#connection-id");
+      if (connectionIdElement) {
+        connectionIdElement.textContent = event.connection_id;
+      }
+    }
+  }
+
+  private ontrack(event: RTCTrackEvent): void {
+    const stream = event.streams[0];
+    const remoteVideoId = `remote-video-${stream.id}`;
+    const remoteVideos = document.querySelector("#remote-videos");
+    if (remoteVideos && !remoteVideos.querySelector(`#${remoteVideoId}`)) {
+      const remoteVideo = document.createElement("video");
+      remoteVideo.id = remoteVideoId;
+      remoteVideo.style.border = "1px solid red";
+      remoteVideo.autoplay = true;
+      remoteVideo.playsInline = true;
+      remoteVideo.controls = true;
+      remoteVideo.width = 320;
+      remoteVideo.height = 240;
+      remoteVideo.srcObject = stream;
+      remoteVideos.append(remoteVideo);
+    }
+  }
+
+  private onremovetrack(event: MediaStreamTrackEvent): void {
+    const target = event.target as MediaStream;
+    const remoteVideo = document.querySelector(`#remote-video-${target.id}`);
+    if (remoteVideo) {
+      remoteVideo.remove();
+    }
+  }
+}
