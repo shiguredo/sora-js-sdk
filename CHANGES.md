@@ -71,6 +71,9 @@
   - 同梱される rolldown / tsdown / vitest / oxlint / oxfmt が更新される
   - `pnpm-workspace.yaml` の `minimumReleaseAgeExclude` に `vitest` を追加する
   - @miosakuma
+- [FIX] WebKit の simulcast_encodings テストが Sora の authz スキーマに違反した値を使っていたのを修正する
+  - `scaleResolutionDownTo` を `maxHeight` / `maxWidth` 形式にし、r0 = 400x225、r1 = 800x450 を指定して `frameWidth` / `frameHeight` を assert する
+  - @miosakuma
 
 ## 2026.1.0
 

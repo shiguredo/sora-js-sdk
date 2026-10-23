@@ -160,7 +160,9 @@ test("WebKit", async ({ browser }) => {
   await context2.close();
 });
 
-// WebKit では scaleResolutionDownTo が反映されないため、このテストは fail する
+// WebKit は scaleResolutionDownTo を適用しないため、このテストは fail する。
+// scaleResolutionDownTo が反映された場合、960x540 のソースが r0 = 400x225、r1 = 800x450 になる。
+// Playwright の WebKit では適用されず、独自の既定スケーリングで r0 = 240x135、r1 = 480x270 になる。
 test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ page }) => {
   test.skip(shouldSkipWebKitTest(test.info().project.name), "WebKit かつ macOS でのみテストを行う");
 
@@ -170,6 +172,13 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
 
   await page.fill("#channel-name", channelName);
 
+  // WebKit は VP9 では simulcast のレイヤーを 1 本しか送出しないため、
+  // r0 / r1 の 2 レイヤーを確認できる VP8 を明示する。
+  await page.selectOption("#video-codec-type", "VP8");
+
+  // Sora の authz スキーマに従い、scaleResolutionDownTo は maxWidth / maxHeight で指定する。
+  // Chrome の setParameters 制約は active な encodings のみに適用されるため、
+  // active: false の r2 には指定しない。
   await page.fill(
     "#simulcast-encodings",
     JSON.stringify([
@@ -177,13 +186,13 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
         active: true,
         rid: "r0",
         scalabilityMode: "L1T1",
-        scaleResolutionDownTo: { width: 960, height: 540 },
+        scaleResolutionDownTo: { maxHeight: 225, maxWidth: 400 },
       },
       {
         active: true,
         rid: "r1",
         scalabilityMode: "L1T1",
-        scaleResolutionDownTo: { width: 960, height: 540 },
+        scaleResolutionDownTo: { maxHeight: 450, maxWidth: 800 },
       },
       { active: false, rid: "r2" },
     ]),
@@ -215,8 +224,11 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
   expect(sendonlyVideoR0OutboundRtpStats).toBeDefined();
   expect(sendonlyVideoR0OutboundRtpStats?.bytesSent).toBeGreaterThan(500);
   expect(sendonlyVideoR0OutboundRtpStats?.packetsSent).toBeGreaterThan(50);
-  // safari はなぜか scalabilityMode が取得できない
-  // expect(sendonlyVideoR0OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
+  // scaleResolutionDownTo が反映されていれば 400x225 になる。
+  // 高さはアスペクト比の維持とエンコーダのアラインメントで数 px ずれることがあるため幅だけ完全一致で確認する
+  expect(sendonlyVideoR0OutboundRtpStats?.frameWidth).toBe(400);
+  expect(sendonlyVideoR0OutboundRtpStats?.frameHeight).toBeGreaterThanOrEqual(224);
+  expect(sendonlyVideoR0OutboundRtpStats?.frameHeight).toBeLessThanOrEqual(225);
 
   const sendonlyVideoR1OutboundRtpStats = findOutboundRtpStatsByRid(
     sendonlyStatsReportJson,
@@ -226,8 +238,11 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
   expect(sendonlyVideoR1OutboundRtpStats).toBeDefined();
   expect(sendonlyVideoR1OutboundRtpStats?.bytesSent).toBeGreaterThan(500);
   expect(sendonlyVideoR1OutboundRtpStats?.packetsSent).toBeGreaterThan(50);
-  // safari はなぜか scalabilityMode が取得できない
-  // expect(sendonlyVideoR0OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
+  // scaleResolutionDownTo が反映されていれば 800x450 になる
+  // 高さはアスペクト比の維持とエンコーダのアラインメントで数 px ずれることがあるため幅だけ完全一致で確認する
+  expect(sendonlyVideoR1OutboundRtpStats?.frameWidth).toBe(800);
+  expect(sendonlyVideoR1OutboundRtpStats?.frameHeight).toBeGreaterThanOrEqual(448);
+  expect(sendonlyVideoR1OutboundRtpStats?.frameHeight).toBeLessThanOrEqual(450);
 
   const sendonlyVideoR2OutboundRtpStats = findOutboundRtpStatsByRid(
     sendonlyStatsReportJson,

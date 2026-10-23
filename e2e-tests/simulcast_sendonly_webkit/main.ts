@@ -55,6 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
       secretKey,
     );
 
+    // scaleResolutionDownTo の縮小先 (r0 = 400x225、r1 = 800x450) より大きいソース解像度を使い、
+    // WebKit が scaleResolutionDownTo を適用しない場合に frameWidth / frameHeight で検出できるようにする。
     const { stream, cleanup } = getFakeMedia({
       audio: false,
       video: { height: 540, width: 960 },
