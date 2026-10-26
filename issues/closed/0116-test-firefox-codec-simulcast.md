@@ -112,7 +112,7 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
 実装時に実 Firefox で Sora へ接続し、以下を確認した。検証環境では Playwright の Firefox を起動できなかったため、同じ fixture を geckodriver 経由の Firefox 158.0.1 で操作して期待値を確定した。Playwright の Firefox で `firefox.test.ts` を実行する確認は CI (self-hosted macOS) で行う。
 
 - VP8 / VP9 / AV1: codec 統計が取得でき、outbound / inbound RTP の bytes / packets が増える。テストは pass する
-- H264: 接続はできるが映像が送出されない (outbound-rtp の bytesSent が 0)。`test.fail` にした。H264 の可否は OpenH264 の有無に依存するため、Firefox が H264 を送出できるようになると `test.fail` が失敗して検知できる
+- H264: 接続はできるが映像が送出されない (outbound-rtp の bytesSent が 0)。macOS の Firefox ブラウザとしては H.264 を利用できるため、Firefox が H.264 非対応という意味ではなく、テスト環境 (Playwright の Firefox やランナー) の設定が完全にできていない状態。`test.fail` にして、環境が整って H.264 を送出できるようになると `test.fail` が失敗して検知できる
 - H265: ビデオの codec 統計が取得できず、送出も受信もされない。`test.fail` にした
 - simulcast 全 rid active: r0 / r1 / r2 の outbound-rtp が存在し、bytesSent / packetsSent が増える。recvonly を r1 で接続すると 480x270 の映像を受信できる
   - r2 まで送出させるには `videoBitRate` を 5000 にしないと帯域配分が足りず r2 が送出されないため、テストでは 5000 を指定する

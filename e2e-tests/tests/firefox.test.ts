@@ -72,9 +72,10 @@ const SIMULCAST_ENCODINGS_SCALE_RESOLUTION_DOWN_TO: SimulcastEncoding[] = [
 ];
 
 // Firefox で送受信できるビデオコーデックかどうか
-// H264 は Firefox が H264 のエンコーダを利用できず、接続はできても映像が送出されない
+// H264 は macOS の Firefox ブラウザとしては利用できるが、テスト環境 (Playwright の Firefox や
+// ランナー) の設定が完全ではないため、接続はできても映像が送出されない
 // H265 は Firefox が WebRTC で利用できない
-// 未対応のコーデックは test.fail にして、Firefox が対応したときに suite が fail して気づけるようにする
+// 利用できない・環境が整っていないコーデックは test.fail にして、利用できるようになったときに suite が fail して気づけるようにする
 const VIDEO_CODEC_CASES: Array<{ codec: string; supported: boolean }> = [
   { codec: "VP8", supported: true },
   { codec: "VP9", supported: true },
