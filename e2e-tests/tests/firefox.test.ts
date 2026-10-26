@@ -133,21 +133,32 @@ async function runSendrecvFirefox(
  * 1 接続分の統計レポートで、指定したビデオコーデックで送出と受信が行われていることを検証する
  */
 function expectVideoCodecSendRecv(stats: StatsReport, videoCodecType: string, label: string): void {
+  const videoCodecMimeType = `video/${videoCodecType}`;
   // 音声は Opus で送受信できていることを確認する
   expect(findCodecStats(stats, "audio/opus"), `${label}: audio/opus の codec 統計`).toBeDefined();
-  // 指定したビデオコーデックが Sora との間で選択されていることを確認する
-  expect(
-    findCodecStats(stats, `video/${videoCodecType}`),
-    `${label}: video/${videoCodecType} の codec 統計`,
-  ).toBeDefined();
-  // ビデオが送出されていることを確認する
+  // ビデオが指定したコーデックで送出されていることを確認する
   const outboundRtp = findOutboundRtpStats(stats, "video");
   expect(outboundRtp, `${label}: ビデオの outbound-rtp`).toBeDefined();
+  // outbound-rtp の codecId から codec 統計を引き、指定したコーデックであることを確認する
+  // codec 統計に存在するだけで実際は別のコーデックで送信している場合があるため
+  const outboundCodecStats = stats.find(
+    (stat) => stat.type === "codec" && stat.id === outboundRtp?.codecId,
+  );
+  expect(outboundCodecStats?.mimeType, `${label}: outbound-rtp の codec の mimeType`).toBe(
+    videoCodecMimeType,
+  );
   expect(outboundRtp?.bytesSent, `${label}: ビデオの bytesSent`).toBeGreaterThan(0);
   expect(outboundRtp?.packetsSent, `${label}: ビデオの packetsSent`).toBeGreaterThan(0);
-  // 相手が送出したビデオを受信できていることを確認する
+  // 相手が送出したビデオを指定したコーデックで受信できていることを確認する
   const inboundRtp = findInboundRtpStats(stats, "video");
   expect(inboundRtp, `${label}: ビデオの inbound-rtp`).toBeDefined();
+  // inbound-rtp の codecId から codec 統計を引き、指定したコーデックであることを確認する
+  const inboundCodecStats = stats.find(
+    (stat) => stat.type === "codec" && stat.id === inboundRtp?.codecId,
+  );
+  expect(inboundCodecStats?.mimeType, `${label}: inbound-rtp の codec の mimeType`).toBe(
+    videoCodecMimeType,
+  );
   expect(inboundRtp?.bytesReceived, `${label}: ビデオの bytesReceived`).toBeGreaterThan(0);
   expect(inboundRtp?.packetsReceived, `${label}: ビデオの packetsReceived`).toBeGreaterThan(0);
 }
