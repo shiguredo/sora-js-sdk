@@ -55,6 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
       secretKey,
     );
 
+    // テストが指定する scaleResolutionDownTo の縮小先より大きい 960x540 にしておく。
+    // 縮小が適用されない場合に frameWidth の差で検出するため。
     const { stream, cleanup } = getFakeMedia({
       audio: false,
       video: { height: 540, width: 960 },

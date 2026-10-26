@@ -5,6 +5,7 @@ import {
   findInboundRtpStats,
   findOutboundRtpStats,
   findOutboundRtpStatsByRid,
+  findVideoCodecStats,
   getStatsReportJson,
   shouldSkipWebKitTest,
 } from "./helper";
@@ -160,7 +161,11 @@ test("WebKit", async ({ browser }) => {
   await context2.close();
 });
 
-// WebKit では scaleResolutionDownTo が反映されないため、このテストは fail する
+// Playwright の WebKit は scaleResolutionDownTo を適用しないため、このテストは fail する
+// (Playwright 1.63.0 同梱の WebKit 26.6 で確認。WebKit のバージョンによっては変わり得る)
+// 適用された場合は 960x540 のソースが r0 = 400x225、r1 = 800x450 相当になる
+// (幅で確認する。高さはエンコーダのアラインメントで 224 / 448 になることがある)。
+// 適用されない場合は WebKit 独自の既定スケーリングで r0 = 240x135、r1 = 480x270 になる
 test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ page }) => {
   test.skip(shouldSkipWebKitTest(test.info().project.name), "WebKit かつ macOS でのみテストを行う");
 
@@ -170,6 +175,21 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
 
   await page.fill("#channel-name", channelName);
 
+  // WebKit は VP9 では simulcast のレイヤーを 1 本しか送出しないため、
+  // r0 / r1 の 2 レイヤーを確認できる VP8 を明示する
+  // (Playwright の WebKit 26.6 で確認。WebKit のバージョンによっては変わり得る)
+  const videoCodecType = "VP8";
+  await page.selectOption("#video-codec-type", videoCodecType);
+
+  // videoBitRate は r0 / r1 が送出されることを確認済みの 1500 を明示する
+  // (fixture の既定値に依存しない)
+  await page.fill("#video-bit-rate", "1500");
+
+  // Sora の authz スキーマでは scaleResolutionDownTo を maxHeight / maxWidth で指定する
+  // scaleResolutionDownTo 自体は Chrome 131 / Edge 131 以降で利用できる
+  // scalabilityMode は WebKit の IDL に存在せず無視されるため assertion しない
+  // (WebKit 26.6 の outbound-rtp では既定値の L1T3 が返る)。Sora の authz スキーマに
+  // 合わせて指定だけは残す
   await page.fill(
     "#simulcast-encodings",
     JSON.stringify([
@@ -177,13 +197,13 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
         active: true,
         rid: "r0",
         scalabilityMode: "L1T1",
-        scaleResolutionDownTo: { width: 960, height: 540 },
+        scaleResolutionDownTo: { maxHeight: 225, maxWidth: 400 },
       },
       {
         active: true,
         rid: "r1",
         scalabilityMode: "L1T1",
-        scaleResolutionDownTo: { width: 960, height: 540 },
+        scaleResolutionDownTo: { maxHeight: 450, maxWidth: 800 },
       },
       { active: false, rid: "r2" },
     ]),
@@ -204,7 +224,7 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
   // simulcast sendonly 統計情報
   const sendonlyStatsReportJson = await getStatsReportJson(page);
 
-  const sendonlyVideoCodecStats = findCodecStats(sendonlyStatsReportJson, "video/VP8");
+  const sendonlyVideoCodecStats = findVideoCodecStats(sendonlyStatsReportJson, videoCodecType);
   expect(sendonlyVideoCodecStats).toBeDefined();
 
   const sendonlyVideoR0OutboundRtpStats = findOutboundRtpStatsByRid(
@@ -215,8 +235,8 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
   expect(sendonlyVideoR0OutboundRtpStats).toBeDefined();
   expect(sendonlyVideoR0OutboundRtpStats?.bytesSent).toBeGreaterThan(500);
   expect(sendonlyVideoR0OutboundRtpStats?.packetsSent).toBeGreaterThan(50);
-  // safari はなぜか scalabilityMode が取得できない
-  // expect(sendonlyVideoR0OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
+  // 高さはエンコーダのアラインメントで 1 から 2 px 変動するため、幅だけ確認する
+  expect(sendonlyVideoR0OutboundRtpStats?.frameWidth).toBe(400);
 
   const sendonlyVideoR1OutboundRtpStats = findOutboundRtpStatsByRid(
     sendonlyStatsReportJson,
@@ -226,8 +246,8 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
   expect(sendonlyVideoR1OutboundRtpStats).toBeDefined();
   expect(sendonlyVideoR1OutboundRtpStats?.bytesSent).toBeGreaterThan(500);
   expect(sendonlyVideoR1OutboundRtpStats?.packetsSent).toBeGreaterThan(50);
-  // safari はなぜか scalabilityMode が取得できない
-  // expect(sendonlyVideoR0OutboundRtpStats?.scalabilityMode).toEqual('L1T1')
+  // r1 も同じ理由で幅だけ確認する
+  expect(sendonlyVideoR1OutboundRtpStats?.frameWidth).toBe(800);
 
   const sendonlyVideoR2OutboundRtpStats = findOutboundRtpStatsByRid(
     sendonlyStatsReportJson,
