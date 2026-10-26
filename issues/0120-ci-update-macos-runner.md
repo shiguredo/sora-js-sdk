@@ -3,12 +3,12 @@
 - Created: 2026-10-23
 - Completed: {YYYY-MM-DD}
 - Branch: feature/update-macos-runner
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-26
 - Reporter: @miosakuma
 
 ## 目的
 
-GitHub-hosted の macOS runner が `macos-15` のままなので、新しい `macos-26` に更新する。新しい macOS / Xcode / ブラウザの組み合わせで E2E を継続的に検証できるようにし、`macos-15` の提供終了やサポート切れに先回りする。
+GitHub-hosted の macOS runner が `macos-15` のままなので、新しい `macos-26` に更新する。新しい macOS / ブラウザの組み合わせで E2E を継続的に検証できるようにし、`macos-15` の提供終了やサポート切れに先回りする。
 
 ## 現状
 
@@ -19,7 +19,7 @@ GitHub-hosted の macOS runner を使っている箇所は次の 2 つ。
 - `.github/workflows/e2e-test-canary.yml` の `runs-on: macos-15`
   - Homebrew で Chrome Canary / Edge Canary をインストールして実行している
 
-self-hosted の macOS runner (`e2e-test-webkit.yml` / `e2e-test-h265.yml` / `e2e-test-firefox.yml`) はラベル (`self-hosted`, `macOS`, `ARM64`, `Apple-M2-Pro`) で指定しており、OS のバージョンはリポジトリ側では管理していない。
+self-hosted の macOS runner (`e2e-test-webkit.yml` / `e2e-test-h265.yml`) はラベル (`self-hosted`, `macOS`, `ARM64`, `Apple-M2-Pro`) と `group: Self` で指定しており、OS のバージョンはリポジトリ側では管理していない。
 
 ## 設計方針
 
@@ -44,4 +44,4 @@ self-hosted の macOS runner (`e2e-test-webkit.yml` / `e2e-test-h265.yml` / `e2e
 ## 関連 issue
 
 - closed 0117: CI 設定のみの変更の先行例 (`Branch: N/A`)
-- closed 0038: GitHub Actions の runner / action 追加の先行例
+- closed 0038: CI ジョブ追加の先行例
