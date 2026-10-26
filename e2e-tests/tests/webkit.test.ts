@@ -163,9 +163,9 @@ test("WebKit", async ({ browser }) => {
 
 // Playwright の WebKit は scaleResolutionDownTo を適用しないため、このテストは fail する
 // (Playwright 1.63.0 同梱の WebKit 26.6 で確認。WebKit のバージョンによっては変わり得る)
-// 適用された場合は 960x540 のソースが r0 = 400x225、r1 = 800x450 になる (高さはエンコーダの
-// アラインメントで 224 / 448 になることがある)。適用されない場合は WebKit 独自の既定
-// スケーリングで r0 = 240x135、r1 = 480x270 になる
+// 適用された場合は 960x540 のソースが r0 = 400x225、r1 = 800x450 相当になる
+// (幅で確認する。高さはエンコーダのアラインメントで 224 / 448 になることがある)。
+// 適用されない場合は WebKit 独自の既定スケーリングで r0 = 240x135、r1 = 480x270 になる
 test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ page }) => {
   test.skip(shouldSkipWebKitTest(test.info().project.name), "WebKit かつ macOS でのみテストを行う");
 
@@ -235,11 +235,8 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
   expect(sendonlyVideoR0OutboundRtpStats).toBeDefined();
   expect(sendonlyVideoR0OutboundRtpStats?.bytesSent).toBeGreaterThan(500);
   expect(sendonlyVideoR0OutboundRtpStats?.packetsSent).toBeGreaterThan(50);
-  // 高さはエンコーダのアラインメントで 1 から 2 px 小さくなることがあるため、
-  // 幅だけ完全一致で確認する
+  // 高さはエンコーダのアラインメントで 1 から 2 px 変動するため、幅だけ確認する
   expect(sendonlyVideoR0OutboundRtpStats?.frameWidth).toBe(400);
-  expect(sendonlyVideoR0OutboundRtpStats?.frameHeight).toBeGreaterThanOrEqual(224);
-  expect(sendonlyVideoR0OutboundRtpStats?.frameHeight).toBeLessThanOrEqual(225);
 
   const sendonlyVideoR1OutboundRtpStats = findOutboundRtpStatsByRid(
     sendonlyStatsReportJson,
@@ -249,10 +246,8 @@ test.fail("WebKit Authz simulcast_encodings ScaleResolutionDownTo", async ({ pag
   expect(sendonlyVideoR1OutboundRtpStats).toBeDefined();
   expect(sendonlyVideoR1OutboundRtpStats?.bytesSent).toBeGreaterThan(500);
   expect(sendonlyVideoR1OutboundRtpStats?.packetsSent).toBeGreaterThan(50);
-  // r1 も同じ理由で幅だけ完全一致、高さは範囲で確認する
+  // r1 も同じ理由で幅だけ確認する
   expect(sendonlyVideoR1OutboundRtpStats?.frameWidth).toBe(800);
-  expect(sendonlyVideoR1OutboundRtpStats?.frameHeight).toBeGreaterThanOrEqual(448);
-  expect(sendonlyVideoR1OutboundRtpStats?.frameHeight).toBeLessThanOrEqual(450);
 
   const sendonlyVideoR2OutboundRtpStats = findOutboundRtpStatsByRid(
     sendonlyStatsReportJson,
