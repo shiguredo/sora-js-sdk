@@ -18,9 +18,8 @@ const SIMULCAST_RECVONLY_URL = "http://localhost:9000/simulcast_recvonly/";
 // Firefox のテストは macOS でのみ実行する
 const SKIP_REASON = "Firefox かつ macOS でのみテストを行う";
 
-// simulcast のソース解像度 (e2e-tests/simulcast_sendonly_firefox/main.ts の fake media と揃える)
-const SIMULCAST_SOURCE_WIDTH = 1280;
-const SIMULCAST_SOURCE_HEIGHT = 720;
+// simulcast のソース幅 (e2e-tests/simulcast_sendonly_firefox/main.ts の fake media と揃える)
+const SIMULCAST_SOURCE_WIDTH = 960;
 
 // 全 rid を送出させるために必要な video_bit_rate
 // 1500 では r2 に割り当てられる帯域が不足し、r2 が送出されないため 5000 を指定する
@@ -35,8 +34,8 @@ type SimulcastEncoding = RTCRtpEncodingParameters & {
 };
 
 // 全 rid を active にした simulcast encodings
-// scaleResolutionDownBy は 1280x720 のソースに対して
-// r0 = 320x180, r1 = 640x360, r2 = 1280x720 になる値
+// scaleResolutionDownBy は 960x540 のソースに対して
+// r0 = 240x135, r1 = 480x270, r2 = 960x540 になる値
 const SIMULCAST_ENCODINGS_ALL_ACTIVE: SimulcastEncoding[] = [
   { active: true, rid: "r0", scalabilityMode: "L1T1", scaleResolutionDownBy: 4 },
   { active: true, rid: "r1", scalabilityMode: "L1T1", scaleResolutionDownBy: 2 },
@@ -53,12 +52,23 @@ const SIMULCAST_ENCODINGS_R2_INACTIVE: SimulcastEncoding[] = [
 // scaleResolutionDownTo を指定した simulcast encodings
 // Sora の authz のスキーマでは maxWidth / maxHeight で指定する
 // (width / height で指定すると Sora が INVALID-AUTHZ-VALUE として値を破棄する)
-// Chrome では scaleResolutionDownTo を全 encodings に指定しないと setParameters が失敗するため、
-// active: false にする rid も含めてすべての encodings に指定する
+// Chrome では scaleResolutionDownTo を active な encodings すべてに指定しないと
+// setParameters が失敗するため、active な r0 / r1 に指定する
+// webkit.test.ts の同じテストと同じ値に揃えている
 const SIMULCAST_ENCODINGS_SCALE_RESOLUTION_DOWN_TO: SimulcastEncoding[] = [
-  { active: true, rid: "r0", scaleResolutionDownTo: { maxHeight: 540, maxWidth: 960 } },
-  { active: true, rid: "r1", scaleResolutionDownTo: { maxHeight: 540, maxWidth: 960 } },
-  { active: true, rid: "r2", scaleResolutionDownTo: { maxHeight: 540, maxWidth: 960 } },
+  {
+    active: true,
+    rid: "r0",
+    scalabilityMode: "L1T1",
+    scaleResolutionDownTo: { maxHeight: 225, maxWidth: 400 },
+  },
+  {
+    active: true,
+    rid: "r1",
+    scalabilityMode: "L1T1",
+    scaleResolutionDownTo: { maxHeight: 450, maxWidth: 800 },
+  },
+  { active: false, rid: "r2" },
 ];
 
 // Firefox で送受信できるビデオコーデックかどうか
@@ -302,7 +312,7 @@ test.describe("Firefox", () => {
       10000,
     );
 
-    // 1280x720 のソースを scaleResolutionDownBy で縮小した解像度を確認する
+    // 960x540 のソースを scaleResolutionDownBy で縮小した解像度を確認する
     const expectedResolutions: Array<{ rid: string; scaleResolutionDownBy: number }> = [
       { rid: "r0", scaleResolutionDownBy: 4 },
       { rid: "r1", scaleResolutionDownBy: 2 },
@@ -311,17 +321,15 @@ test.describe("Firefox", () => {
     for (const { rid, scaleResolutionDownBy } of expectedResolutions) {
       const outboundRtp = findOutboundRtpStatsByRid(stats, "video", rid);
       expect(outboundRtp, `sendonly: ${rid} の outbound-rtp`).toBeDefined();
+      // frameHeight はエンコーダのアラインメントで変動するため、frameWidth だけ確認する
       expect(outboundRtp?.frameWidth, `sendonly: ${rid} の frameWidth`).toBe(
         SIMULCAST_SOURCE_WIDTH / scaleResolutionDownBy,
-      );
-      expect(outboundRtp?.frameHeight, `sendonly: ${rid} の frameHeight`).toBe(
-        SIMULCAST_SOURCE_HEIGHT / scaleResolutionDownBy,
       );
     }
   });
 
   // Firefox は scaleResolutionDownTo (Chrome 131 / Edge 131 以降のみ対応) を適用せず、
-  // 全 rid をソース解像度のまま送出するため、このテストは fail する
+  // r0 / r1 をソース解像度のまま送出するため、このテストは fail する
   test.fail(
     "Firefox simulcast scaleResolutionDownTo が outbound-rtp の解像度に反映される",
     async ({ page }) => {
@@ -333,15 +341,24 @@ test.describe("Firefox", () => {
         10000,
       );
 
-      for (const rid of ["r0", "r1", "r2"]) {
-        const outboundRtp = findOutboundRtpStatsByRid(stats, "video", rid);
-        expect(outboundRtp, `sendonly: ${rid} の outbound-rtp`).toBeDefined();
-        // 送出自体は行われていることを確認する
-        expect(outboundRtp?.bytesSent, `sendonly: ${rid} の bytesSent`).toBeGreaterThan(0);
-        // scaleResolutionDownTo では 1280x720 のソースが 960x540 に縮小される
-        expect(outboundRtp?.frameWidth, `sendonly: ${rid} の frameWidth`).toBe(960);
-        expect(outboundRtp?.frameHeight, `sendonly: ${rid} の frameHeight`).toBe(540);
-      }
+      const r0OutboundRtp = findOutboundRtpStatsByRid(stats, "video", "r0");
+      expect(r0OutboundRtp, "sendonly: r0 の outbound-rtp").toBeDefined();
+      expect(r0OutboundRtp?.bytesSent, "sendonly: r0 の bytesSent").toBeGreaterThan(0);
+      // scaleResolutionDownTo では 960x540 のソースが 400x225 に縮小される
+      // frameHeight はエンコーダのアラインメントで変動するため、frameWidth だけ確認する
+      expect(r0OutboundRtp?.frameWidth, "sendonly: r0 の frameWidth").toBe(400);
+
+      const r1OutboundRtp = findOutboundRtpStatsByRid(stats, "video", "r1");
+      expect(r1OutboundRtp, "sendonly: r1 の outbound-rtp").toBeDefined();
+      expect(r1OutboundRtp?.bytesSent, "sendonly: r1 の bytesSent").toBeGreaterThan(0);
+      // 同様に 960x540 のソースが 800x450 に縮小される
+      expect(r1OutboundRtp?.frameWidth, "sendonly: r1 の frameWidth").toBe(800);
+
+      // r2 は active: false のため送出されない
+      const r2OutboundRtp = findOutboundRtpStatsByRid(stats, "video", "r2");
+      expect(r2OutboundRtp, "sendonly: r2 の outbound-rtp").toBeDefined();
+      expect(r2OutboundRtp?.bytesSent, "sendonly: r2 の bytesSent").toBe(0);
+      expect(r2OutboundRtp?.packetsSent, "sendonly: r2 の packetsSent").toBeLessThanOrEqual(2);
     },
   );
 

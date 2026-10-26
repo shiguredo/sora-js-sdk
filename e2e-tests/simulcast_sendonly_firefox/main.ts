@@ -55,11 +55,12 @@ document.addEventListener("DOMContentLoaded", () => {
       secretKey,
     );
 
-    // scaleResolutionDownBy による縮小結果を確認できるよう 1280x720 の fake media を生成する。
-    // r0 (1/4) は 320x180、r1 (1/2) は 640x360、r2 (1/1) は 1280x720 になる。
+    // scaleResolutionDownBy による縮小結果を確認できるよう 960x540 の fake media を生成する。
+    // E2E テストの負荷を抑えるため 1280x720 は使わない。
+    // r0 (1/4) は 240x135、r1 (1/2) は 480x270、r2 (1/1) は 960x540 になる。
     const { stream, cleanup } = getFakeMedia({
       audio: false,
-      video: { height: 720, width: 1280 },
+      video: { height: 540, width: 960 },
     });
     fakeCleanup = cleanup;
 
