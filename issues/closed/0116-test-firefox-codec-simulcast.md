@@ -104,7 +104,10 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
   - `scaleResolutionDownBy` が outbound-rtp の `frameWidth` に反映されることを確認するテスト
   - `scaleResolutionDownTo` が outbound-rtp の `frameWidth` に反映されることを確認する `test.fail` テスト
   - `scalabilityMode` が outbound-rtp に反映されることを確認する `test.fail` テスト
+- `e2e-tests/scripts/install-openh264.sh` を追加し、Firefox の H264 送受信に必要な OpenH264 (GMP) のプラグインを `.gmp` に導入するようにした
+- `playwright.config.ts` の `firefox` プロジェクトで、H264 のハードウェアエンコーダと OpenH264 を有効にし、`MOZ_GMP_PATH` を設定するようにした
 - `.github/workflows/e2e-test-firefox.yml` を追加し、self-hosted の macOS で `firefox.test.ts` のみを `--project="firefox"` で実行するようにした
+  - テスト前に `e2e-tests/scripts/install-openh264.sh` を実行するようにした
 - `CHANGES.md` の `## develop` の `### misc` に `[ADD]` エントリを追加した
 
 ### 実 Firefox での確認結果
@@ -112,7 +115,7 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
 実装時に実 Firefox で Sora へ接続し、以下を確認した。検証環境では Playwright の Firefox を起動できなかったため、同じ fixture を geckodriver 経由の Firefox 158.0.1 で操作して期待値を確定した。Playwright の Firefox で `firefox.test.ts` を実行する確認は CI (self-hosted macOS) で行う。
 
 - VP8 / VP9 / AV1: codec 統計が取得でき、outbound / inbound RTP の bytes / packets が増える。テストは pass する
-- H264: 接続はできるが映像が送出されない (outbound-rtp の bytesSent が 0)。macOS の Firefox ブラウザとしては H.264 を利用できるため、Firefox が H.264 非対応という意味ではなく、テスト環境 (Playwright の Firefox やランナー) の設定が完全にできていない状態。`test.fail` にして、環境が整って H.264 を送出できるようになると `test.fail` が失敗して検知できる
+- H264: OpenH264 (GMP) のプラグインを `MOZ_GMP_PATH` で読み込ませることで送受信できる。`e2e-tests/scripts/install-openh264.sh` でテスト環境に導入し、`test.fail` を外した
 - H265: ビデオの codec 統計が取得できず、送出も受信もされない。`test.fail` にした
 - simulcast 全 rid active: r0 / r1 / r2 の outbound-rtp が存在し、bytesSent / packetsSent が増える。recvonly を r1 で接続すると 480x270 の映像を受信できる
   - r2 まで送出させるには `videoBitRate` を 5000 にしないと帯域配分が足りず r2 が送出されないため、テストでは 5000 を指定する
@@ -135,5 +138,6 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
 
 - `vp run build` / `vp check` / `vp test run` / `vp exec tsc --noEmit -p e2e-tests/tsconfig.json` は pass した
 - `e2e-tests/tests/firefox.test.ts` は `--project="firefox"` で 10 テストが登録されることを確認した
-- Chromium で同じテストを実行して fixture とテストコードの配線を確認した。VP8 / VP9 / AV1 と simulcast の各テストは pass し、H264 / H265 / `scalabilityMode` / `scaleResolutionDownTo` の `test.fail` は Chromium が対応しているため "Expected to fail, but passed" になった。Firefox 用の期待値が正しく設定されていることの確認になる
+- macOS 27 の実機で Full Disk Access を付与して Playwright の Firefox を起動し、OpenH264 を導入した状態で H264 の sendrecv が pass することを確認した
+- Chromium で同じテストを実行して fixture とテストコードの配線を確認した。VP8 / VP9 / AV1 / H264 と simulcast の各テストは pass し、H265 / `scalabilityMode` / `scaleResolutionDownTo` の `test.fail` は Chromium が対応しているため "Expected to fail, but passed" になった。Firefox 用の期待値が正しく設定されていることの確認になる
 - Chromium の `sendrecv.test.ts` と `simulcast_rid.test.ts` が pass し、既存テストへの退行がないことを確認した

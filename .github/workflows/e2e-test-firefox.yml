@@ -44,6 +44,8 @@ jobs:
       - run: vp install --frozen-lockfile
       - run: vp run build
       - run: vp exec playwright install firefox --with-deps
+      # H264 の送受信に必要な OpenH264 (GMP) のプラグインを取得する
+      - run: sh e2e-tests/scripts/install-openh264.sh
       - run: vp exec playwright test --project="firefox" e2e-tests/tests/firefox.test.ts
         env:
           VITE_TEST_CHANNEL_ID_SUFFIX: _${{ github.run_id }}_${{ matrix.node }}
