@@ -40,6 +40,12 @@
   - Playwright の Firefox 起動時に `MOZ_GMP_PATH` を設定し、H264 をコーデック別テストの対象に含める
   - `.github/workflows/e2e-test-firefox.yml` を追加し、self-hosted の macOS で実行する
   - @miosakuma
+- [ADD] `e2e-tests/simulcast` に `video_codec_type` と `video_bit_rate` の指定 UI を追加する
+  - `video_codec_type` が未指定のときは `codec_type` を送らず、Sora の既定のコーデック選択に任せる
+  - `video_bit_rate` を 1 以上の整数として解釈できないときは接続せずエラーにする
+  - ページの既定値は従来と同じ `VP8` / `1500` とする
+  - 再接続時は旧接続を切断してから新しい接続を確立する
+  - @miosakuma
 - [UPDATE] `@playwright/test` を 1.60.0 から 1.61.0 に更新する
   - 上流で `reinstall_chrome_stable_mac.sh` の curl に `-L` が追加されたため `playwright-core@1.60.0` のパッチを削除する
   - @voluntas
