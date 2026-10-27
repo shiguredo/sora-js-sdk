@@ -1,8 +1,8 @@
 # Firefox のコーデックと simulcast encodings を確認する E2E テストを追加する
 
 - Created: 2026-10-21
-- Completed: 2026-10-26
-- Branch: feature/test-firefox-codec-simulcast
+- Completed: 2026-10-27
+- Branch: feature/test-firefox-codec-simulcast, feature/test-firefox-codec-simulcast-no-gmp
 - Polished: 2026-10-21
 
 ## 目的
@@ -98,24 +98,22 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
   - `sendrecv_firefox` の `#video-codec-type` には VP8 / VP9 / AV1 / H264 / H265 の選択肢を用意した
   - `simulcast_sendonly_firefox` は 960x540 の fake media を使い、`scaleResolutionDownBy` / `scaleResolutionDownTo` による縮小結果を `frameWidth` で確認できるようにした
 - `e2e-tests/tests/firefox.test.ts` に以下のテストを追加した
-  - コーデック別の sendrecv テスト (VP8 / VP9 / AV1 / H264 / H265)。codec 統計、outbound / inbound RTP の codecId から引いたコーデック、bytes / packets を確認する
+  - コーデック別の sendrecv テスト (VP8 / VP9 / AV1 / H265)。codec 統計、outbound / inbound RTP の codecId から引いたコーデック、bytes / packets を確認する
   - simulcast の全 rid active の送出と r1 の recvonly 受信を確認するテスト
   - simulcast の r2 を `active: false` にしたときのテスト
   - `scaleResolutionDownBy` が outbound-rtp の `frameWidth` に反映されることを確認するテスト
   - `scaleResolutionDownTo` が outbound-rtp の `frameWidth` に反映されることを確認する `test.fail` テスト
   - `scalabilityMode` が outbound-rtp に反映されることを確認する `test.fail` テスト
-- `e2e-tests/scripts/install-openh264.sh` を追加し、Firefox の H264 送受信に必要な OpenH264 (GMP) のプラグインを `.gmp` に導入するようにした
-- `playwright.config.ts` の `firefox` プロジェクトで、H264 のハードウェアエンコーダと OpenH264 を有効にし、`MOZ_GMP_PATH` を設定するようにした
+- H264 は Playwright 版 Firefox で GMP プラグイン (OpenH264) の導入が必要なため対応せず、テストの対象から外した
 - `.github/workflows/e2e-test-firefox.yml` を追加し、self-hosted の macOS で `firefox.test.ts` のみを `--project="firefox"` で実行するようにした
-  - テスト前に `e2e-tests/scripts/install-openh264.sh` を実行するようにした
 - `CHANGES.md` の `## develop` の `### misc` に `[ADD]` エントリを追加した
 
 ### Firefox での確認結果
 
-実装時に実 Firefox で Sora へ接続し、以下を確認した。期待値の確定は geckodriver 経由の Firefox 158.0.1 で行った。その後、macOS 27 の実機で Full Disk Access を付与して Playwright の Firefox 155.0 を起動し、OpenH264 を導入した状態で `firefox.test.ts` の 10 テストが pass することを確認した。CI (self-hosted macOS) の `e2e-test-firefox` でも 10 テストが pass している。
+実装時に実 Firefox で Sora へ接続し、以下を確認した。期待値の確定は geckodriver 経由の Firefox 158.0.1 で行った。その後、macOS 27 の実機で Full Disk Access を付与して Playwright の Firefox 155.0 を起動し、H264 を除く 9 テストが pass することを確認した (H265 / `scaleResolutionDownTo` / `scalabilityMode` は `test.fail`)。CI (self-hosted macOS) の `e2e-test-firefox` でも H264 を除く 9 テストが pass している。
 
 - VP8 / VP9 / AV1: codec 統計が取得でき、outbound / inbound RTP の bytes / packets が増える。テストは pass する
-- H264: OpenH264 (GMP) のプラグインを `MOZ_GMP_PATH` で読み込ませることで送受信できる。`e2e-tests/scripts/install-openh264.sh` でテスト環境に導入し、`test.fail` を外した
+- H264: Playwright 版 Firefox で GMP プラグイン (OpenH264) の導入が必要なため対応せず、テストの対象から外した
 - H265: ビデオの codec 統計が取得できず、送出も受信もされない。`test.fail` にした
 - simulcast 全 rid active: r0 / r1 / r2 の outbound-rtp が存在し、bytesSent / packetsSent が増える。recvonly を r1 で接続すると 480x270 の映像を受信できる
   - r2 まで送出させるには `videoBitRate` を 5000 にしないと帯域配分が足りず r2 が送出されないため、テストでは 5000 を指定する
@@ -137,7 +135,11 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
 ### 検証結果
 
 - `vp run build` / `vp check` / `vp test run` / `vp exec tsc --noEmit -p e2e-tests/tsconfig.json` は pass した
-- `e2e-tests/tests/firefox.test.ts` は `--project="firefox"` で 10 テストが登録されることを確認した
-- macOS 27 の実機で Full Disk Access を付与して Playwright の Firefox 155.0 を起動し、OpenH264 を導入した状態で `firefox.test.ts` の 10 テストが pass することを確認した
-- Chromium では `shouldSkipFirefoxTest()` により `firefox.test.ts` のテストがすべて skip される (10 skipped) ため、Chromium での配線確認は行っていない。配線は Playwright Firefox 155.0 と CI で確認した
+- `e2e-tests/tests/firefox.test.ts` は `--project="firefox"` で 9 テストが登録されることを確認した
+- macOS 27 の実機で Full Disk Access を付与して Playwright の Firefox 155.0 を起動し、H264 を除く 9 テストが pass することを確認した (H265 / `scaleResolutionDownTo` / `scalabilityMode` は `test.fail`)
+- Chromium では `shouldSkipFirefoxTest()` により `firefox.test.ts` のテストがすべて skip される (9 skipped) ため、Chromium での配線確認は行っていない。配線は Playwright Firefox 155.0 と CI で確認した
 - Chromium の `sendrecv.test.ts` と `simulcast_rid.test.ts` が pass し、既存テストへの退行がないことを確認した
+
+## reopened の理由
+
+マージ後の指示により、テスト環境に GMP プラグイン (OpenH264) を導入せず、H264 のテストを実施しないことにした。解決方法と検証記録を実装に合わせて修正するため reopened にする。
