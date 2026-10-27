@@ -1,7 +1,6 @@
 # Firefox のコーデックと simulcast encodings を確認する E2E テストを追加する
 
 - Created: 2026-10-21
-- Completed: 2026-10-26
 - Branch: feature/test-firefox-codec-simulcast
 - Polished: 2026-10-21
 
@@ -141,3 +140,7 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
 - macOS 27 の実機で Full Disk Access を付与して Playwright の Firefox 155.0 を起動し、OpenH264 を導入した状態で `firefox.test.ts` の 10 テストが pass することを確認した
 - Chromium では `shouldSkipFirefoxTest()` により `firefox.test.ts` のテストがすべて skip される (10 skipped) ため、Chromium での配線確認は行っていない。配線は Playwright Firefox 155.0 と CI で確認した
 - Chromium の `sendrecv.test.ts` と `simulcast_rid.test.ts` が pass し、既存テストへの退行がないことを確認した
+
+## reopened の理由
+
+マージ後の指示により、テスト環境に GMP プラグイン (OpenH264) を導入せず、H264 のテストを `test.fail` に戻すことになった。解決方法と検証記録を実装に合わせて修正するため reopened にする。
