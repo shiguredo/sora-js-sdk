@@ -1,6 +1,13 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 // vp exec playwright test --ui
+
+// Firefox の H264 は OpenH264 (GMP) のプラグインが必要になる。
+// e2e-tests/scripts/install-openh264.sh で .gmp に配置する
+const openH264Dir =
+  process.env.MOZ_GMP_PATH ?? join(process.cwd(), ".gmp", "gmp-gmpopenh264", "2.6.0");
 
 export default defineConfig({
   testDir: "e2e-tests/tests",
@@ -88,10 +95,26 @@ export default defineConfig({
       use: { ...devices["Desktop Safari"] },
     },
 
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
+    // Firefox は e2e-tests/tests/firefox.test.ts でのみ利用する
+    {
+      name: "firefox",
+      use: {
+        ...devices["Desktop Firefox"],
+        launchOptions: {
+          // Firefox の WebRTC は macOS では H264 のハードウェアエンコーダが
+          // デフォルトで無効になっているため、テストでは有効にする
+          // OpenH264 (GMP) のソフトウェアエンコーダも有効にする
+          firefoxUserPrefs: {
+            "media.webrtc.hw.h264.enabled": true,
+            "media.gmp-gmpopenh264.enabled": true,
+          },
+          // OpenH264 のプラグインを Firefox に読み込ませる
+          ...(existsSync(openH264Dir)
+            ? { env: { ...process.env, MOZ_GMP_PATH: openH264Dir } }
+            : {}),
+        },
+      },
+    },
   ],
   webServer: {
     command: "vp run e2e-dev --port 9000",

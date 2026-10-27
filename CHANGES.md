@@ -34,6 +34,12 @@
   - 成功時に `rpc()` が解決する `result` の内容を検証する
   - 切断後の `rpc()` がクライアント側のエラーになり `cause` が設定されないことを検証する
   - @miosakuma
+- [ADD] Firefox のコーデックと simulcast を確認する E2E テストを追加する
+  - `e2e-tests/sendrecv_firefox` と `e2e-tests/simulcast_sendonly_firefox` を追加し、`e2e-tests/tests/firefox.test.ts` で検証する
+  - H264 の送受信に必要な OpenH264 (GMP) のプラグインを `.gmp` に導入する `e2e-tests/scripts/install-openh264.sh` を追加する
+  - Playwright の Firefox 起動時に `MOZ_GMP_PATH` を設定し、H264 をコーデック別テストの対象に含める
+  - `.github/workflows/e2e-test-firefox.yml` を追加し、self-hosted の macOS で実行する
+  - @miosakuma
 - [UPDATE] `@playwright/test` を 1.60.0 から 1.61.0 に更新する
   - 上流で `reinstall_chrome_stable_mac.sh` の curl に `-L` が追加されたため `playwright-core@1.60.0` のパッチを削除する
   - @voluntas

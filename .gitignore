@@ -21,3 +21,6 @@ dist/
 
 # Claude Code
 /.claude/
+
+# E2E テスト用の OpenH264 プラグイン
+/.gmp/
