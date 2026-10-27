@@ -89,13 +89,15 @@ const VIDEO_CODEC_CASES: Array<{ codec: string; supported: boolean }> = [
  */
 async function releasePagesAndContexts(pages: Page[], contexts: BrowserContext[]): Promise<void> {
   // 接続状態に関わらず切断してからページと context を解放する
-  await Promise.all(
+  // 読み込みに失敗したページでも待ち時間を抑えるため、切断のタイムアウトを短くする
+  await Promise.allSettled(
     pages.map(async (page) => {
-      await page.click("#disconnect").catch(() => {});
+      await page.click("#disconnect", { timeout: 2_000 }).catch(() => {});
       await page.close();
     }),
   );
-  await Promise.all(contexts.map((context) => context.close()));
+  // page の close が失敗しても、context は必ず解放する
+  await Promise.allSettled(contexts.map((context) => context.close()));
 }
 
 /**
