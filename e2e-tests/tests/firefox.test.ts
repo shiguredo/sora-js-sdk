@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import type { Browser, Page } from "@playwright/test";
+import type { Browser, BrowserContext, Page } from "@playwright/test";
 import {
   findCodecStats,
   findInboundRtpStats,
@@ -52,8 +52,7 @@ const SIMULCAST_ENCODINGS_R2_INACTIVE: SimulcastEncoding[] = [
 // scaleResolutionDownTo を指定した simulcast encodings
 // Sora の authz のスキーマでは maxWidth / maxHeight で指定する
 // (width / height で指定すると Sora が INVALID-AUTHZ-VALUE として値を破棄する)
-// Chrome では scaleResolutionDownTo を active な encodings すべてに指定しないと
-// setParameters が失敗するため、active な r0 / r1 に指定する
+// r2 は active: false にして scaleResolutionDownTo を指定しない
 // webkit.test.ts の同じテストと同じ値に揃えている
 const SIMULCAST_ENCODINGS_SCALE_RESOLUTION_DOWN_TO: SimulcastEncoding[] = [
   {
@@ -84,6 +83,22 @@ const VIDEO_CODEC_CASES: Array<{ codec: string; supported: boolean }> = [
 ];
 
 /**
+ * 取得済みのページと context を解放する
+ *
+ * 生成の途中で失敗した場合でも、取得済みのリソースだけを解放できるようにする。
+ */
+async function releasePagesAndContexts(pages: Page[], contexts: BrowserContext[]): Promise<void> {
+  // 接続状態に関わらず切断してからページと context を解放する
+  await Promise.all(
+    pages.map(async (page) => {
+      await page.click("#disconnect").catch(() => {});
+      await page.close();
+    }),
+  );
+  await Promise.all(contexts.map((context) => context.close()));
+}
+
+/**
  * sendrecv_firefox のページを 2 つ接続し、両方の統計レポートを取得する
  *
  * 同じチャンネルに 2 接続することで、自分が送出した映像を相手から受信できる。
@@ -93,12 +108,19 @@ async function runSendrecvFirefox(
   browser: Browser,
   videoCodecType: string,
 ): Promise<[StatsReport, StatsReport]> {
-  const context1 = await browser.newContext();
-  const context2 = await browser.newContext();
-  const page1 = await context1.newPage();
-  const page2 = await context2.newPage();
-  const channelName = randomUUID();
+  // 生成の途中で失敗しても、取得済みのリソースを finally で解放できるようにする
+  const contexts: BrowserContext[] = [];
+  const pages: Page[] = [];
   try {
+    const context1 = await browser.newContext();
+    contexts.push(context1);
+    const context2 = await browser.newContext();
+    contexts.push(context2);
+    const page1 = await context1.newPage();
+    pages.push(page1);
+    const page2 = await context2.newPage();
+    pages.push(page2);
+    const channelName = randomUUID();
     for (const page of [page1, page2]) {
       await page.goto(SENDRECV_FIREFOX_URL);
       await page.fill("#channel-name", channelName);
@@ -120,12 +142,7 @@ async function runSendrecvFirefox(
     return [await getStatsReportJson(page1), await getStatsReportJson(page2)];
   } finally {
     // 接続状態に関わらずページと context を解放する
-    await page1.click("#disconnect").catch(() => {});
-    await page2.click("#disconnect").catch(() => {});
-    await page1.close();
-    await page2.close();
-    await context1.close();
-    await context2.close();
+    await releasePagesAndContexts(pages, contexts);
   }
 }
 
@@ -220,11 +237,18 @@ test.describe("Firefox", () => {
     browser,
   }) => {
     const channelName = randomUUID();
-    const sendonlyContext = await browser.newContext();
-    const recvonlyContext = await browser.newContext();
-    const sendonly = await sendonlyContext.newPage();
-    const recvonly = await recvonlyContext.newPage();
+    // 生成の途中で失敗しても、取得済みのリソースを finally で解放できるようにする
+    const contexts: BrowserContext[] = [];
+    const pages: Page[] = [];
     try {
+      const sendonlyContext = await browser.newContext();
+      contexts.push(sendonlyContext);
+      const recvonlyContext = await browser.newContext();
+      contexts.push(recvonlyContext);
+      const sendonly = await sendonlyContext.newPage();
+      pages.push(sendonly);
+      const recvonly = await recvonlyContext.newPage();
+      pages.push(recvonly);
       // sendonly 側を全 rid active で接続する
       await prepareSimulcastSendonly(sendonly, channelName, SIMULCAST_ENCODINGS_ALL_ACTIVE);
       await sendonly.click("#connect");
@@ -242,7 +266,7 @@ test.describe("Firefox", () => {
       console.log(`recvonly connectionId=${recvonlyConnectionId}`);
 
       // 全 rid の送出と r1 の受信が安定するまで待つ
-      await sendonly.waitForTimeout(10000);
+      await sendonly.waitForTimeout(10_000);
 
       await sendonly.click("#get-stats");
       await recvonly.click("#get-stats");
@@ -263,26 +287,39 @@ test.describe("Firefox", () => {
         expect(outboundRtp?.packetsSent, `sendonly: ${rid} の packetsSent`).toBeGreaterThan(0);
       }
 
-      // 受信側は r1 の映像を受信できている
+      // 受信側は r1 の映像を VP8 で受信できている
       const inboundRtp = findInboundRtpStats(recvonlyStats, "video");
       expect(inboundRtp, "recvonly: ビデオの inbound-rtp").toBeDefined();
+      // inbound-rtp の codecId から codec 統計を引き、VP8 で受信していることを確認する
+      const inboundCodecStats = recvonlyStats.find(
+        (stat) => stat.type === "codec" && stat.id === inboundRtp?.codecId,
+      );
+      expect(inboundCodecStats?.mimeType, "recvonly: inbound-rtp の codec の mimeType").toBe(
+        "video/VP8",
+      );
       expect(inboundRtp?.bytesReceived, "recvonly: ビデオの bytesReceived").toBeGreaterThan(0);
       expect(inboundRtp?.packetsReceived, "recvonly: ビデオの packetsReceived").toBeGreaterThan(0);
 
       // 受信した解像度が送出側の r1 の解像度と一致する
+      // undefined 同士の比較で通らないように、数値であることを先に確認する
       const r1OutboundRtp = findOutboundRtpStatsByRid(sendonlyStats, "video", "r1");
-      expect(inboundRtp?.frameWidth, "recvonly: r1 の frameWidth").toBe(r1OutboundRtp?.frameWidth);
-      expect(inboundRtp?.frameHeight, "recvonly: r1 の frameHeight").toBe(
-        r1OutboundRtp?.frameHeight,
-      );
+      const r1FrameWidth = r1OutboundRtp?.frameWidth;
+      const r1FrameHeight = r1OutboundRtp?.frameHeight;
+      const inboundFrameWidth = inboundRtp?.frameWidth;
+      const inboundFrameHeight = inboundRtp?.frameHeight;
+      expect(typeof r1FrameWidth, "sendonly: r1 の frameWidth の型").toBe("number");
+      expect(typeof r1FrameHeight, "sendonly: r1 の frameHeight の型").toBe("number");
+      expect(typeof inboundFrameWidth, "recvonly: r1 の frameWidth の型").toBe("number");
+      expect(typeof inboundFrameHeight, "recvonly: r1 の frameHeight の型").toBe("number");
+      expect(inboundFrameWidth, "recvonly: r1 の frameWidth").toBeGreaterThan(0);
+      expect(inboundFrameHeight, "recvonly: r1 の frameHeight").toBeGreaterThan(0);
+      expect(inboundFrameWidth, "recvonly: r1 の frameWidth").toBe(r1FrameWidth);
+      expect(inboundFrameHeight, "recvonly: r1 の frameHeight").toBe(r1FrameHeight);
+      // ソースは 960x540 で、r1 は scaleResolutionDownBy 2 なので 480x270 になる
+      expect(inboundFrameWidth, "recvonly: r1 の frameWidth").toBe(SIMULCAST_SOURCE_WIDTH / 2);
     } finally {
       // 接続状態に関わらずページと context を解放する
-      await recvonly.click("#disconnect").catch(() => {});
-      await sendonly.click("#disconnect").catch(() => {});
-      await recvonly.close();
-      await sendonly.close();
-      await recvonlyContext.close();
-      await sendonlyContext.close();
+      await releasePagesAndContexts(pages, contexts);
     }
   });
 
@@ -301,7 +338,7 @@ test.describe("Firefox", () => {
     const r2OutboundRtp = findOutboundRtpStatsByRid(stats, "video", "r2");
     expect(r2OutboundRtp, "sendonly: r2 の outbound-rtp").toBeDefined();
     expect(r2OutboundRtp?.bytesSent, "sendonly: r2 の bytesSent").toBe(0);
-    expect(r2OutboundRtp?.packetsSent, "sendonly: r2 の packetsSent").toBeLessThanOrEqual(2);
+    expect(r2OutboundRtp?.packetsSent, "sendonly: r2 の packetsSent").toBeLessThanOrEqual(1);
 
     // r0 / r1 は送出され続けている
     for (const rid of ["r0", "r1"]) {
@@ -320,7 +357,7 @@ test.describe("Firefox", () => {
       page,
       channelName,
       SIMULCAST_ENCODINGS_ALL_ACTIVE,
-      10000,
+      10_000,
     );
 
     // 960x540 のソースを scaleResolutionDownBy で縮小した解像度を確認する
@@ -349,7 +386,7 @@ test.describe("Firefox", () => {
         page,
         channelName,
         SIMULCAST_ENCODINGS_SCALE_RESOLUTION_DOWN_TO,
-        10000,
+        10_000,
       );
 
       const r0OutboundRtp = findOutboundRtpStatsByRid(stats, "video", "r0");
@@ -369,7 +406,7 @@ test.describe("Firefox", () => {
       const r2OutboundRtp = findOutboundRtpStatsByRid(stats, "video", "r2");
       expect(r2OutboundRtp, "sendonly: r2 の outbound-rtp").toBeDefined();
       expect(r2OutboundRtp?.bytesSent, "sendonly: r2 の bytesSent").toBe(0);
-      expect(r2OutboundRtp?.packetsSent, "sendonly: r2 の packetsSent").toBeLessThanOrEqual(2);
+      expect(r2OutboundRtp?.packetsSent, "sendonly: r2 の packetsSent").toBeLessThanOrEqual(1);
     },
   );
 
