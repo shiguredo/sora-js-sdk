@@ -3,7 +3,7 @@
 - Created: 2026-10-27
 - Completed: {YYYY-MM-DD}
 - Branch: feature/add-simulcast-video-params-ui
-- Polished: {YYYY-MM-DD}
+- Polished: 2026-10-27
 - Reporter: @miosakuma
 
 ## 目的
