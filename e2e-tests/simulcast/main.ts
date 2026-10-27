@@ -96,11 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.querySelector("#disconnect")?.addEventListener("click", async () => {
-    // クライアントは connect の入力検証と getUserMedia が成功した後に 4 つまとめて代入する。
-    // 初回 connect 前と、代入前に失敗した場合は未設定なので何もしない。
-    if (!sendonly) {
-      return;
-    }
     await sendonly.disconnect();
 
     // recvonly r0
@@ -112,11 +107,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
-    // クライアントは connect の入力検証と getUserMedia が成功した後に 4 つまとめて代入する。
-    // 初回 connect 前と、代入前に失敗した場合は未設定なので何もしない。
-    if (!sendonly) {
-      return;
-    }
     const statsReport = await sendonly.getStats();
     const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
