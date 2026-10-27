@@ -69,30 +69,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.querySelector("#get-stats")?.addEventListener("click", async () => {
     const statsReport = await client.getStats();
-    const statsDiv = document.querySelector<HTMLElement>("#stats-report")!;
+    const statsDiv = document.querySelector<HTMLElement>("#stats-report");
     const statsReportJsonDiv = document.querySelector("#stats-report-json");
-    if (statsDiv && statsReportJsonDiv) {
-      let statsHtml = "";
-      const statsReportJson: Array<Record<string, unknown>> = [];
-      for (const report of statsReport.values()) {
-        statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
-        const reportJson: Record<string, unknown> = {
-          id: report.id,
-          type: report.type,
-        };
-        for (const [key, value] of Object.entries(report)) {
-          if (key !== "type" && key !== "id") {
-            statsHtml += `<li><strong>${key}:</strong> ${String(value)}</li>`;
-            reportJson[key] = value;
-          }
-        }
-        statsHtml += "</ul>";
-        statsReportJson.push(reportJson);
-      }
-      statsDiv.innerHTML = statsHtml;
-      // データ属性としても保存（オプション）
-      statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson);
+    if (!statsDiv || !statsReportJsonDiv) {
+      throw new Error("stats report elements not found");
     }
+    let statsHtml = "";
+    const statsReportJson: Array<Record<string, unknown>> = [];
+    for (const report of statsReport.values()) {
+      statsHtml += `<h3>Type: ${report.type}</h3><ul>`;
+      const reportJson: Record<string, unknown> = {
+        id: report.id,
+        type: report.type,
+      };
+      for (const [key, value] of Object.entries(report)) {
+        if (key !== "type" && key !== "id") {
+          statsHtml += `<li><strong>${key}:</strong> ${String(value)}</li>`;
+          reportJson[key] = value;
+        }
+      }
+      statsHtml += "</ul>";
+      statsReportJson.push(reportJson);
+    }
+    statsDiv.innerHTML = statsHtml;
+    // 統計レポートの JSON を data 属性に保存する (getStatsReportJson() がこの属性を読み取る)
+    statsDiv.dataset.statsReportJson = JSON.stringify(statsReportJson);
   });
 });
 
@@ -144,12 +145,12 @@ class SoraClient {
   async disconnect() {
     await this.connection.disconnect();
 
-    // お掃除
+    // ローカルの video 要素に設定した stream を解放する
     const localVideo = document.querySelector<HTMLVideoElement>("#local-video");
     if (localVideo) {
       localVideo.srcObject = null;
     }
-    // お掃除
+    // リモートの video 要素を解放する
     const remoteVideos = document.querySelector("#remote-videos");
     if (remoteVideos) {
       remoteVideos.innerHTML = "";
