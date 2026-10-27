@@ -71,14 +71,13 @@ const SIMULCAST_ENCODINGS_SCALE_RESOLUTION_DOWN_TO: SimulcastEncoding[] = [
 ];
 
 // Firefox で送受信できるビデオコーデックかどうか
-// H264 は OpenH264 (GMP) のプラグインを e2e-tests/scripts/install-openh264.sh で導入して利用する
+// Playwright 版 Firefox は GMP プラグイン (OpenH264) の導入が必要なため H264 は対応しない
 // H265 は Firefox が WebRTC で利用できない
 // 利用できないコーデックは test.fail にして、利用できるようになったときに suite が fail して気づけるようにする
 const VIDEO_CODEC_CASES: Array<{ codec: string; supported: boolean }> = [
   { codec: "VP8", supported: true },
   { codec: "VP9", supported: true },
   { codec: "AV1", supported: true },
-  { codec: "H264", supported: true },
   { codec: "H265", supported: false },
 ];
 
