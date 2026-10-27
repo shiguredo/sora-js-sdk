@@ -1,7 +1,7 @@
 # Firefox のコーデックと simulcast encodings を確認する E2E テストを追加する
 
 - Created: 2026-10-21
-- Completed: 2026-10-23
+- Completed: 2026-10-26
 - Branch: feature/test-firefox-codec-simulcast
 - Polished: 2026-10-21
 
@@ -84,7 +84,7 @@ Firefox E2E の基盤整備も本 issue で行う。0045 はこの基盤を利�
 ## 関連 issue
 
 - pending 0045: `firefox-port-zero-rewrite` のテスト。Firefox E2E の基盤整備は本 issue が行い、0045 はその基盤を利用する
-- open 0115: Firefox の simulcast 利用可否判定の修正。本 issue の simulcast 実動作テストは 0115 のマージ後に有効化する。0115 が未マージの間は `createSignalingMessage()` が `Simulcast can not be used with this browser` を throw するため、simulcast のテストは実行できない。判定が通るだけでは実動作は保証されないため、本 issue で実動作を確認する
+- closed 0115: Firefox の simulcast 利用可否判定の修正。本 issue の simulcast 実動作テストは 0115 のマージ後に有効化する。0115 が未マージの間は `createSignalingMessage()` が `Simulcast can not be used with this browser` を throw するため、simulcast のテストは実行できない。判定が通るだけでは実動作は保証されないため、本 issue で実動作を確認する
 - pending 0014: `setSenderParameters()` の encodings 制約。実接続で顕在化した場合は別途対応する
 - 0015 / 0044: `processOfferSdp` の port=0 ワークアラウンドと観測。本 issue とは別スコープ
 
@@ -110,9 +110,9 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
   - テスト前に `e2e-tests/scripts/install-openh264.sh` を実行するようにした
 - `CHANGES.md` の `## develop` の `### misc` に `[ADD]` エントリを追加した
 
-### 実 Firefox での確認結果
+### Firefox での確認結果
 
-実装時に実 Firefox で Sora へ接続し、以下を確認した。検証環境では Playwright の Firefox を起動できなかったため、同じ fixture を geckodriver 経由の Firefox 158.0.1 で操作して期待値を確定した。Playwright の Firefox で `firefox.test.ts` を実行する確認は CI (self-hosted macOS) で行う。
+実装時に実 Firefox で Sora へ接続し、以下を確認した。期待値の確定は geckodriver 経由の Firefox 158.0.1 で行った。その後、macOS 27 の実機で Full Disk Access を付与して Playwright の Firefox 155.0 を起動し、OpenH264 を導入した状態で `firefox.test.ts` の 10 テストが pass することを確認した。CI (self-hosted macOS) の `e2e-test-firefox` でも 10 テストが pass している。
 
 - VP8 / VP9 / AV1: codec 統計が取得でき、outbound / inbound RTP の bytes / packets が増える。テストは pass する
 - H264: OpenH264 (GMP) のプラグインを `MOZ_GMP_PATH` で読み込ませることで送受信できる。`e2e-tests/scripts/install-openh264.sh` でテスト環境に導入し、`test.fail` を外した
@@ -138,6 +138,6 @@ Firefox E2E の基盤整備と `firefox.test.ts` を追加した。
 
 - `vp run build` / `vp check` / `vp test run` / `vp exec tsc --noEmit -p e2e-tests/tsconfig.json` は pass した
 - `e2e-tests/tests/firefox.test.ts` は `--project="firefox"` で 10 テストが登録されることを確認した
-- macOS 27 の実機で Full Disk Access を付与して Playwright の Firefox を起動し、OpenH264 を導入した状態で H264 の sendrecv が pass することを確認した
-- Chromium で同じテストを実行して fixture とテストコードの配線を確認した。VP8 / VP9 / AV1 / H264 と simulcast の各テストは pass し、H265 / `scalabilityMode` / `scaleResolutionDownTo` の `test.fail` は Chromium が対応しているため "Expected to fail, but passed" になった。Firefox 用の期待値が正しく設定されていることの確認になる
+- macOS 27 の実機で Full Disk Access を付与して Playwright の Firefox 155.0 を起動し、OpenH264 を導入した状態で `firefox.test.ts` の 10 テストが pass することを確認した
+- Chromium では `shouldSkipFirefoxTest()` により `firefox.test.ts` のテストがすべて skip される (10 skipped) ため、Chromium での配線確認は行っていない。配線は Playwright Firefox 155.0 と CI で確認した
 - Chromium の `sendrecv.test.ts` と `simulcast_rid.test.ts` が pass し、既存テストへの退行がないことを確認した
