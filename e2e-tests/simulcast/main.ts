@@ -34,17 +34,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // ページ表示後に選択を変えても、次の connect から反映されるようにするため。
     const videoCodecType = getVideoCodecType();
 
-    const videoBitRateElement = document.querySelector<HTMLInputElement>("#video-bit-rate");
-    if (!videoBitRateElement) {
-      throw new Error("#video-bit-rate element not found");
-    }
-    const videoBitRate = Number.parseInt(videoBitRateElement.value, 10);
-    // 空文字・0 以下・非数値は Sora に送らず、接続前にエラーにする。
-    if (!Number.isFinite(videoBitRate) || videoBitRate <= 0) {
-      throw new Error(
-        `videoBitRate must be a positive number: ${JSON.stringify(videoBitRateElement.value)}`,
-      );
-    }
+    // テスト画面のため、ビットレートは入力値をそのまま数値化して使い、値の検証は行わない。
+    const videoBitRate = Number.parseInt(
+      document.querySelector<HTMLInputElement>("#video-bit-rate")?.value ?? "",
+      10,
+    );
 
     const channelId = getChannelId(channelIdPrefix, channelIdSuffix);
 

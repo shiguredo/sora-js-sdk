@@ -41,7 +41,6 @@
   - @miosakuma
 - [ADD] `e2e-tests/simulcast` に `video_codec_type` と `video_bit_rate` の指定 UI を追加する
   - `video_codec_type` が未指定のときは `codec_type` を送らず、Sora の既定のコーデック選択に任せる
-  - `video_bit_rate` を 1 以上の整数として解釈できないときは接続せずエラーにする
   - ページの既定値は従来と同じ `VP8` / `1500` とする
   - 再接続時は旧接続を切断してから新しい接続を確立する
   - @miosakuma

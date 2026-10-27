@@ -54,7 +54,7 @@
 ## 解決方法
 
 - `e2e-tests/simulcast/index.html` に `#video-codec-type` セレクトボックスと `#video-bit-rate` 数値入力を追加した。コーデックの選択肢は 未指定 / VP8 / VP9 / AV1 / H264 / H265 とし、ページの既定値は従来の固定値と同じ VP8 / 1500 にした。
-- `e2e-tests/simulcast/main.ts` で connect 時に `getVideoCodecType()` と `#video-bit-rate` を読み取り、`SimulcastSendonlySoraClient` のコンストラクタに渡すようにした。ビットレートは `Number.parseInt(value, 10)` で数値化し、有限かつ 0 より大きいことを検証してから接続する。
+- `e2e-tests/simulcast/main.ts` で connect 時に `getVideoCodecType()` と `#video-bit-rate` を読み取り、`SimulcastSendonlySoraClient` のコンストラクタに渡すようにした。ビットレートは `Number.parseInt(value, 10)` で数値化してそのまま渡す。テスト画面のため値の検証は行わない。
 - `SimulcastSendonlySoraClient` で `ConnectionOptions` を組み立て、未指定時は `videoCodecType` を設定しないことで `codec_type` をシグナリングに含めないようにした。
 - 再接続時に旧接続を残したまま変数を上書きすると、新しい接続が失敗したときに旧接続への参照を失って解放できなくなるため、connect 時に旧 sendonly / recvonly を切断してから新しいクライアントを生成するようにした。この挙動変更は `CHANGES.md` にも記載した。設計方針の「recvonly 側の挙動は変更しない」はコーデック / ビットレートの適用範囲を指すものと解釈し、再接続時のライフサイクルは全クライアントで揃えている。
 - `vp check` / `vp exec tsc --noEmit -p e2e-tests/tsconfig.json` / `vp test run` が pass することを確認した。E2E テストは Sora のテストサーバーが必要なためローカルでは実行していない。既定値を従来と同じにしたため `e2e-tests/tests/simulcast.test.ts` は変更していない。
