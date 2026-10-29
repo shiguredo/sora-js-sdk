@@ -26,7 +26,7 @@ self-hosted の macOS runner (`e2e-test-webkit.yml` / `e2e-test-h265.yml`) は�
 ## 設計方針
 
 - `macos-15` を `macos-26` に更新する。GitHub Actions の macOS runner は `macos-26` または `macos-15` を使う規約のため、新しい `macos-26` に揃える
-- 変更後に CI (`e2e-test` / `e2e-test-canary`) が成功することを確認してから develop にマージするため、`feature/update-macos-runner` ブランチで作業する。`feature/*` への push で該当 workflow が実行される
+- 変更後に CI (`e2e-test` / `e2e-test-canary` / `e2e-test-firefox`) が成功することを確認してから develop にマージするため、`feature/update-macos-runner` ブランチで作業する。`feature/*` への push で該当 workflow が実行される
 - 対象は `.github/workflows/e2e-test.yml` の matrix `os` と `.github/workflows/e2e-test-canary.yml` / `.github/workflows/e2e-test-firefox.yml` の `runs-on`
   - `ubuntu-24.04` / `windows-2025-vs2026` は変更しない
 - self-hosted runner の OS バージョン更新はリポジトリ管理外のため本 issue のスコープ外とする
