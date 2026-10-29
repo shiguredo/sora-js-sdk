@@ -91,14 +91,25 @@ export default defineConfig({
     // Firefox は e2e-tests/tests/firefox.test.ts でのみ利用する
     {
       name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
+      use: {
+        ...devices["Desktop Firefox"],
+        // GitHub-hosted の macOS にはグローバル IPv6 が無いため、既定アドレス検出が
+        // IPv6 に向かないよう名前解決で IPv6 を使わないようにする
+        launchOptions: {
+          firefoxUserPrefs: {
+            "network.dns.disableIPv6": true,
+          },
+        },
+      },
     },
   ],
   webServer: {
-    command: "vp run e2e-dev --port 9000",
+    // localhost だと ::1 で待ち受けてしまい、Firefox の既定アドレス検出が IPv6 に向くため
+    // IPv4 のループバックで待ち受ける
+    command: "vp run e2e-dev --host 127.0.0.1 --port 9000",
     reuseExistingServer: !process.env.CI,
     stderr: "pipe",
     stdout: "pipe",
-    url: "http://localhost:9000/",
+    url: "http://127.0.0.1:9000/",
   },
 });

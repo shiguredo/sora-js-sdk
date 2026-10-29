@@ -11,9 +11,9 @@ import {
 } from "./helper";
 import type { StatsReport } from "./helper";
 
-const SENDRECV_FIREFOX_URL = "http://localhost:9000/sendrecv_firefox/";
-const SIMULCAST_SENDONLY_FIREFOX_URL = "http://localhost:9000/simulcast_sendonly_firefox/";
-const SIMULCAST_RECVONLY_URL = "http://localhost:9000/simulcast_recvonly/";
+const SENDRECV_FIREFOX_URL = "http://127.0.0.1:9000/sendrecv_firefox/";
+const SIMULCAST_SENDONLY_FIREFOX_URL = "http://127.0.0.1:9000/simulcast_sendonly_firefox/";
+const SIMULCAST_RECVONLY_URL = "http://127.0.0.1:9000/simulcast_recvonly/";
 
 // Firefox のテストは macOS でのみ実行する
 const SKIP_REASON = "Firefox かつ macOS でのみテストを行う";
