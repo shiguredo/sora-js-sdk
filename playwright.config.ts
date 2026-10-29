@@ -91,6 +91,7 @@ export default defineConfig({
     // Firefox は e2e-tests/tests/firefox.test.ts でのみ利用する
     {
       name: "firefox",
+      testMatch: ["**/firefox.test.ts"],
       use: { ...devices["Desktop Firefox"] },
     },
   ],
