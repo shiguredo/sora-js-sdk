@@ -37,7 +37,8 @@
 - [ADD] Firefox のコーデックと simulcast を確認する E2E テストを追加する
   - `e2e-tests/sendrecv_firefox` と `e2e-tests/simulcast_sendonly_firefox` を追加し、`e2e-tests/tests/firefox.test.ts` で検証する
   - H265 / `scaleResolutionDownTo` / `scalabilityMode` は `test.fail` にし、H264 は Playwright 版 Firefox で GMP プラグイン (OpenH264) の導入が必要なため対応しない
-  - `.github/workflows/e2e-test-firefox.yml` を追加し、GitHub-hosted の macOS で実行する
+  - `.github/workflows/e2e-test-firefox.yml` を追加し、GitHub-hosted runner の macOS で実行する
+  - macOS の Firefox はグローバル IPv6 が無い環境で既定アドレスを検出できないため、webServer とテストの URL を IPv4 ループバックに固定する
   - @miosakuma
 - [ADD] `e2e-tests/simulcast` に `video_codec_type` と `video_bit_rate` の指定 UI を追加する
   - `video_codec_type` が未指定のときは `codec_type` を送らず、Sora の既定のコーデック選択に任せる
