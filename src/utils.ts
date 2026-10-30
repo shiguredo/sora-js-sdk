@@ -37,27 +37,20 @@ function browser(): Browser {
 }
 
 function enabledSimulcast(): boolean {
-  const REQUIRED_HEADER_EXTENSIONS = [
-    "urn:ietf:params:rtp-hdrext:sdes:mid",
-    "urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id",
-    "urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id",
-  ];
-
-  if (!window.RTCRtpSender) {
+  // simulcast の可否は RTCRtpSender.getCapabilities("video").headerExtensions の内容では判定しない。
+  // ヘッダ拡張の一覧は実装によっては rid 系 (rtp-stream-id など) を含まない。Firefox 158.0.1 で
+  // 確認した範囲では、dom/media/webrtc/jsep/JsepSessionImpl.cpp の JsepSessionImpl::GetRtpExtensions が
+  // a=rid を含む m-section に rid 系の a=extmap を追加するため、SDP レベルでは rid ベースの
+  // simulcast を扱える。実装が変わるとこの前提は崩れ得るため、ここでは simulcast に必要な API が
+  // 存在するかだけを判定し、実際の可否は Sora との SDP 交渉に委ねる。
+  const rtpSenderConstructor = window.RTCRtpSender;
+  if (!rtpSenderConstructor) {
     return false;
   }
-  if (!RTCRtpSender.getCapabilities) {
+  if (!rtpSenderConstructor.getCapabilities) {
     return false;
   }
-  const capabilities = RTCRtpSender.getCapabilities("video");
-  if (!capabilities) {
-    return false;
-  }
-  const headerExtensions = new Set(capabilities.headerExtensions.map((h) => h.uri));
-  const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTENSIONS.every((h) =>
-    headerExtensions.has(h),
-  );
-  return hasAllRequiredHeaderExtensions;
+  return true;
 }
 
 function parseDataChannelConfiguration(

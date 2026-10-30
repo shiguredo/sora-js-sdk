@@ -688,6 +688,34 @@ test("createSignalingMessage bundleId: undefined", () => {
 });
 
 /**
+ * simulcast fallback test
+ */
+test("createSignalingMessage simulcast: sendonly で RTCRtpSender が無い場合は throw する", () => {
+  // jsdom には RTCRtpSender が無いため enabledSimulcast() は false を返す。
+  // simulcast 非対応の環境では、Sora に connect を送る前に throw することを検証する。
+  const options = {
+    simulcast: true,
+  };
+  expect(() => {
+    createSignalingMessage(sdp, "sendonly", channelId, undefined, options, false);
+  }).toThrow(new Error("Simulcast can not be used with this browser"));
+});
+
+test("createSignalingMessage simulcast: recvonly は simulcast を指定しても throw しない", () => {
+  // recvonly は simulcast の送出を行わないが、Sora への接続設定として simulcast フラグは送る。
+  // RTCRtpSender が無い環境でも connect メッセージを生成できることを検証する。
+  const options = {
+    simulcast: true,
+  };
+  const message = createSignalingMessage(sdp, "recvonly", channelId, undefined, options, false);
+  expect(message).toStrictEqual({
+    ...baseExpectedMessage,
+    role: "recvonly",
+    simulcast: true,
+  });
+});
+
+/**
  * simulcastRid test
  */
 test("createSignalingMessage simulcastRid", () => {
