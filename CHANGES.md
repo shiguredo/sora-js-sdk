@@ -11,6 +11,9 @@
 
 ## develop
 
+- [FIX] 初回接続の offer 交渉中に setRemoteDescription / createAnswer が失敗したときに ws / pc がクリーンアップされなかったのを修正する
+  - @voluntas
+
 ## 2026.1.0
 
 **リリース日**: 2026-06-17
