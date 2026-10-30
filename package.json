@@ -31,6 +31,7 @@
     "e2e-test": "vp pack && playwright test --project='chromium'",
     "e2e-test-chrome": "vp pack && playwright test --project='Google Chrome*'",
     "e2e-test-edge": "vp pack && playwright test --project='Microsoft Edge*'",
+    "e2e-test-firefox": "vp pack && playwright test --project='firefox'",
     "e2e-test-webkit": "vp pack && playwright test --project='WebKit'",
     "fmt": "vp fmt",
     "lint": "vp lint --type-aware",

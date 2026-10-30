@@ -91,14 +91,18 @@ export default defineConfig({
     // Firefox は e2e-tests/tests/firefox.test.ts でのみ利用する
     {
       name: "firefox",
+      testMatch: ["**/firefox.test.ts"],
       use: { ...devices["Desktop Firefox"] },
     },
   ],
   webServer: {
-    command: "vp run e2e-dev --port 9000",
+    // localhost だと macOS では ::1 で待ち受けてしまい、ページの HTTP 接続の remote IP が
+    // ::1 になることで Firefox の既定アドレス検出が IPv6 に向くため、
+    // 待ち受けとテスト URL を 127.0.0.1 に固定する
+    command: "vp run e2e-dev --host 127.0.0.1 --port 9000",
     reuseExistingServer: !process.env.CI,
     stderr: "pipe",
     stdout: "pipe",
-    url: "http://localhost:9000/",
+    url: "http://127.0.0.1:9000/",
   },
 });
