@@ -11,16 +11,6 @@
 
 ## develop
 
-- [FIX] 初回接続の offer 交渉中に setRemoteDescription / createAnswer が失敗したときに ws / pc がクリーンアップされなかったのを修正する
-  - @voluntas
-- [FIX] rpc() がサーバーの JSON-RPC エラーを `Error("[object Object]")` に潰していたのを修正し、サーバーが返したエラーを `cause` から取得できるようにする
-  - `message` にサーバーが返した `message` を設定する
-  - `cause` に `code` / `message` / `data` を設定する
-  - @miosakuma
-- [FIX] Firefox で simulcast を利用可能と判定する
-  - `RTCRtpSender.getCapabilities("video").headerExtensions` のヘッダ拡張の有無ではなく、`RTCRtpSender.getCapabilities` が利用できるかどうかで判定する
-  - @miosakuma
-
 ### misc
 
 - [CHANGE] ライブラリビルドを `vp build` から `vp pack` に移行する
@@ -84,6 +74,20 @@
   - @miosakuma
 - [FIX] WebKit の simulcast_encodings テストが Sora の authz スキーマに違反した値を使っていたのを修正する
   - `scaleResolutionDownTo` を `{"maxHeight": 225, "maxWidth": 400}` (r0) と `{"maxHeight": 450, "maxWidth": 800}` (r1) に修正し、outbound-rtp の `frameWidth` で縮小結果を検証する
+  - @miosakuma
+
+## 2026.1.1
+
+**リリース日**: 2026-11-04
+
+- [FIX] 初回接続の offer 交渉中に setRemoteDescription / createAnswer が失敗したときに ws / pc がクリーンアップされなかったのを修正する
+  - @voluntas
+- [FIX] rpc() がサーバーの JSON-RPC エラーを `Error("[object Object]")` に潰していたのを修正し、サーバーが返したエラーを `cause` から取得できるようにする
+  - `message` にサーバーが返した `message` を設定する
+  - `cause` に `code` / `message` / `data` を設定する
+  - @miosakuma
+- [FIX] Firefox で simulcast を利用可能と判定する
+  - `RTCRtpSender.getCapabilities("video").headerExtensions` のヘッダ拡張の有無ではなく、`RTCRtpSender.getCapabilities` が利用できるかどうかで判定する
   - @miosakuma
 
 ## 2026.1.0
