@@ -19,9 +19,9 @@ Please read <https://github.com/shiguredo/oss> before use.
 
 ## 条件
 
-- WebRTC SFU Sora 2025.1.0 以降
+- WebRTC SFU Sora 2025.2.0 以降
 - TypeScript 5.1 以降
-- Node.js 22.12 以降
+- Node.js 22.18 以降
 
 ## 使い方
 
@@ -53,7 +53,7 @@ vp install sora-js-sdk
 
 ### Node.js の条件
 
-- Sora JavaScript SDK 2026.1.0 以降は **Node.js 22.0 以降** を要求します
+- Sora JavaScript SDK 2026.1.0 以降は **Node.js 22.18 以降** を要求します
 - Sora JavaScript SDK 2025.1.0 以降は **Node.js 20.0 以降** を要求します
 - Sora JavaScript SDK 2024.2.x までは **Node.js 18.0 以降** を要求します
 
