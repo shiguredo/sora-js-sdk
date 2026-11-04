@@ -37,27 +37,15 @@ function browser(): Browser {
 }
 
 function enabledSimulcast(): boolean {
-  const REQUIRED_HEADER_EXTENSIONS = [
-    "urn:ietf:params:rtp-hdrext:sdes:mid",
-    "urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id",
-    "urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id",
-  ];
-
-  if (!window.RTCRtpSender) {
+  // RTCRtpSender と RTCRtpSender.getCapabilities が存在する環境を simulcast 可能とみなす。
+  const rtpSenderConstructor = window.RTCRtpSender;
+  if (!rtpSenderConstructor) {
     return false;
   }
-  if (!RTCRtpSender.getCapabilities) {
+  if (!rtpSenderConstructor.getCapabilities) {
     return false;
   }
-  const capabilities = RTCRtpSender.getCapabilities("video");
-  if (!capabilities) {
-    return false;
-  }
-  const headerExtensions = new Set(capabilities.headerExtensions.map((h) => h.uri));
-  const hasAllRequiredHeaderExtensions = REQUIRED_HEADER_EXTENSIONS.every((h) =>
-    headerExtensions.has(h),
-  );
-  return hasAllRequiredHeaderExtensions;
+  return true;
 }
 
 function parseDataChannelConfiguration(
@@ -633,6 +621,37 @@ export function createDataChannelEvent(channel: DataChannelConfiguration): DataC
   const event = new Event("datachannel") as DataChannelEvent;
   event.datachannel = channel;
   return event;
+}
+
+/**
+ * JSON-RPC エラーオブジェクトから `Error` を組み立てる
+ *
+ * @remarks
+ * レスポンスの `error` をそのまま reject すると `String(reason)` の
+ * `"[object Object]"` に潰れて内容が失われるため、`message` を `Error` の
+ * message に、オブジェクト全体を `cause` に保持した `Error` を組み立てる。
+ * JSON-RPC 2.0 では `error` はオブジェクトでなければならないため、
+ * `message` が文字列でない場合も `JSON.stringify(error)` を message にして
+ * `cause` に保持する (`code` / `data` を捨てない)。
+ * オブジェクト以外が返された場合は `String(error)` を message にして
+ * `cause` を設定しない (2026.1.0 までの `new Error(String(reason))` と同じ)。
+ *
+ * @internal
+ * @param error - JSON-RPC レスポンスの error の値 (仕様に反する値の場合もある)
+ * @returns message に JSON-RPC の message、cause に JSON-RPC エラーを持つ plain な Error
+ */
+export function createErrorFromJSONRPCError(error: unknown): Error {
+  if (typeof error === "object" && error !== null) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") {
+      return new Error(message, { cause: error });
+    }
+    // message が文字列でないオブジェクトでも cause に保持する
+    return new Error(JSON.stringify(error), { cause: error });
+  }
+  // オブジェクト以外は JSON-RPC 2.0 に反する値
+  // reject できるように文字列化する (cause は設定しない)
+  return new Error(String(error));
 }
 
 export async function parseDataChannelEventData(

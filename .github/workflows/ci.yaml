@@ -14,14 +14,26 @@ jobs:
   ci:
     runs-on: ubuntu-slim
     strategy:
+      # typescript のバージョンごとの検証で 1 つ失敗しても、他のバージョンの
+      # 合否が cancelled で隠れないように fail-fast を無効化する
+      fail-fast: false
       matrix:
         node:
           - "26"
           - "24"
           - "22"
+        # typescript@next / typescript@beta は TypeScript 7 系を指しており、
+        # このブランチで使っている vite-plugin-dts (unplugin-dts) は TypeScript 7 が
+        # JavaScript Compiler API を提供しないため vp build の dts 生成に失敗する。
+        # 失敗自体は SDK が TypeScript の内部変更に追随できていないことの検知として
+        # 妥当だが、上流が対応するまで CI が常時赤になり通知が鳴り続けるため、
+        # 先行版の検証は一時的に matrix から外している。
+        # 戻す条件: vite-plugin-dts (unplugin-dts) が TypeScript 7 に対応したとき。
+        # なお beta / next は moving tag で、minimumReleaseAge (7 日) により公開直後の版は
+        # 入らない点に注意する (matrix に戻す際は実際に入った版を CI ログで確認すること)。
         typescript:
-          - "next"
-          - "beta"
+          # - "next"
+          # - "beta"
           - "6.0"
           - "5.9"
           - "5.8"
