@@ -11,6 +11,10 @@
 
 ## develop
 
+## 2026.1.1
+
+**リリース日**: 2026-11-04
+
 - [FIX] 初回接続の offer 交渉中に setRemoteDescription / createAnswer が失敗したときに ws / pc がクリーンアップされなかったのを修正する
   - @voluntas
 - [FIX] rpc() がサーバーの JSON-RPC エラーを `Error("[object Object]")` に潰していたのを修正し、サーバーが返したエラーを `cause` から取得できるようにする
@@ -19,18 +23,6 @@
   - @miosakuma
 - [FIX] Firefox で simulcast を利用可能と判定する
   - `RTCRtpSender.getCapabilities("video").headerExtensions` のヘッダ拡張の有無ではなく、`RTCRtpSender.getCapabilities` が利用できるかどうかで判定する
-  - @miosakuma
-
-### misc
-
-- [ADD] `e2e-tests/rpc` にサーバーが JSON-RPC エラーを返す呼び出しの検証を追加する
-  - `code` / `message` / `data` が `cause` から取得できることと、エラーの内容が RPC ログに出力されることを検証する
-  - 成功時に `rpc()` が解決する `result` の内容を検証する
-  - 切断後の `rpc()` がクライアント側のエラーになり `cause` が設定されないことを検証する
-  - @miosakuma
-- [UPDATE] `e2e-tests/rpc` の simulcast rid 切り替えテストの切り替え先を r0 から r1 に変更する
-  - 初期 rid を r2 固定から Sora のデフォルト (r0) に変更する
-  - 負荷の高い r2 は使わない
   - @miosakuma
 
 ## 2026.1.0
