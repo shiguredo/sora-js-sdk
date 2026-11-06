@@ -336,7 +336,16 @@ export interface SignalingNotifyNetworkStatus {
 
 export type DataChannelDirection = "sendonly" | "sendrecv" | "recvonly";
 
-export type MessagingHeaderFieldType = "sender_connection_id";
+export type MessagingHeaderFieldType =
+  | "sender_connection_id"
+  /**
+   * 送信者がメッセージの先頭に宛先の connection_id のリストを付け、Sora はその接続にだけメッセージを届ける。
+   * direction が sendrecv または sendonly のラベルで宣言できる。
+   * 宣言したラベルでは `sendMessage` は使えず、`sendMessageToReceivers` で送信する。
+   *
+   * experimental であり、今後変更・削除する可能性がある。この機能に対応した Sora が必要。
+   */
+  | "receiver_connection_id_list";
 export interface MessagingHeaderField {
   type: MessagingHeaderFieldType;
   length?: number;

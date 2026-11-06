@@ -1,7 +1,7 @@
 # DataChannel メッセージングで宛先の connection_id を指定して送るメソッドを追加する
 
 - Created: 2026-11-06
-- Completed: {YYYY-MM-DD}
+- Completed: 2026-11-06
 - Branch: feature/add-messaging-receiver-connection-id-list
 - Polished: 2026-11-06
 
@@ -175,3 +175,38 @@ async sendMessageToReceivers(
 - SDK での `header` と `direction` の組み合わせの検査
   - 既存の `sender_connection_id` も SDK では検査していない。`parseDataChannelConfiguration` は `header` の中身を検査しない
 - Sora JavaScript SDK ドキュメント (https://sora-js-sdk.shiguredo.jp/) への記載 (experimental の間は、TSDoc と `skills/sora-js-sdk/SKILL.md` に留める)
+
+## 解決方法
+
+- `src/types.ts`
+  - `MessagingHeaderFieldType` に `"receiver_connection_id_list"` を追加した
+  - この要素には `@experimental` を付けず、コメント本文に experimental であることを書いた
+- `src/utils.ts`: 純粋関数を 2 つ追加した。どちらも `@internal` で、公開 API としては export していない
+  - `hasReceiverConnectionIdListHeader`: type: offer の DataChannel の設定が `receiver_connection_id_list` を宣言しているかを判定する
+  - `createReceiverConnectionIdListMessage`: 宛先ヘッダーを付けたメッセージを組み立てる。宛先の件数、各 connection_id のバイト数、message が空かどうかを検査する
+- `src/base.ts`
+  - `sendMessageToReceivers(label, message, receiverConnectionIds)` を追加し、TSDoc に `@experimental` を付けた
+  - `sendMessage` は、`receiver_connection_id_list` を宣言したラベルで呼ぶと送信前に例外を投げるようにした
+  - 圧縮の有無で分かれる送信処理は、private メソッド `sendMessagingDataChannelMessage` にまとめ、`sendMessage` と共有した
+- 設計方針から変えた点
+  - `receiverConnectionIds` の型を `readonly string[]` にした。関数は配列を変更しない。`string[]` もそのまま渡せる
+  - 未宣言のラベルでの例外には、代わりに使う `sendMessage` を案内する文を足した
+- type: offer の確認
+  - テスト用の Sora の type: offer で、宣言したラベルの `header` が `{"type": "receiver_connection_id_list"}` (`length` なし) で返ることを確かめた
+  - 宣言の判定は `type` だけで行う
+- テスト
+  - `tests/utils.test.ts`: issue の単体テストの項目をすべて追加した
+    - 26 バイトだが 26 文字ではない connection_id を受け付けるケース
+    - byteOffset が 0 でない message のケース
+    - `hasReceiverConnectionIdListHeader` の判定のケース
+  - `e2e-tests/messaging/`
+    - 宣言のチェックボックス、宛先の入力欄、`sendMessageToReceivers` の送信ボタン、送信時の例外を表示する要素を追加した
+    - `#get-stats` を押すごとに番号を振るようにした。押した回の統計を書き込むと、その番号を `data-stats-response-id` に残す。前に押した回の統計を、テストが新しい統計として読まないようにするため
+  - `e2e-tests/tests/messaging_receiver_connection_id_list.test.ts` を新規に作った
+    - compress が false の場合と true の場合の宛先指定
+    - 宣言と送信メソッドが合わない場合の例外。例外の後に取り直した統計で `#example` の `messagesSent` が 0 であることを確かめ、送信前に止まったことを検証する
+  - 一時的に「送ってから例外」に壊した実装で、E2E が落ちることを確かめた
+- ドキュメント
+  - `skills/sora-js-sdk/SKILL.md` に宛先指定の送信を experimental として追記した
+  - `CHANGES.md` に `[ADD]` を追記した
+- typedoc の出力は、0089 が未解消のため確かめていない
