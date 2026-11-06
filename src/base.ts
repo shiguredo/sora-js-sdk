@@ -68,10 +68,12 @@ import {
   createDataChannelEvent,
   createDataChannelMessageEvent,
   createErrorFromJSONRPCError,
+  createReceiverConnectionIdListMessage,
   createSignalingEvent,
   createSignalingMessage,
   createTimelineEvent,
   decompressMessage,
+  hasReceiverConnectionIdListHeader,
   isFirefox,
   isSafari,
   parseDataChannelEventData,
@@ -2605,6 +2607,10 @@ export default class ConnectionBase {
   /**
    * DataChannel を使用してメッセージを送信するメソッド
    *
+   * header に receiver_connection_id_list を宣言したラベルでは利用できず、例外を投げる。
+   * そのラベルでは `sendMessageToReceivers` を利用すること。
+   * この例外は experimental な receiver_connection_id_list のためのもので、今後変更・削除する可能性がある。
+   *
    * @param label - メッセージを送信する DataChannel のラベル
    * @param message - Uint8Array
    */
@@ -2621,7 +2627,111 @@ export default class ConnectionBase {
       throw new Error("Messaging DataChannel is not open");
     }
     const settings = this.signalingOfferMessageDataChannels[label];
-    if (settings?.compress === true) {
+    // receiver_connection_id_list を宣言したラベルでは、Sora が message の先頭を宛先ヘッダーとして扱い、
+    // 解釈できなければ送信者を切断する。宛先を指定せずに全員へ送る手段も無いため、送信前に止める
+    if (hasReceiverConnectionIdListHeader(settings)) {
+      throw new Error(
+        `Cannot send message without receivers on DataChannel declaring receiver_connection_id_list header: label=${label}, use sendMessageToReceivers instead`,
+      );
+    }
+    await this.sendMessagingDataChannelMessage(dataChannel, settings?.compress === true, message);
+  }
+
+  /**
+   * DataChannel を使用して、宛先の connection_id を指定してメッセージを送信するメソッド
+   *
+   * header に receiver_connection_id_list を宣言したラベルでだけ利用できる。
+   * message の前に宛先ヘッダーを付けて送信し、Sora は指定した connection_id の接続にだけメッセージを届ける。
+   * 圧縮前のメッセージは宛先ヘッダーの分 (1 + 26 x 宛先の件数 バイト) だけ大きくなる。
+   * 宛先の重複は SDK では除かず、渡された順に並べる。
+   * 受信者に届くメッセージには宛先ヘッダーは含まれない。自身の connection_id を指定しても自身には届かない。
+   * compress が true のラベルでは、宛先ヘッダーも含めた全体を圧縮して送信する。
+   *
+   * 接続していない場合は何もしない。次の場合は送信前に例外を投げる。
+   * - DataChannel が存在しない、または open でない
+   * - header に receiver_connection_id_list を宣言していないラベル
+   * - receiverConnectionIds が 0 件、または 256 件以上
+   * - UTF-8 で 26 バイトでない connection_id
+   * - message が空
+   *
+   * experimental であり、今後変更・削除する可能性がある。この機能に対応した Sora が必要。
+   *
+   * @experimental
+   *
+   * @example
+   * ```typescript
+   * const messaging = connection.messaging("sora", metadata, {
+   *   dataChannels: [
+   *     {
+   *       label: "#example",
+   *       direction: "sendrecv",
+   *       header: [{ type: "receiver_connection_id_list" }],
+   *     },
+   *   ],
+   * });
+   * await messaging.connect();
+   * // メッセージング用の DataChannel が open してから呼ぶ (open 前は例外になる)
+   * await messaging.sendMessageToReceivers("#example", new TextEncoder().encode("hello"), [
+   *   receiverConnectionId,
+   * ]);
+   * ```
+   *
+   * @param label - メッセージを送信する DataChannel のラベル
+   * @param message - Uint8Array。空は不可
+   * @param receiverConnectionIds - 宛先の connection_id のリスト。1 件から 255 件で、各 connection_id は UTF-8 で 26 バイト
+   */
+  async sendMessageToReceivers(
+    label: string,
+    message: Uint8Array,
+    receiverConnectionIds: readonly string[],
+  ): Promise<void> {
+    const dataChannel = this.soraDataChannels[label];
+    // 接続していない場合は何もしない
+    if (this.pc === null) {
+      return;
+    }
+    if (dataChannel === undefined) {
+      throw new Error("Could not find DataChannel");
+    }
+    if (dataChannel.readyState !== "open") {
+      throw new Error("Messaging DataChannel is not open");
+    }
+    // receiver_connection_id_list を宣言していないラベルでは宛先ヘッダーとして扱われず、
+    // 宛先ヘッダーを含んだメッセージがそのまま他の接続に届いてしまうため、送信前に止める
+    // 宣言の有無は Sora から受け取った type: offer の data_channels で判定する
+    // 接続時の指定も認証成功時の指定も type: offer に含まれる
+    const settings = this.signalingOfferMessageDataChannels[label];
+    if (!hasReceiverConnectionIdListHeader(settings)) {
+      throw new Error(
+        `DataChannel does not declare receiver_connection_id_list header: label=${label}, use sendMessage instead`,
+      );
+    }
+    const messageWithReceiverConnectionIds = createReceiverConnectionIdListMessage(
+      message,
+      receiverConnectionIds,
+    );
+    await this.sendMessagingDataChannelMessage(
+      dataChannel,
+      settings?.compress === true,
+      messageWithReceiverConnectionIds,
+    );
+  }
+
+  /**
+   * メッセージング用の DataChannel でメッセージを binary で送信する
+   *
+   * compress が true なら圧縮してから送信する
+   *
+   * @param dataChannel - メッセージを送信する DataChannel
+   * @param compress - 圧縮して送信するかどうか
+   * @param message - 送信するメッセージ
+   */
+  private async sendMessagingDataChannelMessage(
+    dataChannel: RTCDataChannel,
+    compress: boolean,
+    message: Uint8Array,
+  ): Promise<void> {
+    if (compress) {
       const compressedMessage = await compressMessage(message);
       dataChannel.send(compressedMessage);
     } else {

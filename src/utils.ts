@@ -11,6 +11,7 @@ import type {
   SignalingNotifyConnectionCreated,
   SignalingNotifyConnectionDestroyed,
   SignalingNotifyMetadata,
+  SignalingOfferMessageDataChannel,
   TimelineEvent,
   TimelineEventLogType,
   TransportType,
@@ -676,6 +677,78 @@ export const decompressMessage = async (binaryMessage: Uint8Array): Promise<Arra
   const decompressedStream = readableStream.pipeThrough(new DecompressionStream("deflate"));
   return new Response(decompressedStream).arrayBuffer();
 };
+
+// DataChannel メッセージングの宛先ヘッダー (header の type receiver_connection_id_list)
+//
+// 根拠資料: Sora ドキュメントの「"type": "receiver_connection_id_list"」
+// https://sora-doc-canary.shiguredo.jp/MESSAGING#8a4601
+//
+// receiver_connection_id_list を宣言したラベルでは、クライアントから Sora へ送るメッセージを
+// [receiver_connection_id count (1 byte)][receiver_connection_id (26 bytes) x count][message] の形にする。
+// count が 0 の場合、バイト数が足りない場合、空のメッセージを送った場合は送信者が切断されるため、
+// 送信前に検査する。
+// experimental であり、Sora の仕様が変わったら変更・削除する可能性がある。
+
+// 宛先ヘッダーで connection_id 1 件が占めるバイト数
+const RECEIVER_CONNECTION_ID_BYTE_LENGTH = 26;
+// 宛先ヘッダーで指定できる connection_id の件数の上限
+// count は 1 バイトで 0 だと切断されるため、指定できるのは 1 件から 255 件になる
+const MAX_RECEIVER_CONNECTION_ID_COUNT = 255;
+
+/**
+ * type: offer の DataChannel の設定が header に receiver_connection_id_list を宣言しているかどうか
+ *
+ * @internal
+ * @param dataChannelSettings - type: offer の data_channels に含まれる DataChannel の設定
+ */
+export function hasReceiverConnectionIdListHeader(
+  dataChannelSettings: SignalingOfferMessageDataChannel | undefined,
+): boolean {
+  const header = dataChannelSettings?.header ?? [];
+  return header.some((field) => field.type === "receiver_connection_id_list");
+}
+
+/**
+ * message の前に宛先ヘッダーを付けたメッセージを組み立てる
+ *
+ * 重複した宛先の扱いは公開ドキュメントに記載が無いため、SDK では重複を除かず、渡された順に並べる
+ *
+ * @internal
+ * @param message - 宛先ヘッダーの後ろに付けるメッセージ。空は不可
+ * @param receiverConnectionIds - 宛先の connection_id のリスト。1 件から 255 件で、各 connection_id は UTF-8 で 26 バイト
+ */
+export function createReceiverConnectionIdListMessage(
+  message: Uint8Array,
+  receiverConnectionIds: readonly string[],
+): Uint8Array {
+  const count = receiverConnectionIds.length;
+  if (count < 1 || count > MAX_RECEIVER_CONNECTION_ID_COUNT) {
+    throw new Error(
+      `Invalid receiverConnectionIds length: expected 1 to ${MAX_RECEIVER_CONNECTION_ID_COUNT}, got ${count}`,
+    );
+  }
+  // 公開ドキュメントの「空のメッセージ」がメッセージ全体を指すのか宛先ヘッダーの後ろの message を
+  // 指すのかを区別できないため、安全側に倒して message が空の場合も送信しない
+  if (message.byteLength === 0) {
+    throw new Error(`Invalid message byte length: expected at least 1, got ${message.byteLength}`);
+  }
+  const headerByteLength = 1 + count * RECEIVER_CONNECTION_ID_BYTE_LENGTH;
+  const result = new Uint8Array(headerByteLength + message.byteLength);
+  result[0] = count;
+  const encoder = new TextEncoder();
+  for (const [index, receiverConnectionId] of receiverConnectionIds.entries()) {
+    // 文字数ではなく UTF-8 で表したバイト数で検査する
+    const encodedReceiverConnectionId = encoder.encode(receiverConnectionId);
+    if (encodedReceiverConnectionId.byteLength !== RECEIVER_CONNECTION_ID_BYTE_LENGTH) {
+      throw new Error(
+        `Invalid receiver connection_id byte length at index ${index}: expected ${RECEIVER_CONNECTION_ID_BYTE_LENGTH}, got ${encodedReceiverConnectionId.byteLength}`,
+      );
+    }
+    result.set(encodedReceiverConnectionId, 1 + index * RECEIVER_CONNECTION_ID_BYTE_LENGTH);
+  }
+  result.set(message, headerByteLength);
+  return result;
+}
 
 export function addStereoToFmtp(sdp: string): string {
   const splitSdp = /^(?<sessionDescription>v=.+?)(?<mediaSection>m=audio.+)/msu.exec(sdp);

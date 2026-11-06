@@ -16,6 +16,12 @@
         <input type="text" name="message" />
         <button id="send-message" disabled>sendMessage</button><br />
       </div>
+      <div style="display: flex">
+        <label for="receiver-connection-ids">宛先の connection_id (カンマ区切り):</label>
+        <input type="text" id="receiver-connection-ids" name="receiver-connection-ids" />
+        <button id="send-message-to-receivers" disabled>sendMessageToReceivers</button>
+      </div>
+      <div id="send-message-error"></div>
       <div>
         <input type="checkbox" id="check-compress" checked />
         <label for="check-compress">Compress</label>
@@ -23,6 +29,10 @@
       <div>
         <input type="checkbox" id="check-header" />
         <label for="check-header">Header</label>
+      </div>
+      <div>
+        <input type="checkbox" id="check-receiver-connection-id-list" />
+        <label for="check-receiver-connection-id-list">Receiver connection_id list</label>
       </div>
       <button id="connect">connect</button>
       <button id="disconnect" disabled>disconnect</button>
