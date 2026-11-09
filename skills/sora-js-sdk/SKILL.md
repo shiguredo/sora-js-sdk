@@ -245,7 +245,7 @@ interface DataChannelConfiguration {
   maxRetransmits?: number;
   protocol?: string;
   ordered?: boolean;
-  header?: MessagingHeaderField[]; // [{ type: "sender_connection_id" }]
+  header?: MessagingHeaderField[]; // [{ type: "sender_connection_id" }] / [{ type: "receiver_connection_id_list" }]
 }
 ```
 
@@ -255,11 +255,58 @@ interface DataChannelConfiguration {
 // message は Uint8Array。compress: true なら自動で圧縮される
 // 未接続 (pc === null) の場合は何もしない
 // DataChannel が存在しない・open でない場合は例外を投げる
+// header に receiver_connection_id_list を宣言したラベルでは例外を投げる
 async sendMessage(label: string, message: Uint8Array): Promise<void>
 ```
 
 受信は `message` コールバックで行う。`event.data` は `ArrayBuffer`。
 `header` に `sender_connection_id` を指定すると、受信メッセージの先頭に送信者の connection_id が付与される。
+
+#### 宛先を指定して送信する (experimental)
+
+**experimental であり、今後変更・削除する可能性がある。この機能に対応した Sora が必要。**
+
+`header` に `{ type: "receiver_connection_id_list" }` を宣言したラベルでは、宛先の connection_id を指定して、その接続にだけメッセージを届けられる。宣言できるのは `direction` が `sendrecv` または `sendonly` のラベル。
+
+```typescript
+// message の前に宛先ヘッダー ([count (1 byte)][connection_id (26 bytes) x count]) を付けて送る
+// compress: true なら宛先ヘッダーも含めた全体を自動で圧縮する
+// 未接続 (pc === null) の場合は何もしない
+// 次の場合は送信前に例外を投げる
+// - DataChannel が存在しない・open でない
+// - header に receiver_connection_id_list を宣言していないラベル
+// - receiverConnectionIds が 0 件または 256 件以上
+// - UTF-8 で 26 バイトでない connection_id
+// - message が空
+async sendMessageToReceivers(
+  label: string,
+  message: Uint8Array,
+  receiverConnectionIds: readonly string[],
+): Promise<void>
+```
+
+- 宣言したラベルでは宛先の指定が必須で、`sendMessage` で全員に送ることはできない。全員に送る場合は、宣言しないラベルを別に用意する
+- 受信者に届くメッセージには宛先ヘッダーは含まれない
+- 自身の connection_id を指定しても自身には届かない
+- 宛先の重複は SDK では除かない
+
+```typescript
+const messaging = sora.messaging("sora", metadata, {
+  dataChannels: [
+    // 宛先を指定して送るラベル
+    { label: "#direct", direction: "sendrecv", header: [{ type: "receiver_connection_id_list" }] },
+    // 全員に送るラベル
+    { label: "#broadcast", direction: "sendrecv" },
+  ],
+});
+await messaging.connect();
+
+// メッセージング用の DataChannel が open してから呼ぶ (open 前は例外になる)
+await messaging.sendMessageToReceivers("#direct", new TextEncoder().encode("hello"), [
+  receiverConnectionId,
+]);
+await messaging.sendMessage("#broadcast", new TextEncoder().encode("hello all"));
+```
 
 ### RPC
 
@@ -496,22 +543,23 @@ recvonly.on("notify", (event) => {
 
 ## クイックリファレンス
 
-| やりたいこと             | コード                                                            |
-| :----------------------- | :---------------------------------------------------------------- |
-| 接続の生成               | `Sora.connection(url, debug)`                                     |
-| 送受信で接続             | `sora.sendrecv(channelId, metadata, options)` → `connect(stream)` |
-| 送信のみで接続           | `sora.sendonly(channelId, metadata, options)` → `connect(stream)` |
-| 受信のみで接続           | `sora.recvonly(channelId, metadata, options)` → `connect()`       |
-| メッセージングのみで接続 | `sora.messaging(channelId, metadata, options)` → `connect()`      |
-| 切断                     | `connection.disconnect()`                                         |
-| コールバック登録         | `connection.on(kind, callback)`                                   |
-| リモート映像の表示       | `on("track", (event) => event.streams[0])`                        |
-| メッセージ送信           | `connection.sendMessage("#label", uint8Array)`                    |
-| メッセージ受信           | `on("message", (event) => event.data)`                            |
-| RPC 呼び出し             | `connection.rpc(method, params, options)`                         |
-| トラック置き換え         | `connection.replaceVideoTrack(stream, track)`                     |
-| トラック削除             | `connection.removeVideoTrack(stream)`                             |
-| 統計取得                 | `connection.pc?.getStats()`                                       |
-| 自身の接続 ID            | `connection.connectionId`                                         |
-| 認証メタデータ           | `connection.authMetadata`                                         |
-| constraints の変更       | `Sora.helpers.applyMediaStreamConstraints(stream, constraints)`   |
+| やりたいこと                            | コード                                                                    |
+| :-------------------------------------- | :------------------------------------------------------------------------ |
+| 接続の生成                              | `Sora.connection(url, debug)`                                             |
+| 送受信で接続                            | `sora.sendrecv(channelId, metadata, options)` → `connect(stream)`         |
+| 送信のみで接続                          | `sora.sendonly(channelId, metadata, options)` → `connect(stream)`         |
+| 受信のみで接続                          | `sora.recvonly(channelId, metadata, options)` → `connect()`               |
+| メッセージングのみで接続                | `sora.messaging(channelId, metadata, options)` → `connect()`              |
+| 切断                                    | `connection.disconnect()`                                                 |
+| コールバック登録                        | `connection.on(kind, callback)`                                           |
+| リモート映像の表示                      | `on("track", (event) => event.streams[0])`                                |
+| メッセージ送信                          | `connection.sendMessage("#label", uint8Array)`                            |
+| 宛先指定のメッセージ送信 (experimental) | `connection.sendMessageToReceivers("#label", uint8Array, [connectionId])` |
+| メッセージ受信                          | `on("message", (event) => event.data)`                                    |
+| RPC 呼び出し                            | `connection.rpc(method, params, options)`                                 |
+| トラック置き換え                        | `connection.replaceVideoTrack(stream, track)`                             |
+| トラック削除                            | `connection.removeVideoTrack(stream)`                                     |
+| 統計取得                                | `connection.pc?.getStats()`                                               |
+| 自身の接続 ID                           | `connection.connectionId`                                                 |
+| 認証メタデータ                          | `connection.authMetadata`                                                 |
+| constraints の変更                      | `Sora.helpers.applyMediaStreamConstraints(stream, constraints)`           |

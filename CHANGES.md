@@ -11,6 +11,14 @@
 
 ## develop
 
+- [ADD] DataChannel メッセージングで宛先の connection_id を指定して送信する `sendMessageToReceivers` を experimental として追加する
+  - `dataChannels` の `header` に `{ type: "receiver_connection_id_list" }` を宣言したラベルで利用でき、指定した connection_id の接続にだけメッセージが届く
+  - `MessagingHeaderFieldType` に `receiver_connection_id_list` を追加する
+  - `receiver_connection_id_list` を宣言したラベルで `sendMessage` を呼ぶと、送信前に例外を投げる
+  - experimental であり、今後変更・削除する可能性がある
+  - この機能に対応した Sora が必要
+  - @voluntas
+
 ### misc
 
 - [CHANGE] ライブラリビルドを `vp build` から `vp pack` に移行する
@@ -35,6 +43,9 @@
   - ページの既定値は従来と同じ `VP8` / `1500` とする
   - 再接続時は旧接続を切断してから新しい接続を確立する
   - @miosakuma
+- [ADD] E2E の messaging ページに `receiver_connection_id_list` を宣言して宛先を指定して送信する UI と E2E テストを追加する
+  - 指定した接続にだけメッセージが届くことと、宣言と送信メソッドが合わない場合に送信前に例外になることを検証する
+  - @voluntas
 - [UPDATE] `@playwright/test` を 1.60.0 から 1.61.0 に更新する
   - 上流で `reinstall_chrome_stable_mac.sh` の curl に `-L` が追加されたため `playwright-core@1.60.0` のパッチを削除する
   - @voluntas

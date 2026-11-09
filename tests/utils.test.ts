@@ -1,10 +1,17 @@
 // XXX: assert を使うと型がエラーがうるさいため expect を使ってる
 
-import type { AudioCodecType, DataChannelDirection, VideoCodecType } from "../src/types";
+import type {
+  AudioCodecType,
+  DataChannelDirection,
+  SignalingOfferMessageDataChannel,
+  VideoCodecType,
+} from "../src/types";
 import {
   ConnectError,
   createErrorFromJSONRPCError,
+  createReceiverConnectionIdListMessage,
   createSignalingMessage,
+  hasReceiverConnectionIdListHeader,
   redact,
 } from "../src/utils";
 
@@ -1135,3 +1142,224 @@ test.each([[{ code: -32_602 }], [["a", "b"]]])(
     expect(error.cause).toBe(value);
   },
 );
+
+/**
+ * DataChannel メッセージングの宛先ヘッダー (receiver_connection_id_list) のテスト
+ *
+ * 宛先ヘッダーは [count (1 byte)][receiver_connection_id (26 bytes) x count] で、
+ * 宛先ヘッダーを付けたメッセージは [count][receiver_connection_id x count][message] の形になる
+ */
+
+// テスト用に、index ごとに異なる 26 文字 (ASCII なので 26 バイト) の connection_id を作る
+const createTestConnectionId = (index: number): string => `C${String(index).padStart(25, "0")}`;
+
+// 宛先ヘッダーを付けたメッセージの期待値を、仕様の形どおりに組み立てる
+const createExpectedReceiverConnectionIdListMessage = (
+  message: Uint8Array,
+  receiverConnectionIds: string[],
+): Uint8Array => {
+  const encodedConnectionIds = receiverConnectionIds.flatMap((connectionId) => [
+    ...new TextEncoder().encode(connectionId),
+  ]);
+  return new Uint8Array([receiverConnectionIds.length, ...encodedConnectionIds, ...message]);
+};
+
+// 宛先 1 件の場合、count が 1 で、その後ろに connection_id と message が並ぶこと
+test("createReceiverConnectionIdListMessage は宛先 1 件の宛先ヘッダーを付けたメッセージを組み立てる", () => {
+  const message = new TextEncoder().encode("hello");
+  const receiverConnectionIds = [createTestConnectionId(1)];
+
+  const result = createReceiverConnectionIdListMessage(message, receiverConnectionIds);
+
+  expect(result).toStrictEqual(
+    createExpectedReceiverConnectionIdListMessage(message, receiverConnectionIds),
+  );
+  // 1 (count) + 26 (connection_id) + 5 (message) バイトになる
+  expect(result.byteLength).toBe(1 + 26 + 5);
+  expect(result[0]).toBe(1);
+});
+
+// 宛先が複数の場合、件数分の connection_id が渡された順に message の前に並ぶこと
+test("createReceiverConnectionIdListMessage は宛先複数件の宛先ヘッダーを渡された順に付ける", () => {
+  const message = new Uint8Array([0, 255, 127]);
+  const receiverConnectionIds = [
+    createTestConnectionId(3),
+    createTestConnectionId(1),
+    createTestConnectionId(2),
+  ];
+
+  const result = createReceiverConnectionIdListMessage(message, receiverConnectionIds);
+
+  expect(result).toStrictEqual(
+    createExpectedReceiverConnectionIdListMessage(message, receiverConnectionIds),
+  );
+  expect(result[0]).toBe(3);
+  // 2 件目の connection_id は 1 + 26 バイト目から始まる
+  expect(new TextDecoder().decode(result.subarray(1 + 26, 1 + 26 * 2))).toBe(
+    createTestConnectionId(1),
+  );
+});
+
+// count は 1 バイトなので、上限の 255 件まで指定できること
+test("createReceiverConnectionIdListMessage は上限の宛先 255 件の宛先ヘッダーを付ける", () => {
+  const message = new Uint8Array([1]);
+  const receiverConnectionIds = Array.from({ length: 255 }, (_, index) =>
+    createTestConnectionId(index),
+  );
+
+  const result = createReceiverConnectionIdListMessage(message, receiverConnectionIds);
+
+  expect(result).toStrictEqual(
+    createExpectedReceiverConnectionIdListMessage(message, receiverConnectionIds),
+  );
+  expect(result[0]).toBe(255);
+  expect(result.byteLength).toBe(1 + 26 * 255 + 1);
+});
+
+// 重複した宛先は SDK では除かず、渡されたとおりに並べること
+test("createReceiverConnectionIdListMessage は重複した宛先を除かずに並べる", () => {
+  const message = new TextEncoder().encode("dup");
+  const receiverConnectionIds = [createTestConnectionId(1), createTestConnectionId(1)];
+
+  const result = createReceiverConnectionIdListMessage(message, receiverConnectionIds);
+
+  expect(result).toStrictEqual(
+    createExpectedReceiverConnectionIdListMessage(message, receiverConnectionIds),
+  );
+  expect(result[0]).toBe(2);
+});
+
+// count に 0 を送ると Sora に切断されるため、宛先 0 件は送信前に例外にすること
+test("createReceiverConnectionIdListMessage は宛先 0 件で例外を投げる", () => {
+  expect(() => {
+    createReceiverConnectionIdListMessage(new Uint8Array([1]), []);
+  }).toThrow(new Error("Invalid receiverConnectionIds length: expected 1 to 255, got 0"));
+});
+
+// count は 1 バイトなので 256 件以上は表せない。送信前に例外にすること
+test("createReceiverConnectionIdListMessage は宛先 256 件で例外を投げる", () => {
+  const receiverConnectionIds = Array.from({ length: 256 }, (_, index) =>
+    createTestConnectionId(index),
+  );
+
+  expect(() => {
+    createReceiverConnectionIdListMessage(new Uint8Array([1]), receiverConnectionIds);
+  }).toThrow(new Error("Invalid receiverConnectionIds length: expected 1 to 255, got 256"));
+});
+
+// connection_id は 26 バイト固定なので、25 バイトと 27 バイトの ASCII の connection_id は例外にすること
+test.each([
+  ["25 バイトの", "C".repeat(25), 25],
+  ["27 バイトの", "C".repeat(27), 27],
+])(
+  "createReceiverConnectionIdListMessage は %s connection_id で例外を投げる",
+  (_, connectionId, byteLength) => {
+    expect(() => {
+      createReceiverConnectionIdListMessage(new Uint8Array([1]), [
+        createTestConnectionId(1),
+        connectionId,
+      ]);
+    }).toThrow(
+      new Error(
+        `Invalid receiver connection_id byte length at index 1: expected 26, got ${byteLength}`,
+      ),
+    );
+  },
+);
+
+// 文字数ではなく UTF-8 のバイト数で検査すること
+// 「あ」は UTF-8 で 3 バイトなので、26 文字のうち 1 文字を「あ」にすると 28 バイトになる
+test("createReceiverConnectionIdListMessage は 26 文字でも 26 バイトでない connection_id で例外を投げる", () => {
+  const connectionId = `あ${"C".repeat(25)}`;
+  // 前提として 26 文字であることを確かめる
+  expect(connectionId).toHaveLength(26);
+
+  expect(() => {
+    createReceiverConnectionIdListMessage(new Uint8Array([1]), [connectionId]);
+  }).toThrow(
+    new Error("Invalid receiver connection_id byte length at index 0: expected 26, got 28"),
+  );
+});
+
+// バイト数で検査するので、26 文字でなくても UTF-8 で 26 バイトなら受け付けること
+// 「あ」(3 バイト) と ASCII 23 文字で、24 文字 26 バイトになる
+test("createReceiverConnectionIdListMessage は 26 文字でなくても 26 バイトの connection_id を受け付ける", () => {
+  const connectionId = `あ${"C".repeat(23)}`;
+  // 前提として 24 文字で、UTF-8 で 26 バイトであることを確かめる
+  expect(connectionId).toHaveLength(24);
+  expect(new TextEncoder().encode(connectionId).byteLength).toBe(26);
+  const message = new Uint8Array([1]);
+
+  const result = createReceiverConnectionIdListMessage(message, [connectionId]);
+
+  expect(result).toStrictEqual(
+    createExpectedReceiverConnectionIdListMessage(message, [connectionId]),
+  );
+});
+
+// message が別のバッファの一部 (byteOffset が 0 でない view) でも、その範囲だけを宛先ヘッダーの後ろに付けること
+test("createReceiverConnectionIdListMessage は byteOffset が 0 でない message の範囲だけを付ける", () => {
+  const buffer = new Uint8Array([9, 9, 1, 2, 3, 9, 9]);
+  const message = buffer.subarray(2, 5);
+  const receiverConnectionIds = [createTestConnectionId(1)];
+
+  const result = createReceiverConnectionIdListMessage(message, receiverConnectionIds);
+
+  expect(result).toStrictEqual(
+    createExpectedReceiverConnectionIdListMessage(new Uint8Array([1, 2, 3]), receiverConnectionIds),
+  );
+});
+
+// 空のメッセージは Sora に切断される扱いにしているため、送信前に例外にすること
+test("createReceiverConnectionIdListMessage は空の message で例外を投げる", () => {
+  expect(() => {
+    createReceiverConnectionIdListMessage(new Uint8Array(), [createTestConnectionId(1)]);
+  }).toThrow(new Error("Invalid message byte length: expected at least 1, got 0"));
+});
+
+// type: offer の data_channels の header に receiver_connection_id_list があるときだけ true になること
+// 行は [説明, 期待値, DataChannel の設定] の順に並べる (テスト名の %s を先頭から埋めるため)
+test.each<[string, boolean, SignalingOfferMessageDataChannel | undefined]>([
+  ["DataChannel が無い場合は", false, undefined],
+  ["header が無い場合は", false, { label: "#example", direction: "sendrecv", compress: false }],
+  [
+    "header が空の場合は",
+    false,
+    { label: "#example", direction: "sendrecv", compress: false, header: [] },
+  ],
+  [
+    "sender_connection_id だけの場合は",
+    false,
+    {
+      label: "#example",
+      direction: "sendrecv",
+      compress: false,
+      header: [{ type: "sender_connection_id", length: 26 }],
+    },
+  ],
+  [
+    "receiver_connection_id_list だけの場合は",
+    true,
+    {
+      label: "#example",
+      direction: "sendonly",
+      compress: true,
+      header: [{ type: "receiver_connection_id_list" }],
+    },
+  ],
+  [
+    "sender_connection_id と receiver_connection_id_list の場合は",
+    true,
+    {
+      label: "#example",
+      direction: "sendrecv",
+      compress: false,
+      header: [
+        { type: "sender_connection_id", length: 26 },
+        { type: "receiver_connection_id_list" },
+      ],
+    },
+  ],
+])("hasReceiverConnectionIdListHeader は %s %s を返す", (_, expected, dataChannelSettings) => {
+  expect(hasReceiverConnectionIdListHeader(dataChannelSettings)).toBe(expected);
+});
