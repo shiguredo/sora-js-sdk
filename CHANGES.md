@@ -57,8 +57,8 @@
 - [UPDATE] TypeScript を 6.0.3 から 7.0.2 に更新する
   - tsconfig の `declarationDir` を削除して tsgo での型定義生成に対応する
   - @voluntas
-- [UPDATE] `@types/node` を 26.5.1 から 26.6.1 に更新する
-  - @voluntas
+- [UPDATE] `@types/node` を 26.5.1 から 26.6.5 に更新する
+  - @voluntas @miosakuma
 - [UPDATE] `jsdom` を 30.0.1 から 30.1.0 に更新する
   - @voluntas
 - [UPDATE] `vite-plus` を 0.2.8 から 1.0.0-rc.0 に更新する
@@ -75,13 +75,16 @@
 - [UPDATE] E2E テストで type redirect 非対応の sora-js-sdk では access_token の cluster_affinity を false にする
   - `2021.2.0` より前のバージョンは、クラスターアフィニティが有効なテストサーバーから type redirect を受け取ると接続に失敗するため
   - @miosakuma
-- [UPDATE] `@types/node` を 26.6.1 から 26.6.5 に更新する
+- [UPDATE] `vite-plus` を 1.0.0-rc.0 から 1.7.0 に更新する
+  - `pnpm-workspace.yaml` の `minimumReleaseAgeExclude` に `vitest` / `tsrs` / `@tsrs/*` を追加する
   - @miosakuma
-- [UPDATE] `jsdom` を 30.1.0 から 30.1.2 に更新する
+- [UPDATE] `@playwright/test` を 1.61.0 から 1.65.1 に更新する
   - @miosakuma
-- [UPDATE] `vite-plus` を 1.0.0-rc.0 から 1.3.0 に更新する
-  - 同梱される rolldown / tsdown / vitest / oxlint / oxfmt が更新される
-  - `pnpm-workspace.yaml` の `minimumReleaseAgeExclude` に `vitest` を追加する
+- [UPDATE] `jsdom` を 30.1.0 から 31.0.1 に更新する
+  - @miosakuma
+- [UPDATE] `jose` を 6.2.12 から 6.2.17 に更新する
+  - @miosakuma
+- [UPDATE] `@types/node` を 26.6.5 から 26.6.6 に更新する
   - @miosakuma
 - [FIX] WebKit の simulcast_encodings テストが Sora の authz スキーマに違反した値を使っていたのを修正する
   - `scaleResolutionDownTo` を `{"maxHeight": 225, "maxWidth": 400}` (r0) と `{"maxHeight": 450, "maxWidth": 800}` (r1) に修正し、outbound-rtp の `frameWidth` で縮小結果を検証する
