@@ -19,8 +19,12 @@ minimumReleaseAgeExclude:
   - "@oxfmt/*"
   - "oxfmt"
   - "@oxlint/*"
-  - "@oxlint-tsgolint/*"
   - "oxlint"
+  # vite-plus 1.7.0 以降の型情報付き lint のバックエンド (tsrs) は活発に更新されるため制限対象外とする
+  - "tsrs"
+  - "@tsrs/*"
+  # oxlint の peerDependency が要求する旧バックエンド (1.7.0 以降は未使用)
+  - "@oxlint-tsgolint/*"
   - "oxlint-tsgolint"
 
 packages:
